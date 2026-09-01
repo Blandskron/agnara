@@ -21,6 +21,10 @@ package version `0.0.0` is a development sentinel, not a published release.
   workflow ([#16]).
 - Capability-first architecture for generated OpenAPI, replaceable HTTP
   documentation providers and protocol-neutral Agnara Explorer introspection.
+- `CapabilityRegistry` and `FrozenCapabilityRegistry`: deterministic
+  registration order, duplicate-id rejection, a freeze step that yields an
+  immutable thread-safe view, lookup by id or dotted string, and
+  introspection by namespace and declared effect ([#19]).
 
 ### Changed
 
@@ -36,3 +40,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [Unreleased]: https://github.com/Blandskron/agnara/compare/main...develop
 [#3]: https://github.com/Blandskron/agnara/issues/3
 [#16]: https://github.com/Blandskron/agnara/issues/16
+[#19]: https://github.com/Blandskron/agnara/issues/19
