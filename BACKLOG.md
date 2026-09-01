@@ -73,7 +73,7 @@ At least 25 focused unit tests covering registration, metadata, duplicate handli
   #30.
 - [x] E2.3 Support dataclasses. Tracking: GitHub Issue #32.
 - [x] E2.4 Define JSON Schema export interface.
-- [ ] E2.5 Prototype msgspec adapter separately.
+- [x] E2.5 Prototype msgspec adapter separately. Tracking: GitHub Issue #34.
 - [ ] E2.6 Prototype Pydantic adapter separately.
 - [?] E2.7 Benchmark adapters before selecting defaults.
 

@@ -1,4 +1,4 @@
-# AGENTS.md — Instructions for Coding Agents
+# AGENTS.md â Instructions for Coding Agents
 
 ## Mission
 
@@ -222,30 +222,39 @@ Read `docs/adr/0021-synchronized-pre-one-releases-and-changelog.md` before
 changing package versions, changelog release headings or Git tags. Never
 publish the `0.0.0` development sentinel.
 
-## Attribution discipline
+## AI Agent Git Attribution
 
-Read `docs/adr/0019-ai-agent-attribution.md` before creating or merging a
-commit that involved an AI agent.
+El desarrollador humano permanece como Author y Committer principal.
 
-- A human-directed change keeps the human as the primary commit author.
-- Add an agent as `Co-authored-by` only when that agent materially authored
-  the change and its exact `Name <email>` identity is authorized for this
-  repository and verifiably maps to a GitHub account.
-- Never invent, guess or copy an agent identity from a model/provider name.
-- Never add attribution for another agent without evidence of its actual
-  contribution and verified identity.
-- Review-only participation belongs in the PR review trail, not normally in a
-  co-author trailer.
-- When an agent has no verified GitHub identity, record its name, role and
-  contribution in the Issue or PR and omit the trailer.
-- Preserve legitimate existing trailers when amending, rebasing, recreating a
-  commit or preparing a squash message. Do not repeat the primary author as a
-  co-author.
+Todo agente de IA que participe materialmente en cambios incluidos en un commit debe agregarse mediante un trailer estándar:
 
-Before push, inspect the final commit message and its parsed trailers. Before
-squash merge, inspect the proposed squash message; after merge, verify the
-accepted commit. Do not rewrite existing history merely to retrofit this
-policy.
+Co-authored-by:
+
+Solo deben incluirse agentes que hayan participado realmente en el cambio.
+Pueden existir múltiples agentes:
+
+Co-authored-by: Codex <codex@openai.com>
+Co-authored-by: Claude
+
+Cada agente debe utilizar su identidad correspondiente.
+Nunca inventar direcciones de correo.
+Nunca utilizar la identidad de otro agente.
+Si la identidad oficial/verificable de un agente es desconocida, debe investigarse antes de agregarla.
+
+### Regla específica para Codex
+
+Mientras esta política siga vigente, Codex debe utilizar:
+
+Co-authored-by: Codex <codex@openai.com>
+
+No utilizar para nuestros commits:
+
+Co-authored-by: Codex <noreply@openai.com>
+Co-authored-by: Codex <codex@example.com>
+Co-authored-by: chatgpt-codex-connector[bot] <...>
+
+ni otra identidad para representar a Codex salvo que una futura actualización oficial de OpenAI/GitHub demuestre que la identidad canónica ha cambiado.
+Si en el futuro cambia la identidad oficial, primero debe actualizarse esta política.
 
 ## Stop conditions
 
@@ -318,21 +327,21 @@ Agnara uses:
 
 ```text
 BACKLOG
-→ Issue
-→ Branch
-→ Implementation
-→ Quality Gates
-→ Commit
-→ Attribution verification
-→ Push
-→ PR
-→ Review
-→ Merge
+â Issue
+â Branch
+â Implementation
+â Quality Gates
+â Commit
+â Attribution verification
+â Push
+â PR
+â Review
+â Merge
 ```
 
 GitHub Issues are executable work units.
 
-One Issue → one branch → one PR is the default.
+One Issue â one branch â one PR is the default.
 
 Before starting new work, inspect existing open PRs and Issues.
 
@@ -351,3 +360,4 @@ If an independent reviewer identity is available, prefer dual-agent review.
 Never weaken repository protections to bypass failing work.
 
 Never push normal feature work directly to protected branches.
+
