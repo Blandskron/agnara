@@ -20,7 +20,7 @@ The agent must update this file as work progresses and must never mark a task co
 - [x] E0.6 Configure pytest.
 - [x] E0.7 Add architecture import tests.
 - [x] E0.8 Add GitHub Actions for Linux, macOS and Windows where practical.
-- [~] E0.9 Add conventional changelog/release process. Tracking: GitHub Issue
+- [x] E0.9 Add conventional changelog/release process. Tracking: GitHub Issue
   #16.
 - [ ] E0.10 Add license only after owner decision.
 - [x] E0.13 Verify Ruff and `ty` gates. Both are green in CI as of PR #1.
