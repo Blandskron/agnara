@@ -1,7 +1,7 @@
-﻿from dataclasses import field
+from dataclasses import field
 from typing import Any
 
-from agnara.core.dataclasses import frozen_slots_dataclass
+from agnara._frozen import frozen_slots_dataclass
 
 __all__ = ["AnonymousPrincipal", "Principal"]
 

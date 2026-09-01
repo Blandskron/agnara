@@ -1,4 +1,4 @@
-﻿# Changelog
+# Changelog
 
 Notable changes to Agnara are recorded here. The format is inspired by Keep a
 Changelog, and release versions follow the synchronized PEP 440 policy in ADR

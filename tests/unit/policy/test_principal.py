@@ -1,6 +1,6 @@
 import pytest
-from agnara.core.dataclasses import FrozenInstanceError
 
+from agnara._frozen import FrozenInstanceError
 from agnara.policy.principal import AnonymousPrincipal, Principal
 
 

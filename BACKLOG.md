@@ -1,4 +1,4 @@
-﻿# Backlog
+# Backlog
 
 Legend:
 
@@ -10,7 +10,7 @@ Legend:
 
 The agent must update this file as work progresses and must never mark a task complete without the associated acceptance criteria passing.
 
-## EPIC 0 Ã¢â‚¬â€ Repository foundation
+## EPIC 0 ???????? Repository foundation
 
 - [x] E0.1 Create `uv` workspace.
 - [x] E0.2 Create package boundaries described in `ARCHITECTURE.md`.
@@ -28,7 +28,7 @@ The agent must update this file as work progresses and must never mark a task co
   Control policy refuses their native binaries (`OSError 4551`) from both
   the virtual environment and the interpreter `Scripts` directory. The
   policy must not be weakened. CI is therefore the authoritative record for
-  these two gates Ã¢â‚¬â€ see `QUALITY_GATES.md`.
+  these two gates ???????? see `QUALITY_GATES.md`.
 - [x] E0.14 Restore GitHub autonomy. `gh` 2.98.0 is installed and
   authenticated, so Issues, Pull Requests, reviews and merges are available
   again. Work merged before PR #1 carries local `--no-ff` merges with
@@ -51,7 +51,7 @@ Current evidence: all five gates pass in CI on CPython 3.14, across
 ubuntu-latest, macos-latest and windows-latest, with 105 tests. See the
 checks on PR #1. Locally only `uv sync` and `pytest` can run (E0.13).
 
-## EPIC 1 Ã¢â‚¬â€ Capability model
+## EPIC 1 ???????? Capability model
 
 - [x] E1.1 Define immutable `CapabilityDefinition`.
 - [x] E1.2 Define stable capability identity.
@@ -66,7 +66,7 @@ checks on PR #1. Locally only `uv sync` and `pytest` can run (E0.13).
 
 At least 25 focused unit tests covering registration, metadata, duplicate handling and immutability.
 
-## EPIC 2 Ã¢â‚¬â€ Schema port
+## EPIC 2 ???????? Schema port
 
 - [x] E2.1 Define schema adapter protocol.
 - [x] E2.2 Implement standard-Python baseline adapter. Tracking: GitHub Issue
@@ -81,7 +81,7 @@ At least 25 focused unit tests covering registration, metadata, duplicate handli
 
 Core imports neither Pydantic nor msgspec.
 
-## EPIC 3 Ã¢â‚¬â€ Dependency graph
+## EPIC 3 ???????? Dependency graph
 
 - [x] E3.1 Write DI RFC.
 - [x] E3.2 Define provider abstraction.
@@ -92,7 +92,7 @@ Core imports neither Pydantic nor msgspec.
 - [ ] E3.7 Implement invocation-scoped cache.
 - [ ] E3.8 Verify free-threading safety assumptions.
 
-## EPIC 4 Ã¢â‚¬â€ Execution compiler/runtime
+## EPIC 4 ???????? Execution compiler/runtime
 
 - [ ] E4.1 Define Invocation.
 - [ ] E4.2 Define ExecutionContext.
@@ -104,7 +104,7 @@ Core imports neither Pydantic nor msgspec.
 - [ ] E4.8 Structured telemetry hooks.
 - [ ] E4.9 Benchmark runtime overhead.
 
-## EPIC 5 Ã¢â‚¬â€ Policy engine
+## EPIC 5 ???????? Policy engine
 
 - [x] E5.1 Define Principal.
 - [ ] E5.2 Define policy interface.
@@ -114,7 +114,7 @@ Core imports neither Pydantic nor msgspec.
 - [ ] E5.6 Delegation RFC.
 - [ ] E5.7 Policy tests independent of transports.
 
-## EPIC 6 Ã¢â‚¬â€ HTTP adapter
+## EPIC 6 ???????? HTTP adapter
 
 - [ ] E6.1 ASGI boundary.
 - [ ] E6.2 Route registry.
@@ -163,7 +163,7 @@ Core imports neither Pydantic nor msgspec.
 - supported OpenAPI/UI versions and known gaps are recorded by conformance
   tests rather than implied by marketing claims.
 
-## EPIC 7 Ã¢â‚¬â€ MCP adapter
+## EPIC 7 ???????? MCP adapter
 
 - [ ] E7.1 Pin supported MCP spec version.
 - [ ] E7.2 Tool projection from capabilities.
@@ -175,7 +175,7 @@ Core imports neither Pydantic nor msgspec.
 - [ ] E7.8 Official SDK conformance tests.
 - [ ] E7.9 Benchmark tool invocation overhead against FastMCP where meaningful.
 
-## EPIC 8 Ã¢â‚¬â€ Documentation and introspection
+## EPIC 8 ???????? Documentation and introspection
 
 - [x] E8.0 Define the interactive documentation and Agnara Explorer
   architecture. Tracked by Issue #9.
@@ -217,7 +217,7 @@ remotely served machine-readable discovery or Explorer release. E8.7 depends
 on E6.7 and E6.11. Explorer views follow the read-only E8.8 shell rather than
 expanding that first PR into a complete frontend.
 
-## EPIC 9 Ã¢â‚¬â€ Telemetry
+## EPIC 9 ???????? Telemetry
 
 - [ ] E9.1 Telemetry port in core.
 - [ ] E9.2 OpenTelemetry adapter.
@@ -226,7 +226,7 @@ expanding that first PR into a complete frontend.
 - [ ] E9.5 MCP/GenAI semantic convention compatibility.
 - [ ] E9.6 no-op telemetry cost benchmark.
 
-## EPIC 10 Ã¢â‚¬â€ v0.1 release gate
+## EPIC 10 ???????? v0.1 release gate
 
 - [ ] Capability definition stable enough for alpha.
 - [ ] Direct invocation stable.
@@ -249,7 +249,7 @@ expanding that first PR into a complete frontend.
 - [ ] plugin marketplace/registry research.
 - [ ] native/Rust acceleration only if benchmarks justify it.
 
-## EPIC 0A Ã¢â‚¬â€ Project/app scaffolding
+## EPIC 0A ???????? Project/app scaffolding
 
 - [ ] E0A.1 Implement `agnara project create`.
 - [ ] E0A.2 Define and validate `agnara.toml`.
@@ -276,7 +276,7 @@ Generated code must:
 - be deterministic for identical inputs;
 - refuse overwrite without explicit authorization.
 
-## EPIC 1A Ã¢â‚¬â€ Modular app runtime
+## EPIC 1A ???????? Modular app runtime
 
 - [ ] E1A.1 Define app/module descriptor.
 - [ ] E1A.2 Register app-owned capabilities.
@@ -285,7 +285,7 @@ Generated code must:
 - [ ] E1A.5 Define cross-app public contract rules.
 - [ ] E1A.6 Freeze app registry during project compilation.
 
-## EPIC 0B Ã¢â‚¬â€ Agentic repository governance
+## EPIC 0B ???????? Agentic repository governance
 
 - [x] E0B.1 Establish GitHub Issue labels for type/area/priority.
 - [x] E0B.2 Configure branch rulesets for `main`.
@@ -293,7 +293,7 @@ Generated code must:
 - [x] E0B.4 Require relevant CI checks before merge.
 - [x] E0B.5 Configure allowed merge strategies.
 - [x] E0B.6 Validate GitHub CLI autonomous workflow.
-- [x] E0B.7 Validate Issue Ã¢â€ â€™ branch Ã¢â€ â€™ PR Ã¢â€ â€™ merge Ã¢â€ â€™ close flow.
+- [x] E0B.7 Validate Issue ???????? branch ???????? PR ???????? merge ???????? close flow.
 - [x] E0B.8 Decide single-agent or dual-agent review mode for repository
   governance. Mode B (single-agent) is in force: PR required, CI required,
   zero required approvals, documented self-review, no fabricated approval.
