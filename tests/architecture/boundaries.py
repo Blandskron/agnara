@@ -35,9 +35,7 @@ DISTRIBUTIONS: dict[str, str] = {
 CORE_DISTRIBUTION = "agnara-core"
 CORE_IMPORT_NAME = DISTRIBUTIONS[CORE_DISTRIBUTION]
 
-ADAPTER_DISTRIBUTIONS: tuple[str, ...] = tuple(
-    sorted(set(DISTRIBUTIONS) - {CORE_DISTRIBUTION})
-)
+ADAPTER_DISTRIBUTIONS: tuple[str, ...] = tuple(sorted(set(DISTRIBUTIONS) - {CORE_DISTRIBUTION}))
 
 #: Import roots owned by the workspace.
 WORKSPACE_IMPORT_NAMES: frozenset[str] = frozenset(DISTRIBUTIONS.values())
@@ -165,9 +163,7 @@ def declared_dependencies(dist_name: str) -> list[str]:
 def declared_workspace_dependencies(dist_name: str) -> list[str]:
     """Declared dependencies that are themselves workspace distributions."""
     return [
-        dep
-        for dep in declared_dependencies(dist_name)
-        if _requirement_name(dep) in DISTRIBUTIONS
+        dep for dep in declared_dependencies(dist_name) if _requirement_name(dep) in DISTRIBUTIONS
     ]
 
 

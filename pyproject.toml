@@ -61,6 +61,13 @@ ban-relative-imports = "parents"
 [tool.ruff.format]
 docstring-code-format = true
 
+# Ruff also formats Python fenced blocks inside Markdown. The examples in
+# docs/API_DESIGN.md and the RFCs are a design contract reviewed by humans,
+# not code to be normalized -- docs/API_DESIGN.md exists precisely so that
+# implementation convenience does not dictate the public API. Some blocks
+# are also deliberately illustrative rather than valid Python.
+exclude = ["**/*.md"]
+
 # --------------------------------------------------------------------------
 # ty (E0.5)
 # --------------------------------------------------------------------------

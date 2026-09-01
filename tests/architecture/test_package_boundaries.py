@@ -44,9 +44,7 @@ def test_core_imports_only_the_standard_library() -> None:
     dependency and needs an ADR before it may appear here.
     """
     offenders = [
-        imp
-        for imp in external_imports_of(CORE_DISTRIBUTION)
-        if not is_standard_library(imp.module)
+        imp for imp in external_imports_of(CORE_DISTRIBUTION) if not is_standard_library(imp.module)
     ]
     assert not offenders, "agnara-core may import only the standard library:\n" + "\n".join(
         f"  {imp.where()} imports {imp.module!r}" for imp in offenders
@@ -96,9 +94,7 @@ def test_adapter_does_not_import_a_sibling_adapter(dist_name: str) -> None:
     Behaviour needed by two adapters belongs in a composition package or in
     the application layer, never in a direct sibling import.
     """
-    siblings = {
-        DISTRIBUTIONS[other] for other in ADAPTER_DISTRIBUTIONS if other != dist_name
-    }
+    siblings = {DISTRIBUTIONS[other] for other in ADAPTER_DISTRIBUTIONS if other != dist_name}
     offenders = [imp for imp in external_imports_of(dist_name) if imp.module in siblings]
     assert not offenders, f"{dist_name} must not import a sibling adapter:\n" + "\n".join(
         f"  {imp.where()} imports {imp.module!r}" for imp in offenders
@@ -139,8 +135,7 @@ def test_dependency_direction_points_inward() -> None:
     )
     for dist_name in ADAPTER_DISTRIBUTIONS:
         assert graph[dist_name] <= {CORE_DISTRIBUTION}, (
-            f"{dist_name} may only depend on {CORE_DISTRIBUTION}; "
-            f"found {sorted(graph[dist_name])}"
+            f"{dist_name} may only depend on {CORE_DISTRIBUTION}; found {sorted(graph[dist_name])}"
         )
 
 
@@ -174,8 +169,6 @@ def test_adapter_may_import_the_core(dist_name: str) -> None:
     If this ever fails, the rules above have become stricter than
     ARCHITECTURE.md section 4 intends.
     """
-    siblings = {
-        DISTRIBUTIONS[other] for other in ADAPTER_DISTRIBUTIONS if other != dist_name
-    }
+    siblings = {DISTRIBUTIONS[other] for other in ADAPTER_DISTRIBUTIONS if other != dist_name}
     assert CORE_IMPORT_NAME not in siblings
     assert CORE_DISTRIBUTION in declared_dependencies(dist_name)
