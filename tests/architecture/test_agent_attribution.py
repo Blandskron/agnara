@@ -51,7 +51,7 @@ def test_identity_keys_are_unique() -> None:
 
 def test_github_noreply_email_matches_the_registered_login() -> None:
     for agent in _registry()["agents"]:
-        if agent["email"] in ("codex@openai.com", "antigravity@google.com"):
+        if agent["email"] in ("codex@openai.com",):
             continue
         match = GITHUB_NOREPLY.fullmatch(agent["email"])
         assert match is not None, f"unverified GitHub noreply shape for {agent['id']}"
