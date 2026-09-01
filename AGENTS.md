@@ -117,6 +117,16 @@ Treat shared mutable state as a concurrency problem.
 - document locks and mutable caches;
 - prefer immutable compiled registries.
 
+## Frozen core value types
+
+Read `docs/adr/0020-reliable-frozen-slotted-value-types.md` before adding a
+frozen slotted dataclass to `agnara-core`.
+
+Use the internal `frozen_slots_dataclass` decorator rather than raw
+`@dataclass(frozen=True, slots=True)`. It preserves slots while ensuring that
+declared and unknown attribute mutation raises `FrozenInstanceError` instead
+of a CPython-generated `TypeError`.
+
 ## Public API discipline
 
 The public API is a product.

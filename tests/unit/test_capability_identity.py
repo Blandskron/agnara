@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import re
 
 import pytest
@@ -117,5 +118,24 @@ class TestValueSemantics:
 
     def test_is_frozen(self) -> None:
         capability_id = CapabilityId("payments", "refund")
-        with pytest.raises(AttributeError):
+        with pytest.raises(dataclasses.FrozenInstanceError):
             capability_id.namespace = "billing"  # ty: ignore[invalid-assignment]
+
+    def test_remains_slotted(self) -> None:
+        assert not hasattr(CapabilityId("payments", "refund"), "__dict__")
+
+    def test_unknown_attribute_reports_a_clear_frozen_error(self) -> None:
+        capability_id = CapabilityId("payments", "refund")
+        with pytest.raises(
+            dataclasses.FrozenInstanceError,
+            match="cannot assign to field 'version'",
+        ):
+            capability_id.version = 2  # ty: ignore[unresolved-attribute]
+
+    def test_unknown_attribute_cannot_be_deleted(self) -> None:
+        capability_id = CapabilityId("payments", "refund")
+        with pytest.raises(
+            dataclasses.FrozenInstanceError,
+            match="cannot delete field 'version'",
+        ):
+            del capability_id.version  # ty: ignore[unresolved-attribute]
