@@ -71,6 +71,6 @@ def _agnara_validation_error(error: pydantic.ValidationError) -> ValidationError
     errors = error.errors()
     if not errors:
         return ValidationError(str(error))
-    
+
     first = errors[0]
     return ValidationError(first["msg"], path=tuple(first["loc"]))
