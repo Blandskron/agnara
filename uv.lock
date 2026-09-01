@@ -4,9 +4,9 @@ requires-python = ">=3.14"
 
 [manifest]
 members = [
+    "agnara",
     "agnara-a2a",
     "agnara-cli",
-    "agnara",
     "agnara-events",
     "agnara-http",
     "agnara-mcp",
@@ -15,9 +15,9 @@ members = [
 
 [manifest.dependency-groups]
 dev = [
+    { name = "agnara", editable = "packages/agnara" },
     { name = "agnara-a2a", editable = "packages/agnara-a2a" },
     { name = "agnara-cli", editable = "packages/agnara-cli" },
-    { name = "agnara", editable = "packages/agnara" },
     { name = "agnara-events", editable = "packages/agnara-events" },
     { name = "agnara-http", editable = "packages/agnara-http" },
     { name = "agnara-mcp", editable = "packages/agnara-mcp" },
@@ -28,6 +28,11 @@ dev = [
     { name = "ruff", specifier = ">=0.14" },
     { name = "ty", specifier = ">=0.0.1a1" },
 ]
+
+[[package]]
+name = "agnara"
+version = "0.1.0"
+source = { editable = "packages/agnara" }
 
 [[package]]
 name = "agnara-a2a"
@@ -50,11 +55,6 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
-
-[[package]]
-name = "agnara"
-version = "0.0.0"
-source = { editable = "packages/agnara" }
 
 [[package]]
 name = "agnara-events"
