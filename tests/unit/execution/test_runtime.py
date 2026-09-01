@@ -32,11 +32,13 @@ def context_for(
     payload: dict[str, Any] | None = None,
     *,
     capability_id: CapabilityId | None = None,
+    deadline: float | None = None,
 ) -> ExecutionContext:
     invocation = Invocation(
         capability_id=capability_id or plan.definition.id,
         payload=payload or {},
         metadata={},
+        deadline=deadline,
     )
     return ExecutionContext(invocation, DIContainer(registry))
 
@@ -187,7 +189,11 @@ def test_handler_cancellation_propagates_and_cleans_up_resource() -> None:
             await never_complete.wait()
 
         plan = ExecutionPlan.compile(definition(refund), registry)
-        direct_context = context_for(plan, registry)
+        direct_context = context_for(
+            plan,
+            registry,
+            deadline=asyncio.get_running_loop().time() + 3600.0,
+        )
         invocation_task = asyncio.create_task(invoke(plan, direct_context))
         await handler_started.wait()
 
@@ -196,6 +202,79 @@ def test_handler_cancellation_propagates_and_cleans_up_resource() -> None:
         with pytest.raises(asyncio.CancelledError):
             await invocation_task
         assert events == ["opened", "closed"]
+
+    asyncio.run(run_test())
+
+
+def test_expired_deadline_times_out_handler_and_cleans_up_resource() -> None:
+    async def run_test() -> None:
+        events: list[str] = []
+
+        class Resource:
+            pass
+
+        @provider()
+        async def provide_resource() -> AsyncIterator[Resource]:
+            events.append("opened")
+            try:
+                yield Resource()
+            finally:
+                events.append("closed")
+
+        registry = DIRegistry()
+        registry.bind(Resource, provide_resource)
+
+        async def refund(resource: Resource) -> None:
+            assert isinstance(resource, Resource)
+            await asyncio.Event().wait()
+
+        plan = ExecutionPlan.compile(definition(refund), registry)
+        deadline = asyncio.get_running_loop().time()
+
+        with pytest.raises(TimeoutError):
+            await invoke(plan, context_for(plan, registry, deadline=deadline))
+        assert events == ["opened", "closed"]
+
+    asyncio.run(run_test())
+
+
+def test_expired_deadline_times_out_dependency_construction_and_cleans_up() -> None:
+    async def run_test() -> None:
+        events: list[str] = []
+
+        class Resource:
+            pass
+
+        class Service:
+            pass
+
+        @provider()
+        def provide_resource() -> Resource:
+            events.append("created")
+            return Resource()
+
+        @provider()
+        async def provide_service(resource: Resource) -> AsyncIterator[Service]:
+            assert isinstance(resource, Resource)
+            try:
+                await asyncio.Event().wait()
+                yield Service()
+            finally:
+                events.append("cancelled")
+
+        registry = DIRegistry()
+        registry.bind(Resource, provide_resource)
+        registry.bind(Service, provide_service)
+
+        async def refund(service: Service) -> None:
+            raise AssertionError("handler must not run")
+
+        plan = ExecutionPlan.compile(definition(refund), registry)
+        deadline = asyncio.get_running_loop().time()
+
+        with pytest.raises(TimeoutError):
+            await invoke(plan, context_for(plan, registry, deadline=deadline))
+        assert events == ["created", "cancelled"]
 
     asyncio.run(run_test())
 

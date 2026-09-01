@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import inspect
 from typing import Any
 
@@ -39,11 +40,19 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
         rendered = ", ".join(sorted(supplied_protected))
         raise InvocationError(f"invocation payload supplies runtime-owned parameter(s): {rendered}")
 
+    if context.deadline is None:
+        return await _execute(plan, context)
+    async with asyncio.timeout_at(context.deadline):
+        return await _execute(plan, context)
+
+
+async def _execute(plan: ExecutionPlan, context: ExecutionContext) -> Any:
+    """Resolve dependencies and call the handler within the caller's timeout scope."""
     async with context.di_container.resolve_dependencies(
         plan.definition.handler,
         plan.target_deps,
     ) as dependencies:
-        arguments = dict(invocation.payload)
+        arguments = dict(context.invocation.payload)
         arguments.update(dependencies)
         arguments.update(dict.fromkeys(plan.context_parameters, context))
 

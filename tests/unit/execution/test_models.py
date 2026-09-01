@@ -45,3 +45,28 @@ def test_execution_context_state():
 
     ctx.state["auth"] = True
     assert ctx.state["auth"] is True
+
+
+@pytest.mark.parametrize("deadline", [float("nan"), float("inf"), True, "soon"])
+def test_invocation_rejects_invalid_deadline(deadline: object) -> None:
+    with pytest.raises(DefinitionError, match="deadline must be a finite monotonic timestamp"):
+        Invocation(
+            capability_id=CapabilityId("test", "cap"),
+            payload={},
+            metadata={},
+            deadline=deadline,  # type: ignore
+        )
+
+
+def test_execution_context_reports_deadline_and_remaining_time() -> None:
+    invocation = Invocation(
+        capability_id=CapabilityId("test", "cap"),
+        payload={},
+        metadata={},
+        deadline=15.0,
+    )
+    context = ExecutionContext(invocation, DIContainer(DIRegistry()))
+
+    assert context.deadline == 15.0
+    assert context.remaining_time(now=10.5) == 4.5
+    assert context.remaining_time(now=20.0) == 0.0
