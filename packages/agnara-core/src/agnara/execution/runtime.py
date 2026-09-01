@@ -5,7 +5,7 @@ from __future__ import annotations
 import inspect
 from typing import Any
 
-from agnara.errors import DefinitionError, InvocationError
+from agnara.errors import InvocationError
 from agnara.execution.context import ExecutionContext
 from agnara.execution.plan import ExecutionPlan
 
@@ -22,9 +22,9 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
     when the handler raises or awaiting its result fails.
     """
     if not isinstance(plan, ExecutionPlan):
-        raise DefinitionError(f"plan must be an ExecutionPlan, got {type(plan).__name__}")
+        raise TypeError(f"plan must be an ExecutionPlan, got {type(plan).__name__}")
     if not isinstance(context, ExecutionContext):
-        raise DefinitionError(f"context must be an ExecutionContext, got {type(context).__name__}")
+        raise TypeError(f"context must be an ExecutionContext, got {type(context).__name__}")
 
     invocation = context.invocation
     if invocation.capability_id != plan.definition.id:

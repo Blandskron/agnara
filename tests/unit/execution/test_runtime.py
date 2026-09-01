@@ -7,7 +7,6 @@ import pytest
 from agnara import InvocationError
 from agnara.capability import CapabilityDefinition, CapabilityId
 from agnara.core.di import DIContainer, DIRegistry, provider
-from agnara.errors import DefinitionError
 from agnara.execution import ExecutionContext, ExecutionPlan, Invocation, invoke
 
 
@@ -175,7 +174,7 @@ def test_cleans_up_invocation_resource_when_handler_raises() -> None:
 )
 def test_rejects_invalid_runtime_inputs(plan: object, context: object, message: str) -> None:
     async def run_test() -> None:
-        with pytest.raises(DefinitionError, match=message):
+        with pytest.raises(TypeError, match=message):
             await invoke(plan, context)  # type: ignore
 
     asyncio.run(run_test())
