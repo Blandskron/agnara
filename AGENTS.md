@@ -213,6 +213,15 @@ Do not push unless the human explicitly asks for a push.
 
 When asked to prepare a final commit, first verify the entire documented quality gate appropriate to the current stage.
 
+For every PR, decide explicitly whether the change needs an entry under
+`CHANGELOG.md` `[Unreleased]`. User-visible behavior, public API, configuration,
+security, dependency, migration and contributor-workflow changes require one.
+Explain justified omissions in the PR.
+
+Read `docs/adr/0021-synchronized-pre-one-releases-and-changelog.md` before
+changing package versions, changelog release headings or Git tags. Never
+publish the `0.0.0` development sentinel.
+
 ## Attribution discipline
 
 Read `docs/adr/0019-ai-agent-attribution.md` before creating or merging a
