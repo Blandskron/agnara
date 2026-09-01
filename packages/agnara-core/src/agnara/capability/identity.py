@@ -31,8 +31,7 @@ def _validate_segment(segment: str, *, part: str, whole: str) -> None:
         )
     if not segment.isidentifier():
         raise DefinitionError(
-            f"invalid capability {part} in {whole!r}: "
-            f"{segment!r} is not a valid Python identifier"
+            f"invalid capability {part} in {whole!r}: {segment!r} is not a valid Python identifier"
         )
 
 
@@ -82,8 +81,7 @@ class CapabilityId:
         if SEPARATOR not in text:
             expected = f"<namespace>{SEPARATOR}<name>"
             raise DefinitionError(
-                f"invalid capability id {text!r}: expected {expected}, "
-                f"but found no {SEPARATOR!r}"
+                f"invalid capability id {text!r}: expected {expected}, but found no {SEPARATOR!r}"
             )
         namespace, _, name = text.partition(SEPARATOR)
         return cls(namespace=namespace, name=name)

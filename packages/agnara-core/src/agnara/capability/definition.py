@@ -89,8 +89,7 @@ class CapabilityDefinition:
             )
         if not callable(self.handler):
             raise DefinitionError(
-                f"handler for {self.id} must be callable, "
-                f"got {type(self.handler).__name__}"
+                f"handler for {self.id} must be callable, got {type(self.handler).__name__}"
             )
         # Copy into a frozenset so a set the caller still holds cannot
         # mutate this definition after construction.
