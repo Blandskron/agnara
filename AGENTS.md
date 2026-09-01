@@ -76,6 +76,20 @@ Transport packages may use these concepts.
 
 A capability is not intrinsically a tool.
 
+### NEVER make documentation UI the semantic source of truth
+
+`agnara-core` MUST NOT depend on OpenAPI tooling, Swagger UI, ReDoc, Scalar or
+another browser documentation implementation.
+
+`agnara-http` may project compiled HTTP exposures to OpenAPI.
+
+Documentation UIs consume generated OpenAPI through replaceable optional
+providers. Agnara Explorer consumes filtered protocol-neutral introspection,
+not OpenAPI alone.
+
+Human UI and machine-readable discovery must remain independently
+configurable. Hiding an operation in a UI is never authorization.
+
 ### NEVER put LLM calls in core
 
 Agentic-native means agents are first-class consumers, not that the framework owns model reasoning.
@@ -189,6 +203,31 @@ Do not push unless the human explicitly asks for a push.
 
 When asked to prepare a final commit, first verify the entire documented quality gate appropriate to the current stage.
 
+## Attribution discipline
+
+Read `docs/adr/0019-ai-agent-attribution.md` before creating or merging a
+commit that involved an AI agent.
+
+- A human-directed change keeps the human as the primary commit author.
+- Add an agent as `Co-authored-by` only when that agent materially authored
+  the change and its exact `Name <email>` identity is authorized for this
+  repository and verifiably maps to a GitHub account.
+- Never invent, guess or copy an agent identity from a model/provider name.
+- Never add attribution for another agent without evidence of its actual
+  contribution and verified identity.
+- Review-only participation belongs in the PR review trail, not normally in a
+  co-author trailer.
+- When an agent has no verified GitHub identity, record its name, role and
+  contribution in the Issue or PR and omit the trailer.
+- Preserve legitimate existing trailers when amending, rebasing, recreating a
+  commit or preparing a squash message. Do not repeat the primary author as a
+  co-author.
+
+Before push, inspect the final commit message and its parsed trailers. Before
+squash merge, inspect the proposed squash message; after merge, verify the
+accepted commit. Do not rewrite existing history merely to retrofit this
+policy.
+
 ## Stop conditions
 
 If two architectural documents conflict:
@@ -236,6 +275,22 @@ Generators must:
 - update project metadata safely;
 - never silently delete modified files.
 
+## Documentation and discovery invariants
+
+Read before changing OpenAPI generation, documentation routes/providers,
+introspection or Agnara Explorer behavior:
+
+- `docs/rfc/0003-http-documentation-and-capability-explorer.md`
+- `docs/adr/0018-replaceable-documentation-providers.md`
+- `docs/REFERENCE_RESEARCH.md`
+
+Use pinned self-hosted UI assets as the production baseline. CDN assets
+require explicit opt-in, exact versions and documented CSP/integrity effects.
+
+Apply visibility, redaction and authorization before serializing OpenAPI or
+introspection. Never expose secrets, runtime dependency values, private
+capabilities or sensitive policy internals automatically.
+
 ## GitHub autonomous development workflow
 
 Read `GIT_WORKFLOW.md` and `AGENT_OPERATING_MODEL.md` before performing repository work.
@@ -249,6 +304,7 @@ BACKLOG
 → Implementation
 → Quality Gates
 → Commit
+→ Attribution verification
 → Push
 → PR
 → Review

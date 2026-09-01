@@ -239,6 +239,16 @@ Lists capability IDs and owning apps.
 
 Shows domain metadata, policies, dependencies and protocol exposures.
 
+Text and `--json` modes consume the same filtered, protocol-neutral
+introspection snapshot used by Agnara Explorer. Inspection must not infer its
+model from OpenAPI because non-HTTP exposures and capability semantics would
+be lost.
+
+The JSON representation requires an explicit format version, deterministic
+ordering and no ANSI decoration. Offline inspection still applies a declared
+publication/redaction policy; it is not permission to dump secrets, dependency
+instances or private policy internals.
+
 ### `agnara graph`
 
 Displays project/app/capability dependency relationships.
@@ -268,6 +278,28 @@ agnara mcp inspect
 ```
 
 Agnara should not unnecessarily wrap every existing ecosystem command. CLI commands are justified only when they add framework-specific value.
+
+### `agnara schema openapi`
+
+Exports the same deterministic OpenAPI 3.2 projection that `agnara-http` can
+serve. It consumes compiled capabilities, HTTP exposures and schema-port
+output; it does not read a manually maintained parallel schema.
+
+The command should support stdout and an explicit output path, machine-readable
+diagnostics and non-interactive operation. Exact flags remain pending the
+OpenAPI implementation Issue.
+
+### Documentation preview
+
+`agnara docs` remains an evaluated command, not an accepted command. It is
+justified only if it adds Agnara-specific value such as starting the configured
+development composition and reporting/opening its selected provider. It must
+not duplicate `agnara dev`, silently enable production documentation or own a
+second set of route/provider settings.
+
+Human documentation interfaces are optional consumers. Agents and automation
+use `agnara schema openapi` and `agnara inspect --json`; neither command parses
+HTML.
 
 ## Non-interactive mode
 

@@ -120,10 +120,46 @@ Core imports neither Pydantic nor msgspec.
 - [ ] E6.4 Response serialization.
 - [ ] E6.5 RFC 9457 failures.
 - [ ] E6.6 Lifespan.
-- [ ] E6.7 OpenAPI 3.2 generation target.
+- [ ] E6.7 Generate deterministic OpenAPI 3.2 from compiled HTTP exposures,
+  shared schemas and explicitly publishable metadata. Do not accept a
+  handwritten parallel schema as the generated source of truth.
 - [ ] E6.8 HTTP conformance tests.
 - [?] E6.9 Compare direct ASGI vs minimal Starlette dependency.
 - [ ] E6.10 Benchmark against FastAPI, Starlette and Litestar.
+- [ ] E6.11 Add pinned OpenAPI 3.2 structural/conformance fixtures, including
+  stable `operationId`, schema references, security schemes and documented
+  unsupported features.
+- [ ] E6.12 Define the replaceable documentation-provider contract without a
+  required browser UI dependency.
+- [ ] E6.13 Add configurable schema, documentation and Explorer routes with
+  deterministic collision detection. Candidate defaults remain provisional.
+- [ ] E6.14 Allow OpenAPI, each human UI, Explorer and interactive try-it to be
+  disabled independently.
+- [ ] E6.15 Implement a Swagger UI provider with pinned self-hosted assets,
+  optional explicit CDN mode and versioned compatibility evidence.
+- [ ] E6.16 Implement a ReDoc provider with the same provider contract and
+  versioned compatibility evidence.
+- [?] E6.17 Spike Scalar and re-evaluate actively maintained alternatives
+  against identical OpenAPI 3.2, CSP, accessibility, mobile, dependency and
+  bundle-size fixtures before selecting any default.
+- [ ] E6.18 Add documentation UI browser tests for CSP, XSS payloads, disabled
+  routes, OAuth redirect handling, authentication state and try-it controls.
+- [ ] E6.19 Enforce the documentation asset policy: pinned local assets by
+  default; exact-version CDN, origin allowlist and integrity/CSP documentation
+  only through explicit opt-in.
+
+### HTTP documentation acceptance
+
+- core imports and declares no OpenAPI or UI implementation;
+- one compiled application produces deterministic OpenAPI through HTTP and CLI
+  export;
+- UI packages are removable without changing capability runtime behavior;
+- an installation with no UI provider can still generate OpenAPI;
+- hidden/private operations and sensitive schema material are absent before
+  serialization;
+- no external network asset is required by the production baseline;
+- supported OpenAPI/UI versions and known gaps are recorded by conformance
+  tests rather than implied by marketing claims.
 
 ## EPIC 7 — MCP adapter
 
@@ -139,12 +175,45 @@ Core imports neither Pydantic nor msgspec.
 
 ## EPIC 8 — Documentation and introspection
 
-- [ ] E8.1 `agnara inspect`.
-- [ ] E8.2 capability graph JSON.
-- [ ] E8.3 human-readable capability table.
-- [ ] E8.4 generated `llms.txt` research.
-- [ ] E8.5 generated agent context.
-- [ ] E8.6 architecture metadata validation.
+- [x] E8.0 Define the interactive documentation and Agnara Explorer
+  architecture. Tracked by Issue #9.
+- [ ] E8.1 Define an immutable, versioned protocol-neutral introspection
+  snapshot for projects, apps, capabilities, exposures, dependencies,
+  policies, effects, risk, idempotency, confirmation and schemas.
+- [ ] E8.2 Define and enforce discovery visibility, redaction and authorization
+  controls before serialization; private capabilities, secrets, dependency
+  instances and policy internals must not leak.
+- [ ] E8.3 Implement `agnara inspect [app]` as a human-readable presentation of
+  the filtered introspection snapshot.
+- [ ] E8.4 Implement deterministic, versioned `agnara inspect [app] --json`
+  output from the same snapshot rather than HTML or OpenAPI.
+- [ ] E8.5 Implement `agnara graph` as a human-readable relationship view over
+  the same snapshot without a second discovery path.
+- [ ] E8.6 Add an authorized machine-readable discovery endpoint with the same
+  versioned serialization as CLI JSON and explicit cache behavior.
+- [ ] E8.7 Implement `agnara schema openapi` over the same OpenAPI projection
+  served by `agnara-http`, with stdout/file output and stable exit behavior.
+- [ ] E8.8 Implement a read-only Agnara Explorer MVP over protocol-neutral
+  introspection, including non-HTTP transport availability.
+- [ ] E8.9 Add Explorer project/app/capability, schema, dependency and policy
+  views without exposing runtime object values or non-publishable metadata.
+- [ ] E8.10 Add Explorer authorization, partial-visibility, cache-control and
+  disabled-surface tests.
+- [ ] E8.11 Add accessibility, keyboard, screen-reader, deep-link and responsive
+  mobile tests for Agnara Explorer.
+- [?] E8.12 Research generated `llms.txt` without treating it as an
+  authorization or canonical discovery format.
+- [ ] E8.13 Generate agent context from the versioned filtered snapshot.
+- [ ] E8.14 Validate architecture metadata and cross-surface snapshot
+  consistency.
+
+### Introspection dependency order
+
+Each line above is intended to become one Issue, branch and reviewable PR.
+E8.1 precedes E8.3 through E8.6 and E8.8 through E8.9. E8.2 precedes any
+remotely served machine-readable discovery or Explorer release. E8.7 depends
+on E6.7 and E6.11. Explorer views follow the read-only E8.8 shell rather than
+expanding that first PR into a complete frontend.
 
 ## EPIC 9 — Telemetry
 
@@ -233,6 +302,9 @@ Generated code must:
   passes and conversations are resolved.
 - [x] E0B.11 Replace placeholder OWNER/REPO in security Issue template.
 - [ ] E0B.12 Document release and hotfix automation evidence.
+- [x] E0B.13 Establish permanent AI-agent attribution policy across commits,
+  Pull Requests, reviews and squash merges without inventing identities or
+  rewriting history. Tracking: GitHub Issue #12.
 
 ### Acceptance
 
