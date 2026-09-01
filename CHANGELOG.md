@@ -58,6 +58,9 @@ package version `0.0.0` is a development sentinel, not a published release.
 - Optional monotonic invocation deadlines covering dependency resolution and
   handler execution, with timeout cleanup and remaining-time introspection
   ([#69]).
+- Immutable protocol-neutral `Success`, `Failure`, and `FailureCode` outcomes,
+  plus an `invoke_result` boundary that preserves direct-call ergonomics,
+  redacts unexpected exceptions, and propagates cancellation ([#71]).
 
 ### Changed
 
