@@ -75,18 +75,10 @@ The agent repeats this loop rather than waiting for a human to provide every nex
 
 ## Observe
 
-At session start inspect:
-
-- repository status;
-- current branch;
-- remote changes;
-- open PRs;
-- requested reviews;
-- failing CI;
-- open Issues;
-- blocked Issues;
-- backlog;
-- security/release state.
+At session start, you MUST coordinate via the MAC protocol:
+- Run `python scripts/agent.py status` to understand active work.
+- Run `python scripts/agent.py next` to find non-colliding ready tasks.
+- If no tasks are found, fall back to inspecting roadmap/backlog and creating new Issues.
 
 ## Triage priority
 
