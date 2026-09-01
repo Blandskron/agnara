@@ -118,7 +118,7 @@ class TestJsonSchema:
             "type": "integer",
             "minimum": 0,
             "description": "A count",
-            }
+        }
 
     def test_exports_nested_model_definitions(self, adapter: PydanticSchemaAdapter) -> None:
         schema = adapter.compile(User).json_schema()

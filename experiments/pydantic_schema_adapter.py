@@ -1,4 +1,4 @@
-﻿"""Experimental Pydantic implementation of Agnara's schema port.
+"""Experimental Pydantic implementation of Agnara's schema port.
 
 This module is evidence for backlog items E2.6 and E2.7. It deliberately
 lives outside `packages/`: importing it opts into pydantic, while every
