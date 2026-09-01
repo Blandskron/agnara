@@ -84,10 +84,10 @@ Core imports neither Pydantic nor msgspec.
 ## EPIC 3 â€” Dependency graph
 
 - [x] E3.1 Write DI RFC.
-- [ ] E3.2 Define provider abstraction.
-- [ ] E3.3 Define scopes.
-- [ ] E3.4 Compile dependency DAG.
-- [ ] E3.5 Detect dependency cycles at compile time.
+- [x] E3.2 Define provider abstraction.
+- [x] E3.3 Define scopes.
+- [x] E3.4 Compile dependency DAG.
+- [x] E3.5 Detect dependency cycles at compile time.
 - [ ] E3.6 Support async resource cleanup.
 - [ ] E3.7 Implement invocation-scoped cache.
 - [ ] E3.8 Verify free-threading safety assumptions.
