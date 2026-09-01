@@ -30,6 +30,22 @@ uv run pytest
 
 Exact command names may evolve, but equivalent gates must remain.
 
+## Where the gates are authoritative
+
+CI is the authoritative record that the gates passed. `.github/workflows/ci.yml`
+runs every command above, on Linux, macOS and Windows, plus a lockfile check,
+and aggregates them into a single required `CI` status.
+
+A developer machine may be unable to run part of the gate. When that happens:
+
+1. state precisely which gate could not run, and the evidence;
+2. do not weaken a security or system policy to work around it;
+3. do not mark the affected backlog item complete on local results alone;
+4. rely on CI for the missing gate before merge.
+
+Reporting a gate as passing when it was never executed is a worse failure
+than a red build.
+
 ## Test pyramid
 
 ```text
