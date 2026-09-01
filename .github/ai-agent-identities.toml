@@ -17,3 +17,14 @@ evidence_url = "https://github.com/Blandskron/agnara/pull/35/commits/294d03d6cb9
 authorized_by = "repository maintainer"
 authorized_on = "2026-09-01"
 
+
+[[agents]]
+id = "google-antigravity"
+display_name = "Antigravity (Google Gemini)"
+git_name = "Antigravity"
+email = "antigravity@google.com"
+github_login = "google-antigravity"
+identity_url = "https://github.com/google-antigravity"
+evidence_url = "https://github.com/google-antigravity"
+authorized_by = "repository maintainer"
+authorized_on = "2026-09-01"
