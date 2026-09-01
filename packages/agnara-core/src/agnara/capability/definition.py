@@ -30,23 +30,28 @@ __all__ = ["CapabilityDefinition"]
 Handler = Callable[..., Any]
 
 
-def _coerce_effects(effects: Iterable[str]) -> frozenset[str]:
-    if isinstance(effects, str):
+def _coerce_string_set(values: Iterable[str], field_name: str, item: str) -> frozenset[str]:
+    """Copy an iterable of labels into a frozenset, validating each one.
+
+    Copying matters: a set the caller still holds must not be able to mutate
+    the definition afterwards.
+    """
+    if isinstance(values, str):
         raise DefinitionError(
-            "effects must be a collection of strings, not the single string "
-            f"{effects!r}; pass {{{effects!r}}} to declare one effect"
+            f"{field_name} must be a collection of strings, not the single string "
+            f"{values!r}; pass {{{values!r}}} to declare one {item}"
         )
     try:
-        collected = frozenset(effects)
+        collected = frozenset(values)
     except TypeError as exc:
         # Not iterable, or holds something unhashable. Either way the
         # caller gets Agnara's error rather than a raw TypeError.
-        raise DefinitionError(f"effects must be an iterable of strings: {exc}") from exc
-    for effect in collected:
-        if not isinstance(effect, str):
-            raise DefinitionError(f"effect {effect!r} is not a string")
-        if not effect.strip():
-            raise DefinitionError("an effect must not be empty or whitespace")
+        raise DefinitionError(f"{field_name} must be an iterable of strings: {exc}") from exc
+    for value in collected:
+        if not isinstance(value, str):
+            raise DefinitionError(f"{item} {value!r} is not a string")
+        if not value.strip():
+            raise DefinitionError(f"a {item} must not be empty or whitespace")
     return collected
 
 
@@ -81,6 +86,9 @@ class CapabilityDefinition:
     handler: Handler
     description: str | None = None
     effects: frozenset[str] = field(default_factory=frozenset)
+    #: Permission labels a policy engine may require. Declarative only:
+    #: holding a scope here grants nothing (ADR 0008, EPIC 5 enforces).
+    scopes: frozenset[str] = field(default_factory=frozenset)
     risk: Risk = Risk.LOW
     confirmation: Confirmation = Confirmation.NEVER
     #: Defaults to ``UNKNOWN``: a capability is not idempotent merely
@@ -99,7 +107,8 @@ class CapabilityDefinition:
             )
         # Copy into a frozenset so a set the caller still holds cannot
         # mutate this definition after construction.
-        object.__setattr__(self, "effects", _coerce_effects(self.effects))
+        object.__setattr__(self, "effects", _coerce_string_set(self.effects, "effects", "effect"))
+        object.__setattr__(self, "scopes", _coerce_string_set(self.scopes, "scopes", "scope"))
         object.__setattr__(self, "risk", _coerce(self.risk, Risk, "risk"))
         object.__setattr__(
             self, "confirmation", _coerce(self.confirmation, Confirmation, "confirmation")
@@ -111,6 +120,14 @@ class CapabilityDefinition:
     def has_effect(self, effect: str) -> bool:
         """Whether this capability declares ``effect``."""
         return effect in self.effects
+
+    def requires_scope(self, scope: str) -> bool:
+        """Whether this capability declares ``scope`` as required.
+
+        Reports a declaration. Deciding whether a caller holds it is the
+        policy engine's job, not this type's (ADR 0008).
+        """
+        return scope in self.scopes
 
     def __str__(self) -> str:
         return str(self.id)

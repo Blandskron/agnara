@@ -55,7 +55,7 @@ checks on PR #1. Locally only `uv sync` and `pytest` can run (E0.13).
 
 - [x] E1.1 Define immutable `CapabilityDefinition`.
 - [x] E1.2 Define stable capability identity.
-- [ ] E1.3 Implement `@app.capability`.
+- [x] E1.3 Implement `@app.capability`.
 - [x] E1.4 Implement deterministic registry.
 - [x] E1.5 Detect duplicate IDs.
 - [x] E1.6 Freeze registry after compilation.
