@@ -244,26 +244,14 @@ Pueden existir múltiples agentes:
 Co-authored-by: Codex <codex@openai.com>
 Co-authored-by: Claude
 
-Cada agente debe utilizar su identidad correspondiente.
-Co-authored-by: Antigravity <antigravity@google.com>
+Cada agente debe utilizar su identidad correspondiente (ver `.github/ai-agent-identities.toml`).
 Nunca inventar direcciones de correo.
 Nunca utilizar la identidad de otro agente.
 Si la identidad oficial/verificable de un agente es desconocida, debe investigarse antes de agregarla.
 
-### Regla específica para Codex
-
-Mientras esta política siga vigente, Codex debe utilizar:
-
-Co-authored-by: Codex <codex@openai.com>
-
-No utilizar para nuestros commits:
-
-Co-authored-by: Codex <noreply@openai.com>
-Co-authored-by: Codex <codex@example.com>
-Co-authored-by: chatgpt-codex-connector[bot] <...>
-
-ni otra identidad para representar a Codex salvo que una futura actualización oficial de OpenAI/GitHub demuestre que la identidad canónica ha cambiado.
-Si en el futuro cambia la identidad oficial, primero debe actualizarse esta política.
+### Reglas Específicas
+- **Gemini**: Lee el documento canónico `GEMINI.md` para usar la identidad oficial y el workflow asociado.
+- **Codex**: Utiliza estrictamente `Co-authored-by: Codex <codex@openai.com>`. No uses variantes como noreply ni identidades inventadas, salvo nueva disposición de GitHub.
 
 ## Stop conditions
 
