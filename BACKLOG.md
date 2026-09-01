@@ -19,7 +19,9 @@ The agent must update this file as work progresses and must never mark a task co
 - [~] E0.5 Configure `ty` type checking. Configured; not yet verified — see E0.13.
 - [x] E0.6 Configure pytest.
 - [x] E0.7 Add architecture import tests.
-- [ ] E0.8 Add GitHub Actions for Linux, macOS and Windows where practical.
+- [~] E0.8 Add GitHub Actions for Linux, macOS and Windows where practical.
+  Workflow added and validated locally; not yet observed green on GitHub
+  because no run has been triggered (see E0.14).
 - [ ] E0.9 Add conventional changelog/release process.
 - [ ] E0.10 Add license only after owner decision.
 - [!] E0.13 Verify Ruff and `ty` gates. Blocked on the current Windows
