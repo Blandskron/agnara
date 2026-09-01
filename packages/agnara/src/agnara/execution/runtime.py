@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import inspect
+import time
 from typing import Any
 
 from agnara.errors import InvocationError, UnknownCapabilityError, ValidationError
 from agnara.execution.context import ExecutionContext
 from agnara.execution.plan import ExecutionPlan
 from agnara.execution.result import CanonicalResult, Failure, FailureCode, Success
+from agnara.execution.telemetry import InvocationStartEvent, InvocationTerminalEvent
 
 __all__ = ["invoke", "invoke_result"]
 
@@ -41,6 +44,40 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
         rendered = ", ".join(sorted(supplied_protected))
         raise InvocationError(f"invocation payload supplies runtime-owned parameter(s): {rendered}")
 
+    start_ns = time.monotonic_ns()
+    start_event = InvocationStartEvent(
+        capability_id=plan.definition.id,
+        tracking_id=invocation.metadata.get("tracking_id"),
+    )
+    for hook in plan.hooks:
+        with contextlib.suppress(Exception):
+            hook.on_invocation_start(start_event)
+
+    outcome = "success"
+    try:
+        if context.deadline is None:
+            return await _execute(plan, context)
+        async with asyncio.timeout_at(context.deadline):
+            return await _execute(plan, context)
+    except asyncio.CancelledError:
+        outcome = "cancellation"
+        raise
+    except TimeoutError:
+        outcome = "timeout"
+        raise
+    except Exception:
+        outcome = "failure"
+        raise
+    finally:
+        terminal_event = InvocationTerminalEvent(
+            capability_id=plan.definition.id,
+            tracking_id=invocation.metadata.get("tracking_id"),
+            duration_ns=time.monotonic_ns() - start_ns,
+            outcome=outcome,
+        )
+        for hook in plan.hooks:
+            with contextlib.suppress(Exception):
+                hook.on_invocation_terminal(terminal_event)
     if context.deadline is None:
         return await _execute(plan, context)
     async with asyncio.timeout_at(context.deadline):

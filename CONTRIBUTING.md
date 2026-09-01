@@ -90,20 +90,20 @@ Template changes require:
 
 ## Issue-driven Git workflow
 
-All contributors — human or agent — follow `GIT_WORKFLOW.md`.
+All contributors ??? human or agent ??? follow `GIT_WORKFLOW.md`.
 
 Default:
 
 ```text
 Issue
-→ short-lived branch
-→ implementation / tests
-→ commit
-→ attribution verification
-→ push
-→ PR to develop
-→ review/checks
-→ merge
+??? short-lived branch
+??? implementation / tests
+??? commit
+??? attribution verification
+??? push
+??? PR to develop
+??? review/checks
+??? merge
 ```
 
 One Issue per PR is preferred.
@@ -154,3 +154,8 @@ apply the current policy.
 
 See `GIT_WORKFLOW.md` and `docs/adr/0019-ai-agent-attribution.md` for the
 complete evidence and merge rules.
+
+## Licensing of Contributions
+
+By submitting a pull request, you agree that your contributions will be licensed under the Apache License 2.0 (see [LICENSE](LICENSE)). No additional Contributor License Agreement (CLA) or Developer Certificate of Origin (DCO) is required at this time.
+

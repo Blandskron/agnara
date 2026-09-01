@@ -101,7 +101,7 @@ Core imports neither Pydantic nor msgspec.
 - [x] E4.5 Cancellation propagation.
 - [x] E4.6 Deadlines/timeouts.
 - [x] E4.7 Canonical result/failure model.
-- [ ] E4.8 Structured telemetry hooks.
+- [x] E4.8 Structured telemetry hooks.
 - [ ] E4.9 Benchmark runtime overhead.
 
 ## EPIC 5 ???????? Policy engine
@@ -316,6 +316,8 @@ Generated code must:
 - force-pushes to protected branches are blocked;
 - no workflow requires an impossible self-approval;
 - the complete lifecycle is visible and understandable to a human maintainer.
+
+
 
 
 

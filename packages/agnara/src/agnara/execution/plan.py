@@ -12,6 +12,7 @@ from agnara.capability.definition import CapabilityDefinition
 from agnara.core.di import DIRegistry, compile_dag
 from agnara.errors import DefinitionError
 from agnara.execution.context import ExecutionContext
+from agnara.execution.telemetry import TelemetryHook
 
 __all__ = ["ExecutionPlan"]
 
@@ -27,6 +28,7 @@ class ExecutionPlan:
 
     definition: CapabilityDefinition
     target_deps: Mapping[Callable[..., Any], Sequence[type]]
+    hooks: tuple[TelemetryHook, ...] = ()
     dependency_parameters: frozenset[str] = field(init=False)
     context_parameters: tuple[str, ...] = field(init=False)
     protected_parameters: frozenset[str] = field(init=False)
@@ -67,7 +69,12 @@ class ExecutionPlan:
         )
 
     @classmethod
-    def compile(cls, definition: CapabilityDefinition, registry: DIRegistry) -> ExecutionPlan:
+    def compile(
+        cls,
+        definition: CapabilityDefinition,
+        registry: DIRegistry,
+        hooks: Sequence[TelemetryHook] = (),
+    ) -> ExecutionPlan:
         """Compile and validate the complete provider graph for ``definition``."""
         if not isinstance(definition, CapabilityDefinition):
             raise DefinitionError(
@@ -78,6 +85,7 @@ class ExecutionPlan:
         return cls(
             definition=definition,
             target_deps=compile_dag(registry, [definition.handler]),
+            hooks=tuple(hooks),
         )
 
     @property
