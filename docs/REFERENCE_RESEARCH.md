@@ -49,6 +49,205 @@ Reference:
 
 - https://spec.openapis.org/oas/latest.html
 
+## OpenAPI documentation interfaces
+
+Reviewed: 2026-08-31 for RFC 0003 and ADR 0018.
+
+This is a point-in-time comparison, not a permanent endorsement. OpenAPI 3.2
+support is still evolving across renderers, so Agnara must test pinned versions
+against its own fixtures instead of equating "accepts a 3.2 document" with full
+conformance.
+
+Registry sizes below are npm `dist.unpackedSize`, not browser transfer size.
+They help expose packaging cost but do not replace a reproducible bundle/load
+measurement with the exact assets Agnara would ship.
+
+| Interface | Maintenance evidence | OAS 3.2 status | npm package snapshot | License |
+|---|---|---|---|---|
+| Swagger UI | `5.32.14`, published August 2026; active releases | `5.32.0` added basic 3.2 support; enhanced 3.2 features remain open | `swagger-ui-dist`: 11,755,365 bytes, 1 dependency | Apache-2.0 |
+| ReDoc CE | `2.5.3`, released May 2026 | public docs still list 3.1/3.0/2.0; 3.2 issues remain, so treat compatibility as incomplete | `redoc`: 7,776,708 bytes, 21 dependencies | MIT |
+| Scalar API Reference | `1.67.0`; frequent August 2026 monorepo releases | parser supports 3.2, but end-to-end API Reference 3.2 tracking is still open | `@scalar/api-reference`: 40,679,445 bytes, 25 dependencies | MIT |
+| Stoplight Elements | `9.0.25`; security/maintenance commits in July 2026 | documents 3.1/3.0/2.0; no evidenced full 3.2 claim | `@stoplight/elements`: 2,809,144 bytes, 12 dependencies | Apache-2.0 |
+| RapiDoc | npm `9.3.8`, last published roughly two years before this review | claims OpenAPI `3.x.x`, but no pinned 3.2 conformance evidence was found | `rapidoc`: 3,606,592 bytes, 8 dependencies | MIT |
+
+### Swagger UI
+
+Strengths:
+
+- most familiar interactive baseline;
+- built-in try-it, API key/basic/bearer preauthorization and OAuth
+  configuration including PKCE;
+- search/filter, deep links, request/response interceptors and plugin system;
+- dependency-free `swagger-ui-dist` bundle can be served locally or loaded
+  from a CDN; Docker distribution is available;
+- active security policy and frequent releases;
+- responsive metadata is present and embedding can be enabled explicitly in
+  the Docker distribution.
+
+Tradeoffs:
+
+- the distribution is relatively large and its visual customization is less
+  cohesive than modern alternatives;
+- dark mode exists but embedded/default configuration remains incomplete;
+- basic OpenAPI 3.2 support does not yet render every new 3.2 construct;
+- long-running accessibility gaps remain open and require Agnara's own WCAG
+  smoke testing;
+- try-it, remote validator calls and OAuth enlarge the network/security
+  surface. Agnara must disable the online validator and credential persistence
+  by default and explicitly constrain submit methods.
+
+Primary sources:
+
+- https://github.com/swagger-api/swagger-ui/releases
+- https://github.com/swagger-api/swagger-ui/issues/10575
+- https://github.com/swagger-api/swagger-ui/issues/10897
+- https://swagger.io/docs/open-source-tools/swagger-ui/usage/configuration/
+- https://swagger.io/docs/open-source-tools/swagger-ui/usage/oauth2/
+- https://swagger.io/docs/open-source-tools/swagger-ui/usage/installation/
+- https://github.com/swagger-api/swagger-ui/issues/10663
+- https://github.com/swagger-api/swagger-ui/issues/7350
+- https://www.npmjs.com/package/swagger-ui-dist
+
+### ReDoc Community Edition
+
+Strengths:
+
+- readable, responsive three-panel reference layout;
+- navigation search, deep schema presentation, code samples and theming;
+- deployable as a standalone local asset, CDN script, HTML element, React
+  component or generated static HTML;
+- supports CSP nonces and an `untrustedSpec` sanitization mode;
+- strong embedding and mobile breakpoints;
+- active maintenance and a large established user base.
+
+Tradeoffs:
+
+- Community Edition does not include the hosted product's try-it console;
+- documented compatibility remains OpenAPI 3.1/3.0/2.0, while 3.2 work is
+  incomplete despite recent crash fixes;
+- the React/runtime dependency surface and standalone bundle need measurement;
+- authentication UX is primarily documentation in CE, not a full interactive
+  client;
+- dark appearance is theme configuration rather than a first-class automatic
+  mode;
+- accessibility requires independent verification; no project-wide WCAG
+  conformance claim was found.
+
+Primary sources:
+
+- https://github.com/Redocly/redoc
+- https://github.com/Redocly/redoc/releases/tag/v2.5.3
+- https://github.com/Redocly/redoc/issues/2773
+- https://redocly.com/docs/redoc/config
+- https://www.npmjs.com/package/redoc
+
+### Scalar API Reference
+
+Strengths:
+
+- strongest modern UX candidate in this review;
+- first-class dark/light themes, search, responsive navigation, code samples,
+  authentication and an integrated API client/try-it experience;
+- highly customizable configuration and plugins;
+- can be embedded through a standalone script or framework integrations and
+  self-hosted; CDN versions can be pinned;
+- very active maintenance, including recent hardening for untrusted OpenAPI
+  links, prototype pollution and server-rendered CSS injection;
+- its OpenAPI parser already supports 3.2.
+
+Tradeoffs:
+
+- the complete API Reference/client 3.2 checklist is still open;
+- the npm package contains a broad multi-package feature surface and is the
+  largest unpacked package in this comparison; browser bytes must be measured
+  separately;
+- strict `script-src` can use a nonce, but current rendering still requires
+  `style-src 'unsafe-inline'` in documented integrations;
+- plugins loaded from URLs and the integrated client are powerful extra trust
+  boundaries and must be disabled or allowlisted explicitly;
+- active ARIA/accessibility defects remain open, so modern appearance is not
+  evidence of WCAG conformance;
+- fast release cadence makes exact version pinning and upgrade tests essential.
+
+Primary sources:
+
+- https://github.com/scalar/scalar
+- https://github.com/scalar/scalar/releases
+- https://github.com/scalar/scalar/issues/6715
+- https://github.com/scalar/scalar/blob/main/packages/openapi-parser/README.md
+- https://github.com/scalar/scalar/blob/main/documentation/configuration.md
+- https://github.com/scalar/scalar/blob/main/documentation/integrations/nextjs.md
+- https://github.com/scalar/scalar/issues/9725
+- https://www.npmjs.com/package/@scalar/api-reference
+
+### Stoplight Elements
+
+Strengths:
+
+- embeddable as React components or Web Components;
+- responsive/sidebar/stacked layouts, try-it, authentication input, code
+  samples and hiding of `x-internal` operations;
+- Apache-2.0 and actively receives maintenance/security fixes;
+- useful if Agnara later needs composition inside a larger documentation
+  portal rather than a standalone page.
+
+Tradeoffs:
+
+- React-oriented transitive dependencies and styling are a larger integration
+  surface than a single-purpose custom element suggests;
+- no evidenced OpenAPI 3.2 support claim was found;
+- dark mode/customization and CSP behavior require a focused spike;
+- credentialed external references and Web Component navigation have open
+  integration issues;
+- no complete WCAG conformance claim was found.
+
+Primary sources:
+
+- https://github.com/stoplightio/elements
+- https://github.com/stoplightio/elements/blob/main/docs/getting-started/elements/elements-options.md
+- https://github.com/stoplightio/elements/commits/main
+- https://github.com/stoplightio/elements/issues/2292
+- https://github.com/stoplightio/elements/issues/2792
+- https://www.npmjs.com/package/@stoplight/elements
+
+### RapiDoc
+
+Strengths:
+
+- framework-neutral Web Component with a single generated JavaScript bundle;
+- built-in try-it, authentication controls, dark/light themes, search,
+  extensive attributes and straightforward embedding;
+- small conceptual integration boundary and MIT license;
+- responsive layouts and local-spec/self-hosting support.
+
+Tradeoffs:
+
+- the npm release is materially older than the other active candidates;
+- "OpenAPI 3.x.x" is not sufficient evidence of complete 3.2 rendering;
+- WCAG 2 support and automated testing remain roadmap items;
+- documented browser support still says Edge is untested;
+- CSP/XSS hardening and current maintenance response require a dedicated spike
+  before production use.
+
+Primary sources:
+
+- https://github.com/rapi-doc/RapiDoc
+- https://rapidocweb.com/api.html
+- https://www.npmjs.com/package/rapidoc
+
+### Research decision
+
+Do not add any UI dependency during architecture work. Define a replaceable
+provider contract and run Swagger UI, ReDoc and Scalar through identical
+OpenAPI 3.2, local-asset, CSP, XSS, OAuth, accessibility, mobile and bundle-size
+fixtures. Keep Elements and RapiDoc as viable later providers, not runtime
+assumptions.
+
+Self-hosted, exact-version assets are the production baseline. CDN delivery is
+opt-in and must document CSP, integrity, privacy and availability consequences.
+No human UI replaces the machine-readable OpenAPI or Agnara introspection
+contracts.
+
 ## MCP
 
 MCP is a primary protocol adapter target.

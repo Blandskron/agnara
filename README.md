@@ -233,6 +233,29 @@ Read in this order:
 7. `QUALITY_GATES.md`
 8. `AGENTS.md`
 
+## HTTP documentation and capability discovery
+
+Agnara keeps familiar HTTP documentation without making it the semantic
+center:
+
+```text
+Capabilities → HTTP exposures → OpenAPI 3.2 → replaceable documentation UI
+```
+
+Swagger UI, ReDoc and modern alternatives are optional consumers of generated
+OpenAPI. They do not belong in `agnara-core`.
+
+The richer Agnara Explorer uses a separate protocol-neutral introspection
+snapshot so it can show apps, non-HTTP exposures, dependencies, policies,
+effects, risk, idempotency and confirmation. Machine-readable discovery
+remains available without parsing or enabling any HTML UI.
+
+The design and security boundaries are specified in:
+
+- `docs/rfc/0003-http-documentation-and-capability-explorer.md`
+- `docs/adr/0018-replaceable-documentation-providers.md`
+- `docs/REFERENCE_RESEARCH.md`
+
 ## License
 
 License selection should be made explicitly before the first public release. Apache-2.0 is recommended for evaluation because of its explicit patent grant, but the repository must not silently choose a license without an owner decision.

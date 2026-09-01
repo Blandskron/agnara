@@ -116,6 +116,11 @@ Each adapter should record:
 - test suite version;
 - generated fixtures.
 
+OpenAPI 3.2 claims additionally require deterministic generated documents,
+structural/conformance fixtures and renderer tests for every documented UI
+provider. A UI accepting the version string is not sufficient evidence that it
+renders new 3.2 semantics correctly.
+
 ## Benchmark integrity
 
 Never benchmark development mode against optimized competitors.
@@ -144,6 +149,11 @@ Before any release beyond experimental alpha:
 - CodeQL or equivalent static analysis;
 - private vulnerability reporting process;
 - security boundary tests.
+
+Documentation/discovery releases additionally require visibility/redaction
+tests, CSP and XSS browser tests, external-asset/network assertions, try-it and
+OAuth flow tests, and accessibility/responsive smoke tests for each supported
+UI. Hiding an operation in a UI must never be the authorization mechanism.
 
 ## Free-threading gate
 

@@ -64,6 +64,11 @@ Deliver:
 - serialization;
 - RFC 9457 mapping;
 - OpenAPI 3.2 target;
+- deterministic OpenAPI export and conformance fixtures;
+- replaceable documentation-provider contract;
+- configurable schema/UI routes and documentation disabling;
+- Swagger UI, ReDoc and modern-UI integration spikes without a core
+  dependency;
 - HTTP test client strategy.
 
 Exit gate: a production-shaped CRUD example works without coupling domain functions to HTTP types.
@@ -93,7 +98,10 @@ Deliver:
 - structured side effects;
 - confirmation;
 - OpenTelemetry adapter;
-- machine-readable introspection.
+- versioned machine-readable introspection;
+- discovery visibility, redaction and authorization controls;
+- CLI inspection/export over the shared introspection snapshot;
+- Agnara Explorer read-only MVP, including non-HTTP exposures.
 
 ## Phase 7 — A2A
 
