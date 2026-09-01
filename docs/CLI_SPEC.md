@@ -1,0 +1,352 @@
+# CLI Specification
+
+## Goal
+
+Agnara should provide a Django-like "create project / create app" experience while generating architecture suitable for modern modular systems.
+
+The CLI should eliminate repetitive setup without hiding the resulting code.
+
+## Invocation
+
+Preferred installed command:
+
+```bash
+agnara <command>
+```
+
+Equivalent module invocation:
+
+```bash
+python -m agnara <command>
+```
+
+`python agnara ...` is not the canonical form because `agnara` is a package/console command, not a local script.
+
+## Project creation
+
+```bash
+agnara project create commerce
+```
+
+Short alias may be considered:
+
+```bash
+agnara new commerce
+```
+
+Default output:
+
+```text
+commerce/
+├── pyproject.toml
+├── agnara.toml
+├── src/
+│   └── commerce/
+│       ├── __init__.py
+│       ├── bootstrap.py
+│       ├── settings.py
+│       └── apps/
+├── tests/
+├── AGENTS.md
+└── README.md
+```
+
+The generator must create only meaningful files.
+
+## App creation
+
+Canonical:
+
+```bash
+agnara app create payments
+```
+
+Default architecture:
+
+```text
+modular-hexagonal
+```
+
+Examples:
+
+```bash
+agnara app create users
+agnara app create catalog --with http
+agnara app create tools --with mcp
+agnara app create payments --with http,mcp,tasks
+agnara app create agents --with mcp,a2a
+```
+
+## Profiles
+
+Profiles are scaffolding conveniences, NOT new runtime app types.
+
+```bash
+agnara app create catalog --profile api
+agnara app create tools --profile mcp
+agnara app create assistants --profile agentic
+agnara app create jobs --profile worker
+agnara app create platform --profile full
+```
+
+Proposed mappings:
+
+| Profile | Initial exposures |
+|---|---|
+| `core` | none |
+| `api` | HTTP |
+| `mcp` | MCP |
+| `agentic` | MCP + A2A |
+| `worker` | Tasks + Events |
+| `full` | HTTP + MCP + A2A + Events + Tasks |
+
+Default profile: `core`.
+
+Profiles can be combined/overridden with `--with`.
+
+## Convenience aliases
+
+For discoverability and speed, optional aliases may map to the canonical command:
+
+```bash
+agnara app-api catalog
+agnara app-mcp tools
+agnara app-agent assistants
+agnara app-worker jobs
+```
+
+These MUST behave as aliases only.
+
+For example:
+
+```text
+agnara app-mcp tools
+```
+
+is semantically equivalent to:
+
+```text
+agnara app create tools --profile mcp
+```
+
+The implementation must not create separate code paths or framework types for these aliases.
+
+## Architecture options
+
+Canonical:
+
+```bash
+agnara app create payments --architecture modular-hexagonal
+```
+
+Initial supported architectures:
+
+### `modular-hexagonal`
+
+Recommended default.
+
+Provides explicit domain/application/adapter boundaries without forcing microservices.
+
+### `minimal`
+
+For very small capabilities, experiments and examples.
+
+### `vertical`
+
+Potential future profile for vertical-slice organization.
+
+Do not add architecture templates casually. Each template becomes a maintained public contract.
+
+## Add exposure to an existing app
+
+```bash
+agnara app expose payments http
+agnara app expose payments mcp
+agnara app expose payments a2a
+agnara app expose payments tasks
+agnara app expose payments events
+```
+
+Multiple:
+
+```bash
+agnara app expose payments http mcp
+```
+
+The command creates adapter scaffolding and updates project metadata without changing domain/application code.
+
+## Remove exposure
+
+Potential command:
+
+```bash
+agnara app unexpose payments mcp
+```
+
+Must fail safely if user code would be destroyed.
+
+Generated code containing user modifications must never be silently deleted.
+
+## Capability generation
+
+```bash
+agnara capability create payments refund
+```
+
+Possible options:
+
+```bash
+agnara capability create payments refund \
+  --input RefundCommand \
+  --output RefundReceipt \
+  --risk high \
+  --effects financial-write
+```
+
+The generator should create application-layer code and tests, not automatically invent business logic.
+
+## Expose a capability
+
+Potential advanced form:
+
+```bash
+agnara expose payments.refund --http "POST /refunds"
+agnara expose payments.refund --mcp
+agnara expose payments.refund --a2a
+```
+
+This is useful when an app has multiple capabilities and only some should be public on a transport.
+
+## Introspection commands
+
+```bash
+agnara apps
+agnara capabilities
+agnara inspect payments
+agnara graph
+agnara doctor
+```
+
+### `agnara apps`
+
+Lists apps, architecture and exposures.
+
+### `agnara capabilities`
+
+Lists capability IDs and owning apps.
+
+### `agnara inspect`
+
+Shows domain metadata, policies, dependencies and protocol exposures.
+
+### `agnara graph`
+
+Displays project/app/capability dependency relationships.
+
+### `agnara doctor`
+
+Checks:
+
+- Python version;
+- project manifest;
+- missing adapters;
+- dependency cycles;
+- invalid app registration;
+- protocol configuration;
+- architecture rule violations.
+
+## Development commands
+
+Potential:
+
+```bash
+agnara dev
+agnara test
+agnara schema openapi
+agnara schema asyncapi
+agnara mcp inspect
+```
+
+Agnara should not unnecessarily wrap every existing ecosystem command. CLI commands are justified only when they add framework-specific value.
+
+## Non-interactive mode
+
+All generators must work in CI and agent environments:
+
+```bash
+agnara app create payments --profile full --no-input
+```
+
+Interactive prompts may exist for humans, but every prompt must have a flag equivalent.
+
+## Dry run
+
+Generators should support:
+
+```bash
+agnara app create payments --with http,mcp --dry-run
+```
+
+Output:
+
+```text
+CREATE src/commerce/apps/payments/...
+UPDATE agnara.toml
+UPDATE project composition
+```
+
+No files are changed.
+
+## Machine-readable output
+
+Important commands should support:
+
+```bash
+--json
+```
+
+Example:
+
+```bash
+agnara inspect payments --json
+```
+
+This is essential for coding agents and automation.
+
+## Safe generation rules
+
+The CLI MUST:
+
+- refuse accidental overwrite by default;
+- be deterministic;
+- make generated provenance clear where useful;
+- avoid timestamps in generated source unless required;
+- support dry-run;
+- produce stable paths;
+- validate identifiers;
+- update metadata atomically where possible;
+- never delete modified user files without explicit force/confirmation.
+
+## Exit codes
+
+Define stable exit codes before 1.0 for automation.
+
+At minimum distinguish:
+
+```text
+success
+usage/config error
+generation conflict
+architecture validation failure
+runtime/project error
+```
+
+## Future plugin generators
+
+Eventually third-party adapters may register generators:
+
+```text
+agnara app expose payments kafka
+```
+
+The plugin system must not permit arbitrary template code execution without clear trust boundaries.

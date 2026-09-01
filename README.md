@@ -1,0 +1,293 @@
+# Agnara
+
+> **Capability-native Python for the agentic era.**
+
+Agnara is a Python 3.14-native capability framework for building services that can be consumed by humans, applications, services, and AI agents without making HTTP the center of the architecture.
+
+Agnara starts from a simple premise:
+
+> **Business capabilities are the product. Protocols are adapters.**
+
+A capability is defined once and may later be exposed through HTTP, MCP, A2A, events, tasks, CLI, internal calls, or future transports without duplicating domain logic.
+
+## Why Agnara exists
+
+Most Python web frameworks were created for a world centered on HTTP APIs, REST, request/response cycles, and human developers. The software landscape now includes AI agents, MCP, A2A, long-running tasks, event-driven systems, human approval flows, machine-readable discovery, and agent-oriented security.
+
+Agnara is not intended to retrofit those concepts onto an HTTP-first architecture.
+
+It is intended to begin from them.
+
+## Design thesis
+
+Traditional framework:
+
+```text
+Python function
+      ↓
+HTTP route
+      ↓
+OpenAPI
+```
+
+Agnara:
+
+```text
+                       HTTP
+                        │
+                        ▼
+MCP ───────────────► Capability ◄────────────── A2A
+                        ▲
+                        │
+                 Events / Tasks
+                        │
+                        ▼
+                  Python handler
+```
+
+The protocol is not the application model.
+
+The capability graph is.
+
+## Core principles
+
+1. Capability-first, not route-first.
+2. Transport-neutral business logic.
+3. Python 3.14 as the minimum runtime baseline.
+4. Modern typing as the source of truth.
+5. Compile execution plans at startup.
+6. Agents are first-class API consumers.
+7. Human and agent authorization are first-class concerns.
+8. Side effects, risk, idempotency, cost, and interaction requirements are machine-readable.
+9. Observability is part of the execution model.
+10. Small core, replaceable adapters, standards over proprietary protocols.
+11. No LLM provider belongs in the core.
+12. Performance claims must be reproducible.
+
+## Target developer experience
+
+```python
+from agnara import Agnara
+
+app = Agnara("commerce")
+
+
+@app.capability
+async def get_product(product_id: int) -> Product:
+    return await products.get(product_id)
+
+
+app.expose(get_product).http.get("/products/{product_id}")
+app.expose(get_product).mcp.tool()
+app.expose(get_product).a2a.skill()
+```
+
+One capability.
+
+One dependency graph.
+
+One security policy.
+
+One telemetry model.
+
+Multiple protocol surfaces.
+
+## Security-aware capabilities
+
+```python
+@app.capability(
+    scopes={"payments:create"},
+    effects={"financial-write"},
+    risk="high",
+    confirmation="required",
+    idempotent=False,
+)
+async def send_payment(
+    command: PaymentCommand,
+    ctx: Context,
+) -> PaymentReceipt:
+    ...
+```
+
+Agnara should make enough semantics machine-readable for a client or agent to determine whether an operation is safe to invoke automatically.
+
+## Architectural layers
+
+```text
+Application
+    │
+    ▼
+Capability Registry
+    │
+    ├── Schema Engine
+    ├── Dependency Graph
+    ├── Policy Engine
+    └── Discovery Metadata
+    │
+    ▼
+Execution Plan Compiler
+    │
+    ▼
+Execution Runtime
+    │
+    ├── HTTP Adapter
+    ├── MCP Adapter
+    ├── A2A Adapter
+    ├── Event Adapter
+    ├── Task Adapter
+    ├── CLI Adapter
+    └── Internal Invocation
+```
+
+## Initial workspace
+
+```text
+agnara/
+├── packages/
+│   ├── agnara-core/
+│   ├── agnara-http/
+│   ├── agnara-mcp/
+│   ├── agnara-a2a/
+│   ├── agnara-events/
+│   ├── agnara-telemetry/
+│   └── agnara-cli/
+├── tests/
+│   ├── architecture/
+│   ├── conformance/
+│   ├── integration/
+│   └── benchmarks/
+├── docs/
+│   ├── adr/
+│   └── rfc/
+├── AGENTS.md
+├── ARCHITECTURE.md
+├── BACKLOG.md
+├── PRINCIPLES.md
+├── ROADMAP.md
+└── pyproject.toml
+```
+
+Not every package must be implemented in the first milestone. The structure defines boundaries before implementation pressure begins to blur them.
+
+## Initial scope
+
+The first meaningful release should prove:
+
+```text
+typed Python capability
+        ↓
+compiled execution plan
+        ↓
+direct invocation
+        ↓
+HTTP exposure
+        ↓
+OpenAPI generation
+        ↓
+MCP exposure
+        ↓
+consistent validation, policy and telemetry
+```
+
+A2A, event transports, distributed tasks, native/Rust acceleration, and broader plugin infrastructure follow only after this foundation is demonstrably correct.
+
+## Non-goals
+
+Agnara is not:
+
+- an ORM;
+- an LLM orchestration framework;
+- a RAG framework;
+- a vector database;
+- a workflow product;
+- a message broker;
+- an authentication database;
+- a replacement for MCP or A2A;
+- a custom HTTP protocol;
+- a custom AI model SDK.
+
+Agnara integrates standards. It does not recreate them.
+
+## Runtime baseline
+
+Agnara targets CPython 3.14+.
+
+The architecture must be safe under conventional CPython and designed consciously for free-threaded Python. Thread-safety cannot be assumed merely because historical CPython used a GIL.
+
+## Project status
+
+**Pre-alpha / architecture-first.**
+
+The repository should not claim production readiness, benchmark leadership, security guarantees, or protocol conformance until those claims are backed by automated evidence.
+
+## Documentation order for contributors and agents
+
+Read in this order:
+
+1. `VISION.md`
+2. `PRINCIPLES.md`
+3. `ARCHITECTURE.md`
+4. `docs/rfc/0001-capability-runtime.md`
+5. `docs/API_DESIGN.md`
+6. `BACKLOG.md`
+7. `QUALITY_GATES.md`
+8. `AGENTS.md`
+
+## License
+
+License selection should be made explicitly before the first public release. Apache-2.0 is recommended for evaluation because of its explicit patent grant, but the repository must not silently choose a license without an owner decision.
+
+## Django-like modular apps, redesigned for 2026
+
+Agnara adopts the productive project/app idea while changing what an app means.
+
+```bash
+agnara project create commerce
+
+cd commerce
+
+agnara app create users --with http
+agnara app create payments --with http,mcp,tasks
+agnara app create recommendations --with mcp,a2a
+```
+
+The project can contain many apps, but each app is a **business module**, not a protocol-specific application.
+
+```text
+commerce
+├── users
+├── catalog
+├── payments
+└── recommendations
+```
+
+Each generated app uses modular hexagonal boundaries by default:
+
+```text
+payments/
+├── domain/
+├── application/
+├── adapters/
+│   ├── inbound/
+│   └── outbound/
+└── tests/
+```
+
+Transport code is generated only when requested.
+
+Convenience commands such as:
+
+```bash
+agnara app-mcp tools
+agnara app-api catalog
+```
+
+may exist as aliases, but internally they are equivalent to normal app creation plus exposure scaffolding.
+
+Read:
+
+- `docs/APPLICATION_MODEL.md`
+- `docs/CLI_SPEC.md`
+- `docs/SCAFFOLDING.md`
+- `docs/PROJECT_MANIFEST.md`
+- `docs/rfc/0002-project-app-scaffolding.md`

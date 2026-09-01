@@ -1,0 +1,136 @@
+# Quality Gates
+
+## Definition of done
+
+A feature is not done when code exists.
+
+It is done when:
+
+1. public behavior is specified;
+2. unit tests cover normal and failure paths;
+3. typing passes;
+4. lint/format passes;
+5. architecture rules pass;
+6. documentation is updated;
+7. performance-sensitive changes include benchmark evidence;
+8. security-sensitive changes include threat analysis;
+9. no unrelated coupling was introduced.
+
+## Required local checks
+
+Target commands:
+
+```bash
+uv sync
+uv run ruff check .
+uv run ruff format --check .
+uv run ty check
+uv run pytest
+```
+
+Exact command names may evolve, but equivalent gates must remain.
+
+## Test pyramid
+
+```text
+unit
+  capability
+  registry
+  DI
+  plan compiler
+  policies
+  schemas
+
+architecture
+  forbidden imports
+  package cycles
+  dependency direction
+
+contract
+  public API behavior
+
+conformance
+  ASGI
+  OpenAPI
+  MCP
+  A2A later
+
+integration
+  composed application surfaces
+
+benchmark
+  startup
+  memory
+  hot path
+  concurrency
+```
+
+## Coverage
+
+Do not optimize for a vanity percentage.
+
+Critical runtime branches require explicit behavioral tests.
+
+Coverage should be reported, but missing behavior is more important than reaching an arbitrary number.
+
+## Mutation testing
+
+Evaluate mutation testing after the core stabilizes, especially for:
+
+- policy engine;
+- dependency scopes;
+- error mapping;
+- execution ordering.
+
+## Property-based testing
+
+Use property-based tests where contracts are algebraic or combinatorial:
+
+- router matching;
+- schema round trips;
+- dependency DAGs;
+- metadata normalization.
+
+## Protocol conformance
+
+Each adapter should record:
+
+- supported specification version;
+- unsupported optional features;
+- test suite version;
+- generated fixtures.
+
+## Benchmark integrity
+
+Never benchmark development mode against optimized competitors.
+
+Record:
+
+- OS;
+- CPU;
+- Python build;
+- free-threaded vs conventional;
+- server;
+- worker count;
+- serializer;
+- payload;
+- concurrency;
+- command;
+- commit SHA.
+
+## Security gates
+
+Before any release beyond experimental alpha:
+
+- threat model;
+- dependency audit;
+- secret scanning;
+- CodeQL or equivalent static analysis;
+- private vulnerability reporting process;
+- security boundary tests.
+
+## Free-threading gate
+
+At least one CI lane should eventually run with CPython free-threaded 3.14t where the dependency ecosystem allows it.
+
+Failures must not be hidden by globally re-enabling the GIL without documentation.
