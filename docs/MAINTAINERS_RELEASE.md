@@ -17,6 +17,16 @@ uv run pytest
 
 When 100% green, the framework is technically ready to be packaged.
 
+### Licensing Readiness Check
+Before the first public release, verify:
+- [x] LICENSE exists
+- [x] Apache-2.0 selected
+- [x] package metadata declares Apache-2.0
+- [x] wheel contains required license metadata/files
+- [x] sdist contains required license metadata/files
+- [x] README license documentation is consistent
+- [x] no contradictory "license pending" documentation remains
+
 ## 2. GitHub Actions and OIDC
 
 Agnara uses **PyPI Trusted Publishing via OpenID Connect (OIDC)**. No passwords, tokens, or `.pypirc` files are ever stored in the repository or personal environments.
@@ -62,3 +72,4 @@ Upon receiving the tag `v*.*.*`, `.github/workflows/release.yml` executes:
 ## 6. TestPyPI (Optional but recommended)
 
 TestPyPI is an entirely separate registry from PyPI. To publish to TestPyPI before production, a Pending Trusted Publisher must also be configured there. See **ACTION REQUIRED FROM OWNER** in the AI agent prompt output for instructions on configuring TestPyPI. Once configured, an intermediate job `publish-testpypi` targeting the `testpypi` environment can be added before the `publish` job.
+

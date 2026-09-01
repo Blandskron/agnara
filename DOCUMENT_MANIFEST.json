@@ -29,6 +29,7 @@
     "BACKLOG.md",
     "BUILD_PROMPT.md",
     "CHANGELOG.md",
+    "LICENSE",
     "CONTRIBUTING.md",
     "FIRST_AGENT_PROMPT.md",
     "GIT_WORKFLOW.md",
@@ -84,3 +85,4 @@
     ]
   }
 }
+
