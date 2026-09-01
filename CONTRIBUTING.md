@@ -54,6 +54,23 @@ Documentation is part of the implementation.
 
 When actual behavior differs from an RFC or ADR, update the decision record rather than leaving contradictory documentation.
 
+## Changelog
+
+Every PR makes an explicit changelog decision.
+
+Add one concise outcome-oriented entry under `CHANGELOG.md` `[Unreleased]`
+when the change affects public API/behavior, configuration, CLI output,
+schemas/protocols, dependencies, security, performance claims,
+deprecations/removals, migrations or the contributor workflow.
+
+Tests, internal refactors or editorial corrections may omit an entry when they
+do not change an observable contract. Select the corresponding PR-template
+option and explain why; do not add noise merely to tick a box.
+
+Release maintainers follow ADR 0021 and `GIT_WORKFLOW.md`. All first-party
+package versions remain synchronized during v0.x, and `0.0.0` must not be
+published.
+
 ## Scaffolding changes
 
 Project/app generator changes are public API changes.

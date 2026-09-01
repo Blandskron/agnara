@@ -220,6 +220,10 @@ The architecture must be safe under conventional CPython and designed consciousl
 
 The repository should not claim production readiness, benchmark leadership, security guarantees, or protocol conformance until those claims are backed by automated evidence.
 
+All current work is unreleased. See `CHANGELOG.md` for the curated
+`[Unreleased]` record; package version `0.0.0` is a development sentinel and
+must not be published.
+
 ## Documentation order for contributors and agents
 
 Read in this order:
