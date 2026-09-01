@@ -52,6 +52,9 @@ package version `0.0.0` is a development sentinel, not a published release.
 - Immutable `ExecutionPlan` startup compilation, which snapshots each
   capability's direct DI requirements after validating the complete provider
   graph ([#62]).
+- Transport-neutral direct invocation of compiled plans with explicit context
+  injection, DI ownership, sync/async handlers and deterministic resource
+  cleanup ([#65]).
 
 ### Changed
 
@@ -84,3 +87,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#34]: https://github.com/Blandskron/agnara/issues/34
 [#36]: https://github.com/Blandskron/agnara/issues/36
 [#62]: https://github.com/Blandskron/agnara/issues/62
+[#65]: https://github.com/Blandskron/agnara/issues/65

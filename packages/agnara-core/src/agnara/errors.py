@@ -11,6 +11,7 @@ __all__ = [
     "AgnaraError",
     "DefinitionError",
     "DuplicateCapabilityError",
+    "InvocationError",
     "RegistryError",
     "RegistryFrozenError",
     "SchemaError",
@@ -33,6 +34,15 @@ class DefinitionError(AgnaraError):
     Raised during declaration or startup compilation, never on the
     invocation hot path. ADR 0005 requires these failures to be explicit
     and to happen as early as possible.
+    """
+
+
+class InvocationError(AgnaraError):
+    """A direct invocation is inconsistent with its compiled plan.
+
+    This reports caller/runtime composition mistakes such as invoking a plan
+    under another capability id or supplying a parameter owned by dependency
+    injection. Canonical handler failures remain a separate E4.7 concern.
     """
 
 

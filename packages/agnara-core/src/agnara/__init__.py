@@ -7,9 +7,9 @@ execution planning and canonical errors.
 It must never import a protocol implementation, a server, a schema library
 or an LLM SDK. See ``ARCHITECTURE.md`` section 3 and ``PRINCIPLES.md`` P2.
 
-Currently implemented: the capability declaration model, the registry and
-the ``@app.capability`` authoring surface (EPIC 1). Execution plans,
-dependency injection and policies are still ahead in ``BACKLOG.md``.
+Currently implemented: capability declaration and registration, schema ports,
+dependency compilation/resolution, execution plans, and direct invocation.
+Policies and transport adapters remain ahead in ``BACKLOG.md``.
 """
 
 from importlib.metadata import version
@@ -29,6 +29,7 @@ from agnara.errors import (
     AgnaraError,
     DefinitionError,
     DuplicateCapabilityError,
+    InvocationError,
     RegistryError,
     RegistryFrozenError,
     SchemaError,
@@ -55,6 +56,7 @@ __all__ = [
     "DuplicateCapabilityError",
     "FrozenCapabilityRegistry",
     "Idempotency",
+    "InvocationError",
     "JsonSchema",
     "RegistryError",
     "RegistryFrozenError",
