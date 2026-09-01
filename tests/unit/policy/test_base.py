@@ -22,11 +22,11 @@ def test_policy_protocol():
             state: typing.ClassVar[dict] = {}
 
         ctx = DummyContext()
-        result = await policy.evaluate(ctx)
+        result = await policy.evaluate(typing.cast(ExecutionContext, ctx))
         assert isinstance(result, PolicySuccess)
 
         ctx.state["fail"] = True
-        result2 = await policy.evaluate(ctx)
+        result2 = await policy.evaluate(typing.cast(ExecutionContext, ctx))
         assert isinstance(result2, PolicyFailure)
         assert result2.reason == "configured to fail"
 
@@ -38,4 +38,4 @@ def test_policy_result_immutability():
 
     failure = PolicyFailure(reason="error")
     with pytest.raises(FrozenInstanceError):
-        failure.reason = "new error"
+        failure.reason = "new error"  # type: ignore

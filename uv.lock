@@ -36,7 +36,7 @@ source = { editable = "packages/agnara" }
 
 [[package]]
 name = "agnara-a2a"
-version = "0.0.0"
+version = "0.1.0"
 source = { editable = "packages/agnara-a2a" }
 dependencies = [
     { name = "agnara" },
@@ -47,7 +47,7 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-cli"
-version = "0.0.0"
+version = "0.1.0"
 source = { editable = "packages/agnara-cli" }
 dependencies = [
     { name = "agnara" },
@@ -58,7 +58,7 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-events"
-version = "0.0.0"
+version = "0.1.0"
 source = { editable = "packages/agnara-events" }
 dependencies = [
     { name = "agnara" },
@@ -69,7 +69,7 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-http"
-version = "0.0.0"
+version = "0.1.0"
 source = { editable = "packages/agnara-http" }
 dependencies = [
     { name = "agnara" },
@@ -80,7 +80,7 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-mcp"
-version = "0.0.0"
+version = "0.1.0"
 source = { editable = "packages/agnara-mcp" }
 dependencies = [
     { name = "agnara" },
@@ -91,7 +91,7 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-telemetry"
-version = "0.0.0"
+version = "0.1.0"
 source = { editable = "packages/agnara-telemetry" }
 dependencies = [
     { name = "agnara" },

@@ -45,7 +45,7 @@ from agnara.schema import (
     TypeSchema,
 )
 
-__version__ = version("agnara-core")
+__version__ = version("agnara")
 
 __all__ = [
     "Agnara",

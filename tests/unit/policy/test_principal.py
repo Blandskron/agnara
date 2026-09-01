@@ -11,7 +11,7 @@ def test_principal_immutability():
     assert principal.metadata == {"role": "admin"}
 
     with pytest.raises(FrozenInstanceError):
-        principal.identity = "user_456"
+        principal.identity = "user_456"  # type: ignore
 
 
 def test_anonymous_principal():
