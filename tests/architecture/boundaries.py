@@ -135,11 +135,10 @@ def _file_imports(path: Path) -> Iterator[SourceImport]:
         if isinstance(node, ast.Import):
             for alias in node.names:
                 yield SourceImport(_top_level(alias.name), path, node.lineno)
-        elif isinstance(node, ast.ImportFrom):
-            # `level > 0` is a relative import, which is intra-package by
-            # definition and therefore never a boundary violation.
-            if node.level == 0 and node.module:
-                yield SourceImport(_top_level(node.module), path, node.lineno)
+        # `level > 0` is a relative import, which is intra-package by
+        # definition and therefore never a boundary violation.
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            yield SourceImport(_top_level(node.module), path, node.lineno)
 
 
 def imports_of(dist_name: str) -> list[SourceImport]:

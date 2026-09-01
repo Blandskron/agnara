@@ -67,7 +67,19 @@ docstring-code-format = true
 
 [tool.ty.environment]
 python-version = "3.14"
-root = ["packages/agnara-core/src", "packages/agnara-http/src", "packages/agnara-mcp/src", "packages/agnara-a2a/src", "packages/agnara-events/src", "packages/agnara-telemetry/src", "packages/agnara-cli/src", "tests"]
+root = [
+    # Each package exposes its import root from `src/`, per ADR 0017.
+    "packages/agnara-core/src",
+    "packages/agnara-http/src",
+    "packages/agnara-mcp/src",
+    "packages/agnara-a2a/src",
+    "packages/agnara-events/src",
+    "packages/agnara-telemetry/src",
+    "packages/agnara-cli/src",
+    # `tests` is itself a package, so the workspace root is what has to be
+    # importable for `tests.architecture...` to resolve -- not `tests/`.
+    ".",
+]
 
 [tool.ty.src]
 include = ["packages", "tests"]

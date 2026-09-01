@@ -14,7 +14,6 @@ from importlib.metadata import distribution
 import pytest
 
 from tests.architecture.boundaries import (
-    ADAPTER_DISTRIBUTIONS,
     DISTRIBUTIONS,
     PACKAGES_DIR,
     WORKSPACE_ROOT,
