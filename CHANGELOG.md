@@ -42,6 +42,9 @@ package version `0.0.0` is a development sentinel, not a published release.
 - An isolated, executable msgspec schema-adapter prototype covering strict
   conversion, JSON Schema generation and protocol-neutral error translation,
   with limitations recorded for the later adapter comparison ([#34]).
+- An isolated, executable Pydantic schema-adapter prototype covering strict
+  conversion, JSON Schema generation and protocol-neutral error translation,
+  with limitations recorded for the later adapter comparison ([#38]).
 - `CapabilityRegistry` and `FrozenCapabilityRegistry`: deterministic
   registration order, duplicate-id rejection, a freeze step that yields an
   immutable thread-safe view, lookup by id or dotted string, and
