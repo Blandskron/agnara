@@ -3,6 +3,8 @@
 from agnara.schema.port import JsonSchema, SchemaAdapter, TypeSchema
 from agnara.schema.standard import (
     AnySchema,
+    DataclassFieldSchema,
+    DataclassSchema,
     DictionarySchema,
     EnumSchema,
     ListSchema,
@@ -16,6 +18,8 @@ from agnara.schema.standard import (
 
 __all__ = [
     "AnySchema",
+    "DataclassFieldSchema",
+    "DataclassSchema",
     "DictionarySchema",
     "EnumSchema",
     "JsonSchema",
