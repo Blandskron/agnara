@@ -193,21 +193,26 @@ class TestImmutability:
         with pytest.raises(dataclasses.FrozenInstanceError):
             setattr(definition, attribute, value)
 
-    def test_no_new_attribute_can_be_added(self) -> None:
-        """`slots=True` keeps a stray attribute from silently attaching.
+    def test_remains_slotted(self) -> None:
+        assert not hasattr(define(), "__dict__")
 
-        The exception type is deliberately broad. On CPython 3.14 a
-        `frozen=True, slots=True` dataclass raises `TypeError` rather than
-        `FrozenInstanceError` for a name that is not a field, because the
-        generated `__setattr__` closes over the pre-slots class. The
-        guarantee this test defends is that the assignment fails and the
-        attribute does not attach. The confusing message is tracked in
-        issue #3.
-        """
+    def test_no_new_attribute_can_be_added(self) -> None:
+        """A typo reports the same clear frozen-value error as a real field."""
         definition = define()
-        with pytest.raises((dataclasses.FrozenInstanceError, AttributeError, TypeError)):
+        with pytest.raises(
+            dataclasses.FrozenInstanceError,
+            match="cannot assign to field 'exposures'",
+        ):
             definition.exposures = ["http"]  # ty: ignore[invalid-assignment]
         assert not hasattr(definition, "exposures")
+
+    def test_unknown_attribute_cannot_be_deleted(self) -> None:
+        definition = define()
+        with pytest.raises(
+            dataclasses.FrozenInstanceError,
+            match="cannot delete field 'exposures'",
+        ):
+            delattr(definition, "exposures")
 
     def test_replace_produces_a_new_definition(self) -> None:
         original = define()

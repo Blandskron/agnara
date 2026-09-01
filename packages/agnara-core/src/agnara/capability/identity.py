@@ -12,9 +12,9 @@ so an id is a namespace plus a name, joined by a dot.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Final
 
+from agnara._frozen import frozen_slots_dataclass
 from agnara.errors import DefinitionError
 
 __all__ = ["CapabilityId"]
@@ -35,7 +35,7 @@ def _validate_segment(segment: str, *, part: str, whole: str) -> None:
         )
 
 
-@dataclass(frozen=True, slots=True)
+@frozen_slots_dataclass
 class CapabilityId:
     """The stable logical name of one capability.
 

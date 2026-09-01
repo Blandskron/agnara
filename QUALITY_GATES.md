@@ -184,6 +184,32 @@ A single-agent self-review is not represented as an independent GitHub approval.
 
 Where independent reviewer identities exist, use them for formal approval.
 
+## Changelog and release consistency gate
+
+Every PR records one of these outcomes:
+
+- a release-note-worthy change has a concise entry under `[Unreleased]`; or
+- no entry is required and the PR explains why.
+
+Before creating a release tag:
+
+- every first-party `pyproject.toml` contains the exact selected PEP 440
+  version;
+- the selected version is not `0.0.0`;
+- `uv.lock` is refreshed and current;
+- `CHANGELOG.md` has a dated section for that exact version and a new
+  `[Unreleased]` section;
+- comparison links reference the previous and new tags correctly;
+- package builds and install/import smoke tests pass;
+- the full required CI, review and attribution gates are green;
+- the annotated `v<version>` tag targets the exact reviewed `main` commit;
+- publishing authorization, license and credentials/trusted publishing are
+  present before any registry upload.
+
+Documentation of this checklist is not evidence that release or hotfix
+automation has run. Record actual commands, artifacts, hashes and GitHub links
+before completing E0B.12.
+
 ## Attribution integrity gate
 
 Before push and again before merge, review attribution as a semantic integrity

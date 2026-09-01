@@ -540,16 +540,24 @@ Issue
 
 No uses `hotfix` para saltarte el flujo normal.
 
+Si el hotfix produce una release, aplica las mismas reglas de versión
+sincronizada, changelog, CI, atribución, tag y propagación descritas en
+`GIT_WORKFLOW.md` y ADR 0021.
+
 ---
 
 ## 14. Releases
 
 Cuando corresponda una release:
 
+Lee primero `docs/adr/0021-synchronized-pre-one-releases-and-changelog.md`.
+Durante v0.x todos los paquetes first-party usan la misma versión PEP 440;
+`0.0.0` es un sentinel de desarrollo y no se publica.
+
 ```bash
 git switch develop
 git pull --ff-only origin develop
-git switch -c release/v0.1.0
+git switch -c release/v0.1.0a1
 ```
 
 La rama release sólo puede contener preparación de release:
@@ -563,17 +571,25 @@ La rama release sólo puede contener preparación de release:
 PR:
 
 ```text
-release/v0.1.0 → main
+release/v0.1.0a1 → main
 ```
+
+La preparación debe actualizar todos los `pyproject.toml`, `uv.lock` y la
+sección fechada del changelog, y debe pasar los gates de release documentados.
 
 Después del merge:
 
-- tag;
+- verificar el commit exacto aceptado;
+- crear el tag anotado e inmutable `v<versión>` sobre ese commit;
 - GitHub Release si aplica;
 - propagar cambios release-only a `develop`;
 - eliminar rama.
 
 No agregues features nuevas en una release branch.
+
+No publiques paquetes sin licencia y autorización de publishing. No marques
+E0B.12 como completo sólo porque el flujo esté documentado: requiere evidencia
+de una ejecución real.
 
 ---
 

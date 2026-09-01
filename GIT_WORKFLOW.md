@@ -35,6 +35,8 @@ Different artifacts own different concerns:
 - Git branches: isolated implementation state.
 - Pull Requests: integration, review and evidence boundary.
 - ADR/RFC: architectural decisions.
+- `CHANGELOG.md`: curated user/contributor-visible outcomes for the next and
+  past releases.
 - CI: objective quality evidence.
 - Git history: immutable record of accepted change.
 - Issues/PRs/reviews: role and contribution evidence for agents that cannot be
@@ -336,6 +338,7 @@ Security impact
 Performance impact
 Documentation
 Breaking changes
+Changelog decision
 AI / Agent contribution (optional for human-only work)
 Checklist
 ```
@@ -549,12 +552,17 @@ Never approve based only on the PR description.
 
 ## Release flow
 
+Read `docs/adr/0021-synchronized-pre-one-releases-and-changelog.md` before
+preparing a release. Agnara uses one synchronized PEP 440 version for every
+first-party package during v0.x. `0.0.0` is an unreleased-development sentinel
+and must not be published.
+
 Release branch starts from `develop`:
 
 ```bash
 git switch develop
 git pull --ff-only origin develop
-git switch -c release/v0.1.0
+git switch -c release/v0.1.0a1
 ```
 
 Release branch may contain only release preparation:
@@ -567,20 +575,43 @@ Release branch may contain only release preparation:
 
 No unrelated feature work.
 
+The release tracking Issue records the selected version and acceptance gates.
+On the branch:
+
+1. set every `packages/*/pyproject.toml` project version to the exact same PEP
+   440 value;
+2. refresh and verify `uv.lock`;
+3. move current `[Unreleased]` entries in `CHANGELOG.md` to
+   `[version] — YYYY-MM-DD`;
+4. create a fresh empty `[Unreleased]` section and update comparison links;
+5. prepare release notes from that versioned changelog section;
+6. run the full quality suite, synchronized-version check, package builds and
+   install/import smoke tests.
+
 Create PR:
 
 ```text
-release/v0.1.0 → main
+release/v0.1.0a1 → main
 ```
 
 Prefer a merge strategy that preserves the release relationship rather than squashing the entire release history blindly.
 
-After merge:
+Before merge, inspect the final commit relationship and attribution. After
+merge:
 
-1. tag the released commit;
-2. publish GitHub Release when applicable;
-3. propagate any release-only commits back into `develop` through a PR;
-4. delete the release branch.
+1. confirm the accepted `main` commit contains the reviewed version and
+   changelog;
+2. create one annotated `v<version>` tag on that exact commit and never move
+   or reuse it;
+3. publish a GitHub Release from the versioned changelog section when
+   applicable;
+4. publish packages only when license, credentials/trusted publishing and
+   release authorization are separately in place;
+5. propagate any release-only commits back into `develop` through a PR;
+6. delete the release branch.
+
+Do not mark E0B.12 complete merely because this process is documented. That
+item requires evidence from an actually exercised release and hotfix flow.
 
 ## Hotfix flow
 
@@ -608,6 +639,15 @@ Issue
 A hotfix is only for urgent defects affecting the releasable/current production line.
 
 Do not use `hotfix/` as a shortcut around `develop`.
+
+If a hotfix produces a release, it must:
+
+- select the next compatible synchronized PEP 440 version;
+- update every first-party package version and `uv.lock`;
+- add the fix under `[Unreleased]`, then cut the dated changelog section;
+- pass the same release consistency, build, CI and attribution gates;
+- tag the exact accepted `main` commit with annotated `v<version>`;
+- propagate code, version and changelog changes back to `develop` by PR.
 
 ## Merge conflict policy
 
