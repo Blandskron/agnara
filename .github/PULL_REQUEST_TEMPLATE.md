@@ -6,6 +6,12 @@
 
 Closes #
 
+<!--
+The keyword links the Issue but does not close it: GitHub only auto-closes
+on merge into the default branch, and normal work targets `develop`. Close
+the Issue by hand after merging. See GIT_WORKFLOW.md step 11.
+-->
+
 ## Backlog
 
 <!-- Example: E1.3 -->
@@ -74,3 +80,4 @@ Explain:
 - [ ] Required CI green
 - [ ] No known unresolved blocker
 - [ ] Backlog synchronized
+- [ ] Issue closed after merge (not automatic on `develop`)

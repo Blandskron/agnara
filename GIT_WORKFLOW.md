@@ -290,7 +290,14 @@ Use:
 Closes #42
 ```
 
-when merge should close the Issue.
+to link the Pull Request to its Issue.
+
+**This does not close the Issue on its own.** GitHub only auto-closes a
+linked Issue when the Pull Request merges into the repository's *default*
+branch. Normal Agnara work merges into `develop` while `main` stays the
+default, so the keyword creates the link and nothing more.
+
+Close the Issue explicitly after merging. See step 11.
 
 ### 9. Review gate
 
@@ -328,6 +335,16 @@ git switch develop
 git pull --ff-only origin develop
 git fetch --prune
 ```
+
+Then close the Issue, because merging into `develop` does not:
+
+```bash
+gh issue close 42 --comment "Delivered by #43, merged as <sha>."
+```
+
+The closing comment should record which Pull Request delivered the work,
+the merge commit, and confirmation that the acceptance criteria are met. An
+Issue closed with no explanation loses the evidence a later reader needs.
 
 Confirm the Issue is closed and `BACKLOG.md` matches reality.
 

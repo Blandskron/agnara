@@ -165,6 +165,9 @@ Before merge:
 - unresolved review conversations are resolved;
 - backlog/docs are synchronized.
 
+After merge, the Issue must actually be closed. Merging into `develop` does
+not close it, because GitHub auto-closes only on the default branch.
+
 A single-agent self-review is not represented as an independent GitHub approval.
 
 Where independent reviewer identities exist, use them for formal approval.
