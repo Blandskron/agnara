@@ -227,7 +227,7 @@ Generated code must:
 - [ ] E0B.8 Decide single-agent or dual-agent review mode for repository governance.
 - [ ] E0B.9 Configure independent reviewer identity when available.
 - [ ] E0B.10 Configure auto-merge policy where safe.
-- [ ] E0B.11 Replace placeholder OWNER/REPO in security Issue template.
+- [x] E0B.11 Replace placeholder OWNER/REPO in security Issue template.
 - [ ] E0B.12 Document release and hotfix automation evidence.
 
 ### Acceptance
