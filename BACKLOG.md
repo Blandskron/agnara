@@ -52,14 +52,14 @@ checks on PR #1. Locally only `uv sync` and `pytest` can run (E0.13).
 
 ## EPIC 1 — Capability model
 
-- [ ] E1.1 Define immutable `CapabilityDefinition`.
-- [ ] E1.2 Define stable capability identity.
+- [x] E1.1 Define immutable `CapabilityDefinition`.
+- [x] E1.2 Define stable capability identity.
 - [ ] E1.3 Implement `@app.capability`.
 - [ ] E1.4 Implement deterministic registry.
 - [ ] E1.5 Detect duplicate IDs.
 - [ ] E1.6 Freeze registry after compilation.
 - [ ] E1.7 Expose read-only introspection API.
-- [ ] E1.8 Add metadata: effects, risk, confirmation, idempotency.
+- [x] E1.8 Add metadata: effects, risk, confirmation, idempotency.
 
 ### Acceptance
 
@@ -216,16 +216,21 @@ Generated code must:
 
 ## EPIC 0B — Agentic repository governance
 
-- [ ] E0B.1 Establish GitHub Issue labels for type/area/priority.
-- [ ] E0B.2 Configure branch rulesets for `main`.
-- [ ] E0B.3 Configure branch rulesets for `develop`.
-- [ ] E0B.4 Require relevant CI checks before merge.
-- [ ] E0B.5 Configure allowed merge strategies.
-- [ ] E0B.6 Validate GitHub CLI autonomous workflow.
-- [ ] E0B.7 Validate Issue → branch → PR → merge → close flow.
-- [ ] E0B.8 Decide single-agent or dual-agent review mode for repository governance.
+- [x] E0B.1 Establish GitHub Issue labels for type/area/priority.
+- [x] E0B.2 Configure branch rulesets for `main`.
+- [x] E0B.3 Configure branch rulesets for `develop`.
+- [x] E0B.4 Require relevant CI checks before merge.
+- [x] E0B.5 Configure allowed merge strategies.
+- [x] E0B.6 Validate GitHub CLI autonomous workflow.
+- [x] E0B.7 Validate Issue → branch → PR → merge → close flow.
+- [x] E0B.8 Decide single-agent or dual-agent review mode for repository
+  governance. Mode B (single-agent) is in force: PR required, CI required,
+  zero required approvals, documented self-review, no fabricated approval.
+  Migrate to Mode A when E0B.9 delivers a second identity.
 - [ ] E0B.9 Configure independent reviewer identity when available.
-- [ ] E0B.10 Configure auto-merge policy where safe.
+- [x] E0B.10 Configure auto-merge policy where safe. Auto-merge is enabled
+  at the repository level; it can only complete once the required `CI` check
+  passes and conversations are resolved.
 - [x] E0B.11 Replace placeholder OWNER/REPO in security Issue template.
 - [ ] E0B.12 Document release and hotfix automation evidence.
 

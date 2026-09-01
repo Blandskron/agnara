@@ -7,12 +7,33 @@ execution planning and canonical errors.
 It must never import a protocol implementation, a server, a schema library
 or an LLM SDK. See ``ARCHITECTURE.md`` section 3 and ``PRINCIPLES.md`` P2.
 
-The public capability API is defined by EPIC 1 in ``BACKLOG.md`` and is not
-implemented yet.
+Currently implemented: the capability declaration model (EPIC 1). The
+registry, decorator, execution plans and policies are still ahead in
+``BACKLOG.md``.
 """
 
 from importlib.metadata import version
 
+from agnara.capability import (
+    CapabilityDefinition,
+    CapabilityId,
+    Confirmation,
+    Idempotency,
+    Risk,
+    StandardEffect,
+)
+from agnara.errors import AgnaraError, DefinitionError
+
 __version__ = version("agnara-core")
 
-__all__ = ["__version__"]
+__all__ = [
+    "AgnaraError",
+    "CapabilityDefinition",
+    "CapabilityId",
+    "Confirmation",
+    "DefinitionError",
+    "Idempotency",
+    "Risk",
+    "StandardEffect",
+    "__version__",
+]

@@ -357,6 +357,11 @@ El PR debe enlazar el Issue:
 Closes #42
 ```
 
+Esto **enlaza** el Issue pero no lo cierra: GitHub sólo cierra
+automáticamente cuando el PR se mergea hacia la rama por defecto, y el
+trabajo normal apunta a `develop`. Cierra el Issue explícitamente después
+del merge.
+
 Incluye:
 
 - resumen;
@@ -483,7 +488,8 @@ git pull --ff-only origin develop
 git fetch --prune
 ```
 
-Verifica que el Issue se haya cerrado y que el backlog esté sincronizado.
+Cierra el Issue (el merge hacia `develop` no lo hace) y verifica que el
+backlog esté sincronizado.
 
 Después toma el siguiente Issue.
 
