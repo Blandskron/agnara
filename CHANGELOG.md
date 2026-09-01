@@ -49,6 +49,10 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Changed
 
+- Agent-assisted commits now resolve authorized public identities through a
+  provider-neutral registry. Materially authored Codex changes use the
+  verified `openai-codex[bot]` GitHub identity, while fixed global hooks and
+  unverified identities remain forbidden ([#36]).
 - `CapabilityDefinition.declare()` carries the authoring-shaped argument
   types, so the documented `effects={...}, risk="high"` calls typecheck
   without suppression while the attributes keep their narrow types ([#24]).
@@ -72,3 +76,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#30]: https://github.com/Blandskron/agnara/issues/30
 [#32]: https://github.com/Blandskron/agnara/issues/32
 [#34]: https://github.com/Blandskron/agnara/issues/34
+[#36]: https://github.com/Blandskron/agnara/issues/36

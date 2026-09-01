@@ -1,0 +1,19 @@
+# Public Git attribution identities authorized for this repository.
+#
+# An entry proves only that an identity may receive Git-native credit. It does
+# not prove participation in a particular change. AGENTS.md and ADR 0019 still
+# require material authorship before an agent adds its trailer.
+
+schema_version = 1
+
+[[agents]]
+id = "openai-codex"
+display_name = "OpenAI Codex"
+git_name = "Codex"
+email = "codex@openai.com"
+github_login = "openai-codex[bot]"
+identity_url = "https://github.com/apps/openai-codex"
+evidence_url = "https://github.com/Blandskron/agnara/pull/35/commits/294d03d6cb9a92e7e9bc3ae9590794c7962d8b30"
+authorized_by = "repository maintainer"
+authorized_on = "2026-09-01"
+
