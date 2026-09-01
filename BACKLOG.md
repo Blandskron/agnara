@@ -69,8 +69,9 @@ At least 25 focused unit tests covering registration, metadata, duplicate handli
 ## EPIC 2 — Schema port
 
 - [x] E2.1 Define schema adapter protocol.
-- [ ] E2.2 Implement standard-Python baseline adapter.
-- [ ] E2.3 Support dataclasses.
+- [x] E2.2 Implement standard-Python baseline adapter. Tracking: GitHub Issue
+  #30.
+- [x] E2.3 Support dataclasses. Tracking: GitHub Issue #32.
 - [x] E2.4 Define JSON Schema export interface.
 - [ ] E2.5 Prototype msgspec adapter separately.
 - [ ] E2.6 Prototype Pydantic adapter separately.

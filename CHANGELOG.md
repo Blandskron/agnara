@@ -32,6 +32,13 @@ package version `0.0.0` is a development sentinel, not a published release.
   reference implementation covering primitives ([#27]).
 - `SchemaError` and `ValidationError`, the latter carrying a path to the
   offending value so adapters can render it per protocol ([#27]).
+- Recursive standard-library schemas for typed lists, string-keyed
+  dictionaries, fixed and variadic tuples, unions, literals and enums, with
+  strict nested validation and deterministic JSON Schema fragments ([#30]).
+- Strict dataclass instance schemas with recursively compiled fields,
+  deterministic nested validation paths, default-aware required properties
+  and compile-time diagnostics for unsupported directional or recursive
+  forms ([#32]).
 - `CapabilityRegistry` and `FrozenCapabilityRegistry`: deterministic
   registration order, duplicate-id rejection, a freeze step that yields an
   immutable thread-safe view, lookup by id or dotted string, and
@@ -59,3 +66,5 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#21]: https://github.com/Blandskron/agnara/issues/21
 [#24]: https://github.com/Blandskron/agnara/issues/24
 [#27]: https://github.com/Blandskron/agnara/issues/27
+[#30]: https://github.com/Blandskron/agnara/issues/30
+[#32]: https://github.com/Blandskron/agnara/issues/32
