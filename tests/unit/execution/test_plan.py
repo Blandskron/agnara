@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Callable
 from dataclasses import FrozenInstanceError
 from typing import Any
@@ -8,6 +9,7 @@ from agnara.capability import CapabilityDefinition, CapabilityId
 from agnara.core.di import (
     DependencyCycleError,
     DependencyResolutionError,
+    DIContainer,
     DIRegistry,
     provider,
 )
@@ -78,6 +80,25 @@ def test_plan_dependency_mapping_is_read_only() -> None:
 
     with pytest.raises(TypeError, match="does not support item assignment"):
         plan.target_deps[refund] = ()  # type: ignore
+
+
+def test_compiled_plan_is_consumed_directly_by_di_container() -> None:
+    async def run_test() -> None:
+        registry = DIRegistry()
+        registry.bind(Database, provide_database)
+
+        def refund(database: Database) -> None:
+            pass
+
+        plan = ExecutionPlan.compile(define(refund), registry)
+        container = DIContainer(registry)
+
+        async with container.resolve_dependencies(refund, plan.target_deps) as resolved:
+            assert isinstance(resolved["database"], Database)
+
+        await container.aclose()
+
+    asyncio.run(run_test())
 
 
 def test_plan_is_frozen_and_slotted() -> None:
