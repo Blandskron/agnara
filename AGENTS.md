@@ -1,5 +1,13 @@
 # AGENTS.md â Instructions for Coding Agents
 
+## Bootstrap (START HERE)
+
+If you are an agent and were just told "Lee AGENTS.md y comienza" or similar:
+1. **Read `MULTI_AGENT_PROTOCOL.md`**. It defines how you coordinate with other agents safely.
+2. Use `python scripts/agent.py next` to find your next assigned task.
+3. Use `python scripts/agent.py claim <issue> <worker_id>` to take ownership.
+4. If working locally with other agents, use `git worktree` (see protocol doc).
+
 ## Mission
 
 Build Agnara as a Python 3.14-native, capability-first, transport-neutral framework for modern services consumed by humans, applications and AI agents.

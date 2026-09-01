@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agnara Work Metadata",
+  "description": "Schema for the YAML metadata block in an Issue body, used by agents for coordination.",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "type": { "type": "string", "enum": ["feature", "bug", "test", "docs", "architecture", "security", "performance", "chore"] },
+    "priority": { "type": "string", "enum": ["P0", "P1", "P2", "P3", "P4"] },
+    "dependencies": {
+      "type": "object",
+      "properties": {
+        "blocked_by": { "type": "array", "items": { "type": "integer" }, "description": "Issue numbers blocking this work." },
+        "conflicts_with": { "type": "array", "items": { "type": "integer" } }
+      },
+      "additionalProperties": false
+    },
+    "scope": {
+      "type": "object",
+      "properties": {
+        "write": { "type": "array", "items": { "type": "string" }, "description": "Glob patterns of files this issue will modify." },
+        "read": { "type": "array", "items": { "type": "string" } },
+        "forbidden": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "parallel": {
+      "type": "object",
+      "properties": {
+        "safe": { "type": "boolean" },
+        "exclusive": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": ["scope"]
+}

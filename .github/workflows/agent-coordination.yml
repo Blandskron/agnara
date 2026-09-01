@@ -1,0 +1,20 @@
+name: Agent Coordination Tests
+
+on:
+  push:
+    branches: [ develop, main ]
+  pull_request:
+
+jobs:
+  test-coordination:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Install dependencies
+        run: pip install pytest
+      - name: Run agent coordination tests
+        run: pytest tests/agent/
