@@ -83,7 +83,7 @@ Core imports neither Pydantic nor msgspec.
 
 ## EPIC 3 â€” Dependency graph
 
-- [ ] E3.1 Write DI RFC.
+- [x] E3.1 Write DI RFC.
 - [ ] E3.2 Define provider abstraction.
 - [ ] E3.3 Define scopes.
 - [ ] E3.4 Compile dependency DAG.
