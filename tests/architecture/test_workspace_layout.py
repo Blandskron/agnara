@@ -10,25 +10,15 @@ import importlib
 import sys
 import tomllib
 from importlib.metadata import distribution
-from pathlib import Path
 
 import pytest
 
-WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
-PACKAGES_DIR = WORKSPACE_ROOT / "packages"
-
-#: Distribution name -> top-level import package, per ADR 0017.
-DISTRIBUTIONS = {
-    "agnara-core": "agnara",
-    "agnara-http": "agnara_http",
-    "agnara-mcp": "agnara_mcp",
-    "agnara-a2a": "agnara_a2a",
-    "agnara-events": "agnara_events",
-    "agnara-telemetry": "agnara_telemetry",
-    "agnara-cli": "agnara_cli",
-}
-
-ADAPTER_DISTRIBUTIONS = sorted(set(DISTRIBUTIONS) - {"agnara-core"})
+from tests.architecture.boundaries import (
+    ADAPTER_DISTRIBUTIONS,
+    DISTRIBUTIONS,
+    PACKAGES_DIR,
+    WORKSPACE_ROOT,
+)
 
 
 def read_package_pyproject(dist_name: str) -> dict:
@@ -81,19 +71,6 @@ def test_package_ships_py_typed(dist_name: str) -> None:
     import_name = DISTRIBUTIONS[dist_name]
     marker = PACKAGES_DIR / dist_name / "src" / import_name / "py.typed"
     assert marker.is_file()
-
-
-def test_core_declares_no_runtime_dependencies() -> None:
-    """PRINCIPLES.md P3 and ADR 0003: the core stays standard-library only."""
-    assert read_package_pyproject("agnara-core")["project"]["dependencies"] == []
-
-
-@pytest.mark.parametrize("dist_name", ADAPTER_DISTRIBUTIONS)
-def test_adapters_declare_only_core_as_a_workspace_dependency(dist_name: str) -> None:
-    """ARCHITECTURE.md section 4: adapters depend on core, never on siblings."""
-    dependencies = read_package_pyproject(dist_name)["project"]["dependencies"]
-    workspace_dependencies = [dep for dep in dependencies if dep.startswith("agnara-")]
-    assert workspace_dependencies == ["agnara-core"]
 
 
 def test_core_exposes_its_version() -> None:

@@ -18,7 +18,7 @@ The agent must update this file as work progresses and must never mark a task co
 - [~] E0.4 Configure Ruff lint + format. Configured; not yet verified — see E0.13.
 - [~] E0.5 Configure `ty` type checking. Configured; not yet verified — see E0.13.
 - [x] E0.6 Configure pytest.
-- [ ] E0.7 Add architecture import tests.
+- [x] E0.7 Add architecture import tests.
 - [ ] E0.8 Add GitHub Actions for Linux, macOS and Windows where practical.
 - [ ] E0.9 Add conventional changelog/release process.
 - [ ] E0.10 Add license only after owner decision.
