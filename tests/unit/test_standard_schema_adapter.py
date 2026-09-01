@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import typing
 from dataclasses import FrozenInstanceError
 from enum import Enum, IntEnum, StrEnum
 from typing import Any, Literal
@@ -263,7 +264,16 @@ class TestJsonSchema:
 class TestUnsupportedAnnotations:
     @pytest.mark.parametrize(
         "annotation",
-        [list, dict, tuple, set[int], frozenset[int], dict[int, str], list[complex]],
+        [
+            list,
+            dict,
+            tuple,
+            typing.Tuple,  # noqa: UP006 -- runtime value under validation
+            set[int],
+            frozenset[int],
+            dict[int, str],
+            list[complex],
+        ],
     )
     def test_rejects_unsupported_or_incomplete_compositions(
         self, adapter: StandardSchemaAdapter, annotation: Any

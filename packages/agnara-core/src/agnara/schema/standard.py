@@ -32,7 +32,7 @@ from __future__ import annotations
 
 from enum import Enum
 from math import isfinite
-from types import NoneType, UnionType
+from types import GenericAlias, NoneType, UnionType
 from typing import Any, Final, Literal, Union, get_args, get_origin
 
 from agnara._frozen import frozen_slots_dataclass
@@ -307,6 +307,8 @@ class StandardSchemaAdapter:
                 raise self._malformed(annotation, "dictionary keys must be str")
             return DictionarySchema(self.compile(value_type))
         if origin is tuple:
+            if not arguments and not isinstance(annotation, GenericAlias):
+                raise self._malformed(annotation, "at least one item type is required")
             if len(arguments) == 2 and arguments[1] is Ellipsis:
                 return TupleSchema((self.compile(arguments[0]),), variadic=True)
             return TupleSchema(tuple(self.compile(argument) for argument in arguments))
