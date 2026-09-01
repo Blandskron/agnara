@@ -107,7 +107,7 @@ Core imports neither Pydantic nor msgspec.
 ## EPIC 5 ???????? Policy engine
 
 - [x] E5.1 Define Principal.
-- [ ] E5.2 Define policy interface.
+- [x] E5.2 Define policy interface.
 - [ ] E5.3 Scope policy.
 - [ ] E5.4 Effects/risk metadata.
 - [ ] E5.5 Confirmation requirement.

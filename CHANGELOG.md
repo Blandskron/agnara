@@ -11,6 +11,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Defined Policy, PolicyResult interface and added policies tuple to CapabilityDefinition.
 - Defined Principal and AnonymousPrincipal for policy evaluation.
 - Python 3.14 workspace with seven explicit package boundaries and
   cross-platform quality gates.

@@ -36,6 +36,7 @@ from agnara.errors import (
     UnknownCapabilityError,
     ValidationError,
 )
+from agnara.policy.base import Policy, PolicyFailure, PolicyResult, PolicySuccess
 from agnara.policy.principal import AnonymousPrincipal, Principal
 from agnara.schema import (
     JsonSchema,
@@ -60,6 +61,10 @@ __all__ = [
     "Idempotency",
     "InvocationError",
     "JsonSchema",
+    "Policy",
+    "PolicyFailure",
+    "PolicyResult",
+    "PolicySuccess",
     "Principal",
     "RegistryError",
     "RegistryFrozenError",

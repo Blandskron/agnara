@@ -1,4 +1,4 @@
-"""E1.1 and E1.8 — the definition is immutable and carries agentic metadata."""
+"""E1.1 and E1.8 ??? the definition is immutable and carries agentic metadata."""
 
 from __future__ import annotations
 
@@ -240,7 +240,7 @@ class TestDeclareConstructor:
         assert declared == define(effects=frozenset({"read"}), risk=Risk.HIGH)
 
     def test_accepts_the_documented_authoring_types(self) -> None:
-        """docs/API_DESIGN.md writes `effects={...}, risk="high"` — the very
+        """docs/API_DESIGN.md writes `effects={...}, risk="high"` ??? the very
         call that used to be a static error."""
         declared = CapabilityDefinition.declare(
             id=REFUND,
@@ -322,3 +322,30 @@ class TestAgenticDeclaration:
         """
         forbidden = {"authorize", "is_allowed", "check_permission", "can_invoke"}
         assert forbidden.isdisjoint(dir(define()))
+
+
+def test_capability_definition_policies():
+    from agnara.policy.base import Policy, PolicySuccess
+
+    class DummyPolicy(Policy):
+        async def evaluate(self, ctx):
+            return PolicySuccess()
+
+    policy1 = DummyPolicy()
+    policy2 = DummyPolicy()
+
+    cap = CapabilityDefinition.declare(
+        id=CapabilityId.parse("test.cap"),
+        handler=lambda: None,
+        policies=[policy1, policy2],
+    )
+    assert cap.policies == (policy1, policy2)
+
+
+def test_capability_definition_policies_type_enforcement():
+    with pytest.raises(DefinitionError, match="must implement the Policy protocol"):
+        CapabilityDefinition.declare(
+            id=CapabilityId.parse("test.cap"),
+            handler=lambda: None,
+            policies=["not a policy"],  # type: ignore
+        )
