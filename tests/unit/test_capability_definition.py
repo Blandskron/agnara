@@ -328,7 +328,7 @@ def test_capability_definition_policies():
     from agnara.policy.base import Policy, PolicySuccess
 
     class DummyPolicy(Policy):
-        async def evaluate(self, ctx):
+        async def evaluate(self, context):
             return PolicySuccess()
 
     policy1 = DummyPolicy()
