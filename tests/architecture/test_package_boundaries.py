@@ -1,4 +1,4 @@
-"""E0.7 — automated architecture rules.
+"""E0.7 ??? automated architecture rules.
 
 These tests are the executable form of the dependency rules in
 ``ARCHITECTURE.md`` sections 3 and 4, ``PRINCIPLES.md`` P2/P3/P13,
@@ -6,10 +6,10 @@ These tests are the executable form of the dependency rules in
 
 They must fail when:
 
-- ``agnara-core`` imports a forbidden dependency;
+- ``agnara`` imports a forbidden dependency;
 - an adapter imports a sibling adapter;
 - a package cycle appears;
-- a new ``agnara-core`` runtime dependency is introduced.
+- a new ``agnara`` runtime dependency is introduced.
 """
 
 from __future__ import annotations
@@ -32,12 +32,12 @@ from tests.architecture.boundaries import (
 )
 
 # ---------------------------------------------------------------------------
-# Rule 1 — the core imports nothing but the standard library
+# Rule 1 ??? the core imports nothing but the standard library
 # ---------------------------------------------------------------------------
 
 
 def test_core_imports_only_the_standard_library() -> None:
-    """PRINCIPLES.md P3: ``agnara-core`` prefers the standard library.
+    """PRINCIPLES.md P3: ``agnara`` prefers the standard library.
 
     This is the general form of the forbidden-dependency rule: anything that
     is neither the standard library nor ``agnara`` itself is a new core
@@ -46,7 +46,7 @@ def test_core_imports_only_the_standard_library() -> None:
     offenders = [
         imp for imp in external_imports_of(CORE_DISTRIBUTION) if not is_standard_library(imp.module)
     ]
-    assert not offenders, "agnara-core may import only the standard library:\n" + "\n".join(
+    assert not offenders, "agnara may import only the standard library:\n" + "\n".join(
         f"  {imp.where()} imports {imp.module!r}" for imp in offenders
     )
 
@@ -57,7 +57,7 @@ def test_core_does_not_import_forbidden_dependencies() -> None:
         imp for imp in external_imports_of(CORE_DISTRIBUTION) if imp.module in FORBIDDEN_IN_CORE
     ]
     assert not offenders, (
-        "agnara-core imports a dependency forbidden by AGENTS.md and ADR 0003:\n"
+        "agnara imports a dependency forbidden by AGENTS.md and ADR 0003:\n"
         + "\n".join(f"  {imp.where()} imports {imp.module!r}" for imp in offenders)
     )
 
@@ -66,7 +66,7 @@ def test_core_declares_no_runtime_dependencies() -> None:
     """A new core runtime dependency must not slip in through packaging."""
     declared = declared_dependencies(CORE_DISTRIBUTION)
     assert declared == [], (
-        "agnara-core must declare no runtime dependencies; CONTRIBUTING.md "
+        "agnara must declare no runtime dependencies; CONTRIBUTING.md "
         f"requires an explicit justification for each one. Found: {declared}"
     )
 
@@ -77,13 +77,13 @@ def test_core_does_not_import_any_adapter() -> None:
     offenders = [
         imp for imp in external_imports_of(CORE_DISTRIBUTION) if imp.module in adapter_import_names
     ]
-    assert not offenders, "agnara-core must not import an adapter:\n" + "\n".join(
+    assert not offenders, "agnara must not import an adapter:\n" + "\n".join(
         f"  {imp.where()} imports {imp.module!r}" for imp in offenders
     )
 
 
 # ---------------------------------------------------------------------------
-# Rule 2 — adapters do not import sibling adapters
+# Rule 2 ??? adapters do not import sibling adapters
 # ---------------------------------------------------------------------------
 
 
@@ -112,7 +112,7 @@ def test_adapter_declares_only_core_as_a_workspace_dependency(dist_name: str) ->
 
 
 # ---------------------------------------------------------------------------
-# Rule 3 — no package cycles
+# Rule 3 ??? no package cycles
 # ---------------------------------------------------------------------------
 
 
@@ -140,7 +140,7 @@ def test_dependency_direction_points_inward() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Rule 4 — imports resolve to a known boundary
+# Rule 4 ??? imports resolve to a known boundary
 # ---------------------------------------------------------------------------
 
 
