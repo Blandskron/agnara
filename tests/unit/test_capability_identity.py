@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from agnara import CapabilityId, DefinitionError
@@ -74,7 +76,7 @@ class TestValidation:
             CapabilityId(namespace="commerce.payments", name="refund")
 
     def test_the_error_message_names_the_offending_id(self) -> None:
-        with pytest.raises(DefinitionError, match="payments.re-fund"):
+        with pytest.raises(DefinitionError, match=re.escape("payments.re-fund")):
             CapabilityId.parse("payments.re-fund")
 
 
@@ -98,4 +100,4 @@ class TestValueSemantics:
     def test_is_frozen(self) -> None:
         capability_id = CapabilityId("payments", "refund")
         with pytest.raises(AttributeError):
-            capability_id.namespace = "billing"  # type: ignore[misc]
+            capability_id.namespace = "billing"  # ty: ignore[invalid-assignment]

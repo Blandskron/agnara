@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+from typing import Any
 
 import pytest
 
@@ -23,10 +24,15 @@ def handler() -> str:
     return "receipt"
 
 
-def define(**overrides: object) -> CapabilityDefinition:
-    kwargs: dict[str, object] = {"id": REFUND, "handler": handler}
+def define(**overrides: Any) -> CapabilityDefinition:
+    """Build a definition, overriding any field.
+
+    Typed as `Any` on purpose: many tests deliberately pass values the
+    signature rejects, to prove construction validates them at runtime.
+    """
+    kwargs: dict[str, Any] = {"id": REFUND, "handler": handler}
     kwargs.update(overrides)
-    return CapabilityDefinition(**kwargs)  # type: ignore[arg-type]
+    return CapabilityDefinition(**kwargs)
 
 
 class TestConstruction:
@@ -175,7 +181,7 @@ class TestImmutability:
         """
         definition = define()
         with pytest.raises((dataclasses.FrozenInstanceError, AttributeError, TypeError)):
-            definition.exposures = ["http"]  # type: ignore[attr-defined]
+            definition.exposures = ["http"]  # ty: ignore[invalid-assignment]
         assert not hasattr(definition, "exposures")
 
     def test_replace_produces_a_new_definition(self) -> None:
