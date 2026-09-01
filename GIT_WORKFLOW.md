@@ -558,22 +558,50 @@ After resolution:
 
 ## Branch protection / rulesets
 
-Recommended for `main`:
+`main` and `develop` are protected by active rulesets. The exact definitions
+live in `.github/rulesets/` so the enforced configuration is reviewable here
+and not only in GitHub settings.
 
-- require Pull Request;
-- require status checks;
-- require conversation resolution;
-- block force pushes;
-- block branch deletion;
-- require independent approval when dual-agent mode is available.
+Both branches enforce:
 
-Recommended for `develop`:
+- Pull Request required, so direct pushes are rejected;
+- the aggregate `CI` status check must pass before merge;
+- review conversations must be resolved;
+- force pushes rejected;
+- branch deletion blocked;
+- merge methods limited to squash and merge commit.
 
-- require Pull Request;
-- require status checks;
-- require conversation resolution;
-- block force pushes;
-- require independent approval when dual-agent mode is available.
+Verified by attempting each violation:
+
+```text
+git push origin develop
+  ! [remote rejected] develop -> develop
+  - Changes must be made through a pull request.
+  - Required status check "CI" is expected.
+
+git push --force origin main:develop
+  ! [remote rejected] main -> develop
+  - Cannot force-push to this branch
+```
+
+### Required approvals are zero, deliberately
+
+`required_approving_review_count` is `0`.
+
+GitHub does not permit a Pull Request author to approve their own Pull
+Request. While Agnara runs on a single agent identity, any non-zero value
+would make the repository impossible to merge into. Raise it to `1` when an
+independent reviewer identity exists (`BACKLOG.md` E0B.9); that single change
+moves the repository from Mode B to Mode A.
+
+Zero required approvals is not the same as no review. Merge still requires a
+green `CI`, resolved conversations, and the documented self-review pass.
+
+### No bypass actors
+
+`bypass_actors` is empty, so no one pushes past the rules silently. An admin
+can still edit or disable a ruleset in settings for a genuine emergency,
+which is visible and auditable in a way a per-push bypass is not.
 
 Never configure a required approval rule that makes a single-agent repository impossible to merge autonomously.
 
