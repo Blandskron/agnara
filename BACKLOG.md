@@ -15,25 +15,24 @@ The agent must update this file as work progresses and must never mark a task co
 - [x] E0.1 Create `uv` workspace.
 - [x] E0.2 Create package boundaries described in `ARCHITECTURE.md`.
 - [x] E0.3 Set `requires-python = ">=3.14"`.
-- [~] E0.4 Configure Ruff lint + format. Configured; not yet verified — see E0.13.
-- [~] E0.5 Configure `ty` type checking. Configured; not yet verified — see E0.13.
+- [x] E0.4 Configure Ruff lint + format.
+- [x] E0.5 Configure `ty` type checking.
 - [x] E0.6 Configure pytest.
 - [x] E0.7 Add architecture import tests.
-- [~] E0.8 Add GitHub Actions for Linux, macOS and Windows where practical.
-  Workflow added and validated locally; not yet observed green on GitHub
-  because no run has been triggered (see E0.14).
+- [x] E0.8 Add GitHub Actions for Linux, macOS and Windows where practical.
 - [ ] E0.9 Add conventional changelog/release process.
 - [ ] E0.10 Add license only after owner decision.
-- [!] E0.13 Verify Ruff and `ty` gates. Blocked on the current Windows
-  workstation: a Windows Application Control policy refuses to execute the
-  `ruff` and `ty` native binaries (`OSError 4551`), from both the project
-  virtual environment and the interpreter `Scripts` directory. The policy
-  must not be weakened to work around this. Both gates therefore run in CI
-  (E0.8) before they can be marked complete.
-- [!] E0.14 Restore GitHub autonomy. The GitHub CLI (`gh`) is not installed
-  on this workstation, so Issues, Pull Requests, reviews and merges cannot
-  be created. Until it is installed and authenticated, the repository
-  operates in local-only mode and EPIC 0B cannot proceed.
+- [x] E0.13 Verify Ruff and `ty` gates. Both are green in CI as of PR #1.
+  They still cannot run on the current Windows workstation: an Application
+  Control policy refuses their native binaries (`OSError 4551`) from both
+  the virtual environment and the interpreter `Scripts` directory. The
+  policy must not be weakened. CI is therefore the authoritative record for
+  these two gates — see `QUALITY_GATES.md`.
+- [x] E0.14 Restore GitHub autonomy. `gh` 2.98.0 is installed and
+  authenticated, so Issues, Pull Requests, reviews and merges are available
+  again. Work merged before PR #1 carries local `--no-ff` merges with
+  documented self-review instead of Pull Requests; that history is not
+  retroactively backed by PR review.
 
 ### Acceptance
 
@@ -47,9 +46,9 @@ uv run pytest
 
 all pass on Python 3.14.
 
-Current evidence: `uv sync` and `pytest` pass locally on CPython 3.14.4
-(39 tests). `ruff` and `ty` are configured but blocked locally by E0.13 and
-must be proven green in CI before EPIC 0 can be marked complete.
+Current evidence: all five gates pass in CI on CPython 3.14, across
+ubuntu-latest, macos-latest and windows-latest, with 105 tests. See the
+checks on PR #1. Locally only `uv sync` and `pytest` can run (E0.13).
 
 ## EPIC 1 — Capability model
 
