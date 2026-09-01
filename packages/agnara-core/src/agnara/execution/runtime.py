@@ -19,7 +19,8 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
     and synchronous handlers returning an awaitable are all handled by
     awaiting the returned value when necessary. Dependency resource cleanup
     is owned by ``DIContainer.resolve_dependencies`` and therefore also runs
-    when the handler raises or awaiting its result fails.
+    when the handler raises, awaiting its result fails, or the owning task is
+    cancelled. Cancellation is never caught or translated here.
     """
     if not isinstance(plan, ExecutionPlan):
         raise TypeError(f"plan must be an ExecutionPlan, got {type(plan).__name__}")
