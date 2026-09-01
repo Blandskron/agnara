@@ -131,6 +131,11 @@ only when its exact identity is authorized and GitHub-verifiable. A model name,
 product name or plausible provider email is not verification. An agent must
 not attribute other agents without evidence of their participation.
 
+Authorized identities live in `.github/ai-agent-identities.toml`. Each agent
+is responsible for selecting its own matching entry when it materially
+authors a change. Registry membership never causes automatic attribution and
+does not authorize one agent to claim another agent's work.
+
 A fully autonomous bot with its own verified and authorized GitHub identity
 may be the primary author. It must not impersonate a human or duplicate itself
 as both primary author and co-author.

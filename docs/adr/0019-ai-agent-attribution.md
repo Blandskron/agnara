@@ -105,15 +105,22 @@ remain historical evidence, not automatic authorization for future use.
 
 ### Registry and contributor files
 
-Agnara will not create an agent-identity registry yet. The audit for Issue #12
-found no repository-configured, verified AI-agent identity to register. An
-empty registry adds ceremony without enforcement value, while a guessed entry
-would violate this decision.
+The audit for Issue #12 found no repository-configured, verified AI-agent
+identity, so Agnara initially declined to create an empty registry. Issue #36
+records the later triggering event: a maintainer explicitly authorized the
+independently verifiable OpenAI Codex GitHub App identity after GitHub resolved
+it as a coauthor on PR #35.
 
-When a maintainer authorizes the first independently verifiable agent account,
-a follow-up Issue may add a minimal machine-readable registry containing only
-public attribution data and evidence references—never credentials, tokens or
-private email addresses.
+`.github/ai-agent-identities.toml` is now the source of identities eligible
+for Git-native attribution. It contains only public attribution data,
+maintainer authorization metadata and evidence references—never credentials,
+tokens or private identity evidence. Each entry authorizes an identity, not
+its automatic presence in commits. Material participation remains a separate
+per-change requirement.
+
+The registry is provider-neutral and may contain multiple verified agents.
+No global Git setting or unconditional hook may add one fixed agent to every
+commit; each materially authoring agent selects its own exact entry.
 
 A separate `AI_CONTRIBUTORS` file is also rejected. It would duplicate Git
 history and PR evidence and would drift unless maintained manually.
@@ -130,8 +137,8 @@ Positive:
 
 Negative:
 
-- attribution verification remains a manual review gate until a trusted
-  registry exists;
+- material participation remains a manual review gate even with a trusted
+  identity registry;
 - non-verifiable agents receive role credit in GitHub artifacts but not
   Git-native co-author linkage;
 - mergers must inspect and sometimes construct squash messages explicitly.
@@ -149,7 +156,6 @@ Negative:
 
 ## Revisit when
 
-- an authorized AI agent has an independently verifiable GitHub account;
 - GitHub exposes stronger machine-readable co-author verification;
 - repeated attribution mistakes justify trusted automated enforcement;
 - project governance adopts signed commits or a contributor identity system.

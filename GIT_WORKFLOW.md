@@ -309,6 +309,12 @@ git show -s --format=full HEAD
 git show -s --format=%B HEAD | git interpret-trailers --parse
 ```
 
+Look up agent identities in `.github/ai-agent-identities.toml`. Use the exact
+registered `git_name` and `email` only for an agent that materially authored
+the change. Multiple participating agents receive independent trailers. The
+registry must never be wired to an unconditional hook: identity eligibility
+does not establish participation.
+
 Confirm that every trailer is material, authorized and GitHub-verifiable;
 that non-verifiable agents are prepared for PR/Issue documentation; and that
 no primary author is duplicated. Preserve legitimate existing trailers when
