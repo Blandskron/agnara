@@ -57,6 +57,7 @@
     "docs/adr/0014-explicit-project-manifest.md",
     "docs/adr/0015-agentic-git-governance.md",
     "docs/adr/0016-independent-agent-review.md",
+    "docs/adr/0017-distribution-and-import-names.md",
     "docs/rfc/0001-capability-runtime.md",
     "docs/rfc/0002-project-app-scaffolding.md"
   ],

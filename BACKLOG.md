@@ -12,16 +12,26 @@ The agent must update this file as work progresses and must never mark a task co
 
 ## EPIC 0 — Repository foundation
 
-- [ ] E0.1 Create `uv` workspace.
-- [ ] E0.2 Create package boundaries described in `ARCHITECTURE.md`.
-- [ ] E0.3 Set `requires-python = ">=3.14"`.
-- [ ] E0.4 Configure Ruff lint + format.
-- [ ] E0.5 Configure `ty` type checking.
-- [ ] E0.6 Configure pytest.
+- [x] E0.1 Create `uv` workspace.
+- [x] E0.2 Create package boundaries described in `ARCHITECTURE.md`.
+- [x] E0.3 Set `requires-python = ">=3.14"`.
+- [~] E0.4 Configure Ruff lint + format. Configured; not yet verified — see E0.13.
+- [~] E0.5 Configure `ty` type checking. Configured; not yet verified — see E0.13.
+- [x] E0.6 Configure pytest.
 - [ ] E0.7 Add architecture import tests.
 - [ ] E0.8 Add GitHub Actions for Linux, macOS and Windows where practical.
 - [ ] E0.9 Add conventional changelog/release process.
 - [ ] E0.10 Add license only after owner decision.
+- [!] E0.13 Verify Ruff and `ty` gates. Blocked on the current Windows
+  workstation: a Windows Application Control policy refuses to execute the
+  `ruff` and `ty` native binaries (`OSError 4551`), from both the project
+  virtual environment and the interpreter `Scripts` directory. The policy
+  must not be weakened to work around this. Both gates therefore run in CI
+  (E0.8) before they can be marked complete.
+- [!] E0.14 Restore GitHub autonomy. The GitHub CLI (`gh`) is not installed
+  on this workstation, so Issues, Pull Requests, reviews and merges cannot
+  be created. Until it is installed and authenticated, the repository
+  operates in local-only mode and EPIC 0B cannot proceed.
 
 ### Acceptance
 
@@ -34,6 +44,10 @@ uv run pytest
 ```
 
 all pass on Python 3.14.
+
+Current evidence: `uv sync` and `pytest` pass locally on CPython 3.14.4
+(39 tests). `ruff` and `ty` are configured but blocked locally by E0.13 and
+must be proven green in CI before EPIC 0 can be marked complete.
 
 ## EPIC 1 — Capability model
 
