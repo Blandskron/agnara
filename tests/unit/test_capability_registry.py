@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import threading
 from collections.abc import Mapping
 from typing import Any
@@ -73,7 +74,7 @@ class TestDuplicates:
 
     def test_the_error_names_the_capability(self) -> None:
         registry = CapabilityRegistry([REFUND])
-        with pytest.raises(DuplicateCapabilityError, match="payments.refund"):
+        with pytest.raises(DuplicateCapabilityError, match=re.escape("payments.refund")):
             registry.register(REFUND)
 
     def test_the_first_registration_survives_a_rejected_duplicate(self) -> None:
@@ -114,7 +115,7 @@ class TestLookup:
         assert 42 not in CapabilityRegistry([REFUND])
 
     def test_a_miss_raises_unknown_capability(self) -> None:
-        with pytest.raises(UnknownCapabilityError, match="payments.missing"):
+        with pytest.raises(UnknownCapabilityError, match=re.escape("payments.missing")):
             CapabilityRegistry([REFUND])["payments.missing"]
 
     def test_a_miss_is_also_a_key_error(self) -> None:
