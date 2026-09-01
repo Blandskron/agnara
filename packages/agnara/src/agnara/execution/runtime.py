@@ -78,6 +78,8 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
         for hook in plan.hooks:
             with contextlib.suppress(Exception):
                 hook.on_invocation_terminal(terminal_event)
+    if context.deadline is None:
+        return await _execute(plan, context)
     async with asyncio.timeout_at(context.deadline):
         return await _execute(plan, context)
 
