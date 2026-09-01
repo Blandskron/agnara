@@ -6,11 +6,12 @@ import asyncio
 import inspect
 from typing import Any
 
-from agnara.errors import InvocationError
+from agnara.errors import InvocationError, UnknownCapabilityError, ValidationError
 from agnara.execution.context import ExecutionContext
 from agnara.execution.plan import ExecutionPlan
+from agnara.execution.result import CanonicalResult, Failure, FailureCode, Success
 
-__all__ = ["invoke"]
+__all__ = ["invoke", "invoke_result"]
 
 
 async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
@@ -44,6 +45,42 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
         return await _execute(plan, context)
     async with asyncio.timeout_at(context.deadline):
         return await _execute(plan, context)
+
+
+async def invoke_result[T](
+    plan: ExecutionPlan,
+    context: ExecutionContext,
+) -> CanonicalResult[T]:
+    """Execute a plan and return its protocol-neutral canonical outcome.
+
+    A handler may return ``Success`` or ``Failure`` explicitly. Ordinary
+    values become ``Success``. Known runtime errors receive stable semantic
+    categories, while unexpected exceptions are redacted. External task
+    cancellation is deliberately not converted into a capability failure.
+
+    Use :func:`invoke` for ergonomic in-process calls that should retain
+    ordinary Python value/exception semantics.
+    """
+    try:
+        value = await invoke(plan, context)
+    except asyncio.CancelledError:
+        raise
+    except ValidationError as error:
+        return Failure(
+            FailureCode.INVALID_INPUT,
+            error.message,
+            details={"path": error.path},
+        )
+    except TimeoutError:
+        return Failure(FailureCode.TIMEOUT, "invocation deadline exceeded")
+    except UnknownCapabilityError as error:
+        return Failure(FailureCode.NOT_FOUND, str(error))
+    except Exception:
+        return Failure(FailureCode.INTERNAL_FAILURE, "capability invocation failed")
+
+    if isinstance(value, Success | Failure):
+        return value
+    return Success(value)
 
 
 async def _execute(plan: ExecutionPlan, context: ExecutionContext) -> Any:

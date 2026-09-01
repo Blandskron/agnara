@@ -150,6 +150,23 @@ result = await app.invoke(
 )
 ```
 
+Direct invocation keeps ordinary Python semantics: it returns the handler
+value and raises exceptions. Transport adapters use the canonical boundary so
+all protocols observe the same success/failure meaning:
+
+```python
+from agnara.execution import Failure, Success, invoke_result
+
+match await invoke_result(plan, context):
+    case Success(value):
+        ...
+    case Failure(code, message):
+        ...
+```
+
+`FailureCode` is protocol-neutral. An HTTP, MCP or A2A adapter maps it to its
+own representation; core never stores a transport status code.
+
 ## 17. Capability introspection
 
 ```python

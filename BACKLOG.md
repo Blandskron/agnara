@@ -100,7 +100,7 @@ Core imports neither Pydantic nor msgspec.
 - [x] E4.4 Direct invocation.
 - [x] E4.5 Cancellation propagation.
 - [x] E4.6 Deadlines/timeouts.
-- [ ] E4.7 Canonical result/failure model.
+- [x] E4.7 Canonical result/failure model.
 - [ ] E4.8 Structured telemetry hooks.
 - [ ] E4.9 Benchmark runtime overhead.
 
