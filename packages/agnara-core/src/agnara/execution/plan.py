@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import field
 from types import MappingProxyType
-from typing import Any
+from typing import Any, get_type_hints
 
 from agnara._frozen import frozen_slots_dataclass
 from agnara.capability.definition import CapabilityDefinition
 from agnara.core.di import DIRegistry, compile_dag
 from agnara.errors import DefinitionError
+from agnara.execution.context import ExecutionContext
 
 __all__ = ["ExecutionPlan"]
 
@@ -25,6 +27,9 @@ class ExecutionPlan:
 
     definition: CapabilityDefinition
     target_deps: Mapping[Callable[..., Any], Sequence[type]]
+    dependency_parameters: frozenset[str] = field(init=False)
+    context_parameters: tuple[str, ...] = field(init=False)
+    protected_parameters: frozenset[str] = field(init=False)
 
     def __post_init__(self) -> None:
         if not isinstance(self.definition, CapabilityDefinition):
@@ -40,6 +45,26 @@ class ExecutionPlan:
             target: tuple(dependencies) for target, dependencies in self.target_deps.items()
         }
         object.__setattr__(self, "target_deps", MappingProxyType(immutable_deps))
+
+        direct_dependencies = frozenset(immutable_deps.get(self.definition.handler, ()))
+        hints = get_type_hints(self.definition.handler)
+        dependency_parameters = frozenset(
+            name
+            for name, annotation in hints.items()
+            if name != "return" and annotation in direct_dependencies
+        )
+        context_parameters = tuple(
+            name
+            for name, annotation in hints.items()
+            if name != "return" and annotation is ExecutionContext
+        )
+        object.__setattr__(self, "dependency_parameters", dependency_parameters)
+        object.__setattr__(self, "context_parameters", context_parameters)
+        object.__setattr__(
+            self,
+            "protected_parameters",
+            dependency_parameters.union(context_parameters),
+        )
 
     @classmethod
     def compile(cls, definition: CapabilityDefinition, registry: DIRegistry) -> ExecutionPlan:
