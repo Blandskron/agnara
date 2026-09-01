@@ -11,6 +11,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Added structured execution telemetry hooks (E4.8).
 - Python 3.14 workspace with seven explicit package boundaries and
   cross-platform quality gates.
 - Protocol-neutral `CapabilityId` and `CapabilityDefinition` value types with
@@ -99,3 +100,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#65]: https://github.com/Blandskron/agnara/issues/65
 [#67]: https://github.com/Blandskron/agnara/issues/67
 [#69]: https://github.com/Blandskron/agnara/issues/69
+

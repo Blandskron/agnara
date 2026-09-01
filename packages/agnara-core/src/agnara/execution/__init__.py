@@ -3,6 +3,7 @@ from .invocation import Invocation
 from .plan import ExecutionPlan
 from .result import CanonicalResult, Failure, FailureCode, Success
 from .runtime import invoke, invoke_result
+from .telemetry import InvocationStartEvent, InvocationTerminalEvent, TelemetryHook
 
 __all__ = [
     "CanonicalResult",
@@ -11,7 +12,10 @@ __all__ = [
     "Failure",
     "FailureCode",
     "Invocation",
+    "InvocationStartEvent",
+    "InvocationTerminalEvent",
     "Success",
+    "TelemetryHook",
     "invoke",
     "invoke_result",
 ]
