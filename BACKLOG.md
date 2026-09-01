@@ -96,7 +96,7 @@ Core imports neither Pydantic nor msgspec.
 
 - [ ] E4.1 Define Invocation.
 - [ ] E4.2 Define ExecutionContext.
-- [ ] E4.3 Compile capability to ExecutionPlan.
+- [x] E4.3 Compile capability to ExecutionPlan.
 - [ ] E4.4 Direct invocation.
 - [ ] E4.5 Cancellation propagation.
 - [ ] E4.6 Deadlines/timeouts.

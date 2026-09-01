@@ -49,6 +49,9 @@ package version `0.0.0` is a development sentinel, not a published release.
   registration order, duplicate-id rejection, a freeze step that yields an
   immutable thread-safe view, lookup by id or dotted string, and
   introspection by namespace and declared effect ([#19]).
+- Immutable `ExecutionPlan` startup compilation, which snapshots each
+  capability's direct DI requirements after validating the complete provider
+  graph ([#62]).
 
 ### Changed
 
@@ -80,3 +83,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#32]: https://github.com/Blandskron/agnara/issues/32
 [#34]: https://github.com/Blandskron/agnara/issues/34
 [#36]: https://github.com/Blandskron/agnara/issues/36
+[#62]: https://github.com/Blandskron/agnara/issues/62
