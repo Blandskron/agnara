@@ -26,18 +26,14 @@ def test_changelog_has_one_unreleased_section() -> None:
 def test_changelog_uses_only_conventional_categories() -> None:
     changelog = (WORKSPACE_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     headings = {
-        line.removeprefix("### ")
-        for line in changelog.splitlines()
-        if line.startswith("### ")
+        line.removeprefix("### ") for line in changelog.splitlines() if line.startswith("### ")
     }
     allowed = {"Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"}
     assert headings <= allowed
 
 
 def test_pull_request_template_requires_a_changelog_decision() -> None:
-    template = (WORKSPACE_ROOT / ".github" / "PULL_REQUEST_TEMPLATE.md").read_text(
-        encoding="utf-8"
-    )
+    template = (WORKSPACE_ROOT / ".github" / "PULL_REQUEST_TEMPLATE.md").read_text(encoding="utf-8")
     assert "## Changelog" in template
     assert "Added/updated an entry under `[Unreleased]`" in template
     assert "Not required; explanation provided below" in template
