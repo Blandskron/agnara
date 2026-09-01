@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from agnara._frozen import frozen_slots_dataclass
@@ -37,4 +39,4 @@ class Policy(Protocol):
     They must be transport-neutral and return a PolicyResult instead of raising exceptions.
     """
 
-    async def evaluate(self, context: "ExecutionContext") -> PolicyResult: ...
+    async def evaluate(self, context: ExecutionContext) -> PolicyResult: ...

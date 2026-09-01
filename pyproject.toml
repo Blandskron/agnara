@@ -10,7 +10,7 @@
 members = ["packages/*"]
 
 [tool.uv.sources]
-agnara-core = { workspace = true }
+agnara = { workspace = true }
 agnara-http = { workspace = true }
 agnara-mcp = { workspace = true }
 agnara-a2a = { workspace = true }
@@ -20,7 +20,7 @@ agnara-cli = { workspace = true }
 
 [dependency-groups]
 dev = [
-    "agnara-core",
+    "agnara",
     "agnara-http",
     "agnara-mcp",
     "agnara-a2a",
@@ -80,7 +80,7 @@ exclude = ["**/*.md"]
 python-version = "3.14"
 root = [
     # Each package exposes its import root from `src/`, per ADR 0017.
-    "packages/agnara-core/src",
+    "packages/agnara/src",
     "packages/agnara-http/src",
     "packages/agnara-mcp/src",
     "packages/agnara-a2a/src",

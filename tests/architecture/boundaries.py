@@ -23,7 +23,7 @@ PACKAGES_DIR = WORKSPACE_ROOT / "packages"
 
 #: Distribution name -> top-level import package, per ADR 0017.
 DISTRIBUTIONS: dict[str, str] = {
-    "agnara-core": "agnara",
+    "agnara": "agnara",
     "agnara-http": "agnara_http",
     "agnara-mcp": "agnara_mcp",
     "agnara-a2a": "agnara_a2a",
@@ -32,7 +32,7 @@ DISTRIBUTIONS: dict[str, str] = {
     "agnara-cli": "agnara_cli",
 }
 
-CORE_DISTRIBUTION = "agnara-core"
+CORE_DISTRIBUTION = "agnara"
 CORE_IMPORT_NAME = DISTRIBUTIONS[CORE_DISTRIBUTION]
 
 ADAPTER_DISTRIBUTIONS: tuple[str, ...] = tuple(sorted(set(DISTRIBUTIONS) - {CORE_DISTRIBUTION}))
@@ -40,7 +40,7 @@ ADAPTER_DISTRIBUTIONS: tuple[str, ...] = tuple(sorted(set(DISTRIBUTIONS) - {CORE
 #: Import roots owned by the workspace.
 WORKSPACE_IMPORT_NAMES: frozenset[str] = frozenset(DISTRIBUTIONS.values())
 
-#: Third-party packages `agnara-core` must never import.
+#: Third-party packages `agnara` must never import.
 #:
 #: The allowlist test (standard library only) is the general rule; this
 #: denylist exists so that a regression fails with a message naming the

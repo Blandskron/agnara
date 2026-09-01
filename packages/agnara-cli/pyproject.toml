@@ -4,7 +4,7 @@ version = "0.0.0"
 description = "Project introspection and scaffolding CLI for Agnara."
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = ["agnara-core"]
+dependencies = ["agnara"]
 
 [build-system]
 requires = ["hatchling"]
