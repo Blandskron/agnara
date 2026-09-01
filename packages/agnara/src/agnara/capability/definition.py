@@ -21,6 +21,7 @@ from agnara._frozen import frozen_slots_dataclass
 from agnara.capability.identity import CapabilityId
 from agnara.capability.metadata import Confirmation, Idempotency, Risk
 from agnara.errors import DefinitionError
+from agnara.policy.base import Policy
 
 __all__ = ["CapabilityDefinition"]
 
@@ -94,8 +95,14 @@ class CapabilityDefinition:
     #: Defaults to ``UNKNOWN``: a capability is not idempotent merely
     #: because nobody said otherwise (RFC 0001).
     idempotency: Idempotency = Idempotency.UNKNOWN
+    policies: tuple[Policy, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.policies, tuple):
+            object.__setattr__(self, "policies", tuple(self.policies))
+        for policy in self.policies:
+            if not isinstance(policy, Policy):
+                raise DefinitionError(f"policy {policy!r} must implement the Policy protocol")
         if not isinstance(self.id, CapabilityId):
             raise DefinitionError(
                 f"id must be a CapabilityId, got {type(self.id).__name__}; "
@@ -129,6 +136,7 @@ class CapabilityDefinition:
         risk: Risk | str = Risk.LOW,
         confirmation: Confirmation | str = Confirmation.NEVER,
         idempotency: Idempotency | str = Idempotency.UNKNOWN,
+        policies: Iterable[Policy] = (),
     ) -> Self:
         """Build a definition from authoring-shaped arguments.
 
@@ -153,6 +161,7 @@ class CapabilityDefinition:
             risk=_coerce(risk, Risk, "risk"),
             confirmation=_coerce(confirmation, Confirmation, "confirmation"),
             idempotency=_coerce(idempotency, Idempotency, "idempotency"),
+            policies=tuple(policies),
         )
 
     def has_effect(self, effect: str) -> bool:

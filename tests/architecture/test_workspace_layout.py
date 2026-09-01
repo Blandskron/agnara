@@ -75,4 +75,4 @@ def test_package_ships_py_typed(dist_name: str) -> None:
 def test_core_exposes_its_version() -> None:
     import agnara
 
-    assert agnara.__version__ == distribution("agnara-core").version
+    assert agnara.__version__ == distribution("agnara").version

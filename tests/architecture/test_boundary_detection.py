@@ -110,12 +110,12 @@ def test_forbidden_dependencies_are_not_standard_library(forbidden: str) -> None
 @pytest.mark.parametrize(
     ("requirement", "expected"),
     [
-        ("agnara-core", "agnara-core"),
-        ("agnara-core>=0.1", "agnara-core"),
-        ("agnara-core[extra]", "agnara-core"),
-        ("agnara-core ; python_version >= '3.14'", "agnara-core"),
-        ("agnara-core @ file:///tmp/x", "agnara-core"),
-        ("agnara-core==0.0.0", "agnara-core"),
+        ("agnara", "agnara"),
+        ("agnara>=0.1", "agnara"),
+        ("agnara[extra]", "agnara"),
+        ("agnara ; python_version >= '3.14'", "agnara"),
+        ("agnara @ file:///tmp/x", "agnara"),
+        ("agnara==0.0.0", "agnara"),
     ],
 )
 def test_requirement_names_are_extracted(requirement: str, expected: str) -> None:
@@ -167,7 +167,7 @@ def test_a_forbidden_core_import_would_be_detected(
     This exercises the same path the real rule uses, so the rule cannot
     silently stop inspecting sources.
     """
-    fake_core = tmp_path / "packages" / "agnara-core" / "src" / "agnara"
+    fake_core = tmp_path / "packages" / "agnara" / "src" / "agnara"
     fake_core.mkdir(parents=True)
     (fake_core / "__init__.py").write_text("import pydantic\n", encoding="utf-8")
 
@@ -176,7 +176,7 @@ def test_a_forbidden_core_import_would_be_detected(
 
     offenders = [
         imp
-        for imp in boundaries.external_imports_of("agnara-core")
+        for imp in boundaries.external_imports_of("agnara")
         if not boundaries.is_standard_library(imp.module)
     ]
     assert [imp.module for imp in offenders] == ["pydantic"]
