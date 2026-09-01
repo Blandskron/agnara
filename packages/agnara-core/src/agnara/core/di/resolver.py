@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 from collections.abc import AsyncGenerator, Callable
 from typing import Any
@@ -17,6 +18,7 @@ class DIContainer:
         self.singleton_cache: dict[type, Any] = {}
         # Global exit stack for singleton cleanup
         self.exit_stack = contextlib.AsyncExitStack()
+        self._lock = asyncio.Lock()
 
     async def aclose(self) -> None:
         """Close the container and cleanup singletons."""
@@ -55,12 +57,14 @@ class DIContainer:
                     raise RuntimeError(f"Provider not found for {typ}")
 
                 # Check caches
-                if provider.scope == Scope.SINGLETON and typ in self.singleton_cache:
-                    return self.singleton_cache[typ]
-                if provider.scope == Scope.INVOCATION and typ in invocation_cache:
+                if provider.scope == Scope.SINGLETON:
+                    async with self._lock:
+                        if typ in self.singleton_cache:
+                            return self.singleton_cache[typ]
+                elif provider.scope == Scope.INVOCATION and typ in invocation_cache:
                     return invocation_cache[typ]
 
-                # Resolve sub-dependencies
+                # Resolve sub-dependencies outside the lock
                 sub_deps = _get_dependencies(provider.func)
                 sub_kwargs = {}
                 for name, sub_typ in sub_deps.items():
@@ -68,38 +72,45 @@ class DIContainer:
                         sub_kwargs[name] = await resolve_type(sub_typ)
 
                 # Instantiate provider
-                if provider.provider_type == ProviderType.SYNC_FUNCTION:
-                    instance = provider.func(**sub_kwargs)
-                elif provider.provider_type == ProviderType.ASYNC_FUNCTION:
-                    instance = await provider.func(**sub_kwargs)
-                elif provider.provider_type == ProviderType.SYNC_GENERATOR:
-                    if provider.scope == Scope.SINGLETON:
-                        instance = self.exit_stack.enter_context(
-                            contextlib.contextmanager(provider.func)(**sub_kwargs)
-                        )
+                async def instantiate() -> Any:
+                    if provider.provider_type == ProviderType.SYNC_FUNCTION:
+                        return provider.func(**sub_kwargs)
+                    elif provider.provider_type == ProviderType.ASYNC_FUNCTION:
+                        return await provider.func(**sub_kwargs)
+                    elif provider.provider_type == ProviderType.SYNC_GENERATOR:
+                        if provider.scope == Scope.SINGLETON:
+                            return self.exit_stack.enter_context(
+                                contextlib.contextmanager(provider.func)(**sub_kwargs)
+                            )
+                        else:
+                            return invocation_stack.enter_context(
+                                contextlib.contextmanager(provider.func)(**sub_kwargs)
+                            )
+                    elif provider.provider_type == ProviderType.ASYNC_GENERATOR:
+                        if provider.scope == Scope.SINGLETON:
+                            return await self.exit_stack.enter_async_context(
+                                contextlib.asynccontextmanager(provider.func)(**sub_kwargs)
+                            )
+                        else:
+                            return await invocation_stack.enter_async_context(
+                                contextlib.asynccontextmanager(provider.func)(**sub_kwargs)
+                            )
                     else:
-                        instance = invocation_stack.enter_context(
-                            contextlib.contextmanager(provider.func)(**sub_kwargs)
-                        )
-                elif provider.provider_type == ProviderType.ASYNC_GENERATOR:
-                    if provider.scope == Scope.SINGLETON:
-                        instance = await self.exit_stack.enter_async_context(
-                            contextlib.asynccontextmanager(provider.func)(**sub_kwargs)
-                        )
-                    else:
-                        instance = await invocation_stack.enter_async_context(
-                            contextlib.asynccontextmanager(provider.func)(**sub_kwargs)
-                        )
-                else:
-                    raise RuntimeError(f"Unknown provider type {provider.provider_type}")
+                        raise RuntimeError(f"Unknown provider type {provider.provider_type}")
 
-                # Save to cache
                 if provider.scope == Scope.SINGLETON:
-                    self.singleton_cache[typ] = instance
-                else:
-                    invocation_cache[typ] = instance
+                    async with self._lock:
+                        # Double-check inside lock
+                        if typ in self.singleton_cache:
+                            return self.singleton_cache[typ]
 
-                return instance
+                        instance = await instantiate()
+                        self.singleton_cache[typ] = instance
+                        return instance
+                else:
+                    instance = await instantiate()
+                    invocation_cache[typ] = instance
+                    return instance
 
             # Resolve direct dependencies
             target_hints = _get_dependencies(target_func)
