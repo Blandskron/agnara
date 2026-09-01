@@ -226,6 +226,63 @@ class TestImmutability:
             dataclasses.replace(define(), risk="catastrophic")
 
 
+class TestDeclareConstructor:
+    """`declare()` carries the authoring-shaped types (#24).
+
+    `__init__` is annotated with the types a definition *has*; `declare`
+    with the types a caller *passes*. Both must produce the same value.
+    """
+
+    def test_produces_the_same_value_as_direct_construction(self) -> None:
+        declared = CapabilityDefinition.declare(
+            id=REFUND, handler=handler, effects={"read"}, risk="high"
+        )
+        assert declared == define(effects=frozenset({"read"}), risk=Risk.HIGH)
+
+    def test_accepts_the_documented_authoring_types(self) -> None:
+        """docs/API_DESIGN.md writes `effects={...}, risk="high"` — the very
+        call that used to be a static error."""
+        declared = CapabilityDefinition.declare(
+            id=REFUND,
+            handler=handler,
+            scopes=["accounts:delete"],
+            effects=["database-write", "database-write"],
+            risk="critical",
+            confirmation="required",
+            idempotency="no",
+        )
+        assert declared.effects == frozenset({"database-write"})
+        assert declared.scopes == frozenset({"accounts:delete"})
+        assert declared.risk is Risk.CRITICAL
+        assert declared.confirmation is Confirmation.REQUIRED
+        assert declared.idempotency is Idempotency.NO
+
+    def test_narrows_iterables_to_frozensets(self) -> None:
+        declared = CapabilityDefinition.declare(
+            id=REFUND, handler=handler, effects=iter(["read"]), scopes=iter(["s"])
+        )
+        assert isinstance(declared.effects, frozenset)
+        assert isinstance(declared.scopes, frozenset)
+
+    def test_defaults_match_direct_construction(self) -> None:
+        assert CapabilityDefinition.declare(id=REFUND, handler=handler) == define()
+
+    def test_validation_still_applies(self) -> None:
+        with pytest.raises(DefinitionError, match="invalid risk"):
+            CapabilityDefinition.declare(id=REFUND, handler=handler, risk="catastrophic")
+
+    def test_a_caller_cannot_mutate_effects_afterwards(self) -> None:
+        mutable = {"read"}
+        declared = CapabilityDefinition.declare(id=REFUND, handler=handler, effects=mutable)
+        mutable.add("destructive")
+        assert declared.effects == frozenset({"read"})
+
+    def test_direct_construction_still_coerces(self) -> None:
+        """`declare` is an addition, not a replacement. `__init__` keeps its
+        runtime validation so direct construction cannot bypass it."""
+        assert define(risk="high").risk is Risk.HIGH
+
+
 class TestValueSemantics:
     def test_equal_definitions_compare_equal(self) -> None:
         assert define(risk="high") == define(risk="high")
