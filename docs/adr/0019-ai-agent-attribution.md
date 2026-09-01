@@ -88,7 +88,8 @@ It receives no guessed trailer.
 ### Commit and squash integrity
 
 Before push, the contributor inspects the committed author and parsed
-trailers. Amend and rebase operations preserve every legitimate trailer.
+trailers. Amend, rebase and deliberate commit-recreation operations preserve
+every legitimate trailer.
 
 Before squash merge, the merger constructs and inspects the final commit
 message explicitly. GitHub is not assumed to copy trailers from every branch

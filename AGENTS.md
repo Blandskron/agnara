@@ -219,8 +219,9 @@ commit that involved an AI agent.
   co-author trailer.
 - When an agent has no verified GitHub identity, record its name, role and
   contribution in the Issue or PR and omit the trailer.
-- Preserve legitimate existing trailers when amending, rebasing or preparing
-  a squash message. Do not repeat the primary author as a co-author.
+- Preserve legitimate existing trailers when amending, rebasing, recreating a
+  commit or preparing a squash message. Do not repeat the primary author as a
+  co-author.
 
 Before push, inspect the final commit message and its parsed trailers. Before
 squash merge, inspect the proposed squash message; after merge, verify the

@@ -130,9 +130,10 @@ exact verified identity. If an agent lacks one, omit the trailer and complete
 the PR template's AI / Agent contribution section with its name, role and
 contribution.
 
-Preserve legitimate trailers during amend/rebase and explicitly carry them
-into a squash-merge message. Verify the resulting commit after merge. Do not
-rewrite historical commits solely to apply the current policy.
+Preserve legitimate trailers during amend/rebase or any deliberate commit
+recreation, and explicitly carry them into a squash-merge message. Verify the
+resulting commit after merge. Do not rewrite historical commits solely to
+apply the current policy.
 
 See `GIT_WORKFLOW.md` and `docs/adr/0019-ai-agent-attribution.md` for the
 complete evidence and merge rules.

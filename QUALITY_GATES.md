@@ -173,6 +173,7 @@ Before merge:
 - required CI is green;
 - architecture checks pass;
 - review gate is complete;
+- attribution integrity gate is complete;
 - unresolved review conversations are resolved;
 - backlog/docs are synchronized.
 
@@ -195,7 +196,8 @@ check:
 - review-only agents are represented in the review trail unless they also
   contributed implementation;
 - non-verifiable agent work is documented in the Issue or PR;
-- legitimate trailers survive amend, rebase and squash preparation;
+- legitimate trailers survive amend, rebase, commit recreation and squash
+  preparation;
 - the primary author is not duplicated as a co-author.
 
 After merge, inspect the accepted commit and confirm that its authorship and

@@ -310,7 +310,7 @@ git show -s --format=%B HEAD | git interpret-trailers --parse
 Confirm that every trailer is material, authorized and GitHub-verifiable;
 that non-verifiable agents are prepared for PR/Issue documentation; and that
 no primary author is duplicated. Preserve legitimate existing trailers when
-amending or rebasing.
+amending, rebasing or deliberately recreating a commit.
 
 ### 8. Push
 
