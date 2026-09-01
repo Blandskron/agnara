@@ -134,3 +134,21 @@ Before any release beyond experimental alpha:
 At least one CI lane should eventually run with CPython free-threaded 3.14t where the dependency ecosystem allows it.
 
 Failures must not be hidden by globally re-enabling the GIL without documentation.
+
+## Merge governance gate
+
+A change is not integration-ready merely because local tests pass.
+
+Before merge:
+
+- GitHub Issue exists and acceptance criteria are satisfied;
+- PR exists;
+- required CI is green;
+- architecture checks pass;
+- review gate is complete;
+- unresolved review conversations are resolved;
+- backlog/docs are synchronized.
+
+A single-agent self-review is not represented as an independent GitHub approval.
+
+Where independent reviewer identities exist, use them for formal approval.

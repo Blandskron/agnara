@@ -70,3 +70,25 @@ Template changes require:
 - migration impact review;
 - confirmation that generated application/domain layers remain transport-neutral;
 - no silent overwrite or deletion behavior.
+
+## Issue-driven Git workflow
+
+All contributors — human or agent — follow `GIT_WORKFLOW.md`.
+
+Default:
+
+```text
+Issue
+→ short-lived branch
+→ PR to develop
+→ review/checks
+→ merge
+```
+
+One Issue per PR is preferred.
+
+Do not push feature work directly to `main` or `develop`.
+
+Use Conventional Commit style.
+
+Every PR must link its Issue and describe validation evidence.

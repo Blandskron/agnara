@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/OWNER/REPO/security/advisories/new
+    about: Use a private security advisory for exploitable vulnerabilities. Replace OWNER/REPO after repository initialization.

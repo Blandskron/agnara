@@ -1,0 +1,49 @@
+name: Bug
+description: Report a reproducible defect in Agnara.
+title: "[BUG] "
+labels:
+  - "type:bug"
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Observed behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Minimal reproducible example, commands and environment.
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Logs, failing tests or references. Do not include secrets.
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Fix acceptance criteria
+      placeholder: |
+        - [ ] Regression test added
+        - [ ] Root cause fixed
+        - [ ] Relevant quality gates pass
+    validations:
+      required: true

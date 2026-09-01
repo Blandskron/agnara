@@ -15,11 +15,18 @@
     "agnara inspect payments --json"
   ],
   "documents": [
+    ".github/ISSUE_TEMPLATE/bug.yml",
+    ".github/ISSUE_TEMPLATE/config.yml",
+    ".github/ISSUE_TEMPLATE/feature.yml",
+    ".github/PULL_REQUEST_TEMPLATE.md",
     "AGENTS.md",
+    "AGENT_OPERATING_MODEL.md",
     "ARCHITECTURE.md",
     "BACKLOG.md",
     "BUILD_PROMPT.md",
     "CONTRIBUTING.md",
+    "FIRST_AGENT_PROMPT.md",
+    "GIT_WORKFLOW.md",
     "NAME_AND_BRAND.md",
     "PERFORMANCE.md",
     "PRINCIPLES.md",
@@ -48,7 +55,21 @@
     "docs/adr/0012-modular-hexagonal-default.md",
     "docs/adr/0013-scaffolding-profiles-are-aliases.md",
     "docs/adr/0014-explicit-project-manifest.md",
+    "docs/adr/0015-agentic-git-governance.md",
+    "docs/adr/0016-independent-agent-review.md",
     "docs/rfc/0001-capability-runtime.md",
     "docs/rfc/0002-project-app-scaffolding.md"
-  ]
+  ],
+  "agentic_development": {
+    "workflow": "Backlog -> Issue -> Branch -> PR -> Review -> Merge",
+    "long_lived_branches": [
+      "main",
+      "develop"
+    ],
+    "normal_target": "develop",
+    "review_modes": [
+      "single-agent-self-review",
+      "dual-agent-independent-review"
+    ]
+  }
 }
