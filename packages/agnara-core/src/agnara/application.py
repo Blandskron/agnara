@@ -175,8 +175,12 @@ class Agnara:
                     ),
                     handler=func,
                     description=description if description is not None else _describe(func),
-                    scopes=scopes,
-                    effects=effects,
+                    # These four are suppressed for one reason: the fields
+                    # are annotated with the narrow post-construction type
+                    # while `__post_init__` accepts the wider authoring
+                    # type. Tracked as a typing smell, not papered over.
+                    scopes=scopes,  # ty: ignore[invalid-argument-type]
+                    effects=effects,  # ty: ignore[invalid-argument-type]
                     risk=risk,  # ty: ignore[invalid-argument-type]
                     confirmation=confirmation,  # ty: ignore[invalid-argument-type]
                     idempotency=_idempotency_from(idempotent),
