@@ -161,6 +161,92 @@ def test_cleans_up_invocation_resource_when_handler_raises() -> None:
     asyncio.run(run_test())
 
 
+def test_handler_cancellation_propagates_and_cleans_up_resource() -> None:
+    async def run_test() -> None:
+        events: list[str] = []
+        handler_started = asyncio.Event()
+        never_complete = asyncio.Event()
+
+        class Resource:
+            pass
+
+        @provider()
+        async def provide_resource() -> AsyncIterator[Resource]:
+            events.append("opened")
+            try:
+                yield Resource()
+            finally:
+                events.append("closed")
+
+        registry = DIRegistry()
+        registry.bind(Resource, provide_resource)
+
+        async def refund(resource: Resource) -> None:
+            assert isinstance(resource, Resource)
+            handler_started.set()
+            await never_complete.wait()
+
+        plan = ExecutionPlan.compile(definition(refund), registry)
+        direct_context = context_for(plan, registry)
+        invocation_task = asyncio.create_task(invoke(plan, direct_context))
+        await handler_started.wait()
+
+        invocation_task.cancel()
+
+        with pytest.raises(asyncio.CancelledError):
+            await invocation_task
+        assert events == ["opened", "closed"]
+
+    asyncio.run(run_test())
+
+
+def test_dependency_construction_cancellation_cleans_up_entered_resource() -> None:
+    async def run_test() -> None:
+        events: list[str] = []
+        dependency_started = asyncio.Event()
+        never_complete = asyncio.Event()
+
+        class Resource:
+            pass
+
+        class Service:
+            pass
+
+        @provider()
+        async def provide_resource() -> AsyncIterator[Resource]:
+            events.append("opened")
+            try:
+                yield Resource()
+            finally:
+                events.append("closed")
+
+        @provider()
+        async def provide_service(resource: Resource) -> AsyncIterator[Service]:
+            assert isinstance(resource, Resource)
+            dependency_started.set()
+            await never_complete.wait()
+            yield Service()
+
+        registry = DIRegistry()
+        registry.bind(Resource, provide_resource)
+        registry.bind(Service, provide_service)
+
+        async def refund(service: Service) -> None:
+            raise AssertionError("handler must not run")
+
+        plan = ExecutionPlan.compile(definition(refund), registry)
+        invocation_task = asyncio.create_task(invoke(plan, context_for(plan, registry)))
+        await dependency_started.wait()
+
+        invocation_task.cancel()
+
+        with pytest.raises(asyncio.CancelledError):
+            await invocation_task
+        assert events == ["opened", "closed"]
+
+    asyncio.run(run_test())
+
+
 @pytest.mark.parametrize(
     ("plan", "context", "message"),
     [
