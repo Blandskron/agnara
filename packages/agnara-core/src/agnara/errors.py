@@ -13,7 +13,9 @@ __all__ = [
     "DuplicateCapabilityError",
     "RegistryError",
     "RegistryFrozenError",
+    "SchemaError",
     "UnknownCapabilityError",
+    "ValidationError",
 ]
 
 
@@ -66,3 +68,56 @@ class UnknownCapabilityError(RegistryError, KeyError):
         # KeyError.__str__ reprs its argument, which would double-quote the
         # message. Use the plain text instead.
         return self.args[0] if self.args else ""
+
+
+class SchemaError(AgnaraError):
+    """A schema could not be compiled from a Python annotation.
+
+    Raised during startup compilation, so an unsupported annotation is a
+    startup failure rather than a surprise on the first invocation
+    (ADR 0005).
+    """
+
+
+class ValidationError(AgnaraError):
+    """A value did not satisfy its compiled schema.
+
+    Protocol-neutral by construction: no status code, no HTTP problem
+    document, no JSON-RPC error object. Adapters map this onto their own
+    protocol, which is what lets one capability report the same failure
+    consistently over HTTP, MCP and a direct call.
+
+    ``path`` locates the offending value inside a nested structure, as a
+    sequence of field names and indices. It is empty when the top-level
+    value itself is wrong.
+    """
+
+    def __init__(self, message: str, *, path: tuple[str | int, ...] = ()) -> None:
+        super().__init__(message)
+        self.message = message
+        self.path = path
+
+    def at(self, segment: str | int) -> ValidationError:
+        """Return the same failure, reported one level further out.
+
+        A nested validator raises against the value it was handed; the
+        caller knows which field or index that value came from and pushes
+        that segment on as the error travels outward.
+        """
+        return ValidationError(self.message, path=(segment, *self.path))
+
+    @property
+    def location(self) -> str:
+        """The path rendered for humans, or ``<value>`` at the top level."""
+        if not self.path:
+            return "<value>"
+        rendered = ""
+        for segment in self.path:
+            if isinstance(segment, int):
+                rendered += f"[{segment}]"
+            else:
+                rendered += f".{segment}" if rendered else segment
+        return rendered
+
+    def __str__(self) -> str:
+        return f"{self.location}: {self.message}"

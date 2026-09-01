@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from dataclasses import field
 from enum import StrEnum
-from typing import Any
+from typing import Any, Self
 
 from agnara._frozen import frozen_slots_dataclass
 from agnara.capability.identity import CapabilityId
@@ -115,6 +115,44 @@ class CapabilityDefinition:
         )
         object.__setattr__(
             self, "idempotency", _coerce(self.idempotency, Idempotency, "idempotency")
+        )
+
+    @classmethod
+    def declare(
+        cls,
+        *,
+        id: CapabilityId,
+        handler: Handler,
+        description: str | None = None,
+        scopes: Iterable[str] = (),
+        effects: Iterable[str] = (),
+        risk: Risk | str = Risk.LOW,
+        confirmation: Confirmation | str = Confirmation.NEVER,
+        idempotency: Idempotency | str = Idempotency.UNKNOWN,
+    ) -> Self:
+        """Build a definition from authoring-shaped arguments.
+
+        `__init__` is annotated with the types a definition *has* once it
+        exists: `effects` is a `frozenset`, `risk` is a `Risk`. Those
+        annotations are correct about the attribute and wrong about the
+        argument, because `__post_init__` accepts any iterable of strings and
+        any enum value's string form. A dataclass has only one annotation for
+        both roles, so every caller writing the documented
+        ``effects={"database-write"}, risk="high"`` was a static error.
+
+        This constructor carries the wide types, normalizes, and hands narrow
+        values to `__init__`. Callers get honest typing; the attribute keeps
+        its guarantee. See #24.
+        """
+        return cls(
+            id=id,
+            handler=handler,
+            description=description,
+            scopes=_coerce_string_set(scopes, "scopes", "scope"),
+            effects=_coerce_string_set(effects, "effects", "effect"),
+            risk=_coerce(risk, Risk, "risk"),
+            confirmation=_coerce(confirmation, Confirmation, "confirmation"),
+            idempotency=_coerce(idempotency, Idempotency, "idempotency"),
         )
 
     def has_effect(self, effect: str) -> bool:
