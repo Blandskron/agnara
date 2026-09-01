@@ -27,6 +27,9 @@ dev = [
     "agnara-events",
     "agnara-telemetry",
     "agnara-cli",
+    # Third-party schema adapters remain experiments until E2.7 compares
+    # their performance and ergonomics. This is not a core dependency.
+    "msgspec>=0.21,<0.22",
     "pytest>=8.4",
     "ruff>=0.14",
     "ty>=0.0.1a1",
@@ -39,7 +42,7 @@ dev = [
 [tool.ruff]
 target-version = "py314"
 line-length = 100
-src = ["packages/*/src", "tests"]
+src = ["packages/*/src", "experiments", "tests"]
 
 [tool.ruff.lint]
 select = [
@@ -89,7 +92,7 @@ root = [
 ]
 
 [tool.ty.src]
-include = ["packages", "tests"]
+include = ["packages", "experiments", "tests"]
 
 # --------------------------------------------------------------------------
 # pytest (E0.6)
