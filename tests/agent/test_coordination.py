@@ -7,6 +7,8 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 spec = importlib.util.spec_from_file_location("agent", "scripts/agent.py")
+assert spec is not None
+assert spec.loader is not None
 agent = importlib.util.module_from_spec(spec)
 sys.modules["agent"] = agent
 spec.loader.exec_module(agent)
