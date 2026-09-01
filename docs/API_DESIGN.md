@@ -168,6 +168,26 @@ http = app.use(Http(openapi=True))
 
 OpenAPI is generated from HTTP exposures plus shared capability schemas.
 
+The complete semantic input is:
+
+```text
+CapabilityDefinition
++ compiled HTTP exposure
++ schema adapter output
++ explicitly publishable policy/discovery metadata
+        ↓
+OpenAPI 3.2
+```
+
+Developers do not maintain a parallel OpenAPI document for generated
+exposures. Capabilities without an HTTP exposure do not appear as invented
+OpenAPI operations.
+
+`Http(openapi=True)` remains a golden-design sketch. It is not stable syntax.
+The implementation must review typed schema/documentation configuration,
+route collision handling and independent enable/disable controls before
+freezing the API.
+
 ## 19. Agent-readable metadata
 
 ```python
@@ -175,6 +195,48 @@ manifest = app.describe(format="agnara")
 ```
 
 The manifest should include permissions, effects, risk and available exposures.
+
+The final API returns or serializes a versioned, filtered introspection
+snapshot. It must not expose internal runtime objects, secret configuration or
+private capabilities merely because they are registered.
+
+OpenAPI and the Agnara snapshot are separate projections. Agents never need to
+parse a documentation HTML page to discover capabilities.
+
+## 19A. Optional documentation interfaces
+
+Conceptual target only:
+
+```python
+http = app.use(
+    Http(
+        openapi=True,
+        docs=True,
+        redoc=False,
+        explorer=True,
+    )
+)
+```
+
+The booleans and default routes are deliberately provisional. The reviewed
+public API must make these independent:
+
+- OpenAPI schema generation and serving;
+- one or more replaceable OpenAPI UI providers;
+- Agnara Explorer;
+- interactive "try it" execution;
+- visibility/authorization policy for each published surface.
+
+Target route shapes such as `/openapi.json`, `/docs`, `/redoc` and `/agnara`
+are familiar candidates, not stable contracts. Every route must be
+configurable, disableable and checked for collisions.
+
+Documentation providers consume an already-filtered OpenAPI contract. Agnara
+Explorer consumes the already-filtered protocol-neutral snapshot instead.
+
+No UI provider is required for OpenAPI export. Production deployments can
+disable all HTML while preserving an authorized machine-readable schema or
+snapshot.
 
 ## 20. Testing without a server
 
@@ -277,3 +339,21 @@ agnara inspect payments --json
 ```
 
 This is a first-class requirement for agents and automation.
+
+The JSON format must be versioned and deterministic and should match the data
+contract consumed by Agnara Explorer. Human text output is a presentation of
+the same filtered snapshot, not a separately discovered model.
+
+## 29. Export generated OpenAPI
+
+```bash
+agnara schema openapi
+```
+
+The command exports the same deterministic projection served by the HTTP
+schema endpoint and must support non-interactive file/stdout use. Exact output
+flags and exit codes remain pending CLI review.
+
+`agnara docs` is not yet accepted. Add it only if it provides framework-specific
+development value beyond `agnara dev`; it must not become a second source of
+documentation configuration.

@@ -76,6 +76,20 @@ Transport packages may use these concepts.
 
 A capability is not intrinsically a tool.
 
+### NEVER make documentation UI the semantic source of truth
+
+`agnara-core` MUST NOT depend on OpenAPI tooling, Swagger UI, ReDoc, Scalar or
+another browser documentation implementation.
+
+`agnara-http` may project compiled HTTP exposures to OpenAPI.
+
+Documentation UIs consume generated OpenAPI through replaceable optional
+providers. Agnara Explorer consumes filtered protocol-neutral introspection,
+not OpenAPI alone.
+
+Human UI and machine-readable discovery must remain independently
+configurable. Hiding an operation in a UI is never authorization.
+
 ### NEVER put LLM calls in core
 
 Agentic-native means agents are first-class consumers, not that the framework owns model reasoning.
@@ -235,6 +249,22 @@ Generators must:
 - expose machine-readable output where documented;
 - update project metadata safely;
 - never silently delete modified files.
+
+## Documentation and discovery invariants
+
+Read before changing OpenAPI generation, documentation routes/providers,
+introspection or Agnara Explorer behavior:
+
+- `docs/rfc/0003-http-documentation-and-capability-explorer.md`
+- `docs/adr/0018-replaceable-documentation-providers.md`
+- `docs/REFERENCE_RESEARCH.md`
+
+Use pinned self-hosted UI assets as the production baseline. CDN assets
+require explicit opt-in, exact versions and documented CSP/integrity effects.
+
+Apply visibility, redaction and authorization before serializing OpenAPI or
+introspection. Never expose secrets, runtime dependency values, private
+capabilities or sensitive policy internals automatically.
 
 ## GitHub autonomous development workflow
 

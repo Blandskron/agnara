@@ -219,6 +219,23 @@ Responsibilities:
 
 `agnara-http` may depend on an ASGI utility library only after an ADR demonstrates why direct ASGI is insufficient.
 
+OpenAPI and browser documentation follow this one-way projection:
+
+```text
+Capability
++ compiled HTTP Exposure
++ Schema Port output
++ explicitly publishable policy/discovery metadata
+        ↓
+OpenAPI 3.2
+        ↓
+replaceable documentation provider
+```
+
+Swagger UI, ReDoc, Scalar or any later documentation provider is optional and
+replaceable. No provider is a semantic dependency of `agnara-http`, and none
+may enter `agnara-core`.
+
 ### `agnara-mcp`
 
 Responsibilities:
@@ -377,28 +394,111 @@ on_error
 
 Hot-path hooks must be compiled to avoid dynamic registry scans.
 
-## 10. Discovery
+## 10. Discovery and documentation
 
-Agnara should eventually expose a protocol-neutral capability manifest.
+Agnara exposes two distinct projections from one compiled application model.
 
-Illustrative shape:
+### Protocol contracts
+
+Each adapter projects only its exposures into the relevant protocol contract:
+
+```text
+HTTP exposures   → OpenAPI 3.2
+MCP exposures    → MCP discovery
+A2A exposures    → Agent Card / skills
+Event exposures  → AsyncAPI
+```
+
+No protocol contract is the canonical representation of a capability.
+
+For HTTP, `agnara-http` derives OpenAPI from the capability definition,
+compiled HTTP exposure, schema port and policy/discovery metadata explicitly
+approved for publication. Developers do not maintain a parallel OpenAPI file
+for generated exposures.
+
+Human OpenAPI interfaces sit behind an optional provider boundary:
+
+```text
+OpenAPI 3.2
+   ├── Swagger UI provider
+   ├── ReDoc provider
+   ├── other evaluated provider
+   └── no UI
+```
+
+The preferred production asset mode is version-pinned and self-hosted. CDN
+loading is explicit opt-in with documented integrity and CSP consequences.
+
+### Protocol-neutral introspection
+
+Agnara also defines a read-only, versioned introspection snapshot for concepts
+that OpenAPI cannot represent completely:
+
+```text
+Project
+Apps
+Capabilities
+Exposures
+Dependencies
+Policies
+Effects
+Risk
+Idempotency
+Confirmation
+Schemas
+Transport availability
+```
+
+Core may define neutral descriptor contracts because multiple adapters and the
+CLI consume them. Adapter-specific exposure details are contributed through
+extension contracts; core does not import adapters.
+
+The snapshot is a safe projection, not a dump of runtime objects. Publication
+policy removes private capabilities, sensitive dependency/policy details,
+secrets and unsafe examples before serialization.
+
+Conceptual machine-readable shape:
 
 ```json
 {
-  "capabilities": [
+  "format": "agnara-introspection",
+  "version": "0",
+  "apps": [
     {
-      "name": "send_payment",
-      "effects": ["financial-write"],
-      "risk": "high",
-      "confirmation": "required",
-      "idempotent": false,
-      "exposures": ["http", "mcp", "a2a"]
+      "id": "payments",
+      "capabilities": [
+        {
+          "id": "payments.refund",
+          "effects": ["financial-write"],
+          "risk": "high",
+          "confirmation": "policy",
+          "idempotency": "no",
+          "exposures": ["http", "mcp", "a2a"]
+        }
+      ]
     }
   ]
 }
 ```
 
-This manifest is not a replacement for OpenAPI, MCP discovery or A2A Agent Cards. It is Agnara's own introspection representation and should remain optional unless standardized later.
+The exact schema and version are pending RFC/API review.
+
+### Agnara Explorer
+
+Agnara Explorer visualizes the filtered protocol-neutral snapshot. It may be
+served through HTTP initially, but HTTP and OpenAPI are not its data model.
+The CLI, agent tooling and Explorer should consume the same introspection
+contract where possible.
+
+Human UI and machine-readable discovery are separate surfaces. Deployments
+must be able to disable all HTML interfaces while retaining an authorized
+OpenAPI or introspection endpoint, or disable publication entirely.
+
+Visibility, schema publication, UI availability and interactive execution are
+independent security decisions. Hiding an operation in a UI does not authorize
+or deauthorize invocation.
+
+See RFC 0003 and ADR 0018.
 
 ## 11. Native acceleration
 
