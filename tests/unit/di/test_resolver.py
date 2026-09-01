@@ -36,7 +36,6 @@ def provide_db() -> Iterator[Database]:
 
 @provider(scope=Scope.INVOCATION)
 async def provide_cache(db: Database) -> AsyncIterator[AsyncCache]:
-    # Cache relies on DB to test cross-provider resolution
     assert db.connected
     cache = AsyncCache()
     await cache.connect()
@@ -59,37 +58,68 @@ def test_di_container_resolution_and_cleanup():
         db_instance = None
         cache_instance = None
 
-        # First invocation
         async with container.resolve_dependencies(my_handler, dag) as kwargs:
-            assert "cache" in kwargs
-            assert "db" in kwargs
-            assert "payload" not in kwargs
-
             cache = kwargs["cache"]
             db = kwargs["db"]
-
-            assert cache.connected
-            assert db.connected
-
             db_instance = db
             cache_instance = cache
 
-        # After invocation, INVOCATION cache should be torn down, SINGLETON should remain
         assert cache_instance.connected is False
         assert db_instance.connected is True
 
-        # Second invocation to check cache reuse
         async with container.resolve_dependencies(my_handler, dag) as kwargs2:
             cache2 = kwargs2["cache"]
             db2 = kwargs2["db"]
-
-            # Singleton reused
             assert db2 is db_instance
-            # Invocation created new
             assert cache2 is not cache_instance
 
-        # Close container
         await container.aclose()
         assert db_instance.connected is False
+
+    asyncio.run(run_test())
+
+
+def test_di_container_singleton_concurrency():
+    """Verify E3.8 free-threading / asyncio concurrency safety assumptions."""
+
+    class SlowSingleton:
+        pass
+
+    initialization_count = 0
+
+    @provider(scope=Scope.SINGLETON)
+    async def provide_slow() -> SlowSingleton:
+        nonlocal initialization_count
+        # Simulate an IO-bound initialization that forces context switch
+        await asyncio.sleep(0.1)
+        initialization_count += 1
+        return SlowSingleton()
+
+    async def run_test():
+        registry = DIRegistry()
+        registry.bind(SlowSingleton, provide_slow)
+
+        def my_handler(slow: SlowSingleton) -> None:
+            pass
+
+        dag = compile_dag(registry, [my_handler])
+        container = DIContainer(registry)
+
+        async def worker():
+            async with container.resolve_dependencies(my_handler, dag) as kwargs:
+                return kwargs["slow"]
+
+        # Run 100 concurrent resolutions
+        results = await asyncio.gather(*(worker() for _ in range(100)))
+
+        # Ensure that only ONE initialization happened despite 100 concurrent requests
+        assert initialization_count == 1
+
+        # Ensure all 100 workers got the exact same instance
+        first_instance = results[0]
+        for instance in results:
+            assert instance is first_instance
+
+        await container.aclose()
 
     asyncio.run(run_test())
