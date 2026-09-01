@@ -5,8 +5,8 @@ dependency, no code generation, nothing clever. It exists so the port has a
 working consumer, so a project can run without choosing a validation
 library, and so faster adapters have something to be measured against.
 
-It covers primitives and common standard-library type compositions.
-Dataclass object schemas follow in E2.3.
+It covers primitives, common standard-library type compositions and ordinary
+dataclass object schemas.
 
 ## Strictness
 
@@ -26,14 +26,27 @@ before it validates, rather than the core guessing on everyone's behalf.
 Python says `isinstance(True, int)` is true. A schema should not: a handler
 declaring `int` and receiving `True` has almost certainly been passed the
 wrong thing. `bool` is checked exactly, and rejected where `int` is wanted.
+
+## Dataclasses
+
+A dataclass annotation validates an exact instance and returns it unchanged.
+Mapping-to-instance construction belongs at a boundary that knows its wire
+format; the core adapter does not silently construct domain objects.
+
+Field defaults make properties non-required in the JSON Schema projection,
+but default factories are never executed during compilation. Recursive
+dataclass graphs, `InitVar` and `init=False` fields fail at compile time until
+the port has explicit reference and directional input/output semantics.
 """
 
 from __future__ import annotations
 
+from dataclasses import MISSING, InitVar, is_dataclass
+from dataclasses import fields as dataclass_fields
 from enum import Enum
 from math import isfinite
 from types import GenericAlias, NoneType, UnionType
-from typing import Any, Final, Literal, Union, get_args, get_origin
+from typing import Any, Final, Literal, Union, cast, get_args, get_origin, get_type_hints
 
 from agnara._frozen import frozen_slots_dataclass
 from agnara.errors import SchemaError, ValidationError
@@ -41,6 +54,8 @@ from agnara.schema.port import JsonSchema, TypeSchema
 
 __all__ = [
     "AnySchema",
+    "DataclassFieldSchema",
+    "DataclassSchema",
     "DictionarySchema",
     "EnumSchema",
     "ListSchema",
@@ -125,6 +140,54 @@ class AnySchema:
         # An empty schema is JSON Schema's "anything", and is not the same
         # as `true`; a mapping keeps the return type uniform.
         return {}
+
+
+@frozen_slots_dataclass
+class DataclassFieldSchema:
+    """One recursively compiled instance field of a dataclass schema."""
+
+    name: str
+    schema: TypeSchema
+    required: bool
+
+
+@frozen_slots_dataclass
+class DataclassSchema:
+    """A strict schema for one standard-library dataclass type."""
+
+    dataclass_type: type
+    fields: tuple[DataclassFieldSchema, ...]
+
+    def validate(self, value: object) -> Any:
+        if type(value) is not self.dataclass_type:
+            raise ValidationError(
+                f"expected {self.dataclass_type.__name__}, got {type(value).__name__}"
+            )
+        for field_schema in self.fields:
+            try:
+                field_value = getattr(value, field_schema.name)
+            except AttributeError as error:
+                raise ValidationError("field is missing", path=(field_schema.name,)) from error
+            try:
+                field_schema.schema.validate(field_value)
+            except ValidationError as error:
+                raise error.at(field_schema.name) from error
+        return value
+
+    def json_schema(self) -> JsonSchema:
+        properties = {
+            field_schema.name: dict(field_schema.schema.json_schema())
+            for field_schema in self.fields
+        }
+        required = [field_schema.name for field_schema in self.fields if field_schema.required]
+        schema: dict[str, Any] = {
+            "type": "object",
+            "properties": properties,
+            "additionalProperties": False,
+        }
+        if required:
+            schema["required"] = required
+        return schema
 
 
 @frozen_slots_dataclass
@@ -284,6 +347,9 @@ class StandardSchemaAdapter:
     """Compiles common Python annotations using only the standard library."""
 
     def compile(self, annotation: Any) -> TypeSchema:
+        return self._compile(annotation, dataclass_stack=())
+
+    def _compile(self, annotation: Any, dataclass_stack: tuple[type, ...]) -> TypeSchema:
         if annotation is Any:
             return AnySchema()
         if annotation is None or annotation is NoneType:
@@ -292,30 +358,36 @@ class StandardSchemaAdapter:
             return PrimitiveSchema(annotation)
         if isinstance(annotation, type) and issubclass(annotation, Enum):
             return self._compile_enum(annotation)
+        if isinstance(annotation, type) and is_dataclass(annotation):
+            return self._compile_dataclass(annotation, dataclass_stack)
 
         origin = get_origin(annotation)
         arguments = get_args(annotation)
         if origin is list:
             if len(arguments) != 1:
                 raise self._malformed(annotation, "exactly one item type is required")
-            return ListSchema(self.compile(arguments[0]))
+            return ListSchema(self._compile(arguments[0], dataclass_stack))
         if origin is dict:
             if len(arguments) != 2:
                 raise self._malformed(annotation, "key and value types are required")
             key_type, value_type = arguments
             if key_type is not str:
                 raise self._malformed(annotation, "dictionary keys must be str")
-            return DictionarySchema(self.compile(value_type))
+            return DictionarySchema(self._compile(value_type, dataclass_stack))
         if origin is tuple:
             if not arguments and not isinstance(annotation, GenericAlias):
                 raise self._malformed(annotation, "at least one item type is required")
             if len(arguments) == 2 and arguments[1] is Ellipsis:
-                return TupleSchema((self.compile(arguments[0]),), variadic=True)
-            return TupleSchema(tuple(self.compile(argument) for argument in arguments))
+                return TupleSchema((self._compile(arguments[0], dataclass_stack),), variadic=True)
+            return TupleSchema(
+                tuple(self._compile(argument, dataclass_stack) for argument in arguments)
+            )
         if origin is Literal:
             return self._compile_literal(annotation, arguments)
         if origin is Union or origin is UnionType:
-            return UnionSchema(tuple(self.compile(argument) for argument in arguments))
+            return UnionSchema(
+                tuple(self._compile(argument, dataclass_stack) for argument in arguments)
+            )
         raise SchemaError(
             f"{self._render(annotation)} is not supported by "
             f"{type(self).__name__}; it currently handles "
@@ -328,6 +400,55 @@ class StandardSchemaAdapter:
         except SchemaError:
             return False
         return True
+
+    def _compile_dataclass(
+        self, annotation: type, dataclass_stack: tuple[type, ...]
+    ) -> DataclassSchema:
+        if annotation in dataclass_stack:
+            cycle = " -> ".join(
+                dataclass_type.__name__ for dataclass_type in (*dataclass_stack, annotation)
+            )
+            raise self._malformed(annotation, f"recursive dataclass graph: {cycle}")
+
+        try:
+            type_hints = get_type_hints(annotation)
+        except Exception as error:
+            raise self._malformed(
+                annotation, f"field annotations could not be resolved: {error}"
+            ) from error
+
+        init_vars = [
+            name for name, field_type in type_hints.items() if isinstance(field_type, InitVar)
+        ]
+        if init_vars:
+            joined = ", ".join(init_vars)
+            raise self._malformed(
+                annotation,
+                f"InitVar fields require directional schema support: {joined}",
+            )
+
+        compiled_fields: list[DataclassFieldSchema] = []
+        next_stack = (*dataclass_stack, annotation)
+        for field in dataclass_fields(cast(Any, annotation)):
+            if not field.init:
+                raise self._malformed(
+                    annotation,
+                    f"field {field.name!r} uses init=False, which requires "
+                    "directional schema support",
+                )
+            field_type = type_hints.get(field.name)
+            if field_type is None:
+                raise self._malformed(
+                    annotation, f"field {field.name!r} has no resolvable annotation"
+                )
+            compiled_fields.append(
+                DataclassFieldSchema(
+                    name=field.name,
+                    schema=self._compile(field_type, next_stack),
+                    required=field.default is MISSING and field.default_factory is MISSING,
+                )
+            )
+        return DataclassSchema(annotation, tuple(compiled_fields))
 
     def _compile_literal(self, annotation: Any, arguments: tuple[object, ...]) -> LiteralSchema:
         if not arguments:
@@ -375,6 +496,7 @@ class StandardSchemaAdapter:
                 "unions",
                 "Literal",
                 "Enum",
+                "dataclasses",
             ]
         )
 
