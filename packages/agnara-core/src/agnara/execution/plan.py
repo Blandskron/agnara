@@ -1,29 +1,86 @@
-from collections.abc import Callable
-from typing import Any
+"""Compiled, protocol-neutral execution metadata for one capability."""
+
+from __future__ import annotations
+
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import field
+from types import MappingProxyType
+from typing import Any, get_type_hints
 
 from agnara._frozen import frozen_slots_dataclass
 from agnara.capability.definition import CapabilityDefinition
-from agnara.core.di.compiler import compile_dag
-from agnara.core.di.registry import DIRegistry
+from agnara.core.di import DIRegistry, compile_dag
+from agnara.errors import DefinitionError
+from agnara.execution.context import ExecutionContext
 
 __all__ = ["ExecutionPlan"]
 
 
 @frozen_slots_dataclass
 class ExecutionPlan:
-    """A compiled capability ready for invocation.
+    """An immutable capability plan compiled before runtime invocation.
 
-    Holds the original capability definition and the pre-computed dependency
-    DAG so that the `DIContainer` can resolve dependencies quickly during
-    execution without needing to re-compile them on the hot path.
+    ``target_deps`` preserves the mapping consumed by ``DIContainer`` while
+    copying every dependency collection to a tuple and wrapping the mapping
+    in a read-only proxy. The mutable DI registry is deliberately not retained.
     """
 
     definition: CapabilityDefinition
-    target_deps: dict[Callable[..., Any], list[type]]
+    target_deps: Mapping[Callable[..., Any], Sequence[type]]
+    dependency_parameters: frozenset[str] = field(init=False)
+    context_parameters: tuple[str, ...] = field(init=False)
+    protected_parameters: frozenset[str] = field(init=False)
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.definition, CapabilityDefinition):
+            raise DefinitionError(
+                f"definition must be a CapabilityDefinition, got {type(self.definition).__name__}"
+            )
+        if not isinstance(self.target_deps, Mapping):
+            raise DefinitionError(
+                f"target_deps must be a mapping, got {type(self.target_deps).__name__}"
+            )
+
+        immutable_deps = {
+            target: tuple(dependencies) for target, dependencies in self.target_deps.items()
+        }
+        object.__setattr__(self, "target_deps", MappingProxyType(immutable_deps))
+
+        direct_dependencies = frozenset(immutable_deps.get(self.definition.handler, ()))
+        hints = get_type_hints(self.definition.handler)
+        dependency_parameters = frozenset(
+            name
+            for name, annotation in hints.items()
+            if name != "return" and annotation in direct_dependencies
+        )
+        context_parameters = tuple(
+            name
+            for name, annotation in hints.items()
+            if name != "return" and annotation is ExecutionContext
+        )
+        object.__setattr__(self, "dependency_parameters", dependency_parameters)
+        object.__setattr__(self, "context_parameters", context_parameters)
+        object.__setattr__(
+            self,
+            "protected_parameters",
+            dependency_parameters.union(context_parameters),
+        )
 
     @classmethod
     def compile(cls, definition: CapabilityDefinition, registry: DIRegistry) -> ExecutionPlan:
-        """Compile a capability definition into an execution plan."""
-        # Compile the dependency DAG for the capability's handler
-        dag = compile_dag(registry, [definition.handler])
-        return cls(definition=definition, target_deps=dag)
+        """Compile and validate the complete provider graph for ``definition``."""
+        if not isinstance(definition, CapabilityDefinition):
+            raise DefinitionError(
+                f"definition must be a CapabilityDefinition, got {type(definition).__name__}"
+            )
+        if not isinstance(registry, DIRegistry):
+            raise DefinitionError(f"registry must be a DIRegistry, got {type(registry).__name__}")
+        return cls(
+            definition=definition,
+            target_deps=compile_dag(registry, [definition.handler]),
+        )
+
+    @property
+    def dependencies(self) -> tuple[type, ...]:
+        """Direct dependency types in handler-signature order."""
+        return tuple(self.target_deps.get(self.definition.handler, ()))

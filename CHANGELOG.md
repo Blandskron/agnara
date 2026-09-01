@@ -49,9 +49,18 @@ package version `0.0.0` is a development sentinel, not a published release.
   registration order, duplicate-id rejection, a freeze step that yields an
   immutable thread-safe view, lookup by id or dotted string, and
   introspection by namespace and declared effect ([#19]).
+- Immutable `ExecutionPlan` startup compilation, which snapshots each
+  capability's direct DI requirements after validating the complete provider
+  graph ([#62]).
+- Transport-neutral direct invocation of compiled plans with explicit context
+  injection, DI ownership, sync/async handlers and deterministic resource
+  cleanup ([#65]).
 
 ### Changed
 
+- Direct invocation explicitly propagates task cancellation while cleaning up
+  resources entered before cancellation, including during dependency
+  construction ([#67]).
 - Agent-assisted commits now resolve authorized public identities through a
   provider-neutral registry. Materially authored Codex changes use the
   verified `openai-codex[bot]` GitHub identity, while fixed global hooks and
@@ -80,3 +89,6 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#32]: https://github.com/Blandskron/agnara/issues/32
 [#34]: https://github.com/Blandskron/agnara/issues/34
 [#36]: https://github.com/Blandskron/agnara/issues/36
+[#62]: https://github.com/Blandskron/agnara/issues/62
+[#65]: https://github.com/Blandskron/agnara/issues/65
+[#67]: https://github.com/Blandskron/agnara/issues/67
