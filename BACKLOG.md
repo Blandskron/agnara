@@ -175,7 +175,7 @@ Core imports neither Pydantic nor msgspec.
 
 ## EPIC 8 — Documentation and introspection
 
-- [~] E8.0 Define the interactive documentation and Agnara Explorer
+- [x] E8.0 Define the interactive documentation and Agnara Explorer
   architecture. Tracked by Issue #9.
 - [ ] E8.1 Define an immutable, versioned protocol-neutral introspection
   snapshot for projects, apps, capabilities, exposures, dependencies,
