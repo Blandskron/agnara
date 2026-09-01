@@ -130,7 +130,7 @@ class TestValueSemantics:
             dataclasses.FrozenInstanceError,
             match="cannot assign to field 'version'",
         ):
-            capability_id.version = 2  # ty: ignore[unresolved-attribute]
+            capability_id.version = 2  # ty: ignore[invalid-assignment]
 
     def test_unknown_attribute_cannot_be_deleted(self) -> None:
         capability_id = CapabilityId("payments", "refund")
@@ -138,4 +138,4 @@ class TestValueSemantics:
             dataclasses.FrozenInstanceError,
             match="cannot delete field 'version'",
         ):
-            del capability_id.version  # ty: ignore[unresolved-attribute]
+            del capability_id.version  # ty: ignore[invalid-assignment]
