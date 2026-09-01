@@ -212,7 +212,7 @@ class TestImmutability:
             dataclasses.FrozenInstanceError,
             match="cannot delete field 'exposures'",
         ):
-            del definition.exposures  # ty: ignore[invalid-assignment]
+            delattr(definition, "exposures")
 
     def test_replace_produces_a_new_definition(self) -> None:
         original = define()

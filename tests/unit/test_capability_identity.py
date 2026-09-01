@@ -138,4 +138,4 @@ class TestValueSemantics:
             dataclasses.FrozenInstanceError,
             match="cannot delete field 'version'",
         ):
-            del capability_id.version  # ty: ignore[invalid-assignment]
+            delattr(capability_id, "version")
