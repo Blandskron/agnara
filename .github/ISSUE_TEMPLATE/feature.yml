@@ -1,0 +1,66 @@
+name: Feature / Backlog Task
+description: Implement a planned Agnara capability, framework feature, or backlog item.
+title: "[BACKLOG-ID] "
+labels:
+  - "type:feature"
+body:
+  - type: input
+    id: backlog
+    attributes:
+      label: Backlog reference
+      description: Example E1.3
+      placeholder: E1.3
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: architecture
+    attributes:
+      label: Architecture constraints
+      description: Relevant AGENTS/ADR/RFC/package boundaries.
+    validations:
+      required: true
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation plan
+      description: Tests, type checks, architecture checks and benchmarks if relevant.
+    validations:
+      required: true

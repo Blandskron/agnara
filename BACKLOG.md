@@ -12,16 +12,27 @@ The agent must update this file as work progresses and must never mark a task co
 
 ## EPIC 0 — Repository foundation
 
-- [ ] E0.1 Create `uv` workspace.
-- [ ] E0.2 Create package boundaries described in `ARCHITECTURE.md`.
-- [ ] E0.3 Set `requires-python = ">=3.14"`.
-- [ ] E0.4 Configure Ruff lint + format.
-- [ ] E0.5 Configure `ty` type checking.
-- [ ] E0.6 Configure pytest.
-- [ ] E0.7 Add architecture import tests.
-- [ ] E0.8 Add GitHub Actions for Linux, macOS and Windows where practical.
+- [x] E0.1 Create `uv` workspace.
+- [x] E0.2 Create package boundaries described in `ARCHITECTURE.md`.
+- [x] E0.3 Set `requires-python = ">=3.14"`.
+- [x] E0.4 Configure Ruff lint + format.
+- [x] E0.5 Configure `ty` type checking.
+- [x] E0.6 Configure pytest.
+- [x] E0.7 Add architecture import tests.
+- [x] E0.8 Add GitHub Actions for Linux, macOS and Windows where practical.
 - [ ] E0.9 Add conventional changelog/release process.
 - [ ] E0.10 Add license only after owner decision.
+- [x] E0.13 Verify Ruff and `ty` gates. Both are green in CI as of PR #1.
+  They still cannot run on the current Windows workstation: an Application
+  Control policy refuses their native binaries (`OSError 4551`) from both
+  the virtual environment and the interpreter `Scripts` directory. The
+  policy must not be weakened. CI is therefore the authoritative record for
+  these two gates — see `QUALITY_GATES.md`.
+- [x] E0.14 Restore GitHub autonomy. `gh` 2.98.0 is installed and
+  authenticated, so Issues, Pull Requests, reviews and merges are available
+  again. Work merged before PR #1 carries local `--no-ff` merges with
+  documented self-review instead of Pull Requests; that history is not
+  retroactively backed by PR review.
 
 ### Acceptance
 
@@ -34,6 +45,10 @@ uv run pytest
 ```
 
 all pass on Python 3.14.
+
+Current evidence: all five gates pass in CI on CPython 3.14, across
+ubuntu-latest, macos-latest and windows-latest, with 105 tests. See the
+checks on PR #1. Locally only `uv sync` and `pytest` can run (E0.13).
 
 ## EPIC 1 — Capability model
 
@@ -198,3 +213,27 @@ Generated code must:
 - [ ] E1A.4 Expose app metadata through introspection.
 - [ ] E1A.5 Define cross-app public contract rules.
 - [ ] E1A.6 Freeze app registry during project compilation.
+
+## EPIC 0B — Agentic repository governance
+
+- [ ] E0B.1 Establish GitHub Issue labels for type/area/priority.
+- [ ] E0B.2 Configure branch rulesets for `main`.
+- [ ] E0B.3 Configure branch rulesets for `develop`.
+- [ ] E0B.4 Require relevant CI checks before merge.
+- [ ] E0B.5 Configure allowed merge strategies.
+- [ ] E0B.6 Validate GitHub CLI autonomous workflow.
+- [ ] E0B.7 Validate Issue → branch → PR → merge → close flow.
+- [ ] E0B.8 Decide single-agent or dual-agent review mode for repository governance.
+- [ ] E0B.9 Configure independent reviewer identity when available.
+- [ ] E0B.10 Configure auto-merge policy where safe.
+- [x] E0B.11 Replace placeholder OWNER/REPO in security Issue template.
+- [ ] E0B.12 Document release and hotfix automation evidence.
+
+### Acceptance
+
+- normal work cannot bypass the documented PR flow;
+- agent can create and close an Issue through a merged PR;
+- required checks are enforced;
+- force-pushes to protected branches are blocked;
+- no workflow requires an impossible self-approval;
+- the complete lifecycle is visible and understandable to a human maintainer.

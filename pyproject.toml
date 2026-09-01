@@ -1,0 +1,107 @@
+# Agnara workspace root.
+#
+# This is a virtual uv workspace root: it is not itself a distributable
+# package. Every distributable package lives under `packages/`.
+#
+# See ARCHITECTURE.md section 3 for the package boundaries and section 4
+# for the allowed dependency graph.
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+agnara-core = { workspace = true }
+agnara-http = { workspace = true }
+agnara-mcp = { workspace = true }
+agnara-a2a = { workspace = true }
+agnara-events = { workspace = true }
+agnara-telemetry = { workspace = true }
+agnara-cli = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "agnara-core",
+    "agnara-http",
+    "agnara-mcp",
+    "agnara-a2a",
+    "agnara-events",
+    "agnara-telemetry",
+    "agnara-cli",
+    "pytest>=8.4",
+    "ruff>=0.14",
+    "ty>=0.0.1a1",
+]
+
+# --------------------------------------------------------------------------
+# Ruff (E0.4)
+# --------------------------------------------------------------------------
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+src = ["packages/*/src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "F",    # pyflakes
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "TID",  # flake8-tidy-imports
+    "RUF",  # ruff-specific
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "parents"
+
+[tool.ruff.format]
+docstring-code-format = true
+
+# Ruff also formats Python fenced blocks inside Markdown. The examples in
+# docs/API_DESIGN.md and the RFCs are a design contract reviewed by humans,
+# not code to be normalized -- docs/API_DESIGN.md exists precisely so that
+# implementation convenience does not dictate the public API. Some blocks
+# are also deliberately illustrative rather than valid Python.
+exclude = ["**/*.md"]
+
+# --------------------------------------------------------------------------
+# ty (E0.5)
+# --------------------------------------------------------------------------
+
+[tool.ty.environment]
+python-version = "3.14"
+root = [
+    # Each package exposes its import root from `src/`, per ADR 0017.
+    "packages/agnara-core/src",
+    "packages/agnara-http/src",
+    "packages/agnara-mcp/src",
+    "packages/agnara-a2a/src",
+    "packages/agnara-events/src",
+    "packages/agnara-telemetry/src",
+    "packages/agnara-cli/src",
+    # `tests` is itself a package, so the workspace root is what has to be
+    # importable for `tests.architecture...` to resolve -- not `tests/`.
+    ".",
+]
+
+[tool.ty.src]
+include = ["packages", "tests"]
+
+# --------------------------------------------------------------------------
+# pytest (E0.6)
+# --------------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+minversion = "8.4"
+testpaths = ["tests", "packages"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+]
+xfail_strict = true
+filterwarnings = ["error"]

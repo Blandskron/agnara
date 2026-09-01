@@ -1,0 +1,9 @@
+# Normalize to LF in the repository and in the working tree on every
+# platform, so Windows, Linux and macOS CI lanes see identical bytes.
+* text=auto eol=lf
+
+# Lockfiles and binary assets
+uv.lock text eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

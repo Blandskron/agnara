@@ -1,0 +1,174 @@
+"""E0.7 — automated architecture rules.
+
+These tests are the executable form of the dependency rules in
+``ARCHITECTURE.md`` sections 3 and 4, ``PRINCIPLES.md`` P2/P3/P13,
+``AGENTS.md`` "Core invariants" and ADR 0003.
+
+They must fail when:
+
+- ``agnara-core`` imports a forbidden dependency;
+- an adapter imports a sibling adapter;
+- a package cycle appears;
+- a new ``agnara-core`` runtime dependency is introduced.
+"""
+
+from __future__ import annotations
+
+import pytest
+
+from tests.architecture.boundaries import (
+    ADAPTER_DISTRIBUTIONS,
+    CORE_DISTRIBUTION,
+    CORE_IMPORT_NAME,
+    DISTRIBUTIONS,
+    FORBIDDEN_IN_CORE,
+    declared_dependencies,
+    declared_workspace_dependencies,
+    dependency_graph,
+    external_imports_of,
+    find_cycle,
+    import_graph,
+    is_standard_library,
+)
+
+# ---------------------------------------------------------------------------
+# Rule 1 — the core imports nothing but the standard library
+# ---------------------------------------------------------------------------
+
+
+def test_core_imports_only_the_standard_library() -> None:
+    """PRINCIPLES.md P3: ``agnara-core`` prefers the standard library.
+
+    This is the general form of the forbidden-dependency rule: anything that
+    is neither the standard library nor ``agnara`` itself is a new core
+    dependency and needs an ADR before it may appear here.
+    """
+    offenders = [
+        imp for imp in external_imports_of(CORE_DISTRIBUTION) if not is_standard_library(imp.module)
+    ]
+    assert not offenders, "agnara-core may import only the standard library:\n" + "\n".join(
+        f"  {imp.where()} imports {imp.module!r}" for imp in offenders
+    )
+
+
+def test_core_does_not_import_forbidden_dependencies() -> None:
+    """AGENTS.md: the core is never coupled to a protocol, server or SDK."""
+    offenders = [
+        imp for imp in external_imports_of(CORE_DISTRIBUTION) if imp.module in FORBIDDEN_IN_CORE
+    ]
+    assert not offenders, (
+        "agnara-core imports a dependency forbidden by AGENTS.md and ADR 0003:\n"
+        + "\n".join(f"  {imp.where()} imports {imp.module!r}" for imp in offenders)
+    )
+
+
+def test_core_declares_no_runtime_dependencies() -> None:
+    """A new core runtime dependency must not slip in through packaging."""
+    declared = declared_dependencies(CORE_DISTRIBUTION)
+    assert declared == [], (
+        "agnara-core must declare no runtime dependencies; CONTRIBUTING.md "
+        f"requires an explicit justification for each one. Found: {declared}"
+    )
+
+
+def test_core_does_not_import_any_adapter() -> None:
+    """ADR 0003: dependencies point inward. Core never imports an adapter."""
+    adapter_import_names = {DISTRIBUTIONS[dist] for dist in ADAPTER_DISTRIBUTIONS}
+    offenders = [
+        imp for imp in external_imports_of(CORE_DISTRIBUTION) if imp.module in adapter_import_names
+    ]
+    assert not offenders, "agnara-core must not import an adapter:\n" + "\n".join(
+        f"  {imp.where()} imports {imp.module!r}" for imp in offenders
+    )
+
+
+# ---------------------------------------------------------------------------
+# Rule 2 — adapters do not import sibling adapters
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("dist_name", ADAPTER_DISTRIBUTIONS)
+def test_adapter_does_not_import_a_sibling_adapter(dist_name: str) -> None:
+    """ARCHITECTURE.md section 4: cross-adapter imports are forbidden.
+
+    Behaviour needed by two adapters belongs in a composition package or in
+    the application layer, never in a direct sibling import.
+    """
+    siblings = {DISTRIBUTIONS[other] for other in ADAPTER_DISTRIBUTIONS if other != dist_name}
+    offenders = [imp for imp in external_imports_of(dist_name) if imp.module in siblings]
+    assert not offenders, f"{dist_name} must not import a sibling adapter:\n" + "\n".join(
+        f"  {imp.where()} imports {imp.module!r}" for imp in offenders
+    )
+
+
+@pytest.mark.parametrize("dist_name", ADAPTER_DISTRIBUTIONS)
+def test_adapter_declares_only_core_as_a_workspace_dependency(dist_name: str) -> None:
+    """Packaging metadata must agree with the import rule."""
+    declared = declared_workspace_dependencies(dist_name)
+    assert declared == [CORE_DISTRIBUTION], (
+        f"{dist_name} must declare exactly one workspace dependency "
+        f"({CORE_DISTRIBUTION}); found {declared}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Rule 3 — no package cycles
+# ---------------------------------------------------------------------------
+
+
+def test_import_graph_is_acyclic() -> None:
+    cycle = find_cycle(import_graph())
+    assert cycle is None, "workspace import cycle: " + " -> ".join(cycle or [])
+
+
+def test_declared_dependency_graph_is_acyclic() -> None:
+    cycle = find_cycle(dependency_graph())
+    assert cycle is None, "declared dependency cycle: " + " -> ".join(cycle or [])
+
+
+def test_dependency_direction_points_inward() -> None:
+    """Every workspace edge terminates at the core, never leaves it."""
+    graph = dependency_graph()
+    assert graph[CORE_DISTRIBUTION] == set(), (
+        f"{CORE_DISTRIBUTION} must not depend on any workspace package; "
+        f"found {sorted(graph[CORE_DISTRIBUTION])}"
+    )
+    for dist_name in ADAPTER_DISTRIBUTIONS:
+        assert graph[dist_name] <= {CORE_DISTRIBUTION}, (
+            f"{dist_name} may only depend on {CORE_DISTRIBUTION}; found {sorted(graph[dist_name])}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Rule 4 — imports resolve to a known boundary
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("dist_name", sorted(DISTRIBUTIONS))
+def test_package_has_no_unresolvable_workspace_import(dist_name: str) -> None:
+    """An ``agnara``-prefixed import must name a real workspace package.
+
+    This catches typos and stale renames that would otherwise only surface
+    at runtime, long after the boundary was crossed.
+    """
+    known = set(DISTRIBUTIONS.values())
+    offenders = [
+        imp
+        for imp in external_imports_of(dist_name)
+        if imp.module.startswith("agnara") and imp.module not in known
+    ]
+    assert not offenders, f"{dist_name} imports an unknown agnara package:\n" + "\n".join(
+        f"  {imp.where()} imports {imp.module!r}" for imp in offenders
+    )
+
+
+@pytest.mark.parametrize("dist_name", ADAPTER_DISTRIBUTIONS)
+def test_adapter_may_import_the_core(dist_name: str) -> None:
+    """A guard on the guards: the allowed edge must stay allowed.
+
+    If this ever fails, the rules above have become stricter than
+    ARCHITECTURE.md section 4 intends.
+    """
+    siblings = {DISTRIBUTIONS[other] for other in ADAPTER_DISTRIBUTIONS if other != dist_name}
+    assert CORE_IMPORT_NAME not in siblings
+    assert CORE_DISTRIBUTION in declared_dependencies(dist_name)

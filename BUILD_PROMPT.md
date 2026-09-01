@@ -198,3 +198,37 @@ The resulting `payments` app is still one protocol-neutral bounded context.
 Do not implement `app-api` or `app-mcp` as separate app models. If shortcuts are implemented, route them to the same canonical generator.
 
 Scaffolding quality is part of the framework's public developer experience and requires golden-file tests.
+
+## Autonomous Git/GitHub operating model
+
+Agnara is intended to be maintained primarily by agents.
+
+Before implementation work, read:
+
+- `GIT_WORKFLOW.md`
+- `AGENT_OPERATING_MODEL.md`
+
+The development unit is:
+
+```text
+Backlog item
+→ GitHub Issue
+→ branch
+→ code/tests/docs
+→ commit
+→ PR
+→ review
+→ merge
+```
+
+At the start of every run, inspect open PRs and Issues before selecting new work.
+
+Do not accumulate multiple unrelated backlog tasks into one long-lived branch.
+
+The preferred normal target is `develop`.
+
+`main` is reserved for release/hotfix integration.
+
+If two independent GitHub agent identities exist, use independent approval.
+
+If only one exists, never attempt to approve your own PR; perform documented self-review and merge only when objective rules allow it.

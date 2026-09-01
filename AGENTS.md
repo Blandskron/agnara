@@ -235,3 +235,44 @@ Generators must:
 - expose machine-readable output where documented;
 - update project metadata safely;
 - never silently delete modified files.
+
+## GitHub autonomous development workflow
+
+Read `GIT_WORKFLOW.md` and `AGENT_OPERATING_MODEL.md` before performing repository work.
+
+Agnara uses:
+
+```text
+BACKLOG
+→ Issue
+→ Branch
+→ Implementation
+→ Quality Gates
+→ Commit
+→ Push
+→ PR
+→ Review
+→ Merge
+```
+
+GitHub Issues are executable work units.
+
+One Issue → one branch → one PR is the default.
+
+Before starting new work, inspect existing open PRs and Issues.
+
+Normal task branches start from `develop` and target `develop`.
+
+`main` receives releases/hotfixes through PRs.
+
+Agents may autonomously create Issues, branches, commits, PRs, reviews and merges when repository permissions permit.
+
+An agent MUST NOT approve its own Pull Request.
+
+If only one GitHub identity is available, perform a mandatory documented self-review and rely on objective required checks rather than fabricating approval.
+
+If an independent reviewer identity is available, prefer dual-agent review.
+
+Never weaken repository protections to bypass failing work.
+
+Never push normal feature work directly to protected branches.

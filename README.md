@@ -291,3 +291,29 @@ Read:
 - `docs/SCAFFOLDING.md`
 - `docs/PROJECT_MANIFEST.md`
 - `docs/rfc/0002-project-app-scaffolding.md`
+
+## Agentic development lifecycle
+
+Agnara is not only agent-compatible at runtime; the repository itself is designed for autonomous software engineering.
+
+Development follows:
+
+```text
+Backlog
+→ GitHub Issue
+→ short-lived branch
+→ implementation
+→ tests / quality gates
+→ Pull Request
+→ review
+→ merge
+→ next Issue
+```
+
+Read:
+
+- `GIT_WORKFLOW.md`
+- `AGENT_OPERATING_MODEL.md`
+- `FIRST_AGENT_PROMPT.md`
+
+Agents are expected to leave a normal, auditable GitHub trail that remains understandable to human maintainers.
