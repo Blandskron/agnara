@@ -3,6 +3,7 @@ from typing import Any
 
 from agnara.core.di.resolver import DIContainer
 from agnara.execution.invocation import Invocation
+from agnara.policy.principal import AnonymousPrincipal, Principal
 
 __all__ = ["ExecutionContext"]
 
@@ -15,11 +16,16 @@ class ExecutionContext:
     """
 
     def __init__(
-        self, invocation: Invocation, di_container: DIContainer, tracking_id: str | None = None
+        self,
+        invocation: Invocation,
+        di_container: DIContainer,
+        tracking_id: str | None = None,
+        principal: Principal | None = None,
     ) -> None:
         self.invocation = invocation
         self.di_container = di_container
         self.tracking_id = tracking_id
+        self.principal = principal or AnonymousPrincipal()
         # State that policies or interceptors might attach during this execution.
         # This is strictly bound to a single capability execution.
         self.state: dict[str, Any] = {}

@@ -1,4 +1,4 @@
-"""Agnara — a capability-first, transport-neutral execution kernel.
+"""Agnara â€” a capability-first, transport-neutral execution kernel.
 
 ``agnara-core`` owns the semantics shared by every transport: the capability
 model, the registry, execution context, the dependency graph, policies,
@@ -36,6 +36,7 @@ from agnara.errors import (
     UnknownCapabilityError,
     ValidationError,
 )
+from agnara.policy.principal import AnonymousPrincipal, Principal
 from agnara.schema import (
     JsonSchema,
     SchemaAdapter,
@@ -48,6 +49,7 @@ __version__ = version("agnara-core")
 __all__ = [
     "Agnara",
     "AgnaraError",
+    "AnonymousPrincipal",
     "CapabilityDefinition",
     "CapabilityId",
     "CapabilityRegistry",
@@ -58,6 +60,7 @@ __all__ = [
     "Idempotency",
     "InvocationError",
     "JsonSchema",
+    "Principal",
     "RegistryError",
     "RegistryFrozenError",
     "Risk",

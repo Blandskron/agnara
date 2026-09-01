@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 Notable changes to Agnara are recorded here. The format is inspired by Keep a
 Changelog, and release versions follow the synchronized PEP 440 policy in ADR
@@ -11,6 +11,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Defined Principal and AnonymousPrincipal for policy evaluation.
 - Python 3.14 workspace with seven explicit package boundaries and
   cross-platform quality gates.
 - Protocol-neutral `CapabilityId` and `CapabilityDefinition` value types with
