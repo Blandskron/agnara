@@ -51,6 +51,14 @@ class CapabilityId:
     name: str
 
     def __post_init__(self) -> None:
+        # Check types before anything else, so a non-string argument raises
+        # DefinitionError rather than leaking an AttributeError or TypeError
+        # out of the checks below.
+        for part, value in (("namespace", self.namespace), ("name", self.name)):
+            if not isinstance(value, str):
+                raise DefinitionError(
+                    f"capability {part} must be a string, got {type(value).__name__}"
+                )
         whole = str(self)
         # Check for a dotted namespace before the generic segment check, so
         # that `commerce.payments` reports the actual mistake rather than

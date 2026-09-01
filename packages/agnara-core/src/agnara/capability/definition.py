@@ -35,7 +35,12 @@ def _coerce_effects(effects: Iterable[str]) -> frozenset[str]:
             "effects must be a collection of strings, not the single string "
             f"{effects!r}; pass {{{effects!r}}} to declare one effect"
         )
-    collected = frozenset(effects)
+    try:
+        collected = frozenset(effects)
+    except TypeError as exc:
+        # Not iterable, or holds something unhashable. Either way the
+        # caller gets Agnara's error rather than a raw TypeError.
+        raise DefinitionError(f"effects must be an iterable of strings: {exc}") from exc
     for effect in collected:
         if not isinstance(effect, str):
             raise DefinitionError(f"effect {effect!r} is not a string")

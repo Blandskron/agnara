@@ -149,6 +149,31 @@ class TestEffects:
     def test_has_effect_is_false_for_an_undeclared_effect(self) -> None:
         assert not define(effects={"read"}).has_effect("destructive")
 
+    def test_rejects_a_non_string_effect(self) -> None:
+        with pytest.raises(DefinitionError, match="not a string"):
+            define(effects={1, 2})
+
+    @pytest.mark.parametrize(
+        ("label", "value"),
+        [
+            ("none", None),
+            ("an integer", 123),
+            ("a list of lists", [["read"]]),
+            ("a dict of lists", {"read": []}.items()),
+        ],
+    )
+    def test_rejects_effects_that_are_not_an_iterable_of_strings(
+        self, label: str, value: object
+    ) -> None:
+        """Every rejection is a DefinitionError, never a raw TypeError.
+
+        Construction promises protocol-neutral errors. A caller catching
+        `DefinitionError` should not also have to catch whatever the
+        standard library happened to raise on the way.
+        """
+        with pytest.raises(DefinitionError):
+            define(effects=value)
+
 
 class TestImmutability:
     @pytest.mark.parametrize(

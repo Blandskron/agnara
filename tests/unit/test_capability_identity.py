@@ -75,6 +75,24 @@ class TestValidation:
         with pytest.raises(DefinitionError, match="single segment"):
             CapabilityId(namespace="commerce.payments", name="refund")
 
+    @pytest.mark.parametrize(
+        ("namespace", "name"),
+        [
+            (123, "refund"),
+            ("payments", None),
+            (None, None),
+            (b"payments", "refund"),
+        ],
+    )
+    def test_rejects_a_non_string_segment(self, namespace: object, name: object) -> None:
+        """A wrong type raises DefinitionError, never a raw TypeError.
+
+        Without an explicit type check the `isidentifier` and containment
+        tests below leak `AttributeError` or `TypeError` instead.
+        """
+        with pytest.raises(DefinitionError, match="must be a string"):
+            CapabilityId(namespace, name)  # ty: ignore[invalid-argument-type]
+
     def test_the_error_message_names_the_offending_id(self) -> None:
         with pytest.raises(DefinitionError, match=re.escape("payments.re-fund")):
             CapabilityId.parse("payments.re-fund")
