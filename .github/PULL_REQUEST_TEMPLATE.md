@@ -74,10 +74,27 @@ Explain:
 - [ ] Independent agent review requested/complete when available
 - [ ] All review conversations resolved
 
+## AI / Agent contribution
+
+<!-- Optional for human-only PRs: write "None" or remove this section. -->
+
+Agent(s):
+
+Role(s):
+
+Contribution:
+
+Identity verified for GitHub attribution: yes/no
+
+Co-authored-by trailers included:
+
+Non-verifiable agents documented:
+
 ## Merge checklist
 
 - [ ] Issue acceptance criteria satisfied
 - [ ] Required CI green
 - [ ] No known unresolved blocker
 - [ ] Backlog synchronized
+- [ ] Commit/squash attribution verified
 - [ ] Issue closed after merge (not automatic on `develop`)

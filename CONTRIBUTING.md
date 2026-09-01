@@ -80,6 +80,10 @@ Default:
 ```text
 Issue
 → short-lived branch
+→ implementation / tests
+→ commit
+→ attribution verification
+→ push
 → PR to develop
 → review/checks
 → merge
@@ -92,3 +96,44 @@ Do not push feature work directly to `main` or `develop`.
 Use Conventional Commit style.
 
 Every PR must link its Issue and describe validation evidence.
+
+## AI / agent attribution
+
+Git history is the source of truth for accepted authorship. PRs and reviews
+provide the complementary record of roles, contributions and verification
+limitations.
+
+For human-directed work, keep the human as primary commit author. Use a
+`Co-authored-by: Name <email>` trailer for an AI agent only when:
+
+- the agent materially authored the change;
+- the exact identity is authorized for Agnara;
+- the email verifiably maps to that GitHub account; and
+- the trailer does not duplicate the primary author.
+
+Do not infer an identity from a model or product name, invent an email, or add
+another agent without evidence that it participated. Review-only agents are
+credited in the PR review trail, not normally as co-authors.
+
+Place valid trailers after a blank line at the end of the commit message:
+
+```text
+docs(governance): define agent attribution
+
+Explain the governance change.
+
+Co-authored-by: Exact Verified Agent <exact-verified-email>
+```
+
+The angle-bracketed value is a placeholder and must be replaced only with an
+exact verified identity. If an agent lacks one, omit the trailer and complete
+the PR template's AI / Agent contribution section with its name, role and
+contribution.
+
+Preserve legitimate trailers during amend/rebase or any deliberate commit
+recreation, and explicitly carry them into a squash-merge message. Verify the
+resulting commit after merge. Do not rewrite historical commits solely to
+apply the current policy.
+
+See `GIT_WORKFLOW.md` and `docs/adr/0019-ai-agent-attribution.md` for the
+complete evidence and merge rules.
