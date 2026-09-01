@@ -237,6 +237,7 @@ Co-authored-by: Codex <codex@openai.com>
 Co-authored-by: Claude
 
 Cada agente debe utilizar su identidad correspondiente.
+Co-authored-by: Antigravity <antigravity@google.com>
 Nunca inventar direcciones de correo.
 Nunca utilizar la identidad de otro agente.
 Si la identidad oficial/verificable de un agente es desconocida, debe investigarse antes de agregarla.
@@ -360,4 +361,5 @@ If an independent reviewer identity is available, prefer dual-agent review.
 Never weaken repository protections to bypass failing work.
 
 Never push normal feature work directly to protected branches.
+
 
