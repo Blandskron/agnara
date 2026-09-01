@@ -105,9 +105,7 @@ class TestValidation:
         assert caught.value.path == ("addresses", 0, "city")
         assert caught.value.message == "Input should be a valid string"
 
-    def test_retains_dictionary_location_in_path(
-        self, adapter: PydanticSchemaAdapter
-    ) -> None:
+    def test_retains_dictionary_location_in_path(self, adapter: PydanticSchemaAdapter) -> None:
         with pytest.raises(ValidationError) as caught:
             adapter.compile(dict[str, list[str]]).validate({"groups": ["ok", 1]})
         assert caught.value.path == ("groups", 1)
@@ -125,9 +123,7 @@ class TestJsonSchema:
     def test_exports_nested_model_definitions(self, adapter: PydanticSchemaAdapter) -> None:
         schema = adapter.compile(User).json_schema()
         assert "$defs" in schema
-        assert schema["properties"]["addresses"]["items"] == {
-            "$ref": "#/$defs/Address"
-        }
+        assert schema["properties"]["addresses"]["items"] == {"$ref": "#/$defs/Address"}
 
     def test_returns_fresh_plain_data(self, adapter: PydanticSchemaAdapter) -> None:
         compiled = adapter.compile(list[int])
@@ -137,5 +133,3 @@ class TestJsonSchema:
 
     def test_does_not_declare_a_dialect(self, adapter: PydanticSchemaAdapter) -> None:
         assert "$schema" not in adapter.compile(User).json_schema()
-
-
