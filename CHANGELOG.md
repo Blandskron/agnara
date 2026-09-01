@@ -55,6 +55,9 @@ package version `0.0.0` is a development sentinel, not a published release.
 - Transport-neutral direct invocation of compiled plans with explicit context
   injection, DI ownership, sync/async handlers and deterministic resource
   cleanup ([#65]).
+- Optional monotonic invocation deadlines covering dependency resolution and
+  handler execution, with timeout cleanup and remaining-time introspection
+  ([#69]).
 
 ### Changed
 
@@ -92,3 +95,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#62]: https://github.com/Blandskron/agnara/issues/62
 [#65]: https://github.com/Blandskron/agnara/issues/65
 [#67]: https://github.com/Blandskron/agnara/issues/67
+[#69]: https://github.com/Blandskron/agnara/issues/69

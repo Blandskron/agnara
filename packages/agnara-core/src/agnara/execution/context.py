@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 
 from agnara.core.di.resolver import DIContainer
@@ -22,3 +23,15 @@ class ExecutionContext:
         # State that policies or interceptors might attach during this execution.
         # This is strictly bound to a single capability execution.
         self.state: dict[str, Any] = {}
+
+    @property
+    def deadline(self) -> float | None:
+        """The invocation's absolute monotonic deadline, when one exists."""
+        return self.invocation.deadline
+
+    def remaining_time(self, now: float | None = None) -> float | None:
+        """Seconds remaining, clamped to zero, or ``None`` without a deadline."""
+        if self.deadline is None:
+            return None
+        current = asyncio.get_running_loop().time() if now is None else now
+        return max(0.0, self.deadline - current)
