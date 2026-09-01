@@ -14,7 +14,8 @@ It is done when:
 6. documentation is updated;
 7. performance-sensitive changes include benchmark evidence;
 8. security-sensitive changes include threat analysis;
-9. no unrelated coupling was introduced.
+9. no unrelated coupling was introduced;
+10. attribution is truthful and evidence-backed.
 
 ## Required local checks
 
@@ -181,3 +182,26 @@ not close it, because GitHub auto-closes only on the default branch.
 A single-agent self-review is not represented as an independent GitHub approval.
 
 Where independent reviewer identities exist, use them for formal approval.
+
+## Attribution integrity gate
+
+Before push and again before merge, review attribution as a semantic integrity
+check:
+
+- primary authorship matches the actual operating mode;
+- each `Co-authored-by` participant materially authored the change;
+- each trailer uses an authorized, GitHub-verifiable identity;
+- no model/tool/provider label was converted into a guessed identity;
+- review-only agents are represented in the review trail unless they also
+  contributed implementation;
+- non-verifiable agent work is documented in the Issue or PR;
+- legitimate trailers survive amend, rebase and squash preparation;
+- the primary author is not duplicated as a co-author.
+
+After merge, inspect the accepted commit and confirm that its authorship and
+trailers match the reviewed squash/merge message.
+
+This gate is a required human/agent review until a trusted, repository-owned
+identity registry exists. Do not add brittle automation that treats an
+unregistered but legitimate contributor as fabricated, and do not create a
+registry populated by guesses merely to automate the check.

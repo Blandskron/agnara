@@ -15,6 +15,7 @@ Backlog
 → Implementation
 → Tests / Quality Gates
 → Commit
+→ Attribution verification
 → Push
 → Pull Request
 → Review
@@ -36,8 +37,47 @@ Different artifacts own different concerns:
 - ADR/RFC: architectural decisions.
 - CI: objective quality evidence.
 - Git history: immutable record of accepted change.
+- Issues/PRs/reviews: role and contribution evidence for agents that cannot be
+  represented by a verified Git identity.
 
 Do not use one artifact as an accidental replacement for all others.
+
+## AI-agent attribution policy
+
+Git authorship, implementation roles and review roles are related but not
+interchangeable.
+
+For human-directed work, keep the human as primary commit author. Add
+`Co-authored-by: Name <email>` for an agent only when the agent materially
+authored the change and the exact identity is both authorized for Agnara and
+verifiably linked to its GitHub user/bot account. A plausible model/provider
+name or email is not evidence. Do not add a different agent without evidence
+that it actually participated.
+
+A fully autonomous bot with a verified, authorized GitHub identity may be the
+primary author. Do not impersonate a human and do not repeat a primary author
+as a co-author.
+
+Review-only participation belongs in the PR review/comment trail, not normally
+in a co-author trailer. An agent that also makes a material implementation
+change may be credited for that work under the same verification rule.
+
+When an agent is not GitHub-verifiable, omit the trailer and document in the
+Issue or PR:
+
+```text
+Agent
+Role
+Contribution
+Identity verified for GitHub attribution: no
+Co-authored-by trailers included: none
+Non-verifiable agents documented
+```
+
+Git history remains the accepted authorship record; PR artifacts explain roles
+and limitations. Do not maintain a duplicate AI-contributors ledger. Do not
+rewrite published history to retrofit this policy. See
+`docs/adr/0019-ai-agent-attribution.md`.
 
 ## Branch model
 
@@ -257,13 +297,28 @@ chore(ci): add Python 3.14t experimental lane
 
 Commit messages should explain coherent changes, not narrate every file.
 
-### 7. Push
+### 7. Verify attribution
+
+Identify the actual contributors and roles before committing. After commit,
+inspect the primary author, complete message and parsed trailers:
+
+```bash
+git show -s --format=full HEAD
+git show -s --format=%B HEAD | git interpret-trailers --parse
+```
+
+Confirm that every trailer is material, authorized and GitHub-verifiable;
+that non-verifiable agents are prepared for PR/Issue documentation; and that
+no primary author is duplicated. Preserve legitimate existing trailers when
+amending or rebasing.
+
+### 8. Push
 
 ```bash
 git push -u origin feat/42-capability-registration
 ```
 
-### 8. Create PR
+### 9. Create PR
 
 Target `develop`.
 
@@ -281,6 +336,7 @@ Security impact
 Performance impact
 Documentation
 Breaking changes
+AI / Agent contribution (optional for human-only work)
 Checklist
 ```
 
@@ -297,9 +353,9 @@ linked Issue when the Pull Request merges into the repository's *default*
 branch. Normal Agnara work merges into `develop` while `main` stays the
 default, so the keyword creates the link and nothing more.
 
-Close the Issue explicitly after merging. See step 11.
+Close the Issue explicitly after merging. See step 12.
 
-### 9. Review gate
+### 10. Review gate
 
 Review the complete diff, not only the final commit.
 
@@ -312,7 +368,7 @@ gh pr checks <number>
 
 Resolve all actionable review comments and failed checks.
 
-### 10. Merge
+### 11. Merge
 
 Normal task PRs should prefer squash merge to keep `develop` history concise:
 
@@ -328,7 +384,21 @@ gh pr merge <number> --squash --delete-branch --auto
 
 Never bypass failing required checks merely to continue.
 
-### 11. Synchronize after merge
+Before squash merge, inspect the proposed final subject/body. GitHub is not
+assumed to preserve trailers from branch commits. If legitimate trailers
+exist, pass an explicit reviewed squash message and place each trailer after a
+blank line at the end:
+
+```bash
+gh pr merge <number> --squash --delete-branch \
+  --subject "<conventional subject>" \
+  --body-file /tmp/reviewed-squash-message.md
+```
+
+Do not copy unverified trailers forward. Do not omit a verified legitimate
+trailer merely because the branch is being squashed.
+
+### 12. Synchronize after merge
 
 ```bash
 git switch develop

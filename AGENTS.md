@@ -203,6 +203,30 @@ Do not push unless the human explicitly asks for a push.
 
 When asked to prepare a final commit, first verify the entire documented quality gate appropriate to the current stage.
 
+## Attribution discipline
+
+Read `docs/adr/0019-ai-agent-attribution.md` before creating or merging a
+commit that involved an AI agent.
+
+- A human-directed change keeps the human as the primary commit author.
+- Add an agent as `Co-authored-by` only when that agent materially authored
+  the change and its exact `Name <email>` identity is authorized for this
+  repository and verifiably maps to a GitHub account.
+- Never invent, guess or copy an agent identity from a model/provider name.
+- Never add attribution for another agent without evidence of its actual
+  contribution and verified identity.
+- Review-only participation belongs in the PR review trail, not normally in a
+  co-author trailer.
+- When an agent has no verified GitHub identity, record its name, role and
+  contribution in the Issue or PR and omit the trailer.
+- Preserve legitimate existing trailers when amending, rebasing or preparing
+  a squash message. Do not repeat the primary author as a co-author.
+
+Before push, inspect the final commit message and its parsed trailers. Before
+squash merge, inspect the proposed squash message; after merge, verify the
+accepted commit. Do not rewrite existing history merely to retrofit this
+policy.
+
 ## Stop conditions
 
 If two architectural documents conflict:
@@ -279,6 +303,7 @@ BACKLOG
 → Implementation
 → Quality Gates
 → Commit
+→ Attribution verification
 → Push
 → PR
 → Review

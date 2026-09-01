@@ -327,6 +327,8 @@ Backlog
 → short-lived branch
 → implementation
 → tests / quality gates
+→ commit
+→ attribution verification
 → Pull Request
 → review
 → merge
@@ -340,3 +342,8 @@ Read:
 - `FIRST_AGENT_PROMPT.md`
 
 Agents are expected to leave a normal, auditable GitHub trail that remains understandable to human maintainers.
+
+Agent roles and Git authorship are separate: unverifiable agents are named in
+Issues/PRs, while commit trailers are reserved for authorized,
+GitHub-verifiable identities. See
+`docs/adr/0019-ai-agent-attribution.md` and `GIT_WORKFLOW.md`.

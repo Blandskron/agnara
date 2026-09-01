@@ -302,6 +302,9 @@ Generated code must:
   passes and conversations are resolved.
 - [x] E0B.11 Replace placeholder OWNER/REPO in security Issue template.
 - [ ] E0B.12 Document release and hotfix automation evidence.
+- [~] E0B.13 Establish permanent AI-agent attribution policy across commits,
+  Pull Requests, reviews and squash merges without inventing identities or
+  rewriting history. Tracking: GitHub Issue #12.
 
 ### Acceptance
 

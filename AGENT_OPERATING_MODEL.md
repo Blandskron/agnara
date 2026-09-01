@@ -61,6 +61,7 @@ OBSERVE
 → IMPLEMENT
 → VERIFY
 → COMMIT
+→ VERIFY ATTRIBUTION
 → PUSH
 → PR
 → REVIEW
@@ -114,6 +115,41 @@ Before editing, write down:
 - non-goals.
 
 For architectural decisions not already documented, create/update RFC/ADR before cementing the implementation.
+
+## Roles, contribution and Git authorship
+
+Logical role names describe work; they are not GitHub identities.
+
+For every agent-assisted change, identify the agents that actually
+participated, their roles and their material contributions. Record that
+information in the PR (or Issue when no PR is possible), even when an agent
+cannot receive Git-native credit.
+
+In a human-directed session, the human remains the primary commit author. An
+agent may receive a `Co-authored-by` trailer only for material authorship and
+only when its exact identity is authorized and GitHub-verifiable. A model name,
+product name or plausible provider email is not verification. An agent must
+not attribute other agents without evidence of their participation.
+
+A fully autonomous bot with its own verified and authorized GitHub identity
+may be the primary author. It must not impersonate a human or duplicate itself
+as both primary author and co-author.
+
+Review is credited through the GitHub review/comment trail. A Review Agent is
+not normally a co-author unless it also made a material implementation
+contribution, in which case that contribution and the identity evidence are
+documented separately.
+
+If no verified agent identity exists, preserve transparency by documenting:
+
+```text
+Agent
+Role
+Contribution
+Identity verified for GitHub attribution: no
+```
+
+and omit `Co-authored-by`.
 
 ## Independent review
 
