@@ -13,10 +13,11 @@ attached later by adapters (ADR 0002, ADR 0003).
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass, field
+from dataclasses import field
 from enum import StrEnum
 from typing import Any
 
+from agnara._frozen import frozen_slots_dataclass
 from agnara.capability.identity import CapabilityId
 from agnara.capability.metadata import Confirmation, Idempotency, Risk
 from agnara.errors import DefinitionError
@@ -63,7 +64,7 @@ def _coerce[EnumT: StrEnum](value: object, enum: type[EnumT], field_name: str) -
     raise DefinitionError(f"invalid {field_name} {value!r}: expected one of {allowed}")
 
 
-@dataclass(frozen=True, slots=True)
+@frozen_slots_dataclass
 class CapabilityDefinition:
     """One declared, protocol-neutral application capability.
 
