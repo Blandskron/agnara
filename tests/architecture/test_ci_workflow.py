@@ -68,9 +68,7 @@ def test_ci_actions_are_pinned_to_exact_versions(workflow_text: str) -> None:
     action is pinned to an exact release.
     """
     used = [
-        line.split("uses:", 1)[1].strip()
-        for line in workflow_text.splitlines()
-        if "uses:" in line
+        line.split("uses:", 1)[1].strip() for line in workflow_text.splitlines() if "uses:" in line
     ]
     assert used, "the workflow declares no actions"
     for action in used:
