@@ -1,6 +1,6 @@
 import asyncio
 import contextlib
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator, Callable, Mapping, Sequence
 from typing import Any
 
 from .compiler import _get_dependencies
@@ -29,7 +29,7 @@ class DIContainer:
     async def resolve_dependencies(
         self,
         target_func: Callable[..., Any],
-        target_deps: dict[Callable[..., Any], list[type]],
+        target_deps: Mapping[Callable[..., Any], Sequence[type]],
     ) -> AsyncGenerator[dict[str, Any]]:
         """
         Resolve dependencies for a target function.

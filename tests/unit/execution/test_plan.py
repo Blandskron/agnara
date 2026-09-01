@@ -49,52 +49,63 @@ def test_plan_compiles_direct_dependencies_in_signature_order() -> None:
         pass
 
     capability = define(refund)
-    plan = ExecutionPlan(capability, registry)
+    plan = ExecutionPlan.compile(capability, registry)
 
-    assert plan.capability is capability
+    assert plan.definition is capability
+    assert plan.target_deps[refund] == (Repository, Database)
     assert plan.dependencies == (Repository, Database)
 
 
-def test_plan_does_not_retain_mutable_registry_state() -> None:
-    registry = DIRegistry()
-    registry.bind(Database, provide_database)
-
+def test_plan_copies_mutable_compiler_output() -> None:
     def refund(database: Database) -> None:
         pass
 
-    plan = ExecutionPlan(define(refund), registry)
+    dependencies = [Database]
+    source = {refund: dependencies}
+    plan = ExecutionPlan(definition=define(refund), target_deps=source)
 
-    registry.bind(Repository, provide_repository)
+    dependencies.append(Repository)
+    source.clear()
 
-    assert plan.dependencies == (Database,)
-    assert not hasattr(plan, "registry")
+    assert plan.target_deps[refund] == (Database,)
+
+
+def test_plan_dependency_mapping_is_read_only() -> None:
+    def refund(database: Database) -> None:
+        pass
+
+    plan = ExecutionPlan(definition=define(refund), target_deps={refund: [Database]})
+
+    with pytest.raises(TypeError, match="does not support item assignment"):
+        plan.target_deps[refund] = ()  # type: ignore
 
 
 def test_plan_is_frozen_and_slotted() -> None:
-    registry = DIRegistry()
-
     def refund(command: dict[str, object]) -> None:
         pass
 
-    plan = ExecutionPlan(define(refund), registry)
+    plan = ExecutionPlan.compile(define(refund), DIRegistry())
 
     assert not hasattr(plan, "__dict__")
-    with pytest.raises(FrozenInstanceError, match="cannot assign to field 'dependencies'"):
-        plan.dependencies = ()
+    with pytest.raises(FrozenInstanceError, match="cannot assign to field 'target_deps'"):
+        plan.target_deps = {}  # type: ignore[misc]
 
 
 @pytest.mark.parametrize(
-    ("capability", "registry", "message"),
+    ("definition", "registry", "message"),
     [
-        (object(), DIRegistry(), "capability must be a CapabilityDefinition"),
+        (object(), DIRegistry(), "definition must be a CapabilityDefinition"),
         (define(lambda: None), object(), "registry must be a DIRegistry"),
     ],
 )
-def test_plan_rejects_invalid_constructor_inputs(
-    capability: object, registry: object, message: str
-) -> None:
+def test_compile_rejects_invalid_inputs(definition: object, registry: object, message: str) -> None:
     with pytest.raises(DefinitionError, match=message):
-        ExecutionPlan(capability, registry)  # type: ignore
+        ExecutionPlan.compile(definition, registry)  # type: ignore
+
+
+def test_constructor_rejects_non_mapping_dependencies() -> None:
+    with pytest.raises(DefinitionError, match="target_deps must be a mapping"):
+        ExecutionPlan(definition=define(lambda: None), target_deps=object())  # type: ignore
 
 
 def test_plan_rejects_provider_cycle_during_compilation() -> None:
@@ -120,7 +131,7 @@ def test_plan_rejects_provider_cycle_during_compilation() -> None:
         pass
 
     with pytest.raises(DependencyCycleError, match="Dependency cycle detected"):
-        ExecutionPlan(define(refund), registry)
+        ExecutionPlan.compile(define(refund), registry)
 
 
 def test_plan_rejects_unbound_provider_dependency_during_compilation() -> None:
@@ -141,4 +152,4 @@ def test_plan_rejects_unbound_provider_dependency_during_compilation() -> None:
         DependencyResolutionError,
         match="Providers can only depend on other registered providers",
     ):
-        ExecutionPlan(define(refund), registry)
+        ExecutionPlan.compile(define(refund), registry)
