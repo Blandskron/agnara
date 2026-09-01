@@ -31,7 +31,15 @@ from agnara.errors import (
     DuplicateCapabilityError,
     RegistryError,
     RegistryFrozenError,
+    SchemaError,
     UnknownCapabilityError,
+    ValidationError,
+)
+from agnara.schema import (
+    JsonSchema,
+    SchemaAdapter,
+    StandardSchemaAdapter,
+    TypeSchema,
 )
 
 __version__ = version("agnara-core")
@@ -49,8 +57,14 @@ __all__ = [
     "Idempotency",
     "RegistryError",
     "RegistryFrozenError",
+    "JsonSchema",
     "Risk",
+    "SchemaAdapter",
+    "SchemaError",
     "StandardEffect",
+    "StandardSchemaAdapter",
+    "TypeSchema",
     "UnknownCapabilityError",
+    "ValidationError",
     "__version__",
 ]

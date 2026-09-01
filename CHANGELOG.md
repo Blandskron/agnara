@@ -27,6 +27,11 @@ package version `0.0.0` is a development sentinel, not a published release.
   decorated function is returned unchanged ([#21]).
 - `scopes` on `CapabilityDefinition`, declarative permission labels a
   policy engine may require ([#21]).
+- Schema port: `SchemaAdapter` and `TypeSchema` protocols, a JSON Schema
+  export contract, and `StandardSchemaAdapter`, a strict standard-library
+  reference implementation covering primitives ([#27]).
+- `SchemaError` and `ValidationError`, the latter carrying a path to the
+  offending value so adapters can render it per protocol ([#27]).
 - `CapabilityRegistry` and `FrozenCapabilityRegistry`: deterministic
   registration order, duplicate-id rejection, a freeze step that yields an
   immutable thread-safe view, lookup by id or dotted string, and
@@ -53,3 +58,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#19]: https://github.com/Blandskron/agnara/issues/19
 [#21]: https://github.com/Blandskron/agnara/issues/21
 [#24]: https://github.com/Blandskron/agnara/issues/24
+[#27]: https://github.com/Blandskron/agnara/issues/27
