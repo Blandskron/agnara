@@ -34,6 +34,10 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Changed
 
+- `CapabilityDefinition.declare()` carries the authoring-shaped argument
+  types, so the documented `effects={...}, risk="high"` calls typecheck
+  without suppression while the attributes keep their narrow types ([#24]).
+
 - Core frozen value types retain slots while using one internal construction
   rule for deterministic mutation failures.
 
@@ -48,3 +52,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#16]: https://github.com/Blandskron/agnara/issues/16
 [#19]: https://github.com/Blandskron/agnara/issues/19
 [#21]: https://github.com/Blandskron/agnara/issues/21
+[#24]: https://github.com/Blandskron/agnara/issues/24
