@@ -88,6 +88,8 @@ Tradeoffs:
 
 - the distribution is relatively large and its visual customization is less
   cohesive than modern alternatives;
+- the current npm distribution declares Scarf installation analytics; a
+  vendoring/build process must disable telemetry and audit install scripts;
 - dark mode exists but embedded/default configuration remains incomplete;
 - basic OpenAPI 3.2 support does not yet render every new 3.2 construct;
 - long-running accessibility gaps remain open and require Agnara's own WCAG
@@ -199,6 +201,8 @@ Tradeoffs:
 - dark mode/customization and CSP behavior require a focused spike;
 - credentialed external references and Web Component navigation have open
   integration issues;
+- current packages added Scarf installation telemetry, which an Agnara asset
+  build must disable and audit;
 - no complete WCAG conformance claim was found.
 
 Primary sources:

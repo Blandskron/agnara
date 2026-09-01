@@ -210,10 +210,10 @@ Core imports neither Pydantic nor msgspec.
 ### Introspection dependency order
 
 Each line above is intended to become one Issue, branch and reviewable PR.
-E8.1 precedes E8.3 through E8.9. E8.2 precedes any remotely served
-machine-readable discovery or Explorer release. E8.7 depends on E6.7 and
-E6.11. Explorer views follow the read-only E8.8 shell rather than expanding
-that first PR into a complete frontend.
+E8.1 precedes E8.3 through E8.6 and E8.8 through E8.9. E8.2 precedes any
+remotely served machine-readable discovery or Explorer release. E8.7 depends
+on E6.7 and E6.11. Explorer views follow the read-only E8.8 shell rather than
+expanding that first PR into a complete frontend.
 
 ## EPIC 9 — Telemetry
 

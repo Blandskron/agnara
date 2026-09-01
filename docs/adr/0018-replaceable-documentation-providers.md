@@ -88,6 +88,8 @@ Negative:
 - core architecture tests reject OpenAPI/UI imports and dependencies;
 - providers accept only an already-filtered document or snapshot;
 - no provider may require a network CDN at runtime by default;
+- no provider may silently relabel or downgrade the canonical OpenAPI 3.2
+  document to accommodate unsupported renderer features;
 - no provider enables try-it or credential persistence implicitly;
 - capability descriptions, schemas and examples are untrusted UI input;
 - a provider compatibility claim names tested versions and unsupported
@@ -103,4 +105,3 @@ Negative:
 - OpenAPI 3.2 UI support is mature enough to select a default confidently;
 - a standard emerges that can represent the Agnara capability graph without
   losing its transport-neutral semantics.
-

@@ -224,6 +224,13 @@ Scalar should receive implementation spikes against the same conformance,
 security, bundle and accessibility fixtures. Adding RapiDoc or Elements later
 must require no change to capability runtime semantics.
 
+The canonical generated contract remains OpenAPI 3.2 even when a provider
+lags behind it. A provider must fail with a clear compatibility diagnostic or
+remain unavailable; it must not silently change only the `openapi` version or
+drop 3.2 fields. Any future loss-aware 3.1 compatibility projection is a
+separate, explicitly requested artifact with a machine-readable loss report
+and requires its own ADR.
+
 ## 5. Routes and configuration
 
 The target experience remains recognizable:
@@ -463,4 +470,3 @@ Rejected because an omitted UI button or operation is not authorization.
    separate frontend artifact.
 7. Whether viewer-specific OpenAPI documents are cached and, if so, by what
    safe key.
-
