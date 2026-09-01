@@ -21,6 +21,12 @@ package version `0.0.0` is a development sentinel, not a published release.
   workflow ([#16]).
 - Capability-first architecture for generated OpenAPI, replaceable HTTP
   documentation providers and protocol-neutral Agnara Explorer introspection.
+- `Agnara` composition root and the `@app.capability` decorator, usable bare
+  or with metadata. Ids default to `<app>.<function>` with an explicit
+  override, descriptions default to the docstring summary, and the
+  decorated function is returned unchanged ([#21]).
+- `scopes` on `CapabilityDefinition`, declarative permission labels a
+  policy engine may require ([#21]).
 - `CapabilityRegistry` and `FrozenCapabilityRegistry`: deterministic
   registration order, duplicate-id rejection, a freeze step that yields an
   immutable thread-safe view, lookup by id or dotted string, and
@@ -41,3 +47,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#3]: https://github.com/Blandskron/agnara/issues/3
 [#16]: https://github.com/Blandskron/agnara/issues/16
 [#19]: https://github.com/Blandskron/agnara/issues/19
+[#21]: https://github.com/Blandskron/agnara/issues/21
