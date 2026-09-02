@@ -121,7 +121,7 @@ Core imports neither Pydantic nor msgspec.
 
 ## EPIC 6 ???????? HTTP adapter
 
-- [ ] E6.1 ASGI boundary.
+- [x] E6.1 ASGI boundary. Tracking: GitHub Issue #107.
 - [ ] E6.2 Route registry.
 - [ ] E6.3 Path/query/header/body binding.
 - [ ] E6.4 Response serialization.
