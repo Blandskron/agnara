@@ -135,25 +135,24 @@ def _compile_roots[T](routes: tuple[_Route[T], ...]) -> Mapping[str, _FrozenNode
 
 
 def _match_node[T](
-    node: _FrozenNode[T],
+    root: _FrozenNode[T],
     segments: tuple[str, ...],
-    index: int,
-    captures: tuple[str, ...],
 ) -> tuple[_Route[T], tuple[str, ...]] | None:
-    if index == len(segments):
-        if node.route is None:
-            return None
-        return node.route, captures
+    pending: list[tuple[_FrozenNode[T], int, tuple[str, ...]]] = [(root, 0, ())]
+    while pending:
+        node, index, captures = pending.pop()
+        if index == len(segments):
+            if node.route is not None:
+                return node.route, captures
+            continue
 
-    segment = segments[index]
-    static_node = node.static.get(segment)
-    if static_node is not None:
-        static_match = _match_node(static_node, segments, index + 1, captures)
-        if static_match is not None:
-            return static_match
-
-    if node.parameter is not None and segment:
-        return _match_node(node.parameter, segments, index + 1, (*captures, segment))
+        segment = segments[index]
+        if node.parameter is not None and segment:
+            pending.append((node.parameter, index + 1, (*captures, segment)))
+        static_node = node.static.get(segment)
+        if static_node is not None:
+            # LIFO order makes the static branch run before the parameter fallback.
+            pending.append((static_node, index + 1, captures))
     return None
 
 
@@ -182,7 +181,7 @@ class _FrozenRouteRegistry[T]:
         root = self._roots.get(normalized_method)
         if root is None:
             return None
-        matched = _match_node(root, segments, 0, ())
+        matched = _match_node(root, segments)
         if matched is None:
             return None
         route, captures = matched
@@ -196,7 +195,7 @@ class _FrozenRouteRegistry[T]:
         return tuple(
             method
             for method in self._method_order
-            if _match_node(self._roots[method], segments, 0, ()) is not None
+            if _match_node(self._roots[method], segments) is not None
         )
 
 

@@ -6,7 +6,10 @@ import pytest
 
 from agnara_http._routing import (
     _DuplicateRouteError,
+    _FrozenNode,
     _FrozenRouteRegistry,
+    _match_node,
+    _Route,
     _RouteDefinitionError,
     _RouteRegistry,
     _RouteRegistryFrozenError,
@@ -220,6 +223,15 @@ class TestMatching:
         registry = _RouteRegistry[str]()
         registry.register("GET", "/users/{user_id}", "user")
         assert registry.freeze().match("GET", "/users/") is None
+
+    def test_deep_untrusted_path_does_not_depend_on_python_recursion(self) -> None:
+        segments = tuple(f"segment-{index}" for index in range(2_000))
+        route = _Route("GET", "/deep", "deep", segments, ())
+        node = _FrozenNode(static={}, parameter=None, route=route)
+        for segment in reversed(segments):
+            node = _FrozenNode(static={segment: node}, parameter=None, route=None)
+
+        assert _match_node(node, segments) == (route, ())
 
     @pytest.mark.parametrize(
         ("method", "path"),
