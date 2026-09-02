@@ -16,6 +16,9 @@ package version `0.0.0` is a development sentinel, not a published release.
 - Defined Principal and AnonymousPrincipal for policy evaluation.
 - Added immutable granted scopes to principals and a transport-neutral
   `ScopePolicy` for deterministic all-required-scope evaluation ([#90]).
+- Defined the protocol-neutral confirmation boundary: verified evidence,
+  interaction-required outcomes, replay binding, and pre-handler enforcement
+  sequencing ([#94]).
 - Python 3.14 workspace with seven explicit package boundaries and
   cross-platform quality gates.
 - Protocol-neutral `CapabilityId` and `CapabilityDefinition` value types with
@@ -108,3 +111,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#69]: https://github.com/Blandskron/agnara/issues/69
 [#87]: https://github.com/Blandskron/agnara/issues/87
 [#90]: https://github.com/Blandskron/agnara/issues/90
+[#94]: https://github.com/Blandskron/agnara/issues/94
