@@ -14,6 +14,8 @@ package version `0.0.0` is a development sentinel, not a published release.
 - Added structured execution telemetry hooks (E4.8).
 - Defined Policy, PolicyResult interface and added policies tuple to CapabilityDefinition.
 - Defined Principal and AnonymousPrincipal for policy evaluation.
+- Added immutable granted scopes to principals and a transport-neutral
+  `ScopePolicy` for deterministic all-required-scope evaluation ([#90]).
 - Python 3.14 workspace with seven explicit package boundaries and
   cross-platform quality gates.
 - Protocol-neutral `CapabilityId` and `CapabilityDefinition` value types with
@@ -105,4 +107,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#67]: https://github.com/Blandskron/agnara/issues/67
 [#69]: https://github.com/Blandskron/agnara/issues/69
 [#87]: https://github.com/Blandskron/agnara/issues/87
-
+[#90]: https://github.com/Blandskron/agnara/issues/90
