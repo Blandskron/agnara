@@ -115,3 +115,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#87]: https://github.com/Blandskron/agnara/issues/87
 [#90]: https://github.com/Blandskron/agnara/issues/90
 [#94]: https://github.com/Blandskron/agnara/issues/94
+[#96]: https://github.com/Blandskron/agnara/issues/96
