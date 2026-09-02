@@ -113,7 +113,9 @@ Core imports neither Pydantic nor msgspec.
 - [x] E5.4 Effects/risk metadata. Delivered with E1.8 by GitHub Issue #2 and
   PR #4; metadata remains data rather than authorization (ADR 0008).
 - [x] E5.5 Confirmation requirement. Tracking: GitHub Issue #96.
-- [ ] E5.6 Delegation RFC.
+- [x] E5.6 Define the protocol-neutral delegation model, including explicit
+  actor/subject separation, monotonic authority attenuation, bounded verified
+  chains and confirmation binding. Tracking: GitHub Issue #101.
 - [ ] E5.7 Policy tests independent of transports.
 
 ## EPIC 6 ???????? HTTP adapter
