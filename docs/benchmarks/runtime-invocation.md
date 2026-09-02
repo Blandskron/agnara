@@ -3,9 +3,10 @@
 ## Purpose
 
 This benchmark measures the warm, transport-neutral execution kernel before
-HTTP or another adapter adds decoding, routing, validation, serialization, or
-network cost. It supplies a reproducible baseline for E4.9; it is not a claim
-that one workstation's latency applies to other Python builds or platforms.
+HTTP or another adapter adds decoding, routing, wire-format conversion,
+serialization, or network cost. Core schema validation is included. It
+supplies a reproducible baseline for E4.9; it is not a claim that one
+workstation's latency applies to other Python builds or platforms.
 
 ## Compared paths
 
@@ -20,9 +21,9 @@ All scenarios execute the same minimal async handler and return the integer
 The plan, invocation, execution context, and DI container are constructed once
 before timing. The compiled scenarios still include capability identity and
 protected-argument checks, telemetry event construction, policy iteration,
-the empty DI resolution scope, handler dispatch, awaitable detection, and
-terminal event construction. They have no policies, dependencies, telemetry
-hooks, or deadline.
+compiled strict input validation, the empty DI resolution scope, handler
+dispatch, awaitable detection, and terminal event construction. They have no
+policies, dependencies, telemetry hooks, or deadline.
 
 Each scenario is warmed independently. The garbage collector is disabled only
 during timed samples to reduce collection scheduling noise and is restored
@@ -78,3 +79,33 @@ on the recorded conventional-GIL Windows build. They are not a cross-platform
 claim, competitor comparison, regression threshold, or proof that any specific
 runtime component is the bottleneck. Profiling and repeated measurements on
 representative deployment builds must precede optimization.
+
+## Input-validation checkpoint
+
+Issue #111 added one precompiled strict `int` schema check to the measured
+compiled paths. Two consecutive dirty-tree checkpoint runs used the same
+command, source state, machine, interpreter, and sampling controls as the
+initial baseline. Recording both is intentional: the fixed-order scenarios
+showed substantial workstation frequency/scheduling variance, so selecting
+only the more favorable run would overstate precision.
+
+```text
+source base commit: 86443bdcfc3f362505ac97470220f85a0f13db84
+dirty: true (Issue #111 implementation under measurement)
+recorded at: 2026-09-02T21:23:00.252289+00:00 and 2026-09-02T21:23:41.060965+00:00
+command: .venv\Scripts\python.exe benchmarks\runtime_invocation.py --iterations 100000 --samples 9 --warmups 3 --json
+```
+
+| Scenario | First median ns/op | Second median ns/op | Observed median range |
+| --- | ---: | ---: | ---: |
+| Direct async handler | 88.287 | 90.201 | 88.287–90.201 |
+| Compiled `invoke` | 11,040.347 | 6,807.125 | 6,807.125–11,040.347 |
+| Canonical `invoke_result` | 12,278.055 | 11,789.887 | 11,789.887–12,278.055 |
+
+The `invoke` checkpoint range straddles the original 6,953.200 ns/op median,
+while both canonical checkpoint medians exceed the original 7,711.570 ns/op
+median. Because the scenarios run in fixed batches and the two immediate runs
+disagree materially for `invoke`, this evidence confirms that validation is
+present in the measured hot path but does not isolate its cost reliably. A
+future optimization claim should first add interleaved or externally controlled
+benchmarking and repeat measurements on representative deployment systems.
