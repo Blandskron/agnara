@@ -8,9 +8,9 @@ It must never import a protocol implementation, a server, a schema library
 or an LLM SDK. See ``ARCHITECTURE.md`` section 3 and ``PRINCIPLES.md`` P2.
 
 Currently implemented: capability declaration and registration, schema ports,
-dependency compilation/resolution, execution plans, and direct invocation.
-Principals and independently evaluable policies are also available; runtime
-policy orchestration and transport adapters remain ahead in ``BACKLOG.md``.
+dependency compilation/resolution, execution plans, direct invocation, and
+pre-handler policy orchestration. Transport adapters remain ahead in
+``BACKLOG.md``.
 """
 
 from importlib.metadata import version
@@ -30,7 +30,9 @@ from agnara.errors import (
     AgnaraError,
     DefinitionError,
     DuplicateCapabilityError,
+    InteractionRequiredError,
     InvocationError,
+    PolicyDeniedError,
     RegistryError,
     RegistryFrozenError,
     SchemaError,
@@ -39,8 +41,14 @@ from agnara.errors import (
 )
 from agnara.policy import (
     AnonymousPrincipal,
+    ConfirmationEvidence,
+    ConfirmationVerdict,
+    ConfirmationVerifier,
+    InteractionKind,
+    InteractionRequest,
     Policy,
     PolicyFailure,
+    PolicyInteractionRequired,
     PolicyResult,
     PolicySuccess,
     Principal,
@@ -63,14 +71,22 @@ __all__ = [
     "CapabilityId",
     "CapabilityRegistry",
     "Confirmation",
+    "ConfirmationEvidence",
+    "ConfirmationVerdict",
+    "ConfirmationVerifier",
     "DefinitionError",
     "DuplicateCapabilityError",
     "FrozenCapabilityRegistry",
     "Idempotency",
+    "InteractionKind",
+    "InteractionRequest",
+    "InteractionRequiredError",
     "InvocationError",
     "JsonSchema",
     "Policy",
+    "PolicyDeniedError",
     "PolicyFailure",
+    "PolicyInteractionRequired",
     "PolicyResult",
     "PolicySuccess",
     "Principal",

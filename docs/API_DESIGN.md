@@ -108,17 +108,25 @@ async def delete_account(...) -> DeleteReceipt:
 ## 13. Human interaction
 
 ```python
-@app.capability
-async def approve_transfer(command: Transfer, ctx: Context) -> Receipt:
-    if command.amount > 10_000:
-        await ctx.require_confirmation(
-            title="Confirm transfer",
-            message="This transfer exceeds the automatic approval threshold.",
-        )
+@app.capability(
+    confirmation="required",
+    effects={"financial-write"},
+)
+async def approve_transfer(command: Transfer) -> Receipt:
     return await transfer(command)
 ```
 
-Exact API pending RFC.
+`confirmation="required"` compiles only when the execution plan receives an
+application-provided `ConfirmationVerifier`. Evidence is passed explicitly as
+`ConfirmationEvidence` on the invocation context; arbitrary invocation
+metadata is never treated as approval. Missing evidence produces an immutable
+interaction request, while invalid evidence is denied.
+
+Conditional interaction is expressed by an explicit pre-handler `Policy`
+that returns `PolicyInteractionRequired`. Dynamic
+`ctx.require_confirmation(...)` remains deferred because handler code could
+produce effects before reaching it. A `confirmation="policy"` declaration
+without an explicit policy is rejected during plan compilation (ADR 0024).
 
 ## 14. Deadline-aware handler
 

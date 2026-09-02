@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 
 from agnara.capability import CapabilityDefinition, CapabilityId
+from agnara.capability.metadata import Confirmation
 from agnara.core.di import (
     DependencyCycleError,
     DependencyResolutionError,
@@ -15,6 +16,30 @@ from agnara.core.di import (
 )
 from agnara.errors import DefinitionError
 from agnara.execution import ExecutionPlan
+from agnara.policy import (
+    ConfirmationEvidence,
+    ConfirmationVerdict,
+    PolicyFailure,
+    PolicyResult,
+)
+from agnara.policy.confirmation import ConfirmationPolicy
+
+
+class DenyPolicy:
+    async def evaluate(self, context) -> PolicyResult:
+        return PolicyFailure("denied")
+
+
+class ValidVerifier:
+    async def verify(
+        self,
+        evidence: ConfirmationEvidence,
+        *,
+        capability_id,
+        invocation,
+        principal,
+    ) -> ConfirmationVerdict:
+        return ConfirmationVerdict.VALID
 
 
 class Database:
@@ -174,3 +199,68 @@ def test_plan_rejects_unbound_provider_dependency_during_compilation() -> None:
         match="Providers can only depend on other registered providers",
     ):
         ExecutionPlan.compile(define(refund), registry)
+
+
+def test_plan_compiles_explicit_policies_in_declaration_order() -> None:
+    first = DenyPolicy()
+    second = DenyPolicy()
+    capability = CapabilityDefinition(
+        id=CapabilityId("payments", "refund"),
+        handler=lambda: None,
+        policies=(first, second),
+    )
+
+    assert ExecutionPlan.compile(capability, DIRegistry()).policies == (first, second)
+
+
+def test_required_confirmation_appends_gate_after_explicit_policies() -> None:
+    explicit = DenyPolicy()
+    capability = CapabilityDefinition(
+        id=CapabilityId("payments", "refund"),
+        handler=lambda: None,
+        confirmation=Confirmation.REQUIRED,
+        policies=(explicit,),
+    )
+
+    plan = ExecutionPlan.compile(
+        capability,
+        DIRegistry(),
+        confirmation_verifier=ValidVerifier(),
+    )
+
+    assert plan.policies[0] is explicit
+    assert isinstance(plan.policies[1], ConfirmationPolicy)
+
+
+def test_required_confirmation_without_verifier_fails_at_compilation() -> None:
+    capability = CapabilityDefinition(
+        id=CapabilityId("payments", "refund"),
+        handler=lambda: None,
+        confirmation=Confirmation.REQUIRED,
+    )
+
+    with pytest.raises(DefinitionError, match="requires a confirmation verifier"):
+        ExecutionPlan.compile(capability, DIRegistry())
+
+
+def test_policy_confirmation_uses_only_explicit_application_policies() -> None:
+    explicit = DenyPolicy()
+    capability = CapabilityDefinition(
+        id=CapabilityId("payments", "refund"),
+        handler=lambda: None,
+        confirmation=Confirmation.POLICY,
+        policies=(explicit,),
+    )
+
+    assert ExecutionPlan.compile(capability, DIRegistry()).policies == (explicit,)
+
+
+def test_policy_confirmation_without_explicit_policy_fails_at_compilation() -> None:
+    capability = CapabilityDefinition(
+        id=CapabilityId("payments", "refund"),
+        handler=lambda: None,
+        confirmation=Confirmation.POLICY,
+    )
+
+    with pytest.raises(DefinitionError, match="has no explicit policies"):
+        ExecutionPlan.compile(capability, DIRegistry())

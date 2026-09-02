@@ -185,8 +185,9 @@ Negative:
    denial ordering, cancellation, deadlines, redaction, and no handler effects.
 6. Map the canonical outcome independently in each transport adapter.
 
-E5.5 remains incomplete until the protocol-neutral implementation and tests
-pass. This ADR is the prerequisite, not evidence of runtime support.
+The protocol-neutral stages 1–5 were implemented and verified by GitHub Issue
+#96. Transport adapters still map the canonical outcome independently as they
+are implemented; they do not redefine confirmation semantics.
 
 ## Revisit when
 
