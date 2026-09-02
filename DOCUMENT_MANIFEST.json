@@ -68,6 +68,9 @@
     "docs/adr/0019-ai-agent-attribution.md",
     "docs/adr/0020-reliable-frozen-slotted-value-types.md",
     "docs/adr/0021-synchronized-pre-one-releases-and-changelog.md",
+    "docs/adr/0022-canonical-invocation-results.md",
+    "docs/adr/0023-structured-execution-telemetry-hooks.md",
+    "docs/adr/0024-confirmation-requirements.md",
     "docs/rfc/0001-capability-runtime.md",
     "docs/rfc/0002-project-app-scaffolding.md",
     "docs/rfc/0003-http-documentation-and-capability-explorer.md"
@@ -85,4 +88,3 @@
     ]
   }
 }
-
