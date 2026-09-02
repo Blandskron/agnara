@@ -112,7 +112,7 @@ Core imports neither Pydantic nor msgspec.
 - [x] E5.3 Scope policy. Tracking: GitHub Issue #90.
 - [x] E5.4 Effects/risk metadata. Delivered with E1.8 by GitHub Issue #2 and
   PR #4; metadata remains data rather than authorization (ADR 0008).
-- [ ] E5.5 Confirmation requirement.
+- [x] E5.5 Confirmation requirement. Tracking: GitHub Issue #96.
 - [ ] E5.6 Delegation RFC.
 - [ ] E5.7 Policy tests independent of transports.
 
@@ -318,4 +318,3 @@ Generated code must:
 - force-pushes to protected branches are blocked;
 - no workflow requires an impossible self-approval;
 - the complete lifecycle is visible and understandable to a human maintainer.
-

@@ -7,11 +7,18 @@ transport representation. Adapters map these onto their own protocols; see
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from agnara.policy.base import InteractionRequest
+
 __all__ = [
     "AgnaraError",
     "DefinitionError",
     "DuplicateCapabilityError",
+    "InteractionRequiredError",
     "InvocationError",
+    "PolicyDeniedError",
     "RegistryError",
     "RegistryFrozenError",
     "SchemaError",
@@ -44,6 +51,18 @@ class InvocationError(AgnaraError):
     under another capability id or supplying a parameter owned by dependency
     injection. Canonical handler failures remain a separate E4.7 concern.
     """
+
+
+class PolicyDeniedError(AgnaraError):
+    """A pre-handler policy denied direct invocation."""
+
+
+class InteractionRequiredError(AgnaraError):
+    """A direct invocation requires caller interaction before it can proceed."""
+
+    def __init__(self, request: InteractionRequest) -> None:
+        super().__init__("capability invocation requires interaction")
+        self.request = request
 
 
 class RegistryError(AgnaraError):

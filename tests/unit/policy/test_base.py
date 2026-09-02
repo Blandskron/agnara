@@ -1,10 +1,20 @@
 import asyncio
 import typing
+from dataclasses import FrozenInstanceError
 
 import pytest
 
+from agnara.capability import CapabilityId
 from agnara.execution.context import ExecutionContext
-from agnara.policy.base import Policy, PolicyFailure, PolicyResult, PolicySuccess
+from agnara.policy.base import (
+    InteractionKind,
+    InteractionRequest,
+    Policy,
+    PolicyFailure,
+    PolicyInteractionRequired,
+    PolicyResult,
+    PolicySuccess,
+)
 
 
 class DummyPolicy(Policy):
@@ -39,3 +49,23 @@ def test_policy_result_immutability():
     failure = PolicyFailure(reason="error")
     with pytest.raises(FrozenInstanceError):
         failure.reason = "new error"  # type: ignore
+
+
+def test_interaction_request_copies_hints_and_is_immutable():
+    hints = {"impact": "destructive"}
+    request = InteractionRequest(
+        InteractionKind.CONFIRMATION,
+        "Confirm deletion",
+        "Confirm this deletion before continuing.",
+        CapabilityId("accounts", "delete"),
+        hints,
+    )
+    outcome = PolicyInteractionRequired(request)
+    hints["impact"] = "safe"
+
+    assert request.hints == {"impact": "destructive"}
+    assert outcome.request is request
+    with pytest.raises(FrozenInstanceError):
+        request.title = "Changed"  # ty: ignore[invalid-assignment]
+    with pytest.raises(TypeError):
+        typing.cast(dict[str, object], request.hints)["impact"] = "safe"

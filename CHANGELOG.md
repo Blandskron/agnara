@@ -19,6 +19,9 @@ package version `0.0.0` is a development sentinel, not a published release.
 - Defined the protocol-neutral confirmation boundary: verified evidence,
   interaction-required outcomes, replay binding, and pre-handler enforcement
   sequencing ([#94]).
+- Implemented verifier-backed confirmation policies, immutable interaction
+  requests, explicit evidence on execution contexts, and pre-handler canonical
+  outcome mapping ([#96]).
 - Python 3.14 workspace with seven explicit package boundaries and
   cross-platform quality gates.
 - Protocol-neutral `CapabilityId` and `CapabilityDefinition` value types with

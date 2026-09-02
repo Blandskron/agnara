@@ -9,10 +9,13 @@ from typing import Any, get_type_hints
 
 from agnara._frozen import frozen_slots_dataclass
 from agnara.capability.definition import CapabilityDefinition
+from agnara.capability.metadata import Confirmation
 from agnara.core.di import DIRegistry, compile_dag
 from agnara.errors import DefinitionError
 from agnara.execution.context import ExecutionContext
 from agnara.execution.telemetry import TelemetryHook
+from agnara.policy import ConfirmationVerifier, Policy
+from agnara.policy.confirmation import ConfirmationPolicy
 
 __all__ = ["ExecutionPlan"]
 
@@ -29,6 +32,7 @@ class ExecutionPlan:
     definition: CapabilityDefinition
     target_deps: Mapping[Callable[..., Any], Sequence[type]]
     hooks: tuple[TelemetryHook, ...] = ()
+    policies: tuple[Policy, ...] = ()
     dependency_parameters: frozenset[str] = field(init=False)
     context_parameters: tuple[str, ...] = field(init=False)
     protected_parameters: frozenset[str] = field(init=False)
@@ -74,6 +78,7 @@ class ExecutionPlan:
         definition: CapabilityDefinition,
         registry: DIRegistry,
         hooks: Sequence[TelemetryHook] = (),
+        confirmation_verifier: ConfirmationVerifier | None = None,
     ) -> ExecutionPlan:
         """Compile and validate the complete provider graph for ``definition``."""
         if not isinstance(definition, CapabilityDefinition):
@@ -82,10 +87,23 @@ class ExecutionPlan:
             )
         if not isinstance(registry, DIRegistry):
             raise DefinitionError(f"registry must be a DIRegistry, got {type(registry).__name__}")
+        policies = list(definition.policies)
+        if definition.confirmation is Confirmation.POLICY and not policies:
+            raise DefinitionError(
+                f"capability {definition.id} declares policy confirmation "
+                "but has no explicit policies"
+            )
+        if definition.confirmation is Confirmation.REQUIRED:
+            if confirmation_verifier is None:
+                raise DefinitionError(
+                    f"capability {definition.id} requires a confirmation verifier"
+                )
+            policies.append(ConfirmationPolicy(definition.id, confirmation_verifier))
         return cls(
             definition=definition,
             target_deps=compile_dag(registry, [definition.handler]),
             hooks=tuple(hooks),
+            policies=tuple(policies),
         )
 
     @property
