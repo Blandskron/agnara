@@ -11,12 +11,9 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
-<<<<<<< HEAD
 - Added structured execution telemetry hooks (E4.8).
-=======
 - Defined Policy, PolicyResult interface and added policies tuple to CapabilityDefinition.
 - Defined Principal and AnonymousPrincipal for policy evaluation.
->>>>>>> origin/main
 - Python 3.14 workspace with seven explicit package boundaries and
   cross-platform quality gates.
 - Protocol-neutral `CapabilityId` and `CapabilityDefinition` value types with
@@ -86,6 +83,8 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Fixed
 
+- Removed unresolved merge markers from the changelog and added a governance
+  regression check that prevents their reintroduction ([#87]).
 - Unknown assignment or deletion on frozen slotted core values now raises
   `FrozenInstanceError` instead of CPython 3.14's confusing internal
   `TypeError` ([#3]).
@@ -105,5 +104,5 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#65]: https://github.com/Blandskron/agnara/issues/65
 [#67]: https://github.com/Blandskron/agnara/issues/67
 [#69]: https://github.com/Blandskron/agnara/issues/69
-
+[#87]: https://github.com/Blandskron/agnara/issues/87
 
