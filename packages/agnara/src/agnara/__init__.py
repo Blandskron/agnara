@@ -9,7 +9,8 @@ or an LLM SDK. See ``ARCHITECTURE.md`` section 3 and ``PRINCIPLES.md`` P2.
 
 Currently implemented: capability declaration and registration, schema ports,
 dependency compilation/resolution, execution plans, and direct invocation.
-Policies and transport adapters remain ahead in ``BACKLOG.md``.
+Principals and independently evaluable policies are also available; runtime
+policy orchestration and transport adapters remain ahead in ``BACKLOG.md``.
 """
 
 from importlib.metadata import version
@@ -36,8 +37,15 @@ from agnara.errors import (
     UnknownCapabilityError,
     ValidationError,
 )
-from agnara.policy.base import Policy, PolicyFailure, PolicyResult, PolicySuccess
-from agnara.policy.principal import AnonymousPrincipal, Principal
+from agnara.policy import (
+    AnonymousPrincipal,
+    Policy,
+    PolicyFailure,
+    PolicyResult,
+    PolicySuccess,
+    Principal,
+    ScopePolicy,
+)
 from agnara.schema import (
     JsonSchema,
     SchemaAdapter,
@@ -71,6 +79,7 @@ __all__ = [
     "Risk",
     "SchemaAdapter",
     "SchemaError",
+    "ScopePolicy",
     "StandardEffect",
     "StandardSchemaAdapter",
     "TypeSchema",

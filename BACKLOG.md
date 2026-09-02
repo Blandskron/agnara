@@ -109,7 +109,7 @@ Core imports neither Pydantic nor msgspec.
 
 - [x] E5.1 Define Principal.
 - [x] E5.2 Define policy interface.
-- [ ] E5.3 Scope policy.
+- [x] E5.3 Scope policy. Tracking: GitHub Issue #90.
 - [ ] E5.4 Effects/risk metadata.
 - [ ] E5.5 Confirmation requirement.
 - [ ] E5.6 Delegation RFC.
@@ -317,7 +317,5 @@ Generated code must:
 - force-pushes to protected branches are blocked;
 - no workflow requires an impossible self-approval;
 - the complete lifecycle is visible and understandable to a human maintainer.
-
-
 
 
