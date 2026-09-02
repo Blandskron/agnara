@@ -7,6 +7,7 @@ These tests are the executable form of the dependency rules in
 They must fail when:
 
 - ``agnara`` imports a forbidden dependency;
+- protocol-neutral policy tests import a transport or protocol SDK;
 - an adapter imports a sibling adapter;
 - a package cycle appears;
 - a new ``agnara`` runtime dependency is introduced.
@@ -22,6 +23,8 @@ from tests.architecture.boundaries import (
     CORE_IMPORT_NAME,
     DISTRIBUTIONS,
     FORBIDDEN_IN_CORE,
+    WORKSPACE_ROOT,
+    _file_imports,
     declared_dependencies,
     declared_workspace_dependencies,
     dependency_graph,
@@ -79,6 +82,26 @@ def test_core_does_not_import_any_adapter() -> None:
     ]
     assert not offenders, "agnara must not import an adapter:\n" + "\n".join(
         f"  {imp.where()} imports {imp.module!r}" for imp in offenders
+    )
+
+
+def test_policy_tests_are_independent_of_transports() -> None:
+    """BACKLOG E5.7: policy behavior is tested without transport coupling."""
+    policy_test_paths = sorted((WORKSPACE_ROOT / "tests" / "unit" / "policy").rglob("*.py"))
+    policy_test_paths.append(
+        WORKSPACE_ROOT / "tests" / "unit" / "execution" / "test_policy_runtime.py"
+    )
+    adapter_import_names = {DISTRIBUTIONS[distribution] for distribution in ADAPTER_DISTRIBUTIONS}
+    disallowed = FORBIDDEN_IN_CORE | adapter_import_names
+    offenders = [
+        imported
+        for path in policy_test_paths
+        for imported in _file_imports(path)
+        if imported.module in disallowed
+    ]
+
+    assert not offenders, "policy tests must remain transport-neutral:\n" + "\n".join(
+        f"  {imported.where()} imports {imported.module!r}" for imported in offenders
     )
 
 

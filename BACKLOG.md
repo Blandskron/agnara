@@ -116,7 +116,8 @@ Core imports neither Pydantic nor msgspec.
 - [x] E5.6 Define the protocol-neutral delegation model, including explicit
   actor/subject separation, monotonic authority attenuation, bounded verified
   chains and confirmation binding. Tracking: GitHub Issue #101.
-- [ ] E5.7 Policy tests independent of transports.
+- [x] E5.7 Keep policy tests independent of transports with an executable
+  architecture guard. Tracking: GitHub Issue #103.
 
 ## EPIC 6 ???????? HTTP adapter
 
