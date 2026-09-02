@@ -22,8 +22,17 @@ dispatcher. Startup registration validates methods and segment parameters,
 detects duplicate or structurally ambiguous templates, and freezes into an
 immutable per-method trie. Runtime matching prefers static segments, captures
 raw decoded path segments, preserves significant trailing slashes, and exposes
-allowed methods in deterministic registration order. It does not yet bind
-values to capability inputs or generate HTTP responses.
+allowed methods in deterministic registration order.
+
+E6.3 adds an internal compiled request-binding boundary. Every capability
+input is assigned explicitly to a path segment, query parameter, header, or a
+single JSON body during startup. Runtime binding performs strict query
+percent/UTF-8 decoding, case-insensitive header lookup, documented scalar wire
+conversion, bounded chunked JSON reads, and deterministic duplicate/error
+handling. It produces an invocation payload for the shared core validation
+path and never substitutes for capability schema validation. Multipart, forms,
+files, cookies, public exposure syntax, and HTTP response mapping remain out of
+scope.
 
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
@@ -31,9 +40,9 @@ The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 - https://asgi.readthedocs.io/en/latest/specs/www.html
 
 This is not yet a public HTTP composition API or a complete ASGI/HTTP
-conformance claim. Route registration, binding, response serialization,
-lifespan, OpenAPI generation, documentation providers and Explorer remain
-separate roadmap work; see RFC 0003, ADR 0018, EPIC 6 and EPIC 8.
+conformance claim. Response serialization, lifespan, OpenAPI generation,
+documentation providers and Explorer remain separate roadmap work; see RFC
+0003, ADR 0018, EPIC 6 and EPIC 8.
 
 - Import package: `agnara_http`
 - Depends on: `agnara-core`

@@ -124,7 +124,7 @@ Core imports neither Pydantic nor msgspec.
 
 - [x] E6.1 ASGI boundary. Tracking: GitHub Issue #107.
 - [x] E6.2 Route registry. Tracking: GitHub Issue #109.
-- [ ] E6.3 Path/query/header/body binding.
+- [x] E6.3 Path/query/header/body binding. Tracking: GitHub Issue #113.
 - [ ] E6.4 Response serialization.
 - [ ] E6.5 RFC 9457 failures.
 - [ ] E6.6 Lifespan.

@@ -15,6 +15,9 @@ package version `0.0.0` is a development sentinel, not a published release.
   raw adapter inputs and rejects unsupported protocols explicitly ([#107]).
 - Added a deterministic two-phase HTTP route registry with fail-fast template
   collision detection and immutable compiled trie matching ([#109]).
+- Added compiled explicit HTTP path/query/header/JSON-body binding with strict
+  wire decoding, scalar conversion, bounded chunked bodies, and shared core
+  schema validation ([#113]).
 - Added structured execution telemetry hooks (E4.8).
 - Defined Policy, PolicyResult interface and added policies tuple to CapabilityDefinition.
 - Defined Principal and AnonymousPrincipal for policy evaluation.
