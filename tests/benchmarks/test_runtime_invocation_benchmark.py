@@ -28,6 +28,16 @@ def test_runtime_benchmark_emits_reproducible_json_contract() -> None:
 
     record = json.loads(completed.stdout)
 
+    assert set(record) == {
+        "schema_version",
+        "benchmark",
+        "recorded_at_utc",
+        "git",
+        "environment",
+        "config",
+        "results",
+        "median_ratio_to_direct",
+    }
     assert record["schema_version"] == 1
     assert record["benchmark"] == "agnara.runtime.invocation"
     assert record["config"] == {
@@ -45,14 +55,41 @@ def test_runtime_benchmark_emits_reproducible_json_contract() -> None:
         "compiled_invoke",
         "canonical_invoke_result",
     }
+    assert set(record["git"]) == {"commit", "dirty"}
     assert record["git"]["commit"]
     assert isinstance(record["git"]["dirty"], bool)
+    assert set(record["environment"]) == {
+        "implementation",
+        "python_version",
+        "python_build",
+        "python_executable",
+        "gil_enabled",
+        "platform",
+        "machine",
+        "processor",
+        "cpu_count",
+        "timer",
+    }
     assert record["environment"]["python_version"]
 
     for result in record["results"].values():
+        assert set(result) == {
+            "elapsed_ns",
+            "ns_per_operation",
+            "summary_ns_per_operation",
+        }
         assert len(result["elapsed_ns"]) == 2
         assert len(result["ns_per_operation"]) == 2
+        assert set(result["summary_ns_per_operation"]) == {
+            "minimum",
+            "median",
+            "mean",
+            "maximum",
+            "stdev",
+        }
         assert result["summary_ns_per_operation"]["median"] > 0
+
+    assert all(ratio > 0 for ratio in record["median_ratio_to_direct"].values())
 
 
 def test_runtime_benchmark_rejects_non_positive_sampling_controls() -> None:
