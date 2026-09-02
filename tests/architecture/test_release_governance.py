@@ -23,6 +23,12 @@ def test_changelog_has_one_unreleased_section() -> None:
     assert changelog.count("## [Unreleased]") == 1
 
 
+def test_changelog_has_no_unresolved_merge_markers() -> None:
+    changelog = (WORKSPACE_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    markers = ("<<<<<<<", "=======", ">>>>>>>")
+    assert not any(marker in changelog for marker in markers)
+
+
 def test_changelog_uses_only_conventional_categories() -> None:
     changelog = (WORKSPACE_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     headings = {
