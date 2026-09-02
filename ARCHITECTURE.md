@@ -126,9 +126,9 @@ Example conceptual pipeline:
 
 ```text
 authenticate
-→ resolve invocation dependencies
-→ validate/coerce input
 → enforce policy
+→ validate/coerce input
+→ resolve invocation dependencies
 → invoke handler
 → validate output
 → emit telemetry

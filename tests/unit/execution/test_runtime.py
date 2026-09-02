@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from agnara import InvocationError, ValidationError
+from agnara import InvocationError, PolicyDeniedError, ValidationError
 from agnara.capability import CapabilityDefinition, CapabilityId
 from agnara.core.di import DIContainer, DIRegistry, provider
 from agnara.execution import (
@@ -17,6 +17,8 @@ from agnara.execution import (
     invoke,
     invoke_result,
 )
+from agnara.policy import PolicyFailure, PolicyResult
+from agnara.schema import TypeSchema
 
 
 class Database:
@@ -136,6 +138,143 @@ def test_rejects_payload_values_for_runtime_owned_parameters(reserved_name: str)
 
         with pytest.raises(InvocationError, match=reserved_name):
             await invoke(plan, direct_context)
+
+    asyncio.run(run_test())
+
+
+@pytest.mark.parametrize(
+    ("payload", "path", "message"),
+    [
+        ({}, ("payment_id",), "required input is missing"),
+        ({"payment_id": "pay_123", "extra": True}, ("extra",), "unexpected input"),
+        ({"payment_id": 123}, ("payment_id",), "expected str, got int"),
+    ],
+)
+def test_validates_payload_shape_and_values(
+    payload: dict[str, Any], path: tuple[str, ...], message: str
+) -> None:
+    async def run_test() -> None:
+        def refund(payment_id: str) -> None:
+            raise AssertionError("handler must not run")
+
+        registry = DIRegistry()
+        plan = ExecutionPlan.compile(definition(refund), registry)
+
+        with pytest.raises(ValidationError, match=message) as failure:
+            await invoke(plan, context_for(plan, registry, payload))
+
+        assert failure.value.path == path
+
+    asyncio.run(run_test())
+
+
+def test_omitted_optional_input_uses_handler_default() -> None:
+    async def run_test() -> None:
+        def refund(reason: str = "requested") -> str:
+            return reason
+
+        registry = DIRegistry()
+        plan = ExecutionPlan.compile(definition(refund), registry)
+
+        assert await invoke(plan, context_for(plan, registry)) == "requested"
+
+    asyncio.run(run_test())
+
+
+def test_passes_schema_return_value_without_mutating_invocation_payload() -> None:
+    class IntegerFromText:
+        def validate(self, value: object) -> int:
+            if not isinstance(value, str):
+                raise ValidationError("expected text")
+            return int(value)
+
+        def json_schema(self) -> dict[str, Any]:
+            return {"type": "integer"}
+
+    class Adapter:
+        def compile(self, annotation: Any) -> TypeSchema:
+            assert annotation is int
+            return IntegerFromText()
+
+        def supports(self, annotation: Any) -> bool:
+            return annotation is int
+
+    async def run_test() -> None:
+        def refund(quantity: int) -> int:
+            return quantity
+
+        registry = DIRegistry()
+        plan = ExecutionPlan.compile(definition(refund), registry, schema_adapter=Adapter())
+        direct_context = context_for(plan, registry, {"quantity": "3"})
+
+        assert await invoke(plan, direct_context) == 3
+        assert direct_context.invocation.payload == {"quantity": "3"}
+
+    asyncio.run(run_test())
+
+
+def test_policy_denial_precedes_input_validation() -> None:
+    class Deny:
+        async def evaluate(self, context: ExecutionContext) -> PolicyResult:
+            return PolicyFailure("not allowed")
+
+    async def run_test() -> None:
+        def refund(payment_id: str) -> None:
+            raise AssertionError("handler must not run")
+
+        registry = DIRegistry()
+        capability = CapabilityDefinition(
+            id=CapabilityId("payments", "refund"),
+            handler=refund,
+            policies=(Deny(),),
+        )
+        plan = ExecutionPlan.compile(capability, registry)
+
+        with pytest.raises(PolicyDeniedError, match="not allowed"):
+            await invoke(plan, context_for(plan, registry, {"payment_id": 123}))
+
+    asyncio.run(run_test())
+
+
+def test_invalid_input_does_not_construct_dependencies() -> None:
+    async def run_test() -> None:
+        constructed = False
+
+        @provider()
+        def tracked_database() -> Database:
+            nonlocal constructed
+            constructed = True
+            return Database()
+
+        def refund(payment_id: str, database: Database) -> None:
+            raise AssertionError("handler must not run")
+
+        registry = DIRegistry()
+        registry.bind(Database, tracked_database)
+        plan = ExecutionPlan.compile(definition(refund), registry)
+
+        with pytest.raises(ValidationError):
+            await invoke(plan, context_for(plan, registry, {"payment_id": 123}))
+        assert constructed is False
+
+    asyncio.run(run_test())
+
+
+def test_canonical_invocation_maps_compiled_input_failure() -> None:
+    async def run_test() -> None:
+        def refund(payment_id: str) -> None:
+            pass
+
+        registry = DIRegistry()
+        plan = ExecutionPlan.compile(definition(refund), registry)
+
+        assert await invoke_result(
+            plan, context_for(plan, registry, {"payment_id": 123})
+        ) == Failure(
+            FailureCode.INVALID_INPUT,
+            "expected str, got int",
+            details={"path": ("payment_id",)},
+        )
 
     asyncio.run(run_test())
 

@@ -14,7 +14,7 @@ from agnara.core.di import (
     DIRegistry,
     provider,
 )
-from agnara.errors import DefinitionError
+from agnara.errors import DefinitionError, SchemaError
 from agnara.execution import ExecutionPlan
 from agnara.policy import (
     ConfirmationEvidence,
@@ -23,6 +23,7 @@ from agnara.policy import (
     PolicyResult,
 )
 from agnara.policy.confirmation import ConfirmationPolicy
+from agnara.schema import PrimitiveSchema, TypeSchema
 
 
 class DenyPolicy:
@@ -72,7 +73,7 @@ def test_plan_compiles_direct_dependencies_in_signature_order() -> None:
     registry.bind(Database, provide_database)
     registry.bind(Repository, provide_repository)
 
-    def refund(command: dict[str, object], repository: Repository, database: Database) -> None:
+    def refund(command: dict[str, Any], repository: Repository, database: Database) -> None:
         pass
 
     capability = define(refund)
@@ -127,7 +128,7 @@ def test_compiled_plan_is_consumed_directly_by_di_container() -> None:
 
 
 def test_plan_is_frozen_and_slotted() -> None:
-    def refund(command: dict[str, object]) -> None:
+    def refund(command: dict[str, Any]) -> None:
         pass
 
     plan = ExecutionPlan.compile(define(refund), DIRegistry())
@@ -135,6 +136,62 @@ def test_plan_is_frozen_and_slotted() -> None:
     assert not hasattr(plan, "__dict__")
     with pytest.raises(FrozenInstanceError, match="cannot assign to field 'target_deps'"):
         plan.target_deps = {}  # type: ignore[misc]
+
+
+def test_plan_compiles_ordinary_input_schemas_and_requiredness() -> None:
+    def refund(payment_id: str, reason: str = "requested") -> None:
+        pass
+
+    plan = ExecutionPlan.compile(define(refund), DIRegistry())
+
+    assert tuple(plan.input_schemas) == ("payment_id", "reason")
+    assert plan.input_schemas["payment_id"] == PrimitiveSchema(str)
+    assert plan.required_inputs == frozenset({"payment_id"})
+    with pytest.raises(TypeError, match="does not support item assignment"):
+        plan.input_schemas["other"] = PrimitiveSchema(str)  # ty: ignore[invalid-assignment]
+
+
+def test_plan_uses_supplied_schema_adapter_once_per_ordinary_input() -> None:
+    compiled: list[Any] = []
+
+    class Adapter:
+        def compile(self, annotation: Any) -> TypeSchema:
+            compiled.append(annotation)
+            return PrimitiveSchema(annotation)
+
+        def supports(self, annotation: Any) -> bool:
+            return True
+
+    def refund(payment_id: str, database: Database) -> None:
+        pass
+
+    registry = DIRegistry()
+    registry.bind(Database, provide_database)
+    plan = ExecutionPlan.compile(define(refund), registry, schema_adapter=Adapter())
+
+    assert compiled == [str]
+    assert tuple(plan.input_schemas) == ("payment_id",)
+
+
+@pytest.mark.parametrize(
+    ("handler", "message"),
+    [
+        (lambda value: None, "requires a type annotation"),
+        (lambda *values: None, "must be an explicit"),
+        (lambda **values: None, "must be an explicit"),
+    ],
+)
+def test_plan_rejects_ambiguous_input_shapes(handler: Callable[..., Any], message: str) -> None:
+    with pytest.raises(DefinitionError, match=message):
+        ExecutionPlan.compile(define(handler), DIRegistry())
+
+
+def test_plan_reports_input_context_for_unsupported_schema() -> None:
+    def refund(command: object) -> None:
+        pass
+
+    with pytest.raises(SchemaError, match=r"payments\.refund input 'command'"):
+        ExecutionPlan.compile(define(refund), DIRegistry())
 
 
 @pytest.mark.parametrize(

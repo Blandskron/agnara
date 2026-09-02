@@ -70,6 +70,9 @@ package version `0.0.0` is a development sentinel, not a published release.
 - Immutable `ExecutionPlan` startup compilation, which snapshots each
   capability's direct DI requirements after validating the complete provider
   graph ([#62]).
+- Compiled protocol-neutral capability input schemas with deterministic
+  required/unknown-input failures and validated values on the invocation path
+  ([#111]).
 - Transport-neutral direct invocation of compiled plans with explicit context
   injection, DI ownership, sync/async handlers and deterministic resource
   cleanup ([#65]).

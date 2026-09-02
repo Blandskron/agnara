@@ -142,7 +142,7 @@ async def invoke_result[T](
 
 
 async def _execute(plan: ExecutionPlan, context: ExecutionContext) -> Any:
-    """Resolve dependencies and call the handler within the caller's timeout scope."""
+    """Enforce policies, validate inputs, resolve dependencies, and call the handler."""
     for policy in plan.policies:
         result = await policy.evaluate(context)
         if isinstance(result, PolicySuccess):
@@ -153,11 +153,11 @@ async def _execute(plan: ExecutionPlan, context: ExecutionContext) -> Any:
             raise InteractionRequiredError(result.request)
         raise TypeError(f"policy returned an invalid result: {type(result).__name__}")
 
+    arguments = _validate_inputs(plan, context.invocation.payload)
     async with context.di_container.resolve_dependencies(
         plan.definition.handler,
         plan.target_deps,
     ) as dependencies:
-        arguments = dict(context.invocation.payload)
         arguments.update(dependencies)
         arguments.update(dict.fromkeys(plan.context_parameters, context))
 
@@ -165,3 +165,24 @@ async def _execute(plan: ExecutionPlan, context: ExecutionContext) -> Any:
         if inspect.isawaitable(result):
             return await result
         return result
+
+
+def _validate_inputs(plan: ExecutionPlan, payload: dict[str, Any]) -> dict[str, Any]:
+    """Validate a payload against precompiled schemas without mutating it."""
+    unexpected = sorted(set(payload).difference(plan.input_schemas))
+    if unexpected:
+        raise ValidationError("unexpected input", path=(unexpected[0],))
+
+    missing = sorted(plan.required_inputs.difference(payload))
+    if missing:
+        raise ValidationError("required input is missing", path=(missing[0],))
+
+    arguments: dict[str, Any] = {}
+    for name, schema in plan.input_schemas.items():
+        if name not in payload:
+            continue
+        try:
+            arguments[name] = schema.validate(payload[name])
+        except ValidationError as error:
+            raise error.at(name) from error
+    return arguments

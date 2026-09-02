@@ -104,6 +104,7 @@ Core imports neither Pydantic nor msgspec.
 - [x] E4.7 Canonical result/failure model.
 - [x] E4.8 Structured telemetry hooks.
 - [x] E4.9 Benchmark runtime overhead. Tracking: GitHub Issue #105.
+- [x] E4.10 Compile and enforce capability input schemas. Tracking: GitHub Issue #111.
 
 ## EPIC 5 ???????? Policy engine
 
