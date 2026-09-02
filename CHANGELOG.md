@@ -22,6 +22,9 @@ package version `0.0.0` is a development sentinel, not a published release.
 - Implemented verifier-backed confirmation policies, immutable interaction
   requests, explicit evidence on execution contexts, and pre-handler canonical
   outcome mapping ([#96]).
+- Defined protocol-neutral delegation semantics with explicit actor/subject
+  separation, monotonic authority attenuation, bounded verified chains and
+  confirmation binding ([#101]).
 - Python 3.14 workspace with seven explicit package boundaries and
   cross-platform quality gates.
 - Protocol-neutral `CapabilityId` and `CapabilityDefinition` value types with
@@ -116,3 +119,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#90]: https://github.com/Blandskron/agnara/issues/90
 [#94]: https://github.com/Blandskron/agnara/issues/94
 [#96]: https://github.com/Blandskron/agnara/issues/96
+[#101]: https://github.com/Blandskron/agnara/issues/101
