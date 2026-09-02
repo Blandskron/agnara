@@ -17,6 +17,14 @@ boundary delivered by E6.1. It accepts HTTP scopes and delegates their raw
 protocols are rejected explicitly instead of being mistaken for supported
 lifespan or WebSocket behavior.
 
+E6.2 adds the internal two-phase route registry used by that future
+dispatcher. Startup registration validates methods and segment parameters,
+detects duplicate or structurally ambiguous templates, and freezes into an
+immutable per-method trie. Runtime matching prefers static segments, captures
+raw decoded path segments, preserves significant trailing slashes, and exposes
+allowed methods in deterministic registration order. It does not yet bind
+values to capability inputs or generate HTTP responses.
+
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
 - https://asgi.readthedocs.io/en/latest/specs/main.html
