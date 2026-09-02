@@ -11,6 +11,8 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Established a dependency-free internal ASGI 3 HTTP boundary that preserves
+  raw adapter inputs and rejects unsupported protocols explicitly ([#107]).
 - Added structured execution telemetry hooks (E4.8).
 - Defined Policy, PolicyResult interface and added policies tuple to CapabilityDefinition.
 - Defined Principal and AnonymousPrincipal for policy evaluation.

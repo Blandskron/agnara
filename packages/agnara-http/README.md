@@ -11,9 +11,21 @@ Agnara Explorer is not an OpenAPI renderer. If it is initially served through
 this adapter, it consumes the filtered protocol-neutral introspection snapshot
 defined by the core/application composition boundary.
 
-The package currently contains boundary scaffolding only. Generation,
-providers, routes and Explorer are roadmap work; see RFC 0003, ADR 0018,
-EPIC 6 and EPIC 8.
+The package now contains the dependency-free internal ASGI 3 single-callable
+boundary delivered by E6.1. It accepts HTTP scopes and delegates their raw
+`scope`, `receive` and `send` objects to the adapter's dispatcher. Unsupported
+protocols are rejected explicitly instead of being mistaken for supported
+lifespan or WebSocket behavior.
+
+The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
+
+- https://asgi.readthedocs.io/en/latest/specs/main.html
+- https://asgi.readthedocs.io/en/latest/specs/www.html
+
+This is not yet a public HTTP composition API or a complete ASGI/HTTP
+conformance claim. Route registration, binding, response serialization,
+lifespan, OpenAPI generation, documentation providers and Explorer remain
+separate roadmap work; see RFC 0003, ADR 0018, EPIC 6 and EPIC 8.
 
 - Import package: `agnara_http`
 - Depends on: `agnara-core`
