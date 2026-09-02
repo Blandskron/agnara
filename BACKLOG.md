@@ -22,7 +22,8 @@ The agent must update this file as work progresses and must never mark a task co
 - [x] E0.8 Add GitHub Actions for Linux, macOS and Windows where practical.
 - [x] E0.9 Add conventional changelog/release process. Tracking: GitHub Issue
   #16.
-- [ ] E0.10 Add license only after owner decision.
+- [x] E0.10 Add license after owner decision. Apache License 2.0 was adopted
+  by PR #81.
 - [x] E0.13 Verify Ruff and `ty` gates. Both are green in CI as of PR #1.
   They still cannot run on the current Windows workstation: an Application
   Control policy refuses their native binaries (`OSError 4551`) from both
@@ -88,14 +89,14 @@ Core imports neither Pydantic nor msgspec.
 - [x] E3.3 Define scopes.
 - [x] E3.4 Compile dependency DAG.
 - [x] E3.5 Detect dependency cycles at compile time.
-- [ ] E3.6 Support async resource cleanup.
-- [ ] E3.7 Implement invocation-scoped cache.
-- [ ] E3.8 Verify free-threading safety assumptions.
+- [x] E3.6 Support async resource cleanup. Delivered by PR #53.
+- [x] E3.7 Implement invocation-scoped cache. Delivered by PR #53.
+- [x] E3.8 Verify free-threading safety assumptions. Delivered by PR #56.
 
 ## EPIC 4 ???????? Execution compiler/runtime
 
-- [ ] E4.1 Define Invocation.
-- [ ] E4.2 Define ExecutionContext.
+- [x] E4.1 Define Invocation. Delivered by PR #58.
+- [x] E4.2 Define ExecutionContext. Delivered by PR #58.
 - [x] E4.3 Compile capability to ExecutionPlan.
 - [x] E4.4 Direct invocation.
 - [x] E4.5 Cancellation propagation.
@@ -316,7 +317,6 @@ Generated code must:
 - force-pushes to protected branches are blocked;
 - no workflow requires an impossible self-approval;
 - the complete lifecycle is visible and understandable to a human maintainer.
-
 
 
 
