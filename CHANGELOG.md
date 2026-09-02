@@ -18,6 +18,9 @@ package version `0.0.0` is a development sentinel, not a published release.
 - Added compiled explicit HTTP path/query/header/JSON-body binding with strict
   wire decoding, scalar conversion, bounded chunked bodies, and shared core
   schema validation ([#113]).
+- Added deterministic non-streaming ASGI success responses with compact UTF-8
+  JSON, dataclass and enum projection, correct `HEAD`/`204` behavior, and
+  fail-before-start validation ([#115]).
 - Added structured execution telemetry hooks (E4.8).
 - Defined Policy, PolicyResult interface and added policies tuple to CapabilityDefinition.
 - Defined Principal and AnonymousPrincipal for policy evaluation.

@@ -34,13 +34,22 @@ path and never substitutes for capability schema validation. Multipart, forms,
 files, cookies, public exposure syntax, and HTTP response mapping remain out of
 scope.
 
+E6.4 adds deterministic internal success-response serialization. Successful
+values are projected recursively to compact UTF-8 JSON and emitted as one ASGI
+response-start event followed by one terminal body event. `None` produces a
+bodyless `204`; `HEAD` preserves the equivalent representation headers while
+suppressing transmitted body bytes. The complete value is checked before the
+response starts, including cycles, finite numbers and string-only object keys.
+Canonical failures remain explicitly unsupported here because E6.5 owns their
+RFC 9457 mapping.
+
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
 - https://asgi.readthedocs.io/en/latest/specs/main.html
 - https://asgi.readthedocs.io/en/latest/specs/www.html
 
 This is not yet a public HTTP composition API or a complete ASGI/HTTP
-conformance claim. Response serialization, lifespan, OpenAPI generation,
+conformance claim. Failure serialization, lifespan, OpenAPI generation,
 documentation providers and Explorer remain separate roadmap work; see RFC
 0003, ADR 0018, EPIC 6 and EPIC 8.
 
