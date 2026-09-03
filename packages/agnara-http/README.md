@@ -95,17 +95,22 @@ problem component. Compact sorted-key UTF-8 serialization is byte-stable for
 identical compiled input. This does not add a schema route, CLI export, UI,
 viewer-specific authorization or a complete conformance claim; see ADR 0032.
 
-E6.8 adds the conformance suite. Every other test module checks one module's
-own rules; this one checks the rules that hold across the adapter, by driving a
-request matrix through the ASGI entry point a server calls and validating every
-exchange with one shared checker, so a response path cannot be exercised
-without being checked. It covers the ASGI response event pair, `content-length`
-agreeing with the representation on every path, `HEAD` transmitting no body,
-`204` carrying no representation metadata, `405` carrying `Allow`, and every
-error body being a parseable problem document whose `status` member agrees with
-the response status. It is not a general HTTP conformance claim: the module
-states what it checks and what the adapter does not implement. OpenAPI
-structural fixtures stay in E6.11 so a failure names one specification.
+E6.11 pins the generated document. One reference application in
+`tests/http/reference_application.py` exercises every projection feature the
+adapter implements, and its serialized OpenAPI is committed as a fixture and
+compared byte for byte, so a change to what the framework publishes shows up
+as a reviewable diff instead of a silently passing suite. The fixture is
+regenerated with `uv run python -m tests.http.reference_application`, never
+edited by hand, so it cannot become a parallel source of truth.
+
+Alongside it are the structural properties a behaviour test cannot express:
+every `$ref` resolves locally, no component is defined without being
+referenced, path templates agree with their declared path parameters, and
+`operationId` is stable across projections and registration order. And the
+negative ones: the document declares no `security` and no
+`components.securitySchemes`, because the adapter authenticates nobody, so
+shipping authentication without updating the projection fails a test rather
+than publishing an unsecured API.
 
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
