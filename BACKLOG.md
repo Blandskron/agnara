@@ -148,7 +148,7 @@ Core imports neither Pydantic nor msgspec.
   shared checker. Tracking: GitHub Issue #137.
 - [?] E6.9 Compare direct ASGI vs minimal Starlette dependency.
 - [ ] E6.10 Benchmark against FastAPI, Starlette and Litestar.
-- [ ] E6.11 Add pinned OpenAPI 3.2 structural/conformance fixtures, including
+- [x] E6.11 Add pinned OpenAPI 3.2 structural/conformance fixtures, including
   stable `operationId`, schema references, security schemes and documented
   unsupported features.
 - [x] E6.12 Define the replaceable documentation-provider contract without a
