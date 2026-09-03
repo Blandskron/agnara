@@ -112,6 +112,10 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Fixed
 
+- The multi-agent coordination CLI no longer aborts with `UnicodeEncodeError`
+  on a narrow console codec. Output framing is ASCII, and GitHub-sourced
+  titles, worker names and scopes degrade to replacement characters instead of
+  killing the command ([#119]).
 - Removed unresolved merge markers from the changelog and added a governance
   regression check that prevents their reintroduction ([#87]).
 - Unknown assignment or deletion on frozen slotted core values now raises
