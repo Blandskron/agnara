@@ -95,6 +95,18 @@ problem component. Compact sorted-key UTF-8 serialization is byte-stable for
 identical compiled input. This does not add a schema route, CLI export, UI,
 viewer-specific authorization or a complete conformance claim; see ADR 0032.
 
+E6.8 adds the conformance suite. Every other test module checks one module's
+own rules; this one checks the rules that hold across the adapter, by driving a
+request matrix through the ASGI entry point a server calls and validating every
+exchange with one shared checker, so a response path cannot be exercised
+without being checked. It covers the ASGI response event pair, `content-length`
+agreeing with the representation on every path, `HEAD` transmitting no body,
+`204` carrying no representation metadata, `405` carrying `Allow`, and every
+error body being a parseable problem document whose `status` member agrees with
+the response status. It is not a general HTTP conformance claim: the module
+states what it checks and what the adapter does not implement. OpenAPI
+structural fixtures stay in E6.11 so a failure names one specification.
+
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
 - https://asgi.readthedocs.io/en/latest/specs/main.html
