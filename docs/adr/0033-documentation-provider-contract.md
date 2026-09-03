@@ -1,4 +1,4 @@
-# ADR 0032 — The Documentation-Provider Contract
+# ADR 0033 — The Documentation-Provider Contract
 
 - Status: Proposed
 - Date: 2026-09-03
