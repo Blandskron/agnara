@@ -130,7 +130,7 @@ Core imports neither Pydantic nor msgspec.
 - [x] E6.2 Route registry. Tracking: GitHub Issue #109.
 - [x] E6.3 Path/query/header/body binding. Tracking: GitHub Issue #113.
 - [x] E6.4 Response serialization. Tracking: GitHub Issue #115.
-- [ ] E6.5 RFC 9457 failures.
+- [x] E6.5 RFC 9457 failures. Tracking: GitHub Issue #117.
 - [ ] E6.6 Lifespan.
 - [ ] E6.7 Generate deterministic OpenAPI 3.2 from compiled HTTP exposures,
   shared schemas and explicitly publishable metadata. Do not accept a

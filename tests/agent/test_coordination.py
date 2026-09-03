@@ -1,7 +1,9 @@
 # Load script as module
 import importlib.util
+import io
 import json
 import sys
+from contextlib import redirect_stdout
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -145,3 +147,103 @@ def test_claim_success(mock_run, mock_get_issues, capsys):
     agent.cmd_claim(args)
     captured = capsys.readouterr()
     assert "Successfully claimed #42" in captured.out
+
+
+def cp1252_stream() -> io.TextIOWrapper:
+    """A stream with the default Windows codec, which rejects most Unicode."""
+    return io.TextIOWrapper(io.BytesIO(), encoding="cp1252", newline="")
+
+
+def written(stream: io.TextIOWrapper) -> str:
+    stream.flush()
+    raw = stream.buffer
+    assert isinstance(raw, io.BytesIO)
+    return raw.getvalue().decode("cp1252")
+
+
+def ready_issue(number: int, title: str) -> Any:
+    body = mock_issue(number, ["packages/agnara-http/**"], [])["body"]
+    return agent.Issue(
+        number=number,
+        title=title,
+        state="OPEN",
+        body="",
+        comments=[],
+        metadata=agent.parse_metadata(body),
+        lease=None,
+    )
+
+
+def test_emit_leaves_encodable_text_unchanged() -> None:
+    stream = cp1252_stream()
+    agent.emit("Ready work    3", stream=stream)
+    assert written(stream) == "Ready work    3\n"
+
+
+def test_emit_replaces_characters_the_stream_codec_cannot_encode() -> None:
+    stream = cp1252_stream()
+    agent.emit("frame ── label 你", stream=stream)
+    output = written(stream)
+    assert output.startswith("frame ")
+    assert "─" not in output
+    assert "你" not in output
+
+
+def test_encodable_tolerates_a_missing_or_unknown_codec() -> None:
+    assert agent.encodable("─", None) == "─"
+    assert agent.encodable("─", "not-a-codec") == "─"
+
+
+def test_status_framing_is_pure_ascii() -> None:
+    assert agent.RULE.isascii()
+    assert set(agent.RULE) == {"-"}
+
+
+@patch("agent.get_issues")
+def test_status_writes_every_line_to_a_narrow_codec_stream(mock_get_issues: Any) -> None:
+    expires = (datetime.now(UTC) + timedelta(hours=1)).isoformat()
+    claim_str = f'{agent.CLAIM_PREFIX}{{"worker": "w─rker", "expires": "{expires}"}} -->'
+    issue = ready_issue(7, "titled")
+    issue.lease = agent.parse_lease([{"body": claim_str, "databaseId": 1}])
+    mock_get_issues.return_value = [issue]
+
+    stream = cp1252_stream()
+    with redirect_stdout(stream):
+        agent.cmd_status(MagicMock())
+
+    output = written(stream)
+    assert "AGNARA DEVELOPMENT SWARM" in output
+    assert agent.RULE in output
+    assert "Active        1" in output
+    assert "#007" in output
+
+
+@patch("agent.get_issues")
+def test_next_survives_a_remote_title_the_console_cannot_encode(mock_get_issues: Any) -> None:
+    mock_get_issues.return_value = [ready_issue(9, "add ─ deterministic 你 output")]
+    args = MagicMock()
+    args.json = False
+
+    stream = cp1252_stream()
+    with redirect_stdout(stream):
+        agent.cmd_next(args)
+
+    output = written(stream)
+    assert output.startswith("#9 - add ")
+    assert "─" not in output
+
+
+@patch("agent.get_issues")
+def test_next_json_output_stays_ascii_and_parseable(mock_get_issues: Any) -> None:
+    title = "add ─ deterministic 你 output"
+    mock_get_issues.return_value = [ready_issue(9, title)]
+    args = MagicMock()
+    args.json = True
+
+    stream = cp1252_stream()
+    with redirect_stdout(stream):
+        agent.cmd_next(args)
+
+    output = written(stream)
+    assert output.isascii()
+    assert json.loads(output) == {"issue": 9, "title": title}

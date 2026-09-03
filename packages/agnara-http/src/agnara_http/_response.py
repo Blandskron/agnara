@@ -45,7 +45,7 @@ class _SerializedResponse:
 
 
 def _serialize_success(result: Success[Any]) -> _SerializedResponse:
-    """Serialize a canonical success; failure projection belongs to E6.5."""
+    """Serialize a canonical success; failures belong to the RFC 9457 boundary."""
     if isinstance(result, Failure):
         raise _ResponseSerializationError("failure outcomes require RFC 9457 serialization")
     if not isinstance(result, Success):

@@ -21,6 +21,11 @@ package version `0.0.0` is a development sentinel, not a published release.
 - Added deterministic non-streaming ASGI success responses with compact UTF-8
   JSON, dataclass and enum projection, correct `HEAD`/`204` behavior, and
   fail-before-start validation ([#115]).
+- Added RFC 9457 failure responses with an exhaustive, reviewed
+  `FailureCode`-to-status table, occurrence-independent problem titles,
+  optional compiled problem-type URIs, collision-free nested failure details,
+  `internal_failure` redaction, and a prebuilt last-resort internal problem
+  response ([#117]).
 - Added structured execution telemetry hooks (E4.8).
 - Defined Policy, PolicyResult interface and added policies tuple to CapabilityDefinition.
 - Defined Principal and AnonymousPrincipal for policy evaluation.
@@ -111,6 +116,10 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Fixed
 
+- The multi-agent coordination CLI no longer aborts with `UnicodeEncodeError`
+  on a narrow console codec. Output framing is ASCII, and GitHub-sourced
+  titles, worker names and scopes degrade to replacement characters instead of
+  killing the command ([#119]).
 - Removed unresolved merge markers from the changelog and added a governance
   regression check that prevents their reintroduction ([#87]).
 - Unknown assignment or deletion on frozen slotted core values now raises
