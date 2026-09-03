@@ -108,7 +108,7 @@ documentation that is wrong. The network is opt-in twice, once by the provider
 declaring remote assets and once by the deployment permitting them, so pinned
 local assets stay the baseline. An empty registry is the supported no-UI
 deployment. No provider ships here: Swagger UI is E6.15, ReDoc E6.16, Scalar
-E6.17; see ADR 0032.
+E6.17; see ADR 0033.
 
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
