@@ -1,4 +1,4 @@
-"""E0.8 ??? the CI workflow must run the documented quality gates.
+"""E0.8 — the CI workflow must run the documented quality gates.
 
 ``QUALITY_GATES.md`` names the commands that define "done". CI is the only
 place those commands are proven, so a gate silently dropped from the

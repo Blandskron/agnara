@@ -90,20 +90,20 @@ Template changes require:
 
 ## Issue-driven Git workflow
 
-All contributors ??? human or agent ??? follow `GIT_WORKFLOW.md`.
+All contributors — human or agent — follow `GIT_WORKFLOW.md`.
 
 Default:
 
 ```text
 Issue
-??? short-lived branch
-??? implementation / tests
-??? commit
-??? attribution verification
-??? push
-??? PR to develop
-??? review/checks
-??? merge
+→ short-lived branch
+→ implementation / tests
+→ commit
+→ attribution verification
+→ push
+→ PR to develop
+→ review/checks
+→ merge
 ```
 
 One Issue per PR is preferred.

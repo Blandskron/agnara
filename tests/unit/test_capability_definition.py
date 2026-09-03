@@ -1,4 +1,4 @@
-"""E1.1 and E1.8 ??? the definition is immutable and carries agentic metadata."""
+"""E1.1 and E1.8 — the definition is immutable and carries agentic metadata."""
 
 from __future__ import annotations
 
@@ -240,7 +240,7 @@ class TestDeclareConstructor:
         assert declared == define(effects=frozenset({"read"}), risk=Risk.HIGH)
 
     def test_accepts_the_documented_authoring_types(self) -> None:
-        """docs/API_DESIGN.md writes `effects={...}, risk="high"` ??? the very
+        """docs/API_DESIGN.md writes `effects={...}, risk="high"` — the very
         call that used to be a static error."""
         declared = CapabilityDefinition.declare(
             id=REFUND,
