@@ -256,7 +256,12 @@ def _routed_path(scope: _Scope) -> str:
     root_path = scope.get("root_path", "")
     if not isinstance(root_path, str):
         raise TypeError("ASGI scope 'root_path' must be a string")
-    if not root_path or not path.startswith(root_path):
+    if not root_path:
+        return path
+    if path == root_path:
+        return "/"
+    mount_prefix = root_path if root_path.endswith("/") else f"{root_path}/"
+    if not path.startswith(mount_prefix):
         return path
     remainder = path[len(root_path) :]
     return remainder if remainder.startswith("/") else f"/{remainder}"

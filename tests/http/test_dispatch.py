@@ -522,6 +522,16 @@ def test_a_request_outside_the_mount_prefix_does_not_match() -> None:
     assert events[0]["status"] == 404
 
 
+def test_a_path_with_only_a_textual_mount_prefix_does_not_match() -> None:
+    def ping() -> str:
+        return "pong"
+
+    served = dispatcher(_HTTPExposure("GET", "/ary/ping", plan(ping)))
+    events = request(served, "GET", "/apiary/ping", root_path="/api")
+
+    assert events[0]["status"] == 404
+
+
 def test_a_target_that_is_not_a_uri_reference_omits_the_instance() -> None:
     def ping() -> str:
         return "pong"

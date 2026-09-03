@@ -125,6 +125,9 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Fixed
 
+- HTTP dispatch now strips `root_path` only at a complete mount-path segment,
+  preventing a mount such as `/api` from capturing a textual prefix such as
+  `/apiary` ([#133]).
 - Every `CHANGELOG.md` reference link resolves again. Nine had lost or never
   received a definition and rendered as literal text; governance tests now
   reject an undefined reference, an unreferenced definition, a duplicate, and
@@ -178,3 +181,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#131]: https://github.com/Blandskron/agnara/issues/131
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
+[#133]: https://github.com/Blandskron/agnara/issues/133
