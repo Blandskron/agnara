@@ -96,6 +96,10 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Changed
 
+- Contributors on the maintainer Windows workstation can now run the complete
+  five-command quality gate locally. The `E0.13` record no longer claims that
+  Ruff and `ty` are unrunnable there; CI stays the authoritative
+  cross-platform record ([#120]).
 - Direct invocation explicitly propagates task cancellation while cleaning up
   resources entered before cancellation, including during dependency
   construction ([#67]).
@@ -142,8 +146,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#94]: https://github.com/Blandskron/agnara/issues/94
 [#96]: https://github.com/Blandskron/agnara/issues/96
 [#101]: https://github.com/Blandskron/agnara/issues/101
-[#107]: https://github.com/Blandskron/agnara/issues/107
-[#109]: https://github.com/Blandskron/agnara/issues/109
-[#113]: https://github.com/Blandskron/agnara/issues/113
-[#115]: https://github.com/Blandskron/agnara/issues/115
-[#117]: https://github.com/Blandskron/agnara/issues/117
+[#120]: https://github.com/Blandskron/agnara/issues/120

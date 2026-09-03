@@ -25,11 +25,13 @@ The agent must update this file as work progresses and must never mark a task co
 - [x] E0.10 Add license after owner decision. Apache License 2.0 was adopted
   by PR #81.
 - [x] E0.13 Verify Ruff and `ty` gates. Both are green in CI as of PR #1.
-  They still cannot run on the current Windows workstation: an Application
-  Control policy refuses their native binaries (`OSError 4551`) from both
-  the virtual environment and the interpreter `Scripts` directory. The
-  policy must not be weakened. CI is therefore the authoritative record for
-  these two gates ???????? see `QUALITY_GATES.md`.
+  As of 2026-09-03 both also run on the maintainer Windows workstation, from
+  `uv run` and directly from `.venv/Scripts`: ruff 0.16.5 and ty 0.0.77 on
+  CPython 3.14.4. The Application Control policy that previously refused
+  their native binaries with `OSError 4551` no longer does; it was not
+  weakened to achieve that, and it must not be. One workstation is not
+  cross-platform evidence, so CI remains the authoritative record for Linux
+  and macOS. Tracking: GitHub Issue #120. See `QUALITY_GATES.md`.
 - [x] E0.14 Restore GitHub autonomy. `gh` 2.98.0 is installed and
   authenticated, so Issues, Pull Requests, reviews and merges are available
   again. Work merged before PR #1 carries local `--no-ff` merges with
@@ -49,8 +51,10 @@ uv run pytest
 all pass on Python 3.14.
 
 Current evidence: all five gates pass in CI on CPython 3.14, across
-ubuntu-latest, macos-latest and windows-latest, with 105 tests. See the
-checks on PR #1. Locally only `uv sync` and `pytest` can run (E0.13).
+ubuntu-latest, macos-latest and windows-latest. They also pass locally on the
+maintainer Windows workstation (E0.13). The suite was 105 tests at PR #1 and
+783 on `develop` on 2026-09-03; the authoritative count is the one reported by
+the most recent CI run rather than this line.
 
 ## EPIC 1 ???????? Capability model
 
