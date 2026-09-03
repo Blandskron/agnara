@@ -83,6 +83,18 @@ internal problem, which is the case that constant exists for. The problem
 a query cannot be copied into a problem body. Every invocation runs as the
 anonymous principal, which is why no path here produces a `401`; see ADR 0031.
 
+E6.7 adds a dependency-free internal OpenAPI 3.2.0 projection from that same
+compiled exposure registry. An exposure is absent by default and contributes
+paths, identifiers, descriptions, tags and schemas only through explicit
+publication metadata; filtering happens before document assembly. Parameters
+and JSON request bodies reuse the capability plan's compiled input schemas.
+The current response projection truthfully remains generic because the runtime
+does not yet compile output schemas: `200` carries an unconstrained JSON value,
+`204` carries no value, and a default RFC 9457 response references one shared
+problem component. Compact sorted-key UTF-8 serialization is byte-stable for
+identical compiled input. This does not add a schema route, CLI export, UI,
+viewer-specific authorization or a complete conformance claim; see ADR 0032.
+
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
 - https://asgi.readthedocs.io/en/latest/specs/main.html

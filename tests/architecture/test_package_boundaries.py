@@ -134,6 +134,20 @@ def test_adapter_declares_only_core_as_a_workspace_dependency(dist_name: str) ->
     )
 
 
+def test_http_openapi_projection_uses_only_stdlib_and_workspace_boundaries() -> None:
+    """E6.7: generating OpenAPI must not require a protocol or UI library."""
+    path = WORKSPACE_ROOT / "packages" / "agnara-http" / "src" / "agnara_http" / "_openapi.py"
+    allowed = {CORE_IMPORT_NAME, DISTRIBUTIONS["agnara-http"]}
+    offenders = [
+        imported
+        for imported in _file_imports(path)
+        if imported.module not in allowed and not is_standard_library(imported.module)
+    ]
+    assert not offenders, "OpenAPI projection must stay dependency-free:\n" + "\n".join(
+        f"  {imported.where()} imports {imported.module!r}" for imported in offenders
+    )
+
+
 # ---------------------------------------------------------------------------
 # Rule 3 — no package cycles
 # ---------------------------------------------------------------------------
