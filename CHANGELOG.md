@@ -125,6 +125,10 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Fixed
 
+- Every `CHANGELOG.md` reference link resolves again. Nine had lost or never
+  received a definition and rendered as literal text; governance tests now
+  reject an undefined reference, an unreferenced definition, a duplicate, and
+  a definition whose URL does not match its own number ([#125]).
 - Restored the em-dashes, arrows and box-drawing characters that a lossy
   cp1252 write had replaced with literal question marks across `README.md`,
   `BACKLOG.md`, `CONTRIBUTING.md`, one core module docstring and four test
@@ -151,16 +155,26 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#32]: https://github.com/Blandskron/agnara/issues/32
 [#34]: https://github.com/Blandskron/agnara/issues/34
 [#36]: https://github.com/Blandskron/agnara/issues/36
+[#38]: https://github.com/Blandskron/agnara/issues/38
 [#62]: https://github.com/Blandskron/agnara/issues/62
 [#65]: https://github.com/Blandskron/agnara/issues/65
 [#67]: https://github.com/Blandskron/agnara/issues/67
 [#69]: https://github.com/Blandskron/agnara/issues/69
+[#71]: https://github.com/Blandskron/agnara/issues/71
 [#87]: https://github.com/Blandskron/agnara/issues/87
 [#90]: https://github.com/Blandskron/agnara/issues/90
 [#94]: https://github.com/Blandskron/agnara/issues/94
 [#96]: https://github.com/Blandskron/agnara/issues/96
 [#101]: https://github.com/Blandskron/agnara/issues/101
+[#107]: https://github.com/Blandskron/agnara/issues/107
+[#109]: https://github.com/Blandskron/agnara/issues/109
+[#111]: https://github.com/Blandskron/agnara/issues/111
+[#113]: https://github.com/Blandskron/agnara/issues/113
+[#115]: https://github.com/Blandskron/agnara/issues/115
+[#117]: https://github.com/Blandskron/agnara/issues/117
+[#119]: https://github.com/Blandskron/agnara/issues/119
 [#120]: https://github.com/Blandskron/agnara/issues/120
 [#129]: https://github.com/Blandskron/agnara/issues/129
 [#131]: https://github.com/Blandskron/agnara/issues/131
 [#123]: https://github.com/Blandskron/agnara/issues/123
+[#125]: https://github.com/Blandskron/agnara/issues/125
