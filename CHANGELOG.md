@@ -21,6 +21,11 @@ package version `0.0.0` is a development sentinel, not a published release.
 - Added deterministic non-streaming ASGI success responses with compact UTF-8
   JSON, dataclass and enum projection, correct `HEAD`/`204` behavior, and
   fail-before-start validation ([#115]).
+- Added RFC 9457 failure responses with an exhaustive, reviewed
+  `FailureCode`-to-status table, occurrence-independent problem titles,
+  optional compiled problem-type URIs, collision-free nested failure details,
+  `internal_failure` redaction, and a prebuilt last-resort internal problem
+  response ([#117]).
 - Added structured execution telemetry hooks (E4.8).
 - Defined Policy, PolicyResult interface and added policies tuple to CapabilityDefinition.
 - Defined Principal and AnonymousPrincipal for policy evaluation.
@@ -133,3 +138,8 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#94]: https://github.com/Blandskron/agnara/issues/94
 [#96]: https://github.com/Blandskron/agnara/issues/96
 [#101]: https://github.com/Blandskron/agnara/issues/101
+[#107]: https://github.com/Blandskron/agnara/issues/107
+[#109]: https://github.com/Blandskron/agnara/issues/109
+[#113]: https://github.com/Blandskron/agnara/issues/113
+[#115]: https://github.com/Blandskron/agnara/issues/115
+[#117]: https://github.com/Blandskron/agnara/issues/117

@@ -40,8 +40,22 @@ response-start event followed by one terminal body event. `None` produces a
 bodyless `204`; `HEAD` preserves the equivalent representation headers while
 suppressing transmitted body bytes. The complete value is checked before the
 response starts, including cycles, finite numbers and string-only object keys.
-Canonical failures remain explicitly unsupported here because E6.5 owns their
-RFC 9457 mapping.
+Canonical failures are serialized by the separate RFC 9457 boundary below.
+
+E6.5 adds internal RFC 9457 failure mapping. Every `FailureCode` is projected
+through one explicit, exhaustive table to a reviewed HTTP status and an
+occurrence-independent problem `title`, and emitted as
+`application/problem+json` with the same deterministic compact UTF-8 JSON
+encoding used for success. The stable machine-readable discriminator is the
+`code` extension member, so applications that publish no problem
+documentation keep the RFC 9457 default `about:blank` type; an application may
+instead compile an explicit absolute base URI into one type URI per code.
+Failure details are nested under a single `details` member so they cannot
+shadow a reserved member, `internal_failure` never serializes handler message
+or details, and a prebuilt last-resort internal problem response is available
+to a dispatcher that cannot serialize an outcome. `WWW-Authenticate`,
+`Retry-After`, content negotiation, `problem+xml` and multi-error arrays are
+documented gaps rather than conformance claims; see ADR 0028.
 
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
@@ -49,9 +63,9 @@ The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 - https://asgi.readthedocs.io/en/latest/specs/www.html
 
 This is not yet a public HTTP composition API or a complete ASGI/HTTP
-conformance claim. Failure serialization, lifespan, OpenAPI generation,
-documentation providers and Explorer remain separate roadmap work; see RFC
-0003, ADR 0018, EPIC 6 and EPIC 8.
+conformance claim. Lifespan, OpenAPI generation, documentation providers and
+Explorer remain separate roadmap work; see RFC 0003, ADR 0018, EPIC 6 and
+EPIC 8.
 
 - Import package: `agnara_http`
 - Depends on: `agnara-core`
