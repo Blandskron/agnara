@@ -11,6 +11,11 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Added compiled HTTP surface routes for already-produced schema,
+  documentation and Explorer artifacts: paths are explicit and static,
+  compilation order is deterministic, collisions reserve the whole path
+  against capability routes, and unmatched requests delegate unchanged to
+  capability dispatch ([#145]).
 - Added the replaceable documentation-provider contract: a provider receives
   an already-filtered OpenAPI document and never the compiled registry, must
   name the OpenAPI versions it was tested against and the features it does not
@@ -189,6 +194,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#129]: https://github.com/Blandskron/agnara/issues/129
 [#131]: https://github.com/Blandskron/agnara/issues/131
 [#141]: https://github.com/Blandskron/agnara/issues/141
+[#145]: https://github.com/Blandskron/agnara/issues/145
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133
