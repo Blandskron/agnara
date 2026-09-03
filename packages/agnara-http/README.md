@@ -69,6 +69,20 @@ namespace keyed by the `code` extension, because `code` is what a client
 reads. `401` and `429` stay absent until authentication and rate limiting
 exist; see ADR 0030.
 
+E6.6b is the request path itself. A declared exposure carries a method, a
+path template, an `ExecutionPlan`, its input bindings and a body limit;
+compilation validates all of it against the capability's real input schemas
+and freezes an immutable registry, so a matched route resolves to its plan and
+binding in one lookup and every declaration error fails at startup. Dispatch
+then matches, binds, invokes and serializes with no reflection and no lock.
+`HEAD` falls back to a `GET` exposure and suppresses only body bytes;
+`root_path` is stripped so an application can be mounted; a client disconnect
+produces no response; and a serialization failure falls back to the prebuilt
+internal problem, which is the case that constant exists for. The problem
+`instance` carries the path but never the query string, so a secret passed in
+a query cannot be copied into a problem body. Every invocation runs as the
+anonymous principal, which is why no path here produces a `401`; see ADR 0031.
+
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
 - https://asgi.readthedocs.io/en/latest/specs/main.html

@@ -30,6 +30,11 @@ package version `0.0.0` is a development sentinel, not a published release.
   capability: classified binding failures, `404`, `405` with a required
   `Allow` header, `413` and `415`, sharing one problem-type namespace with
   capability failures ([#129]).
+- Added compiled HTTP exposures and the end-to-end request path: startup
+  validation and an immutable route-to-plan registry, then match, bind,
+  invoke and serialize, with `HEAD` served from `GET`, `root_path` stripping,
+  no response on a client disconnect, and a query-free problem `instance`
+  ([#131]).
 - Added structured execution telemetry hooks (E4.8).
 - Defined Policy, PolicyResult interface and added policies tuple to CapabilityDefinition.
 - Defined Principal and AnonymousPrincipal for policy evaluation.
@@ -157,4 +162,5 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#101]: https://github.com/Blandskron/agnara/issues/101
 [#120]: https://github.com/Blandskron/agnara/issues/120
 [#129]: https://github.com/Blandskron/agnara/issues/129
+[#131]: https://github.com/Blandskron/agnara/issues/131
 [#123]: https://github.com/Blandskron/agnara/issues/123
