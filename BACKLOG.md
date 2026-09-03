@@ -143,7 +143,9 @@ Core imports neither Pydantic nor msgspec.
   shared schemas and explicitly publishable metadata. Do not accept a
   handwritten parallel schema as the generated source of truth. Tracking:
   GitHub Issue #135.
-- [ ] E6.8 HTTP conformance tests.
+- [x] E6.8 Add an executable HTTP conformance suite that drives a request
+  matrix through the ASGI entry point and validates every exchange with one
+  shared checker. Tracking: GitHub Issue #137.
 - [?] E6.9 Compare direct ASGI vs minimal Starlette dependency.
 - [ ] E6.10 Benchmark against FastAPI, Starlette and Litestar.
 - [x] E6.11 Add pinned OpenAPI 3.2 structural/conformance fixtures, including
