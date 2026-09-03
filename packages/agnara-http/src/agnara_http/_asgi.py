@@ -1,9 +1,13 @@
 """Dependency-free ASGI boundary for the HTTP adapter.
 
 The module is internal until the HTTP exposure/composition API is reviewed.
-It follows the ASGI 3 single-callable shape and deliberately recognizes only
-HTTP scopes. Routing, request binding, response mapping, lifespan, and
-WebSockets belong to later adapter work.
+It follows the ASGI 3 single-callable shape and recognizes HTTP scopes, plus
+lifespan scopes when an application lifecycle is configured. Routing, request
+binding, response mapping and WebSockets belong to other adapter modules.
+
+A lifespan scope with no configured dispatcher is refused rather than silently
+completed. Raising is how an ASGI application tells a server it has no
+lifespan, and a server running `lifespan="auto"` handles that itself.
 """
 
 from __future__ import annotations
@@ -16,6 +20,7 @@ type _Message = dict[str, Any]
 type _Receive = Callable[[], Awaitable[_Message]]
 type _Send = Callable[[_Message], Awaitable[None]]
 type _HTTPDispatch = Callable[[_Scope, _Receive, _Send], Awaitable[None]]
+type _LifespanDispatch = Callable[[_Scope, _Receive, _Send], Awaitable[None]]
 
 
 class _UnsupportedScopeError(RuntimeError):
@@ -23,14 +28,21 @@ class _UnsupportedScopeError(RuntimeError):
 
 
 class _ASGIBoundary:
-    """ASGI 3 callable that validates and delegates one HTTP connection scope."""
+    """ASGI 3 callable that validates and delegates one connection scope."""
 
-    __slots__ = ("_dispatch",)
+    __slots__ = ("_dispatch", "_lifespan")
 
-    def __init__(self, dispatch: _HTTPDispatch) -> None:
+    def __init__(
+        self,
+        dispatch: _HTTPDispatch,
+        lifespan: _LifespanDispatch | None = None,
+    ) -> None:
         if not callable(dispatch):
             raise TypeError(f"dispatch must be callable, got {type(dispatch).__name__}")
+        if lifespan is not None and not callable(lifespan):
+            raise TypeError(f"lifespan must be callable, got {type(lifespan).__name__}")
         self._dispatch = dispatch
+        self._lifespan = lifespan
 
     async def __call__(
         self,
@@ -44,7 +56,11 @@ class _ASGIBoundary:
         scope_type = scope.get("type")
         if not isinstance(scope_type, str):
             raise TypeError("ASGI scope 'type' must be a string")
-        if scope_type != "http":
+        if scope_type == "http":
+            handler = self._dispatch
+        elif scope_type == "lifespan" and self._lifespan is not None:
+            handler = self._lifespan
+        else:
             raise _UnsupportedScopeError(f"unsupported ASGI scope type: {scope_type!r}")
 
         if not callable(receive):
@@ -52,4 +68,4 @@ class _ASGIBoundary:
         if not callable(send):
             raise TypeError(f"ASGI send must be callable, got {type(send).__name__}")
 
-        return await self._dispatch(scope, receive, send)
+        return await handler(scope, receive, send)
