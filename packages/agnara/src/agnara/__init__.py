@@ -1,4 +1,4 @@
-"""Agnara ???????? a capability-first, transport-neutral execution kernel.
+"""Agnara — a capability-first, transport-neutral execution kernel.
 
 ``agnara-core`` owns the semantics shared by every transport: the capability
 model, the registry, execution context, the dependency graph, policies,

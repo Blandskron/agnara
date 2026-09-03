@@ -1,4 +1,4 @@
-"""E0.7 ??? automated architecture rules.
+"""E0.7 — automated architecture rules.
 
 These tests are the executable form of the dependency rules in
 ``ARCHITECTURE.md`` sections 3 and 4, ``PRINCIPLES.md`` P2/P3/P13,
@@ -35,7 +35,7 @@ from tests.architecture.boundaries import (
 )
 
 # ---------------------------------------------------------------------------
-# Rule 1 ??? the core imports nothing but the standard library
+# Rule 1 — the core imports nothing but the standard library
 # ---------------------------------------------------------------------------
 
 
@@ -106,7 +106,7 @@ def test_policy_tests_are_independent_of_transports() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Rule 2 ??? adapters do not import sibling adapters
+# Rule 2 — adapters do not import sibling adapters
 # ---------------------------------------------------------------------------
 
 
@@ -135,7 +135,7 @@ def test_adapter_declares_only_core_as_a_workspace_dependency(dist_name: str) ->
 
 
 # ---------------------------------------------------------------------------
-# Rule 3 ??? no package cycles
+# Rule 3 — no package cycles
 # ---------------------------------------------------------------------------
 
 
@@ -163,7 +163,7 @@ def test_dependency_direction_points_inward() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Rule 4 ??? imports resolve to a known boundary
+# Rule 4 — imports resolve to a known boundary
 # ---------------------------------------------------------------------------
 
 

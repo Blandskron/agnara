@@ -116,6 +116,11 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Fixed
 
+- Restored the em-dashes, arrows and box-drawing characters that a lossy
+  cp1252 write had replaced with literal question marks across `README.md`,
+  `BACKLOG.md`, `CONTRIBUTING.md`, one core module docstring and four test
+  modules. Every diagram in the README is readable again, and a
+  repository-integrity test now fails on reintroduction ([#123]).
 - The multi-agent coordination CLI no longer aborts with `UnicodeEncodeError`
   on a narrow console codec. Output framing is ASCII, and GitHub-sourced
   titles, worker names and scopes degrade to replacement characters instead of
@@ -147,3 +152,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#96]: https://github.com/Blandskron/agnara/issues/96
 [#101]: https://github.com/Blandskron/agnara/issues/101
 [#120]: https://github.com/Blandskron/agnara/issues/120
+[#123]: https://github.com/Blandskron/agnara/issues/123
