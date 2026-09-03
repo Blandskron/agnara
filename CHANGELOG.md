@@ -26,6 +26,10 @@ package version `0.0.0` is a development sentinel, not a published release.
   optional compiled problem-type URIs, collision-free nested failure details,
   `internal_failure` redaction, and a prebuilt last-resort internal problem
   response ([#117]).
+- Added transport-level RFC 9457 problems for failures that precede a
+  capability: classified binding failures, `404`, `405` with a required
+  `Allow` header, `413` and `415`, sharing one problem-type namespace with
+  capability failures ([#129]).
 - Added structured execution telemetry hooks (E4.8).
 - Defined Policy, PolicyResult interface and added policies tuple to CapabilityDefinition.
 - Defined Principal and AnonymousPrincipal for policy evaluation.
@@ -152,4 +156,5 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#96]: https://github.com/Blandskron/agnara/issues/96
 [#101]: https://github.com/Blandskron/agnara/issues/101
 [#120]: https://github.com/Blandskron/agnara/issues/120
+[#129]: https://github.com/Blandskron/agnara/issues/129
 [#123]: https://github.com/Blandskron/agnara/issues/123

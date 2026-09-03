@@ -10,8 +10,9 @@ from capability metadata.
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
-from dataclasses import dataclass
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, replace
+from enum import StrEnum
 from types import MappingProxyType
 from typing import Any
 from urllib.parse import urlsplit
@@ -58,12 +59,55 @@ _PROBLEMS: Mapping[FailureCode, _ProblemMapping] = MappingProxyType(
     }
 )
 
-_ABOUT_BLANK_TYPES: Mapping[FailureCode, str] = MappingProxyType(
-    dict.fromkeys(FailureCode, _ABOUT_BLANK)
+
+class _TransportFailure(StrEnum):
+    """A request that failed before any capability could run.
+
+    These are transport conditions, not capability outcomes, so they are not
+    ``FailureCode`` members and never will be. ``FailureCode`` describes what
+    a capability decided; this describes why one was never reached.
+    """
+
+    NOT_FOUND = "not_found"
+    METHOD_NOT_ALLOWED = "method_not_allowed"
+    INVALID_INPUT = "invalid_input"
+    CONTENT_TOO_LARGE = "content_too_large"
+    UNSUPPORTED_MEDIA_TYPE = "unsupported_media_type"
+
+
+_TRANSPORT_PROBLEMS: Mapping[_TransportFailure, _ProblemMapping] = MappingProxyType(
+    {
+        _TransportFailure.INVALID_INPUT: _ProblemMapping(400, "Invalid Input"),
+        _TransportFailure.NOT_FOUND: _ProblemMapping(404, "Not Found"),
+        _TransportFailure.METHOD_NOT_ALLOWED: _ProblemMapping(405, "Method Not Allowed"),
+        _TransportFailure.CONTENT_TOO_LARGE: _ProblemMapping(413, "Content Too Large"),
+        _TransportFailure.UNSUPPORTED_MEDIA_TYPE: _ProblemMapping(415, "Unsupported Media Type"),
+    }
 )
 
 
-def _compile_problem_types(base_uri: str | None = None) -> Mapping[FailureCode, str]:
+def _problem_codes() -> tuple[str, ...]:
+    """Every value the ``code`` extension member can take, deduplicated.
+
+    Capability and transport failures share one problem-type namespace,
+    because ``code`` is what a client actually reads. Where the semantics
+    coincide, so does the code: a capability that reports ``not_found`` and a
+    target that has no route document the same thing.
+    """
+    seen: dict[str, None] = {}
+    for code in FailureCode:
+        seen[code.value] = None
+    for transport in _TransportFailure:
+        seen[transport.value] = None
+    return tuple(seen)
+
+
+_ABOUT_BLANK_TYPES: Mapping[str, str] = MappingProxyType(
+    dict.fromkeys(_problem_codes(), _ABOUT_BLANK)
+)
+
+
+def _compile_problem_types(base_uri: str | None = None) -> Mapping[str, str]:
     """Compile the immutable problem-type URIs used by one HTTP application.
 
     Agnara does not invent a hosted documentation origin. Without an explicit
@@ -85,14 +129,91 @@ def _compile_problem_types(base_uri: str | None = None) -> Mapping[FailureCode, 
     if not base_uri.endswith("/"):
         raise _ProblemDefinitionError("problem type base URI must end with '/'")
     return MappingProxyType(
-        {code: f"{base_uri}{code.value.replace('_', '-')}" for code in FailureCode}
+        {code: f"{base_uri}{code.replace('_', '-')}" for code in _problem_codes()}
     )
+
+
+def _serialize_transport_failure(
+    failure: _TransportFailure,
+    detail: str,
+    *,
+    details: Mapping[str, Any] | None = None,
+    headers: Iterable[tuple[bytes, bytes]] = (),
+    problem_types: Mapping[str, str] = _ABOUT_BLANK_TYPES,
+    instance: str | None = None,
+) -> _SerializedResponse:
+    """Project one pre-capability failure onto a ``problem+json`` response.
+
+    ``headers`` carries what the status requires rather than what a caller
+    would like: RFC 9110 requires ``Allow`` on ``405``, and attaching it here
+    means it cannot be forgotten at emission time.
+    """
+    if not isinstance(failure, _TransportFailure):
+        raise TypeError(f"failure must be a _TransportFailure, got {type(failure).__name__}")
+    if not isinstance(detail, str) or not detail:
+        raise TypeError("detail must be a non-empty string")
+    mapping = _TRANSPORT_PROBLEMS[failure]
+    problem_type = problem_types.get(failure.value)
+    if not isinstance(problem_type, str) or not problem_type:
+        raise _ResponseSerializationError(f"transport failure {failure!r} has no problem type")
+
+    document: dict[str, Any] = {
+        "type": problem_type,
+        "title": mapping.title,
+        "status": mapping.status,
+        "code": failure.value,
+        "detail": detail,
+    }
+    if details:
+        document["details"] = _to_json_value(dict(details), set(), path="$.details")
+    if instance is not None:
+        document["instance"] = _checked_instance(instance)
+
+    body = _encode(document)
+    return _with_headers(
+        _SerializedResponse(
+            status=mapping.status,
+            headers=(
+                (b"content-type", _PROBLEM_MEDIA_TYPE),
+                (b"content-length", str(len(body)).encode("ascii")),
+            ),
+            body=body,
+        ),
+        headers,
+    )
+
+
+def _with_headers(
+    response: _SerializedResponse,
+    headers: Iterable[tuple[bytes, bytes]],
+) -> _SerializedResponse:
+    """Append required headers without letting them shadow the representation."""
+    extra = tuple(headers)
+    if not extra:
+        return response
+    reserved = {b"content-type", b"content-length"}
+    for name, value in extra:
+        if not isinstance(name, bytes) or not isinstance(value, bytes):
+            raise TypeError("response headers must be byte pairs")
+        if name.lower() in reserved:
+            raise _ResponseSerializationError(
+                f"{name.decode('ascii')} is owned by the response boundary"
+            )
+    return replace(response, headers=(*response.headers, *extra))
+
+
+def _allow_header(methods: Iterable[str]) -> tuple[tuple[bytes, bytes], ...]:
+    """Build the RFC 9110 ``Allow`` header for a 405, preserving order."""
+    listed = tuple(methods)
+    if not listed:
+        raise _ResponseSerializationError("a 405 problem requires at least one allowed method")
+    return ((b"allow", ", ".join(listed).encode("ascii")),)
 
 
 def _serialize_failure(
     result: Failure,
     *,
-    problem_types: Mapping[FailureCode, str] = _ABOUT_BLANK_TYPES,
+    problem_types: Mapping[str, str] = _ABOUT_BLANK_TYPES,
     instance: str | None = None,
 ) -> _SerializedResponse:
     """Project one canonical failure onto a complete ``problem+json`` response."""
@@ -101,7 +222,7 @@ def _serialize_failure(
     mapping = _PROBLEMS.get(result.code)
     if mapping is None:  # pragma: no cover - guarded by an exhaustiveness test
         raise _ResponseSerializationError(f"failure code {result.code!r} has no reviewed status")
-    problem_type = problem_types.get(result.code)
+    problem_type = problem_types.get(result.code.value)
     if not isinstance(problem_type, str) or not problem_type:
         raise _ResponseSerializationError(f"failure code {result.code!r} has no problem type")
 
@@ -137,7 +258,7 @@ def _serialize_failure(
 def _serialize_result(
     result: CanonicalResult[Any],
     *,
-    problem_types: Mapping[FailureCode, str] = _ABOUT_BLANK_TYPES,
+    problem_types: Mapping[str, str] = _ABOUT_BLANK_TYPES,
     instance: str | None = None,
 ) -> _SerializedResponse:
     """Serialize either half of a canonical outcome through its own boundary."""

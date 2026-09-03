@@ -57,6 +57,18 @@ to a dispatcher that cannot serialize an outcome. `WWW-Authenticate`,
 `Retry-After`, content negotiation, `problem+xml` and multi-error arrays are
 documented gaps rather than conformance claims; see ADR 0028.
 
+E6.6a adds transport-level problems: the failures that happen before a
+capability runs. Binding failures now carry a reason rather than only a
+message, so a dispatcher selects a status from a contract instead of matching
+text: malformed data becomes `400`, an unacceptable media type `415`, an
+oversized body `413`, and a client disconnect becomes no response at all. A
+missing route becomes `404` and a method mismatch `405` with the `Allow`
+header RFC 9110 requires, attached during serialization so it cannot be
+dropped at emission. Capability and transport failures share one problem-type
+namespace keyed by the `code` extension, because `code` is what a client
+reads. `401` and `429` stay absent until authentication and rate limiting
+exist; see ADR 0030.
+
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
 - https://asgi.readthedocs.io/en/latest/specs/main.html

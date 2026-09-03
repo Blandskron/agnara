@@ -151,9 +151,11 @@ def test_default_problem_type_is_about_blank_for_every_code() -> None:
 def test_compiled_base_uri_produces_stable_per_code_problem_types() -> None:
     types = _compile_problem_types("https://example.test/problems/")
 
-    assert set(types) == set(FailureCode)
-    assert types[FailureCode.INVALID_INPUT] == "https://example.test/problems/invalid-input"
-    assert types[FailureCode.INTERNAL_FAILURE] == "https://example.test/problems/internal-failure"
+    # One namespace keyed by the `code` extension value, so capability and
+    # transport failures that mean the same thing share a problem type.
+    assert {code.value for code in FailureCode} <= set(types)
+    assert types["invalid_input"] == "https://example.test/problems/invalid-input"
+    assert types["internal_failure"] == "https://example.test/problems/internal-failure"
     document = _document(
         _serialize_failure(Failure(FailureCode.RATE_LIMITED, "slow down"), problem_types=types)
     )
@@ -164,7 +166,7 @@ def test_compiled_problem_types_are_read_only() -> None:
     types = _compile_problem_types("https://example.test/problems/")
     mutable: Any = types
     with pytest.raises(TypeError):
-        mutable[FailureCode.CONFLICT] = "https://example.test/other"
+        mutable["conflict"] = "https://example.test/other"
 
 
 @pytest.mark.parametrize(
