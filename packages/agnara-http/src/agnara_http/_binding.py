@@ -26,13 +26,33 @@ class _BindingDefinitionError(ValueError):
     """A binding declaration is invalid or ambiguous."""
 
 
+class _BindingFailure(StrEnum):
+    """Why request data could not be bound, for a dispatcher to branch on.
+
+    A dispatcher must not read the message text to decide a status, so the
+    reason is part of the error's contract.
+    """
+
+    MALFORMED = "malformed"
+    UNSUPPORTED_MEDIA_TYPE = "unsupported_media_type"
+    CONTENT_TOO_LARGE = "content_too_large"
+    DISCONNECTED = "disconnected"
+
+
 class _RequestBindingError(ValueError):
     """HTTP request data cannot be bound to the declared input."""
 
-    def __init__(self, message: str, *, location: str) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        location: str,
+        failure: _BindingFailure = _BindingFailure.MALFORMED,
+    ) -> None:
         super().__init__(f"{location}: {message}")
         self.message = message
         self.location = location
+        self.failure = failure
 
 
 class _BindingSource(StrEnum):
@@ -196,7 +216,11 @@ async def _bind_request(
             len(content_types) != 1
             or content_types[0].split(";", 1)[0].strip().lower() != "application/json"
         ):
-            raise _RequestBindingError("expected application/json", location="header.content-type")
+            raise _RequestBindingError(
+                "expected application/json",
+                location="header.content-type",
+                failure=_BindingFailure.UNSUPPORTED_MEDIA_TYPE,
+            )
         raw_body = await _read_body(receive, plan.max_body_bytes)
         if raw_body:
             try:
@@ -279,7 +303,11 @@ async def _read_body(receive: _Receive, limit: int) -> bytes:
             raise _RequestBindingError("ASGI event must be a dictionary", location="body")
         message_type = message.get("type")
         if message_type == "http.disconnect":
-            raise _RequestBindingError("client disconnected", location="body")
+            raise _RequestBindingError(
+                "client disconnected",
+                location="body",
+                failure=_BindingFailure.DISCONNECTED,
+            )
         if message_type != "http.request":
             raise _RequestBindingError("unexpected ASGI event", location="body")
         chunk = message.get("body", b"")
@@ -287,7 +315,11 @@ async def _read_body(receive: _Receive, limit: int) -> bytes:
             raise _RequestBindingError("ASGI body chunk must be bytes", location="body")
         size += len(chunk)
         if size > limit:
-            raise _RequestBindingError("request body exceeds configured limit", location="body")
+            raise _RequestBindingError(
+                "request body exceeds configured limit",
+                location="body",
+                failure=_BindingFailure.CONTENT_TOO_LARGE,
+            )
         chunks.append(chunk)
         more = message.get("more_body", False)
         if not isinstance(more, bool):

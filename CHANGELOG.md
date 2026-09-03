@@ -26,11 +26,15 @@ package version `0.0.0` is a development sentinel, not a published release.
   optional compiled problem-type URIs, collision-free nested failure details,
   `internal_failure` redaction, and a prebuilt last-resort internal problem
   response ([#117]).
-- Added the ASGI lifespan bridge: one async context manager lifecycle, exact
-  startup/shutdown event sequencing, traceback-carrying failure reporting to
-  the hosting server, cancellation propagation, single-use dispatchers, and a
-  refusal to carry application state through the lifespan return value
-  ([#127]).
+- Added transport-level RFC 9457 problems for failures that precede a
+  capability: classified binding failures, `404`, `405` with a required
+  `Allow` header, `413` and `415`, sharing one problem-type namespace with
+  capability failures ([#129]).
+- Added compiled HTTP exposures and the end-to-end request path: startup
+  validation and an immutable route-to-plan registry, then match, bind,
+  invoke and serialize, with `HEAD` served from `GET`, `root_path` stripping,
+  no response on a client disconnect, and a query-free problem `instance`
+  ([#131]).
 - Added structured execution telemetry hooks (E4.8).
 - Defined Policy, PolicyResult interface and added policies tuple to CapabilityDefinition.
 - Defined Principal and AnonymousPrincipal for policy evaluation.
@@ -170,6 +174,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#117]: https://github.com/Blandskron/agnara/issues/117
 [#119]: https://github.com/Blandskron/agnara/issues/119
 [#120]: https://github.com/Blandskron/agnara/issues/120
-[#127]: https://github.com/Blandskron/agnara/issues/127
+[#129]: https://github.com/Blandskron/agnara/issues/129
+[#131]: https://github.com/Blandskron/agnara/issues/131
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
