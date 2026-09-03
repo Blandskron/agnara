@@ -156,8 +156,8 @@ Core imports neither Pydantic nor msgspec.
 - [x] E6.13 Add configurable schema, documentation and Explorer routes with
   deterministic collision detection. Candidate defaults remain provisional.
   Tracking: GitHub Issue #145.
-- [ ] E6.14 Allow OpenAPI, each human UI, Explorer and interactive try-it to be
-  disabled independently.
+- [x] E6.14 Allow OpenAPI, each human UI, Explorer and interactive try-it to be
+  disabled independently. Tracking: GitHub Issue #147.
 - [ ] E6.15 Implement a Swagger UI provider with pinned self-hosted assets,
   optional explicit CDN mode and versioned compatibility evidence.
 - [ ] E6.16 Implement a ReDoc provider with the same provider contract and

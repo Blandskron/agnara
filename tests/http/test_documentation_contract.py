@@ -144,8 +144,17 @@ def test_a_provider_may_receive_the_serialized_document_directly() -> None:
     registry = _DocumentationRegistry()
     registry.register(provider)
 
-    registry.render("example", request(document=b'{"openapi":"3.2.0"}'))
+    registry.render("example", request(document_url=None, document=b'{"openapi":"3.2.0"}'))
     assert provider.seen[0].document == b'{"openapi":"3.2.0"}'
+
+
+def test_a_provider_receives_exactly_one_document_source() -> None:
+    with pytest.raises(_DocumentationDefinitionError, match="exactly one"):
+        request(document_url=None)
+    with pytest.raises(_DocumentationDefinitionError, match="exactly one"):
+        request(document=b'{"openapi":"3.2.0"}')
+    with pytest.raises(_DocumentationDefinitionError, match="must not be empty"):
+        request(document_url=None, document=b"")
 
 
 # --- what a provider must declare ------------------------------------------

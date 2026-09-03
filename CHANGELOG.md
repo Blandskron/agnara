@@ -11,6 +11,10 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Added an immutable HTTP publication plan where schema serving, each
+  documentation UI, Explorer and per-UI try-it are selected independently;
+  UIs without a schema endpoint receive document bytes instead of an
+  unserved URL ([#147]).
 - Added compiled HTTP surface routes for already-produced schema,
   documentation and Explorer artifacts: paths are explicit and static,
   compilation order is deterministic, collisions reserve the whole path
@@ -195,6 +199,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#131]: https://github.com/Blandskron/agnara/issues/131
 [#141]: https://github.com/Blandskron/agnara/issues/141
 [#145]: https://github.com/Blandskron/agnara/issues/145
+[#147]: https://github.com/Blandskron/agnara/issues/147
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133

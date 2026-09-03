@@ -123,6 +123,18 @@ delegate unchanged to capability dispatch. No default route or public
 configuration syntax is selected here, omission is not authorization, and UI
 assets remain separate work; see ADR 0034.
 
+E6.14 adds an immutable internal publication plan without a global boolean
+bag. Schema, each documentation UI and Explorer are selected by supplying
+their own typed configuration; absence means disabled, and no environment
+silently changes that choice. Each UI owns its own try-it state, which defaults
+off. A selected UI receives the configured schema URL only when that endpoint
+is actually present; otherwise it receives the already-filtered serialized
+document directly. Exactly one source is required. Explorer alone has no
+OpenAPI dependency, an unused OpenAPI artifact publishes nothing, and all
+selected paths pass through the E6.13 collision boundary before any provider
+renders. The plan remains internal and does not implement provider HTML, CSP,
+assets, visibility or authorization; see ADR 0035.
+
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
 - https://asgi.readthedocs.io/en/latest/specs/main.html

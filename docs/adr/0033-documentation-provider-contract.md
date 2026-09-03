@@ -26,9 +26,10 @@ dependency nobody chose.
 
 The contract is four values and one protocol.
 
-**What a provider is given** is an already-filtered document or its local
-URL, a title, an asset base URL, the document's OpenAPI version, and whether
-try-it is enabled. Nothing else. There is no route registry, no compiled
+**What a provider is given** is exactly one already-filtered document source:
+serialized bytes or its local URL, plus a title, an asset base URL, the
+document's OpenAPI version, and whether try-it is enabled. Nothing else.
+There is no route registry, no compiled
 exposure, no execution plan and no capability, and a test asserts the field
 set so a later field cannot smuggle one in. A provider renders what the
 projection already decided to publish; it does not get to look further.
@@ -87,6 +88,8 @@ requires a browser interface.
 - No OpenAPI or UI type enters `agnara-core`.
 - `agnara-http` imports and declares no browser documentation package.
 - A provider receives only an already-filtered document.
+- A provider receives exactly one document source, so a disabled schema route
+  cannot leave a UI pointing at a URL that is not served.
 - Try-it is off unless explicitly enabled, and no other setting turns it on.
 - A version claim without named tested versions is refused at registration.
 - An external origin requires both a provider declaration and deployment

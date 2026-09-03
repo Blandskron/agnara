@@ -105,7 +105,7 @@ class _DocumentationRequest:
     publish; it does not get to look further.
     """
 
-    document_url: str
+    document_url: str | None
     title: str
     assets_url: str
     openapi_version: str
@@ -113,18 +113,29 @@ class _DocumentationRequest:
     try_it: bool = False
 
     def __post_init__(self) -> None:
-        for name in ("document_url", "assets_url"):
-            value = getattr(self, name)
-            if not isinstance(value, str) or not _LOCAL_URL.fullmatch(value):
-                raise _DocumentationDefinitionError(
-                    f"{name} must be a same-origin absolute path, got {value!r}"
-                )
+        if self.document_url is not None and (
+            not isinstance(self.document_url, str) or not _LOCAL_URL.fullmatch(self.document_url)
+        ):
+            raise _DocumentationDefinitionError(
+                "document_url must be a same-origin absolute path or None, "
+                f"got {self.document_url!r}"
+            )
+        if not isinstance(self.assets_url, str) or not _LOCAL_URL.fullmatch(self.assets_url):
+            raise _DocumentationDefinitionError(
+                f"assets_url must be a same-origin absolute path, got {self.assets_url!r}"
+            )
         if not isinstance(self.title, str) or not self.title.strip():
             raise _DocumentationDefinitionError("title must be a non-empty string")
         if not isinstance(self.openapi_version, str) or not self.openapi_version.strip():
             raise _DocumentationDefinitionError("openapi_version must be a non-empty string")
         if self.document is not None and not isinstance(self.document, bytes):
             raise _DocumentationDefinitionError("document must be the serialized bytes or None")
+        if self.document == b"":
+            raise _DocumentationDefinitionError("document bytes must not be empty")
+        if (self.document_url is None) == (self.document is None):
+            raise _DocumentationDefinitionError(
+                "exactly one of document_url or document must be supplied"
+            )
         if not isinstance(self.try_it, bool):
             raise _DocumentationDefinitionError("try_it must be a boolean")
 
