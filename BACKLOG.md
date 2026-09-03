@@ -135,9 +135,10 @@ Core imports neither Pydantic nor msgspec.
 - [x] E6.6a Classify transport-level request failures and project them to
   RFC 9457, including `405` with `Allow`, `413` and `415`. Tracking: GitHub
   Issue #129.
-- [ ] E6.6b Compile HTTP exposures and dispatch one request end to end:
+- [x] E6.6b Compile HTTP exposures and dispatch one request end to end:
   route match, binding, invocation, response or problem. E6.7 and E6.8
-  depend on it, because both presuppose a compiled HTTP exposure.
+  depend on it, because both presuppose a compiled HTTP exposure. Tracking:
+  GitHub Issue #131.
 - [ ] E6.7 Generate deterministic OpenAPI 3.2 from compiled HTTP exposures,
   shared schemas and explicitly publishable metadata. Do not accept a
   handwritten parallel schema as the generated source of truth.
