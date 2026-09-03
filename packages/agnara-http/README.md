@@ -95,6 +95,23 @@ problem component. Compact sorted-key UTF-8 serialization is byte-stable for
 identical compiled input. This does not add a schema route, CLI export, UI,
 viewer-specific authorization or a complete conformance claim; see ADR 0032.
 
+E6.11 pins the generated document. One reference application in
+`tests/http/reference_application.py` exercises every projection feature the
+adapter implements, and its serialized OpenAPI is committed as a fixture and
+compared byte for byte, so a change to what the framework publishes shows up
+as a reviewable diff instead of a silently passing suite. The fixture is
+regenerated with `uv run python -m tests.http.reference_application`, never
+edited by hand, so it cannot become a parallel source of truth.
+
+Alongside it are the structural properties a behaviour test cannot express:
+every `$ref` resolves locally, no component is defined without being
+referenced, path templates agree with their declared path parameters, and
+`operationId` is stable across projections and registration order. And the
+negative ones: the document declares no `security` and no
+`components.securitySchemes`, because the adapter authenticates nobody, so
+shipping authentication without updating the projection fails a test rather
+than publishing an unsecured API.
+
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
 - https://asgi.readthedocs.io/en/latest/specs/main.html

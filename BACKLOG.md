@@ -146,9 +146,9 @@ Core imports neither Pydantic nor msgspec.
 - [ ] E6.8 HTTP conformance tests.
 - [?] E6.9 Compare direct ASGI vs minimal Starlette dependency.
 - [ ] E6.10 Benchmark against FastAPI, Starlette and Litestar.
-- [ ] E6.11 Add pinned OpenAPI 3.2 structural/conformance fixtures, including
+- [x] E6.11 Add pinned OpenAPI 3.2 structural/conformance fixtures, including
   stable `operationId`, schema references, security schemes and documented
-  unsupported features.
+  unsupported features. Tracking: GitHub Issue #139.
 - [ ] E6.12 Define the replaceable documentation-provider contract without a
   required browser UI dependency.
 - [ ] E6.13 Add configurable schema, documentation and Explorer routes with
