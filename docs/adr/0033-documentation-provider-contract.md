@@ -1,4 +1,4 @@
-# ADR 0032 — The Documentation-Provider Contract
+# ADR 0033 — The Documentation-Provider Contract
 
 - Status: Proposed
 - Date: 2026-09-03
@@ -93,3 +93,4 @@ requires a browser interface.
   permission.
 - Asset paths cannot traverse; documentation URLs cannot be
   protocol-relative.
+
