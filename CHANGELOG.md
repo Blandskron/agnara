@@ -11,6 +11,10 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Added pinned ReDoc CE 2.5.3 local and opt-in CDN documentation providers,
+  including verified licensed assets, SRI, untrusted-spec sanitization and an
+  explicit blob-worker CSP requirement; ReDoc truthfully refuses canonical
+  OpenAPI 3.2 and try-it instead of silently degrading either ([#151]).
 - Added pinned Swagger UI 5.32.14 documentation providers: the production
   baseline serves verified licensed assets locally, while a separate
   exact-version CDN provider requires explicit remote-asset permission and
@@ -206,6 +210,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#145]: https://github.com/Blandskron/agnara/issues/145
 [#147]: https://github.com/Blandskron/agnara/issues/147
 [#149]: https://github.com/Blandskron/agnara/issues/149
+[#151]: https://github.com/Blandskron/agnara/issues/151
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133

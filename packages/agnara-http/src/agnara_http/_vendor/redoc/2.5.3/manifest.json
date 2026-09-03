@@ -1,0 +1,28 @@
+{
+  "name": "redoc",
+  "version": "2.5.3",
+  "license": "MIT",
+  "source": {
+    "tarball": "https://registry.npmjs.org/redoc/-/redoc-2.5.3.tgz",
+    "npm_sha1": "f44692cbdf81bb2077fb38358885d976e6e27f88",
+    "npm_integrity": "sha512-bBbat+Sx6xKWdyoCGTtA0BWeTEW9Vs4VnEja7q7ZLOk4IM7cHQLrf+kDxWF6dKeKxT8kOBnoy/OsNXCeLttpyQ==",
+    "sha256": "e09cc6eb1af62e493e92ebff1ff98b5917ff4018f24ef9be91a3d97998987a73"
+  },
+  "acquisition": {
+    "command": "npm pack redoc@2.5.3 --ignore-scripts",
+    "install_scripts_executed": false,
+    "reviewed": "2026-09-03"
+  },
+  "cdn": {
+    "origin": "https://cdn.redoc.ly",
+    "url": "https://cdn.redoc.ly/redoc/v2.5.3/bundles/redoc.standalone.js",
+    "verified_against_tarball": "2026-09-03"
+  },
+  "assets": {
+    "redoc.standalone.js": {
+      "bytes": 1097271,
+      "sha256": "1320f442151c57c447d3b70c7ffc6c4f86d08464020fe34c8cc5d3164e9944f0",
+      "sri": "sha384-xiEssMQFSpSfLbzRZCGfxxIM5QDb2DTrU6vyoZdp2sV1L6pmOMy6MpTtUoLbpC96"
+    }
+  }
+}

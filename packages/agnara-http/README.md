@@ -107,7 +107,7 @@ support, it becomes unavailable with a diagnostic instead of rendering
 documentation that is wrong. The network is opt-in twice, once by the provider
 declaring remote assets and once by the deployment permitting them, so pinned
 local assets stay the baseline. An empty registry is the supported no-UI
-deployment. ReDoc remains E6.16 and Scalar E6.17; see ADR 0033.
+deployment. Scalar remains E6.17; see ADR 0033.
 
 E6.13 adds one internal compiled route layer for already-produced HTTP
 surfaces. A schema, documentation page or future Explorer shell supplies a
@@ -145,6 +145,16 @@ fetches, and leave try-it off unless this UI explicitly enables it. The
 provider truthfully lists the OpenAPI 3.2 features deferred upstream; it claims
 basic 3.2.0 rendering, not complete conformance. Provider composition and the
 final emitted CSP remain internal follow-up work; see ADR 0036.
+
+E6.16 adds internal local and CDN ReDoc CE providers pinned to 2.5.3. The
+local variant serves a size/hash-verified MIT-licensed standalone bundle; the
+CDN variant uses the byte-identical exact-version `cdn.redoc.ly` resource with
+SRI and remains behind remote-asset permission. Both generate a same-origin
+initializer, enable untrusted-spec sanitization, hide the download button and
+declare ReDoc's runtime inline-style and blob-worker needs without enabling
+inline JavaScript. ReDoc CE has no try-it console and upstream still does not
+claim OpenAPI 3.2 support, so those requests become unavailable explicitly;
+the canonical document is never downgraded. See ADR 0037.
 
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 

@@ -70,17 +70,20 @@ class _ContentSecurityPolicy:
     """What a page needs, declared by the provider rather than inferred.
 
     ``external_origins`` is the only way to reach the network, and a provider
-    that lists one without ``remote_assets`` permission is refused. RFC 0003
-    makes pinned local assets the secure baseline; this is where that stops
-    being advice.
+    that lists one without ``remote_assets`` permission is refused.
+    ``blob_worker`` separately declares a local object-URL worker requirement;
+    it is an explicit CSP privilege but not a remote network dependency. RFC
+    0003 makes pinned local assets the secure baseline; this is where that
+    stops being advice.
     """
 
     inline_style: bool = False
     inline_script: bool = False
+    blob_worker: bool = False
     external_origins: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        for flag in ("inline_style", "inline_script"):
+        for flag in ("inline_style", "inline_script", "blob_worker"):
             if not isinstance(getattr(self, flag), bool):
                 raise _DocumentationDefinitionError(f"{flag} must be a boolean")
         if not isinstance(self.external_origins, tuple):

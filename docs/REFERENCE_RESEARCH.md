@@ -52,7 +52,7 @@ Reference:
 ## OpenAPI documentation interfaces
 
 Reviewed: 2026-08-31 for RFC 0003 and ADR 0018. Swagger UI evidence refreshed
-2026-09-03 for ADR 0036.
+2026-09-03 for ADR 0036; ReDoc evidence refreshed 2026-09-03 for ADR 0037.
 
 This is a point-in-time comparison, not a permanent endorsement. OpenAPI 3.2
 support is still evolving across renderers, so Agnara must test pinned versions
@@ -153,10 +153,31 @@ Tradeoffs:
 - accessibility requires independent verification; no project-wide WCAG
   conformance claim was found.
 
+E6.16 evidence and implementation boundary (2026-09-03):
+
+- pinned release: `redoc@2.5.3`, with release notes dated 2026-05-27;
+- vendored payload: `redoc.standalone.js` (1,097,271 bytes), verified from the
+  official npm tarball;
+- acquisition uses `npm pack --ignore-scripts`, so the package's 21 declared
+  runtime dependencies and `prepare` hook do not run in Agnara installations;
+- the exact `cdn.redoc.ly` version was downloaded and byte-compared with the
+  tarball asset before recording SHA-384 SRI;
+- the bundle injects styles and creates a search worker from `blob:`, both of
+  which are explicit provider CSP requirements;
+- ReDoc receives `untrustedSpec: true`; no external Google font origin occurs
+  in the inspected 2.5.3 standalone bundle, and local CSP deliberately blocks
+  its upstream footer-logo URL so branding cannot become a network dependency;
+- 2.5.3 prevents a 3.2 crash, but the README still claims only 3.1/3.0/2.0 and
+  the 3.2 issues remain open, so the provider declares only tested 3.1.0 and
+  refuses Agnara's canonical 3.2.0 artifact;
+- ReDoc CE has no try-it console, so that request is refused rather than
+  ignored.
+
 Primary sources:
 
 - https://github.com/Redocly/redoc
 - https://github.com/Redocly/redoc/releases/tag/v2.5.3
+- https://github.com/Redocly/redoc/issues/2746
 - https://github.com/Redocly/redoc/issues/2773
 - https://redocly.com/docs/redoc/config
 - https://www.npmjs.com/package/redoc

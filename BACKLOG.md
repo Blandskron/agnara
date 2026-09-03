@@ -161,8 +161,8 @@ Core imports neither Pydantic nor msgspec.
 - [x] E6.15 Implement a Swagger UI provider with pinned self-hosted assets,
   optional explicit CDN mode and versioned compatibility evidence. Tracking:
   GitHub Issue #149.
-- [ ] E6.16 Implement a ReDoc provider with the same provider contract and
-  versioned compatibility evidence.
+- [x] E6.16 Implement a ReDoc provider with the same provider contract and
+  versioned compatibility evidence. Tracking: GitHub Issue #151.
 - [?] E6.17 Spike Scalar and re-evaluate actively maintained alternatives
   against identical OpenAPI 3.2, CSP, accessibility, mobile, dependency and
   bundle-size fixtures before selecting any default.
