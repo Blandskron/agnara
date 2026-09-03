@@ -224,6 +224,12 @@ Scalar should receive implementation spikes against the same conformance,
 security, bundle and accessibility fixtures. Adding RapiDoc or Elements later
 must require no change to capability runtime semantics.
 
+E6.15 completed the Swagger UI integration spike with version 5.32.14. ADR
+0036 records the local-asset baseline, distinct opt-in CDN provider, integrity
+evidence, secure initializer defaults and the exact OpenAPI 3.2 features still
+deferred upstream. This is compatibility evidence for one provider version,
+not selection of an unconditional default or a claim of complete 3.2 support.
+
 The canonical generated contract remains OpenAPI 3.2 even when a provider
 lags behind it. A provider must fail with a clear compatibility diagnostic or
 remain unavailable; it must not silently change only the `openapi` version or

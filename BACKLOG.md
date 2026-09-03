@@ -158,8 +158,9 @@ Core imports neither Pydantic nor msgspec.
   Tracking: GitHub Issue #145.
 - [x] E6.14 Allow OpenAPI, each human UI, Explorer and interactive try-it to be
   disabled independently. Tracking: GitHub Issue #147.
-- [ ] E6.15 Implement a Swagger UI provider with pinned self-hosted assets,
-  optional explicit CDN mode and versioned compatibility evidence.
+- [x] E6.15 Implement a Swagger UI provider with pinned self-hosted assets,
+  optional explicit CDN mode and versioned compatibility evidence. Tracking:
+  GitHub Issue #149.
 - [ ] E6.16 Implement a ReDoc provider with the same provider contract and
   versioned compatibility evidence.
 - [?] E6.17 Spike Scalar and re-evaluate actively maintained alternatives

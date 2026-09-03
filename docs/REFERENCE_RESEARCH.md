@@ -51,7 +51,8 @@ Reference:
 
 ## OpenAPI documentation interfaces
 
-Reviewed: 2026-08-31 for RFC 0003 and ADR 0018.
+Reviewed: 2026-08-31 for RFC 0003 and ADR 0018. Swagger UI evidence refreshed
+2026-09-03 for ADR 0036.
 
 This is a point-in-time comparison, not a permanent endorsement. OpenAPI 3.2
 support is still evolving across renderers, so Agnara must test pinned versions
@@ -98,9 +99,26 @@ Tradeoffs:
   surface. Agnara must disable the online validator and credential persistence
   by default and explicitly constrain submit methods.
 
+E6.15 evidence and implementation boundary (2026-09-03):
+
+- pinned release: `swagger-ui-dist@5.32.14`, released 2026-08-18;
+- vendored browser payload: `swagger-ui-bundle.js` (1,553,809 bytes) and
+  `swagger-ui.css` (185,784 bytes), both verified from the official npm tarball;
+- acquisition uses `npm pack --ignore-scripts`, so the declared Scarf package
+  dependency and installation lifecycle do not run;
+- a versioned manifest records npm integrity, local SHA-256 and CDN SRI, while
+  the upstream Apache-2.0 license and notice ship beside the assets;
+- 5.32.0's basic 3.2 implementation explicitly deferred `$self`,
+  `additionalOperations`, component `mediaTypes` and `pathItems`, Tag Object
+  enhancements, `querystring` parameters and streaming `itemSchema`;
+- the local provider is the production baseline; the exact-version unpkg
+  variant has a distinct provider name, SRI and an explicit remote-assets gate.
+
 Primary sources:
 
 - https://github.com/swagger-api/swagger-ui/releases
+- https://github.com/swagger-api/swagger-ui/releases/tag/v5.32.14
+- https://github.com/swagger-api/swagger-ui/pull/10721
 - https://github.com/swagger-api/swagger-ui/issues/10575
 - https://github.com/swagger-api/swagger-ui/issues/10897
 - https://swagger.io/docs/open-source-tools/swagger-ui/usage/configuration/
