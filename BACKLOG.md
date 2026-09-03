@@ -131,7 +131,7 @@ Core imports neither Pydantic nor msgspec.
 - [x] E6.3 Path/query/header/body binding. Tracking: GitHub Issue #113.
 - [x] E6.4 Response serialization. Tracking: GitHub Issue #115.
 - [x] E6.5 RFC 9457 failures. Tracking: GitHub Issue #117.
-- [ ] E6.6 Lifespan.
+- [x] E6.6 Lifespan. Tracking: GitHub Issue #127.
 - [x] E6.6a Classify transport-level request failures and project them to
   RFC 9457, including `405` with `Allow`, `413` and `415`. Tracking: GitHub
   Issue #129.
@@ -139,9 +139,10 @@ Core imports neither Pydantic nor msgspec.
   route match, binding, invocation, response or problem. E6.7 and E6.8
   depend on it, because both presuppose a compiled HTTP exposure. Tracking:
   GitHub Issue #131.
-- [ ] E6.7 Generate deterministic OpenAPI 3.2 from compiled HTTP exposures,
+- [x] E6.7 Generate deterministic OpenAPI 3.2 from compiled HTTP exposures,
   shared schemas and explicitly publishable metadata. Do not accept a
-  handwritten parallel schema as the generated source of truth.
+  handwritten parallel schema as the generated source of truth. Tracking:
+  GitHub Issue #135.
 - [ ] E6.8 HTTP conformance tests.
 - [?] E6.9 Compare direct ASGI vs minimal Starlette dependency.
 - [ ] E6.10 Benchmark against FastAPI, Starlette and Litestar.

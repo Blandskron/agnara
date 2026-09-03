@@ -60,6 +60,32 @@ _BINDING_STATUS: Mapping[_BindingFailure, _TransportFailure] = {
 
 
 @dataclass(frozen=True, slots=True)
+class _OpenAPIPublication:
+    """Metadata an exposure explicitly permits the OpenAPI projection to use."""
+
+    summary: str | None = None
+    publish_description: bool = False
+    tags: tuple[str, ...] = ()
+    deprecated: bool = False
+
+    def __post_init__(self) -> None:
+        if self.summary is not None and (
+            not isinstance(self.summary, str) or not self.summary.strip()
+        ):
+            raise _BindingDefinitionError("OpenAPI summary must be a non-empty string or None")
+        if not isinstance(self.publish_description, bool):
+            raise _BindingDefinitionError("publish_description must be a boolean")
+        if not isinstance(self.tags, tuple):
+            raise _BindingDefinitionError("OpenAPI tags must be a tuple")
+        if any(not isinstance(tag, str) or not tag.strip() for tag in self.tags):
+            raise _BindingDefinitionError("OpenAPI tags must be non-empty strings")
+        if len(self.tags) != len(set(self.tags)):
+            raise _BindingDefinitionError("OpenAPI tags must be unique")
+        if not isinstance(self.deprecated, bool):
+            raise _BindingDefinitionError("deprecated must be a boolean")
+
+
+@dataclass(frozen=True, slots=True)
 class _HTTPExposure:
     """One declared HTTP exposure of a compiled capability."""
 
@@ -68,6 +94,7 @@ class _HTTPExposure:
     plan: ExecutionPlan
     bindings: tuple[_InputBinding, ...] = ()
     max_body_bytes: int = 1_048_576
+    openapi: _OpenAPIPublication | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,6 +103,7 @@ class _CompiledExposure:
 
     plan: ExecutionPlan
     binding: _HTTPBindingPlan
+    openapi: _OpenAPIPublication | None
 
 
 def _compile_exposures(
@@ -88,6 +116,8 @@ def _compile_exposures(
             raise _BindingDefinitionError(
                 f"exposures must contain _HTTPExposure values, got {type(exposure).__name__}"
             )
+        if exposure.openapi is not None and not isinstance(exposure.openapi, _OpenAPIPublication):
+            raise _BindingDefinitionError("openapi must be _OpenAPIPublication or None")
         _, parameter_names = _parse_template(exposure.path_template)
         binding = _HTTPBindingPlan.compile(
             exposure.plan,
@@ -98,7 +128,7 @@ def _compile_exposures(
         registry.register(
             exposure.method,
             exposure.path_template,
-            _CompiledExposure(exposure.plan, binding),
+            _CompiledExposure(exposure.plan, binding, exposure.openapi),
         )
     return registry.freeze()
 

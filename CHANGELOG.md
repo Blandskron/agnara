@@ -35,6 +35,9 @@ package version `0.0.0` is a development sentinel, not a published release.
   invoke and serialize, with `HEAD` served from `GET`, `root_path` stripping,
   no response on a client disconnect, and a query-free problem `instance`
   ([#131]).
+- Added dependency-free deterministic OpenAPI 3.2 projection from explicitly
+  publishable compiled HTTP exposures, reusing compiled input schemas and
+  filtering hidden operations before document assembly ([#135]).
 - Added structured execution telemetry hooks (E4.8).
 - Defined Policy, PolicyResult interface and added policies tuple to CapabilityDefinition.
 - Defined Principal and AnonymousPrincipal for policy evaluation.
@@ -182,3 +185,4 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133
+[#135]: https://github.com/Blandskron/agnara/issues/135
