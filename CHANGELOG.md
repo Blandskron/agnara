@@ -26,6 +26,11 @@ package version `0.0.0` is a development sentinel, not a published release.
   optional compiled problem-type URIs, collision-free nested failure details,
   `internal_failure` redaction, and a prebuilt last-resort internal problem
   response ([#117]).
+- Added the ASGI lifespan bridge: one async context manager lifecycle, exact
+  startup/shutdown event sequencing, traceback-carrying failure reporting to
+  the hosting server, cancellation propagation, single-use dispatchers, and a
+  refusal to carry application state through the lifespan return value
+  ([#127]).
 - Added structured execution telemetry hooks (E4.8).
 - Defined Policy, PolicyResult interface and added policies tuple to CapabilityDefinition.
 - Defined Principal and AnonymousPrincipal for policy evaluation.
@@ -152,4 +157,5 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#96]: https://github.com/Blandskron/agnara/issues/96
 [#101]: https://github.com/Blandskron/agnara/issues/101
 [#120]: https://github.com/Blandskron/agnara/issues/120
+[#127]: https://github.com/Blandskron/agnara/issues/127
 [#123]: https://github.com/Blandskron/agnara/issues/123

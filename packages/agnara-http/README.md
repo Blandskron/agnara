@@ -57,15 +57,26 @@ to a dispatcher that cannot serialize an outcome. `WWW-Authenticate`,
 `Retry-After`, content negotiation, `problem+xml` and multi-error arrays are
 documented gaps rather than conformance claims; see ADR 0028.
 
+E6.6 adds the ASGI lifespan bridge. An application lifecycle is one async
+context manager factory: startup enters it, shutdown exits it, and failures
+are reported as `lifespan.startup.failed` or `lifespan.shutdown.failed` with
+the traceback, which reaches the hosting server's log rather than a client.
+Task cancellation propagates instead of being reported as a failed lifespan,
+one dispatcher runs one cycle, and a protocol violation releases the lifecycle
+before the error propagates. The lifecycle cannot return a value: application
+state belongs to dependency providers, not to an HTTP adapter. A `lifespan`
+scope is still refused when no dispatcher is configured, which is how an ASGI
+application declares it has no lifespan. Startup compilation, WebSockets, hot
+reload and readiness endpoints are not part of it; see ADR 0029.
+
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
 - https://asgi.readthedocs.io/en/latest/specs/main.html
 - https://asgi.readthedocs.io/en/latest/specs/www.html
 
 This is not yet a public HTTP composition API or a complete ASGI/HTTP
-conformance claim. Lifespan, OpenAPI generation, documentation providers and
-Explorer remain separate roadmap work; see RFC 0003, ADR 0018, EPIC 6 and
-EPIC 8.
+conformance claim. OpenAPI generation, documentation providers and Explorer
+remain separate roadmap work; see RFC 0003, ADR 0018, EPIC 6 and EPIC 8.
 
 - Import package: `agnara_http`
 - Depends on: `agnara-core`
