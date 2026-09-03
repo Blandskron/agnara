@@ -230,6 +230,12 @@ evidence, secure initializer defaults and the exact OpenAPI 3.2 features still
 deferred upstream. This is compatibility evidence for one provider version,
 not selection of an unconditional default or a claim of complete 3.2 support.
 
+E6.16 completed the ReDoc CE spike with version 2.5.3. ADR 0037 records its
+local and opt-in CDN assets, sanitization and CSP needs. ReDoc's upstream 3.2
+work remains incomplete and CE has no try-it console, so the provider refuses
+both requests explicitly. It never downgrades the canonical document or
+pretends that a read-only reference interface is interactive.
+
 The canonical generated contract remains OpenAPI 3.2 even when a provider
 lags behind it. A provider must fail with a clear compatibility diagnostic or
 remain unavailable; it must not silently change only the `openapi` version or

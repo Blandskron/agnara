@@ -259,7 +259,14 @@ def test_an_unusable_asset_path_is_refused(path: str) -> None:
 def test_a_local_policy_requires_no_network() -> None:
     assert _ContentSecurityPolicy().requires_network is False
     assert _ContentSecurityPolicy(inline_style=True).requires_network is False
+    assert _ContentSecurityPolicy(blob_worker=True).requires_network is False
     assert _ContentSecurityPolicy(external_origins=("https://cdn.test",)).requires_network is True
+
+
+@pytest.mark.parametrize("field", ["inline_style", "inline_script", "blob_worker"])
+def test_a_csp_capability_must_be_a_real_boolean(field: str) -> None:
+    with pytest.raises(_DocumentationDefinitionError, match=f"{field} must be a boolean"):
+        _ContentSecurityPolicy(**{field: "yes"})  # ty: ignore[invalid-argument-type]
 
 
 @pytest.mark.parametrize("origin", ["http://cdn.test", "cdn.test", "//cdn.test"])
