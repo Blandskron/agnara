@@ -45,6 +45,7 @@ from agnara_http._asgi import _ASGIBoundary
 from agnara_http._binding import _BindingSource, _InputBinding
 from agnara_http._dispatch import _compile_exposures, _HTTPDispatcher, _HTTPExposure
 from agnara_http._lifespan import _LifespanDispatcher
+from agnara_http._surfaces import _compile_surfaces, _HTTPSurface, _SurfaceDispatcher
 
 PROBLEM_MEDIA_TYPE = b"application/problem+json"
 JSON_MEDIA_TYPE = b"application/json; charset=utf-8"
@@ -233,7 +234,19 @@ def application() -> _ASGIBoundary:
             _HTTPExposure("GET", "/v1/opaque", plan(unserializable, "opaque")),
         ]
     )
-    return _ASGIBoundary(_HTTPDispatcher(routes, DIContainer(DIRegistry())))
+    capability_dispatch = _HTTPDispatcher(routes, DIContainer(DIRegistry()))
+    surface_routes = _compile_surfaces(
+        (
+            _HTTPSurface(
+                "schema",
+                "/openapi.json",
+                "application/json; charset=utf-8",
+                b'{"openapi":"3.2.0"}',
+            ),
+        ),
+        routes,
+    )
+    return _ASGIBoundary(_SurfaceDispatcher(surface_routes, capability_dispatch))
 
 
 def exchange(
@@ -285,6 +298,7 @@ def exchange(
 #: Every request the suite performs, and the status it must produce. Adding a
 #: row is how a new response path joins the conformance checks.
 MATRIX: tuple[tuple[str, dict[str, Any], int], ...] = (
+    ("static schema surface", {"method": "GET", "path": "/openapi.json"}, 200),
     ("success", {"method": "GET", "path": "/v1/orders/7"}, 200),
     (
         "success with query",
@@ -391,7 +405,9 @@ def test_the_checker_rejects_a_non_conformant_exchange() -> None:
 # --- HEAD ------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("path", ["/v1/orders/7", "/v1/absent", "/v1/conflict", "/v1/empty"])
+@pytest.mark.parametrize(
+    "path", ["/openapi.json", "/v1/orders/7", "/v1/absent", "/v1/conflict", "/v1/empty"]
+)
 def test_head_matches_its_get_representation_without_sending_it(path: str) -> None:
     get = conformance(exchange("GET", path))
     head = conformance(exchange("HEAD", path), representation_length=len(get.body))

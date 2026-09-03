@@ -153,8 +153,9 @@ Core imports neither Pydantic nor msgspec.
   unsupported features.
 - [x] E6.12 Define the replaceable documentation-provider contract without a
   required browser UI dependency. Tracking: GitHub Issue #141.
-- [ ] E6.13 Add configurable schema, documentation and Explorer routes with
+- [x] E6.13 Add configurable schema, documentation and Explorer routes with
   deterministic collision detection. Candidate defaults remain provisional.
+  Tracking: GitHub Issue #145.
 - [ ] E6.14 Allow OpenAPI, each human UI, Explorer and interactive try-it to be
   disabled independently.
 - [ ] E6.15 Implement a Swagger UI provider with pinned self-hosted assets,

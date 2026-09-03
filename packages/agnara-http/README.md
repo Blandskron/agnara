@@ -110,6 +110,19 @@ local assets stay the baseline. An empty registry is the supported no-UI
 deployment. No provider ships here: Swagger UI is E6.15, ReDoc E6.16, Scalar
 E6.17; see ADR 0033.
 
+E6.13 adds one internal compiled route layer for already-produced HTTP
+surfaces. A schema, documentation page or future Explorer shell supplies a
+stable logical name, an explicit static path, its media type, complete bytes
+and optional safe headers; the layer does not know how any artifact was
+generated. Compilation sorts declarations, rejects duplicate names and paths,
+and reserves each surface path against every capability method so shadowing
+and `405` behavior cannot depend on dispatcher order. At runtime `GET` serves
+the immutable response, `HEAD` preserves its headers without body bytes,
+other methods receive `405` with `Allow: GET, HEAD`, and unmatched exchanges
+delegate unchanged to capability dispatch. No default route or public
+configuration syntax is selected here, omission is not authorization, and UI
+assets remain separate work; see ADR 0034.
+
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
 - https://asgi.readthedocs.io/en/latest/specs/main.html
