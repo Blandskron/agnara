@@ -11,10 +11,36 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, TextIO
 
 CLAIM_PREFIX = "<!-- agnara-lease-claim: "
 RELEASE_PREFIX = "<!-- agnara-lease-release: "
+
+# Output framing stays ASCII on purpose. The bootstrap instructions in
+# AGENTS.md cannot assume a UTF-8 console, and on Windows the default cp1252
+# codec cannot encode box-drawing characters. Issue titles, worker names and
+# scopes come from GitHub, so they can still hold anything; emit() replaces
+# whatever the stream cannot encode instead of aborting the command.
+RULE = "-" * 40
+
+
+def emit(text: str = "", *, stream: TextIO | None = None) -> None:
+    """Print one line, degrading unencodable characters instead of raising."""
+    target = sys.stdout if stream is None else stream
+    print(encodable(text, getattr(target, "encoding", None)), file=target)
+
+
+def encodable(text: str, encoding: str | None) -> str:
+    """Return text the stream can encode, with replacements where it cannot."""
+    if not encoding:
+        return text
+    try:
+        text.encode(encoding)
+    except UnicodeEncodeError:
+        return text.encode(encoding, errors="replace").decode(encoding, errors="replace")
+    except LookupError:
+        return text
+    return text
 
 
 @dataclass
@@ -123,7 +149,7 @@ def get_issues() -> list[Issue]:
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     except subprocess.CalledProcessError as e:
-        print(f"Error fetching issues: {e.stderr}", file=sys.stderr)
+        emit(f"Error fetching issues: {e.stderr}", stream=sys.stderr)
         sys.exit(1)
 
     raw_issues = json.loads(result.stdout)
@@ -164,15 +190,15 @@ def cmd_status(args):
     active = [i for i in issues if i.lease is not None]
     ready = [i for i in issues if i.lease is None and i.metadata is not None]
 
-    print("AGNARA DEVELOPMENT SWARM")
-    print("────────────────────────────────────────")
-    print(f"Active        {len(active)}")
-    print(f"Ready work    {len(ready)}")
-    print()
+    emit("AGNARA DEVELOPMENT SWARM")
+    emit(RULE)
+    emit(f"Active        {len(active)}")
+    emit(f"Ready work    {len(ready)}")
+    emit()
     for issue in active:
         worker = issue.lease.worker if issue.lease else "unknown"
         scopes = ", ".join(issue.metadata.scope.write) if issue.metadata else "unknown"
-        print(f"#{issue.number:03d}  {worker[:15]:<15}  IMPLEMENTING   {scopes}")
+        emit(f"#{issue.number:03d}  {worker[:15]:<15}  IMPLEMENTING   {scopes}")
 
 
 def cmd_next(args):
@@ -189,14 +215,14 @@ def cmd_next(args):
         meta = issue.metadata
         if meta and not check_scope_collision(meta.scope.write, active_writes):
             if args.json:
-                print(json.dumps({"issue": issue.number, "title": issue.title}))
+                emit(json.dumps({"issue": issue.number, "title": issue.title}))
             else:
-                print(f"#{issue.number} - {issue.title}")
+                emit(f"#{issue.number} - {issue.title}")
             return
     if args.json:
-        print(json.dumps({"issue": None}))
+        emit(json.dumps({"issue": None}))
     else:
-        print("No ready work available without scope collisions.")
+        emit("No ready work available without scope collisions.")
 
 
 def cmd_claim(args):
@@ -212,13 +238,13 @@ def cmd_claim(args):
     issues = get_issues()
     target = next((i for i in issues if i.number == args.issue), None)
     if not target or not target.lease:
-        print("Failed to acquire lease.")
+        emit("Failed to acquire lease.")
         sys.exit(1)
 
     if target.lease.worker == args.worker:
-        print(f"Successfully claimed #{args.issue} for {args.worker}")
+        emit(f"Successfully claimed #{args.issue} for {args.worker}")
     else:
-        print(f"Lost race. Issue #{args.issue} is owned by {target.lease.worker}")
+        emit(f"Lost race. Issue #{args.issue} is owned by {target.lease.worker}")
         sys.exit(1)
 
 
@@ -226,7 +252,7 @@ def cmd_release(args):
     release_str = f"{RELEASE_PREFIX} -->"
     cmd = ["gh", "issue", "comment", str(args.issue), "--body", release_str]
     subprocess.run(cmd, capture_output=True, check=True)
-    print(f"Released #{args.issue}")
+    emit(f"Released #{args.issue}")
 
 
 def main():
