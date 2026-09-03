@@ -25,6 +25,7 @@ from tests.architecture.boundaries import (
     FORBIDDEN_IN_CORE,
     WORKSPACE_ROOT,
     _file_imports,
+    _requirement_name,
     declared_dependencies,
     declared_workspace_dependencies,
     dependency_graph,
@@ -209,3 +210,48 @@ def test_adapter_may_import_the_core(dist_name: str) -> None:
     siblings = {DISTRIBUTIONS[other] for other in ADAPTER_DISTRIBUTIONS if other != dist_name}
     assert CORE_IMPORT_NAME not in siblings
     assert CORE_DISTRIBUTION in declared_dependencies(dist_name)
+
+
+#: Browser documentation renderers and their runtimes. ADR 0018 keeps every
+#: one of these behind the optional documentation-provider boundary, so
+#: `agnara-http` must not acquire one as a dependency, not even a soft import.
+FORBIDDEN_UI_PACKAGES = frozenset(
+    {
+        "swagger_ui",
+        "swagger_ui_bundle",
+        "flask_swagger_ui",
+        "redoc",
+        "redocly",
+        "scalar",
+        "scalar_fastapi",
+        "rapidoc",
+        "stoplight",
+        "elements",
+        "jinja2",
+        "mako",
+        "markupsafe",
+    }
+)
+
+
+def test_the_http_adapter_imports_no_browser_documentation_package() -> None:
+    offenders = [
+        imported
+        for imported in external_imports_of("agnara-http")
+        if imported.module in FORBIDDEN_UI_PACKAGES
+    ]
+    assert not offenders, (
+        "agnara-http imports a browser documentation package, which ADR 0018 "
+        "keeps behind the optional provider boundary:\n"
+        + "\n".join(f"  {imported.where}: {imported.module}" for imported in offenders)
+    )
+
+
+def test_the_http_adapter_declares_no_browser_documentation_dependency() -> None:
+    declared = {
+        _requirement_name(requirement) for requirement in declared_dependencies("agnara-http")
+    }
+    assert not declared & FORBIDDEN_UI_PACKAGES, (
+        f"agnara-http declares a browser documentation dependency: "
+        f"{sorted(declared & FORBIDDEN_UI_PACKAGES)}"
+    )

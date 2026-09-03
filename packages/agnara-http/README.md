@@ -95,6 +95,21 @@ problem component. Compact sorted-key UTF-8 serialization is byte-stable for
 identical compiled input. This does not add a schema route, CLI export, UI,
 viewer-specific authorization or a complete conformance claim; see ADR 0032.
 
+E6.12 adds the documentation-provider contract. ADR 0018 and RFC 0003 decided
+that browser documentation sits behind an optional, replaceable boundary; this
+is that boundary in code, so its guarantees are enforced rather than trusted.
+A provider is given an already-filtered document or its local URL and nothing
+that could reveal more: no route registry, no compiled exposure, no execution
+plan, no capability. It must name the OpenAPI versions it was tested against
+and the features it does not support, because a compatibility claim made by
+silence is the one this project refuses. Asked for a version it does not
+support, it becomes unavailable with a diagnostic instead of rendering
+documentation that is wrong. The network is opt-in twice, once by the provider
+declaring remote assets and once by the deployment permitting them, so pinned
+local assets stay the baseline. An empty registry is the supported no-UI
+deployment. No provider ships here: Swagger UI is E6.15, ReDoc E6.16, Scalar
+E6.17; see ADR 0032.
+
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
 - https://asgi.readthedocs.io/en/latest/specs/main.html
