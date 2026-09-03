@@ -11,6 +11,12 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Added the replaceable documentation-provider contract: a provider receives
+  an already-filtered OpenAPI document and never the compiled registry, must
+  name the OpenAPI versions it was tested against and the features it does not
+  support, becomes unavailable with a diagnostic rather than rendering a
+  version it does not support, and needs both its own declaration and
+  deployment permission before requiring an external origin ([#141]).
 - Established a dependency-free internal ASGI 3 HTTP boundary that preserves
   raw adapter inputs and rejects unsupported protocols explicitly ([#107]).
 - Added a deterministic two-phase HTTP route registry with fail-fast template
@@ -182,6 +188,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#120]: https://github.com/Blandskron/agnara/issues/120
 [#129]: https://github.com/Blandskron/agnara/issues/129
 [#131]: https://github.com/Blandskron/agnara/issues/131
+[#141]: https://github.com/Blandskron/agnara/issues/141
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133

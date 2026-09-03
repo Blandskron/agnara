@@ -77,6 +77,7 @@
     "docs/adr/0028-rfc-9457-failure-mapping.md",
     "docs/adr/0030-transport-level-http-problems.md",
     "docs/adr/0031-compiled-http-exposures-and-dispatch.md",
+    "docs/adr/0032-documentation-provider-contract.md",
     "docs/adr/0032-deterministic-openapi-projection.md",
     "docs/rfc/0001-capability-runtime.md",
     "docs/rfc/0002-project-app-scaffolding.md",

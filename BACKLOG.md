@@ -150,9 +150,9 @@ Core imports neither Pydantic nor msgspec.
 - [ ] E6.10 Benchmark against FastAPI, Starlette and Litestar.
 - [x] E6.11 Add pinned OpenAPI 3.2 structural/conformance fixtures, including
   stable `operationId`, schema references, security schemes and documented
-  unsupported features. Tracking: GitHub Issue #139.
-- [ ] E6.12 Define the replaceable documentation-provider contract without a
-  required browser UI dependency.
+  unsupported features.
+- [x] E6.12 Define the replaceable documentation-provider contract without a
+  required browser UI dependency. Tracking: GitHub Issue #141.
 - [ ] E6.13 Add configurable schema, documentation and Explorer routes with
   deterministic collision detection. Candidate defaults remain provisional.
 - [ ] E6.14 Allow OpenAPI, each human UI, Explorer and interactive try-it to be
