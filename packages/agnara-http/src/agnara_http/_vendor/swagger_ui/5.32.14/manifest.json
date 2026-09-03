@@ -1,0 +1,33 @@
+{
+  "name": "swagger-ui-dist",
+  "version": "5.32.14",
+  "license": "Apache-2.0",
+  "source": {
+    "tarball": "https://registry.npmjs.org/swagger-ui-dist/-/swagger-ui-dist-5.32.14.tgz",
+    "npm_sha1": "bb3a3e738bf17bc2ee2640a711fcc44be76fde4c",
+    "npm_integrity": "sha512-nOA2pSQhcmODMUQZpJHYKNuwniDUqcOWGNaSCOoZv12FdOSJ9JxV95HtyRGNMqEBj6h6lCNTy20TgZDYTSuUIg==",
+    "sha256": "609702d791d8d3cdcbc3a52632f6be2f9b743eadf6ba49ca9737dac2a6e0b2a3"
+  },
+  "acquisition": {
+    "command": "npm pack swagger-ui-dist@5.32.14 --ignore-scripts",
+    "install_scripts_executed": false,
+    "reviewed": "2026-09-03"
+  },
+  "cdn": {
+    "origin": "https://unpkg.com",
+    "root": "https://unpkg.com/swagger-ui-dist@5.32.14",
+    "verified_against_tarball": "2026-09-03"
+  },
+  "assets": {
+    "swagger-ui-bundle.js": {
+      "bytes": 1553809,
+      "sha256": "16d93d5cc19e54c98fb0b81157dbb3bd90780aa36b914e128a643b31e54a93f4",
+      "sri": "sha384-Dt83RhU85ZmX7werw9uTFCzmauXUoSyx3pdzTQMABtsnFmooJy4Vz9/ACh7n5m1A"
+    },
+    "swagger-ui.css": {
+      "bytes": 185784,
+      "sha256": "d7f39f764aa18c7b47dd05b9af5613e373e4ac0f3557c2693d52d0abc2464d76",
+      "sri": "sha384-fgyWYkUAamzuI8mJFu/xpRP0JWCJRwkwUwsYDoOYVHUJ8NQE5cENn8ib3ppwFFSX"
+    }
+  }
+}

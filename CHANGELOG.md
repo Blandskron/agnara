@@ -11,6 +11,11 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Added pinned Swagger UI 5.32.14 documentation providers: the production
+  baseline serves verified licensed assets locally, while a separate
+  exact-version CDN provider requires explicit remote-asset permission and
+  uses SRI; online validation, credential persistence and try-it are disabled
+  by default, and known OpenAPI 3.2 gaps are declared ([#149]).
 - Added an immutable HTTP publication plan where schema serving, each
   documentation UI, Explorer and per-UI try-it are selected independently;
   UIs without a schema endpoint receive document bytes instead of an
@@ -200,6 +205,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#141]: https://github.com/Blandskron/agnara/issues/141
 [#145]: https://github.com/Blandskron/agnara/issues/145
 [#147]: https://github.com/Blandskron/agnara/issues/147
+[#149]: https://github.com/Blandskron/agnara/issues/149
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133

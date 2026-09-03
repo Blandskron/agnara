@@ -107,8 +107,7 @@ support, it becomes unavailable with a diagnostic instead of rendering
 documentation that is wrong. The network is opt-in twice, once by the provider
 declaring remote assets and once by the deployment permitting them, so pinned
 local assets stay the baseline. An empty registry is the supported no-UI
-deployment. No provider ships here: Swagger UI is E6.15, ReDoc E6.16, Scalar
-E6.17; see ADR 0033.
+deployment. ReDoc remains E6.16 and Scalar E6.17; see ADR 0033.
 
 E6.13 adds one internal compiled route layer for already-produced HTTP
 surfaces. A schema, documentation page or future Explorer shell supplies a
@@ -135,14 +134,27 @@ selected paths pass through the E6.13 collision boundary before any provider
 renders. The plan remains internal and does not implement provider HTML, CSP,
 assets, visibility or authorization; see ADR 0035.
 
+E6.15 adds internal local and CDN Swagger UI providers pinned to 5.32.14. The
+local production baseline serves the verified Apache-2.0 bundle and stylesheet
+from the application origin; runtime size and SHA-256 checks protect the
+vendored bytes. The separately named CDN variant uses exact `unpkg.com` URLs
+and SRI and remains unavailable until remote assets are explicitly permitted.
+Both modes use a local initializer rather than inline JavaScript, disable the
+online validator, URL configuration, credential persistence and credentialed
+fetches, and leave try-it off unless this UI explicitly enables it. The
+provider truthfully lists the OpenAPI 3.2 features deferred upstream; it claims
+basic 3.2.0 rendering, not complete conformance. Provider composition and the
+final emitted CSP remain internal follow-up work; see ADR 0036.
+
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
 - https://asgi.readthedocs.io/en/latest/specs/main.html
 - https://asgi.readthedocs.io/en/latest/specs/www.html
 
 This is not yet a public HTTP composition API or a complete ASGI/HTTP
-conformance claim. OpenAPI generation, documentation providers and Explorer
-remain separate roadmap work; see RFC 0003, ADR 0018, EPIC 6 and EPIC 8.
+conformance claim. Additional documentation providers, browser integration and
+Explorer remain separate roadmap work; see RFC 0003, ADR 0018, EPIC 6 and EPIC
+8.
 
 - Import package: `agnara_http`
 - Depends on: `agnara-core`
