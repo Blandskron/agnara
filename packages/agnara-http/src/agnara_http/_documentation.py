@@ -168,6 +168,53 @@ class _DocumentationPage:
         object.__setattr__(self, "assets", MappingProxyType(copied))
 
 
+def _documentation_security_headers(
+    policy: _ContentSecurityPolicy,
+) -> tuple[tuple[bytes, bytes], ...]:
+    """Serialize one provider declaration into restrictive browser headers.
+
+    The provider describes only the privileges its page needs.  This function
+    owns the shared production baseline around those privileges, so browser
+    tests and eventual route composition cannot drift into separate policies.
+    """
+    if not isinstance(policy, _ContentSecurityPolicy):
+        raise _DocumentationDefinitionError(
+            "documentation security headers require a _ContentSecurityPolicy"
+        )
+
+    origins = tuple(sorted(policy.external_origins))
+    script_sources = ["'self'", *origins]
+    style_sources = ["'self'", *origins]
+    if policy.inline_script:
+        script_sources.append("'unsafe-inline'")
+    if policy.inline_style:
+        style_sources.append("'unsafe-inline'")
+
+    worker_sources = ["'self'"]
+    if policy.blob_worker:
+        worker_sources.append("blob:")
+
+    directives = (
+        "default-src 'none'",
+        "base-uri 'none'",
+        "connect-src 'self'",
+        "font-src 'self' data:",
+        "frame-ancestors 'none'",
+        "img-src 'self' data: blob:",
+        "object-src 'none'",
+        f"script-src {' '.join(script_sources)}",
+        f"style-src {' '.join(style_sources)}",
+        f"worker-src {' '.join(worker_sources)}",
+    )
+    return (
+        (b"cache-control", b"no-store"),
+        (b"content-security-policy", "; ".join(directives).encode("ascii")),
+        (b"referrer-policy", b"no-referrer"),
+        (b"x-content-type-options", b"nosniff"),
+        (b"x-frame-options", b"DENY"),
+    )
+
+
 @runtime_checkable
 class _DocumentationProvider(Protocol):
     """What an optional browser documentation UI must implement.

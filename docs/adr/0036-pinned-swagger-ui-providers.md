@@ -95,6 +95,12 @@ those later gates consume.
 
 ## Primary evidence
 
+E6.18 subsequently verified the local provider under the emitted CSP in
+Playwright 1.62.0 Chromium, including OpenAPI 3.2 rendering, inert untrusted
+markup, per-UI try-it, empty credential-named storage, keyboard/mobile smoke
+behavior and a same-origin secretless OAuth redirect that remains unpublished.
+See ADR 0039; this is not complete OpenAPI or WCAG conformance.
+
 - https://github.com/swagger-api/swagger-ui/releases/tag/v5.32.14
 - https://github.com/swagger-api/swagger-ui/pull/10721
 - https://github.com/swagger-api/swagger-ui/issues/10897

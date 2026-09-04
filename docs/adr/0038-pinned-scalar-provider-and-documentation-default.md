@@ -81,9 +81,10 @@ refused by the provider contract rather than guessed or rewritten.
 No documentation UI becomes Agnara's unconditional default. Swagger UI is
 the current compatibility baseline, ReDoc is a useful read-only 3.1 reference
 provider, and Scalar remains the leading modern-UX candidate. Default
-selection stays deferred until E6.18 supplies comparable browser evidence and
-the public composition API can express the selection without implicit
-publication.
+selection remains deferred after E6.18 because its comparable browser smoke
+evidence does not resolve the active ARIA defects or complete 3.2 conformance,
+and the public composition API cannot yet express the selection without
+implicit publication.
 
 ## Consequences
 
@@ -95,8 +96,8 @@ publication.
 - CDN deployment is exact-version, SRI-protected and explicitly opt-in.
 - Try-it remains independently selectable and credential persistence remains
   disabled.
-- Accessibility and responsive source evidence is recorded honestly, while
-  browser conformance remains a gate rather than an inferred claim.
+- Accessibility and responsive source evidence is complemented by E6.18's
+  browser smoke gate without being overstated as WCAG conformance.
 - Stoplight Elements and RapiDoc remain possible application-supplied future
   providers; adding one requires no core change.
 
@@ -112,9 +113,17 @@ publication.
 - Remote fonts are blocked rather than silently added to local CSP.
 - Partial OpenAPI 3.2 and accessibility evidence is never described as full
   conformance.
-- No UI is selected as a default before E6.18 browser evidence.
+- No UI is selected as a default until browser, compatibility, accessibility
+  and public composition evidence supports that decision.
 
 ## Primary evidence
+
+E6.18 subsequently verified the local provider under the emitted CSP in
+Playwright 1.62.0 Chromium. The 3.2 fixture renders, Scalar's remote font and
+malicious images are blocked, XSS remains inert, try-it follows its independent
+selection, credential-named storage stays empty, and keyboard/mobile smoke
+checks pass. The known ARIA and complete 3.2 gaps still defer a default. See
+ADR 0039.
 
 - https://github.com/scalar/scalar/releases/tag/release-2026-08-28-df40ed7
 - https://github.com/scalar/scalar/issues/6715

@@ -30,6 +30,7 @@ dev = [
     # Third-party schema adapters remain experiments until E2.7 compares
     # their performance and ergonomics. This is not a core dependency.
     "msgspec>=0.21,<0.22",
+    "playwright==1.62.0",
     "pydantic>=2.9,<3",
     "pytest>=8.4",
     "ruff>=0.14",
@@ -109,3 +110,6 @@ addopts = [
 ]
 xfail_strict = true
 filterwarnings = ["error"]
+markers = [
+    "browser: real-browser conformance tests enabled explicitly in their CI job",
+]

@@ -53,7 +53,8 @@ Reference:
 
 Reviewed: 2026-08-31 for RFC 0003 and ADR 0018. Swagger UI evidence refreshed
 2026-09-03 for ADR 0036; ReDoc evidence refreshed 2026-09-03 for ADR 0037;
-Scalar and alternative evidence refreshed 2026-09-03 for ADR 0038.
+Scalar and alternative evidence refreshed 2026-09-03 for ADR 0038; shared
+Chromium browser evidence added 2026-09-03 for ADR 0039.
 
 This is a point-in-time comparison, not a permanent endorsement. OpenAPI 3.2
 support is still evolving across renderers, so Agnara must test pinned versions
@@ -313,12 +314,22 @@ contract without runtime UI dependencies. Keep Elements and RapiDoc as viable
 later providers, not runtime assumptions: the refreshed maintenance,
 dependency and compatibility evidence does not make either a stronger default.
 
-Do not select an unconditional documentation default yet. Scalar remains the
-leading modern-UX candidate and Swagger UI the compatibility baseline, but
-their incomplete OpenAPI 3.2/accessibility evidence requires E6.18's identical
-real-browser CSP, XSS, OAuth, accessibility, mobile and try-it fixtures first.
-ReDoc remains a read-only 3.1 provider and cannot render the canonical 3.2
-artifact honestly.
+E6.18 ran identical Playwright 1.62.0 Chromium 151.0.7922.34 fixtures over the
+pinned local providers. Swagger UI and Scalar rendered the 3.2 fixture; ReDoc
+rendered the equivalent 3.1 fixture and refused 3.2 before browser delivery.
+All three kept the XSS marker inert, produced no successful external response,
+accepted keyboard focus and avoided document overflow at 390 by 844 pixels.
+CSP actively blocked the malicious image, Scalar font and ReDoc branding
+origins.
+Swagger/Scalar try-it followed the independent selection, credential-named
+storage stayed empty, and Swagger's computed OAuth redirect was same-origin,
+secretless and unpublished.
+
+Do not select an unconditional documentation default yet. This evidence
+validates the integration boundary, not complete OpenAPI or WCAG conformance.
+Scalar's known ARIA defects remain open, ReDoc remains a read-only 3.1
+provider, and the public composition API is still provisional. Scalar remains
+the leading modern-UX candidate and Swagger UI the compatibility baseline.
 
 Self-hosted, exact-version assets are the production baseline. CDN delivery is
 opt-in and must document CSP, integrity, privacy and availability consequences.
