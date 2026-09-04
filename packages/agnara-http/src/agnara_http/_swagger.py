@@ -22,6 +22,7 @@ from agnara_http._documentation import (
     _DocumentationDefinitionError,
     _DocumentationPage,
     _DocumentationRequest,
+    _RemoteAsset,
 )
 
 _SWAGGER_UI_VERSION = "5.32.14"
@@ -79,10 +80,6 @@ class _SwaggerUIProvider:
     def name(self) -> str:
         return "swagger-ui-cdn" if self.cdn else "swagger-ui"
 
-    @property
-    def remote_assets(self) -> bool:
-        return self.cdn
-
     def render(self, request: _DocumentationRequest) -> _DocumentationPage:
         initializer = _initializer(request)
         initializer_asset = _Asset("text/javascript; charset=utf-8", initializer)
@@ -96,12 +93,30 @@ class _SwaggerUIProvider:
                 inline_style=True,
                 external_origins=(_SWAGGER_UI_ORIGIN,),
             )
+            remote_assets = tuple(
+                sorted(
+                    (
+                        _RemoteAsset(
+                            url=bundle_url,
+                            version=_SWAGGER_UI_VERSION,
+                            integrity=_ASSET_EVIDENCE[_BUNDLE_NAME][2],
+                        ),
+                        _RemoteAsset(
+                            url=stylesheet_url,
+                            version=_SWAGGER_UI_VERSION,
+                            integrity=_ASSET_EVIDENCE[_STYLESHEET_NAME][2],
+                        ),
+                    ),
+                    key=lambda asset: asset.url,
+                )
+            )
             integrity = True
         else:
             bundle_url = _join_url(request.assets_url, _BUNDLE_NAME)
             stylesheet_url = _join_url(request.assets_url, _STYLESHEET_NAME)
             assets = {**_bundled_assets(), _INITIALIZER_NAME: initializer_asset}
             csp = _ContentSecurityPolicy(inline_style=True)
+            remote_assets = ()
             integrity = False
 
         rendered = _html(
@@ -111,7 +126,12 @@ class _SwaggerUIProvider:
             initializer_url=initializer_url,
             integrity=integrity,
         )
-        return _DocumentationPage(html=rendered, csp=csp, assets=assets)
+        return _DocumentationPage(
+            html=rendered,
+            csp=csp,
+            assets=assets,
+            remote_assets=remote_assets,
+        )
 
 
 @cache

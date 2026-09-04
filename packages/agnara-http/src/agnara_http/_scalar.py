@@ -17,6 +17,7 @@ from agnara_http._documentation import (
     _DocumentationDefinitionError,
     _DocumentationPage,
     _DocumentationRequest,
+    _RemoteAsset,
 )
 
 _SCALAR_VERSION = "1.67.0"
@@ -59,10 +60,6 @@ class _ScalarProvider:
     def name(self) -> str:
         return "scalar-cdn" if self.cdn else "scalar"
 
-    @property
-    def remote_assets(self) -> bool:
-        return self.cdn
-
     def render(self, request: _DocumentationRequest) -> _DocumentationPage:
         initializer_asset = _Asset("text/javascript; charset=utf-8", _initializer(request))
         initializer_url = _join_url(request.assets_url, _INITIALIZER_NAME)
@@ -74,11 +71,19 @@ class _ScalarProvider:
                 inline_style=True,
                 external_origins=(_SCALAR_ORIGIN,),
             )
+            remote_assets = (
+                _RemoteAsset(
+                    url=bundle_url,
+                    version=_SCALAR_VERSION,
+                    integrity=_ASSET_EVIDENCE[_BUNDLE_NAME][2],
+                ),
+            )
             integrity = True
         else:
             bundle_url = _join_url(request.assets_url, _BUNDLE_NAME)
             assets = {**_bundled_assets(), _INITIALIZER_NAME: initializer_asset}
             csp = _ContentSecurityPolicy(inline_style=True)
+            remote_assets = ()
             integrity = False
 
         return _DocumentationPage(
@@ -90,6 +95,7 @@ class _ScalarProvider:
             ),
             csp=csp,
             assets=assets,
+            remote_assets=remote_assets,
         )
 
 

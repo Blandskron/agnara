@@ -198,6 +198,12 @@ origins and CSP changes, and use subresource integrity when the distribution
 supports stable hashes. A mutable `latest` CDN URL is not an acceptable
 production default.
 
+ADR 0040 makes this policy executable. Every external script and stylesheet
+has immutable exact-version URL, SHA-384 SRI and anonymous-CORS metadata. The
+registry verifies that rendered HTML, declarations and CSP correspond exactly
+and accepts a set of canonical allowed origins rather than a boolean. Local
+assets and no UI require no network permission.
+
 The no-UI provider remains valid. OpenAPI generation cannot require a browser
 interface.
 
@@ -252,6 +258,12 @@ redirect boundary, keyboard focus and a 390 by 844 responsive smoke viewport.
 The evidence is intentionally narrower than WCAG or complete OpenAPI
 conformance. Scalar's active ARIA gaps, ReDoc's 3.2 incompatibility and the
 provisional public composition API still prevent an unconditional default.
+
+E6.19 enforces the common asset boundary independently of provider. ADR 0040
+records exact remote-resource metadata, HTML/SRI/CORS correspondence,
+canonical CSP origins, deployment origin allowlists and repository-wide
+vendored-resource packaging evidence. This closes the asset-policy work
+without selecting a UI default or making a CDN part of the baseline.
 
 The canonical generated contract remains OpenAPI 3.2 even when a provider
 lags behind it. A provider must fail with a clear compatibility diagnostic or

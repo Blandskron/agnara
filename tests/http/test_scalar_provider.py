@@ -43,8 +43,8 @@ def test_local_provider_serves_the_verified_self_contained_bundle() -> None:
     rendered = page.html.decode()
 
     assert provider.name == "scalar"
-    assert provider.remote_assets is False
     assert page.csp.external_origins == ()
+    assert page.remote_assets == ()
     assert page.csp.inline_script is False
     assert page.csp.inline_style is True
     assert page.csp.blob_worker is False
@@ -126,13 +126,19 @@ def test_cdn_provider_uses_exact_entrypoint_sri_and_local_initializer() -> None:
     with pytest.raises(_DocumentationUnavailable, match="has not permitted"):
         registry.render(provider.name, request())
 
-    page = registry.render(provider.name, request(), allow_remote_assets=True)
+    page = registry.render(
+        provider.name,
+        request(),
+        allowed_remote_origins=frozenset({"https://cdn.jsdelivr.net"}),
+    )
     rendered = page.html.decode()
     root = f"https://cdn.jsdelivr.net/npm/@scalar/api-reference@{_SCALAR_VERSION}/dist/browser"
 
     assert provider.name == "scalar-cdn"
-    assert provider.remote_assets is True
     assert page.csp.external_origins == ("https://cdn.jsdelivr.net",)
+    assert tuple(asset.url for asset in page.remote_assets) == (
+        "https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.67.0/dist/browser/standalone.js",
+    )
     assert set(page.assets) == {"scalar-initializer.js"}
     assert f'{root}/standalone.js" integrity="{_ASSET_EVIDENCE["standalone.js"][2]}' in rendered
     assert "@latest" not in rendered

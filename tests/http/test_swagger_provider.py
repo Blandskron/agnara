@@ -43,8 +43,8 @@ def test_local_provider_serves_only_verified_same_origin_assets() -> None:
     rendered = page.html.decode()
 
     assert provider.name == "swagger-ui"
-    assert provider.remote_assets is False
     assert page.csp.external_origins == ()
+    assert page.remote_assets == ()
     assert page.csp.inline_script is False
     assert page.csp.inline_style is True
     assert set(page.assets) == {
@@ -125,13 +125,20 @@ def test_cdn_provider_uses_exact_urls_sri_and_a_local_initializer() -> None:
     with pytest.raises(_DocumentationUnavailable, match="has not permitted"):
         registry.render(provider.name, request())
 
-    page = registry.render(provider.name, request(), allow_remote_assets=True)
+    page = registry.render(
+        provider.name,
+        request(),
+        allowed_remote_origins=frozenset({"https://unpkg.com"}),
+    )
     rendered = page.html.decode()
     root = f"https://unpkg.com/swagger-ui-dist@{_SWAGGER_UI_VERSION}"
 
     assert provider.name == "swagger-ui-cdn"
-    assert provider.remote_assets is True
     assert page.csp.external_origins == ("https://unpkg.com",)
+    assert {asset.url for asset in page.remote_assets} == {
+        "https://unpkg.com/swagger-ui-dist@5.32.14/swagger-ui-bundle.js",
+        "https://unpkg.com/swagger-ui-dist@5.32.14/swagger-ui.css",
+    }
     assert set(page.assets) == {"swagger-initializer.js"}
     assert f'{root}/swagger-ui.css" integrity="{_ASSET_EVIDENCE["swagger-ui.css"][2]}' in rendered
     assert (

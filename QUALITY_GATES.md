@@ -167,7 +167,11 @@ Before any release beyond experimental alpha:
 Documentation/discovery releases additionally require visibility/redaction
 tests, CSP and XSS browser tests, external-asset/network assertions, try-it and
 OAuth flow tests, and accessibility/responsive smoke tests for each supported
-UI. Hiding an operation in a UI must never be the authorization mechanism.
+UI. Remote scripts and styles require exact-version URLs, SHA-384 SRI,
+anonymous CORS, matching canonical CSP origins and an exact deployment origin
+allowlist. Vendored UI manifests, hashes, licenses and wheel contents are
+release evidence. Hiding an operation in a UI must never be the authorization
+mechanism.
 
 ## Free-threading gate
 
