@@ -265,6 +265,12 @@ expanding that first PR into a complete frontend.
 
 ## EPIC 10 — v0.1 release gate
 
+`v0.1.0a1` shipped on 2026-09-04 as a PEP 440 pre-release ahead of this gate.
+An alpha deliberately does not satisfy it: the items below remain the
+conditions for a final `v0.1.0`, and none is marked complete because the alpha
+published only the `agnara` core distribution. See `CHANGELOG.md` for the
+released scope.
+
 - [ ] Capability definition stable enough for alpha.
 - [ ] Direct invocation stable.
 - [ ] HTTP usable.
