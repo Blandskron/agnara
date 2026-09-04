@@ -14,6 +14,7 @@ from .authorization import (
     McpPrincipalMapper,
 )
 from .discovery import build_mcp_discovery_server
+from .interaction import McpInteractionProjectionError, project_mcp_interaction_required
 from .protocol import (
     MCP_PROTOCOL_VERSION,
     MCP_PYTHON_SDK_VERSION,
@@ -31,9 +32,11 @@ __all__ = [
     "McpAuthenticatedIdentity",
     "McpAuthorization",
     "McpAuthorizationDefinitionError",
+    "McpInteractionProjectionError",
     "McpPrincipalMapper",
     "McpToolDefinitionError",
     "McpToolExposure",
     "build_mcp_discovery_server",
+    "project_mcp_interaction_required",
     "project_mcp_tools",
 ]

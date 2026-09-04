@@ -23,11 +23,12 @@ assert SUPPORTED_MCP_PROTOCOL_VERSIONS == ("2026-07-28",)
 
 This pin establishes the protocol boundary; it is not a claim that the
 unfinished E7 adapter already implements every MCP feature. Tool projection,
-schema mapping, discovery and the request-scoped authorization bridge are
-implemented. Interaction-required outcomes, Tasks/MRTR behavior and official
-SDK conformance remain separate backlog items. Legacy protocol revisions are
-not advertised until Agnara has explicit compatibility tests for them, even
-though the SDK can serve older clients.
+schema mapping, discovery, the request-scoped authorization bridge and
+canonical interaction-required projection are implemented. Tool invocation,
+MRTR resumption, Tasks behavior and official SDK conformance remain separate
+backlog work. Legacy protocol revisions are not advertised until Agnara has
+explicit compatibility tests for them, even though the SDK can serve older
+clients.
 
 ## Tool exposures
 
@@ -118,3 +119,55 @@ scopes are present on the mapped principal. Results retain conservative
 substitute for policy evaluation at invocation time. This discovery-only
 server does not implement `tools/call` and must not be presented as a complete
 MCP application server.
+
+## Interaction-required projection
+
+Project the adapter-facing canonical outcome rather than MCP values or
+exception text:
+
+```python
+from agnara.execution import Failure, FailureCode, invoke_result
+from agnara_mcp import project_mcp_interaction_required
+
+outcome = await invoke_result(plan, context)
+if isinstance(outcome, Failure) and outcome.code is FailureCode.INTERACTION_REQUIRED:
+    mcp_result = project_mcp_interaction_required(outcome)
+```
+
+The currently supported `confirmation` kind becomes a 2026-07-28
+`InputRequiredResult` containing one deterministic form-mode
+`elicitation/create` request. Its restricted flat schema asks for one required
+boolean field. The projection validates the complete canonical detail shape
+but publishes neither capability identity nor arbitrary interaction hints.
+
+This function only projects the interim result. It does not register
+`tools/call`, consume `inputResponses`, create or verify `requestState`, or
+resume an invocation. An elicitation action or submitted boolean is untrusted
+caller input and is never `ConfirmationEvidence` by itself. An application
+confirmation verifier must independently bind and validate evidence before a
+handler may run.
+
+## Tasks and resumption
+
+Tasks left the MCP core specification in `2026-07-28` and continue there as an
+opt-in extension that the pinned SDK defines as types only and never
+dispatches. Agnara neither implements nor advertises that extension, and its
+tool projection never sets the legacy `execution.taskSupport` marker.
+
+Multi Round-Trip Requests are the resumption mechanism of the pinned revision:
+a client fulfills the `inputRequests` of an `InputRequiredResult` and retries
+the same request with `inputResponses` and the echoed `requestState`. Nothing
+in this package mints or accepts that state yet.
+
+When it does, three properties of the official boundary apply. `requestState`
+is attacker-controlled until the SDK's `RequestStateBoundary` verifies it, and
+because this package builds on the lowlevel `Server` rather than `MCPServer`
+that middleware must be installed explicitly, with an explicit audience.
+`RequestStateSecurity.ephemeral()` is process-local and rejects state minted
+by another worker or before a restart, so a multi-instance deployment needs a
+shared key ring. The envelope binds method, target, arguments, audience,
+principal and expiry, but carries no single-use marker, so it is round
+integrity rather than invocation replay protection.
+
+A resumed round therefore re-evaluates the core policy and calls the
+application confirmation verifier exactly as a first round does. See ADR 0042.

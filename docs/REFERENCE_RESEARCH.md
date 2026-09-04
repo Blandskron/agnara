@@ -449,6 +449,74 @@ Authorization references:
 - https://github.com/modelcontextprotocol/python-sdk/blob/v2.1.1/src/mcp/server/auth/provider.py
 - https://github.com/modelcontextprotocol/python-sdk/blob/v2.1.1/src/mcp/server/auth/middleware/auth_context.py
 
+Reviewed 2026-09-04 for E7.6. In MCP `2026-07-28`, an operation that needs
+caller input returns an `InputRequiredResult` containing embedded input
+requests; it does not open a server-to-client back-channel. Form elicitation
+uses an `elicitation/create` request with a human-readable message and a
+restricted JSON Schema limited to a flat object of primitive properties. The
+official generated wire model does not include an `additionalProperties`
+closure keyword for this schema, so Agnara does not publish or claim one.
+
+The first Agnara projection maps only the canonical
+`FailureCode.INTERACTION_REQUIRED` confirmation shape to a single required
+boolean form field. It validates but does not serialize capability identity or
+arbitrary hints. This boundary deliberately stops before `tools/call` and
+MRTR resumption: a client `accept` action or boolean response is input, not
+verifier-approved `ConfirmationEvidence`. The future resumption boundary must
+validate responses and integrity-protect any `requestState` against the
+principal, originating method/arguments, expiry and replay requirements.
+
+Interaction references:
+
+- https://modelcontextprotocol.io/specification/2026-07-28/client/elicitation
+- https://modelcontextprotocol.io/specification/2026-07-28/server/tools
+- https://py.sdk.modelcontextprotocol.io/handlers/multi-round-trip/
+- https://github.com/modelcontextprotocol/python-sdk/blob/v2.1.1/src/mcp_types/_types.py
+
+Reviewed 2026-09-04 for E7.7. Tasks entered MCP in `2025-11-25` and left the
+core specification in `2026-07-28`, continuing as an opt-in extension. The
+pinned SDK encodes that split exactly: `mcp_types` defines `Task`,
+`CreateTaskResult`, `GetTaskRequest`, `CancelTaskRequest`,
+`GetTaskPayloadRequest`, `ListTasksRequest` and `TaskStatusNotification` as
+types only, and their methods are absent from the dispatched request and
+notification unions. `mcp` 2.1.1 ships no task store, lifecycle or `tasks/*`
+handler, and its extension interface names `tasks/get` only as an example
+contribution. `Tool.execution` with its `task_support` marker is likewise
+`2025-11-25`-only; Agnara's projection never sets it.
+
+Multi Round-Trip Requests are therefore the resumption mechanism the pinned
+revision actually defines. An interactive request returns
+`InputRequiredResult` instead of its normal result; the client fulfills the
+server-assigned `input_requests` and retries the same request with
+`input_responses` and the echoed `request_state`. The carrier set is closed to
+`tools/call`, `prompts/get` and `resources/read`, so `tools/call` is Agnara's
+only in-scope carrier.
+
+The SDK's `RequestStateBoundary` seals outgoing state and verifies inbound
+echoes before any handler runs, binding envelope version, issue and expiry
+times, method, target, an arguments digest, audience and a principal claim,
+and rejecting failures as `-32602` with a frozen message. Three limits matter
+for Agnara. Only `MCPServer` installs the middleware, while `agnara-mcp`
+builds on the lowlevel `Server`, so the boundary must be appended explicitly
+with an explicit audience. `RequestStateSecurity.ephemeral()`, the
+convenience policy, is process-local and rejects state minted by another
+worker or before a restart, so multi-instance deployments need a shared key
+ring. The envelope carries expiry but no single-use marker or consumed-token
+store, so an identical round stays replayable within its TTL, which defaults
+to 600 seconds; round integrity is not invocation-level replay safety.
+
+`ElicitResult.action` (`accept`, `decline`, `cancel`) and its `content` are
+client input, so neither can become `ConfirmationEvidence`. A resumption round
+must still evaluate the core policy and call `ConfirmationVerifier.verify`
+with capability identity, invocation and principal. Recorded as ADR 0042.
+
+Task and MRTR references:
+
+- https://py.sdk.modelcontextprotocol.io/handlers/multi-round-trip/
+- https://github.com/modelcontextprotocol/python-sdk/blob/v2.1.1/src/mcp/server/request_state.py
+- https://github.com/modelcontextprotocol/python-sdk/blob/v2.1.1/src/mcp/server/extension.py
+- https://github.com/modelcontextprotocol/python-sdk/blob/v2.1.1/src/mcp_types/methods.py
+
 ## A2A
 
 A2A is a post-v0.1 adapter target.

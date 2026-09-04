@@ -202,8 +202,14 @@ Core imports neither Pydantic nor msgspec.
   #166.
 - [x] E7.4 Discovery. Tracking: GitHub Issue #168.
 - [x] E7.5 Authorization integration. Tracking: GitHub Issue #170.
-- [ ] E7.6 Canonical interaction-required mapping to MCP.
-- [ ] E7.7 Task/MRTR research.
+- [x] E7.6 Canonical interaction-required mapping to MCP. Tracking: GitHub
+  Issue #172.
+- [x] E7.7 Task/MRTR research. Tasks left the core specification in
+  `2026-07-28` and the pinned SDK never dispatches their methods, so MRTR
+  is the only resumption mechanism Agnara adopts and the Tasks extension is
+  not claimed. Recorded by ADR 0042, which also constrains E7.8. Delivered
+  inside the v0.1.0a1 release branch rather than under its own Issue, because
+  GitHub API access was unavailable for the whole cycle.
 - [ ] E7.8 Official SDK conformance tests.
 - [ ] E7.9 Benchmark tool invocation overhead against FastMCP where meaningful.
 
@@ -259,6 +265,12 @@ expanding that first PR into a complete frontend.
 - [ ] E9.6 no-op telemetry cost benchmark.
 
 ## EPIC 10 — v0.1 release gate
+
+`v0.1.0a1` shipped on 2026-09-04 as a PEP 440 pre-release ahead of this gate.
+An alpha deliberately does not satisfy it: the items below remain the
+conditions for a final `v0.1.0`, and none is marked complete because the alpha
+published only the `agnara` core distribution. See `CHANGELOG.md` for the
+released scope.
 
 - [ ] Capability definition stable enough for alpha.
 - [ ] Direct invocation stable.

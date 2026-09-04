@@ -91,6 +91,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -121,5 +124,11 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          # Curated notes per ADR 0021 step 7; the generated PR list is
+          # appended below them. A tag without a notes file falls back to the
+          # generated list alone.
+          body_path: docs/releases/${{ github.ref_name }}.md
           generate_release_notes: true
           files: dist/*
+          # PEP 440 pre-release segments must never ship as a stable release.
+          prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') }}

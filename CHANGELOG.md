@@ -4,13 +4,39 @@ Notable changes to Agnara are recorded here. The format is inspired by Keep a
 Changelog, and release versions follow the synchronized PEP 440 policy in ADR
 0021.
 
-All work listed below is unreleased. The repository has no release tag yet;
-package version `0.0.0` is a development sentinel, not a published release.
+`0.1.0a1` is the first published release. Every first-party package in the
+workspace carries that synchronized version, but only the `agnara` core
+distribution was uploaded to PyPI in that cycle; the adapter packages are
+versioned and buildable from the repository without being published. See the
+`0.1.0a1` scope note below.
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.1.0a1] - 2026-09-04
+
+First public alpha: an architectural proof that Agnara installs and runs as a
+real Python distribution. The public API is unstable and this release is not
+production-ready.
+
+Published to PyPI: `agnara` only. `agnara-http`, `agnara-mcp`, `agnara-cli`,
+`agnara-a2a`, `agnara-events` and `agnara-telemetry` share the version but were
+not uploaded, so the HTTP, OpenAPI, MCP and CLI surfaces recorded below are
+reachable from a repository checkout rather than from `pip install agnara`.
+
 ### Added
 
+- Defined the MCP Task and multi-round-trip boundary: MRTR as the only
+  resumption mechanism on the pinned revision, the Tasks extension neither
+  implemented nor advertised, explicit request-state boundary installation
+  on the lowlevel server tier, and confirmation evidence kept separate from
+  client-echoed round state (ADR 0042).
+- Added deterministic projection of canonical interaction-required
+  confirmation outcomes to official MCP `InputRequiredResult` form
+  elicitations, with strict canonical-detail validation, minimal safe
+  serialization and explicit separation from evidence verification and MRTR
+  resumption ([#172]).
 - Added a request-scoped MCP authorization bridge from official SDK verified
   identity context to protocol-neutral principals, with credential-free
   explicit identity mapping, fail-closed redacted errors, isolated static
@@ -215,7 +241,8 @@ package version `0.0.0` is a development sentinel, not a published release.
   `FrozenInstanceError` instead of CPython 3.14's confusing internal
   `TypeError` ([#3]).
 
-[Unreleased]: https://github.com/Blandskron/agnara/compare/main...develop
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...develop
+[0.1.0a1]: https://github.com/Blandskron/agnara/releases/tag/v0.1.0a1
 [#3]: https://github.com/Blandskron/agnara/issues/3
 [#16]: https://github.com/Blandskron/agnara/issues/16
 [#19]: https://github.com/Blandskron/agnara/issues/19
@@ -261,6 +288,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#166]: https://github.com/Blandskron/agnara/issues/166
 [#168]: https://github.com/Blandskron/agnara/issues/168
 [#170]: https://github.com/Blandskron/agnara/issues/170
+[#172]: https://github.com/Blandskron/agnara/issues/172
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133

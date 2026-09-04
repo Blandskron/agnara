@@ -8,12 +8,17 @@ The primary artifact published is the `agnara` distribution (which internally ma
 
 Before a release is drafted, the repository must pass all automated quality gates. You can verify readiness locally by ensuring that the framework is in a clean state:
 ```bash
-uv pip install -e ".[dev]"
+uv sync --locked
 uv run ruff check .
 uv run ruff format --check .
 uv run ty check
 uv run pytest
 ```
+
+The workspace has no `[dev]` extra: development dependencies live in the root
+`[dependency-groups] dev` table and are installed by `uv sync`. `uv` itself is
+a required release tool — `tests/http/test_documentation_assets.py` asserts it
+is on `PATH`.
 
 When 100% green, the framework is technically ready to be packaged.
 
@@ -40,17 +45,38 @@ The project owner has pre-configured the following external contract in PyPI:
 
 ## 3. How to Draft a Release
 
-The pipeline is triggered automatically when a new version tag is pushed:
+Publication is triggered by pushing the version tag; everything before that is
+manual and reviewable.
 
-1. Update the version in `packages/agnara/pyproject.toml` (e.g. to `0.1.0`).
-2. Run `uv lock` to update the lockfile workspace metadata.
-3. Commit and merge to `main` via PR.
-4. Draft a new tag `v0.1.0`.
+ADR 0021 keeps every first-party package on one synchronized version, so a
+release updates all seven, not only the published one.
+
+1. Branch `release/v<version>` from `develop`.
+2. Set the same version in **every** `packages/*/pyproject.toml` (e.g.
+   `0.1.0a1`).
+3. Run `uv lock` and confirm `uv lock --check` is clean.
+4. Close `CHANGELOG.md`: rename `[Unreleased]` to `[<version>] - YYYY-MM-DD`,
+   open a new empty `[Unreleased]`, and update the comparison links.
+5. Build and validate the artifacts, then install the wheel into a clean
+   environment outside the checkout and run the quick start.
+6. Open the PR to `main`, wait for every required check, and merge through the
+   mechanism branch protection allows.
+7. Tag the exact merged commit, annotated:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag -a v0.1.0a1 -m "Agnara v0.1.0a1 — First Public Alpha"
+git push origin v0.1.0a1
 ```
+
+8. Propagate the release-only commits back to `develop` through a PR.
+
+Write `docs/releases/v<version>.md` before tagging. `release.yml` uses it as
+the GitHub Release body and appends the generated PR list underneath, so a
+missing file silently degrades the release notes to the generated list.
+
+Only `agnara` is published. The adapter packages carry the synchronized
+version and are buildable from the repository, but each additional
+distribution needs its own PyPI Trusted Publisher before it can be uploaded.
 
 ## 4. The `release.yml` Workflow
 
@@ -71,5 +97,5 @@ Upon receiving the tag `v*.*.*`, `.github/workflows/release.yml` executes:
 
 ## 6. TestPyPI (Optional but recommended)
 
-TestPyPI is an entirely separate registry from PyPI. To publish to TestPyPI before production, a Pending Trusted Publisher must also be configured there. See **ACTION REQUIRED FROM OWNER** in the AI agent prompt output for instructions on configuring TestPyPI. Once configured, an intermediate job `publish-testpypi` targeting the `testpypi` environment can be added before the `publish` job.
+TestPyPI is an entirely separate registry from PyPI. To publish to TestPyPI before production, a Pending Trusted Publisher must also be configured there. Configuring it is a repository-owner action in the TestPyPI web interface. Once a Pending Trusted Publisher exists there, an intermediate `publish-testpypi` job targeting a `testpypi` environment can be added before the `publish` job.
 

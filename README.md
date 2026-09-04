@@ -10,6 +10,79 @@ Agnara starts from a simple premise:
 
 A capability is defined once and may later be exposed through HTTP, MCP, A2A, events, tasks, CLI, internal calls, or future transports without duplicating domain logic.
 
+## Install
+
+```bash
+pip install agnara==0.1.0a1
+```
+
+Or track the newest pre-release:
+
+```bash
+pip install --pre agnara
+```
+
+Requires CPython 3.14 or newer. The core distribution has no third-party
+dependencies.
+
+`0.1.0a1` publishes the `agnara` core kernel only. The HTTP, OpenAPI, MCP and
+CLI adapters live in sibling packages in this repository and were not uploaded
+to PyPI in this release, so they are not installable with `pip` yet.
+
+## Quick start
+
+```python
+import asyncio
+
+from agnara import Agnara, Risk, StandardEffect
+from agnara.core.di import DIContainer, DIRegistry
+from agnara.execution import (
+    ExecutionContext,
+    ExecutionPlan,
+    Invocation,
+    invoke_result,
+)
+
+app = Agnara("billing")
+
+
+@app.capability(
+    description="Refund a captured payment.",
+    scopes=("billing:write",),
+    effects=(StandardEffect.FINANCIAL_WRITE,),
+    risk=Risk.HIGH,
+)
+def refund(payment_id: str, amount_cents: int) -> str:
+    return f"refunded {amount_cents} cents for {payment_id}"
+
+
+async def main() -> None:
+    capabilities = app.compile()
+    dependencies = DIRegistry()
+    plan = ExecutionPlan.compile(capabilities["billing.refund"], dependencies)
+
+    outcome = await invoke_result(
+        plan,
+        ExecutionContext(
+            Invocation(
+                capability_id=plan.definition.id,
+                payload={"payment_id": "pay_123", "amount_cents": 2500},
+                metadata={},
+            ),
+            DIContainer(dependencies),
+        ),
+    )
+    print(outcome)
+
+
+asyncio.run(main())
+```
+
+The capability is declared once, with its risk and effects, and invoked
+directly — no server, no HTTP, no transport. `examples/quickstart.py` in this
+repository is the longer version, including dependency injection and canonical
+failure handling.
+
 ## Why Agnara exists
 
 Most Python web frameworks were created for a world centered on HTTP APIs, REST, request/response cycles, and human developers. The software landscape now includes AI agents, MCP, A2A, long-running tasks, event-driven systems, human approval flows, machine-readable discovery, and agent-oriented security.
@@ -216,13 +289,19 @@ The architecture must be safe under conventional CPython and designed consciousl
 
 ## Project status
 
-**Pre-alpha / architecture-first.**
+```text
+Status:         Alpha (experimental)
+Latest release: v0.1.0a1
+```
+
+`v0.1.0a1` is the first public release: an architectural proof that Agnara
+installs and runs as a real Python distribution. It is not production-ready,
+the public API may change without a deprecation cycle, and only the `agnara`
+core distribution is on PyPI.
 
 The repository should not claim production readiness, benchmark leadership, security guarantees, or protocol conformance until those claims are backed by automated evidence.
 
-All current work is unreleased. See `CHANGELOG.md` for the curated
-`[Unreleased]` record; package version `0.0.0` is a development sentinel and
-must not be published.
+See `CHANGELOG.md` for the released record and the exact published scope.
 
 ## Documentation order for contributors and agents
 
