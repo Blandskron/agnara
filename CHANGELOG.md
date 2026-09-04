@@ -219,6 +219,13 @@ reachable from a repository checkout rather than from `pip install agnara`.
 
 ### Fixed
 
+- Pinned CPython 3.14 in every `release.yml` job and made a wrong
+  interpreter fail loudly. The artifact-validation job built its clean-room
+  environment on whatever Python the runner offered, so the first tagged run
+  could not install its own `>=3.14` wheel, and the publish job's
+  post-release check carried the same defect where it would have failed
+  after upload.
+
 - HTTP dispatch now strips `root_path` only at a complete mount-path segment,
   preventing a mount such as `/api` from capturing a textual prefix such as
   `/apiary` ([#133]).
