@@ -144,6 +144,12 @@ SDK support for a revision is necessary but insufficient for an Agnara
 conformance claim. Claims require adapter-level fixtures for the implemented
 projection, negotiation and error surface.
 
+Protocol exposure registries must reject invalid and duplicate wire names at
+startup, preserve declaration order, retain their protocol-neutral capability
+definitions, and compile into immutable snapshots. A protocol adapter must
+not infer that an arbitrary callable is authorized or registered merely
+because it is callable.
+
 ## Benchmark integrity
 
 Never benchmark development mode against optimized competitors.

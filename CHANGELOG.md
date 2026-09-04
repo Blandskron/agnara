@@ -11,6 +11,10 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Added deterministic MCP tool exposure registration through
+  `Mcp(app).tool(capability)`, including explicit wire-name overrides,
+  startup collision checks, capability ownership validation, and immutable
+  compiled snapshots ([#164]).
 - Pinned the first MCP adapter baseline to specification `2026-07-28` and the
   official Python SDK `2.1.1`, with an adapter-owned version contract,
   dependency-boundary tests and explicit deferral of unfinished protocol and
@@ -240,6 +244,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#157]: https://github.com/Blandskron/agnara/issues/157
 [#159]: https://github.com/Blandskron/agnara/issues/159
 [#162]: https://github.com/Blandskron/agnara/issues/162
+[#164]: https://github.com/Blandskron/agnara/issues/164
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133
