@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Updated: 2026-09-04
-- Tracking: GitHub Issue #174
+- Tracking: none; delivered in the `v0.1.0a1` release branch (E7.7)
 
 ## Decision
 

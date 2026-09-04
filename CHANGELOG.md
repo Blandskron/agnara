@@ -31,7 +31,7 @@ reachable from a repository checkout rather than from `pip install agnara`.
   resumption mechanism on the pinned revision, the Tasks extension neither
   implemented nor advertised, explicit request-state boundary installation
   on the lowlevel server tier, and confirmation evidence kept separate from
-  client-echoed round state ([#174]).
+  client-echoed round state (ADR 0042).
 - Added deterministic projection of canonical interaction-required
   confirmation outcomes to official MCP `InputRequiredResult` form
   elicitations, with strict canonical-detail validation, minimal safe
@@ -289,7 +289,6 @@ reachable from a repository checkout rather than from `pip install agnara`.
 [#168]: https://github.com/Blandskron/agnara/issues/168
 [#170]: https://github.com/Blandskron/agnara/issues/170
 [#172]: https://github.com/Blandskron/agnara/issues/172
-[#174]: https://github.com/Blandskron/agnara/issues/174
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133
