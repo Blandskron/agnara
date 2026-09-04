@@ -11,6 +11,11 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Added pinned Scalar API Reference 1.67.0 local and opt-in CDN providers with
+  verified licensed assets and SRI, explicit telemetry/plugin/agent/font
+  boundaries, independently disabled try-it and documented partial OpenAPI
+  3.2/accessibility support; the documentation default remains deferred until
+  shared browser evidence exists ([#153]).
 - Added pinned ReDoc CE 2.5.3 local and opt-in CDN documentation providers,
   including verified licensed assets, SRI, untrusted-spec sanitization and an
   explicit blob-worker CSP requirement; ReDoc truthfully refuses canonical
@@ -211,6 +216,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#147]: https://github.com/Blandskron/agnara/issues/147
 [#149]: https://github.com/Blandskron/agnara/issues/149
 [#151]: https://github.com/Blandskron/agnara/issues/151
+[#153]: https://github.com/Blandskron/agnara/issues/153
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133

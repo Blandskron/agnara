@@ -236,6 +236,14 @@ work remains incomplete and CE has no try-it console, so the provider refuses
 both requests explicitly. It never downgrades the canonical document or
 pretends that a read-only reference interface is interactive.
 
+E6.17 completed the Scalar API Reference spike with version 1.67.0. ADR 0038
+records its self-contained pinned bundle, exact-version opt-in CDN mode,
+explicit telemetry/plugin/agent/font boundaries and partial OpenAPI 3.2 and
+accessibility evidence. Scalar remains the leading modern-UX candidate, but
+the upstream end-to-end 3.2 tracker and active ARIA defects mean no provider is
+selected as an unconditional default before E6.18 runs comparable browser
+fixtures.
+
 The canonical generated contract remains OpenAPI 3.2 even when a provider
 lags behind it. A provider must fail with a clear compatibility diagnostic or
 remain unavailable; it must not silently change only the `openapi` version or

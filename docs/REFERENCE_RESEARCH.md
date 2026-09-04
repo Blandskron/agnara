@@ -52,7 +52,8 @@ Reference:
 ## OpenAPI documentation interfaces
 
 Reviewed: 2026-08-31 for RFC 0003 and ADR 0018. Swagger UI evidence refreshed
-2026-09-03 for ADR 0036; ReDoc evidence refreshed 2026-09-03 for ADR 0037.
+2026-09-03 for ADR 0036; ReDoc evidence refreshed 2026-09-03 for ADR 0037;
+Scalar and alternative evidence refreshed 2026-09-03 for ADR 0038.
 
 This is a point-in-time comparison, not a permanent endorsement. OpenAPI 3.2
 support is still evolving across renderers, so Agnara must test pinned versions
@@ -210,6 +211,33 @@ Tradeoffs:
   evidence of WCAG conformance;
 - fast release cadence makes exact version pinning and upgrade tests essential.
 
+E6.17 evidence and implementation boundary (2026-09-03):
+
+- pinned release: `@scalar/api-reference@1.67.0`, published 2026-08-28 in
+  release tag `release-2026-08-28-df40ed7`;
+- vendored payload: the self-contained browser `standalone.js` IIFE
+  (3,736,898 bytes), including the interactive client and verified from the
+  official 9,050,339-byte npm tarball;
+- acquisition uses `npm pack --ignore-scripts`; none of the package's 25
+  declared dependencies or build/test scripts runs in Agnara installations;
+- the exact-version jsDelivr entrypoint byte-matches the npm artifact and has
+  recorded SHA-384 SRI; the MIT license comes from the exact release tag
+  because the npm tarball does not contain it;
+- the initializer disables telemetry, credential persistence, document
+  editing/download, developer tools, agent/MCP affordances, proxy defaults and
+  plugin URLs; try-it controls remain hidden unless independently selected;
+- Scalar injects CSS and embeds `fonts.scalar.com` URLs. Inline styles are
+  declared, but local CSP does not allow the font origin, so system fonts are
+  used without a hidden network dependency;
+- the bundle contains responsive media rules and ARIA markup, but issue #9725
+  reports active ARIA failures; source inspection is not a WCAG/mobile claim,
+  and E6.18 owns browser verification;
+- the parser accepts 3.2 and Agnara preserves that version, but upstream issue
+  #6715 still tracks uncompleted API Reference/client/workspace work. The
+  provider names this partial boundary rather than claiming full conformance;
+- the resulting `agnara-http` wheel is 1,937,150 bytes, up 1,095,884 bytes
+  from the Swagger/ReDoc baseline build.
+
 Primary sources:
 
 - https://github.com/scalar/scalar
@@ -280,11 +308,17 @@ Primary sources:
 
 ### Research decision
 
-Do not add any UI dependency during architecture work. Define a replaceable
-provider contract and run Swagger UI, ReDoc and Scalar through identical
-OpenAPI 3.2, local-asset, CSP, XSS, OAuth, accessibility, mobile and bundle-size
-fixtures. Keep Elements and RapiDoc as viable later providers, not runtime
-assumptions.
+Swagger UI, ReDoc and Scalar now implement the same replaceable provider
+contract without runtime UI dependencies. Keep Elements and RapiDoc as viable
+later providers, not runtime assumptions: the refreshed maintenance,
+dependency and compatibility evidence does not make either a stronger default.
+
+Do not select an unconditional documentation default yet. Scalar remains the
+leading modern-UX candidate and Swagger UI the compatibility baseline, but
+their incomplete OpenAPI 3.2/accessibility evidence requires E6.18's identical
+real-browser CSP, XSS, OAuth, accessibility, mobile and try-it fixtures first.
+ReDoc remains a read-only 3.1 provider and cannot render the canonical 3.2
+artifact honestly.
 
 Self-hosted, exact-version assets are the production baseline. CDN delivery is
 opt-in and must document CSP, integrity, privacy and availability consequences.
