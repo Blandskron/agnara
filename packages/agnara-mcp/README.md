@@ -27,3 +27,30 @@ schema mapping, discovery, authorization, interaction-required outcomes,
 Tasks/MRTR behavior and official SDK conformance remain separate backlog
 items. Legacy protocol revisions are not advertised until Agnara has explicit
 compatibility tests for them, even though the SDK can serve older clients.
+
+## Tool exposures
+
+Declare tool exposure separately from capability semantics:
+
+```python
+from agnara import Agnara
+from agnara_mcp import Mcp
+
+app = Agnara("users")
+mcp = Mcp(app)
+
+
+@app.capability
+def get_user(user_id: str) -> str:
+    return user_id
+
+
+mcp.tool(get_user)
+tools = mcp.compile()
+```
+
+The default MCP name is the stable capability identity (`users.get_user`).
+Pass `name="users-get"` to select a different valid wire name. Compilation is
+idempotent, closes registration, and returns an immutable snapshot in
+declaration order. E7.3 will add JSON Schema projection; this layer
+intentionally does not create incomplete SDK `Tool` objects.
