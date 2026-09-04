@@ -167,8 +167,9 @@ Core imports neither Pydantic nor msgspec.
   against identical OpenAPI 3.2, CSP, accessibility, mobile, dependency and
   bundle-size fixtures before selecting any default. Tracking: GitHub Issue
   #153.
-- [ ] E6.18 Add documentation UI browser tests for CSP, XSS payloads, disabled
+- [x] E6.18 Add documentation UI browser tests for CSP, XSS payloads, disabled
   routes, OAuth redirect handling, authentication state and try-it controls.
+  Tracking: GitHub Issue #155.
 - [ ] E6.19 Enforce the documentation asset policy: pinned local assets by
   default; exact-version CDN, origin allowlist and integrity/CSP documentation
   only through explicit opt-in.

@@ -31,6 +31,19 @@ uv run pytest
 
 Exact command names may evolve, but equivalent gates must remain.
 
+Documentation browser conformance is a separate required CI lane because the
+ordinary cross-platform gate must not depend on a preinstalled browser. Its
+reproducible commands are:
+
+```bash
+uv run playwright install --with-deps chromium
+AGNARA_RUN_BROWSER_TESTS=1 uv run pytest tests/http/test_documentation_browser.py -m browser
+```
+
+Playwright is version-pinned in the development lock. Without the explicit
+environment flag, pytest still collects these tests and reports them skipped;
+only the dedicated browser job is evidence that they passed.
+
 ## Where the gates are authoritative
 
 CI is the authoritative record that the gates passed. `.github/workflows/ci.yml`

@@ -85,4 +85,14 @@ def test_ci_grants_only_read_permissions_by_default(workflow_text: str) -> None:
 
 def test_ci_exposes_a_single_aggregate_status_check(workflow_text: str) -> None:
     """Branch protection needs one stable required check (E0B.4)."""
-    assert "needs: [lint, types, test, lockfile]" in workflow_text
+    assert "needs: [lint, types, test, browser, lockfile]" in workflow_text
+
+
+def test_documentation_browser_conformance_is_an_explicit_required_job(
+    workflow_text: str,
+) -> None:
+    """E6.18 browser evidence must not disappear into ordinary skipped tests."""
+    assert "browser:\n    name: Documentation browsers" in workflow_text
+    assert "playwright install --with-deps chromium" in workflow_text
+    assert 'AGNARA_RUN_BROWSER_TESTS: "1"' in workflow_text
+    assert "pytest tests/http/test_documentation_browser.py -m browser" in workflow_text

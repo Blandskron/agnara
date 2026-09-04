@@ -10,6 +10,7 @@ import pytest
 from agnara_http._documentation import (
     _Asset,
     _ContentSecurityPolicy,
+    _documentation_security_headers,
     _DocumentationDefinitionError,
     _DocumentationPage,
     _DocumentationProvider,
@@ -273,6 +274,51 @@ def test_a_csp_capability_must_be_a_real_boolean(field: str) -> None:
 def test_an_external_origin_must_be_https(origin: str) -> None:
     with pytest.raises(_DocumentationDefinitionError, match="must be an https URL"):
         _ContentSecurityPolicy(external_origins=(origin,))
+
+
+def test_security_headers_serialize_only_declared_browser_privileges() -> None:
+    headers = dict(
+        _documentation_security_headers(
+            _ContentSecurityPolicy(
+                inline_style=True,
+                blob_worker=True,
+                external_origins=("https://cdn.example",),
+            )
+        )
+    )
+    csp = headers[b"content-security-policy"].decode("ascii")
+
+    assert headers == {
+        b"cache-control": b"no-store",
+        b"content-security-policy": headers[b"content-security-policy"],
+        b"referrer-policy": b"no-referrer",
+        b"x-content-type-options": b"nosniff",
+        b"x-frame-options": b"DENY",
+    }
+    assert "default-src 'none'" in csp
+    assert "connect-src 'self'" in csp
+    assert "connect-src 'self' https://cdn.example" not in csp
+    assert "script-src 'self' https://cdn.example" in csp
+    assert "style-src 'self' https://cdn.example 'unsafe-inline'" in csp
+    assert "worker-src 'self' blob:" in csp
+    assert "script-src 'self' https://cdn.example 'unsafe-inline'" not in csp
+
+
+def test_inline_script_and_worker_blob_are_never_granted_implicitly() -> None:
+    csp = dict(_documentation_security_headers(_ContentSecurityPolicy()))[
+        b"content-security-policy"
+    ].decode("ascii")
+
+    assert "script-src 'self';" in csp
+    assert "style-src 'self';" in csp
+    assert "worker-src 'self'" in csp
+    assert "'unsafe-inline'" not in csp
+    assert "blob:" in csp  # Images may use local object URLs.
+
+
+def test_security_headers_require_the_reviewed_policy_type() -> None:
+    with pytest.raises(_DocumentationDefinitionError, match="require a _ContentSecurityPolicy"):
+        _documentation_security_headers(object())  # ty: ignore[invalid-argument-type]
 
 
 def test_a_provider_that_needs_a_cdn_without_declaring_it_is_a_definition_error() -> None:

@@ -156,15 +156,25 @@ inline JavaScript. ReDoc CE has no try-it console and upstream still does not
 claim OpenAPI 3.2 support, so those requests become unavailable explicitly;
 the canonical document is never downgraded. See ADR 0037.
 
+E6.17 adds internal local and CDN Scalar 1.67.0 providers. E6.18 then drives
+all three pinned local providers through a test-only HTTP bridge over the
+compiled ASGI surface dispatcher and the exact emitted security headers.
+Playwright 1.62.0 Chromium verifies rendering, CSP-blocked undeclared origins,
+inert XSS payloads, disabled routes, non-persisted credential state,
+same-origin unpublished OAuth redirect behavior, per-UI try-it, keyboard
+entry and a 390 by 844 responsive smoke viewport. Playwright remains a
+workspace development dependency, not an `agnara-http` dependency. These are
+browser smoke tests rather than complete WCAG/OpenAPI conformance, so the
+documentation default remains explicitly deferred; see ADRs 0038 and 0039.
+
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
 - https://asgi.readthedocs.io/en/latest/specs/main.html
 - https://asgi.readthedocs.io/en/latest/specs/www.html
 
-This is not yet a public HTTP composition API or a complete ASGI/HTTP
-conformance claim. Additional documentation providers, browser integration and
-Explorer remain separate roadmap work; see RFC 0003, ADR 0018, EPIC 6 and EPIC
-8.
+This is not yet a public HTTP composition API or a complete ASGI/HTTP,
+OpenAPI or WCAG conformance claim. Asset-policy enforcement and Explorer
+remain separate roadmap work; see RFC 0003, ADR 0018, EPIC 6 and EPIC 8.
 
 - Import package: `agnara_http`
 - Depends on: `agnara-core`

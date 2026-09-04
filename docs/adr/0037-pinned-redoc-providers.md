@@ -82,8 +82,9 @@ integration is considered complete.
   additional raw browser assets.
 - The local provider has no CDN/font dependency. The versioned CDN mode adds a
   declared availability/privacy dependency and is opt-in.
-- E6.18 can translate the explicit style and blob-worker requirements into a
-  tested response CSP. E6.19 can generalize the manifest/build policy.
+- E6.18 translated the explicit style and blob-worker requirements into a
+  real-browser-tested response CSP. E6.19 can generalize the manifest/build
+  policy.
 - No documentation UI is selected as an unconditional default.
 
 ## Guardrails
@@ -100,6 +101,12 @@ integration is considered complete.
 - Vendored bytes and licensing evidence ship in the wheel and are verified.
 
 ## Primary evidence
+
+E6.18 subsequently verified the local 3.1 provider under the emitted CSP in
+Playwright 1.62.0 Chromium. The blob worker runs, remote branding and malicious
+images are blocked, XSS remains inert, credential-named storage stays empty,
+and keyboard/mobile smoke checks pass. The contract still refuses 3.2 before
+browser delivery. See ADR 0039; this is not WCAG conformance.
 
 - https://github.com/Redocly/redoc/releases/tag/v2.5.3
 - https://github.com/Redocly/redoc

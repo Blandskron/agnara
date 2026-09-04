@@ -244,6 +244,15 @@ the upstream end-to-end 3.2 tracker and active ARIA defects mean no provider is
 selected as an unconditional default before E6.18 runs comparable browser
 fixtures.
 
+E6.18 now runs those comparable fixtures in a required Playwright
+1.62.0/Chromium CI job. ADR 0039 records real-browser rendering through the
+compiled ASGI surface boundary, exact CSP/security headers, blocked XSS and
+undeclared origins, try-it and storage state, an unpublished same-origin OAuth
+redirect boundary, keyboard focus and a 390 by 844 responsive smoke viewport.
+The evidence is intentionally narrower than WCAG or complete OpenAPI
+conformance. Scalar's active ARIA gaps, ReDoc's 3.2 incompatibility and the
+provisional public composition API still prevent an unconditional default.
+
 The canonical generated contract remains OpenAPI 3.2 even when a provider
 lags behind it. A provider must fail with a clear compatibility diagnostic or
 remain unavailable; it must not silently change only the `openapi` version or

@@ -18,6 +18,7 @@ venv/
 .coverage
 coverage.xml
 htmlcov/
+test-results/
 
 # uv
 uv.lock.bak
