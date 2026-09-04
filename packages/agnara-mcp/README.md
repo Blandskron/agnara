@@ -23,11 +23,12 @@ assert SUPPORTED_MCP_PROTOCOL_VERSIONS == ("2026-07-28",)
 
 This pin establishes the protocol boundary; it is not a claim that the
 unfinished E7 adapter already implements every MCP feature. Tool projection,
-schema mapping, discovery and the request-scoped authorization bridge are
-implemented. Interaction-required outcomes, Tasks/MRTR behavior and official
-SDK conformance remain separate backlog items. Legacy protocol revisions are
-not advertised until Agnara has explicit compatibility tests for them, even
-though the SDK can serve older clients.
+schema mapping, discovery, the request-scoped authorization bridge and
+canonical interaction-required projection are implemented. Tool invocation,
+MRTR resumption, Tasks behavior and official SDK conformance remain separate
+backlog work. Legacy protocol revisions are not advertised until Agnara has
+explicit compatibility tests for them, even though the SDK can serve older
+clients.
 
 ## Tool exposures
 
@@ -118,3 +119,30 @@ scopes are present on the mapped principal. Results retain conservative
 substitute for policy evaluation at invocation time. This discovery-only
 server does not implement `tools/call` and must not be presented as a complete
 MCP application server.
+
+## Interaction-required projection
+
+Project the adapter-facing canonical outcome rather than MCP values or
+exception text:
+
+```python
+from agnara.execution import Failure, FailureCode, invoke_result
+from agnara_mcp import project_mcp_interaction_required
+
+outcome = await invoke_result(plan, context)
+if isinstance(outcome, Failure) and outcome.code is FailureCode.INTERACTION_REQUIRED:
+    mcp_result = project_mcp_interaction_required(outcome)
+```
+
+The currently supported `confirmation` kind becomes a 2026-07-28
+`InputRequiredResult` containing one deterministic form-mode
+`elicitation/create` request. Its restricted flat schema asks for one required
+boolean field. The projection validates the complete canonical detail shape
+but publishes neither capability identity nor arbitrary interaction hints.
+
+This function only projects the interim result. It does not register
+`tools/call`, consume `inputResponses`, create or verify `requestState`, or
+resume an invocation. An elicitation action or submitted boolean is untrusted
+caller input and is never `ConfirmationEvidence` by itself. An application
+confirmation verifier must independently bind and validate evidence before a
+handler may run; E7.7 will research the MRTR/state boundary.

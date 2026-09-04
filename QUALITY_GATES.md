@@ -167,6 +167,16 @@ and fail closed with redacted protocol errors. Scope-filtered discovery must
 remain request-isolated, private and immediately stale; cache metadata or
 discoverability never substitutes for invocation authorization.
 
+Protocol interaction projections must start from canonical adapter-facing
+outcomes, validate their complete reviewed detail shape, and serialize only
+the minimum caller-safe fields supported by the pinned protocol. MCP form
+elicitation uses its restricted flat-schema vocabulary and never carries
+credentials, capability internals, arbitrary interaction hints or verifier
+diagnostics. Client acceptance or submitted form values remain untrusted input
+and must not become confirmation evidence without independent application
+verification. An interim projection must not claim MRTR resumption, state
+integrity or tool-invocation support that it does not implement.
+
 ## Benchmark integrity
 
 Never benchmark development mode against optimized competitors.

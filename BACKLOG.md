@@ -202,7 +202,8 @@ Core imports neither Pydantic nor msgspec.
   #166.
 - [x] E7.4 Discovery. Tracking: GitHub Issue #168.
 - [x] E7.5 Authorization integration. Tracking: GitHub Issue #170.
-- [ ] E7.6 Canonical interaction-required mapping to MCP.
+- [x] E7.6 Canonical interaction-required mapping to MCP. Tracking: GitHub
+  Issue #172.
 - [ ] E7.7 Task/MRTR research.
 - [ ] E7.8 Official SDK conformance tests.
 - [ ] E7.9 Benchmark tool invocation overhead against FastMCP where meaningful.

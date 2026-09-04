@@ -449,6 +449,30 @@ Authorization references:
 - https://github.com/modelcontextprotocol/python-sdk/blob/v2.1.1/src/mcp/server/auth/provider.py
 - https://github.com/modelcontextprotocol/python-sdk/blob/v2.1.1/src/mcp/server/auth/middleware/auth_context.py
 
+Reviewed 2026-09-04 for E7.6. In MCP `2026-07-28`, an operation that needs
+caller input returns an `InputRequiredResult` containing embedded input
+requests; it does not open a server-to-client back-channel. Form elicitation
+uses an `elicitation/create` request with a human-readable message and a
+restricted JSON Schema limited to a flat object of primitive properties. The
+official generated wire model does not include an `additionalProperties`
+closure keyword for this schema, so Agnara does not publish or claim one.
+
+The first Agnara projection maps only the canonical
+`FailureCode.INTERACTION_REQUIRED` confirmation shape to a single required
+boolean form field. It validates but does not serialize capability identity or
+arbitrary hints. This boundary deliberately stops before `tools/call` and
+MRTR resumption: a client `accept` action or boolean response is input, not
+verifier-approved `ConfirmationEvidence`. The future resumption boundary must
+validate responses and integrity-protect any `requestState` against the
+principal, originating method/arguments, expiry and replay requirements.
+
+Interaction references:
+
+- https://modelcontextprotocol.io/specification/2026-07-28/client/elicitation
+- https://modelcontextprotocol.io/specification/2026-07-28/server/tools
+- https://py.sdk.modelcontextprotocol.io/handlers/multi-round-trip/
+- https://github.com/modelcontextprotocol/python-sdk/blob/v2.1.1/src/mcp_types/_types.py
+
 ## A2A
 
 A2A is a post-v0.1 adapter target.

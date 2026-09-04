@@ -11,6 +11,11 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Added deterministic projection of canonical interaction-required
+  confirmation outcomes to official MCP `InputRequiredResult` form
+  elicitations, with strict canonical-detail validation, minimal safe
+  serialization and explicit separation from evidence verification and MRTR
+  resumption ([#172]).
 - Added a request-scoped MCP authorization bridge from official SDK verified
   identity context to protocol-neutral principals, with credential-free
   explicit identity mapping, fail-closed redacted errors, isolated static
@@ -261,6 +266,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#166]: https://github.com/Blandskron/agnara/issues/166
 [#168]: https://github.com/Blandskron/agnara/issues/168
 [#170]: https://github.com/Blandskron/agnara/issues/170
+[#172]: https://github.com/Blandskron/agnara/issues/172
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133
