@@ -13,6 +13,12 @@ on:
 permissions:
   contents: read
 
+env:
+  # Fail rather than silently fall back to a different interpreter. Without
+  # this, `uv venv` picked the runner's CPython 3.12 and the >=3.14 wheel
+  # became uninstallable in the validation job.
+  UV_PYTHON_DOWNLOADS: manual
+
 jobs:
   validate:
     name: Validate Quality Gates
@@ -30,6 +36,9 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+
+      - name: Set up Python 3.14
+        run: uv python install 3.14
           
       - name: Build sdist and wheel for agnara
         run: uv build --package agnara
@@ -50,6 +59,9 @@ jobs:
       
       - name: Install uv
         uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python 3.14
+        run: uv python install 3.14
         
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -73,7 +85,7 @@ jobs:
         run: |
           mkdir /tmp/smoke-test
           cd /tmp/smoke-test
-          uv venv
+          uv venv --python 3.14
           uv pip install $GITHUB_WORKSPACE/dist/agnara-*.whl
           uv run python -c "import agnara; print(agnara.__version__)"
           uv run python -c "from agnara import CapabilityDefinition, Agnara"
@@ -94,6 +106,9 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
+      - name: Set up Python 3.14
+        run: uv python install 3.14
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -111,7 +126,7 @@ jobs:
           sleep 30
           mkdir /tmp/post-release
           cd /tmp/post-release
-          uv venv
+          uv venv --python 3.14
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             TAG_VERSION="${GITHUB_REF#refs/tags/v}"
             uv pip install agnara==$TAG_VERSION
