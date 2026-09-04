@@ -11,6 +11,11 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Enforced the documentation asset policy with immutable exact-version remote
+  resource metadata, SHA-384 SRI and anonymous-CORS validation, exact HTML/CSP
+  correspondence, canonical deployment origin allowlists, and repository-wide
+  vendored hash/license/packaging checks; pinned local assets and no UI remain
+  zero-network baselines ([#157]).
 - Added a required Playwright 1.62.0/Chromium documentation-browser gate for
   Swagger UI, ReDoc and Scalar covering emitted CSP/security headers, XSS and
   undeclared-network blocking, mobile/keyboard smoke behavior, credential
@@ -223,6 +228,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#151]: https://github.com/Blandskron/agnara/issues/151
 [#153]: https://github.com/Blandskron/agnara/issues/153
 [#155]: https://github.com/Blandskron/agnara/issues/155
+[#157]: https://github.com/Blandskron/agnara/issues/157
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133

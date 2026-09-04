@@ -18,6 +18,7 @@ from agnara_http._documentation import (
     _DocumentationPage,
     _DocumentationRequest,
     _DocumentationUnavailable,
+    _RemoteAsset,
 )
 
 _REDOC_VERSION = "2.5.3"
@@ -59,10 +60,6 @@ class _ReDocProvider:
     def name(self) -> str:
         return "redoc-cdn" if self.cdn else "redoc"
 
-    @property
-    def remote_assets(self) -> bool:
-        return self.cdn
-
     def render(self, request: _DocumentationRequest) -> _DocumentationPage:
         if request.try_it:
             raise _DocumentationUnavailable(
@@ -82,11 +79,19 @@ class _ReDocProvider:
                 blob_worker=True,
                 external_origins=(_REDOC_ORIGIN,),
             )
+            remote_assets = (
+                _RemoteAsset(
+                    url=bundle_url,
+                    version=_REDOC_VERSION,
+                    integrity=_ASSET_EVIDENCE[_BUNDLE_NAME][2],
+                ),
+            )
             integrity = True
         else:
             bundle_url = _join_url(request.assets_url, _BUNDLE_NAME)
             assets = {**_bundled_assets(), _INITIALIZER_NAME: initializer_asset}
             csp = _ContentSecurityPolicy(inline_style=True, blob_worker=True)
+            remote_assets = ()
             integrity = False
 
         return _DocumentationPage(
@@ -98,6 +103,7 @@ class _ReDocProvider:
             ),
             csp=csp,
             assets=assets,
+            remote_assets=remote_assets,
         )
 
 

@@ -336,6 +336,15 @@ opt-in and must document CSP, integrity, privacy and availability consequences.
 No human UI replaces the machine-readable OpenAPI or Agnara introspection
 contracts.
 
+E6.19 converts that research rule into a provider-independent contract. CDN
+scripts and styles now require an exact semantic version in the URL, SHA-384
+SRI, anonymous CORS, an exactly matching canonical CSP origin and explicit
+deployment allowlisting of that origin. Tests cross-check all three vendored
+manifests, licensed files, byte lengths and SHA-256 values against packaged
+resources. The normative basis is the W3C Subresource Integrity and CSP Level
+3 specifications; SRI authenticates the received representation while CSP
+limits which origin may supply it.
+
 ## MCP
 
 MCP is a primary protocol adapter target.

@@ -104,10 +104,10 @@ plan, no capability. It must name the OpenAPI versions it was tested against
 and the features it does not support, because a compatibility claim made by
 silence is the one this project refuses. Asked for a version it does not
 support, it becomes unavailable with a diagnostic instead of rendering
-documentation that is wrong. The network is opt-in twice, once by the provider
-declaring remote assets and once by the deployment permitting them, so pinned
-local assets stay the baseline. An empty registry is the supported no-UI
-deployment. Scalar remains E6.17; see ADR 0033.
+documentation that is wrong. Pinned local assets stay the baseline and an
+empty registry is the supported no-UI deployment. E6.19 replaces the original
+coarse remote-assets gate with exact resource declarations and an exact-origin
+deployment allowlist; see ADRs 0033 and 0040.
 
 E6.13 adds one internal compiled route layer for already-produced HTTP
 surfaces. A schema, documentation page or future Explorer shell supplies a
@@ -167,14 +167,23 @@ workspace development dependency, not an `agnara-http` dependency. These are
 browser smoke tests rather than complete WCAG/OpenAPI conformance, so the
 documentation default remains explicitly deferred; see ADRs 0038 and 0039.
 
+E6.19 enforces the asset policy at the provider-independent registry boundary.
+Each remote script or stylesheet must have an exact-version HTTPS URL, valid
+SHA-384 SRI and anonymous CORS declaration; its rendered HTML attributes and
+CSP origin must match exactly. Deployments permit a frozen set of canonical
+origins rather than a boolean, so enabling one CDN cannot authorize a future
+provider host. Local providers and the no-UI deployment need no permission.
+Repository-wide tests verify the vendored manifests, hashes, licenses,
+packaging tree and absence of UI runtime dependencies. See ADR 0040.
+
 The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 
 - https://asgi.readthedocs.io/en/latest/specs/main.html
 - https://asgi.readthedocs.io/en/latest/specs/www.html
 
 This is not yet a public HTTP composition API or a complete ASGI/HTTP,
-OpenAPI or WCAG conformance claim. Asset-policy enforcement and Explorer
-remain separate roadmap work; see RFC 0003, ADR 0018, EPIC 6 and EPIC 8.
+OpenAPI or WCAG conformance claim. Explorer remains separate roadmap work; see
+RFC 0003, ADR 0018, EPIC 6 and EPIC 8.
 
 - Import package: `agnara_http`
 - Depends on: `agnara-core`

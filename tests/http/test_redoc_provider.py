@@ -43,8 +43,8 @@ def test_local_provider_serves_verified_same_origin_assets() -> None:
     rendered = page.html.decode()
 
     assert provider.name == "redoc"
-    assert provider.remote_assets is False
     assert page.csp.external_origins == ()
+    assert page.remote_assets == ()
     assert page.csp.inline_script is False
     assert page.csp.inline_style is True
     assert page.csp.blob_worker is True
@@ -134,14 +134,20 @@ def test_cdn_provider_uses_exact_url_sri_and_a_local_initializer() -> None:
     with pytest.raises(_DocumentationUnavailable, match="has not permitted"):
         registry.render(provider.name, request())
 
-    page = registry.render(provider.name, request(), allow_remote_assets=True)
+    page = registry.render(
+        provider.name,
+        request(),
+        allowed_remote_origins=frozenset({"https://cdn.redoc.ly"}),
+    )
     rendered = page.html.decode()
     expected_url = f"https://cdn.redoc.ly/redoc/v{_REDOC_VERSION}/bundles/redoc.standalone.js"
     expected_sri = _ASSET_EVIDENCE["redoc.standalone.js"][2]
 
     assert provider.name == "redoc-cdn"
-    assert provider.remote_assets is True
     assert page.csp.external_origins == ("https://cdn.redoc.ly",)
+    assert tuple(asset.url for asset in page.remote_assets) == (
+        "https://cdn.redoc.ly/redoc/v2.5.3/bundles/redoc.standalone.js",
+    )
     assert page.csp.blob_worker is True
     assert set(page.assets) == {"redoc-initializer.js"}
     assert f'{expected_url}" integrity="{expected_sri}' in rendered

@@ -41,8 +41,8 @@ what a renderer needs and guessing produces either a broken page or a policy
 loose enough to be pointless.
 
 **What a provider must declare** is its name, the exact OpenAPI versions it
-was tested against, the features it does not support, and whether it needs
-remote assets. `supported_openapi` and `unsupported_features` are required,
+was tested against, and the features it does not support.
+`supported_openapi` and `unsupported_features` are required,
 not optional: a compatibility claim made by silence is exactly the claim this
 project refuses to accept. Declaring no unsupported features is allowed, but
 it must be said.
@@ -51,10 +51,11 @@ it must be said.
 with a diagnostic naming the version and the provider. It is never asked to
 render, and the canonical document is never rewritten to suit it.
 
-**The network is opt-in twice**: once by the provider declaring
-`remote_assets`, and once by the deployment permitting it at render time. A
-provider that returns an external origin without declaring it is a definition
-error; one that declares it without deployment permission is unavailable.
+**The network is exact and opt-in**: ADR 0040 supersedes the original boolean
+gate. A provider declares every exact-version remote subresource with SRI and
+anonymous CORS metadata, and the deployment permits precise canonical origins
+at render time. HTML, declarations and CSP must correspond exactly. A
+provider whose origin is not allowlisted is unavailable.
 
 Two same-origin rules exist because the obvious checks are wrong:
 
@@ -92,7 +93,7 @@ requires a browser interface.
   cannot leave a UI pointing at a URL that is not served.
 - Try-it is off unless explicitly enabled, and no other setting turns it on.
 - A version claim without named tested versions is refused at registration.
-- An external origin requires both a provider declaration and deployment
-  permission.
+- An external origin requires exact resource metadata, matching HTML/CSP and
+  exact-origin deployment permission (ADR 0040).
 - Asset paths cannot traverse; documentation URLs cannot be
   protocol-relative.

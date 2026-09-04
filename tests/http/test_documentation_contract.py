@@ -17,6 +17,7 @@ from agnara_http._documentation import (
     _DocumentationRegistry,
     _DocumentationRequest,
     _DocumentationUnavailable,
+    _RemoteAsset,
     _validate_provider,
 )
 
@@ -43,14 +44,12 @@ class Provider:
         *,
         supported_openapi: tuple[str, ...] = (OPENAPI,),
         unsupported_features: tuple[str, ...] = (),
-        remote_assets: bool = False,
         page: _DocumentationPage | None = None,
         returns: Any = None,
     ) -> None:
         self.name = name
         self.supported_openapi = supported_openapi
         self.unsupported_features = unsupported_features
-        self.remote_assets = remote_assets
         self.seen: list[_DocumentationRequest] = []
         self._page = page
         self._returns = returns
@@ -182,7 +181,6 @@ def test_a_provider_that_claims_compatibility_by_silence_is_refused() -> None:
         ({"supported_openapi": [OPENAPI]}, "must name the OpenAPI versions"),
         ({"unsupported_features": ("",)}, "must declare its unsupported features"),
         ({"unsupported_features": "webhooks"}, "must declare its unsupported features"),
-        ({"remote_assets": "yes"}, "remote_assets must be a boolean"),
     ],
 )
 def test_a_malformed_declaration_is_refused(kwargs: dict[str, Any], message: str) -> None:
@@ -272,8 +270,35 @@ def test_a_csp_capability_must_be_a_real_boolean(field: str) -> None:
 
 @pytest.mark.parametrize("origin", ["http://cdn.test", "cdn.test", "//cdn.test"])
 def test_an_external_origin_must_be_https(origin: str) -> None:
-    with pytest.raises(_DocumentationDefinitionError, match="must be an https URL"):
+    with pytest.raises(_DocumentationDefinitionError, match="must be an https origin"):
         _ContentSecurityPolicy(external_origins=(origin,))
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "https://cdn.test/",
+        "https://cdn.test/assets",
+        "https://user@cdn.test",
+        "https://cdn.test?release=1",
+        "https://CDN.test",
+        "https://cdn.test:443",
+        "https://*.cdn.test",
+        "https://cdn.test.",
+        "https://café.test",
+        "https://cdn.test\n",
+    ],
+)
+def test_an_external_origin_must_be_canonical(origin: str) -> None:
+    with pytest.raises(_DocumentationDefinitionError, match="origin"):
+        _ContentSecurityPolicy(external_origins=(origin,))
+
+
+def test_external_origins_are_unique_and_sorted() -> None:
+    with pytest.raises(_DocumentationDefinitionError, match="unique and in canonical sorted order"):
+        _ContentSecurityPolicy(external_origins=("https://z.example", "https://a.example"))
+    with pytest.raises(_DocumentationDefinitionError, match="unique and in canonical sorted order"):
+        _ContentSecurityPolicy(external_origins=("https://a.example", "https://a.example"))
 
 
 def test_security_headers_serialize_only_declared_browser_privileges() -> None:
@@ -321,38 +346,184 @@ def test_security_headers_require_the_reviewed_policy_type() -> None:
         _documentation_security_headers(object())  # ty: ignore[invalid-argument-type]
 
 
-def test_a_provider_that_needs_a_cdn_without_declaring_it_is_a_definition_error() -> None:
+SRI = "sha384-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+REMOTE_URL = "https://cdn.test/ui@1.2.3/app.js"
+
+
+def remote_page(
+    *,
+    html: bytes | None = None,
+    url: str = REMOTE_URL,
+    integrity: str = SRI,
+    crossorigin: str = "anonymous",
+    csp_origins: tuple[str, ...] = ("https://cdn.test",),
+) -> _DocumentationPage:
+    rendered = (
+        html
+        or (
+            f'<script src="{url}" integrity="{integrity}" crossorigin="{crossorigin}"></script>'
+        ).encode()
+    )
+    return _DocumentationPage(
+        html=rendered,
+        csp=_ContentSecurityPolicy(external_origins=csp_origins),
+        remote_assets=(
+            _RemoteAsset(
+                url=url,
+                version="1.2.3",
+                integrity=integrity,
+                crossorigin=crossorigin,
+            ),
+        ),
+    )
+
+
+def test_remote_html_without_a_declaration_is_a_definition_error() -> None:
     registry = _DocumentationRegistry()
     registry.register(
         Provider(
             page=_DocumentationPage(
-                html=b"<x>", csp=_ContentSecurityPolicy(external_origins=("https://cdn.test",))
+                html=f'<script src="{REMOTE_URL}"></script>'.encode(),
+                csp=_ContentSecurityPolicy(external_origins=("https://cdn.test",)),
             )
         )
     )
 
-    with pytest.raises(_DocumentationDefinitionError, match="does not declare remote_assets"):
-        registry.render("example", request(), allow_remote_assets=True)
+    with pytest.raises(_DocumentationDefinitionError, match="do not match its HTML"):
+        registry.render(
+            "example",
+            request(),
+            allowed_remote_origins=frozenset({"https://cdn.test"}),
+        )
 
 
 def test_a_declared_cdn_still_needs_the_application_to_permit_it() -> None:
-    # Pinned local assets are the secure baseline; the network is opt-in twice,
-    # once by the provider and once by the deployment.
     registry = _DocumentationRegistry()
-    registry.register(
-        Provider(
-            remote_assets=True,
-            page=_DocumentationPage(
-                html=b"<x>", csp=_ContentSecurityPolicy(external_origins=("https://cdn.test",))
-            ),
-        )
-    )
+    registry.register(Provider(page=remote_page()))
 
     with pytest.raises(_DocumentationUnavailable, match="has not permitted"):
         registry.render("example", request())
 
-    permitted = registry.render("example", request(), allow_remote_assets=True)
+    permitted = registry.render(
+        "example",
+        request(),
+        allowed_remote_origins=frozenset({"https://cdn.test"}),
+    )
     assert permitted.csp.external_origins == ("https://cdn.test",)
+
+
+def test_permission_is_an_exact_origin_allowlist() -> None:
+    registry = _DocumentationRegistry()
+    registry.register(Provider(page=remote_page()))
+
+    with pytest.raises(_DocumentationUnavailable, match=r"cdn\.test"):
+        registry.render(
+            "example",
+            request(),
+            allowed_remote_origins=frozenset({"https://other.test"}),
+        )
+
+
+@pytest.mark.parametrize(
+    ("html", "message"),
+    [
+        (
+            f'<script src="{REMOTE_URL}" crossorigin="anonymous"></script>'.encode(),
+            "missing or incorrect SRI",
+        ),
+        (
+            f'<script src="{REMOTE_URL}" integrity="{SRI}"></script>'.encode(),
+            "missing or incorrect crossorigin",
+        ),
+        (
+            (
+                f'<script src="{REMOTE_URL}" integrity="{SRI}" '
+                'crossorigin="use-credentials"></script>'
+            ).encode(),
+            "missing or incorrect crossorigin",
+        ),
+        (
+            (
+                f'<script src="{REMOTE_URL}" integrity="{SRI}" crossorigin="anonymous"></script>'
+                f'<script src="{REMOTE_URL}" integrity="{SRI}" crossorigin="anonymous"></script>'
+            ).encode(),
+            "more than once",
+        ),
+        (b'<script src="//cdn.test/app.js"></script>', "same-origin path or exact https URL"),
+        (b'<script src="app.js"></script>', "same-origin path or exact https URL"),
+    ],
+)
+def test_remote_subresource_html_is_validated_independently_of_provider(
+    html: bytes, message: str
+) -> None:
+    registry = _DocumentationRegistry()
+    registry.register(Provider(page=remote_page(html=html)))
+
+    with pytest.raises(_DocumentationDefinitionError, match=message):
+        registry.render(
+            "example",
+            request(),
+            allowed_remote_origins=frozenset({"https://cdn.test"}),
+        )
+
+
+def test_csp_origins_must_exactly_match_remote_assets() -> None:
+    registry = _DocumentationRegistry()
+    registry.register(
+        Provider(page=remote_page(csp_origins=("https://cdn.test", "https://unused.test")))
+    )
+
+    with pytest.raises(_DocumentationDefinitionError, match="do not exactly match"):
+        registry.render(
+            "example",
+            request(),
+            allowed_remote_origins=frozenset({"https://cdn.test", "https://unused.test"}),
+        )
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"url": "http://cdn.test/ui@1.2.3/app.js"}, "https origin"),
+        ({"url": "https://cdn.test/ui@latest/app.js"}, "exact version"),
+        ({"url": "https://cdn.test/ui@1.2.3/app.js?mutable=1"}, "without query"),
+        ({"url": "https://cdn.test/ui@1.2.3/app.js\n"}, "whitespace or control"),
+        ({"version": "latest"}, "exact semantic version"),
+        ({"version": "01.2.3"}, "exact semantic version"),
+        ({"version": "9.9.9"}, "contain its exact version"),
+        ({"integrity": "sha256-AAAA"}, "sha384 SRI"),
+        ({"integrity": "sha384-not-base64"}, "valid base64"),
+        ({"crossorigin": "use-credentials"}, "exactly 'anonymous'"),
+    ],
+)
+def test_remote_asset_metadata_is_immutable_and_exact(kwargs: dict[str, Any], message: str) -> None:
+    fields = {
+        "url": REMOTE_URL,
+        "version": "1.2.3",
+        "integrity": SRI,
+        "crossorigin": "anonymous",
+    }
+    fields.update(kwargs)
+    with pytest.raises(_DocumentationDefinitionError, match=message):
+        _RemoteAsset(**fields)
+
+
+def test_the_origin_allowlist_is_immutable_and_canonical() -> None:
+    registry = _DocumentationRegistry()
+    registry.register(Provider(page=remote_page()))
+
+    with pytest.raises(_DocumentationDefinitionError, match="must be a frozenset"):
+        registry.render(
+            "example",
+            request(),
+            allowed_remote_origins={"https://cdn.test"},  # ty: ignore[invalid-argument-type]
+        )
+    with pytest.raises(_DocumentationDefinitionError, match="canonical origin"):
+        registry.render(
+            "example",
+            request(),
+            allowed_remote_origins=frozenset({"https://cdn.test/assets"}),
+        )
 
 
 def test_a_local_provider_needs_no_permission() -> None:

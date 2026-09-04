@@ -170,9 +170,9 @@ Core imports neither Pydantic nor msgspec.
 - [x] E6.18 Add documentation UI browser tests for CSP, XSS payloads, disabled
   routes, OAuth redirect handling, authentication state and try-it controls.
   Tracking: GitHub Issue #155.
-- [ ] E6.19 Enforce the documentation asset policy: pinned local assets by
+- [x] E6.19 Enforce the documentation asset policy: pinned local assets by
   default; exact-version CDN, origin allowlist and integrity/CSP documentation
-  only through explicit opt-in.
+  only through explicit opt-in. Tracking: GitHub Issue #157.
 
 ### HTTP documentation acceptance
 
