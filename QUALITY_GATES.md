@@ -139,6 +139,13 @@ renders new 3.2 semantics correctly.
 
 Never benchmark development mode against optimized competitors.
 
+Comparative HTTP benchmarks must pin competitor versions outside
+distributable package dependencies, exercise equivalent successful output,
+validate correctness outside every timed sample, rotate scenario order, retain
+raw samples and record the included/excluded measurement boundary. Framework,
+server and network results must remain distinct. CI checks the benchmark
+contract, never a workstation-derived latency threshold.
+
 Record:
 
 - OS;

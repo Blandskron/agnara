@@ -1,6 +1,6 @@
 # Reference Research Baseline
 
-Last reviewed: 2026-08-31.
+Last reviewed: 2026-09-03.
 
 This document records external standards and projects that influence Agnara. It is not a dependency list.
 
@@ -36,6 +36,27 @@ Reference:
 
 - https://github.com/fastapi/fastapi
 - https://fastapi.tiangolo.com/history-design-future/
+
+## HTTP framework benchmark pins
+
+Reviewed 2026-09-03 for E6.10. The reproducible development-only comparison
+pins FastAPI 0.141.1, Starlette 1.6.0 and Litestar 2.24.0, the current PyPI
+releases observed on that date. All three declare Python 3.14 compatibility.
+They are benchmark fixtures, not `agnara-http` dependencies.
+
+The shared harness measures a warm in-process ASGI request, not server or
+network throughput. FastAPI depends on Starlette and Pydantic; Starlette is the
+minimal toolkit reference; Litestar brings a broader dependency surface and
+uses msgspec. Those differences remain visible in the report rather than
+being flattened into a claim that every scenario performs identical internal
+work.
+
+References:
+
+- https://pypi.org/project/fastapi/0.141.1/
+- https://pypi.org/project/starlette/1.6.0/
+- https://pypi.org/project/litestar/2.24.0/
+- `docs/benchmarks/http-frameworks.md`
 
 ## OpenAPI
 

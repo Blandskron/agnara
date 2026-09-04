@@ -15,3 +15,7 @@ ASGI provides immediate compatibility with existing Python servers and infrastru
 ## Future
 
 RSGI/native acceleration may be evaluated with benchmark evidence.
+
+ADR 0041 resolves the later minimal-Starlette comparison in favour of keeping
+this direct boundary. E6.10 provides reproducible narrow benchmark evidence;
+it does not justify native acceleration or a portable performance claim.

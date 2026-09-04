@@ -27,6 +27,11 @@ dev = [
     "agnara-events",
     "agnara-telemetry",
     "agnara-cli",
+    # E6.10 comparison fixtures only. These must never enter a distributable
+    # Agnara package or be confused with an HTTP implementation dependency.
+    "fastapi==0.141.1",
+    "litestar==2.24.0",
+    "starlette==1.6.0",
     # Third-party schema adapters remain experiments until E2.7 compares
     # their performance and ergonomics. This is not a core dependency.
     "msgspec>=0.21,<0.22",
