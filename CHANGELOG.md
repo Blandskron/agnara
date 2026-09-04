@@ -11,6 +11,10 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Added an official SDK MCP discovery boundary for frozen projected tools,
+  including pinned `server/discover` capability advertisement, deterministic
+  detached `tools/list` results, conservative private cache hints, and explicit
+  invalid-cursor handling ([#168]).
 - Added projection from compiled capability inputs to official MCP SDK `Tool`
   definitions, with closed object schemas, protected-parameter exclusion,
   deterministic required fields, detached JSON-safe schema data, and ignored
@@ -251,6 +255,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#162]: https://github.com/Blandskron/agnara/issues/162
 [#164]: https://github.com/Blandskron/agnara/issues/164
 [#166]: https://github.com/Blandskron/agnara/issues/166
+[#168]: https://github.com/Blandskron/agnara/issues/168
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133

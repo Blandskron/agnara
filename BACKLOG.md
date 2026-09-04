@@ -200,7 +200,7 @@ Core imports neither Pydantic nor msgspec.
 - [x] E7.3 Map compiled capability input schemas to detached official SDK
   `Tool` definitions, excluding protected parameters. Tracking: GitHub Issue
   #166.
-- [ ] E7.4 Discovery.
+- [x] E7.4 Discovery. Tracking: GitHub Issue #168.
 - [ ] E7.5 Authorization integration.
 - [ ] E7.6 Canonical interaction-required mapping to MCP.
 - [ ] E7.7 Task/MRTR research.

@@ -408,6 +408,26 @@ therefore wraps compiled input fragments in an object with
 `additionalProperties: false`, while leaving optional `outputSchema` absent
 until output validation exists in the core runtime.
 
+Reviewed 2026-09-04 for E7.4. In the modern `2026-07-28` lifecycle,
+`server/discover` is the server capability/version advertisement and
+`tools/list` is the cacheable tool-definition surface. The official SDK stamps
+server identity into result `_meta`, derives advertised capabilities from the
+handlers actually registered, and represents tool lists with
+`ListToolsResult`. MCP pagination uses opaque cursors; because Agnara's first
+discovery boundary returns one complete immutable startup snapshot, it emits
+no cursor and rejects every caller-supplied cursor as invalid rather than
+silently assigning it meaning. Discovery results use an immediately stale,
+private cache hint until E7.5 defines authorization-aware visibility and cache
+partitioning.
+
+Additional references:
+
+- https://modelcontextprotocol.io/specification/2026-07-28/server/discover
+- https://modelcontextprotocol.io/specification/2026-07-28/server/tools
+- https://modelcontextprotocol.io/specification/2026-07-28/server/utilities/pagination
+- https://modelcontextprotocol.io/specification/2026-07-28/server/utilities/caching
+- https://github.com/modelcontextprotocol/python-sdk/tree/v2.1.1
+
 ## A2A
 
 A2A is a post-v0.1 adapter target.
