@@ -70,6 +70,10 @@ git push origin v0.1.0a1
 
 8. Propagate the release-only commits back to `develop` through a PR.
 
+Write `docs/releases/v<version>.md` before tagging. `release.yml` uses it as
+the GitHub Release body and appends the generated PR list underneath, so a
+missing file silently degrades the release notes to the generated list.
+
 Only `agnara` is published. The adapter packages carry the synchronized
 version and are buildable from the repository, but each additional
 distribution needs its own PyPI Trusted Publisher before it can be uploaded.
