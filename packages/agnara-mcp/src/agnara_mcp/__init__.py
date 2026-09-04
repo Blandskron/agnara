@@ -12,6 +12,7 @@ from .protocol import (
     MCP_PYTHON_SDK_VERSION,
     SUPPORTED_MCP_PROTOCOL_VERSIONS,
 )
+from .schema import project_mcp_tools
 from .tools import FrozenMcpTools, Mcp, McpToolDefinitionError, McpToolExposure
 
 __all__ = [
@@ -22,4 +23,5 @@ __all__ = [
     "Mcp",
     "McpToolDefinitionError",
     "McpToolExposure",
+    "project_mcp_tools",
 ]

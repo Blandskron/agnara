@@ -11,6 +11,11 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Added projection from compiled capability inputs to official MCP SDK `Tool`
+  definitions, with closed object schemas, protected-parameter exclusion,
+  deterministic required fields, detached JSON-safe schema data, and ignored
+  isolated pytest basetemp directories used by repository verification
+  ([#166]).
 - Added deterministic MCP tool exposure registration through
   `Mcp(app).tool(capability)`, including explicit wire-name overrides,
   startup collision checks, capability ownership validation, and immutable
@@ -245,6 +250,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#159]: https://github.com/Blandskron/agnara/issues/159
 [#162]: https://github.com/Blandskron/agnara/issues/162
 [#164]: https://github.com/Blandskron/agnara/issues/164
+[#166]: https://github.com/Blandskron/agnara/issues/166
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133

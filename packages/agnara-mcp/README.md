@@ -52,5 +52,16 @@ tools = mcp.compile()
 The default MCP name is the stable capability identity (`users.get_user`).
 Pass `name="users-get"` to select a different valid wire name. Compilation is
 idempotent, closes registration, and returns an immutable snapshot in
-declaration order. E7.3 will add JSON Schema projection; this layer
-intentionally does not create incomplete SDK `Tool` objects.
+declaration order. Exposure registration itself intentionally does not create
+incomplete SDK `Tool` objects before execution plans and schemas are available.
+
+Compile protocol-neutral execution plans, then project the frozen exposures to
+official SDK definitions with `project_mcp_tools(tools, plans)`. Input schemas
+are closed JSON Schema objects, preserve handler parameter order, and omit DI
+and `ExecutionContext` parameters. Schema fragments are copied into detached
+JSON data so mutating an SDK model cannot alter the core plan or a later
+projection.
+
+`outputSchema` is intentionally absent for now. Agnara will publish it only
+after the core runtime compiles and validates output annotations; declaring an
+unenforced response contract would make client validation unreliable.

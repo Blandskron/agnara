@@ -401,6 +401,13 @@ References:
 
 The MCP adapter must pin and test the exact supported specification/SDK version rather than assuming evergreen compatibility.
 
+For E7.3, the same tool specification establishes that `inputSchema` is a
+required JSON Schema object, defaults to dialect 2020-12 when `$schema` is
+absent, and recommends a closed object for a tool without parameters. Agnara
+therefore wraps compiled input fragments in an object with
+`additionalProperties: false`, while leaving optional `outputSchema` absent
+until output validation exists in the core runtime.
+
 ## A2A
 
 A2A is a post-v0.1 adapter target.
