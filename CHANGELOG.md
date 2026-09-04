@@ -4,15 +4,41 @@ Notable changes to Agnara are recorded here. The format is inspired by Keep a
 Changelog, and release versions follow the synchronized PEP 440 policy in ADR
 0021.
 
-`0.1.0a1` is the first published release. Every first-party package in the
-workspace carries that synchronized version, but only the `agnara` core
-distribution was uploaded to PyPI in that cycle; the adapter packages are
-versioned and buildable from the repository without being published. See the
-`0.1.0a1` scope note below.
+`0.1.0a2` is the first published release. `0.1.0a1` was tagged but never
+reached PyPI: its release run failed in artifact validation, so the publish job
+never executed. Every first-party package in the workspace carries the
+synchronized version, but only the `agnara` core distribution is uploaded to
+PyPI; the adapter packages are versioned and buildable from the repository
+without being published. See the `0.1.0a2` scope note below.
 
 ## [Unreleased]
 
 Nothing yet.
+
+## [0.1.0a2] - 2026-09-04
+
+First release actually published to PyPI. Same source surface as the tagged
+`0.1.0a1`; this version exists because the `0.1.0a1` release run never reached
+the publish job and a tag is never moved or reused.
+
+Published to PyPI: `agnara` only. `agnara-http`, `agnara-mcp`, `agnara-cli`,
+`agnara-a2a`, `agnara-events` and `agnara-telemetry` share the version but are
+not uploaded, so the HTTP, OpenAPI, MCP and CLI surfaces are reachable from a
+repository checkout rather than from `pip install agnara`.
+
+### Fixed
+
+- Made the release pipeline's out-of-workspace smoke test deterministic. It
+  drove `uv venv` without an interpreter request, so the runner's CPython 3.12
+  was selected and the `requires-python >= 3.14` wheel could not be installed,
+  failing `Validate built artifacts` before anything could be published. The
+  step now creates the environment with an explicit `--python 3.14`, installs
+  and runs through that environment's interpreter instead of `uv run`, requires
+  exactly one wheel in `dist/`, and asserts the interpreter version, the
+  version reported by the installed distribution and that `agnara` resolved
+  from `site-packages` rather than from the checkout. The post-publish
+  verification step was made deterministic the same way, since a failure there
+  would prevent the GitHub Release from being created.
 
 ## [0.1.0a1] - 2026-09-04
 
@@ -20,10 +46,10 @@ First public alpha: an architectural proof that Agnara installs and runs as a
 real Python distribution. The public API is unstable and this release is not
 production-ready.
 
-Published to PyPI: `agnara` only. `agnara-http`, `agnara-mcp`, `agnara-cli`,
-`agnara-a2a`, `agnara-events` and `agnara-telemetry` share the version but were
-not uploaded, so the HTTP, OpenAPI, MCP and CLI surfaces recorded below are
-reachable from a repository checkout rather than from `pip install agnara`.
+Tagged but never published. The release run for `v0.1.0a1` failed in
+`Validate built artifacts`, so no distribution was uploaded to PyPI and the
+GitHub Release was never created. Everything recorded below shipped to PyPI
+under `0.1.0a2` instead.
 
 ### Added
 
@@ -248,7 +274,8 @@ reachable from a repository checkout rather than from `pip install agnara`.
   `FrozenInstanceError` instead of CPython 3.14's confusing internal
   `TypeError` ([#3]).
 
-[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...develop
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...develop
+[0.1.0a2]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...v0.1.0a2
 [0.1.0a1]: https://github.com/Blandskron/agnara/releases/tag/v0.1.0a1
 [#3]: https://github.com/Blandskron/agnara/issues/3
 [#16]: https://github.com/Blandskron/agnara/issues/16

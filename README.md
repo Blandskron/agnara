@@ -13,7 +13,7 @@ A capability is defined once and may later be exposed through HTTP, MCP, A2A, ev
 ## Install
 
 ```bash
-pip install agnara==0.1.0a1
+pip install agnara==0.1.0a2
 ```
 
 Or track the newest pre-release:
@@ -25,7 +25,7 @@ pip install --pre agnara
 Requires CPython 3.14 or newer. The core distribution has no third-party
 dependencies.
 
-`0.1.0a1` publishes the `agnara` core kernel only. The HTTP, OpenAPI, MCP and
+`0.1.0a2` publishes the `agnara` core kernel only. The HTTP, OpenAPI, MCP and
 CLI adapters live in sibling packages in this repository and were not uploaded
 to PyPI in this release, so they are not installable with `pip` yet.
 
@@ -291,10 +291,10 @@ The architecture must be safe under conventional CPython and designed consciousl
 
 ```text
 Status:         Alpha (experimental)
-Latest release: v0.1.0a1
+Latest release: v0.1.0a2
 ```
 
-`v0.1.0a1` is the first public release: an architectural proof that Agnara
+`v0.1.0a2` is the first published release: an architectural proof that Agnara
 installs and runs as a real Python distribution. It is not production-ready,
 the public API may change without a deprecation cycle, and only the `agnara`
 core distribution is on PyPI.
