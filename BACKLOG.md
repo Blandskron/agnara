@@ -204,7 +204,11 @@ Core imports neither Pydantic nor msgspec.
 - [x] E7.5 Authorization integration. Tracking: GitHub Issue #170.
 - [x] E7.6 Canonical interaction-required mapping to MCP. Tracking: GitHub
   Issue #172.
-- [ ] E7.7 Task/MRTR research.
+- [x] E7.7 Task/MRTR research. Tasks left the core specification in
+  `2026-07-28` and the pinned SDK never dispatches their methods, so MRTR
+  is the only resumption mechanism Agnara adopts and the Tasks extension is
+  not claimed. Recorded by ADR 0042, which also constrains E7.8. Tracking:
+  GitHub Issue #174.
 - [ ] E7.8 Official SDK conformance tests.
 - [ ] E7.9 Benchmark tool invocation overhead against FastMCP where meaningful.
 

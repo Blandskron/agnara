@@ -177,6 +177,19 @@ and must not become confirmation evidence without independent application
 verification. An interim projection must not claim MRTR resumption, state
 integrity or tool-invocation support that it does not implement.
 
+Protocol resumption must use the mechanism the pinned revision defines rather
+than an extension the adapter has not implemented. An optional protocol
+extension is never advertised, and never implied by a legacy tool field,
+without its own reviewed implementation and conformance evidence. Adapter
+state echoed by a client is attacker-controlled until a verified boundary
+replaces it, and that boundary must be installed explicitly on the server
+tier the adapter actually builds on rather than assumed from a higher-tier
+default. Multi-instance deployments require explicitly shared key material;
+a process-local convenience key is never a production default. Round-level
+integrity, expiry and request binding do not constitute invocation replay
+protection, and a resumed round re-evaluates policy and confirmation evidence
+exactly as a first round does.
+
 ## Benchmark integrity
 
 Never benchmark development mode against optimized competitors.
