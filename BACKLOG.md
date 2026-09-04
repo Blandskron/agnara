@@ -163,9 +163,10 @@ Core imports neither Pydantic nor msgspec.
   GitHub Issue #149.
 - [x] E6.16 Implement a ReDoc provider with the same provider contract and
   versioned compatibility evidence. Tracking: GitHub Issue #151.
-- [?] E6.17 Spike Scalar and re-evaluate actively maintained alternatives
+- [x] E6.17 Spike Scalar and re-evaluate actively maintained alternatives
   against identical OpenAPI 3.2, CSP, accessibility, mobile, dependency and
-  bundle-size fixtures before selecting any default.
+  bundle-size fixtures before selecting any default. Tracking: GitHub Issue
+  #153.
 - [ ] E6.18 Add documentation UI browser tests for CSP, XSS payloads, disabled
   routes, OAuth redirect handling, authentication state and try-it controls.
 - [ ] E6.19 Enforce the documentation asset policy: pinned local assets by
