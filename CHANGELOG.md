@@ -11,6 +11,11 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Added a reproducible in-process ASGI benchmark comparing Agnara HTTP with a
+  direct reference, Starlette 1.6.0, FastAPI 0.141.1 and Litestar 2.24.0 using
+  deterministic rotating samples, correctness checks, raw/environment/version
+  evidence and no CI timing threshold; ADR 0041 retains the dependency-free
+  direct ASGI boundary ([#159]).
 - Enforced the documentation asset policy with immutable exact-version remote
   resource metadata, SHA-384 SRI and anonymous-CORS validation, exact HTML/CSP
   correspondence, canonical deployment origin allowlists, and repository-wide
@@ -229,6 +234,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#153]: https://github.com/Blandskron/agnara/issues/153
 [#155]: https://github.com/Blandskron/agnara/issues/155
 [#157]: https://github.com/Blandskron/agnara/issues/157
+[#159]: https://github.com/Blandskron/agnara/issues/159
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133

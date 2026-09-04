@@ -146,8 +146,10 @@ Core imports neither Pydantic nor msgspec.
 - [x] E6.8 Add an executable HTTP conformance suite that drives a request
   matrix through the ASGI entry point and validates every exchange with one
   shared checker. Tracking: GitHub Issue #137.
-- [?] E6.9 Compare direct ASGI vs minimal Starlette dependency.
-- [ ] E6.10 Benchmark against FastAPI, Starlette and Litestar.
+- [x] E6.9 Compare direct ASGI vs minimal Starlette dependency. ADR 0041 keeps
+  the direct boundary. Tracking: GitHub Issue #159.
+- [x] E6.10 Benchmark against FastAPI, Starlette and Litestar. Tracking:
+  GitHub Issue #159.
 - [x] E6.11 Add pinned OpenAPI 3.2 structural/conformance fixtures, including
   stable `operationId`, schema references, security schemes and documented
   unsupported features.
