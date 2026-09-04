@@ -191,7 +191,9 @@ Core imports neither Pydantic nor msgspec.
 
 ## EPIC 7 — MCP adapter
 
-- [ ] E7.1 Pin supported MCP spec version.
+- [x] E7.1 Pin the MCP `2026-07-28` protocol baseline and official Python SDK
+  `2.1.1`, without claiming unfinished adapter conformance. Tracking: GitHub
+  Issue #162.
 - [ ] E7.2 Tool projection from capabilities.
 - [ ] E7.3 Schema mapping.
 - [ ] E7.4 Discovery.
