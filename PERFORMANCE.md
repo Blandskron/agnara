@@ -33,6 +33,13 @@ Candidate servers:
 - Uvicorn;
 - Granian.
 
+The E6.10 in-process HTTP comparison is implemented by
+`benchmarks/http_frameworks.py` and recorded in
+`docs/benchmarks/http-frameworks.md`. It separates framework cost from server
+and network cost, rotates scenario order and retains raw samples. ADR 0041
+keeps the direct ASGI boundary; the result is not a portable ranking or CI
+latency threshold.
+
 ## Benchmark scenarios
 
 ### Startup

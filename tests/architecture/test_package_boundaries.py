@@ -1,4 +1,4 @@
-"""E0.7 ??? automated architecture rules.
+"""E0.7 — automated architecture rules.
 
 These tests are the executable form of the dependency rules in
 ``ARCHITECTURE.md`` sections 3 and 4, ``PRINCIPLES.md`` P2/P3/P13,
@@ -7,6 +7,7 @@ These tests are the executable form of the dependency rules in
 They must fail when:
 
 - ``agnara`` imports a forbidden dependency;
+- protocol-neutral policy tests import a transport or protocol SDK;
 - an adapter imports a sibling adapter;
 - a package cycle appears;
 - a new ``agnara`` runtime dependency is introduced.
@@ -22,6 +23,9 @@ from tests.architecture.boundaries import (
     CORE_IMPORT_NAME,
     DISTRIBUTIONS,
     FORBIDDEN_IN_CORE,
+    WORKSPACE_ROOT,
+    _file_imports,
+    _requirement_name,
     declared_dependencies,
     declared_workspace_dependencies,
     dependency_graph,
@@ -32,7 +36,7 @@ from tests.architecture.boundaries import (
 )
 
 # ---------------------------------------------------------------------------
-# Rule 1 ??? the core imports nothing but the standard library
+# Rule 1 — the core imports nothing but the standard library
 # ---------------------------------------------------------------------------
 
 
@@ -82,8 +86,28 @@ def test_core_does_not_import_any_adapter() -> None:
     )
 
 
+def test_policy_tests_are_independent_of_transports() -> None:
+    """BACKLOG E5.7: policy behavior is tested without transport coupling."""
+    policy_test_paths = sorted((WORKSPACE_ROOT / "tests" / "unit" / "policy").rglob("*.py"))
+    policy_test_paths.append(
+        WORKSPACE_ROOT / "tests" / "unit" / "execution" / "test_policy_runtime.py"
+    )
+    adapter_import_names = {DISTRIBUTIONS[distribution] for distribution in ADAPTER_DISTRIBUTIONS}
+    disallowed = FORBIDDEN_IN_CORE | adapter_import_names
+    offenders = [
+        imported
+        for path in policy_test_paths
+        for imported in _file_imports(path)
+        if imported.module in disallowed
+    ]
+
+    assert not offenders, "policy tests must remain transport-neutral:\n" + "\n".join(
+        f"  {imported.where()} imports {imported.module!r}" for imported in offenders
+    )
+
+
 # ---------------------------------------------------------------------------
-# Rule 2 ??? adapters do not import sibling adapters
+# Rule 2 — adapters do not import sibling adapters
 # ---------------------------------------------------------------------------
 
 
@@ -111,8 +135,22 @@ def test_adapter_declares_only_core_as_a_workspace_dependency(dist_name: str) ->
     )
 
 
+def test_http_openapi_projection_uses_only_stdlib_and_workspace_boundaries() -> None:
+    """E6.7: generating OpenAPI must not require a protocol or UI library."""
+    path = WORKSPACE_ROOT / "packages" / "agnara-http" / "src" / "agnara_http" / "_openapi.py"
+    allowed = {CORE_IMPORT_NAME, DISTRIBUTIONS["agnara-http"]}
+    offenders = [
+        imported
+        for imported in _file_imports(path)
+        if imported.module not in allowed and not is_standard_library(imported.module)
+    ]
+    assert not offenders, "OpenAPI projection must stay dependency-free:\n" + "\n".join(
+        f"  {imported.where()} imports {imported.module!r}" for imported in offenders
+    )
+
+
 # ---------------------------------------------------------------------------
-# Rule 3 ??? no package cycles
+# Rule 3 — no package cycles
 # ---------------------------------------------------------------------------
 
 
@@ -140,7 +178,7 @@ def test_dependency_direction_points_inward() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Rule 4 ??? imports resolve to a known boundary
+# Rule 4 — imports resolve to a known boundary
 # ---------------------------------------------------------------------------
 
 
@@ -172,3 +210,48 @@ def test_adapter_may_import_the_core(dist_name: str) -> None:
     siblings = {DISTRIBUTIONS[other] for other in ADAPTER_DISTRIBUTIONS if other != dist_name}
     assert CORE_IMPORT_NAME not in siblings
     assert CORE_DISTRIBUTION in declared_dependencies(dist_name)
+
+
+#: Browser documentation renderers and their runtimes. ADR 0018 keeps every
+#: one of these behind the optional documentation-provider boundary, so
+#: `agnara-http` must not acquire one as a dependency, not even a soft import.
+FORBIDDEN_UI_PACKAGES = frozenset(
+    {
+        "swagger_ui",
+        "swagger_ui_bundle",
+        "flask_swagger_ui",
+        "redoc",
+        "redocly",
+        "scalar",
+        "scalar_fastapi",
+        "rapidoc",
+        "stoplight",
+        "elements",
+        "jinja2",
+        "mako",
+        "markupsafe",
+    }
+)
+
+
+def test_the_http_adapter_imports_no_browser_documentation_package() -> None:
+    offenders = [
+        imported
+        for imported in external_imports_of("agnara-http")
+        if imported.module in FORBIDDEN_UI_PACKAGES
+    ]
+    assert not offenders, (
+        "agnara-http imports a browser documentation package, which ADR 0018 "
+        "keeps behind the optional provider boundary:\n"
+        + "\n".join(f"  {imported.where}: {imported.module}" for imported in offenders)
+    )
+
+
+def test_the_http_adapter_declares_no_browser_documentation_dependency() -> None:
+    declared = {
+        _requirement_name(requirement) for requirement in declared_dependencies("agnara-http")
+    }
+    assert not declared & FORBIDDEN_UI_PACKAGES, (
+        f"agnara-http declares a browser documentation dependency: "
+        f"{sorted(declared & FORBIDDEN_UI_PACKAGES)}"
+    )

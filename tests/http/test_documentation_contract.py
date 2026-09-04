@@ -1,0 +1,596 @@
+"""The replaceable documentation-provider contract (E6.12)."""
+
+from __future__ import annotations
+
+import dataclasses
+from typing import Any
+
+import pytest
+
+from agnara_http._documentation import (
+    _Asset,
+    _ContentSecurityPolicy,
+    _documentation_security_headers,
+    _DocumentationDefinitionError,
+    _DocumentationPage,
+    _DocumentationProvider,
+    _DocumentationRegistry,
+    _DocumentationRequest,
+    _DocumentationUnavailable,
+    _RemoteAsset,
+    _validate_provider,
+)
+
+OPENAPI = "3.2.0"
+
+
+def request(**overrides: Any) -> _DocumentationRequest:
+    fields: dict[str, Any] = {
+        "document_url": "/openapi.json",
+        "title": "Reference",
+        "assets_url": "/docs/assets",
+        "openapi_version": OPENAPI,
+    }
+    fields.update(overrides)
+    return _DocumentationRequest(**fields)
+
+
+class Provider:
+    """A minimal conforming provider, with every declaration a real one needs."""
+
+    def __init__(
+        self,
+        name: str = "example",
+        *,
+        supported_openapi: tuple[str, ...] = (OPENAPI,),
+        unsupported_features: tuple[str, ...] = (),
+        page: _DocumentationPage | None = None,
+        returns: Any = None,
+    ) -> None:
+        self.name = name
+        self.supported_openapi = supported_openapi
+        self.unsupported_features = unsupported_features
+        self.seen: list[_DocumentationRequest] = []
+        self._page = page
+        self._returns = returns
+
+    def render(self, request: _DocumentationRequest) -> _DocumentationPage:
+        self.seen.append(request)
+        if self._returns is not None:
+            return self._returns
+        return self._page or _DocumentationPage(html=b"<!doctype html><title>x</title>")
+
+
+# --- what a provider is given ----------------------------------------------
+
+
+def test_a_provider_is_given_the_document_and_nothing_that_could_reveal_more() -> None:
+    # The whole point of the boundary: a provider renders what the projection
+    # already decided to publish. A future field that carried the registry, an
+    # exposure or a plan would make an unpublished capability reachable, so the
+    # field set itself is the assertion.
+    names = {field.name for field in dataclasses.fields(_DocumentationRequest)}
+
+    assert names == {
+        "document_url",
+        "title",
+        "assets_url",
+        "openapi_version",
+        "document",
+        "try_it",
+    }
+    forbidden = ("routes", "registry", "exposure", "exposures", "plan", "capability", "container")
+    for term in forbidden:
+        assert not any(term in name for name in names), f"{term!r} must not reach a provider"
+
+
+def test_try_it_is_off_unless_it_is_asked_for() -> None:
+    assert request().try_it is False
+    assert request(try_it=True).try_it is True
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"document_url": "https://cdn.example/openapi.json"}, "same-origin absolute path"),
+        ({"document_url": "openapi.json"}, "same-origin absolute path"),
+        ({"assets_url": "//evil.test/assets"}, "same-origin absolute path"),
+        ({"title": "  "}, "title must be a non-empty string"),
+        ({"openapi_version": ""}, "openapi_version must be a non-empty string"),
+        ({"document": "not bytes"}, "document must be the serialized bytes"),
+        ({"try_it": "yes"}, "try_it must be a boolean"),
+    ],
+)
+def test_an_unusable_request_is_refused(overrides: dict[str, Any], message: str) -> None:
+    with pytest.raises(_DocumentationDefinitionError, match=message):
+        request(**overrides)
+
+
+@pytest.mark.parametrize("url", ["//cdn.example/openapi.json", "//evil.test/assets"])
+def test_a_protocol_relative_url_is_not_a_same_origin_path(url: str) -> None:
+    # `//host/path` is a network reference wearing a local path's clothes. It
+    # starts with a slash, so a naive same-origin check accepts it and the
+    # deployment quietly gains an external dependency.
+    with pytest.raises(_DocumentationDefinitionError, match="same-origin absolute path"):
+        request(document_url=url)
+    with pytest.raises(_DocumentationDefinitionError, match="same-origin absolute path"):
+        request(assets_url=url)
+
+
+@pytest.mark.parametrize(
+    "path", ["../escape.js", "ui/../../escape.js", "..", ".", "ui/./app.js", "ui/../app.js"]
+)
+def test_an_asset_path_cannot_traverse_out_of_its_root(path: str) -> None:
+    # A provider names the files it needs served; a traversal segment would
+    # let it name a file outside the asset root it was given.
+    with pytest.raises(_DocumentationDefinitionError, match="invalid asset path"):
+        _DocumentationPage(html=b"<x>", assets={path: _Asset("text/javascript", b"")})
+
+
+def test_ordinary_dotted_asset_names_still_work() -> None:
+    page = _DocumentationPage(
+        html=b"<x>",
+        assets={
+            "swagger-ui.min.css": _Asset("text/css", b""),
+            "ui/app.bundle.js": _Asset("text/javascript", b""),
+            "fonts/inter-v13.woff2": _Asset("font/woff2", b""),
+        },
+    )
+    assert len(page.assets) == 3
+
+
+def test_a_provider_may_receive_the_serialized_document_directly() -> None:
+    provider = Provider()
+    registry = _DocumentationRegistry()
+    registry.register(provider)
+
+    registry.render("example", request(document_url=None, document=b'{"openapi":"3.2.0"}'))
+    assert provider.seen[0].document == b'{"openapi":"3.2.0"}'
+
+
+def test_a_provider_receives_exactly_one_document_source() -> None:
+    with pytest.raises(_DocumentationDefinitionError, match="exactly one"):
+        request(document_url=None)
+    with pytest.raises(_DocumentationDefinitionError, match="exactly one"):
+        request(document=b'{"openapi":"3.2.0"}')
+    with pytest.raises(_DocumentationDefinitionError, match="must not be empty"):
+        request(document_url=None, document=b"")
+
+
+# --- what a provider must declare ------------------------------------------
+
+
+def test_a_conforming_provider_validates() -> None:
+    assert _validate_provider(Provider()) is not None
+    assert isinstance(Provider(), _DocumentationProvider)
+
+
+def test_a_provider_that_claims_compatibility_by_silence_is_refused() -> None:
+    # An untested compatibility claim is the one ADR 0018 refuses to accept.
+    with pytest.raises(_DocumentationDefinitionError, match="must name the OpenAPI versions"):
+        _validate_provider(Provider(supported_openapi=()))
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"name": "Example"}, "invalid provider name"),
+        ({"name": "9lives"}, "invalid provider name"),
+        ({"name": ""}, "invalid provider name"),
+        ({"supported_openapi": ("",)}, "declares an empty OpenAPI version"),
+        ({"supported_openapi": [OPENAPI]}, "must name the OpenAPI versions"),
+        ({"unsupported_features": ("",)}, "must declare its unsupported features"),
+        ({"unsupported_features": "webhooks"}, "must declare its unsupported features"),
+    ],
+)
+def test_a_malformed_declaration_is_refused(kwargs: dict[str, Any], message: str) -> None:
+    with pytest.raises(_DocumentationDefinitionError, match=message):
+        _validate_provider(Provider(**kwargs))
+
+
+def test_an_object_that_is_not_a_provider_is_refused() -> None:
+    with pytest.raises(_DocumentationDefinitionError, match="does not implement"):
+        _validate_provider(object())
+
+
+def test_declaring_no_unsupported_features_is_allowed_but_must_be_explicit() -> None:
+    # An empty tuple is a claim; a missing attribute is not.
+    assert _validate_provider(Provider(unsupported_features=())).unsupported_features == ()
+
+
+# --- compatibility ---------------------------------------------------------
+
+
+def test_an_unsupported_document_version_makes_the_provider_unavailable() -> None:
+    registry = _DocumentationRegistry()
+    provider = Provider(supported_openapi=("3.1.0",))
+    registry.register(provider)
+
+    with pytest.raises(_DocumentationUnavailable) as raised:
+        registry.render("example", request())
+
+    assert "does not support OpenAPI 3.2.0" in str(raised.value)
+    assert "3.1.0" in str(raised.value)
+    assert provider.seen == [], "an incompatible provider must not be asked to render"
+
+
+def test_a_supported_version_renders() -> None:
+    registry = _DocumentationRegistry()
+    registry.register(Provider(supported_openapi=("3.1.0", OPENAPI)))
+
+    page = registry.render("example", request())
+    assert page.html.startswith(b"<!doctype html>")
+
+
+def test_an_unknown_provider_name_is_unavailable_rather_than_a_key_error() -> None:
+    with pytest.raises(_DocumentationUnavailable, match="no documentation provider named"):
+        _DocumentationRegistry().render("absent", request())
+
+
+# --- assets and policy -----------------------------------------------------
+
+
+def test_a_provider_declares_its_assets_rather_than_the_adapter_inferring_them() -> None:
+    page = _DocumentationPage(
+        html=b"<!doctype html>",
+        assets={
+            "ui.css": _Asset("text/css", b"body{}"),
+            "ui/app.js": _Asset("text/javascript", b""),
+        },
+    )
+    assert set(page.assets) == {"ui.css", "ui/app.js"}
+    assert page.assets["ui.css"].media_type == "text/css"
+
+
+def test_page_assets_are_read_only() -> None:
+    page = _DocumentationPage(html=b"<!doctype html>", assets={"ui.css": _Asset("text/css", b"")})
+    mutable: Any = page.assets
+    with pytest.raises(TypeError):
+        mutable["evil.js"] = _Asset("text/javascript", b"")
+
+
+@pytest.mark.parametrize("path", ["../escape.js", "/absolute.js", "with space.js", ""])
+def test_an_unusable_asset_path_is_refused(path: str) -> None:
+    with pytest.raises(_DocumentationDefinitionError, match="invalid asset path"):
+        _DocumentationPage(html=b"<x>", assets={path: _Asset("text/javascript", b"")})
+
+
+def test_a_local_policy_requires_no_network() -> None:
+    assert _ContentSecurityPolicy().requires_network is False
+    assert _ContentSecurityPolicy(inline_style=True).requires_network is False
+    assert _ContentSecurityPolicy(blob_worker=True).requires_network is False
+    assert _ContentSecurityPolicy(external_origins=("https://cdn.test",)).requires_network is True
+
+
+@pytest.mark.parametrize("field", ["inline_style", "inline_script", "blob_worker"])
+def test_a_csp_capability_must_be_a_real_boolean(field: str) -> None:
+    with pytest.raises(_DocumentationDefinitionError, match=f"{field} must be a boolean"):
+        _ContentSecurityPolicy(**{field: "yes"})  # ty: ignore[invalid-argument-type]
+
+
+@pytest.mark.parametrize("origin", ["http://cdn.test", "cdn.test", "//cdn.test"])
+def test_an_external_origin_must_be_https(origin: str) -> None:
+    with pytest.raises(_DocumentationDefinitionError, match="must be an https origin"):
+        _ContentSecurityPolicy(external_origins=(origin,))
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "https://cdn.test/",
+        "https://cdn.test/assets",
+        "https://user@cdn.test",
+        "https://cdn.test?release=1",
+        "https://CDN.test",
+        "https://cdn.test:443",
+        "https://*.cdn.test",
+        "https://cdn.test.",
+        "https://café.test",
+        "https://cdn.test\n",
+    ],
+)
+def test_an_external_origin_must_be_canonical(origin: str) -> None:
+    with pytest.raises(_DocumentationDefinitionError, match="origin"):
+        _ContentSecurityPolicy(external_origins=(origin,))
+
+
+def test_external_origins_are_unique_and_sorted() -> None:
+    with pytest.raises(_DocumentationDefinitionError, match="unique and in canonical sorted order"):
+        _ContentSecurityPolicy(external_origins=("https://z.example", "https://a.example"))
+    with pytest.raises(_DocumentationDefinitionError, match="unique and in canonical sorted order"):
+        _ContentSecurityPolicy(external_origins=("https://a.example", "https://a.example"))
+
+
+def test_security_headers_serialize_only_declared_browser_privileges() -> None:
+    headers = dict(
+        _documentation_security_headers(
+            _ContentSecurityPolicy(
+                inline_style=True,
+                blob_worker=True,
+                external_origins=("https://cdn.example",),
+            )
+        )
+    )
+    csp = headers[b"content-security-policy"].decode("ascii")
+
+    assert headers == {
+        b"cache-control": b"no-store",
+        b"content-security-policy": headers[b"content-security-policy"],
+        b"referrer-policy": b"no-referrer",
+        b"x-content-type-options": b"nosniff",
+        b"x-frame-options": b"DENY",
+    }
+    assert "default-src 'none'" in csp
+    assert "connect-src 'self'" in csp
+    assert "connect-src 'self' https://cdn.example" not in csp
+    assert "script-src 'self' https://cdn.example" in csp
+    assert "style-src 'self' https://cdn.example 'unsafe-inline'" in csp
+    assert "worker-src 'self' blob:" in csp
+    assert "script-src 'self' https://cdn.example 'unsafe-inline'" not in csp
+
+
+def test_inline_script_and_worker_blob_are_never_granted_implicitly() -> None:
+    csp = dict(_documentation_security_headers(_ContentSecurityPolicy()))[
+        b"content-security-policy"
+    ].decode("ascii")
+
+    assert "script-src 'self';" in csp
+    assert "style-src 'self';" in csp
+    assert "worker-src 'self'" in csp
+    assert "'unsafe-inline'" not in csp
+    assert "blob:" in csp  # Images may use local object URLs.
+
+
+def test_security_headers_require_the_reviewed_policy_type() -> None:
+    with pytest.raises(_DocumentationDefinitionError, match="require a _ContentSecurityPolicy"):
+        _documentation_security_headers(object())  # ty: ignore[invalid-argument-type]
+
+
+SRI = "sha384-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+REMOTE_URL = "https://cdn.test/ui@1.2.3/app.js"
+
+
+def remote_page(
+    *,
+    html: bytes | None = None,
+    url: str = REMOTE_URL,
+    integrity: str = SRI,
+    crossorigin: str = "anonymous",
+    csp_origins: tuple[str, ...] = ("https://cdn.test",),
+) -> _DocumentationPage:
+    rendered = (
+        html
+        or (
+            f'<script src="{url}" integrity="{integrity}" crossorigin="{crossorigin}"></script>'
+        ).encode()
+    )
+    return _DocumentationPage(
+        html=rendered,
+        csp=_ContentSecurityPolicy(external_origins=csp_origins),
+        remote_assets=(
+            _RemoteAsset(
+                url=url,
+                version="1.2.3",
+                integrity=integrity,
+                crossorigin=crossorigin,
+            ),
+        ),
+    )
+
+
+def test_remote_html_without_a_declaration_is_a_definition_error() -> None:
+    registry = _DocumentationRegistry()
+    registry.register(
+        Provider(
+            page=_DocumentationPage(
+                html=f'<script src="{REMOTE_URL}"></script>'.encode(),
+                csp=_ContentSecurityPolicy(external_origins=("https://cdn.test",)),
+            )
+        )
+    )
+
+    with pytest.raises(_DocumentationDefinitionError, match="do not match its HTML"):
+        registry.render(
+            "example",
+            request(),
+            allowed_remote_origins=frozenset({"https://cdn.test"}),
+        )
+
+
+def test_a_declared_cdn_still_needs_the_application_to_permit_it() -> None:
+    registry = _DocumentationRegistry()
+    registry.register(Provider(page=remote_page()))
+
+    with pytest.raises(_DocumentationUnavailable, match="has not permitted"):
+        registry.render("example", request())
+
+    permitted = registry.render(
+        "example",
+        request(),
+        allowed_remote_origins=frozenset({"https://cdn.test"}),
+    )
+    assert permitted.csp.external_origins == ("https://cdn.test",)
+
+
+def test_permission_is_an_exact_origin_allowlist() -> None:
+    registry = _DocumentationRegistry()
+    registry.register(Provider(page=remote_page()))
+
+    with pytest.raises(_DocumentationUnavailable, match=r"cdn\.test"):
+        registry.render(
+            "example",
+            request(),
+            allowed_remote_origins=frozenset({"https://other.test"}),
+        )
+
+
+@pytest.mark.parametrize(
+    ("html", "message"),
+    [
+        (
+            f'<script src="{REMOTE_URL}" crossorigin="anonymous"></script>'.encode(),
+            "missing or incorrect SRI",
+        ),
+        (
+            f'<script src="{REMOTE_URL}" integrity="{SRI}"></script>'.encode(),
+            "missing or incorrect crossorigin",
+        ),
+        (
+            (
+                f'<script src="{REMOTE_URL}" integrity="{SRI}" '
+                'crossorigin="use-credentials"></script>'
+            ).encode(),
+            "missing or incorrect crossorigin",
+        ),
+        (
+            (
+                f'<script src="{REMOTE_URL}" integrity="{SRI}" crossorigin="anonymous"></script>'
+                f'<script src="{REMOTE_URL}" integrity="{SRI}" crossorigin="anonymous"></script>'
+            ).encode(),
+            "more than once",
+        ),
+        (b'<script src="//cdn.test/app.js"></script>', "same-origin path or exact https URL"),
+        (b'<script src="app.js"></script>', "same-origin path or exact https URL"),
+    ],
+)
+def test_remote_subresource_html_is_validated_independently_of_provider(
+    html: bytes, message: str
+) -> None:
+    registry = _DocumentationRegistry()
+    registry.register(Provider(page=remote_page(html=html)))
+
+    with pytest.raises(_DocumentationDefinitionError, match=message):
+        registry.render(
+            "example",
+            request(),
+            allowed_remote_origins=frozenset({"https://cdn.test"}),
+        )
+
+
+def test_csp_origins_must_exactly_match_remote_assets() -> None:
+    registry = _DocumentationRegistry()
+    registry.register(
+        Provider(page=remote_page(csp_origins=("https://cdn.test", "https://unused.test")))
+    )
+
+    with pytest.raises(_DocumentationDefinitionError, match="do not exactly match"):
+        registry.render(
+            "example",
+            request(),
+            allowed_remote_origins=frozenset({"https://cdn.test", "https://unused.test"}),
+        )
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"url": "http://cdn.test/ui@1.2.3/app.js"}, "https origin"),
+        ({"url": "https://cdn.test/ui@latest/app.js"}, "exact version"),
+        ({"url": "https://cdn.test/ui@1.2.3/app.js?mutable=1"}, "without query"),
+        ({"url": "https://cdn.test/ui@1.2.3/app.js\n"}, "whitespace or control"),
+        ({"version": "latest"}, "exact semantic version"),
+        ({"version": "01.2.3"}, "exact semantic version"),
+        ({"version": "9.9.9"}, "contain its exact version"),
+        ({"integrity": "sha256-AAAA"}, "sha384 SRI"),
+        ({"integrity": "sha384-not-base64"}, "valid base64"),
+        ({"crossorigin": "use-credentials"}, "exactly 'anonymous'"),
+    ],
+)
+def test_remote_asset_metadata_is_immutable_and_exact(kwargs: dict[str, Any], message: str) -> None:
+    fields = {
+        "url": REMOTE_URL,
+        "version": "1.2.3",
+        "integrity": SRI,
+        "crossorigin": "anonymous",
+    }
+    fields.update(kwargs)
+    with pytest.raises(_DocumentationDefinitionError, match=message):
+        _RemoteAsset(**fields)
+
+
+def test_the_origin_allowlist_is_immutable_and_canonical() -> None:
+    registry = _DocumentationRegistry()
+    registry.register(Provider(page=remote_page()))
+
+    with pytest.raises(_DocumentationDefinitionError, match="must be a frozenset"):
+        registry.render(
+            "example",
+            request(),
+            allowed_remote_origins={"https://cdn.test"},  # ty: ignore[invalid-argument-type]
+        )
+    with pytest.raises(_DocumentationDefinitionError, match="canonical origin"):
+        registry.render(
+            "example",
+            request(),
+            allowed_remote_origins=frozenset({"https://cdn.test/assets"}),
+        )
+
+
+def test_a_local_provider_needs_no_permission() -> None:
+    registry = _DocumentationRegistry()
+    registry.register(Provider())
+    assert registry.render("example", request()).csp.requires_network is False
+
+
+# --- the registry ----------------------------------------------------------
+
+
+def test_no_provider_is_a_supported_deployment_rather_than_a_broken_one() -> None:
+    registry = _DocumentationRegistry()
+
+    assert len(registry) == 0
+    assert list(registry) == []
+    assert registry.get("example") is None
+    assert "example" not in registry
+
+
+def test_two_providers_cannot_share_a_name() -> None:
+    registry = _DocumentationRegistry()
+    registry.register(Provider("swagger"))
+    registry.register(Provider("redoc"))
+
+    with pytest.raises(_DocumentationDefinitionError, match="already registered"):
+        registry.register(Provider("swagger"))
+    assert {provider.name for provider in registry} == {"swagger", "redoc"}
+
+
+def test_registration_validates_before_anything_is_stored() -> None:
+    registry = _DocumentationRegistry()
+    with pytest.raises(_DocumentationDefinitionError):
+        registry.register(Provider(supported_openapi=()))
+    assert len(registry) == 0
+
+
+def test_a_provider_returning_the_wrong_type_is_a_definition_error() -> None:
+    registry = _DocumentationRegistry()
+    registry.register(Provider(returns="<html>"))
+
+    with pytest.raises(_DocumentationDefinitionError, match="not a _DocumentationPage"):
+        registry.render("example", request())
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"html": b""}, "html must be non-empty bytes"),
+        ({"html": "<x>"}, "html must be non-empty bytes"),
+        ({"html": b"<x>", "csp": object()}, "csp must be a _ContentSecurityPolicy"),
+        ({"html": b"<x>", "assets": [("a.js", None)]}, "assets must be a mapping"),
+        ({"html": b"<x>", "assets": {"a.js": object()}}, "is not an _Asset"),
+    ],
+)
+def test_a_malformed_page_is_refused(kwargs: dict[str, Any], message: str) -> None:
+    with pytest.raises(_DocumentationDefinitionError, match=message):
+        _DocumentationPage(**kwargs)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"media_type": "", "body": b""}, "media_type must be a non-empty string"),
+        ({"media_type": "text/css", "body": "x"}, "body must be bytes"),
+    ],
+)
+def test_a_malformed_asset_is_refused(kwargs: dict[str, Any], message: str) -> None:
+    with pytest.raises(_DocumentationDefinitionError, match=message):
+        _Asset(**kwargs)

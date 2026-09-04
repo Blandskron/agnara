@@ -7,3 +7,7 @@ uv.lock text eol=lf
 *.png binary
 *.jpg binary
 *.ico binary
+
+# Vendored browser assets are checked against upstream byte hashes. Preserve
+# upstream whitespace even when it would be rejected in authored source.
+packages/agnara-http/src/agnara_http/_vendor/** -whitespace

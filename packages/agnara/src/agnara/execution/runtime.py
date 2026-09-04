@@ -8,11 +8,18 @@ import inspect
 import time
 from typing import Any
 
-from agnara.errors import InvocationError, UnknownCapabilityError, ValidationError
+from agnara.errors import (
+    InteractionRequiredError,
+    InvocationError,
+    PolicyDeniedError,
+    UnknownCapabilityError,
+    ValidationError,
+)
 from agnara.execution.context import ExecutionContext
 from agnara.execution.plan import ExecutionPlan
 from agnara.execution.result import CanonicalResult, Failure, FailureCode, Success
 from agnara.execution.telemetry import InvocationStartEvent, InvocationTerminalEvent
+from agnara.policy import PolicyFailure, PolicyInteractionRequired, PolicySuccess
 
 __all__ = ["invoke", "invoke_result"]
 
@@ -112,6 +119,20 @@ async def invoke_result[T](
         return Failure(FailureCode.TIMEOUT, "invocation deadline exceeded")
     except UnknownCapabilityError as error:
         return Failure(FailureCode.NOT_FOUND, str(error))
+    except PolicyDeniedError as error:
+        return Failure(FailureCode.FORBIDDEN, str(error))
+    except InteractionRequiredError as error:
+        request = error.request
+        return Failure(
+            FailureCode.INTERACTION_REQUIRED,
+            request.message,
+            details={
+                "kind": request.kind.value,
+                "title": request.title,
+                "capability_id": str(request.capability_id),
+                "hints": tuple(sorted(request.hints.items())),
+            },
+        )
     except Exception:
         return Failure(FailureCode.INTERNAL_FAILURE, "capability invocation failed")
 
@@ -121,12 +142,22 @@ async def invoke_result[T](
 
 
 async def _execute(plan: ExecutionPlan, context: ExecutionContext) -> Any:
-    """Resolve dependencies and call the handler within the caller's timeout scope."""
+    """Enforce policies, validate inputs, resolve dependencies, and call the handler."""
+    for policy in plan.policies:
+        result = await policy.evaluate(context)
+        if isinstance(result, PolicySuccess):
+            continue
+        if isinstance(result, PolicyFailure):
+            raise PolicyDeniedError(result.reason)
+        if isinstance(result, PolicyInteractionRequired):
+            raise InteractionRequiredError(result.request)
+        raise TypeError(f"policy returned an invalid result: {type(result).__name__}")
+
+    arguments = _validate_inputs(plan, context.invocation.payload)
     async with context.di_container.resolve_dependencies(
         plan.definition.handler,
         plan.target_deps,
     ) as dependencies:
-        arguments = dict(context.invocation.payload)
         arguments.update(dependencies)
         arguments.update(dict.fromkeys(plan.context_parameters, context))
 
@@ -134,3 +165,24 @@ async def _execute(plan: ExecutionPlan, context: ExecutionContext) -> Any:
         if inspect.isawaitable(result):
             return await result
         return result
+
+
+def _validate_inputs(plan: ExecutionPlan, payload: dict[str, Any]) -> dict[str, Any]:
+    """Validate a payload against precompiled schemas without mutating it."""
+    unexpected = sorted(set(payload).difference(plan.input_schemas))
+    if unexpected:
+        raise ValidationError("unexpected input", path=(unexpected[0],))
+
+    missing = sorted(plan.required_inputs.difference(payload))
+    if missing:
+        raise ValidationError("required input is missing", path=(missing[0],))
+
+    arguments: dict[str, Any] = {}
+    for name, schema in plan.input_schemas.items():
+        if name not in payload:
+            continue
+        try:
+            arguments[name] = schema.validate(payload[name])
+        except ValidationError as error:
+            raise error.at(name) from error
+    return arguments

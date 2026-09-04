@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 
 from agnara.capability import CapabilityDefinition, CapabilityId
+from agnara.capability.metadata import Confirmation
 from agnara.core.di import (
     DependencyCycleError,
     DependencyResolutionError,
@@ -13,8 +14,33 @@ from agnara.core.di import (
     DIRegistry,
     provider,
 )
-from agnara.errors import DefinitionError
+from agnara.errors import DefinitionError, SchemaError
 from agnara.execution import ExecutionPlan
+from agnara.policy import (
+    ConfirmationEvidence,
+    ConfirmationVerdict,
+    PolicyFailure,
+    PolicyResult,
+)
+from agnara.policy.confirmation import ConfirmationPolicy
+from agnara.schema import PrimitiveSchema, TypeSchema
+
+
+class DenyPolicy:
+    async def evaluate(self, context) -> PolicyResult:
+        return PolicyFailure("denied")
+
+
+class ValidVerifier:
+    async def verify(
+        self,
+        evidence: ConfirmationEvidence,
+        *,
+        capability_id,
+        invocation,
+        principal,
+    ) -> ConfirmationVerdict:
+        return ConfirmationVerdict.VALID
 
 
 class Database:
@@ -47,7 +73,7 @@ def test_plan_compiles_direct_dependencies_in_signature_order() -> None:
     registry.bind(Database, provide_database)
     registry.bind(Repository, provide_repository)
 
-    def refund(command: dict[str, object], repository: Repository, database: Database) -> None:
+    def refund(command: dict[str, Any], repository: Repository, database: Database) -> None:
         pass
 
     capability = define(refund)
@@ -102,7 +128,7 @@ def test_compiled_plan_is_consumed_directly_by_di_container() -> None:
 
 
 def test_plan_is_frozen_and_slotted() -> None:
-    def refund(command: dict[str, object]) -> None:
+    def refund(command: dict[str, Any]) -> None:
         pass
 
     plan = ExecutionPlan.compile(define(refund), DIRegistry())
@@ -110,6 +136,62 @@ def test_plan_is_frozen_and_slotted() -> None:
     assert not hasattr(plan, "__dict__")
     with pytest.raises(FrozenInstanceError, match="cannot assign to field 'target_deps'"):
         plan.target_deps = {}  # type: ignore[misc]
+
+
+def test_plan_compiles_ordinary_input_schemas_and_requiredness() -> None:
+    def refund(payment_id: str, reason: str = "requested") -> None:
+        pass
+
+    plan = ExecutionPlan.compile(define(refund), DIRegistry())
+
+    assert tuple(plan.input_schemas) == ("payment_id", "reason")
+    assert plan.input_schemas["payment_id"] == PrimitiveSchema(str)
+    assert plan.required_inputs == frozenset({"payment_id"})
+    with pytest.raises(TypeError, match="does not support item assignment"):
+        plan.input_schemas["other"] = PrimitiveSchema(str)  # ty: ignore[invalid-assignment]
+
+
+def test_plan_uses_supplied_schema_adapter_once_per_ordinary_input() -> None:
+    compiled: list[Any] = []
+
+    class Adapter:
+        def compile(self, annotation: Any) -> TypeSchema:
+            compiled.append(annotation)
+            return PrimitiveSchema(annotation)
+
+        def supports(self, annotation: Any) -> bool:
+            return True
+
+    def refund(payment_id: str, database: Database) -> None:
+        pass
+
+    registry = DIRegistry()
+    registry.bind(Database, provide_database)
+    plan = ExecutionPlan.compile(define(refund), registry, schema_adapter=Adapter())
+
+    assert compiled == [str]
+    assert tuple(plan.input_schemas) == ("payment_id",)
+
+
+@pytest.mark.parametrize(
+    ("handler", "message"),
+    [
+        (lambda value: None, "requires a type annotation"),
+        (lambda *values: None, "must be an explicit"),
+        (lambda **values: None, "must be an explicit"),
+    ],
+)
+def test_plan_rejects_ambiguous_input_shapes(handler: Callable[..., Any], message: str) -> None:
+    with pytest.raises(DefinitionError, match=message):
+        ExecutionPlan.compile(define(handler), DIRegistry())
+
+
+def test_plan_reports_input_context_for_unsupported_schema() -> None:
+    def refund(command: object) -> None:
+        pass
+
+    with pytest.raises(SchemaError, match=r"payments\.refund input 'command'"):
+        ExecutionPlan.compile(define(refund), DIRegistry())
 
 
 @pytest.mark.parametrize(
@@ -174,3 +256,68 @@ def test_plan_rejects_unbound_provider_dependency_during_compilation() -> None:
         match="Providers can only depend on other registered providers",
     ):
         ExecutionPlan.compile(define(refund), registry)
+
+
+def test_plan_compiles_explicit_policies_in_declaration_order() -> None:
+    first = DenyPolicy()
+    second = DenyPolicy()
+    capability = CapabilityDefinition(
+        id=CapabilityId("payments", "refund"),
+        handler=lambda: None,
+        policies=(first, second),
+    )
+
+    assert ExecutionPlan.compile(capability, DIRegistry()).policies == (first, second)
+
+
+def test_required_confirmation_appends_gate_after_explicit_policies() -> None:
+    explicit = DenyPolicy()
+    capability = CapabilityDefinition(
+        id=CapabilityId("payments", "refund"),
+        handler=lambda: None,
+        confirmation=Confirmation.REQUIRED,
+        policies=(explicit,),
+    )
+
+    plan = ExecutionPlan.compile(
+        capability,
+        DIRegistry(),
+        confirmation_verifier=ValidVerifier(),
+    )
+
+    assert plan.policies[0] is explicit
+    assert isinstance(plan.policies[1], ConfirmationPolicy)
+
+
+def test_required_confirmation_without_verifier_fails_at_compilation() -> None:
+    capability = CapabilityDefinition(
+        id=CapabilityId("payments", "refund"),
+        handler=lambda: None,
+        confirmation=Confirmation.REQUIRED,
+    )
+
+    with pytest.raises(DefinitionError, match="requires a confirmation verifier"):
+        ExecutionPlan.compile(capability, DIRegistry())
+
+
+def test_policy_confirmation_uses_only_explicit_application_policies() -> None:
+    explicit = DenyPolicy()
+    capability = CapabilityDefinition(
+        id=CapabilityId("payments", "refund"),
+        handler=lambda: None,
+        confirmation=Confirmation.POLICY,
+        policies=(explicit,),
+    )
+
+    assert ExecutionPlan.compile(capability, DIRegistry()).policies == (explicit,)
+
+
+def test_policy_confirmation_without_explicit_policy_fails_at_compilation() -> None:
+    capability = CapabilityDefinition(
+        id=CapabilityId("payments", "refund"),
+        handler=lambda: None,
+        confirmation=Confirmation.POLICY,
+    )
+
+    with pytest.raises(DefinitionError, match="has no explicit policies"):
+        ExecutionPlan.compile(capability, DIRegistry())

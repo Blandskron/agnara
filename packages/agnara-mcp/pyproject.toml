@@ -1,11 +1,11 @@
 [project]
 name = "agnara-mcp"
-version = "0.1.0"
+version = "0.1.0a1"
 description = "Model Context Protocol exposure adapter for Agnara capabilities."
 readme = "README.md"
 requires-python = ">=3.14"
 license = {text = "Apache-2.0"}
-dependencies = ["agnara"]
+dependencies = ["agnara", "mcp==2.1.1"]
 
 [build-system]
 requires = ["hatchling"]

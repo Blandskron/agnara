@@ -198,6 +198,12 @@ origins and CSP changes, and use subresource integrity when the distribution
 supports stable hashes. A mutable `latest` CDN URL is not an acceptable
 production default.
 
+ADR 0040 makes this policy executable. Every external script and stylesheet
+has immutable exact-version URL, SHA-384 SRI and anonymous-CORS metadata. The
+registry verifies that rendered HTML, declarations and CSP correspond exactly
+and accepts a set of canonical allowed origins rather than a boolean. Local
+assets and no UI require no network permission.
+
 The no-UI provider remains valid. OpenAPI generation cannot require a browser
 interface.
 
@@ -223,6 +229,41 @@ No provider is selected as an unconditional default. Swagger UI, ReDoc and
 Scalar should receive implementation spikes against the same conformance,
 security, bundle and accessibility fixtures. Adding RapiDoc or Elements later
 must require no change to capability runtime semantics.
+
+E6.15 completed the Swagger UI integration spike with version 5.32.14. ADR
+0036 records the local-asset baseline, distinct opt-in CDN provider, integrity
+evidence, secure initializer defaults and the exact OpenAPI 3.2 features still
+deferred upstream. This is compatibility evidence for one provider version,
+not selection of an unconditional default or a claim of complete 3.2 support.
+
+E6.16 completed the ReDoc CE spike with version 2.5.3. ADR 0037 records its
+local and opt-in CDN assets, sanitization and CSP needs. ReDoc's upstream 3.2
+work remains incomplete and CE has no try-it console, so the provider refuses
+both requests explicitly. It never downgrades the canonical document or
+pretends that a read-only reference interface is interactive.
+
+E6.17 completed the Scalar API Reference spike with version 1.67.0. ADR 0038
+records its self-contained pinned bundle, exact-version opt-in CDN mode,
+explicit telemetry/plugin/agent/font boundaries and partial OpenAPI 3.2 and
+accessibility evidence. Scalar remains the leading modern-UX candidate, but
+the upstream end-to-end 3.2 tracker and active ARIA defects mean no provider is
+selected as an unconditional default before E6.18 runs comparable browser
+fixtures.
+
+E6.18 now runs those comparable fixtures in a required Playwright
+1.62.0/Chromium CI job. ADR 0039 records real-browser rendering through the
+compiled ASGI surface boundary, exact CSP/security headers, blocked XSS and
+undeclared origins, try-it and storage state, an unpublished same-origin OAuth
+redirect boundary, keyboard focus and a 390 by 844 responsive smoke viewport.
+The evidence is intentionally narrower than WCAG or complete OpenAPI
+conformance. Scalar's active ARIA gaps, ReDoc's 3.2 incompatibility and the
+provisional public composition API still prevent an unconditional default.
+
+E6.19 enforces the common asset boundary independently of provider. ADR 0040
+records exact remote-resource metadata, HTML/SRI/CORS correspondence,
+canonical CSP origins, deployment origin allowlists and repository-wide
+vendored-resource packaging evidence. This closes the asset-policy work
+without selecting a UI default or making a CDN part of the baseline.
 
 The canonical generated contract remains OpenAPI 3.2 even when a provider
 lags behind it. A provider must fail with a clear compatibility diagnostic or

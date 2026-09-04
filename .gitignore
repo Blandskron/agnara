@@ -12,12 +12,14 @@ venv/
 
 # Tooling caches
 .pytest_cache/
+.pytest-*/
 .ruff_cache/
 .ty_cache/
 .mypy_cache/
 .coverage
 coverage.xml
 htmlcov/
+test-results/
 
 # uv
 uv.lock.bak

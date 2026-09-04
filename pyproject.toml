@@ -27,9 +27,15 @@ dev = [
     "agnara-events",
     "agnara-telemetry",
     "agnara-cli",
+    # E6.10 comparison fixtures only. These must never enter a distributable
+    # Agnara package or be confused with an HTTP implementation dependency.
+    "fastapi==0.141.1",
+    "litestar==2.24.0",
+    "starlette==1.6.0",
     # Third-party schema adapters remain experiments until E2.7 compares
     # their performance and ergonomics. This is not a core dependency.
     "msgspec>=0.21,<0.22",
+    "playwright==1.62.0",
     "pydantic>=2.9,<3",
     "pytest>=8.4",
     "ruff>=0.14",
@@ -93,7 +99,7 @@ root = [
 ]
 
 [tool.ty.src]
-include = ["packages", "experiments", "tests"]
+include = ["packages", "examples", "experiments", "tests"]
 
 # --------------------------------------------------------------------------
 # pytest (E0.6)
@@ -109,3 +115,6 @@ addopts = [
 ]
 xfail_strict = true
 filterwarnings = ["error"]
+markers = [
+    "browser: real-browser conformance tests enabled explicitly in their CI job",
+]

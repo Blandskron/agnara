@@ -10,7 +10,7 @@ Legend:
 
 The agent must update this file as work progresses and must never mark a task complete without the associated acceptance criteria passing.
 
-## EPIC 0 ???????? Repository foundation
+## EPIC 0 — Repository foundation
 
 - [x] E0.1 Create `uv` workspace.
 - [x] E0.2 Create package boundaries described in `ARCHITECTURE.md`.
@@ -22,13 +22,16 @@ The agent must update this file as work progresses and must never mark a task co
 - [x] E0.8 Add GitHub Actions for Linux, macOS and Windows where practical.
 - [x] E0.9 Add conventional changelog/release process. Tracking: GitHub Issue
   #16.
-- [ ] E0.10 Add license only after owner decision.
+- [x] E0.10 Add license after owner decision. Apache License 2.0 was adopted
+  by PR #81.
 - [x] E0.13 Verify Ruff and `ty` gates. Both are green in CI as of PR #1.
-  They still cannot run on the current Windows workstation: an Application
-  Control policy refuses their native binaries (`OSError 4551`) from both
-  the virtual environment and the interpreter `Scripts` directory. The
-  policy must not be weakened. CI is therefore the authoritative record for
-  these two gates ???????? see `QUALITY_GATES.md`.
+  As of 2026-09-03 both also run on the maintainer Windows workstation, from
+  `uv run` and directly from `.venv/Scripts`: ruff 0.16.5 and ty 0.0.77 on
+  CPython 3.14.4. The Application Control policy that previously refused
+  their native binaries with `OSError 4551` no longer does; it was not
+  weakened to achieve that, and it must not be. One workstation is not
+  cross-platform evidence, so CI remains the authoritative record for Linux
+  and macOS. Tracking: GitHub Issue #120. See `QUALITY_GATES.md`.
 - [x] E0.14 Restore GitHub autonomy. `gh` 2.98.0 is installed and
   authenticated, so Issues, Pull Requests, reviews and merges are available
   again. Work merged before PR #1 carries local `--no-ff` merges with
@@ -48,10 +51,12 @@ uv run pytest
 all pass on Python 3.14.
 
 Current evidence: all five gates pass in CI on CPython 3.14, across
-ubuntu-latest, macos-latest and windows-latest, with 105 tests. See the
-checks on PR #1. Locally only `uv sync` and `pytest` can run (E0.13).
+ubuntu-latest, macos-latest and windows-latest. They also pass locally on the
+maintainer Windows workstation (E0.13). The suite was 105 tests at PR #1 and
+783 on `develop` on 2026-09-03; the authoritative count is the one reported by
+the most recent CI run rather than this line.
 
-## EPIC 1 ???????? Capability model
+## EPIC 1 — Capability model
 
 - [x] E1.1 Define immutable `CapabilityDefinition`.
 - [x] E1.2 Define stable capability identity.
@@ -66,7 +71,7 @@ checks on PR #1. Locally only `uv sync` and `pytest` can run (E0.13).
 
 At least 25 focused unit tests covering registration, metadata, duplicate handling and immutability.
 
-## EPIC 2 ???????? Schema port
+## EPIC 2 — Schema port
 
 - [x] E2.1 Define schema adapter protocol.
 - [x] E2.2 Implement standard-Python baseline adapter. Tracking: GitHub Issue
@@ -81,74 +86,95 @@ At least 25 focused unit tests covering registration, metadata, duplicate handli
 
 Core imports neither Pydantic nor msgspec.
 
-## EPIC 3 ???????? Dependency graph
+## EPIC 3 — Dependency graph
 
 - [x] E3.1 Write DI RFC.
 - [x] E3.2 Define provider abstraction.
 - [x] E3.3 Define scopes.
 - [x] E3.4 Compile dependency DAG.
 - [x] E3.5 Detect dependency cycles at compile time.
-- [ ] E3.6 Support async resource cleanup.
-- [ ] E3.7 Implement invocation-scoped cache.
-- [ ] E3.8 Verify free-threading safety assumptions.
+- [x] E3.6 Support async resource cleanup. Delivered by PR #53.
+- [x] E3.7 Implement invocation-scoped cache. Delivered by PR #53.
+- [x] E3.8 Verify free-threading safety assumptions. Delivered by PR #56.
 
-## EPIC 4 ???????? Execution compiler/runtime
+## EPIC 4 — Execution compiler/runtime
 
-- [ ] E4.1 Define Invocation.
-- [ ] E4.2 Define ExecutionContext.
+- [x] E4.1 Define Invocation. Delivered by PR #58.
+- [x] E4.2 Define ExecutionContext. Delivered by PR #58.
 - [x] E4.3 Compile capability to ExecutionPlan.
 - [x] E4.4 Direct invocation.
 - [x] E4.5 Cancellation propagation.
 - [x] E4.6 Deadlines/timeouts.
 - [x] E4.7 Canonical result/failure model.
 - [x] E4.8 Structured telemetry hooks.
-- [ ] E4.9 Benchmark runtime overhead.
+- [x] E4.9 Benchmark runtime overhead. Tracking: GitHub Issue #105.
+- [x] E4.10 Compile and enforce capability input schemas. Tracking: GitHub Issue #111.
 
-## EPIC 5 ???????? Policy engine
+## EPIC 5 — Policy engine
 
 - [x] E5.1 Define Principal.
 - [x] E5.2 Define policy interface.
-- [ ] E5.3 Scope policy.
-- [ ] E5.4 Effects/risk metadata.
-- [ ] E5.5 Confirmation requirement.
-- [ ] E5.6 Delegation RFC.
-- [ ] E5.7 Policy tests independent of transports.
+- [x] E5.3 Scope policy. Tracking: GitHub Issue #90.
+- [x] E5.4 Effects/risk metadata. Delivered with E1.8 by GitHub Issue #2 and
+  PR #4; metadata remains data rather than authorization (ADR 0008).
+- [x] E5.5 Confirmation requirement. Tracking: GitHub Issue #96.
+- [x] E5.6 Define the protocol-neutral delegation model, including explicit
+  actor/subject separation, monotonic authority attenuation, bounded verified
+  chains and confirmation binding. Tracking: GitHub Issue #101.
+- [x] E5.7 Keep policy tests independent of transports with an executable
+  architecture guard. Tracking: GitHub Issue #103.
 
-## EPIC 6 ???????? HTTP adapter
+## EPIC 6 — HTTP adapter
 
-- [ ] E6.1 ASGI boundary.
-- [ ] E6.2 Route registry.
-- [ ] E6.3 Path/query/header/body binding.
-- [ ] E6.4 Response serialization.
-- [ ] E6.5 RFC 9457 failures.
-- [ ] E6.6 Lifespan.
-- [ ] E6.7 Generate deterministic OpenAPI 3.2 from compiled HTTP exposures,
+- [x] E6.1 ASGI boundary. Tracking: GitHub Issue #107.
+- [x] E6.2 Route registry. Tracking: GitHub Issue #109.
+- [x] E6.3 Path/query/header/body binding. Tracking: GitHub Issue #113.
+- [x] E6.4 Response serialization. Tracking: GitHub Issue #115.
+- [x] E6.5 RFC 9457 failures. Tracking: GitHub Issue #117.
+- [x] E6.6 Lifespan. Tracking: GitHub Issue #127.
+- [x] E6.6a Classify transport-level request failures and project them to
+  RFC 9457, including `405` with `Allow`, `413` and `415`. Tracking: GitHub
+  Issue #129.
+- [x] E6.6b Compile HTTP exposures and dispatch one request end to end:
+  route match, binding, invocation, response or problem. E6.7 and E6.8
+  depend on it, because both presuppose a compiled HTTP exposure. Tracking:
+  GitHub Issue #131.
+- [x] E6.7 Generate deterministic OpenAPI 3.2 from compiled HTTP exposures,
   shared schemas and explicitly publishable metadata. Do not accept a
-  handwritten parallel schema as the generated source of truth.
-- [ ] E6.8 HTTP conformance tests.
-- [?] E6.9 Compare direct ASGI vs minimal Starlette dependency.
-- [ ] E6.10 Benchmark against FastAPI, Starlette and Litestar.
-- [ ] E6.11 Add pinned OpenAPI 3.2 structural/conformance fixtures, including
+  handwritten parallel schema as the generated source of truth. Tracking:
+  GitHub Issue #135.
+- [x] E6.8 Add an executable HTTP conformance suite that drives a request
+  matrix through the ASGI entry point and validates every exchange with one
+  shared checker. Tracking: GitHub Issue #137.
+- [x] E6.9 Compare direct ASGI vs minimal Starlette dependency. ADR 0041 keeps
+  the direct boundary. Tracking: GitHub Issue #159.
+- [x] E6.10 Benchmark against FastAPI, Starlette and Litestar. Tracking:
+  GitHub Issue #159.
+- [x] E6.11 Add pinned OpenAPI 3.2 structural/conformance fixtures, including
   stable `operationId`, schema references, security schemes and documented
   unsupported features.
-- [ ] E6.12 Define the replaceable documentation-provider contract without a
-  required browser UI dependency.
-- [ ] E6.13 Add configurable schema, documentation and Explorer routes with
+- [x] E6.12 Define the replaceable documentation-provider contract without a
+  required browser UI dependency. Tracking: GitHub Issue #141.
+- [x] E6.13 Add configurable schema, documentation and Explorer routes with
   deterministic collision detection. Candidate defaults remain provisional.
-- [ ] E6.14 Allow OpenAPI, each human UI, Explorer and interactive try-it to be
-  disabled independently.
-- [ ] E6.15 Implement a Swagger UI provider with pinned self-hosted assets,
-  optional explicit CDN mode and versioned compatibility evidence.
-- [ ] E6.16 Implement a ReDoc provider with the same provider contract and
-  versioned compatibility evidence.
-- [?] E6.17 Spike Scalar and re-evaluate actively maintained alternatives
+  Tracking: GitHub Issue #145.
+- [x] E6.14 Allow OpenAPI, each human UI, Explorer and interactive try-it to be
+  disabled independently. Tracking: GitHub Issue #147.
+- [x] E6.15 Implement a Swagger UI provider with pinned self-hosted assets,
+  optional explicit CDN mode and versioned compatibility evidence. Tracking:
+  GitHub Issue #149.
+- [x] E6.16 Implement a ReDoc provider with the same provider contract and
+  versioned compatibility evidence. Tracking: GitHub Issue #151.
+- [x] E6.17 Spike Scalar and re-evaluate actively maintained alternatives
   against identical OpenAPI 3.2, CSP, accessibility, mobile, dependency and
-  bundle-size fixtures before selecting any default.
-- [ ] E6.18 Add documentation UI browser tests for CSP, XSS payloads, disabled
+  bundle-size fixtures before selecting any default. Tracking: GitHub Issue
+  #153.
+- [x] E6.18 Add documentation UI browser tests for CSP, XSS payloads, disabled
   routes, OAuth redirect handling, authentication state and try-it controls.
-- [ ] E6.19 Enforce the documentation asset policy: pinned local assets by
+  Tracking: GitHub Issue #155.
+- [x] E6.19 Enforce the documentation asset policy: pinned local assets by
   default; exact-version CDN, origin allowlist and integrity/CSP documentation
-  only through explicit opt-in.
+  only through explicit opt-in. Tracking: GitHub Issue #157.
 
 ### HTTP documentation acceptance
 
@@ -163,19 +189,31 @@ Core imports neither Pydantic nor msgspec.
 - supported OpenAPI/UI versions and known gaps are recorded by conformance
   tests rather than implied by marketing claims.
 
-## EPIC 7 ???????? MCP adapter
+## EPIC 7 — MCP adapter
 
-- [ ] E7.1 Pin supported MCP spec version.
-- [ ] E7.2 Tool projection from capabilities.
-- [ ] E7.3 Schema mapping.
-- [ ] E7.4 Discovery.
-- [ ] E7.5 Authorization integration.
-- [ ] E7.6 Canonical interaction-required mapping to MCP.
-- [ ] E7.7 Task/MRTR research.
+- [x] E7.1 Pin the MCP `2026-07-28` protocol baseline and official Python SDK
+  `2.1.1`, without claiming unfinished adapter conformance. Tracking: GitHub
+  Issue #162.
+- [x] E7.2 Project capabilities into deterministic, immutable MCP tool
+  exposures with startup name and collision validation. Tracking: GitHub
+  Issue #164.
+- [x] E7.3 Map compiled capability input schemas to detached official SDK
+  `Tool` definitions, excluding protected parameters. Tracking: GitHub Issue
+  #166.
+- [x] E7.4 Discovery. Tracking: GitHub Issue #168.
+- [x] E7.5 Authorization integration. Tracking: GitHub Issue #170.
+- [x] E7.6 Canonical interaction-required mapping to MCP. Tracking: GitHub
+  Issue #172.
+- [x] E7.7 Task/MRTR research. Tasks left the core specification in
+  `2026-07-28` and the pinned SDK never dispatches their methods, so MRTR
+  is the only resumption mechanism Agnara adopts and the Tasks extension is
+  not claimed. Recorded by ADR 0042, which also constrains E7.8. Delivered
+  inside the v0.1.0a1 release branch rather than under its own Issue, because
+  GitHub API access was unavailable for the whole cycle.
 - [ ] E7.8 Official SDK conformance tests.
 - [ ] E7.9 Benchmark tool invocation overhead against FastMCP where meaningful.
 
-## EPIC 8 ???????? Documentation and introspection
+## EPIC 8 — Documentation and introspection
 
 - [x] E8.0 Define the interactive documentation and Agnara Explorer
   architecture. Tracked by Issue #9.
@@ -217,7 +255,7 @@ remotely served machine-readable discovery or Explorer release. E8.7 depends
 on E6.7 and E6.11. Explorer views follow the read-only E8.8 shell rather than
 expanding that first PR into a complete frontend.
 
-## EPIC 9 ???????? Telemetry
+## EPIC 9 — Telemetry
 
 - [ ] E9.1 Telemetry port in core.
 - [ ] E9.2 OpenTelemetry adapter.
@@ -226,7 +264,13 @@ expanding that first PR into a complete frontend.
 - [ ] E9.5 MCP/GenAI semantic convention compatibility.
 - [ ] E9.6 no-op telemetry cost benchmark.
 
-## EPIC 10 ???????? v0.1 release gate
+## EPIC 10 — v0.1 release gate
+
+`v0.1.0a1` shipped on 2026-09-04 as a PEP 440 pre-release ahead of this gate.
+An alpha deliberately does not satisfy it: the items below remain the
+conditions for a final `v0.1.0`, and none is marked complete because the alpha
+published only the `agnara` core distribution. See `CHANGELOG.md` for the
+released scope.
 
 - [ ] Capability definition stable enough for alpha.
 - [ ] Direct invocation stable.
@@ -249,7 +293,7 @@ expanding that first PR into a complete frontend.
 - [ ] plugin marketplace/registry research.
 - [ ] native/Rust acceleration only if benchmarks justify it.
 
-## EPIC 0A ???????? Project/app scaffolding
+## EPIC 0A — Project/app scaffolding
 
 - [ ] E0A.1 Implement `agnara project create`.
 - [ ] E0A.2 Define and validate `agnara.toml`.
@@ -276,7 +320,7 @@ Generated code must:
 - be deterministic for identical inputs;
 - refuse overwrite without explicit authorization.
 
-## EPIC 1A ???????? Modular app runtime
+## EPIC 1A — Modular app runtime
 
 - [ ] E1A.1 Define app/module descriptor.
 - [ ] E1A.2 Register app-owned capabilities.
@@ -285,7 +329,7 @@ Generated code must:
 - [ ] E1A.5 Define cross-app public contract rules.
 - [ ] E1A.6 Freeze app registry during project compilation.
 
-## EPIC 0B ???????? Agentic repository governance
+## EPIC 0B — Agentic repository governance
 
 - [x] E0B.1 Establish GitHub Issue labels for type/area/priority.
 - [x] E0B.2 Configure branch rulesets for `main`.
@@ -293,7 +337,7 @@ Generated code must:
 - [x] E0B.4 Require relevant CI checks before merge.
 - [x] E0B.5 Configure allowed merge strategies.
 - [x] E0B.6 Validate GitHub CLI autonomous workflow.
-- [x] E0B.7 Validate Issue ???????? branch ???????? PR ???????? merge ???????? close flow.
+- [x] E0B.7 Validate Issue → branch → PR → merge → close flow.
 - [x] E0B.8 Decide single-agent or dual-agent review mode for repository
   governance. Mode B (single-agent) is in force: PR required, CI required,
   zero required approvals, documented self-review, no fabricated approval.
@@ -316,8 +360,3 @@ Generated code must:
 - force-pushes to protected branches are blocked;
 - no workflow requires an impossible self-approval;
 - the complete lifecycle is visible and understandable to a human maintainer.
-
-
-
-
-

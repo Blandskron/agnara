@@ -233,10 +233,13 @@ Agnara executes capabilities. Agent reasoning engines are consumers/composers, n
 ## Open questions
 
 1. Exact input/dependency annotation syntax.
-2. Whether schema validation occurs before or after dependency construction.
+2. ~~Whether schema validation occurs before or after dependency construction.~~
+   Resolved by ADR 0025: after pre-handler policy evaluation and before
+   dependency construction.
 3. How partial streaming failures are represented.
 4. Canonical authorization principal model.
-5. Delegation model.
+5. Public delegation runtime types and verifier API; the security model is
+   defined by RFC 0004.
 6. Unified interaction-required state.
 7. Capability versioning.
 8. Sync handler execution strategy.

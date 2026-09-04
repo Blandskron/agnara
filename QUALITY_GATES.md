@@ -31,6 +31,19 @@ uv run pytest
 
 Exact command names may evolve, but equivalent gates must remain.
 
+Documentation browser conformance is a separate required CI lane because the
+ordinary cross-platform gate must not depend on a preinstalled browser. Its
+reproducible commands are:
+
+```bash
+uv run playwright install --with-deps chromium
+AGNARA_RUN_BROWSER_TESTS=1 uv run pytest tests/http/test_documentation_browser.py -m browser
+```
+
+Playwright is version-pinned in the development lock. Without the explicit
+environment flag, pytest still collects these tests and reports them skipped;
+only the dedicated browser job is evidence that they passed.
+
 ## Where the gates are authoritative
 
 CI is the authoritative record that the gates passed. `.github/workflows/ci.yml`
@@ -122,9 +135,71 @@ structural/conformance fixtures and renderer tests for every documented UI
 provider. A UI accepting the version string is not sufficient evidence that it
 renders new 3.2 semantics correctly.
 
+### Protocol version pins
+
+Every protocol adapter must name exact specification revisions and test them
+against an exact official SDK baseline. A protocol SDK dependency belongs only
+to its adapter package; it must not enter `agnara` core or sibling adapters.
+SDK support for a revision is necessary but insufficient for an Agnara
+conformance claim. Claims require adapter-level fixtures for the implemented
+projection, negotiation and error surface.
+
+Protocol exposure registries must reject invalid and duplicate wire names at
+startup, preserve declaration order, retain their protocol-neutral capability
+definitions, and compile into immutable snapshots. A protocol adapter must
+not infer that an arbitrary callable is authorized or registered merely
+because it is callable.
+
+Protocol schema projections must consume compiled core schemas rather than
+repeat handler input classification. They must exclude protected dependency
+and context parameters, preserve property and required-field order, reject
+non-JSON fragments at startup, and detach protocol documents from core schema
+state. Optional output contracts must not be published before runtime output
+validation enforces them.
+
+Protocol discovery must advertise only versions and capabilities actually
+served. List results must preserve deterministic compiled order, use explicit
+cache hints, handle cursors according to the pinned protocol, and return data
+detached from immutable startup state. Authentication bridges must consume
+only verifier-approved request context, keep bearer credentials and arbitrary
+claims out of application mappers, require explicit actor/subject semantics,
+and fail closed with redacted protocol errors. Scope-filtered discovery must
+remain request-isolated, private and immediately stale; cache metadata or
+discoverability never substitutes for invocation authorization.
+
+Protocol interaction projections must start from canonical adapter-facing
+outcomes, validate their complete reviewed detail shape, and serialize only
+the minimum caller-safe fields supported by the pinned protocol. MCP form
+elicitation uses its restricted flat-schema vocabulary and never carries
+credentials, capability internals, arbitrary interaction hints or verifier
+diagnostics. Client acceptance or submitted form values remain untrusted input
+and must not become confirmation evidence without independent application
+verification. An interim projection must not claim MRTR resumption, state
+integrity or tool-invocation support that it does not implement.
+
+Protocol resumption must use the mechanism the pinned revision defines rather
+than an extension the adapter has not implemented. An optional protocol
+extension is never advertised, and never implied by a legacy tool field,
+without its own reviewed implementation and conformance evidence. Adapter
+state echoed by a client is attacker-controlled until a verified boundary
+replaces it, and that boundary must be installed explicitly on the server
+tier the adapter actually builds on rather than assumed from a higher-tier
+default. Multi-instance deployments require explicitly shared key material;
+a process-local convenience key is never a production default. Round-level
+integrity, expiry and request binding do not constitute invocation replay
+protection, and a resumed round re-evaluates policy and confirmation evidence
+exactly as a first round does.
+
 ## Benchmark integrity
 
 Never benchmark development mode against optimized competitors.
+
+Comparative HTTP benchmarks must pin competitor versions outside
+distributable package dependencies, exercise equivalent successful output,
+validate correctness outside every timed sample, rotate scenario order, retain
+raw samples and record the included/excluded measurement boundary. Framework,
+server and network results must remain distinct. CI checks the benchmark
+contract, never a workstation-derived latency threshold.
 
 Record:
 
@@ -154,7 +229,11 @@ Before any release beyond experimental alpha:
 Documentation/discovery releases additionally require visibility/redaction
 tests, CSP and XSS browser tests, external-asset/network assertions, try-it and
 OAuth flow tests, and accessibility/responsive smoke tests for each supported
-UI. Hiding an operation in a UI must never be the authorization mechanism.
+UI. Remote scripts and styles require exact-version URLs, SHA-384 SRI,
+anonymous CORS, matching canonical CSP origins and an exact deployment origin
+allowlist. Vendored UI manifests, hashes, licenses and wheel contents are
+release evidence. Hiding an operation in a UI must never be the authorization
+mechanism.
 
 ## Free-threading gate
 

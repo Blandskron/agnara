@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
+  # `release.yml` re-runs these gates before it builds or publishes anything.
+  # Without `workflow_call` that job cannot start at all.
+  workflow_call:
 
 # A newer push to the same branch supersedes an in-flight run.
 concurrency:
@@ -94,6 +97,33 @@ jobs:
       - name: Pytest
         run: uv run pytest
 
+  # E6.18: run vendored documentation UIs under a browser-enforced CSP. The
+  # ordinary test matrix deliberately does not download browser binaries.
+  browser:
+    name: Documentation browsers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
+
+      - name: Set up Python 3.14
+        run: uv python install 3.14
+
+      - name: Sync workspace
+        run: uv sync --locked
+
+      - name: Install pinned Chromium and system dependencies
+        run: uv run playwright install --with-deps chromium
+
+      - name: Documentation provider browser conformance
+        env:
+          AGNARA_RUN_BROWSER_TESTS: "1"
+        run: uv run pytest tests/http/test_documentation_browser.py -m browser
+
   # The lockfile is a merge gate: an unlocked change would let CI and a
   # developer machine resolve different dependency sets.
   lockfile:
@@ -117,7 +147,7 @@ jobs:
   ci:
     name: CI
     if: always()
-    needs: [lint, types, test, lockfile]
+    needs: [lint, types, test, browser, lockfile]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job did not succeed

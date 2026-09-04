@@ -1,3 +1,5 @@
+from agnara.errors import InteractionRequiredError, PolicyDeniedError
+
 from .context import ExecutionContext
 from .invocation import Invocation
 from .plan import ExecutionPlan
@@ -11,9 +13,11 @@ __all__ = [
     "ExecutionPlan",
     "Failure",
     "FailureCode",
+    "InteractionRequiredError",
     "Invocation",
     "InvocationStartEvent",
     "InvocationTerminalEvent",
+    "PolicyDeniedError",
     "Success",
     "TelemetryHook",
     "invoke",

@@ -10,6 +10,79 @@ Agnara starts from a simple premise:
 
 A capability is defined once and may later be exposed through HTTP, MCP, A2A, events, tasks, CLI, internal calls, or future transports without duplicating domain logic.
 
+## Install
+
+```bash
+pip install agnara==0.1.0a1
+```
+
+Or track the newest pre-release:
+
+```bash
+pip install --pre agnara
+```
+
+Requires CPython 3.14 or newer. The core distribution has no third-party
+dependencies.
+
+`0.1.0a1` publishes the `agnara` core kernel only. The HTTP, OpenAPI, MCP and
+CLI adapters live in sibling packages in this repository and were not uploaded
+to PyPI in this release, so they are not installable with `pip` yet.
+
+## Quick start
+
+```python
+import asyncio
+
+from agnara import Agnara, Risk, StandardEffect
+from agnara.core.di import DIContainer, DIRegistry
+from agnara.execution import (
+    ExecutionContext,
+    ExecutionPlan,
+    Invocation,
+    invoke_result,
+)
+
+app = Agnara("billing")
+
+
+@app.capability(
+    description="Refund a captured payment.",
+    scopes=("billing:write",),
+    effects=(StandardEffect.FINANCIAL_WRITE,),
+    risk=Risk.HIGH,
+)
+def refund(payment_id: str, amount_cents: int) -> str:
+    return f"refunded {amount_cents} cents for {payment_id}"
+
+
+async def main() -> None:
+    capabilities = app.compile()
+    dependencies = DIRegistry()
+    plan = ExecutionPlan.compile(capabilities["billing.refund"], dependencies)
+
+    outcome = await invoke_result(
+        plan,
+        ExecutionContext(
+            Invocation(
+                capability_id=plan.definition.id,
+                payload={"payment_id": "pay_123", "amount_cents": 2500},
+                metadata={},
+            ),
+            DIContainer(dependencies),
+        ),
+    )
+    print(outcome)
+
+
+asyncio.run(main())
+```
+
+The capability is declared once, with its risk and effects, and invoked
+directly — no server, no HTTP, no transport. `examples/quickstart.py` in this
+repository is the longer version, including dependency injection and canonical
+failure handling.
+
 ## Why Agnara exists
 
 Most Python web frameworks were created for a world centered on HTTP APIs, REST, request/response cycles, and human developers. The software landscape now includes AI agents, MCP, A2A, long-running tasks, event-driven systems, human approval flows, machine-readable discovery, and agent-oriented security.
@@ -24,9 +97,9 @@ Traditional framework:
 
 ```text
 Python function
-      ???
+      ↓
 HTTP route
-      ???
+      ↓
 OpenAPI
 ```
 
@@ -34,14 +107,14 @@ Agnara:
 
 ```text
                        HTTP
-                        ???
-                        ???
-MCP ???????????????????????????????????????????????? Capability ????????????????????????????????????????????? A2A
-                        ???
-                        ???
+                        │
+                        ▼
+MCP ───────────────► Capability ◄────────────── A2A
+                        ▲
+                        │
                  Events / Tasks
-                        ???
-                        ???
+                        │
+                        ▼
                   Python handler
 ```
 
@@ -115,56 +188,56 @@ Agnara should make enough semantics machine-readable for a client or agent to de
 
 ```text
 Application
-    ???
-    ???
+    │
+    ▼
 Capability Registry
-    ???
-    ????????? Schema Engine
-    ????????? Dependency Graph
-    ????????? Policy Engine
-    ????????? Discovery Metadata
-    ???
-    ???
+    │
+    ├── Schema Engine
+    ├── Dependency Graph
+    ├── Policy Engine
+    └── Discovery Metadata
+    │
+    ▼
 Execution Plan Compiler
-    ???
-    ???
+    │
+    ▼
 Execution Runtime
-    ???
-    ????????? HTTP Adapter
-    ????????? MCP Adapter
-    ????????? A2A Adapter
-    ????????? Event Adapter
-    ????????? Task Adapter
-    ????????? CLI Adapter
-    ????????? Internal Invocation
+    │
+    ├── HTTP Adapter
+    ├── MCP Adapter
+    ├── A2A Adapter
+    ├── Event Adapter
+    ├── Task Adapter
+    ├── CLI Adapter
+    └── Internal Invocation
 ```
 
 ## Initial workspace
 
 ```text
 agnara/
-????????? packages/
-???   ????????? agnara-core/
-???   ????????? agnara-http/
-???   ????????? agnara-mcp/
-???   ????????? agnara-a2a/
-???   ????????? agnara-events/
-???   ????????? agnara-telemetry/
-???   ????????? agnara-cli/
-????????? tests/
-???   ????????? architecture/
-???   ????????? conformance/
-???   ????????? integration/
-???   ????????? benchmarks/
-????????? docs/
-???   ????????? adr/
-???   ????????? rfc/
-????????? AGENTS.md
-????????? ARCHITECTURE.md
-????????? BACKLOG.md
-????????? PRINCIPLES.md
-????????? ROADMAP.md
-????????? pyproject.toml
+├── packages/
+│   ├── agnara-core/
+│   ├── agnara-http/
+│   ├── agnara-mcp/
+│   ├── agnara-a2a/
+│   ├── agnara-events/
+│   ├── agnara-telemetry/
+│   └── agnara-cli/
+├── tests/
+│   ├── architecture/
+│   ├── conformance/
+│   ├── integration/
+│   └── benchmarks/
+├── docs/
+│   ├── adr/
+│   └── rfc/
+├── AGENTS.md
+├── ARCHITECTURE.md
+├── BACKLOG.md
+├── PRINCIPLES.md
+├── ROADMAP.md
+└── pyproject.toml
 ```
 
 Not every package must be implemented in the first milestone. The structure defines boundaries before implementation pressure begins to blur them.
@@ -175,17 +248,17 @@ The first meaningful release should prove:
 
 ```text
 typed Python capability
-        ???
+        ↓
 compiled execution plan
-        ???
+        ↓
 direct invocation
-        ???
+        ↓
 HTTP exposure
-        ???
+        ↓
 OpenAPI generation
-        ???
+        ↓
 MCP exposure
-        ???
+        ↓
 consistent validation, policy and telemetry
 ```
 
@@ -216,13 +289,19 @@ The architecture must be safe under conventional CPython and designed consciousl
 
 ## Project status
 
-**Pre-alpha / architecture-first.**
+```text
+Status:         Alpha (experimental)
+Latest release: v0.1.0a1
+```
+
+`v0.1.0a1` is the first public release: an architectural proof that Agnara
+installs and runs as a real Python distribution. It is not production-ready,
+the public API may change without a deprecation cycle, and only the `agnara`
+core distribution is on PyPI.
 
 The repository should not claim production readiness, benchmark leadership, security guarantees, or protocol conformance until those claims are backed by automated evidence.
 
-All current work is unreleased. See `CHANGELOG.md` for the curated
-`[Unreleased]` record; package version `0.0.0` is a development sentinel and
-must not be published.
+See `CHANGELOG.md` for the released record and the exact published scope.
 
 ## Documentation order for contributors and agents
 
@@ -243,11 +322,12 @@ Agnara keeps familiar HTTP documentation without making it the semantic
 center:
 
 ```text
-Capabilities ??? HTTP exposures ??? OpenAPI 3.2 ??? replaceable documentation UI
+Capabilities → HTTP exposures → OpenAPI 3.2 → replaceable documentation UI
 ```
 
-Swagger UI, ReDoc and modern alternatives are optional consumers of generated
-OpenAPI. They do not belong in `agnara-core`.
+Pinned Swagger UI, ReDoc and Scalar providers are optional consumers of
+generated OpenAPI. They do not belong in `agnara-core`, and none is selected
+as an unconditional default before the shared browser conformance gate.
 
 The richer Agnara Explorer uses a separate protocol-neutral introspection
 snapshot so it can show apps, non-HTTP exposures, dependencies, policies,
@@ -282,22 +362,22 @@ The project can contain many apps, but each app is a **business module**, not a 
 
 ```text
 commerce
-????????? users
-????????? catalog
-????????? payments
-????????? recommendations
+├── users
+├── catalog
+├── payments
+└── recommendations
 ```
 
 Each generated app uses modular hexagonal boundaries by default:
 
 ```text
 payments/
-????????? domain/
-????????? application/
-????????? adapters/
-???   ????????? inbound/
-???   ????????? outbound/
-????????? tests/
+├── domain/
+├── application/
+├── adapters/
+│   ├── inbound/
+│   └── outbound/
+└── tests/
 ```
 
 Transport code is generated only when requested.
@@ -327,16 +407,16 @@ Development follows:
 
 ```text
 Backlog
-??? GitHub Issue
-??? short-lived branch
-??? implementation
-??? tests / quality gates
-??? commit
-??? attribution verification
-??? Pull Request
-??? review
-??? merge
-??? next Issue
+→ GitHub Issue
+→ short-lived branch
+→ implementation
+→ tests / quality gates
+→ commit
+→ attribution verification
+→ Pull Request
+→ review
+→ merge
+→ next Issue
 ```
 
 Read:
@@ -351,4 +431,3 @@ Agent roles and Git authorship are separate: unverifiable agents are named in
 Issues/PRs, while commit trailers are reserved for authorized,
 GitHub-verifiable identities. See
 `docs/adr/0019-ai-agent-attribution.md` and `GIT_WORKFLOW.md`.
-
