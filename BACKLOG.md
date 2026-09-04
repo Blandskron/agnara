@@ -197,7 +197,9 @@ Core imports neither Pydantic nor msgspec.
 - [x] E7.2 Project capabilities into deterministic, immutable MCP tool
   exposures with startup name and collision validation. Tracking: GitHub
   Issue #164.
-- [ ] E7.3 Schema mapping.
+- [x] E7.3 Map compiled capability input schemas to detached official SDK
+  `Tool` definitions, excluding protected parameters. Tracking: GitHub Issue
+  #166.
 - [ ] E7.4 Discovery.
 - [ ] E7.5 Authorization integration.
 - [ ] E7.6 Canonical interaction-required mapping to MCP.

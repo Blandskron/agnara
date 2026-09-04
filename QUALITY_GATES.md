@@ -150,6 +150,13 @@ definitions, and compile into immutable snapshots. A protocol adapter must
 not infer that an arbitrary callable is authorized or registered merely
 because it is callable.
 
+Protocol schema projections must consume compiled core schemas rather than
+repeat handler input classification. They must exclude protected dependency
+and context parameters, preserve property and required-field order, reject
+non-JSON fragments at startup, and detach protocol documents from core schema
+state. Optional output contracts must not be published before runtime output
+validation enforces them.
+
 ## Benchmark integrity
 
 Never benchmark development mode against optimized competitors.
