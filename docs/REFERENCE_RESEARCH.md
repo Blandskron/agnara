@@ -51,7 +51,10 @@ Reference:
 
 ## OpenAPI documentation interfaces
 
-Reviewed: 2026-08-31 for RFC 0003 and ADR 0018.
+Reviewed: 2026-08-31 for RFC 0003 and ADR 0018. Swagger UI evidence refreshed
+2026-09-03 for ADR 0036; ReDoc evidence refreshed 2026-09-03 for ADR 0037;
+Scalar and alternative evidence refreshed 2026-09-03 for ADR 0038; shared
+Chromium browser evidence added 2026-09-03 for ADR 0039.
 
 This is a point-in-time comparison, not a permanent endorsement. OpenAPI 3.2
 support is still evolving across renderers, so Agnara must test pinned versions
@@ -98,9 +101,26 @@ Tradeoffs:
   surface. Agnara must disable the online validator and credential persistence
   by default and explicitly constrain submit methods.
 
+E6.15 evidence and implementation boundary (2026-09-03):
+
+- pinned release: `swagger-ui-dist@5.32.14`, released 2026-08-18;
+- vendored browser payload: `swagger-ui-bundle.js` (1,553,809 bytes) and
+  `swagger-ui.css` (185,784 bytes), both verified from the official npm tarball;
+- acquisition uses `npm pack --ignore-scripts`, so the declared Scarf package
+  dependency and installation lifecycle do not run;
+- a versioned manifest records npm integrity, local SHA-256 and CDN SRI, while
+  the upstream Apache-2.0 license and notice ship beside the assets;
+- 5.32.0's basic 3.2 implementation explicitly deferred `$self`,
+  `additionalOperations`, component `mediaTypes` and `pathItems`, Tag Object
+  enhancements, `querystring` parameters and streaming `itemSchema`;
+- the local provider is the production baseline; the exact-version unpkg
+  variant has a distinct provider name, SRI and an explicit remote-assets gate.
+
 Primary sources:
 
 - https://github.com/swagger-api/swagger-ui/releases
+- https://github.com/swagger-api/swagger-ui/releases/tag/v5.32.14
+- https://github.com/swagger-api/swagger-ui/pull/10721
 - https://github.com/swagger-api/swagger-ui/issues/10575
 - https://github.com/swagger-api/swagger-ui/issues/10897
 - https://swagger.io/docs/open-source-tools/swagger-ui/usage/configuration/
@@ -135,10 +155,31 @@ Tradeoffs:
 - accessibility requires independent verification; no project-wide WCAG
   conformance claim was found.
 
+E6.16 evidence and implementation boundary (2026-09-03):
+
+- pinned release: `redoc@2.5.3`, with release notes dated 2026-05-27;
+- vendored payload: `redoc.standalone.js` (1,097,271 bytes), verified from the
+  official npm tarball;
+- acquisition uses `npm pack --ignore-scripts`, so the package's 21 declared
+  runtime dependencies and `prepare` hook do not run in Agnara installations;
+- the exact `cdn.redoc.ly` version was downloaded and byte-compared with the
+  tarball asset before recording SHA-384 SRI;
+- the bundle injects styles and creates a search worker from `blob:`, both of
+  which are explicit provider CSP requirements;
+- ReDoc receives `untrustedSpec: true`; no external Google font origin occurs
+  in the inspected 2.5.3 standalone bundle, and local CSP deliberately blocks
+  its upstream footer-logo URL so branding cannot become a network dependency;
+- 2.5.3 prevents a 3.2 crash, but the README still claims only 3.1/3.0/2.0 and
+  the 3.2 issues remain open, so the provider declares only tested 3.1.0 and
+  refuses Agnara's canonical 3.2.0 artifact;
+- ReDoc CE has no try-it console, so that request is refused rather than
+  ignored.
+
 Primary sources:
 
 - https://github.com/Redocly/redoc
 - https://github.com/Redocly/redoc/releases/tag/v2.5.3
+- https://github.com/Redocly/redoc/issues/2746
 - https://github.com/Redocly/redoc/issues/2773
 - https://redocly.com/docs/redoc/config
 - https://www.npmjs.com/package/redoc
@@ -170,6 +211,33 @@ Tradeoffs:
 - active ARIA/accessibility defects remain open, so modern appearance is not
   evidence of WCAG conformance;
 - fast release cadence makes exact version pinning and upgrade tests essential.
+
+E6.17 evidence and implementation boundary (2026-09-03):
+
+- pinned release: `@scalar/api-reference@1.67.0`, published 2026-08-28 in
+  release tag `release-2026-08-28-df40ed7`;
+- vendored payload: the self-contained browser `standalone.js` IIFE
+  (3,736,898 bytes), including the interactive client and verified from the
+  official 9,050,339-byte npm tarball;
+- acquisition uses `npm pack --ignore-scripts`; none of the package's 25
+  declared dependencies or build/test scripts runs in Agnara installations;
+- the exact-version jsDelivr entrypoint byte-matches the npm artifact and has
+  recorded SHA-384 SRI; the MIT license comes from the exact release tag
+  because the npm tarball does not contain it;
+- the initializer disables telemetry, credential persistence, document
+  editing/download, developer tools, agent/MCP affordances, proxy defaults and
+  plugin URLs; try-it controls remain hidden unless independently selected;
+- Scalar injects CSS and embeds `fonts.scalar.com` URLs. Inline styles are
+  declared, but local CSP does not allow the font origin, so system fonts are
+  used without a hidden network dependency;
+- the bundle contains responsive media rules and ARIA markup, but issue #9725
+  reports active ARIA failures; source inspection is not a WCAG/mobile claim,
+  and E6.18 owns browser verification;
+- the parser accepts 3.2 and Agnara preserves that version, but upstream issue
+  #6715 still tracks uncompleted API Reference/client/workspace work. The
+  provider names this partial boundary rather than claiming full conformance;
+- the resulting `agnara-http` wheel is 1,937,150 bytes, up 1,095,884 bytes
+  from the Swagger/ReDoc baseline build.
 
 Primary sources:
 
@@ -241,16 +309,41 @@ Primary sources:
 
 ### Research decision
 
-Do not add any UI dependency during architecture work. Define a replaceable
-provider contract and run Swagger UI, ReDoc and Scalar through identical
-OpenAPI 3.2, local-asset, CSP, XSS, OAuth, accessibility, mobile and bundle-size
-fixtures. Keep Elements and RapiDoc as viable later providers, not runtime
-assumptions.
+Swagger UI, ReDoc and Scalar now implement the same replaceable provider
+contract without runtime UI dependencies. Keep Elements and RapiDoc as viable
+later providers, not runtime assumptions: the refreshed maintenance,
+dependency and compatibility evidence does not make either a stronger default.
+
+E6.18 ran identical Playwright 1.62.0 Chromium 151.0.7922.34 fixtures over the
+pinned local providers. Swagger UI and Scalar rendered the 3.2 fixture; ReDoc
+rendered the equivalent 3.1 fixture and refused 3.2 before browser delivery.
+All three kept the XSS marker inert, produced no successful external response,
+accepted keyboard focus and avoided document overflow at 390 by 844 pixels.
+CSP actively blocked the malicious image, Scalar font and ReDoc branding
+origins.
+Swagger/Scalar try-it followed the independent selection, credential-named
+storage stayed empty, and Swagger's computed OAuth redirect was same-origin,
+secretless and unpublished.
+
+Do not select an unconditional documentation default yet. This evidence
+validates the integration boundary, not complete OpenAPI or WCAG conformance.
+Scalar's known ARIA defects remain open, ReDoc remains a read-only 3.1
+provider, and the public composition API is still provisional. Scalar remains
+the leading modern-UX candidate and Swagger UI the compatibility baseline.
 
 Self-hosted, exact-version assets are the production baseline. CDN delivery is
 opt-in and must document CSP, integrity, privacy and availability consequences.
 No human UI replaces the machine-readable OpenAPI or Agnara introspection
 contracts.
+
+E6.19 converts that research rule into a provider-independent contract. CDN
+scripts and styles now require an exact semantic version in the URL, SHA-384
+SRI, anonymous CORS, an exactly matching canonical CSP origin and explicit
+deployment allowlisting of that origin. Tests cross-check all three vendored
+manifests, licensed files, byte lengths and SHA-256 values against packaged
+resources. The normative basis is the W3C Subresource Integrity and CSP Level
+3 specifications; SRI authenticates the received representation while CSP
+limits which origin may supply it.
 
 ## MCP
 

@@ -246,8 +246,9 @@ center:
 Capabilities → HTTP exposures → OpenAPI 3.2 → replaceable documentation UI
 ```
 
-Swagger UI, ReDoc and modern alternatives are optional consumers of generated
-OpenAPI. They do not belong in `agnara-core`.
+Pinned Swagger UI, ReDoc and Scalar providers are optional consumers of
+generated OpenAPI. They do not belong in `agnara-core`, and none is selected
+as an unconditional default before the shared browser conformance gate.
 
 The richer Agnara Explorer uses a separate protocol-neutral introspection
 snapshot so it can show apps, non-HTTP exposures, dependencies, policies,
@@ -351,4 +352,3 @@ Agent roles and Git authorship are separate: unverifiable agents are named in
 Issues/PRs, while commit trailers are reserved for authorized,
 GitHub-verifiable identities. See
 `docs/adr/0019-ai-agent-attribution.md` and `GIT_WORKFLOW.md`.
-

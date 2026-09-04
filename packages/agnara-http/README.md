@@ -115,9 +115,9 @@ The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 - https://asgi.readthedocs.io/en/latest/specs/main.html
 - https://asgi.readthedocs.io/en/latest/specs/www.html
 
-This is not yet a public HTTP composition API or a complete ASGI/HTTP
-conformance claim. OpenAPI generation, documentation providers and Explorer
-remain separate roadmap work; see RFC 0003, ADR 0018, EPIC 6 and EPIC 8.
+This is not yet a public HTTP composition API or a complete ASGI/HTTP,
+OpenAPI or WCAG conformance claim. Explorer remains separate roadmap work; see
+RFC 0003, ADR 0018, EPIC 6 and EPIC 8.
 
 - Import package: `agnara_http`
 - Depends on: `agnara-core`

@@ -1,0 +1,37 @@
+{
+  "name": "@scalar/api-reference",
+  "version": "1.67.0",
+  "license": "MIT",
+  "source": {
+    "tarball": "https://registry.npmjs.org/@scalar/api-reference/-/api-reference-1.67.0.tgz",
+    "npm_sha1": "9f404834da666eeaa41bc7dccc69b784f20bd997",
+    "npm_integrity": "sha512-GBgsAKP9kmGbaUVZLlCeOK6QNVB/HKwfefvpRviiWsf1Qq3B4LHTrnQuZnfeojfoCqDXu2mldh8G8jSEaycpMA==",
+    "sha256": "8cf1d6fa26f36988ee65e2da373e61f2424f27df90ab7aa2bf0a6d4e9fbc299d",
+    "release_tag": "release-2026-08-28-df40ed7"
+  },
+  "acquisition": {
+    "command": "npm pack @scalar/api-reference@1.67.0 --ignore-scripts",
+    "install_scripts_executed": false,
+    "declared_dependencies_not_installed": 25,
+    "reviewed": "2026-09-03"
+  },
+  "cdn": {
+    "origin": "https://cdn.jsdelivr.net",
+    "root": "https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.67.0/dist/browser",
+    "entrypoint_verified_against_tarball": "2026-09-03"
+  },
+  "runtime": {
+    "vendored_bytes": 3736898,
+    "standalone_bundle_is_self_contained": true,
+    "remote_font_origin_blocked": "https://fonts.scalar.com",
+    "dynamic_entrypoints_disabled": ["agent", "mcp", "pluginUrls"],
+    "telemetry_disabled": true
+  },
+  "assets": {
+    "standalone.js": {
+      "bytes": 3736898,
+      "sha256": "d150e6d9ec333062cb15870704bb9eb6ec6fa99ce3fe5b164a53bc0470e838ee",
+      "sri": "sha384-6c7Vmx+i0yi8gBbltn0x1cavD+zsMGw2xmXXVyacPJLIGBxwaVimW5TW0WiW17Ir"
+    }
+  }
+}

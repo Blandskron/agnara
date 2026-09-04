@@ -143,30 +143,36 @@ Core imports neither Pydantic nor msgspec.
   shared schemas and explicitly publishable metadata. Do not accept a
   handwritten parallel schema as the generated source of truth. Tracking:
   GitHub Issue #135.
-- [ ] E6.8 HTTP conformance tests.
+- [x] E6.8 Add an executable HTTP conformance suite that drives a request
+  matrix through the ASGI entry point and validates every exchange with one
+  shared checker. Tracking: GitHub Issue #137.
 - [?] E6.9 Compare direct ASGI vs minimal Starlette dependency.
 - [ ] E6.10 Benchmark against FastAPI, Starlette and Litestar.
-- [ ] E6.11 Add pinned OpenAPI 3.2 structural/conformance fixtures, including
+- [x] E6.11 Add pinned OpenAPI 3.2 structural/conformance fixtures, including
   stable `operationId`, schema references, security schemes and documented
   unsupported features.
 - [x] E6.12 Define the replaceable documentation-provider contract without a
   required browser UI dependency. Tracking: GitHub Issue #141.
 - [ ] E6.13 Add configurable schema, documentation and Explorer routes with
   deterministic collision detection. Candidate defaults remain provisional.
-- [ ] E6.14 Allow OpenAPI, each human UI, Explorer and interactive try-it to be
-  disabled independently.
-- [ ] E6.15 Implement a Swagger UI provider with pinned self-hosted assets,
-  optional explicit CDN mode and versioned compatibility evidence.
-- [ ] E6.16 Implement a ReDoc provider with the same provider contract and
-  versioned compatibility evidence.
-- [?] E6.17 Spike Scalar and re-evaluate actively maintained alternatives
+  Tracking: GitHub Issue #145.
+- [x] E6.14 Allow OpenAPI, each human UI, Explorer and interactive try-it to be
+  disabled independently. Tracking: GitHub Issue #147.
+- [x] E6.15 Implement a Swagger UI provider with pinned self-hosted assets,
+  optional explicit CDN mode and versioned compatibility evidence. Tracking:
+  GitHub Issue #149.
+- [x] E6.16 Implement a ReDoc provider with the same provider contract and
+  versioned compatibility evidence. Tracking: GitHub Issue #151.
+- [x] E6.17 Spike Scalar and re-evaluate actively maintained alternatives
   against identical OpenAPI 3.2, CSP, accessibility, mobile, dependency and
-  bundle-size fixtures before selecting any default.
-- [ ] E6.18 Add documentation UI browser tests for CSP, XSS payloads, disabled
+  bundle-size fixtures before selecting any default. Tracking: GitHub Issue
+  #153.
+- [x] E6.18 Add documentation UI browser tests for CSP, XSS payloads, disabled
   routes, OAuth redirect handling, authentication state and try-it controls.
-- [ ] E6.19 Enforce the documentation asset policy: pinned local assets by
+  Tracking: GitHub Issue #155.
+- [x] E6.19 Enforce the documentation asset policy: pinned local assets by
   default; exact-version CDN, origin allowlist and integrity/CSP documentation
-  only through explicit opt-in.
+  only through explicit opt-in. Tracking: GitHub Issue #157.
 
 ### HTTP documentation acceptance
 
