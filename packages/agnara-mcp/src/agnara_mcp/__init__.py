@@ -7,6 +7,12 @@ Depends on ``agnara-core``. Must not import a sibling adapter.
 See ``ARCHITECTURE.md`` sections 3 and 4, and EPIC 7 in ``BACKLOG.md``.
 """
 
+from .authorization import (
+    McpAuthenticatedIdentity,
+    McpAuthorization,
+    McpAuthorizationDefinitionError,
+    McpPrincipalMapper,
+)
 from .discovery import build_mcp_discovery_server
 from .protocol import (
     MCP_PROTOCOL_VERSION,
@@ -22,6 +28,10 @@ __all__ = [
     "SUPPORTED_MCP_PROTOCOL_VERSIONS",
     "FrozenMcpTools",
     "Mcp",
+    "McpAuthenticatedIdentity",
+    "McpAuthorization",
+    "McpAuthorizationDefinitionError",
+    "McpPrincipalMapper",
     "McpToolDefinitionError",
     "McpToolExposure",
     "build_mcp_discovery_server",

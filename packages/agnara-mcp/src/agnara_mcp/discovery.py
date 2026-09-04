@@ -17,6 +17,7 @@ from mcp_types import (
 
 from mcp import MCPError
 
+from .authorization import McpAuthorization
 from .protocol import SUPPORTED_MCP_PROTOCOL_VERSIONS
 from .tools import McpToolDefinitionError
 
@@ -65,6 +66,7 @@ def build_mcp_discovery_server(
     name: str,
     version: str,
     instructions: str | None = None,
+    authorization: McpAuthorization | None = None,
 ) -> Server[Any]:
     """Build a discovery-only official SDK server from a startup tool snapshot.
 
@@ -76,6 +78,13 @@ def build_mcp_discovery_server(
     server_version = _required_text(version, field="version")
     server_instructions = _optional_text(instructions, field="instructions")
     snapshot = _snapshot_tools(tools)
+    if authorization is not None:
+        if not isinstance(authorization, McpAuthorization):
+            raise TypeError(
+                "authorization must be McpAuthorization or None, got "
+                f"{type(authorization).__name__}"
+            )
+        authorization._validate_tools(snapshot)
 
     async def list_tools(
         _ctx: ServerRequestContext[Any],
@@ -88,8 +97,13 @@ def build_mcp_discovery_server(
                 message="Invalid tools/list cursor",
                 data=cursor,
             )
+        visible_names = None if authorization is None else authorization.discoverable_tool_names()
         return ListToolsResult(
-            tools=[tool.model_copy(deep=True) for tool in snapshot],
+            tools=[
+                tool.model_copy(deep=True)
+                for tool in snapshot
+                if visible_names is None or tool.name in visible_names
+            ],
             ttl_ms=0,
             cache_scope="private",
         )

@@ -11,6 +11,10 @@ package version `0.0.0` is a development sentinel, not a published release.
 
 ### Added
 
+- Added a request-scoped MCP authorization bridge from official SDK verified
+  identity context to protocol-neutral principals, with credential-free
+  explicit identity mapping, fail-closed redacted errors, isolated static
+  scope filtering, and private immediately stale discovery results ([#170]).
 - Added an official SDK MCP discovery boundary for frozen projected tools,
   including pinned `server/discover` capability advertisement, deterministic
   detached `tools/list` results, conservative private cache hints, and explicit
@@ -256,6 +260,7 @@ package version `0.0.0` is a development sentinel, not a published release.
 [#164]: https://github.com/Blandskron/agnara/issues/164
 [#166]: https://github.com/Blandskron/agnara/issues/166
 [#168]: https://github.com/Blandskron/agnara/issues/168
+[#170]: https://github.com/Blandskron/agnara/issues/170
 [#123]: https://github.com/Blandskron/agnara/issues/123
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133
