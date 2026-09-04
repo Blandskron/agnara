@@ -1,0 +1,1 @@
+"""MCP adapter tests."""

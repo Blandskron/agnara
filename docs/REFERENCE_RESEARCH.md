@@ -1,6 +1,6 @@
 # Reference Research Baseline
 
-Last reviewed: 2026-09-03.
+Last reviewed: 2026-09-04.
 
 This document records external standards and projects that influence Agnara. It is not a dependency list.
 
@@ -370,7 +370,13 @@ limits which origin may supply it.
 
 MCP is a primary protocol adapter target.
 
-The 2026-07-28 specification introduced/strengthened concepts including:
+Reviewed 2026-09-04 for E7.1. Agnara's first MCP adapter line targets the
+authoritative `2026-07-28` specification and pins the official Python SDK to
+`mcp==2.1.1`. PyPI identifies 2.1.1 as the current stable release, published
+through the SDK repository's trusted-publishing workflow, and declares Python
+3.14 support. The SDK's public `LATEST_PROTOCOL_VERSION` is `2026-07-28`.
+
+The `2026-07-28` specification introduced/strengthened concepts including:
 
 - stateless protocol core;
 - Multi Round-Trip Requests;
@@ -380,9 +386,18 @@ The 2026-07-28 specification introduced/strengthened concepts including:
 - extension framework;
 - Tasks as an extension.
 
-Reference:
+The official SDK also negotiates legacy revisions. Agnara deliberately
+advertises only the revision covered by its own future conformance suite;
+SDK capability alone is not framework conformance. Tool projection, schema,
+discovery, authorization, interaction-required behavior, Tasks/MRTR and full
+conformance remain E7.2–E7.8.
 
+References:
+
+- https://modelcontextprotocol.io/specification/2026-07-28
 - https://blog.modelcontextprotocol.io/posts/2026-07-28/
+- https://github.com/modelcontextprotocol/python-sdk/releases/tag/v2.1.1
+- https://pypi.org/project/mcp/2.1.1/
 
 The MCP adapter must pin and test the exact supported specification/SDK version rather than assuming evergreen compatibility.
 

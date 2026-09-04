@@ -135,6 +135,15 @@ structural/conformance fixtures and renderer tests for every documented UI
 provider. A UI accepting the version string is not sufficient evidence that it
 renders new 3.2 semantics correctly.
 
+### Protocol version pins
+
+Every protocol adapter must name exact specification revisions and test them
+against an exact official SDK baseline. A protocol SDK dependency belongs only
+to its adapter package; it must not enter `agnara` core or sibling adapters.
+SDK support for a revision is necessary but insufficient for an Agnara
+conformance claim. Claims require adapter-level fixtures for the implemented
+projection, negotiation and error surface.
+
 ## Benchmark integrity
 
 Never benchmark development mode against optimized competitors.
