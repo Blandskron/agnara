@@ -23,10 +23,11 @@ assert SUPPORTED_MCP_PROTOCOL_VERSIONS == ("2026-07-28",)
 
 This pin establishes the protocol boundary; it is not a claim that the
 unfinished E7 adapter already implements every MCP feature. Tool projection,
-schema mapping, discovery, authorization, interaction-required outcomes,
-Tasks/MRTR behavior and official SDK conformance remain separate backlog
-items. Legacy protocol revisions are not advertised until Agnara has explicit
-compatibility tests for them, even though the SDK can serve older clients.
+schema mapping and discovery are implemented. Authorization,
+interaction-required outcomes, Tasks/MRTR behavior and official SDK
+conformance remain separate backlog items. Legacy protocol revisions are not
+advertised until Agnara has explicit compatibility tests for them, even though
+the SDK can serve older clients.
 
 ## Tool exposures
 
@@ -65,3 +66,32 @@ projection.
 `outputSchema` is intentionally absent for now. Agnara will publish it only
 after the core runtime compiles and validates output annotations; declaring an
 unenforced response contract would make client validation unreliable.
+
+## Discovery
+
+Build a discovery-only official SDK server after exposure and plan compilation:
+
+```python
+from agnara_mcp import build_mcp_discovery_server, project_mcp_tools
+
+projected = project_mcp_tools(tools, plans)
+server = build_mcp_discovery_server(
+    projected,
+    name="users",
+    version="1.0.0",
+    instructions="Use these tools only with an authorized caller.",
+)
+```
+
+The server implements the modern `server/discover` and `tools/list` surfaces.
+It advertises only MCP `2026-07-28` and the tools capability, with no mutable
+list notifications. Tool discovery returns the complete frozen startup
+snapshot in declaration order, so it emits no cursor and rejects any supplied
+cursor as invalid parameters. Responses are detached from the startup state
+and explicitly use `ttlMs: 0` with `cacheScope: private`.
+
+Those cache settings are deliberately conservative. E7.5 will define
+principal-aware authorization and filtering; discoverability and cache scope
+must never be treated as authorization. This discovery-only server does not
+implement `tools/call` and must not be presented as a complete MCP application
+server.

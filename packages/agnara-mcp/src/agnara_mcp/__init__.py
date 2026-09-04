@@ -7,6 +7,7 @@ Depends on ``agnara-core``. Must not import a sibling adapter.
 See ``ARCHITECTURE.md`` sections 3 and 4, and EPIC 7 in ``BACKLOG.md``.
 """
 
+from .discovery import build_mcp_discovery_server
 from .protocol import (
     MCP_PROTOCOL_VERSION,
     MCP_PYTHON_SDK_VERSION,
@@ -23,5 +24,6 @@ __all__ = [
     "Mcp",
     "McpToolDefinitionError",
     "McpToolExposure",
+    "build_mcp_discovery_server",
     "project_mcp_tools",
 ]

@@ -157,6 +157,13 @@ non-JSON fragments at startup, and detach protocol documents from core schema
 state. Optional output contracts must not be published before runtime output
 validation enforces them.
 
+Protocol discovery must advertise only versions and capabilities actually
+served. List results must preserve deterministic compiled order, use explicit
+cache hints, handle cursors according to the pinned protocol, and return data
+detached from immutable startup state. Before principal-aware filtering exists,
+discovery defaults must be private and immediately stale; cache metadata or
+discoverability never substitutes for authorization.
+
 ## Benchmark integrity
 
 Never benchmark development mode against optimized competitors.
