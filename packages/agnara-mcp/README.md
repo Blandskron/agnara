@@ -23,11 +23,11 @@ assert SUPPORTED_MCP_PROTOCOL_VERSIONS == ("2026-07-28",)
 
 This pin establishes the protocol boundary; it is not a claim that the
 unfinished E7 adapter already implements every MCP feature. Tool projection,
-schema mapping and discovery are implemented. Authorization,
-interaction-required outcomes, Tasks/MRTR behavior and official SDK
-conformance remain separate backlog items. Legacy protocol revisions are not
-advertised until Agnara has explicit compatibility tests for them, even though
-the SDK can serve older clients.
+schema mapping, discovery and the request-scoped authorization bridge are
+implemented. Interaction-required outcomes, Tasks/MRTR behavior and official
+SDK conformance remain separate backlog items. Legacy protocol revisions are
+not advertised until Agnara has explicit compatibility tests for them, even
+though the SDK can serve older clients.
 
 ## Tool exposures
 
@@ -72,14 +72,26 @@ unenforced response contract would make client validation unreliable.
 Build a discovery-only official SDK server after exposure and plan compilation:
 
 ```python
-from agnara_mcp import build_mcp_discovery_server, project_mcp_tools
+from agnara.policy import Principal
+from agnara_mcp import McpAuthorization, build_mcp_discovery_server, project_mcp_tools
+
+
+def map_mcp_identity(identity) -> Principal:
+    # The application explicitly decides whether client, subject, or both
+    # represent its actor identity.
+    actor = identity.client_id
+    if identity.subject is not None:
+        actor = f"{actor} acting-for {identity.subject}"
+    return Principal(actor, scopes=identity.scopes)
 
 projected = project_mcp_tools(tools, plans)
+authorization = McpAuthorization(tools, map_mcp_identity)
 server = build_mcp_discovery_server(
     projected,
     name="users",
     version="1.0.0",
     instructions="Use these tools only with an authorized caller.",
+    authorization=authorization,
 )
 ```
 
@@ -90,8 +102,19 @@ snapshot in declaration order, so it emits no cursor and rejects any supplied
 cursor as invalid parameters. Responses are detached from the startup state
 and explicitly use `ttlMs: 0` with `cacheScope: private`.
 
-Those cache settings are deliberately conservative. E7.5 will define
-principal-aware authorization and filtering; discoverability and cache scope
-must never be treated as authorization. This discovery-only server does not
-implement `tools/call` and must not be presented as a complete MCP application
-server.
+`McpAuthorization` reads the official SDK's request-local verified access-token
+context. Anonymous requests receive an `AnonymousPrincipal`; authenticated
+requests pass only immutable, credential-free client, issuer, subject,
+resource and scope facts to the application's explicit mapper. Bearer tokens
+and arbitrary claims are never passed to it. The SDK token verifier remains
+responsible for token validity, expiry, resource/audience and trust decisions.
+The mapper is a trusted, request-safe application boundary and must explicitly
+define actor/delegation semantics instead of assuming that an OAuth client and
+subject are interchangeable.
+
+`tools/list` includes an exposure only when all statically declared capability
+scopes are present on the mapped principal. Results retain conservative
+`ttlMs: 0` and `cacheScope: private` hints. This is visibility filtering, not a
+substitute for policy evaluation at invocation time. This discovery-only
+server does not implement `tools/call` and must not be presented as a complete
+MCP application server.

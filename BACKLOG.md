@@ -201,7 +201,7 @@ Core imports neither Pydantic nor msgspec.
   `Tool` definitions, excluding protected parameters. Tracking: GitHub Issue
   #166.
 - [x] E7.4 Discovery. Tracking: GitHub Issue #168.
-- [ ] E7.5 Authorization integration.
+- [x] E7.5 Authorization integration. Tracking: GitHub Issue #170.
 - [ ] E7.6 Canonical interaction-required mapping to MCP.
 - [ ] E7.7 Task/MRTR research.
 - [ ] E7.8 Official SDK conformance tests.

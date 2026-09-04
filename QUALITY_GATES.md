@@ -160,9 +160,12 @@ validation enforces them.
 Protocol discovery must advertise only versions and capabilities actually
 served. List results must preserve deterministic compiled order, use explicit
 cache hints, handle cursors according to the pinned protocol, and return data
-detached from immutable startup state. Before principal-aware filtering exists,
-discovery defaults must be private and immediately stale; cache metadata or
-discoverability never substitutes for authorization.
+detached from immutable startup state. Authentication bridges must consume
+only verifier-approved request context, keep bearer credentials and arbitrary
+claims out of application mappers, require explicit actor/subject semantics,
+and fail closed with redacted protocol errors. Scope-filtered discovery must
+remain request-isolated, private and immediately stale; cache metadata or
+discoverability never substitutes for invocation authorization.
 
 ## Benchmark integrity
 

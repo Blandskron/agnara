@@ -389,8 +389,8 @@ The `2026-07-28` specification introduced/strengthened concepts including:
 The official SDK also negotiates legacy revisions. Agnara deliberately
 advertises only the revision covered by its own future conformance suite;
 SDK capability alone is not framework conformance. Tool projection, schema,
-discovery, authorization, interaction-required behavior, Tasks/MRTR and full
-conformance remain E7.2–E7.8.
+discovery and the authorization bridge are now implemented; interaction-required
+behavior, Tasks/MRTR and full conformance remain later E7 work.
 
 References:
 
@@ -417,8 +417,7 @@ handlers actually registered, and represents tool lists with
 discovery boundary returns one complete immutable startup snapshot, it emits
 no cursor and rejects every caller-supplied cursor as invalid rather than
 silently assigning it meaning. Discovery results use an immediately stale,
-private cache hint until E7.5 defines authorization-aware visibility and cache
-partitioning.
+private cache hint.
 
 Additional references:
 
@@ -427,6 +426,28 @@ Additional references:
 - https://modelcontextprotocol.io/specification/2026-07-28/server/utilities/pagination
 - https://modelcontextprotocol.io/specification/2026-07-28/server/utilities/caching
 - https://github.com/modelcontextprotocol/python-sdk/tree/v2.1.1
+
+Reviewed 2026-09-04 for E7.5. The official SDK's bearer-auth middleware
+validates a token through the configured `TokenVerifier`, then exposes its
+`AccessToken` only through request-local authorization context. Its public
+identity helper separates OAuth `client_id`, issuer and subject; Agnara does
+not silently collapse those meanings into a core actor. Instead, an explicit
+application mapper receives an immutable value containing only client,
+issuer, subject, resource and scopes. Raw bearer credentials and arbitrary
+claims do not cross that boundary, mapper failures become redacted internal
+protocol errors, and concurrent requests do not share principals.
+
+Discovery applies only the capability's statically declared scope subset to
+the mapped principal. It preserves declaration order and private, immediately
+stale caching. This reduces unauthorized metadata disclosure but is not full
+policy evaluation and cannot authorize a future `tools/call`; invocation must
+evaluate the core policy independently.
+
+Authorization references:
+
+- https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization
+- https://github.com/modelcontextprotocol/python-sdk/blob/v2.1.1/src/mcp/server/auth/provider.py
+- https://github.com/modelcontextprotocol/python-sdk/blob/v2.1.1/src/mcp/server/auth/middleware/auth_context.py
 
 ## A2A
 
