@@ -286,8 +286,12 @@ Core imports neither Pydantic nor msgspec.
   a withheld field rather than printing its declared default. It is not
   `llms.txt`, which E8.12 still has to conclude on. Recorded by ADR 0051.
   Tracking: GitHub Issue #200.
-- [ ] E8.14 Validate architecture metadata and cross-surface snapshot
-  consistency.
+- [x] E8.14 Validate architecture metadata and cross-surface snapshot
+  consistency. `ARCHITECTURE.md`'s concept list is now read out of the document
+  and checked against the model, no descriptor field can be published without a
+  named decision, and six surfaces — four CLI renderings, the HTTP discovery
+  endpoint and MCP `tools/list` — are asserted to agree for one viewer.
+  Tracking: GitHub Issue #202.
 
 ### Introspection dependency order
 
