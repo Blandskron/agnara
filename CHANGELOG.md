@@ -13,7 +13,11 @@ without being published. See the `0.1.0a2` scope note below.
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- Added bounded MCP SDK conformance coverage for discovery, malformed
+  pagination, unsupported calls and concurrent request identity/cache isolation,
+  with an explicit coverage matrix and exclusions ([#181]).
 
 ## [0.1.0a2] - 2026-09-04
 
@@ -327,3 +331,4 @@ under `0.1.0a2` instead.
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133
 [#135]: https://github.com/Blandskron/agnara/issues/135
+[#181]: https://github.com/Blandskron/agnara/issues/181

@@ -510,6 +510,13 @@ client input, so neither can become `ConfirmationEvidence`. A resumption round
 must still evaluate the core policy and call `ConfirmationVerifier.verify`
 with capability identity, invocation and principal. Recorded as ADR 0042.
 
+E7.8 exercises the pinned SDK's modern ClientSession/dispatcher boundary with
+real Agnara projections, malformed requests and concurrent verified identity
+contexts. Its in-process connection uses a direct dispatcher pair rather than
+network transport or JSON-RPC framing. The bounded coverage and unsupported
+surfaces are recorded in `docs/MCP_CONFORMANCE.md`; this is compatibility
+evidence, not full protocol certification.
+
 Task and MRTR references:
 
 - https://py.sdk.modelcontextprotocol.io/handlers/multi-round-trip/
