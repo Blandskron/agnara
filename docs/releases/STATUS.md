@@ -2,7 +2,7 @@
 
 Generated from `docs/releases/release-status.json` and verified by
 `uv run python scripts/check_release_readiness.py`.
-Assessed on **2026-09-05** against commit **`f7f53cd`**.
+Assessed on **2026-09-05** against commit **`f16f6fc`**.
 
 ```text
 Current target      0.1.0a3  (Integration Alpha)
@@ -21,14 +21,14 @@ The readiness percentage is **informational only**. A release is ready when
 
 | Gate | Kind | Evidence |
 | --- | --- | --- |
-| Full supported test suite passes | evidence | `uv run pytest` — 2003 passed, 31 skipped (browser-only, run in their own CI lane) |
+| Full supported test suite passes | evidence | `uv run pytest` — 2053 passed, 31 skipped (browser-only, run in their own CI lane) |
 | Package build succeeds | evidence | `uv build --package agnara` — wheel and sdist produced |
 | Clean-environment installation smoke test succeeds | evidence | wheel installed into a fresh 3.14.4 venv; `agnara` imports from `site-packages`, not the checkout |
 | Python 3.14 baseline verified | automated | all seven packages declare `requires-python >= 3.14`; CI asserts the interpreter |
 | HTTP integration tests pass | evidence | 691 HTTP + 25 cross-surface integration tests; 31 real-browser cases in the required CI lane |
 | MCP integration and conformance tests pass | evidence | 157 tests against pinned `mcp==2.1.1`, including `tests/mcp/test_sdk_conformance.py` |
 | CLI smoke tests pass | evidence | 200 CLI tests; `agnara --version` and `--help` verified |
-| No known release-blocking regression | evidence | 0 open issues; CI and Agent Coordination green on `f7f53cd` |
+| No known release-blocking regression | evidence | 0 open issues; CI green on `develop`; all nine required checks pass on PR #236 |
 | Changelog accurately describes changes since `0.1.0a2` | automated | 29 entries under `[Unreleased]`; `tests/architecture/test_release_governance.py` enforces structure and references |
 | Version references are internally consistent | automated | all seven first-party packages declare `0.1.0a2` |
 
@@ -101,6 +101,16 @@ decision.
 does not stop when `a3` closes.
 
 ---
+
+## Evidence freshness
+
+Evidence declares the paths it covers and expires when one of them changes
+between its recorded commit and `HEAD`. Adding a test under `tests/` correctly
+expires the full-suite result; it does not touch the MCP, HTTP, CLI or
+packaging results, because none of them covers that file.
+
+Evidence that declares no coverage expires on any commit. Refusing to guess is
+the safe answer when nothing says what a result depended on.
 
 ## How to reproduce this
 

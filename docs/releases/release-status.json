@@ -5,7 +5,7 @@
   "previous_release": "0.1.0a2",
   "status": "IN_PROGRESS",
   "assessed_on": "2026-09-05",
-  "assessed_commit": "f7f53cdd74ea0f8728e5b5d0e6c08ce8230734c5",
+  "assessed_commit": "f16f6fc02a5650766d804043af38007617107da4",
   "blocked_reason": null,
   "notes": [
     "Status is recomputed by scripts/check_release_readiness.py. Automated gates are re-derived from the repository and are never read from this file.",
@@ -20,9 +20,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "f7f53cdd74ea0f8728e5b5d0e6c08ce8230734c5",
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
         "command": "uv run pytest",
-        "result": "2003 passed, 31 skipped (browser-only, run in their own CI lane)",
+        "result": "2053 passed, 31 skipped (browser-only, run in their own CI lane)",
         "ci": "https://github.com/Blandskron/agnara/actions/workflows/ci.yml",
         "paths": [
           "tests"
@@ -42,7 +42,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "f7f53cdd74ea0f8728e5b5d0e6c08ce8230734c5",
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
         "command": "uv build --package agnara",
         "result": "built agnara-0.1.0a2-py3-none-any.whl and agnara-0.1.0a2.tar.gz",
         "paths": [
@@ -63,7 +63,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "f7f53cdd74ea0f8728e5b5d0e6c08ce8230734c5",
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
         "command": "uv venv --python 3.14 && uv pip install <wheel> && python -c 'import agnara'",
         "result": "agnara 0.1.0a2 imported from site-packages on CPython 3.14.4; public API imports succeed",
         "note": "The same check runs in release.yml 'Validate built artifacts', which additionally asserts the wheel is not shadowed by the checkout.",
@@ -92,7 +92,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "f7f53cdd74ea0f8728e5b5d0e6c08ce8230734c5",
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
         "command": "uv run pytest tests/http tests/integration",
         "result": "691 HTTP tests and 25 cross-surface integration tests collected and passing; 31 real-browser cases run in the required 'Documentation browsers' CI lane",
         "paths": [
@@ -114,7 +114,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "f7f53cdd74ea0f8728e5b5d0e6c08ce8230734c5",
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
         "command": "uv run pytest tests/mcp",
         "result": "157 tests passing against the pinned official SDK mcp==2.1.1, including tests/mcp/test_sdk_conformance.py",
         "paths": [
@@ -135,7 +135,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "f7f53cdd74ea0f8728e5b5d0e6c08ce8230734c5",
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
         "command": "uv run pytest tests/cli && uv run agnara --version && uv run agnara --help",
         "result": "200 CLI tests pass; 'agnara 0.1.0a2' and the command list render, covering apps, app, inspect, graph, project and schema",
         "paths": [
@@ -156,9 +156,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "f7f53cdd74ea0f8728e5b5d0e6c08ce8230734c5",
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
         "command": "gh issue list --state open && gh run list --branch develop",
-        "result": "0 open issues; CI and Agent Coordination Tests both success on f7f53cd",
+        "result": "0 open issues; CI green on develop; all nine required checks pass on PR #236",
         "paths": [
           "BACKLOG.md"
         ],
@@ -205,7 +205,7 @@
       "mandatory": false,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "f7f53cdd74ea0f8728e5b5d0e6c08ce8230734c5",
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
         "command": "uv run python benchmarks/runtime_invocation.py",
         "result": "four recorded baselines: runtime invocation, HTTP frameworks, MCP tool invocation and telemetry overhead",
         "paths": [
