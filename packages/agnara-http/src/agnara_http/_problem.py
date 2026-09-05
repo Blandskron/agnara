@@ -73,11 +73,17 @@ class _TransportFailure(StrEnum):
     INVALID_INPUT = "invalid_input"
     CONTENT_TOO_LARGE = "content_too_large"
     UNSUPPORTED_MEDIA_TYPE = "unsupported_media_type"
+    #: A surface that requires an identified viewer received none. It shares
+    #: its code, status and title with the capability failure of the same name
+    #: because the semantics coincide, which is the rule `_problem_codes`
+    #: already documents.
+    UNAUTHENTICATED = "unauthenticated"
 
 
 _TRANSPORT_PROBLEMS: Mapping[_TransportFailure, _ProblemMapping] = MappingProxyType(
     {
         _TransportFailure.INVALID_INPUT: _ProblemMapping(400, "Invalid Input"),
+        _TransportFailure.UNAUTHENTICATED: _ProblemMapping(401, "Unauthenticated"),
         _TransportFailure.NOT_FOUND: _ProblemMapping(404, "Not Found"),
         _TransportFailure.METHOD_NOT_ALLOWED: _ProblemMapping(405, "Method Not Allowed"),
         _TransportFailure.CONTENT_TOO_LARGE: _ProblemMapping(413, "Content Too Large"),
