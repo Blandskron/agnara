@@ -7,6 +7,7 @@ from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 from opentelemetry.metrics import NoOpMeterProvider
@@ -53,7 +54,7 @@ def measurements(reader: InMemoryMetricReader) -> dict[str, Any]:
 
 
 def terminal(outcome: str, duration: int = 250_000_000) -> InvocationTerminalEvent:
-    return InvocationTerminalEvent(CAPABILITY, "secret-tracking-id", duration, outcome)
+    return InvocationTerminalEvent(CAPABILITY, "secret-tracking-id", duration, outcome, uuid4().hex)
 
 
 def plan_for(hook: Any, handler: Any) -> ExecutionPlan:
@@ -78,7 +79,7 @@ def context_for(plan: ExecutionPlan, deadline: float | None = None) -> Execution
 )
 def test_exact_units_values_and_attribute_allowlist(recorded: Any, outcome: str) -> None:
     hook, reader = recorded
-    hook.on_invocation_start(InvocationStartEvent(CAPABILITY, "secret-tracking-id"))
+    hook.on_invocation_start(InvocationStartEvent(CAPABILITY, "secret-tracking-id", uuid4().hex))
     assert reader.get_metrics_data() is None
     hook.on_invocation_terminal(terminal(outcome))
     metrics = measurements(reader)

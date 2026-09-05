@@ -353,7 +353,19 @@ expanding that first PR into a complete frontend.
   ADR 0054, which remains Proposed and does not claim maintainer approval.
   Spans, transport links, conventions and benchmarks remain E9.3-E9.6.
   Tracking: GitHub Issue #216.
-- [ ] E9.3 Common capability spans.
+- [x] E9.3 Common capability spans. Core now generates an opaque
+  `invocation_id` once per invocation and repeats it on the terminal event,
+  which is the correlation contract ADR 0054 deferred; a caller `tracking_id`
+  is still never a storage key. `OpenTelemetryTracingHook` opens one span per
+  invocation over an application-supplied tracer, ends it on the matching
+  terminal, maps outcomes to a closed status vocabulary, and derives nesting
+  from the OpenTelemetry context so a nested invocation is a child and sibling
+  tasks are not. No tracking ID, payload, result, exception text or invocation
+  identity is exported, and the correlation map is released by every terminal
+  event. 15 core identity cases and 30 real-SDK 1.44.0 span cases, plus a new
+  architecture rule that core declares no tracing vocabulary. Recorded in
+  ADR 0055, which remains Proposed. Transport linking, semantic conventions
+  and no-op cost remain E9.4-E9.6. Tracking: GitHub Issue #219.
 - [ ] E9.4 transport span linking.
 - [ ] E9.5 MCP/GenAI semantic convention compatibility.
 - [ ] E9.6 no-op telemetry cost benchmark.

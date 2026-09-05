@@ -68,6 +68,11 @@ events to spans needs a separately reviewed execution-context contract;
 defer it to E9.3/E9.4. Emitting start counters adds partial-lifecycle metrics
 without a current requirement; keep this first bridge terminal-only.
 
+E9.3 settled that deferred contract: the runtime now supplies an opaque
+`invocation_id` on both events, and ADR 0055 builds spans on it. Nothing in
+this bridge changes. Metrics still need no correlation, the start callback
+stays empty, and the two hooks compose on one plan.
+
 This is a bounded initial E9.2 implementation. Traces, span linking,
 MCP/GenAI compatibility and no-op cost evidence remain E9.3-E9.6. Proposed
 status does not claim maintainer architectural approval.

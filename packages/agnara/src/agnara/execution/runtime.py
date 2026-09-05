@@ -7,6 +7,7 @@ import contextlib
 import inspect
 import time
 from typing import Any
+from uuid import uuid4
 
 from agnara.errors import (
     InteractionRequiredError,
@@ -52,9 +53,14 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
         raise InvocationError(f"invocation payload supplies runtime-owned parameter(s): {rendered}")
 
     start_ns = time.monotonic_ns()
+    # Observers need a key that pairs this start with its terminal event.
+    # A caller-supplied tracking ID cannot serve: it is optional, repeatable
+    # across invocations and attacker-controlled on a remote transport.
+    invocation_id = uuid4().hex
     start_event = InvocationStartEvent(
         capability_id=plan.definition.id,
         tracking_id=invocation.metadata.get("tracking_id"),
+        invocation_id=invocation_id,
     )
     for hook in plan.hooks:
         with contextlib.suppress(Exception):
@@ -81,14 +87,11 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
             tracking_id=invocation.metadata.get("tracking_id"),
             duration_ns=time.monotonic_ns() - start_ns,
             outcome=outcome,
+            invocation_id=invocation_id,
         )
         for hook in plan.hooks:
             with contextlib.suppress(Exception):
                 hook.on_invocation_terminal(terminal_event)
-    if context.deadline is None:
-        return await _execute(plan, context)
-    async with asyncio.timeout_at(context.deadline):
-        return await _execute(plan, context)
 
 
 async def invoke_result[T](

@@ -15,6 +15,10 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Fixed
 
+- Removed unreachable code at the end of `agnara.execution.runtime.invoke`.
+  Four statements followed a `try` block whose every branch returned, so they
+  could never execute; this is a readability correction with no behavior
+  change ([#219]).
 - Explorer error responses now prevent storage with `private, no-store` and
   include the same security headers as its pages, preserving authentication
   challenges and method information ([#208]).
@@ -23,7 +27,25 @@ without being published. See the `0.1.0a2` scope note below.
   hook collection, so later changes to the source list cannot change a
   compiled plan's observers ([#211]).
 
+### Changed
+
+- **Breaking (pre-1.0).** `InvocationStartEvent` and `InvocationTerminalEvent`
+  now carry a required `invocation_id` that the execution runtime generates
+  once per invocation and repeats on the terminal event. It is the supported
+  way to pair the two events: a caller `tracking_id` is optional, repeatable
+  and caller-controlled, so it was never a safe key. The field is appended to
+  each event, so code constructing one positionally fails with a missing
+  argument rather than binding a value to the wrong field; supply the identity
+  or construct by keyword. Hooks that only read events are unaffected ([#219]).
+
 ### Added
+
+- Added `OpenTelemetryTracingHook` in `agnara-telemetry`, which opens one span
+  per capability invocation over an application-supplied tracer and ends it on
+  the matching terminal event. A nested invocation becomes a child span, while
+  invocations in sibling tasks stay unrelated. Only the capability identity and
+  a closed outcome vocabulary are recorded; provider, processor, exporter,
+  flush and shutdown remain owned by the application ([#219]).
 
 - Authorized the Anthropic Claude agent identity for Git attribution.
   `.github/ai-agent-identities.toml` now registers `claude[bot]`, and AGENTS.md
