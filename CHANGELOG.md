@@ -36,6 +36,9 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Changed
 
+- `agnara project create` now reports what it wrote with the same renderer
+  `--dry-run` uses, so a preview and a real run cannot describe the same plan
+  differently ([#233]).
 - An invocation whose compiled plan registers no telemetry hook no longer
   builds lifecycle events. Identity generation, tracking-ID resolution, clock
   reads and event construction are skipped when nothing can observe them,
@@ -57,6 +60,14 @@ without being published. See the `0.1.0a2` scope note below.
   or construct by keyword. Hooks that only read events are unaffected ([#219]).
 
 ### Added
+
+- Added `agnara app create`, which generates a bounded context in the
+  modular-hexagonal layout and declares it in `agnara.toml`. The manifest is
+  appended to, so its comments and ordering survive; an already-declared app,
+  an invalid manifest and a missing one are refused before anything is written.
+  The generated app runs: its capabilities register, compile and invoke against
+  the generated outbound adapter. It does not edit `bootstrap.py`, and prints
+  the lines to add instead ([#233]).
 
 - Added `agnara project create`, the first generator. It writes a composition
   root, a manifest, a package layout and tests, from a plan built before
@@ -495,3 +506,4 @@ under `0.1.0a2` instead.
 [#227]: https://github.com/Blandskron/agnara/issues/227
 [#229]: https://github.com/Blandskron/agnara/issues/229
 [#231]: https://github.com/Blandskron/agnara/issues/231
+[#233]: https://github.com/Blandskron/agnara/issues/233

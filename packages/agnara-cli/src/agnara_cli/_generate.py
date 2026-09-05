@@ -14,6 +14,7 @@ disagree with the real one. See ADR 0060.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
@@ -42,16 +43,29 @@ class GenerationError(Exception):
 
 @dataclass(frozen=True, slots=True)
 class FileAction:
-    """One file a plan would write, and whether something is already there."""
+    """One file a plan would write, and whether something is already there.
+
+    ``intended_update`` separates the two reasons a file can already exist. A
+    generator that means to edit project metadata — ``agnara app create``
+    adding a table to ``agnara.toml`` — declares that intent, and the existing
+    file is not a conflict. A file the generator meant to create and found
+    already there is a conflict, and is refused.
+    """
 
     path: PurePosixPath
     contents: str
     exists: bool
+    intended_update: bool = False
 
     @property
     def verb(self) -> str:
         """`docs/CLI_SPEC.md` renders a plan as CREATE and UPDATE lines."""
-        return "UPDATE" if self.exists else "CREATE"
+        return "UPDATE" if self.exists or self.intended_update else "CREATE"
+
+    @property
+    def is_conflict(self) -> bool:
+        """An existing file this action was not authorized to replace."""
+        return self.exists and not self.intended_update
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,28 +77,47 @@ class GenerationPlan:
 
     @property
     def conflicts(self) -> tuple[FileAction, ...]:
-        """Actions that would replace an existing file."""
-        return tuple(action for action in self.actions if action.exists)
+        """Actions that would replace an existing file without authorization."""
+        return tuple(action for action in self.actions if action.is_conflict)
 
     def resolve(self, action: FileAction) -> Path:
         """The absolute path one action writes to."""
         return self.root.joinpath(*action.path.parts)
 
 
-def build_plan(root: Path, files: dict[str, str]) -> GenerationPlan:
+def build_plan(
+    root: Path,
+    files: dict[str, str],
+    *,
+    updates: Iterable[str] = (),
+) -> GenerationPlan:
     """Turn rendered file contents into a plan, sorted for determinism.
 
     Sorting by path is what makes two runs with the same inputs produce the
     same plan, the same rendering and the same JSON, regardless of the order a
     template happened to build its mapping in.
+
+    ``updates`` names the paths the generator intends to rewrite, so an edit to
+    project metadata is not reported as a conflict with itself.
     """
+    intended = set(updates)
+    unknown = sorted(intended - set(files))
+    if unknown:
+        raise GenerationError(f"declared an update for a file it does not write: {unknown}")
     actions = []
     for relative in sorted(files):
         path = PurePosixPath(relative)
         if path.is_absolute() or any(part == ".." for part in path.parts):
             raise GenerationError(f"refusing to generate outside the target: {relative!r}")
         target = root.joinpath(*path.parts)
-        actions.append(FileAction(path=path, contents=files[relative], exists=target.exists()))
+        actions.append(
+            FileAction(
+                path=path,
+                contents=files[relative],
+                exists=target.exists(),
+                intended_update=relative in intended,
+            )
+        )
     return GenerationPlan(root=root, actions=tuple(actions))
 
 
@@ -110,6 +143,7 @@ def plan_json(plan: GenerationPlan) -> dict[str, object]:
                 "path": str(action.path),
                 "action": action.verb.lower(),
                 "exists": action.exists,
+                "intended_update": action.intended_update,
             }
             for action in plan.actions
         ],

@@ -110,11 +110,12 @@ def run_project_create(arguments: argparse.Namespace) -> str:
     apply_plan(plan, overwrite=arguments.overwrite)
     if arguments.json:
         return json.dumps(plan_json(plan), indent=2, sort_keys=True)
-    written = "\n".join(f"{action.verb} {plan.root.name}/{action.path}" for action in plan.actions)
+    # The same renderer the dry run used, so what was previewed and what
+    # was done are reported identically rather than by two similar strings.
     return (
-        f"{written}\n\n"
-        f"Created {plan.root.name}. Next:\n"
-        f"  cd {plan.root.name}\n"
-        f"  uv sync\n"
-        f"  uv run pytest"
+        render_plan(plan)
+        + f"\n\nCreated {plan.root.name}. Next:\n"
+        + f"  cd {plan.root.name}\n"
+        + "  uv sync\n"
+        + "  uv run pytest"
     )
