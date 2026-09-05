@@ -523,6 +523,26 @@ failures use isError tool content without details, and interaction requirements
 reuse the strict E7.6 mapper. The pinned SDK validates the serialized results;
 this does not implement tools/call or extend the transport support claim.
 
+Reviewed 2026-09-05 for E7.8b and E7.9. E7.8b implements `tools/call` and
+answers the open question above: discovery filtering cannot authorize
+invocation, and a compiled plan carries no scope policy because declared
+scopes are metadata (ADR 0008). The dispatcher therefore evaluates core's
+`ScopePolicy` for the capability's declared scopes before any effect, in
+addition to whatever policies the plan already carries. `requestState` and
+`inputResponses` are refused with `INVALID_PARAMS` rather than ignored, so no
+unverified resumption state is accepted while ADR 0042's boundary remains
+unimplemented. Recorded as ADR 0044.
+
+E7.9 compares that dispatcher with the pinned SDK's `MCPServer` (the v1
+`FastMCP` module now raises on import). Two findings shaped the harness. The
+SDK runs a synchronous tool through `anyio.to_thread.run_sync`, so a
+sync-only comparison measures a worker-thread hop rather than dispatch;
+scenarios are therefore split by handler kind. And the official client
+revalidates a result against the tool's `outputSchema`, which only `MCPServer`
+publishes, so the end-to-end boundary is not doing identical work for both.
+Both are recorded in `docs/benchmarks/mcp-tool-invocation.md` rather than
+normalized away.
+
 Task and MRTR references:
 
 - https://py.sdk.modelcontextprotocol.io/handlers/multi-round-trip/
