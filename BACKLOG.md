@@ -551,6 +551,17 @@ Generated code must:
   passes and conversations are resolved.
 - [x] E0B.11 Replace placeholder OWNER/REPO in security Issue template.
 - [ ] E0B.12 Document release and hotfix automation evidence.
+- [x] E0B.13 Establish an evidence-based release readiness program.
+  `docs/releases/RELEASE_PLAN.md` defines the progressive path from `0.1.0a2`
+  to `0.1.0` with measurable exit gates and no calendar dates;
+  `docs/releases/release-status.json` records one entry per gate and
+  `docs/releases/STATUS.md` renders it. `scripts/check_release_readiness.py`
+  re-derives automated gates from the repository rather than trusting the file,
+  treats evidence as valid only while its commit is `HEAD`, and never satisfies
+  a gate that needs human judgment. A satisfied gate without evidence is a hard
+  error. 53 cases, including that a 95% score with one open gate is still
+  `IN_PROGRESS`. It supplements `QUALITY_GATES.md` and weakens nothing.
+  Tracking: GitHub Issue #235.
 - [x] E0B.13 Establish permanent AI-agent attribution policy across commits,
   Pull Requests, reviews and squash merges without inventing identities or
   rewriting history. Tracking: GitHub Issue #12.

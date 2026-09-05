@@ -1,0 +1,222 @@
+{
+  "schema_version": 1,
+  "current_target": "0.1.0a3",
+  "next_target": "0.1.0a4",
+  "previous_release": "0.1.0a2",
+  "status": "IN_PROGRESS",
+  "assessed_on": "2026-09-05",
+  "assessed_commit": "f16f6fc02a5650766d804043af38007617107da4",
+  "blocked_reason": null,
+  "notes": [
+    "Status is recomputed by scripts/check_release_readiness.py. Automated gates are re-derived from the repository and are never read from this file.",
+    "Evidence expires when a file it declares under 'covers' changes between its recorded commit and HEAD. Evidence with no 'covers' expires on any commit.",
+    "This file records measurement only. It authorizes no tag, release or upload."
+  ],
+  "gates": [
+    {
+      "id": "test-suite",
+      "title": "Full supported test suite passes",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
+        "command": "uv run pytest",
+        "result": "2053 passed, 31 skipped (browser-only, run in their own CI lane)",
+        "ci": "https://github.com/Blandskron/agnara/actions/workflows/ci.yml",
+        "paths": [
+          "tests"
+        ],
+        "covers": [
+          "packages",
+          "tests",
+          "pyproject.toml",
+          "uv.lock"
+        ]
+      }
+    },
+    {
+      "id": "packaging-build",
+      "title": "Package build succeeds",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
+        "command": "uv build --package agnara",
+        "result": "built agnara-0.1.0a2-py3-none-any.whl and agnara-0.1.0a2.tar.gz",
+        "paths": [
+          ".github/workflows/release.yml"
+        ],
+        "covers": [
+          "packages",
+          "pyproject.toml",
+          "uv.lock",
+          ".github/workflows/release.yml"
+        ]
+      }
+    },
+    {
+      "id": "install-smoke",
+      "title": "Clean-environment installation smoke test succeeds",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
+        "command": "uv venv --python 3.14 && uv pip install <wheel> && python -c 'import agnara'",
+        "result": "agnara 0.1.0a2 imported from site-packages on CPython 3.14.4; public API imports succeed",
+        "note": "The same check runs in release.yml 'Validate built artifacts', which additionally asserts the wheel is not shadowed by the checkout.",
+        "paths": [
+          ".github/workflows/release.yml"
+        ],
+        "covers": [
+          "packages",
+          "pyproject.toml",
+          "uv.lock",
+          ".github/workflows/release.yml"
+        ]
+      }
+    },
+    {
+      "id": "python-baseline",
+      "title": "Python 3.14 baseline verified",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "SATISFIED"
+    },
+    {
+      "id": "http-integration",
+      "title": "HTTP integration tests pass",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
+        "command": "uv run pytest tests/http tests/integration",
+        "result": "691 HTTP tests and 25 cross-surface integration tests collected and passing; 31 real-browser cases run in the required 'Documentation browsers' CI lane",
+        "paths": [
+          "tests/http",
+          "tests/integration"
+        ],
+        "covers": [
+          "packages/agnara",
+          "packages/agnara-http",
+          "tests/http",
+          "tests/integration"
+        ]
+      }
+    },
+    {
+      "id": "mcp-conformance",
+      "title": "MCP integration and conformance tests pass",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
+        "command": "uv run pytest tests/mcp",
+        "result": "157 tests passing against the pinned official SDK mcp==2.1.1, including tests/mcp/test_sdk_conformance.py",
+        "paths": [
+          "tests/mcp/test_sdk_conformance.py",
+          "docs/MCP_CONFORMANCE.md"
+        ],
+        "covers": [
+          "packages/agnara",
+          "packages/agnara-mcp",
+          "tests/mcp"
+        ]
+      }
+    },
+    {
+      "id": "cli-smoke",
+      "title": "CLI smoke tests pass",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
+        "command": "uv run pytest tests/cli && uv run agnara --version && uv run agnara --help",
+        "result": "200 CLI tests pass; 'agnara 0.1.0a2' and the command list render, covering apps, app, inspect, graph, project and schema",
+        "paths": [
+          "tests/cli",
+          "docs/CLI_SPEC.md"
+        ],
+        "covers": [
+          "packages/agnara",
+          "packages/agnara-cli",
+          "tests/cli"
+        ]
+      }
+    },
+    {
+      "id": "no-blocking-regression",
+      "title": "No known release-blocking regression",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
+        "command": "gh issue list --state open && gh run list --branch develop",
+        "result": "0 open issues; CI green on develop; all nine required checks pass on PR #236",
+        "paths": [
+          "BACKLOG.md"
+        ],
+        "covers": [
+          "packages",
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "docs-reflect-implementation",
+      "title": "Public documentation reflects the implementation",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "README.md, packages/agnara/README.md and examples/quickstart.py describe the 0.1.0a2 published surface and pin 'pip install agnara==0.1.0a2'. The subsystems added since a2 are documented in docs/ and in ADRs 0051-0061, but the user-facing entry points still frame the project at a2. docs/MAINTAINERS_RELEASE.md places version-reference updates on the release branch, so this gate closes during release preparation."
+    },
+    {
+      "id": "changelog-accurate",
+      "title": "Changelog accurately describes changes since 0.1.0a2",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "SATISFIED"
+    },
+    {
+      "id": "security-release-checks",
+      "title": "Security and release checks required by QUALITY_GATES.md",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "QUALITY_GATES.md scopes threat model, dependency audit, secret scanning, static analysis and a private reporting channel to 'before any release beyond experimental alpha'. Observed state on 2026-09-05: security boundary tests EXIST (Explorer authorization and cache-control, MCP authorization, policy ordering, redaction); threat model ABSENT (BACKLOG EPIC 10 lists it unchecked); dependency audit ABSENT (no tooling configured); secret scanning DISABLED (GitHub repository setting); static analysis ABSENT (no CodeQL workflow); private vulnerability reporting NOT CONFIGURED (SECURITY.md itself says to configure it before public release). Whether 0.1.0a3 remains inside the experimental-alpha exemption is a maintainer decision this tool must not make."
+    },
+    {
+      "id": "version-consistency",
+      "title": "Version references are internally consistent",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "SATISFIED"
+    },
+    {
+      "id": "benchmarks-published",
+      "title": "Baseline benchmarks published",
+      "kind": "evidence",
+      "mandatory": false,
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
+        "command": "uv run python benchmarks/runtime_invocation.py",
+        "result": "four recorded baselines: runtime invocation, HTTP frameworks, MCP tool invocation and telemetry overhead",
+        "paths": [
+          "docs/benchmarks",
+          "benchmarks"
+        ],
+        "covers": [
+          "benchmarks",
+          "docs/benchmarks"
+        ]
+      }
+    }
+  ]
+}
