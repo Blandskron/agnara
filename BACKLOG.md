@@ -440,7 +440,20 @@ complete because the alpha published only the `agnara` core distribution. See
 
 ## EPIC 0A — Project/app scaffolding
 
-- [ ] E0A.1 Implement `agnara project create`.
+- [x] E0A.1 Implement `agnara project create`. Generates the tree
+  `docs/CLI_SPEC.md` specifies through a plan built without touching the
+  filesystem, applied in a second step, so `--dry-run` and `--json` render the
+  same plan the real run writes and cannot disagree with it. A conflict is
+  refused before the first write, naming every path, so a refused run leaves
+  the directory exactly as it was; `--overwrite` authorizes replacement for one
+  run and there is never a prompt. Output is byte-identical across runs and
+  uses `
+` endings on every platform. The generated project depends on
+  `agnara` alone, its manifest is accepted by the E0A.2 reader, its own tests
+  pass, and `agnara apps` and `agnara inspect` both read it. 31 cases,
+  including the real Ruff lint and format checks against the generated tree,
+  verified non-vacuous. Recorded in ADR 0060, which remains Proposed.
+  Tracking: GitHub Issue #231.
 - [x] E0A.2 Define and validate `agnara.toml`. The format is decided and read:
   `[project]`, `[defaults]` and `[apps.<name>]` with the architecture and
   exposure vocabularies `docs/CLI_SPEC.md` names, inheritance from the project
@@ -464,9 +477,21 @@ complete because the alpha published only the `agnara` core distribution. See
 - [ ] E0A.6 Implement `--with` exposure selection.
 - [ ] E0A.7 Implement profiles: core/api/mcp/agentic/worker/full.
 - [ ] E0A.8 Implement optional CLI aliases without duplicate code paths.
-- [ ] E0A.9 Implement `--dry-run`.
-- [ ] E0A.10 Implement non-destructive conflict detection.
-- [ ] E0A.11 Implement `--json` output for generator plans/results.
+- [~] E0A.9 Implement `--dry-run`.
+  Implemented for `agnara project create` on the shared plan/apply
+  mechanism (ADR 0060). `--dry-run` completes when a second
+  generator uses it, because a mechanism with one caller has not yet
+  been shown to be reusable. Blocked on E0A.3.
+- [~] E0A.10 Implement non-destructive conflict detection.
+  Implemented for `agnara project create` on the shared plan/apply
+  mechanism (ADR 0060). Conflict detection completes when a second
+  generator uses it, because a mechanism with one caller has not yet
+  been shown to be reusable. Blocked on E0A.3.
+- [~] E0A.11 Implement `--json` output for generator plans/results.
+  Implemented for `agnara project create` on the shared plan/apply
+  mechanism (ADR 0060). `--json` plan output completes when a second
+  generator uses it, because a mechanism with one caller has not yet
+  been shown to be reusable. Blocked on E0A.3.
 - [ ] E0A.12 Add golden-file tests for generated projects/apps.
 - [ ] E0A.13 Add Windows/Linux/macOS path tests.
 - [ ] E0A.14 Add architecture tests for generated app dependency direction.

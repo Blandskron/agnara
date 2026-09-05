@@ -24,9 +24,11 @@ from importlib.metadata import PackageNotFoundError, version
 
 from agnara_cli._apps import add_apps_parser
 from agnara_cli._context import add_context_parser
+from agnara_cli._generate import GenerationError
 from agnara_cli._graph import add_graph_parser
 from agnara_cli._inspect import add_inspect_parser
 from agnara_cli._manifest import ManifestError
+from agnara_cli._project import add_project_parser
 from agnara_cli._schema import add_schema_parser
 from agnara_cli._target import TargetError
 
@@ -54,6 +56,7 @@ def _parser() -> argparse.ArgumentParser:
     add_apps_parser(subparsers)
     add_inspect_parser(subparsers)
     add_graph_parser(subparsers)
+    add_project_parser(subparsers)
     add_schema_parser(subparsers)
     add_context_parser(subparsers)
     return parser
@@ -63,15 +66,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run one command and return its exit code.
 
     A `TargetError` is the operator's problem — a bad target, a module that
-    will not import, an application that will not compile — and so is a
-    `ManifestError`: a missing or invalid `agnara.toml`. Both are reported as
+    will not import, an application that will not compile — and so are a
+    `ManifestError`, a missing or invalid `agnara.toml`, and a
+    `GenerationError`, a generator refusing to write. All are reported as
     one line on stderr. Anything else is a defect in this CLI and is left to
     propagate, because hiding it would make it unreportable.
     """
     arguments = _parser().parse_args(argv)
     try:
         output = arguments.handler(arguments)
-    except (ManifestError, TargetError) as error:
+    except (GenerationError, ManifestError, TargetError) as error:
         print(f"agnara: {error}", file=sys.stderr)
         return EXIT_FAILED
     _emit(output)

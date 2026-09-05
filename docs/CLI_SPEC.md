@@ -53,6 +53,39 @@ commerce/
 
 The generator must create only meaningful files.
 
+#### Implemented form
+
+```bash
+agnara project create commerce
+agnara project create commerce --directory ../workspace
+agnara project create commerce --dry-run
+agnara project create commerce --json
+agnara project create commerce --overwrite
+```
+
+Generation is two phases: a plan built without touching the filesystem, then
+an apply step that writes it. `--dry-run` renders the plan and creates
+nothing, not even the project directory. `--json` emits the same plan, so a
+preview cannot disagree with the result.
+
+A run that would replace an existing file refuses before writing anything,
+naming every conflicting path; `--overwrite` authorizes replacement for that
+run. The command never prompts. Identical inputs produce byte-identical
+output, and generated files use `
+` endings on every platform.
+
+The project name must be a single lower-case Python identifier: it becomes a
+package directory, an import path and `[project] name` in the manifest.
+
+`bootstrap.py` is the composition root and exposes `app`, so the tooling reads
+a freshly generated project:
+
+```bash
+agnara inspect commerce.bootstrap:app --path src --dependencies dependencies
+```
+
+See ADR 0060.
+
 ## App creation
 
 Canonical:
