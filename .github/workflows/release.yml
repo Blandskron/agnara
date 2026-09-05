@@ -82,13 +82,89 @@ jobs:
           fi
           
       - name: Install and smoke test outside workspace
+        env:
+          EXPECTED_PYTHON: "3.14"
         run: |
-          mkdir /tmp/smoke-test
+          set -euo pipefail
+          shopt -s nullglob
+
+          # Resolve the wheel before leaving the workspace, and insist on
+          # exactly one: a stale extra wheel in dist/ would otherwise make the
+          # glob expand to two arguments and validate an artifact we are not
+          # about to publish.
+          wheels=("$GITHUB_WORKSPACE"/dist/agnara-*.whl)
+          if [[ "${#wheels[@]}" -ne 1 ]]; then
+            echo "::error::expected exactly one agnara wheel in dist/, found ${#wheels[@]}: ${wheels[*]-}"
+            exit 1
+          fi
+          WHEEL="${wheels[0]}"
+          echo "Wheel under test: $(basename "$WHEEL")"
+
+          rm -rf /tmp/smoke-test
+          mkdir -p /tmp/smoke-test
           cd /tmp/smoke-test
-          uv venv --python 3.14
-          uv pip install $GITHUB_WORKSPACE/dist/agnara-*.whl
-          uv run python -c "import agnara; print(agnara.__version__)"
-          uv run python -c "from agnara import CapabilityDefinition, Agnara"
+
+          # Address the interpreter explicitly instead of going through
+          # `uv run`. `uv run` re-discovers (and may create) an environment of
+          # its own, so it can report success against something other than the
+          # venv the wheel was installed into.
+          uv venv --python "$EXPECTED_PYTHON" .venv
+          SMOKE_PYTHON=/tmp/smoke-test/.venv/bin/python
+
+          uv pip install --python "$SMOKE_PYTHON" "$WHEEL"
+
+          "$SMOKE_PYTHON" -c "import agnara; print(agnara.__version__)"
+          "$SMOKE_PYTHON" -c "from agnara import CapabilityDefinition, Agnara"
+
+          cat > assert_install.py <<'PYCODE'
+          """Assert the wheel, not the checkout, is what just got imported."""
+          import os
+          import sys
+          from importlib.metadata import version
+
+          import agnara
+          from agnara import Agnara, CapabilityDefinition  # noqa: F401
+
+          failures: list[str] = []
+
+          want_python = tuple(int(part) for part in os.environ["EXPECTED_PYTHON"].split("."))
+          if sys.version_info[: len(want_python)] != want_python:
+              failures.append(
+                  f"interpreter is {sys.version.split()[0]}, expected {os.environ['EXPECTED_PYTHON']}"
+              )
+
+          expected_version = os.environ.get("EXPECTED_VERSION")
+          if expected_version and agnara.__version__ != expected_version:
+              failures.append(
+                  f"agnara.__version__ is {agnara.__version__!r}, expected {expected_version!r}"
+              )
+          if agnara.__version__ != version("agnara"):
+              failures.append(
+                  f"agnara.__version__ ({agnara.__version__}) disagrees with installed "
+                  f"distribution metadata ({version('agnara')})"
+              )
+
+          # A wheel that failed to install can still import when the checkout is
+          # on sys.path, which is the failure this gate exists to catch.
+          origin = os.path.realpath(agnara.__file__)
+          if "site-packages" not in origin.split(os.sep):
+              failures.append(f"agnara imported from {origin}, which is not an installed location")
+          workspace = os.path.realpath(os.environ["GITHUB_WORKSPACE"])
+          if os.path.commonpath([origin, workspace]) == workspace:
+              failures.append(f"agnara imported from the checkout at {origin}")
+
+          if failures:
+              for failure in failures:
+                  print(f"::error::{failure}")
+              sys.exit(1)
+
+          print(f"agnara {agnara.__version__} imported from {origin} on Python {sys.version.split()[0]}")
+          PYCODE
+
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            export EXPECTED_VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          "$SMOKE_PYTHON" assert_install.py
 
   publish:
     name: Publish to PyPI
@@ -122,18 +198,30 @@ jobs:
           
       - name: Post-release verification
         run: |
+          set -euo pipefail
+
           # Wait a few seconds for PyPI to index
           sleep 30
-          mkdir /tmp/post-release
+
+          rm -rf /tmp/post-release
+          mkdir -p /tmp/post-release
           cd /tmp/post-release
-          uv venv --python 3.14
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+
+          # Same reasoning as the pre-publish smoke test: drive the venv
+          # interpreter directly so this cannot pass against some other
+          # environment that `uv run` happened to resolve.
+          uv venv --python 3.14 .venv
+          RELEASE_PYTHON=/tmp/post-release/.venv/bin/python
+
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             TAG_VERSION="${GITHUB_REF#refs/tags/v}"
-            uv pip install agnara==$TAG_VERSION
+            uv pip install --python "$RELEASE_PYTHON" "agnara==$TAG_VERSION"
           else
-            uv pip install agnara
+            uv pip install --python "$RELEASE_PYTHON" agnara
           fi
-          uv run python -c "import agnara; print(agnara.__version__)"
+
+          "$RELEASE_PYTHON" -c "import agnara; print(agnara.__version__)"
+          "$RELEASE_PYTHON" -c "from agnara import CapabilityDefinition, Agnara"
           
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
