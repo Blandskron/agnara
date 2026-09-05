@@ -123,6 +123,11 @@ Use property-based tests where contracts are algebraic or combinatorial:
 
 ## Protocol conformance
 
+MCP's bounded official SDK suite and exclusions are recorded in
+`docs/MCP_CONFORMANCE.md`. Run `uv run pytest tests/mcp tests/architecture`.
+These tests run in the ordinary CI matrix; an in-process modern SDK exchange
+is not evidence of network transport or complete MCP protocol conformance.
+
 Each adapter should record:
 
 - supported specification version;

@@ -25,8 +25,11 @@ This pin establishes the protocol boundary; it is not a claim that the
 unfinished E7 adapter already implements every MCP feature. Tool projection,
 schema mapping, discovery, the request-scoped authorization bridge and
 canonical interaction-required projection are implemented. Tool invocation,
-MRTR resumption, Tasks behavior and official SDK conformance remain separate
-backlog work. Legacy protocol revisions are not advertised until Agnara has
+MRTR resumption and Tasks behavior remain separate backlog work. Bounded
+official SDK compatibility evidence is recorded in
+[`docs/MCP_CONFORMANCE.md`](../../docs/MCP_CONFORMANCE.md); it covers the
+implemented surfaces and does not claim complete MCP conformance.
+Legacy protocol revisions are not advertised until Agnara has
 explicit compatibility tests for them, even though the SDK can serve older
 clients.
 
