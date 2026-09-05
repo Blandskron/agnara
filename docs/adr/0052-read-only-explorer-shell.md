@@ -132,8 +132,23 @@ shadowing a capability id, structured schema rendering, deterministic key
 order, the depth bound, a payload inside a schema fragment, and that every new
 page keeps the strict policy and loads nothing.
 
-Limits: no styling, no Explorer-specific authorization and cache-control suite
-(E8.10), no accessibility, keyboard, screen-reader or responsive tests (E8.11),
-no search, no try-it, and no write operation. No real-browser test yet: the
-page has nothing a browser would execute, so the existing browser job's value
-here is accessibility and rendering, which is E8.11's subject.
+E8.11 (Issue #209) adds `tests/http/test_explorer_browser.py`, running the
+actual ASGI Explorer through the existing loopback host with pinned
+Playwright 1.62.0 and Chromium. Every page now encloses its content in one
+native `<main>` landmark; the first browser run found that all three pages
+lacked it. This semantic HTML change requires no asset or CSP exception.
+
+The suite checks language, page titles, one named level-one heading inside the
+main landmark, nonempty link names, a complete keyboard navigation round trip
+including reverse tabbing, direct URLs, reload and history restoration. It
+checks browser accessibility-tree content for schemas/providers and for partial
+and empty views, including the absence of withheld metadata. Representative
+pages fit 390-by-844 and 1280-by-844 viewports without horizontal overflow,
+fetch only their own document and retain the strict CSP. These checks run in
+the existing required browser CI job; ordinary runs explicitly skip them.
+
+Limits: accessibility-tree checks are not actual screen-reader tests or WCAG
+certification. Viewport evidence covers these fixtures, not arbitrary schema
+depths, long unbreakable identifiers, text zoom or every mobile device. There
+is no styling, search, try-it or write operation. The Explorer-specific
+authorization/cache suite is tracked separately as E8.10.

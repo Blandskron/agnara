@@ -283,8 +283,12 @@ Core imports neither Pydantic nor msgspec.
   Issue #206.
 - [ ] E8.10 Add Explorer authorization, partial-visibility, cache-control and
   disabled-surface tests.
-- [ ] E8.11 Add accessibility, keyboard, screen-reader, deep-link and responsive
+- [~] E8.11 Add accessibility, keyboard, screen-reader, deep-link and responsive
   mobile tests for Agnara Explorer.
+  Implemented locally: 17 Chromium tests pass; ordinary suite: 1669 passed,
+  31 browser cases skipped. Ruff and ty pass. Accessibility-tree evidence is
+  not an actual screen-reader or WCAG claim. Pending PR/CI integration.
+  Tracking: GitHub Issue #209.
 - [?] E8.12 Research generated `llms.txt` without treating it as an
   authorization or canonical discovery format.
 - [x] E8.13 Generate agent context from the versioned filtered snapshot.
