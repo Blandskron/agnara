@@ -471,27 +471,44 @@ complete because the alpha published only the `agnara` core distribution. See
   question for the manifest's scope: it describes intent, Python composes.
   Manifest-driven target resolution stays blocked on E0A.1. Tracking: GitHub
   Issue #229.
-- [ ] E0A.3 Implement `agnara app create`.
-- [ ] E0A.4 Implement default `modular-hexagonal` template.
+- [x] E0A.3 Implement `agnara app create`. Generates a bounded context and
+  appends `[apps.<name>]` to `agnara.toml`, preserving the comments and
+  ordering already there rather than re-serializing a parsed model. An
+  already-declared app, an invalid manifest and a missing one are all refused
+  before anything is written, and a refused run leaves the manifest unmodified.
+  It reuses the E0A.1 mechanism, which needed one addition to carry a second
+  consumer: an intended metadata update is distinguishable from an unexpected
+  conflict. It does not edit `bootstrap.py` — modifying a user's composition
+  root needs its own decision — and prints the lines to add instead. Recorded
+  in ADR 0061, which remains Proposed. Tracking: GitHub Issue #233.
+- [x] E0A.4 Implement default `modular-hexagonal` template. The generated app
+  runs rather than being a skeleton: domain, application port, capabilities,
+  an in-memory outbound adapter implementing that port, and passing tests. The
+  example is domain-neutral because an invented domain is code its first reader
+  deletes; the dependency direction is not, and four tests enforce it. The
+  generated app passes the real Ruff lint and format checks under the generated
+  project's own configuration. 35 cases. Recorded in ADR 0061.
+  Tracking: GitHub Issue #233.
 - [ ] E0A.5 Implement `minimal` template.
 - [ ] E0A.6 Implement `--with` exposure selection.
 - [ ] E0A.7 Implement profiles: core/api/mcp/agentic/worker/full.
 - [ ] E0A.8 Implement optional CLI aliases without duplicate code paths.
-- [~] E0A.9 Implement `--dry-run`.
-  Implemented for `agnara project create` on the shared plan/apply
-  mechanism (ADR 0060). `--dry-run` completes when a second
-  generator uses it, because a mechanism with one caller has not yet
-  been shown to be reusable. Blocked on E0A.3.
-- [~] E0A.10 Implement non-destructive conflict detection.
-  Implemented for `agnara project create` on the shared plan/apply
-  mechanism (ADR 0060). Conflict detection completes when a second
-  generator uses it, because a mechanism with one caller has not yet
-  been shown to be reusable. Blocked on E0A.3.
-- [~] E0A.11 Implement `--json` output for generator plans/results.
-  Implemented for `agnara project create` on the shared plan/apply
-  mechanism (ADR 0060). `--json` plan output completes when a second
-  generator uses it, because a mechanism with one caller has not yet
-  been shown to be reusable. Blocked on E0A.3.
+- [x] E0A.9 Implement `--dry-run`.
+  Delivered on the shared plan/apply mechanism (ADR 0060) and proven reusable
+  by a second generator, `agnara app create` (ADR 0061): one renderer now
+  produces both the preview and the applied result, so they cannot drift.
+  Tracking: GitHub Issues #231 and #233.
+- [x] E0A.10 Implement non-destructive conflict detection.
+  Delivered on the shared plan/apply mechanism (ADR 0060). A conflict is found
+  against the whole plan and refused before the first write, so a refused run
+  leaves the directory exactly as it was. E0A.3 added the distinction between
+  an intended metadata update and an unexpected conflict (ADR 0061).
+  Tracking: GitHub Issues #231 and #233.
+- [x] E0A.11 Implement `--json` output for generator plans/results.
+  Delivered on the shared plan/apply mechanism (ADR 0060): a versioned, sorted
+  document describing every file, its action and whether it conflicts, emitted
+  by both generators from the same plan.
+  Tracking: GitHub Issues #231 and #233.
 - [ ] E0A.12 Add golden-file tests for generated projects/apps.
 - [ ] E0A.13 Add Windows/Linux/macOS path tests.
 - [ ] E0A.14 Add architecture tests for generated app dependency direction.

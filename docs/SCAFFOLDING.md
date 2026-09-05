@@ -256,3 +256,22 @@ does establish the convention every tool reads, so
 security-relevant decision a generator must not make silently.
 
 The generated project depends on `agnara` and nothing else.
+
+## Implemented default template
+
+`agnara app create` generates the modular-hexagonal layout above (E0A.3/E0A.4,
+ADR 0061). Answering this document's rule that a generator "must NOT generate
+dozens of meaningless empty files", the generated app runs: a domain, an
+application port, capabilities that depend on that port, an in-memory outbound
+adapter that implements it, and tests that pass.
+
+The example is domain-neutral — a `Record` with a `Reference` — because an app
+may be called `payments`, `catalog` or `users`, and an invented banking domain
+in a catalog is code its first reader deletes. What is not neutral is the
+direction of every dependency, which four tests enforce: no generated module
+imports a transport, no domain or application module imports an adapter, the
+domain imports nothing from the application, and `module.py` is the only
+non-test module that knows both the application and its adapters.
+
+`adapters/inbound/` is created as a documented, empty package. Only requested
+inbound adapters are added, and `--with` is E0A.6.

@@ -110,6 +110,38 @@ agnara app create payments --with http,mcp,tasks
 agnara app create agents --with mcp,a2a
 ```
 
+#### Implemented form
+
+```bash
+agnara app create payments
+agnara app create payments --project path/to/project
+agnara app create payments --dry-run
+agnara app create payments --json
+```
+
+Generates the modular-hexagonal layout below and appends `[apps.<name>]` to
+`agnara.toml`, preserving the comments and ordering already in that file.
+An already-declared app is refused, and so is an invalid or missing manifest,
+before anything is written.
+
+`--dry-run`, `--json`, `--overwrite` and the never-prompt guarantee are the
+same code `agnara project create` uses. The manifest is reported as an
+intended `UPDATE`, not a conflict; a file the generator meant to create and
+found already there is still a conflict and is still refused.
+
+The generated app is a working example: its capabilities register, compile and
+invoke against the generated outbound adapter. The command does **not** edit
+`bootstrap.py` — modifying a user's composition root needs its own decision —
+so it prints the two lines to add:
+
+```python
+from commerce.apps.payments import module as payments_module
+
+payments_module.register(app, dependencies)
+```
+
+See ADR 0061.
+
 ## Profiles
 
 Profiles are scaffolding conveniences, NOT new runtime app types.
