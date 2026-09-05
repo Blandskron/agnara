@@ -175,6 +175,19 @@ match await invoke_result(plan, context):
 `FailureCode` is protocol-neutral. An HTTP, MCP or A2A adapter maps it to its
 own representation; core never stores a transport status code.
 
+The implemented MCP result boundary is explicit composition:
+
+```python
+from agnara_mcp import project_mcp_result
+
+mcp_result = project_mcp_result(await invoke_result(plan, context))
+```
+
+Success JSON values are copied into `structuredContent.result` with equivalent
+JSON text. Canonical failures expose only code/message as tool error content;
+interaction requirements use the strict E7.6 projection. This does not install
+a tool-call handler or validate an outputSchema. See ADR 0043.
+
 ## 17. Capability introspection
 
 ```python

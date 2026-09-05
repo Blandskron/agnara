@@ -15,6 +15,9 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added `project_mcp_result` for detached JSON success content, canonical tool
+  errors without internal details and existing interaction-required projection,
+  with explicit rejection of unsupported output values ([#183]).
 - Added bounded MCP SDK conformance coverage for discovery, malformed
   pagination, unsupported calls and concurrent request identity/cache isolation,
   with an explicit coverage matrix and exclusions ([#181]).
@@ -332,3 +335,4 @@ under `0.1.0a2` instead.
 [#133]: https://github.com/Blandskron/agnara/issues/133
 [#135]: https://github.com/Blandskron/agnara/issues/135
 [#181]: https://github.com/Blandskron/agnara/issues/181
+[#183]: https://github.com/Blandskron/agnara/issues/183

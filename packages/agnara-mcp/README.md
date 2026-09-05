@@ -123,6 +123,37 @@ substitute for policy evaluation at invocation time. This discovery-only
 server does not implement `tools/call` and must not be presented as a complete
 MCP application server.
 
+## Canonical result projection
+
+Convert the core runtime outcome with `project_mcp_result`:
+
+```python
+from agnara.execution import Success
+from agnara_mcp import project_mcp_result
+
+result = project_mcp_result(Success({"total": 42}))
+# structuredContent: {"result": {"total": 42}}
+# content: [{"type": "text", "text": '{"result":{"total":42}}'}]
+```
+
+Use `project_mcp_result(await invoke_result(plan, context))` in composition
+code. Success accepts explicit JSON built-ins; tuples become arrays. Data is
+copied, object keys are sorted in the equivalent JSON text, and a `result`
+envelope preserves successful null. No outputSchema is claimed. Unsupported
+objects, subclasses, non-string keys, non-finite numbers, cycles and nesting
+beyond 64 levels raise `McpResultProjectionError` with a redacted message.
+The caller owns the source value and must not mutate it during projection.
+
+Ordinary canonical failures produce `isError: true` and JSON text with only
+`code` and the caller-safe `message`; failure details are omitted. Application
+code owns the safety of explicitly supplied canonical messages. Unexpected
+exceptions are redacted by `invoke_result` before reaching this projection.
+Interaction requirements delegate to the existing mapper described below.
+
+This function does not register `tools/call`, serialize arbitrary model fields,
+or implement resumption. Dataclasses and custom models require explicit
+conversion to public JSON data. See ADR 0043.
+
 ## Interaction-required projection
 
 Project the adapter-facing canonical outcome rather than MCP values or

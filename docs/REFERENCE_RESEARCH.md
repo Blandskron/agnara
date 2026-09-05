@@ -517,6 +517,12 @@ network transport or JSON-RPC framing. The bounded coverage and unsupported
 surfaces are recorded in `docs/MCP_CONFORMANCE.md`; this is compatibility
 evidence, not full protocol certification.
 
+E7.8a adds explicit canonical result projection (ADR 0043). Successful public
+JSON data is detached into an envelope with matching text, ordinary canonical
+failures use isError tool content without details, and interaction requirements
+reuse the strict E7.6 mapper. The pinned SDK validates the serialized results;
+this does not implement tools/call or extend the transport support claim.
+
 Task and MRTR references:
 
 - https://py.sdk.modelcontextprotocol.io/handlers/multi-round-trip/

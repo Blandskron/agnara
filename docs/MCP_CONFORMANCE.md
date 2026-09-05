@@ -1,6 +1,7 @@
 # MCP conformance evidence
 
-Suite revision: 1. Tracking: [#181](https://github.com/Blandskron/agnara/issues/181).
+Suite revision: 2. Tracking: [#181](https://github.com/Blandskron/agnara/issues/181)
+and [#183](https://github.com/Blandskron/agnara/issues/183).
 
 This is Agnara-owned compatibility evidence against the official `mcp==2.1.1`
 and `mcp-types==2.1.1` packages for MCP `2026-07-28`. It is not an official
@@ -45,6 +46,7 @@ server dispatch instead of being rejected by a typed client constructor.
 | Unsupported calls | `test_sdk_conformance.py`: tool calls, resource/prompt lists and task methods return `METHOD_NOT_FOUND`, with no handler effects and recovery afterward | No successful `tools/call`, resources, prompts or Tasks implementation |
 | Forged resumption | `test_sdk_conformance.py`: unsupported tool invocation remains rejected even with echoed state and an accepted confirmation form | Does not validate an MRTR security boundary; no resumption path exists |
 | Canonical interaction | `test_interaction_mapping.py`: real pre-effect core failure projects to official input-required models, with deterministic serialization and rejection of malformed details | One-way projection only; no verifier-backed round trip |
+| Canonical results | `test_result_projection.py`: SDK-validated success and every failure category; detached JSON/text, malformed/cyclic/deep value rejection, runtime exception redaction and cancellation propagation | Projection only; no successful tool-call dispatcher or outputSchema validation |
 | Tasks/MRTR boundary | `test_task_boundary.py`: pinned SDK method inventory, carrier set, no task advertisement or exported resumption API | No state sealing, verification, replay store or Tasks extension |
 
 The concurrency test uses owned `TaskGroup` tasks and a barrier, with a bounded
