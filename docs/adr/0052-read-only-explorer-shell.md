@@ -132,8 +132,21 @@ shadowing a capability id, structured schema rendering, deterministic key
 order, the depth bound, a payload inside a schema fragment, and that every new
 page keeps the strict policy and loads nothing.
 
-Limits: no styling, no Explorer-specific authorization and cache-control suite
-(E8.10), no accessibility, keyboard, screen-reader or responsive tests (E8.11),
+E8.10 (Issue #208) adds `tests/http/test_explorer_security.py`: authorization
+on all three views, invalid and failing resolvers, anonymous opt-in, withheld
+metadata, equivalent hidden/absent application failures, overlapping viewers,
+unchanged source snapshots, GET/HEAD cache and security headers, and discovery
+remaining available when Explorer is omitted from composition.
+
+The suite exposed missing cache controls on Explorer errors. All Explorer
+errors now carry `private, no-store`, the configured `Vary` header and the
+shell's security headers, retaining problem content, challenges and `Allow`.
+An error never inherits a configured private page cache lifetime. This prevents
+a viewer-dependent missing-target result from being stored and reused after
+the viewer changes. The shared canonical error response is not mutated, and
+authorization and filtering order remain unchanged.
+
+Limits: no styling, no accessibility, keyboard, screen-reader or responsive tests (E8.11),
 no search, no try-it, and no write operation. No real-browser test yet: the
 page has nothing a browser would execute, so the existing browser job's value
 here is accessibility and rendering, which is E8.11's subject.
