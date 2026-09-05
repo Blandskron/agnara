@@ -1,7 +1,8 @@
 # MCP conformance evidence
 
-Suite revision: 2. Tracking: [#181](https://github.com/Blandskron/agnara/issues/181)
-and [#183](https://github.com/Blandskron/agnara/issues/183).
+Suite revision: 3. Tracking: [#181](https://github.com/Blandskron/agnara/issues/181),
+[#183](https://github.com/Blandskron/agnara/issues/183) and
+[#185](https://github.com/Blandskron/agnara/issues/185).
 
 This is Agnara-owned compatibility evidence against the official `mcp==2.1.1`
 and `mcp-types==2.1.1` packages for MCP `2026-07-28`. It is not an official
@@ -23,9 +24,10 @@ Dependency installation still requires the locked packages to be available.
 ## Measurement boundary
 
 `test_sdk_conformance.py` compiles real Agnara capabilities, projects their
-input schemas, builds the discovery server, and connects the official
-`Client(..., mode="auto")`. The client negotiates the exact pinned modern
-revision; the discovery contract test asserts it explicitly. Requests traverse
+input schemas, builds both the discovery-only server and the invocable one,
+and connects the official `Client(..., mode="auto")`. The client negotiates the
+exact pinned modern revision; the discovery contract test asserts it
+explicitly. Requests traverse
 the official ClientSession, modern dispatcher, server validation and result
 validation. No adapter handler is called directly.
 
@@ -39,14 +41,17 @@ server dispatch instead of being rejected by a typed client constructor.
 | Surface | Executable evidence | Limit |
 | --- | --- | --- |
 | Discovery | `test_sdk_conformance.py`, `test_discovery.py`: pinned revision, tools-only advertisement, server identity, private zero-TTL results | No legacy compatibility claim |
-| Tool definitions | `test_schema_mapping.py`, `test_tool_projection.py`, `test_sdk_conformance.py`: compiled inputs, closed schemas, stable names and no output/task claims | Output validation and invocation are absent |
+| Tool definitions | `test_schema_mapping.py`, `test_tool_projection.py`, `test_sdk_conformance.py`: compiled inputs, closed schemas, stable names and no output/task claims | Output validation is absent |
 | Pagination errors | `test_sdk_conformance.py`: empty/unissued cursors and malformed numeric/list cursors return `INVALID_PARAMS`; discovery still works afterward | Complete startup snapshot, no pagination implementation |
 | Authorization isolation | `test_sdk_conformance.py`: concurrent anonymous, unscoped and scoped tasks share one client; private lists change with each request identity and remain detached | SDK verified identity context is supplied by the test; OAuth verification is not tested |
 | Authorization failures | `test_authorization.py`: immutable credential-free mapper input, fail-closed mapper errors and scope filtering | Discovery visibility does not authorize invocation |
-| Unsupported calls | `test_sdk_conformance.py`: tool calls, resource/prompt lists and task methods return `METHOD_NOT_FOUND`, with no handler effects and recovery afterward | No successful `tools/call`, resources, prompts or Tasks implementation |
-| Forged resumption | `test_sdk_conformance.py`: unsupported tool invocation remains rejected even with echoed state and an accepted confirmation form | Does not validate an MRTR security boundary; no resumption path exists |
+| Tool invocation | `test_tool_invocation.py`, `test_sdk_conformance.py`: success, compiled defaults, invalid input, dependency lifecycle, redacted handler exceptions, unrepresentable values and concurrent calls through the official client | No output schema, progress, partial results or streaming |
+| Invocation authorization | `test_tool_invocation.py`, `test_sdk_conformance.py`: declared scopes are enforced by core `ScopePolicy` before any effect, for the same identity discovery filters on, and forged runtime-owned parameters are refused | OAuth verification is still supplied by the test, not exercised |
+| Invocation lifecycle | `test_tool_invocation.py`, `test_sdk_conformance.py`: a server deadline becomes a canonical `timeout` result, client abandonment unwinds the handler without answering, and the connection recovers | No resumable or long-running execution model |
+| Unsupported calls | `test_sdk_conformance.py`: on the discovery-only server, tool calls, resource/prompt lists and task methods return `METHOD_NOT_FOUND`; on the invocable server, unknown names and task-augmented calls return `INVALID_PARAMS`, with no handler effects and recovery afterward | No resources, prompts or Tasks implementation |
+| Forged resumption | `test_sdk_conformance.py`: echoed state and an accepted confirmation form are refused by both servers | Does not validate an MRTR security boundary; no resumption path exists |
 | Canonical interaction | `test_interaction_mapping.py`: real pre-effect core failure projects to official input-required models, with deterministic serialization and rejection of malformed details | One-way projection only; no verifier-backed round trip |
-| Canonical results | `test_result_projection.py`: SDK-validated success and every failure category; detached JSON/text, malformed/cyclic/deep value rejection, runtime exception redaction and cancellation propagation | Projection only; no successful tool-call dispatcher or outputSchema validation |
+| Canonical results | `test_result_projection.py`: SDK-validated success and every failure category; detached JSON/text, malformed/cyclic/deep value rejection, runtime exception redaction and cancellation propagation | Projection only; no outputSchema validation |
 | Tasks/MRTR boundary | `test_task_boundary.py`: pinned SDK method inventory, carrier set, no task advertisement or exported resumption API | No state sealing, verification, replay store or Tasks extension |
 
 The concurrency test uses owned `TaskGroup` tasks and a barrier, with a bounded
@@ -57,11 +62,13 @@ test. Each task resets its authentication ContextVar in `finally`.
 ## Explicit exclusions
 
 Network transport conformance, OAuth token verification, complete protocol
-certification, legacy revisions, successful tool invocation, output contracts,
-MRTR resumption, confirmation verification over MCP, Tasks, notifications,
-streaming and performance remain outside this suite's support claim. Future
-implementation must extend the matrix with positive and negative evidence
-before those surfaces are advertised.
+certification, legacy revisions, output contracts, MRTR resumption,
+confirmation verification over MCP, Tasks, notifications, progress, streaming
+and performance remain outside this suite's support claim. Tool invocation is
+now implemented and tested in process; it is not benchmarked (E7.9) and
+carries no network or throughput claim. Future implementation must extend the
+matrix with positive and negative evidence before those surfaces are
+advertised.
 
 ## Upstream reference
 

@@ -40,6 +40,14 @@ and network cost, rotates scenario order and retains raw samples. ADR 0041
 keeps the direct ASGI boundary; the result is not a portable ranking or CI
 latency threshold.
 
+The E7.9 in-process MCP comparison is implemented by
+`benchmarks/mcp_tool_invocation.py` and recorded in
+`docs/benchmarks/mcp-tool-invocation.md`. FastMCP is `MCPServer` in the pinned
+`mcp==2.1.1`. It measures the handler boundary and the official client
+boundary separately, and reports synchronous and asynchronous tools
+separately because the SDK runs a synchronous tool in a worker thread. The
+same caveats apply: no portable ranking, no throughput claim, no threshold.
+
 ## Benchmark scenarios
 
 ### Startup
