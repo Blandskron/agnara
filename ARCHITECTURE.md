@@ -481,7 +481,16 @@ Conceptual machine-readable shape:
 }
 ```
 
-The exact schema and version are pending RFC/API review.
+`agnara.introspection` implements this contract: frozen slotted descriptors
+whose fields are names, declared metadata and canonical JSON text, built from
+a compiled application by `describe_app` and assembled by `snapshot`. The
+format is `agnara-introspection` and the version is `"0"`, which states that
+the contract is not yet stable. Exposures are contributed by whoever owns the
+adapters, and transport availability is derived from them. See ADR 0045.
+
+Building a snapshot is not publishing one. Visibility, redaction and
+authorization filter the snapshot before serialization; that layer is E8.2 and
+is not implemented yet.
 
 ### Agnara Explorer
 

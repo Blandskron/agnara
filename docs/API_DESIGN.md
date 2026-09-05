@@ -222,6 +222,31 @@ print(definition.exposures)
 
 The final registry API may differ but this must be easy.
 
+For tooling rather than authoring, one protocol-neutral snapshot describes a
+compiled application:
+
+```python
+from agnara.introspection import ExposureDescriptor, describe_app, snapshot
+
+document = snapshot(
+    [
+        describe_app(
+            app,
+            plans,
+            dependencies=registry,
+            exposures={"users.get_user": [ExposureDescriptor.of("http", "GET /users/{id}")]},
+        )
+    ]
+).json_data()
+```
+
+The CLI, an authorized discovery endpoint and Agnara Explorer read this rather
+than deriving answers from OpenAPI or from one another. Descriptors are frozen
+and hold only names, declared metadata and canonical JSON text, so a snapshot
+cannot reach a handler, a dependency instance or a policy object. Serializing
+is not publishing: visibility, redaction and authorization filter the snapshot
+first. See ADR 0045.
+
 ## 18. OpenAPI projection
 
 ```python

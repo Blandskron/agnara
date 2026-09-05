@@ -231,9 +231,12 @@ Core imports neither Pydantic nor msgspec.
 
 - [x] E8.0 Define the interactive documentation and Agnara Explorer
   architecture. Tracked by Issue #9.
-- [ ] E8.1 Define an immutable, versioned protocol-neutral introspection
+- [x] E8.1 Define an immutable, versioned protocol-neutral introspection
   snapshot for projects, apps, capabilities, exposures, dependencies,
-  policies, effects, risk, idempotency, confirmation and schemas.
+  policies, effects, risk, idempotency, confirmation and schemas. Descriptor
+  fields are names, declared metadata and canonical JSON text, so reaching a
+  runtime object is structurally impossible rather than merely discouraged.
+  Recorded by ADR 0045. Tracking: GitHub Issue #188.
 - [ ] E8.2 Define and enforce discovery visibility, redaction and authorization
   controls before serialization; private capabilities, secrets, dependency
   instances and policy internals must not leak.

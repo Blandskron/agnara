@@ -15,6 +15,11 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added the protocol-neutral introspection snapshot in `agnara.introspection`:
+  frozen descriptors for apps, capabilities, inputs, dependencies, providers,
+  policies and adapter-contributed exposures, built from a compiled
+  application, with a versioned JSON data form and no path from a snapshot to
+  a runtime object ([#188]).
 - Added a comparative MCP tool-invocation benchmark against the pinned SDK's
   `MCPServer`, measuring the handler and official-client boundaries separately
   and reporting synchronous and asynchronous tools apart, with the baseline
@@ -348,3 +353,4 @@ under `0.1.0a2` instead.
 [#183]: https://github.com/Blandskron/agnara/issues/183
 [#185]: https://github.com/Blandskron/agnara/issues/185
 [#186]: https://github.com/Blandskron/agnara/issues/186
+[#188]: https://github.com/Blandskron/agnara/issues/188
