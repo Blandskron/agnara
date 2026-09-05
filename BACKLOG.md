@@ -237,9 +237,13 @@ Core imports neither Pydantic nor msgspec.
   fields are names, declared metadata and canonical JSON text, so reaching a
   runtime object is structurally impossible rather than merely discouraged.
   Recorded by ADR 0045. Tracking: GitHub Issue #188.
-- [ ] E8.2 Define and enforce discovery visibility, redaction and authorization
+- [x] E8.2 Define and enforce discovery visibility, redaction and authorization
   controls before serialization; private capabilities, secrets, dependency
-  instances and policy internals must not leak.
+  instances and policy internals must not leak. `filter_snapshot` separates the
+  visibility rule from an explicit published-field set with no default, drops an
+  application whose capabilities are all hidden, and marks its result so an
+  unfiltered snapshot cannot be served by mistake. Recorded by ADR 0046.
+  Tracking: GitHub Issue #190.
 - [ ] E8.3 Implement `agnara inspect [app]` as a human-readable presentation of
   the filtered introspection snapshot.
 - [ ] E8.4 Implement deterministic, versioned `agnara inspect [app] --json`

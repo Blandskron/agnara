@@ -243,9 +243,22 @@ document = snapshot(
 The CLI, an authorized discovery endpoint and Agnara Explorer read this rather
 than deriving answers from OpenAPI or from one another. Descriptors are frozen
 and hold only names, declared metadata and canonical JSON text, so a snapshot
-cannot reach a handler, a dependency instance or a policy object. Serializing
-is not publishing: visibility, redaction and authorization filter the snapshot
-first. See ADR 0045.
+cannot reach a handler, a dependency instance or a policy object. See ADR 0045.
+
+Serializing is not publishing. Decide what a viewer may see first:
+
+```python
+from agnara.introspection import DiscoveryVisibility, Hiding, ScopeVisible, filter_snapshot
+
+visibility = DiscoveryVisibility.agent_safe(Hiding({"users.reindex"}, ScopeVisible()))
+published = filter_snapshot(document, visibility, principal).json_data()
+```
+
+The visibility rule decides which capabilities this principal may discover;
+the published field set decides what is said about each one, and it has no
+default. `identity_only`, `agent_safe` and `unrestricted` are named starting
+points. Hiding is discovery-only: a hidden capability stays registered and
+stays invocable by anyone the policy layer allows. See ADR 0046.
 
 ## 18. OpenAPI projection
 

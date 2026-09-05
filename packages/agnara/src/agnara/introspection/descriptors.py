@@ -413,6 +413,10 @@ class IntrospectionSnapshot:
     project: str | None = None
     format: str = INTROSPECTION_FORMAT
     version: str = INTROSPECTION_VERSION
+    #: Whether a visibility decision has already been applied. A consumer that
+    #: serves a snapshot to anyone should refuse an unfiltered one; a builder
+    #: cannot set this, because building is not deciding.
+    filtered: bool = False
 
     def __post_init__(self) -> None:
         if not isinstance(self.apps, tuple) or any(
@@ -429,6 +433,8 @@ class IntrospectionSnapshot:
             raise IntrospectionError("introspection project must be a non-empty string or None")
         _text(self.format, field="format")
         _text(self.version, field="version")
+        if not isinstance(self.filtered, bool):
+            raise IntrospectionError("introspection snapshot filtered must be a boolean")
 
     @property
     def transports(self) -> tuple[str, ...]:
@@ -446,6 +452,7 @@ class IntrospectionSnapshot:
         return {
             "format": self.format,
             "version": self.version,
+            "filtered": self.filtered,
             "project": self.project,
             "transports": list(self.transports),
             "apps": [app.json_data() for app in self.apps],

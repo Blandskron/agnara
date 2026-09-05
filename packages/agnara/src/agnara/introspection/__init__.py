@@ -5,8 +5,9 @@ discovery endpoint and Agnara Explorer the same source of truth, so none of
 them derives its answers from OpenAPI or from another surface's projection.
 
 This package defines the snapshot and builds it from a compiled application.
-It does not decide what a viewer may see: visibility, redaction and
-authorization filter this model before serialization (E8.2).
+It also decides what one viewer may see: ``filter_snapshot`` applies a
+``DiscoveryVisibility`` before anything is serialized, because filtering a
+serialized document leaks through references and derived values.
 """
 
 from .builder import describe_app, snapshot
@@ -24,20 +25,38 @@ from .descriptors import (
     ProviderDescriptor,
     TypeReference,
 )
+from .visibility import (
+    AllCapabilitiesVisible,
+    DiscoveryField,
+    DiscoveryVisibility,
+    Hiding,
+    NoCapabilityVisible,
+    ScopeVisible,
+    VisibilityRule,
+    filter_snapshot,
+)
 
 __all__ = [
     "INTROSPECTION_FORMAT",
     "INTROSPECTION_VERSION",
+    "AllCapabilitiesVisible",
     "AppDescriptor",
     "CapabilityDescriptor",
     "DependencyDescriptor",
+    "DiscoveryField",
+    "DiscoveryVisibility",
     "ExposureDescriptor",
+    "Hiding",
     "InputDescriptor",
     "IntrospectionError",
     "IntrospectionSnapshot",
+    "NoCapabilityVisible",
     "PolicyDescriptor",
     "ProviderDescriptor",
+    "ScopeVisible",
     "TypeReference",
+    "VisibilityRule",
     "describe_app",
+    "filter_snapshot",
     "snapshot",
 ]
