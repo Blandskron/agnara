@@ -8,8 +8,9 @@ It must never import a protocol implementation, a server, a schema library
 or an LLM SDK. See ``ARCHITECTURE.md`` section 3 and ``PRINCIPLES.md`` P2.
 
 Currently implemented: capability declaration and registration, schema ports,
-dependency compilation/resolution, execution plans, direct invocation, and
-pre-handler policy orchestration. Transport adapters remain ahead in
+dependency compilation/resolution, execution plans, direct invocation,
+pre-handler policy orchestration, and the protocol-neutral introspection
+snapshot in ``agnara.introspection``. Transport adapters remain ahead in
 ``BACKLOG.md``.
 """
 
