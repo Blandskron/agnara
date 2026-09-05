@@ -300,6 +300,27 @@ Documentation of this checklist is not evidence that release or hotfix
 automation has run. Record actual commands, artifacts, hashes and GitHub links
 before completing E0B.12.
 
+## Release readiness program
+
+`docs/releases/RELEASE_PLAN.md` defines the progressive path from the published
+`0.1.0a2` to `0.1.0`, and `scripts/check_release_readiness.py` measures how far
+the current state has come.
+
+That program **supplements** this document and never relaxes it. Where the two
+differ, this document wins. In particular the security gates above keep their
+own scope: the readiness tool reports the observed state of each item and
+refuses to decide whether a given release is still inside the
+"beyond experimental alpha" exemption.
+
+A readiness percentage is informational. A release is ready only when every
+mandatory gate is satisfied, and satisfied means evidence exists — recorded
+against the commit it was produced on, so a green record cannot outlive the
+code it described.
+
+```bash
+uv run python scripts/check_release_readiness.py
+```
+
 ## Attribution integrity gate
 
 Before push and again before merge, review attribution as a semantic integrity

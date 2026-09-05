@@ -61,6 +61,15 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added an evidence-based release readiness program:
+  `docs/releases/RELEASE_PLAN.md` defines the path from `0.1.0a2` to `0.1.0`,
+  `docs/releases/release-status.json` and `docs/releases/STATUS.md` record the
+  current state, and `uv run python scripts/check_release_readiness.py`
+  evaluates it. Automated gates are recomputed from the repository, evidence
+  expires when its commit is no longer `HEAD`, and gates needing human
+  judgment are never satisfied by the tool. It supplements `QUALITY_GATES.md`
+  and relaxes nothing ([#235]).
+
 - Added `agnara app create`, which generates a bounded context in the
   modular-hexagonal layout and declares it in `agnara.toml`. The manifest is
   appended to, so its comments and ordering survive; an already-declared app,
@@ -507,3 +516,4 @@ under `0.1.0a2` instead.
 [#229]: https://github.com/Blandskron/agnara/issues/229
 [#231]: https://github.com/Blandskron/agnara/issues/231
 [#233]: https://github.com/Blandskron/agnara/issues/233
+[#235]: https://github.com/Blandskron/agnara/issues/235
