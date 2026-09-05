@@ -281,7 +281,7 @@ Core imports neither Pydantic nor msgspec.
   as bounded nested structure rather than escaped JSON, and each view
   disappears when its field is withheld. Recorded in ADR 0052. Tracking: GitHub
   Issue #206.
-- [ ] E8.10 Add Explorer authorization, partial-visibility, cache-control and
+- [~] E8.10 Add Explorer authorization, partial-visibility, cache-control and
   disabled-surface tests.
 - [~] E8.11 Add accessibility, keyboard, screen-reader, deep-link and responsive
   mobile tests for Agnara Explorer.
