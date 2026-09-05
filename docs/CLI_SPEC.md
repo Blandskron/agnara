@@ -224,6 +224,7 @@ agnara apps
 agnara capabilities
 agnara inspect payments
 agnara graph
+agnara context
 agnara doctor
 ```
 
@@ -304,6 +305,28 @@ When the visibility decision withholds dependencies or providers, the command
 names the withheld relationship source instead of drawing an empty tree.
 Providers no visible capability reaches are listed separately, computed
 transitively. See ADR 0048.
+
+### `agnara context`
+
+Renders the same filtered snapshot as Markdown for a model to read.
+
+```bash
+agnara context billing.bootstrap:app --visibility agent
+agnara context billing.bootstrap:app --output CAPABILITIES.md
+```
+
+It takes the same target and visibility arguments as `agnara inspect`, so it
+cannot describe a capability that command would hide from the same viewer.
+
+Every rendering, including an empty one, states that seeing a capability is not
+permission to invoke it. A field the visibility decision withheld is named
+under a "This view is partial" line rather than printed as its declared
+default, because a model told `risk: low` about a withheld risk is misled about
+the thing that matters most. The snapshot's format and version appear in the
+header so a stale context is identifiable.
+
+This is not `llms.txt` and must not be presented as canonical discovery or as
+authorization. See ADR 0051.
 
 ### `agnara doctor`
 

@@ -15,6 +15,10 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added `agnara context`, which renders the filtered snapshot as Markdown for a
+  model to read. It states in every rendering that seeing a capability is not
+  permission to invoke it, and names a withheld field instead of printing its
+  declared default ([#200]).
 - Added `agnara schema openapi`, which exports the OpenAPI document a
   composition produced rather than projecting a second one. Serialized bytes
   are emitted unchanged, so an export is byte-identical to what an HTTP surface
@@ -381,3 +385,4 @@ under `0.1.0a2` instead.
 [#194]: https://github.com/Blandskron/agnara/issues/194
 [#196]: https://github.com/Blandskron/agnara/issues/196
 [#198]: https://github.com/Blandskron/agnara/issues/198
+[#200]: https://github.com/Blandskron/agnara/issues/200
