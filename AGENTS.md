@@ -242,7 +242,7 @@ Solo deben incluirse agentes que hayan participado realmente en el cambio.
 Pueden existir múltiples agentes:
 
 Co-authored-by: Codex <codex@openai.com>
-Co-authored-by: Claude
+Co-authored-by: Claude <noreply@anthropic.com>
 
 Cada agente debe utilizar su identidad correspondiente (ver `.github/ai-agent-identities.toml`).
 Nunca inventar direcciones de correo.
@@ -252,6 +252,7 @@ Si la identidad oficial/verificable de un agente es desconocida, debe investigar
 ### Reglas Específicas
 - **Gemini**: Lee el documento canónico `GEMINI.md` para usar la identidad oficial y el workflow asociado.
 - **Codex**: Utiliza estrictamente `Co-authored-by: Codex <codex@openai.com>`. No uses variantes como noreply ni identidades inventadas, salvo nueva disposición de GitHub.
+- **Claude**: Utiliza estrictamente `Co-authored-by: Claude <noreply@anthropic.com>`. No incluyas la versión del modelo en el nombre: la identidad registrada es estable y no cambia con cada release.
 
 ## Stop conditions
 

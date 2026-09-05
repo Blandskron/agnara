@@ -25,6 +25,12 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Authorized the Anthropic Claude agent identity for Git attribution.
+  `.github/ai-agent-identities.toml` now registers `claude[bot]`, and AGENTS.md
+  states the exact `Co-authored-by: Claude <noreply@anthropic.com>` trailer, so
+  the registry covers every agent that has contributed to this repository
+  ([#219]).
+
 - Added `OpenTelemetryMetricsHook` in `agnara-telemetry` for terminal invocation
   counts and duration, using an application-supplied meter. The adapter depends
   on the OpenTelemetry API; SDK/exporter setup and shutdown remain owned by
@@ -426,3 +432,4 @@ under `0.1.0a2` instead.
 [#209]: https://github.com/Blandskron/agnara/issues/209
 [#211]: https://github.com/Blandskron/agnara/issues/211
 [#216]: https://github.com/Blandskron/agnara/issues/216
+[#219]: https://github.com/Blandskron/agnara/issues/219
