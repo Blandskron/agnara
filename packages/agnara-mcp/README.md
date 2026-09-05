@@ -1,6 +1,6 @@
 # agnara-mcp
 
-Model Context Protocol exposure adapter. Owns MCP server projection, tool discovery, schema mapping and MCP authorization integration.
+Model Context Protocol exposure adapter. Owns MCP server projection, tool discovery, invocation dispatch, schema mapping and MCP authorization integration.
 
 - Import package: `agnara_mcp`
 - Depends on: `agnara-core`
@@ -23,9 +23,10 @@ assert SUPPORTED_MCP_PROTOCOL_VERSIONS == ("2026-07-28",)
 
 This pin establishes the protocol boundary; it is not a claim that the
 unfinished E7 adapter already implements every MCP feature. Tool projection,
-schema mapping, discovery, the request-scoped authorization bridge and
-canonical interaction-required projection are implemented. Tool invocation,
-MRTR resumption and Tasks behavior remain separate backlog work. Bounded
+schema mapping, discovery, the request-scoped authorization bridge, canonical
+result and interaction-required projection, and `tools/call` dispatch are
+implemented. MRTR resumption and Tasks behavior remain separate backlog work,
+and invocation is not yet benchmarked. Bounded
 official SDK compatibility evidence is recorded in
 [`docs/MCP_CONFORMANCE.md`](../../docs/MCP_CONFORMANCE.md); it covers the
 implemented surfaces and does not claim complete MCP conformance.
@@ -119,9 +120,53 @@ subject are interchangeable.
 `tools/list` includes an exposure only when all statically declared capability
 scopes are present on the mapped principal. Results retain conservative
 `ttlMs: 0` and `cacheScope: private` hints. This is visibility filtering, not a
-substitute for policy evaluation at invocation time. This discovery-only
-server does not implement `tools/call` and must not be presented as a complete
-MCP application server.
+substitute for policy evaluation at invocation time. `build_mcp_discovery_server`
+serves discovery alone and answers `tools/call` with `METHOD_NOT_FOUND`; use
+`build_mcp_server` when the same snapshot must also be invocable.
+
+## Tool invocation
+
+```python
+from agnara.core.di import DIContainer
+from agnara_mcp import build_mcp_server
+
+server = build_mcp_server(
+    tools,
+    plans,
+    DIContainer(registry),
+    name="users",
+    version="1.0.0",
+    authorization=authorization,
+    timeout=30,
+)
+```
+
+Invocation is added over the discovery snapshot described above, so a name can
+never be invocable without being discoverable. One immutable route table is
+compiled at startup; a call does a mapping lookup, one authorization
+evaluation, one core invocation and one result projection, and the dispatcher
+keeps no per-request state.
+
+Each call enforces that capability's statically declared scopes with core's
+`ScopePolicy` before any dependency is resolved or handler runs. Declared
+scopes authorize nothing on their own (ADR 0008) and discovery filtering is
+visibility, so without this guard a caller could execute a capability its own
+`tools/list` response hides. The guard never replaces the plan's own policies:
+those still run inside the core runtime.
+
+Protocol errors and capability failures stay separate. An unknown tool name,
+task-augmented execution and any `requestState` or `inputResponses` are
+`INVALID_PARAMS` errors, because there is no call to make and no verified
+resumption path exists. Invalid input, denial, timeout, redacted handler
+exceptions and interaction requirements are canonical outcomes projected as
+tool results, so a caller and its model can see and correct them.
+
+A caller-supplied argument naming a dependency or `ExecutionContext` parameter
+is answered with the same `invalid_input` message an undeclared input receives,
+so runtime-owned parameter names stay unpublished. The optional `timeout`
+becomes the invocation deadline and yields a canonical `timeout` result.
+Cancellation is never converted into a result: an abandoned request propagates
+so the SDK drops it and core unwinds dependency cleanup. See ADR 0044.
 
 ## Canonical result projection
 
@@ -150,8 +195,8 @@ code owns the safety of explicitly supplied canonical messages. Unexpected
 exceptions are redacted by `invoke_result` before reaching this projection.
 Interaction requirements delegate to the existing mapper described below.
 
-This function does not register `tools/call`, serialize arbitrary model fields,
-or implement resumption. Dataclasses and custom models require explicit
+This function serializes no arbitrary model fields and implements no
+resumption. Dataclasses and custom models require explicit
 conversion to public JSON data. See ADR 0043.
 
 ## Interaction-required projection
@@ -174,9 +219,9 @@ The currently supported `confirmation` kind becomes a 2026-07-28
 boolean field. The projection validates the complete canonical detail shape
 but publishes neither capability identity nor arbitrary interaction hints.
 
-This function only projects the interim result. It does not register
-`tools/call`, consume `inputResponses`, create or verify `requestState`, or
-resume an invocation. An elicitation action or submitted boolean is untrusted
+This function only projects the interim result. It does not consume
+`inputResponses`, create or verify `requestState`, or resume an invocation;
+the dispatcher refuses both fields outright. An elicitation action or submitted boolean is untrusted
 caller input and is never `ConfirmationEvidence` by itself. An application
 confirmation verifier must independently bind and validate evidence before a
 handler may run.
@@ -191,7 +236,8 @@ tool projection never sets the legacy `execution.taskSupport` marker.
 Multi Round-Trip Requests are the resumption mechanism of the pinned revision:
 a client fulfills the `inputRequests` of an `InputRequiredResult` and retries
 the same request with `inputResponses` and the echoed `requestState`. Nothing
-in this package mints or accepts that state yet.
+in this package mints or accepts that state: the dispatcher rejects both fields
+with `INVALID_PARAMS`.
 
 When it does, three properties of the official boundary apply. `requestState`
 is attacker-controlled until the SDK's `RequestStateBoundary` verifies it, and

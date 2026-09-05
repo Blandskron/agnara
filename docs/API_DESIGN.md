@@ -185,8 +185,32 @@ mcp_result = project_mcp_result(await invoke_result(plan, context))
 
 Success JSON values are copied into `structuredContent.result` with equivalent
 JSON text. Canonical failures expose only code/message as tool error content;
-interaction requirements use the strict E7.6 projection. This does not install
-a tool-call handler or validate an outputSchema. See ADR 0043.
+interaction requirements use the strict E7.6 projection. This function does not
+validate an outputSchema. See ADR 0043.
+
+A server that also serves `tools/call` composes the same pieces once at
+startup:
+
+```python
+from agnara_mcp import build_mcp_server
+
+server = build_mcp_server(
+    exposures,
+    plans,
+    di_container,
+    name="billing",
+    version="1.0.0",
+    authorization=authorization,
+    timeout=30,
+)
+```
+
+`build_mcp_server` adds invocation over the discovery snapshot
+`build_mcp_discovery_server` already produces, so no name is invocable without
+being discoverable. Each call enforces the capability's declared scopes with
+core's `ScopePolicy` before any effect, invokes the compiled plan and projects
+the canonical outcome. Unknown tools, task-augmented execution and resumption
+attempts are protocol errors; everything else is a tool result. See ADR 0044.
 
 ## 17. Capability introspection
 

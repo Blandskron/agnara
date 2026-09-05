@@ -215,8 +215,11 @@ Core imports neither Pydantic nor msgspec.
   Tracking: GitHub Issue #181.
 - [x] E7.8a Project canonical invocation outcomes to official MCP result models.
   Tracking: GitHub Issue #183. Prerequisite for tool invocation.
-- [ ] E7.8b Implement the MCP tool invocation dispatcher and its lifecycle,
+- [x] E7.8b Implement the MCP tool invocation dispatcher and its lifecycle,
   authorization and cancellation conformance tests before benchmarking calls.
+  Declared scopes are enforced by core `ScopePolicy` before any effect, because
+  discovery filtering is visibility rather than authorization. Recorded by
+  ADR 0044. Tracking: GitHub Issue #185.
 - [ ] E7.9 Benchmark tool invocation overhead against FastMCP where meaningful.
   Depends on E7.8a and E7.8b; discovery-only timings are not invocation evidence.
 
