@@ -58,6 +58,14 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added `agnara project create`, the first generator. It writes a composition
+  root, a manifest, a package layout and tests, from a plan built before
+  anything is written: `--dry-run` and `--json` render that same plan, a run
+  that would replace an existing file refuses before writing anything and names
+  every conflict, `--overwrite` authorizes replacement for one run, and the
+  command never prompts. Output is byte-identical for identical inputs. The
+  generated project depends on `agnara` alone ([#231]).
+
 - Added the `agnara.toml` project manifest format and its reader. `agnara apps`
   lists the apps a project declares with their architecture and exposures, as
   text or deterministic JSON, without importing any project module.
@@ -486,3 +494,4 @@ under `0.1.0a2` instead.
 [#225]: https://github.com/Blandskron/agnara/issues/225
 [#227]: https://github.com/Blandskron/agnara/issues/227
 [#229]: https://github.com/Blandskron/agnara/issues/229
+[#231]: https://github.com/Blandskron/agnara/issues/231

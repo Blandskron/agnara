@@ -238,3 +238,21 @@ agnara inspect <app> --json
 and from the filesystem alone.
 
 Hidden registry magic is discouraged.
+
+## Implemented form
+
+`agnara project create` is the first generator (E0A.1, ADR 0060). It
+establishes the mechanism the rest of EPIC 0A reuses: a generator builds a
+plan without touching the filesystem, and an apply step writes it. `--dry-run`
+and `--json` render that same plan, so a preview cannot disagree with the
+result, and conflicts are detected against the whole plan before the first
+write rather than discovered halfway through one.
+
+Two content decisions are deliberate. The generated `bootstrap.py` declares no
+example capability — `agnara app create` is where capabilities arrive — but it
+does establish the convention every tool reads, so
+`agnara inspect <project>.bootstrap:app --path src` works immediately. And
+`settings.py` reads no environment: where configuration comes from is a
+security-relevant decision a generator must not make silently.
+
+The generated project depends on `agnara` and nothing else.
