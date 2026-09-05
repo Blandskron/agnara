@@ -28,3 +28,42 @@ We will introduce a `TelemetryHook` protocol and attach immutable tuples of hook
 - The `ExecutionPlan` compiler must now be supplied with any desired telemetry hooks. Adapters will compile their plans with the necessary OpenTelemetry hooks later in EPIC 9.
 - `invoke` now natively handles lifecycle emissions. Because `invoke_result` calls `invoke`, terminal events are emitted exactly once regardless of whether the caller requested ergonomic Python exceptions or canonical HTTP-friendly results.
 - OpenTelemetry spans and context propagation are firmly relegated to an external provider package (`agnara-telemetry`), preserving the core's purity.
+
+## E9.1 implementation clarification (Issue #211)
+
+E9.1 reuses this accepted port; it does not introduce another observer API.
+`ExecutionPlan.__post_init__` now copies hooks to a tuple and validates both
+callbacks, so direct construction has the same collection ownership as
+`ExecutionPlan.compile`. Mutating the supplied list later cannot change the
+callbacks registered for a compiled plan. Order and duplicate registrations
+are preserved; each registration receives its own callback dispatch.
+
+Each hook must expose callable `on_invocation_start` and
+`on_invocation_terminal` attributes. Coroutine, asynchronous-generator and
+synchronous-generator functions are rejected with `DefinitionError`, including
+those supplied as a callable object's `__call__`. Such callbacks previously
+produced unevaluated objects or silently lost telemetry. Diagnostics name the
+hook index and callback without rendering the hook's state.
+
+Validation does not call hooks and does not move reflection to invocation.
+It is structural validation, not a proof of application code behavior: a
+synchronous wrapper that secretly returns an awaitable still violates the
+contract. Callbacks must accept one event and synchronously return `None`.
+Ordinary callback `Exception`s remain silently ignored; `BaseException`
+control signals are not suppressed. No promise is added that those signals
+produce a balanced start/terminal pair.
+
+Hook objects remain adapter-owned and may be shared by concurrent invocations.
+Freezing the collection does not freeze or synchronize their state. Adapters
+must provide their own synchronization or task-local state, avoid blocking
+callbacks, and own exporter setup, flushing and shutdown. Hooks must not be
+reconfigured while compiled plans use them. Caller-provided tracking IDs are
+neither guaranteed unique nor safe storage keys for invocation state; do not
+put secrets in them. Core does not create spans or own exporter resources.
+
+`tests/unit/execution/test_telemetry_configuration.py` covers both construction
+paths, invalid callback forms, source-list mutation, declaration order,
+duck-typed synchronous hooks and the absence of callback execution during
+validation. Existing lifecycle tests cover success, failure, timeout,
+cancellation and ordinary hook failure isolation. OpenTelemetry integration,
+span linking, semantic conventions and no-op cost evidence remain E9.2-E9.6.

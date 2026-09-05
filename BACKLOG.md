@@ -310,7 +310,12 @@ expanding that first PR into a complete frontend.
 
 ## EPIC 9 — Telemetry
 
-- [ ] E9.1 Telemetry port in core.
+- [~] E9.1 Telemetry port in core. Reuse E4.8's `TelemetryHook` and events;
+  validate callbacks and freeze registration on both plan construction paths.
+  Implemented locally with 42 configuration regression cases. Full gate:
+  1711 passed, 14 browser cases skipped; Ruff and ty pass. Pending PR/CI
+  integration. OpenTelemetry and span semantics remain E9.2-E9.6.
+  Tracking: GitHub Issue #211.
 - [ ] E9.2 OpenTelemetry adapter.
 - [ ] E9.3 Common capability spans.
 - [ ] E9.4 transport span linking.

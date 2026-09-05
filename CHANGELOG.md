@@ -13,6 +13,13 @@ without being published. See the `0.1.0a2` scope note below.
 
 ## [Unreleased]
 
+### Fixed
+
+- Execution plans now reject missing, non-callable, coroutine and generator
+  telemetry callbacks at startup. Direct construction also snapshots the
+  hook collection, so later changes to the source list cannot change a
+  compiled plan's observers ([#211]).
+
 ### Added
 
 - Added Explorer application, schema and dependency views: navigation is
@@ -403,3 +410,4 @@ under `0.1.0a2` instead.
 [#202]: https://github.com/Blandskron/agnara/issues/202
 [#204]: https://github.com/Blandskron/agnara/issues/204
 [#206]: https://github.com/Blandskron/agnara/issues/206
+[#211]: https://github.com/Blandskron/agnara/issues/211
