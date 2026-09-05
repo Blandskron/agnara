@@ -38,11 +38,17 @@ reproducible commands are:
 ```bash
 uv run playwright install --with-deps chromium
 AGNARA_RUN_BROWSER_TESTS=1 uv run pytest tests/http/test_documentation_browser.py -m browser
+AGNARA_RUN_BROWSER_TESTS=1 uv run pytest tests/http/test_explorer_browser.py -m browser
 ```
 
 Playwright is version-pinned in the development lock. Without the explicit
 environment flag, pytest still collects these tests and reports them skipped;
 only the dedicated browser job is evidence that they passed.
+
+Explorer browser checks cover semantic landmarks, accessible names and tree
+content, keyboard navigation, direct links/reloads and representative desktop
+and mobile viewports. Accessibility-tree assertions are not evidence of an
+actual screen-reader session or WCAG certification.
 
 ## Where the gates are authoritative
 

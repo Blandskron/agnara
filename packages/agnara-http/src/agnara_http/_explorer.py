@@ -199,8 +199,9 @@ def _document(title: str, body: Iterable[str]) -> bytes:
         f"<title>{escape(title)}</title>",
         "</head>",
         "<body>",
+        "<main>",
     )
-    return "\n".join((*head, *body, "</body>", "</html>", "")).encode("utf-8")
+    return "\n".join((*head, *body, "</main>", "</body>", "</html>", "")).encode("utf-8")
 
 
 def _withheld(visibility: DiscoveryVisibility) -> list[str]:
