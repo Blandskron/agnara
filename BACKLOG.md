@@ -213,7 +213,12 @@ Core imports neither Pydantic nor msgspec.
 - [x] E7.8 Add bounded official SDK conformance tests for implemented MCP
   surfaces, with explicit exclusions in `docs/MCP_CONFORMANCE.md`.
   Tracking: GitHub Issue #181.
+- [x] E7.8a Project canonical invocation outcomes to official MCP result models.
+  Tracking: GitHub Issue #183. Prerequisite for tool invocation.
+- [ ] E7.8b Implement the MCP tool invocation dispatcher and its lifecycle,
+  authorization and cancellation conformance tests before benchmarking calls.
 - [ ] E7.9 Benchmark tool invocation overhead against FastMCP where meaningful.
+  Depends on E7.8a and E7.8b; discovery-only timings are not invocation evidence.
 
 ## EPIC 8 — Documentation and introspection
 

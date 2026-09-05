@@ -20,6 +20,7 @@ from .protocol import (
     MCP_PYTHON_SDK_VERSION,
     SUPPORTED_MCP_PROTOCOL_VERSIONS,
 )
+from .result import McpResultProjectionError, project_mcp_result
 from .schema import project_mcp_tools
 from .tools import FrozenMcpTools, Mcp, McpToolDefinitionError, McpToolExposure
 
@@ -34,9 +35,11 @@ __all__ = [
     "McpAuthorizationDefinitionError",
     "McpInteractionProjectionError",
     "McpPrincipalMapper",
+    "McpResultProjectionError",
     "McpToolDefinitionError",
     "McpToolExposure",
     "build_mcp_discovery_server",
     "project_mcp_interaction_required",
+    "project_mcp_result",
     "project_mcp_tools",
 ]
