@@ -6,7 +6,8 @@ never in ``agnara-core``.
 
 Currently implemented: ``agnara inspect``, which imports a compiled
 application and presents its filtered protocol-neutral introspection
-snapshot as text or as deterministic JSON. Scaffolding remains ahead in
+snapshot as text or as deterministic JSON, and ``agnara graph``, which draws
+the relationships in that same snapshot. Scaffolding remains ahead in
 EPIC 0A.
 
 Depends on ``agnara-core``. Must not import a sibling adapter.

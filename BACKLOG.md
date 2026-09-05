@@ -253,8 +253,11 @@ Core imports neither Pydantic nor msgspec.
   output from the same snapshot rather than HTML or OpenAPI. Both modes build
   one snapshot and apply one filter, differing only in the last call.
   Tracking: GitHub Issue #192.
-- [ ] E8.5 Implement `agnara graph` as a human-readable relationship view over
-  the same snapshot without a second discovery path.
+- [x] E8.5 Implement `agnara graph` as a human-readable relationship view over
+  the same snapshot without a second discovery path. Every introspection
+  command obtains its data from one shared view, so two commands cannot
+  disagree under one visibility decision. Recorded by ADR 0048. Tracking:
+  GitHub Issue #194.
 - [ ] E8.6 Add an authorized machine-readable discovery endpoint with the same
   versioned serialization as CLI JSON and explicit cache behavior.
 - [ ] E8.7 Implement `agnara schema openapi` over the same OpenAPI projection
