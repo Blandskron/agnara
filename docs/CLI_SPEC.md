@@ -287,6 +287,24 @@ composing a server, so no adapter contributes them. See ADR 0047.
 
 Displays project/app/capability dependency relationships.
 
+#### Implemented form
+
+```bash
+agnara graph billing.bootstrap:app --dependencies registry
+agnara graph billing.bootstrap:app --visibility agent --as-scope billing:write
+```
+
+`agnara graph` takes the same target and visibility arguments as
+`agnara inspect` and reads the same filtered snapshot, so the two cannot
+disagree about what a viewer may see. It draws each visible capability, its
+dependency parameters, and the provider each resolves to with that provider's
+scope, kind and own requirements.
+
+When the visibility decision withholds dependencies or providers, the command
+names the withheld relationship source instead of drawing an empty tree.
+Providers no visible capability reaches are listed separately, computed
+transitively. See ADR 0048.
+
 ### `agnara doctor`
 
 Checks:

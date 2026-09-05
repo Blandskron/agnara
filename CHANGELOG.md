@@ -15,6 +15,10 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added `agnara graph`, which draws capability, dependency and provider
+  relationships from the same filtered snapshot `agnara inspect` reads. Every
+  introspection command now obtains its data from one shared view, so no
+  command has a second discovery path ([#194]).
 - Added the `agnara` command and `agnara inspect`, which imports a compiled
   application named as `module:attribute` and presents its filtered
   introspection snapshot as text or deterministic JSON. Both modes build one
@@ -365,3 +369,4 @@ under `0.1.0a2` instead.
 [#188]: https://github.com/Blandskron/agnara/issues/188
 [#190]: https://github.com/Blandskron/agnara/issues/190
 [#192]: https://github.com/Blandskron/agnara/issues/192
+[#194]: https://github.com/Blandskron/agnara/issues/194

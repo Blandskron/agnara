@@ -11,8 +11,9 @@ allowed dependency graph.
 
 ## Status
 
-`agnara inspect` is implemented. Project and app scaffolding, `agnara graph`,
-`agnara schema openapi` and `agnara doctor` remain ahead in the backlog.
+`agnara inspect` and `agnara graph` are implemented. Project and app
+scaffolding, `agnara schema openapi` and `agnara doctor` remain ahead in the
+backlog.
 
 ## `agnara inspect`
 
@@ -36,3 +37,15 @@ inspection is therefore not a documented bypass of a publication decision.
 Exit codes are `0` for an answer, `1` for a target the CLI could not use and
 `2` for an invalid command line. Output carries no ANSI decoration. See
 ADR 0047 and `docs/CLI_SPEC.md`.
+
+## `agnara graph`
+
+```bash
+agnara graph billing.bootstrap:app --dependencies registry
+```
+
+Draws capability, dependency and provider relationships from the same filtered
+snapshot, with the same target and visibility arguments. There is no second
+discovery path: both commands read one `View`, so neither can show something
+the other withheld. A withheld relationship source is named rather than drawn
+as an empty tree. See ADR 0048.

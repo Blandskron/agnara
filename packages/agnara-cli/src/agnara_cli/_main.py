@@ -22,6 +22,7 @@ import sys
 from collections.abc import Sequence
 from importlib.metadata import PackageNotFoundError, version
 
+from agnara_cli._graph import add_graph_parser
 from agnara_cli._inspect import add_inspect_parser
 from agnara_cli._target import TargetError
 
@@ -47,6 +48,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"agnara {_version()}")
     subparsers = parser.add_subparsers(dest="command", required=True, metavar="COMMAND")
     add_inspect_parser(subparsers)
+    add_graph_parser(subparsers)
     return parser
 
 
