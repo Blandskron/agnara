@@ -232,6 +232,28 @@ AUTOMATED_CHECKS = {
 # ---------------------------------------------------------------------------
 
 
+def changed_since(commit: str, paths: list[str]) -> list[str] | None:
+    """Which of `paths` changed between `commit` and HEAD, or None if unknown.
+
+    This is what keeps the staleness rule useful rather than merely strict.
+    Expiring every record on every commit would make the status permanently
+    stale and train everyone to ignore it; expiring never would let a green
+    record outlive the code. Expiring when the code the evidence actually
+    covers has moved is the honest middle.
+    """
+    try:
+        completed = subprocess.run(
+            ["git", "diff", "--name-only", f"{commit}..HEAD", "--", *paths],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except OSError, subprocess.CalledProcessError:  # pragma: no cover - unknown commit
+        return None
+    return [line for line in completed.stdout.splitlines() if line.strip()]
+
+
 def evaluate_evidence(gate: dict[str, Any], current_commit: str | None) -> tuple[str, str]:
     """Trust recorded evidence only while it still describes the current code."""
     evidence = gate.get("evidence")
@@ -244,14 +266,33 @@ def evaluate_evidence(gate: dict[str, Any], current_commit: str | None) -> tuple
     commit = evidence.get("commit")
     if commit is None:
         raise StatusError(f"gate {gate['id']!r} records evidence without a commit")
-    if current_commit is not None and commit != current_commit:
-        return STALE, f"evidence was recorded on {commit[:10]}, HEAD is {current_commit[:10]}"
 
     for reference in evidence.get("paths", []):
         if not (ROOT / reference).exists():
             return UNSATISFIED, f"evidence references a missing path: {reference}"
 
+    if current_commit is not None and commit != current_commit:
+        covers = evidence.get("covers")
+        if not covers:
+            # Nothing declares what this evidence depends on, so any movement
+            # could invalidate it. Refusing to guess is the safe answer.
+            return STALE, (
+                f"recorded on {commit[:10]}, HEAD is {current_commit[:10]}, "
+                "and the evidence declares no 'covers' paths"
+            )
+        changed = changed_since(commit, covers)
+        if changed is None:
+            return STALE, f"recorded on {commit[:10]}; the range to HEAD could not be read"
+        if changed:
+            shown = ", ".join(changed[:3]) + ("..." if len(changed) > 3 else "")
+            return (
+                STALE,
+                f"recorded on {commit[:10]}; {len(changed)} covered file(s) changed: {shown}",
+            )
+
     summary = evidence.get("result") or evidence.get("command") or "recorded"
+    if current_commit is not None and commit != current_commit:
+        summary = f"{summary} (recorded on {commit[:10]}; nothing it covers has changed)"
     return SATISFIED, summary
 
 

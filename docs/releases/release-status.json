@@ -9,7 +9,7 @@
   "blocked_reason": null,
   "notes": [
     "Status is recomputed by scripts/check_release_readiness.py. Automated gates are re-derived from the repository and are never read from this file.",
-    "Evidence is valid only while its commit is HEAD. Older evidence is reported as STALE, not green.",
+    "Evidence expires when a file it declares under 'covers' changes between its recorded commit and HEAD. Evidence with no 'covers' expires on any commit.",
     "This file records measurement only. It authorizes no tag, release or upload."
   ],
   "gates": [
@@ -24,7 +24,15 @@
         "command": "uv run pytest",
         "result": "2003 passed, 31 skipped (browser-only, run in their own CI lane)",
         "ci": "https://github.com/Blandskron/agnara/actions/workflows/ci.yml",
-        "paths": ["tests"]
+        "paths": [
+          "tests"
+        ],
+        "covers": [
+          "packages",
+          "tests",
+          "pyproject.toml",
+          "uv.lock"
+        ]
       }
     },
     {
@@ -37,7 +45,15 @@
         "commit": "f7f53cdd74ea0f8728e5b5d0e6c08ce8230734c5",
         "command": "uv build --package agnara",
         "result": "built agnara-0.1.0a2-py3-none-any.whl and agnara-0.1.0a2.tar.gz",
-        "paths": [".github/workflows/release.yml"]
+        "paths": [
+          ".github/workflows/release.yml"
+        ],
+        "covers": [
+          "packages",
+          "pyproject.toml",
+          "uv.lock",
+          ".github/workflows/release.yml"
+        ]
       }
     },
     {
@@ -51,7 +67,15 @@
         "command": "uv venv --python 3.14 && uv pip install <wheel> && python -c 'import agnara'",
         "result": "agnara 0.1.0a2 imported from site-packages on CPython 3.14.4; public API imports succeed",
         "note": "The same check runs in release.yml 'Validate built artifacts', which additionally asserts the wheel is not shadowed by the checkout.",
-        "paths": [".github/workflows/release.yml"]
+        "paths": [
+          ".github/workflows/release.yml"
+        ],
+        "covers": [
+          "packages",
+          "pyproject.toml",
+          "uv.lock",
+          ".github/workflows/release.yml"
+        ]
       }
     },
     {
@@ -71,7 +95,16 @@
         "commit": "f7f53cdd74ea0f8728e5b5d0e6c08ce8230734c5",
         "command": "uv run pytest tests/http tests/integration",
         "result": "691 HTTP tests and 25 cross-surface integration tests collected and passing; 31 real-browser cases run in the required 'Documentation browsers' CI lane",
-        "paths": ["tests/http", "tests/integration"]
+        "paths": [
+          "tests/http",
+          "tests/integration"
+        ],
+        "covers": [
+          "packages/agnara",
+          "packages/agnara-http",
+          "tests/http",
+          "tests/integration"
+        ]
       }
     },
     {
@@ -84,7 +117,15 @@
         "commit": "f7f53cdd74ea0f8728e5b5d0e6c08ce8230734c5",
         "command": "uv run pytest tests/mcp",
         "result": "157 tests passing against the pinned official SDK mcp==2.1.1, including tests/mcp/test_sdk_conformance.py",
-        "paths": ["tests/mcp/test_sdk_conformance.py", "docs/MCP_CONFORMANCE.md"]
+        "paths": [
+          "tests/mcp/test_sdk_conformance.py",
+          "docs/MCP_CONFORMANCE.md"
+        ],
+        "covers": [
+          "packages/agnara",
+          "packages/agnara-mcp",
+          "tests/mcp"
+        ]
       }
     },
     {
@@ -97,7 +138,15 @@
         "commit": "f7f53cdd74ea0f8728e5b5d0e6c08ce8230734c5",
         "command": "uv run pytest tests/cli && uv run agnara --version && uv run agnara --help",
         "result": "200 CLI tests pass; 'agnara 0.1.0a2' and the command list render, covering apps, app, inspect, graph, project and schema",
-        "paths": ["tests/cli", "docs/CLI_SPEC.md"]
+        "paths": [
+          "tests/cli",
+          "docs/CLI_SPEC.md"
+        ],
+        "covers": [
+          "packages/agnara",
+          "packages/agnara-cli",
+          "tests/cli"
+        ]
       }
     },
     {
@@ -110,7 +159,13 @@
         "commit": "f7f53cdd74ea0f8728e5b5d0e6c08ce8230734c5",
         "command": "gh issue list --state open && gh run list --branch develop",
         "result": "0 open issues; CI and Agent Coordination Tests both success on f7f53cd",
-        "paths": ["BACKLOG.md"]
+        "paths": [
+          "BACKLOG.md"
+        ],
+        "covers": [
+          "packages",
+          "tests"
+        ]
       }
     },
     {
@@ -153,7 +208,14 @@
         "commit": "f7f53cdd74ea0f8728e5b5d0e6c08ce8230734c5",
         "command": "uv run python benchmarks/runtime_invocation.py",
         "result": "four recorded baselines: runtime invocation, HTTP frameworks, MCP tool invocation and telemetry overhead",
-        "paths": ["docs/benchmarks", "benchmarks"]
+        "paths": [
+          "docs/benchmarks",
+          "benchmarks"
+        ],
+        "covers": [
+          "benchmarks",
+          "docs/benchmarks"
+        ]
       }
     }
   ]
