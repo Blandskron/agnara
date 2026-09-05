@@ -493,15 +493,15 @@ class _ExplorerDispatcher:
         normalized = _normalize_method(method)
         head = normalized == "HEAD"
         if normalized not in {"GET", "HEAD"}:
-            await _send_response(self._method_not_allowed(path), send)
+            await self._send_error(self._method_not_allowed(path), send)
             return
 
         principal = _principal_or_failure(self._explorer.discovery, scope)
         if isinstance(principal, _ResolverFailed):
-            await _send_response(_INTERNAL_PROBLEM, send, head=head)
+            await self._send_error(_INTERNAL_PROBLEM, send, head=head)
             return
         if principal is None:
-            await _send_response(self._unauthenticated(path), send, head=head)
+            await self._send_error(self._unauthenticated(path), send, head=head)
             return
 
         document = filter_snapshot(
@@ -516,9 +516,27 @@ class _ExplorerDispatcher:
         if body is None:
             # Hidden and absent are the same answer on purpose: telling them
             # apart would publish the existence of something withheld.
-            await _send_response(self._not_found(path), send, head=head)
+            await self._send_error(self._not_found(path), send, head=head)
             return
         await _send_response(self._page(body), send, head=head)
+
+    async def _send_error(
+        self, response: _SerializedResponse, send: _Send, *, head: bool = False
+    ) -> None:
+        """Never cache a viewer-dependent denial, missing target or resolver failure.
+
+        Preserve the canonical problem and challenge/Allow headers, without
+        mutating the shared internal-error response. Errors always use no-store
+        even when the composer selected a private cache lifetime for HTML.
+        """
+        headers = dict(response.headers)
+        headers.update(self._explorer.headers)
+        headers[b"cache-control"] = b"private, no-store"
+        await _send_response(
+            _SerializedResponse(response.status, tuple(headers.items()), response.body),
+            send,
+            head=head,
+        )
 
     def _subpage(
         self,

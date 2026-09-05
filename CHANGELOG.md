@@ -13,6 +13,12 @@ without being published. See the `0.1.0a2` scope note below.
 
 ## [Unreleased]
 
+### Fixed
+
+- Explorer error responses now prevent storage with `private, no-store` and
+  include the same security headers as its pages, preserving authentication
+  challenges and method information ([#208]).
+
 ### Added
 
 - Added Explorer application, schema and dependency views: navigation is
@@ -403,3 +409,4 @@ under `0.1.0a2` instead.
 [#202]: https://github.com/Blandskron/agnara/issues/202
 [#204]: https://github.com/Blandskron/agnara/issues/204
 [#206]: https://github.com/Blandskron/agnara/issues/206
+[#208]: https://github.com/Blandskron/agnara/issues/208
