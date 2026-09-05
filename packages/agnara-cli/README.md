@@ -8,3 +8,31 @@ Project introspection and scaffolding CLI. Owns project/app generators, template
 
 See `ARCHITECTURE.md` sections 3 and 4 for the package boundaries and the
 allowed dependency graph.
+
+## Status
+
+`agnara inspect` is implemented. Project and app scaffolding, `agnara graph`,
+`agnara schema openapi` and `agnara doctor` remain ahead in the backlog.
+
+## `agnara inspect`
+
+```bash
+agnara inspect billing.bootstrap:app --dependencies registry
+agnara inspect billing.bootstrap:app --json
+```
+
+Imports a compiled application and presents its filtered protocol-neutral
+introspection snapshot. Text and `--json` build one snapshot and apply one
+visibility decision, so the two cannot disagree, and neither derives anything
+from OpenAPI.
+
+Importing the target executes the module that defines it. A malformed target
+is rejected before any import happens.
+
+`--visibility` selects `full` (default), `agent` or `identity`; `--as-scope`
+simulates a viewer's scopes; `--hide` removes named capabilities. Offline
+inspection is therefore not a documented bypass of a publication decision.
+
+Exit codes are `0` for an answer, `1` for a target the CLI could not use and
+`2` for an invalid command line. Output carries no ANSI decoration. See
+ADR 0047 and `docs/CLI_SPEC.md`.

@@ -244,10 +244,15 @@ Core imports neither Pydantic nor msgspec.
   application whose capabilities are all hidden, and marks its result so an
   unfiltered snapshot cannot be served by mistake. Recorded by ADR 0046.
   Tracking: GitHub Issue #190.
-- [ ] E8.3 Implement `agnara inspect [app]` as a human-readable presentation of
-  the filtered introspection snapshot.
-- [ ] E8.4 Implement deterministic, versioned `agnara inspect [app] --json`
-  output from the same snapshot rather than HTML or OpenAPI.
+- [x] E8.3 Implement `agnara inspect [app]` as a human-readable presentation of
+  the filtered introspection snapshot. The application is named explicitly as
+  `module:attribute` until `agnara.toml` exists, and the visibility decision is
+  a command-line argument rather than an assumption. Recorded by ADR 0047.
+  Tracking: GitHub Issue #192.
+- [x] E8.4 Implement deterministic, versioned `agnara inspect [app] --json`
+  output from the same snapshot rather than HTML or OpenAPI. Both modes build
+  one snapshot and apply one filter, differing only in the last call.
+  Tracking: GitHub Issue #192.
 - [ ] E8.5 Implement `agnara graph` as a human-readable relationship view over
   the same snapshot without a second discovery path.
 - [ ] E8.6 Add an authorized machine-readable discovery endpoint with the same
