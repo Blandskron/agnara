@@ -156,7 +156,9 @@ dead before this change and is not a behavior change.
 
 Transport span linking is E9.4: this ADR creates no remote parent, injects and
 extracts no propagation headers, and makes no claim about a span produced by an
-HTTP or MCP adapter. Semantic convention compatibility is E9.5: the span name
+HTTP or MCP adapter. E9.4 answered that question without changing this design:
+ADR 0056 keeps propagation an application responsibility, and the ambient
+context this ADR already parents from is what carries a caller's trace in. Semantic convention compatibility is E9.5: the span name
 and both attributes are custom Agnara names and are not asserted to satisfy any
 OpenTelemetry protocol or GenAI convention. No-op cost evidence is E9.6.
 
