@@ -288,13 +288,18 @@ Core imports neither Pydantic nor msgspec.
   Pending PR/CI integration. Tracking: GitHub Issue #208.
 - [ ] E8.11 Add accessibility, keyboard, screen-reader, deep-link and responsive
   mobile tests for Agnara Explorer.
-- [?] E8.12 Research generated `llms.txt` without treating it as an
+- [~] E8.12 Research generated `llms.txt` without treating it as an
   authorization or canonical discovery format.
+  Local research recorded in proposed ADR 0053: reserve an optional index for
+  documentation publishing, retain existing runtime discovery/context, and
+  add no endpoint or generator. Local gate: 1669 passed, 14 browser cases
+  skipped; Ruff and ty pass. Pending ADR review and PR/CI integration.
+  Tracking: GitHub Issue #210.
 - [x] E8.13 Generate agent context from the versioned filtered snapshot.
   `agnara context` renders it as Markdown from the shared view, states in every
   rendering that seeing a capability is not permission to invoke it, and names
   a withheld field rather than printing its declared default. It is not
-  `llms.txt`, which E8.12 still has to conclude on. Recorded by ADR 0051.
+  `llms.txt`; E8.12 records that separate documentation boundary. Recorded by ADR 0051.
   Tracking: GitHub Issue #200.
 - [x] E8.14 Validate architecture metadata and cross-surface snapshot
   consistency. `ARCHITECTURE.md`'s concept list is now read out of the document
