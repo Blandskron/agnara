@@ -4,7 +4,8 @@ Owns ``agnara project create``, ``agnara app create``, capability
 generation, introspection commands and diagnostics. Templates live here,
 never in ``agnara-core``.
 
-Currently implemented: ``agnara inspect``, which imports a compiled
+Currently implemented: ``agnara apps``, which lists what ``agnara.toml``
+declares without importing anything, ``agnara inspect``, which imports a compiled
 application and presents its filtered protocol-neutral introspection
 snapshot as text or as deterministic JSON, ``agnara graph``, which draws the
 relationships in that same snapshot, ``agnara schema openapi``, which exports
@@ -17,15 +18,29 @@ See ``ARCHITECTURE.md`` section 15, ``docs/CLI_SPEC.md`` and EPIC 0A.
 """
 
 from ._main import EXIT_FAILED, EXIT_OK, EXIT_USAGE, main
+from ._manifest import (
+    ManifestApp,
+    ManifestError,
+    ProjectManifest,
+    find_manifest,
+    load_manifest,
+    parse_manifest,
+)
 from ._target import ResolvedTarget, TargetError, resolve_attribute, resolve_target
 
 __all__ = [
     "EXIT_FAILED",
     "EXIT_OK",
     "EXIT_USAGE",
+    "ManifestApp",
+    "ManifestError",
+    "ProjectManifest",
     "ResolvedTarget",
     "TargetError",
+    "find_manifest",
+    "load_manifest",
     "main",
+    "parse_manifest",
     "resolve_attribute",
     "resolve_target",
 ]

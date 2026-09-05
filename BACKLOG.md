@@ -441,7 +441,23 @@ complete because the alpha published only the `agnara` core distribution. See
 ## EPIC 0A — Project/app scaffolding
 
 - [ ] E0A.1 Implement `agnara project create`.
-- [ ] E0A.2 Define and validate `agnara.toml`.
+- [x] E0A.2 Define and validate `agnara.toml`. The format is decided and read:
+  `[project]`, `[defaults]` and `[apps.<name>]` with the architecture and
+  exposure vocabularies `docs/CLI_SPEC.md` names, inheritance from the project
+  default, preserved declaration order, and no module or path declared twice.
+  Parsed with `tomllib`, so no dependency was added. An unknown table or key is
+  rejected rather than ignored, because a typo that silently disables an app is
+  the worst failure a file agents edit can have; the cost, that a newer
+  manifest is refused by an older Agnara, is recorded rather than hidden. An
+  app `path` must be relative, POSIX and free of `..`, validated now because
+  generators will write to it later. `python` is checked as a non-empty string
+  and explicitly not parsed as a PEP 440 specifier. `agnara apps` ships as the
+  first reader, listing apps, architecture and exposures as text or
+  deterministic JSON without importing anything. 68 cases. Recorded in
+  ADR 0059, which remains Proposed and also answers RFC 0002's source-of-truth
+  question for the manifest's scope: it describes intent, Python composes.
+  Manifest-driven target resolution stays blocked on E0A.1. Tracking: GitHub
+  Issue #229.
 - [ ] E0A.3 Implement `agnara app create`.
 - [ ] E0A.4 Implement default `modular-hexagonal` template.
 - [ ] E0A.5 Implement `minimal` template.

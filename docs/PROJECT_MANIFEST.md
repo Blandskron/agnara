@@ -48,6 +48,25 @@ It is not intended to contain secrets.
 
 Secrets belong in environment/provider configuration.
 
+## Implemented form
+
+ADR 0059 records the decided format and `agnara_cli` implements a reader for
+it. `[project] name` must be a valid Python identifier; `python` is validated
+as a non-empty string and deliberately not parsed as a PEP 440 specifier.
+`[defaults] architecture` and each `[apps.<name>] architecture` accept
+`modular-hexagonal`, `minimal` or `vertical`; `exposures` accepts `http`,
+`mcp`, `a2a`, `tasks` or `events`. Each app requires `module` and `path`, and
+an app inherits the project default architecture when it declares none.
+
+An unknown table or key is rejected rather than ignored, so a typo fails
+instead of silently disabling an app. An app `path` must be relative, must use
+`/` separators and may not contain `..`, because generators will later write
+to it. Two apps may not share a module or a path. Declaration order is
+preserved.
+
+`agnara apps` reads the manifest and lists apps, architecture and exposures.
+It imports nothing, so it reports declared intent rather than runtime state.
+
 ## Runtime relationship
 
 The project manifest describes composition intent.

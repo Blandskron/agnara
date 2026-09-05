@@ -232,6 +232,24 @@ agnara doctor
 
 Lists apps, architecture and exposures.
 
+#### Implemented form
+
+```bash
+agnara apps
+agnara apps --project path/to/project
+agnara apps --json
+```
+
+Reads `agnara.toml`, searching the given directory and its ancestors, and
+defaulting to the working directory. It imports nothing and runs no project
+code, so it reports the composition a project *declares* rather than what a
+compiled application registers; detecting divergence between the two belongs
+to `agnara doctor`.
+
+`--json` emits a versioned, deterministically ordered document with POSIX
+paths on every platform. A missing or invalid manifest is an operator error:
+one line on stderr and a failing exit code, never a traceback. See ADR 0059.
+
 ### `agnara capabilities`
 
 Lists capability IDs and owning apps.
@@ -252,7 +270,10 @@ instances or private policy internals.
 
 #### Implemented form
 
-Until `agnara.toml` exists (E0A.2), the application is named explicitly:
+`agnara.toml` now exists (E0A.2, ADR 0059) but does not yet resolve a target:
+naming a composed application from the manifest needs a convention for where
+that application lives, which belongs with the generator that creates it
+(E0A.1). Until then the application is named explicitly:
 
 ```bash
 agnara inspect billing.bootstrap:app

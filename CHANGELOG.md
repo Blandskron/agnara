@@ -58,6 +58,15 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added the `agnara.toml` project manifest format and its reader. `agnara apps`
+  lists the apps a project declares with their architecture and exposures, as
+  text or deterministic JSON, without importing any project module.
+  `agnara_cli` exports `ProjectManifest`, `ManifestApp`, `ManifestError`,
+  `parse_manifest`, `load_manifest` and `find_manifest`. Unknown tables and
+  keys are rejected rather than ignored, and an app path may not be absolute or
+  escape the project directory. No new dependency: parsing uses `tomllib`
+  ([#229]).
+
 - Added `OpenTelemetryTracingHook` in `agnara-telemetry`, which opens one span
   per capability invocation over an application-supplied tracer and ends it on
   the matching terminal event. A nested invocation becomes a child span, while
@@ -476,3 +485,4 @@ under `0.1.0a2` instead.
 [#221]: https://github.com/Blandskron/agnara/issues/221
 [#225]: https://github.com/Blandskron/agnara/issues/225
 [#227]: https://github.com/Blandskron/agnara/issues/227
+[#229]: https://github.com/Blandskron/agnara/issues/229
