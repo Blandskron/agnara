@@ -218,11 +218,13 @@ endpoint serves, with no JavaScript, no stylesheet and no external asset. That
 makes read-only structural rather than configured and lets the content security
 policy be `default-src 'none'` with no exceptions.
 
-The index lists applications, transport availability — including transports
-OpenAPI cannot describe — and every visible capability, each with a deep link
-to its own page. A capability hidden from the viewer and one that does not
+Navigation is project → application → capability. The index lists
+applications, transport availability — including transports OpenAPI cannot
+describe — and every visible capability. An application page carries its
+provider graph; a capability page renders each published input's JSON Schema as
+nested structure rather than as escaped JSON. A capability hidden from the viewer and one that does not
 exist produce the same `404`, because telling them apart would publish the
 existence of something withheld.
 
-Styling, detail views, accessibility and browser tests are separate backlog
-items. See ADR 0052.
+Styling, accessibility and browser tests are separate backlog items. See
+ADR 0052.

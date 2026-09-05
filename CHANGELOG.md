@@ -15,6 +15,10 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added Explorer application, schema and dependency views: navigation is
+  project → application → capability, an input's JSON Schema renders as bounded
+  nested structure rather than escaped JSON, and each view disappears when its
+  field is withheld ([#206]).
 - Added the read-only Agnara Explorer: server-rendered HTML over the same
   filtered snapshot, visibility decision and principal resolver the discovery
   endpoint uses, with no JavaScript, stylesheet or external asset, deep links
@@ -398,3 +402,4 @@ under `0.1.0a2` instead.
 [#200]: https://github.com/Blandskron/agnara/issues/200
 [#202]: https://github.com/Blandskron/agnara/issues/202
 [#204]: https://github.com/Blandskron/agnara/issues/204
+[#206]: https://github.com/Blandskron/agnara/issues/206
