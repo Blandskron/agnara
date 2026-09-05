@@ -220,8 +220,12 @@ Core imports neither Pydantic nor msgspec.
   Declared scopes are enforced by core `ScopePolicy` before any effect, because
   discovery filtering is visibility rather than authorization. Recorded by
   ADR 0044. Tracking: GitHub Issue #185.
-- [ ] E7.9 Benchmark tool invocation overhead against FastMCP where meaningful.
-  Depends on E7.8a and E7.8b; discovery-only timings are not invocation evidence.
+- [x] E7.9 Benchmark tool invocation overhead against FastMCP where meaningful.
+  FastMCP is `MCPServer` in the pinned SDK. `benchmarks/mcp_tool_invocation.py`
+  measures the handler and official-client boundaries separately, and separates
+  synchronous from asynchronous tools because the SDK runs a synchronous tool
+  in a worker thread. Recorded in `docs/benchmarks/mcp-tool-invocation.md`; the
+  result is reproducible evidence on one workstation, not a portable ranking.
 
 ## EPIC 8 — Documentation and introspection
 
