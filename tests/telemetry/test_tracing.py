@@ -174,10 +174,15 @@ def test_outcome_attribute_and_status_are_a_closed_vocabulary(
     (span,) = exported(exporter)
     assert span.name == str(CAPABILITY)
     assert span.attributes is not None
-    assert dict(span.attributes) == {
+    expected = {
         "agnara.capability.id": str(CAPABILITY),
         "agnara.invocation.outcome": recorded,
     }
+    if status is StatusCode.ERROR:
+        # ADR 0057: the one stable convention attribute Agnara adopts, carrying
+        # the same closed vocabulary rather than an exception type.
+        expected["error.type"] = recorded
+    assert dict(span.attributes) == expected
     assert span.status.status_code is status
     assert span.status.description in (None, recorded if status is StatusCode.ERROR else None)
 
@@ -270,7 +275,12 @@ def test_no_caller_or_runtime_payload_reaches_the_exporter(traced: Any) -> None:
         assert secret not in rendered
     assert span.events == ()
     assert span.attributes is not None
-    assert set(span.attributes) == {"agnara.capability.id", "agnara.invocation.outcome"}
+    assert set(span.attributes) == {
+        "agnara.capability.id",
+        "agnara.invocation.outcome",
+        "error.type",
+    }
+    assert span.attributes["error.type"] == "failure"
 
 
 def test_an_invocation_identity_is_not_exported_as_an_attribute(traced: Any) -> None:

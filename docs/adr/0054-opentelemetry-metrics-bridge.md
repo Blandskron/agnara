@@ -73,6 +73,13 @@ E9.3 settled that deferred contract: the runtime now supplies an opaque
 this bridge changes. Metrics still need no correlation, the start callback
 stays empty, and the two hooks compose on one plan.
 
+E9.5 reconsidered these attributes and kept them. ADR 0057 adopts `error.type`
+on error spans but deliberately not on these instruments: the existing
+`agnara.invocation.outcome` already carries that information on every
+measurement, so a second attribute present only on failures would fragment
+time series without adding signal. Spans and metrics therefore carry different
+attribute sets on purpose, which a test records.
+
 This is a bounded initial E9.2 implementation. Traces, span linking,
 MCP/GenAI compatibility and no-op cost evidence remain E9.3-E9.6. Proposed
 status does not claim maintainer architectural approval.

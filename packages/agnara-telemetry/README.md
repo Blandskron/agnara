@@ -141,6 +141,32 @@ without it, a root span. Malformed headers are inert rather than fatal, and an
 unknown `traceparent` version links, because W3C requires forward compatibility
 and forbids only `ff`.
 
-MCP/GenAI conventions and no-op benchmarks remain E9.5-E9.6. See
+## Semantic conventions
+
+Agnara emits `agnara.`-namespaced names plus exactly one OpenTelemetry
+convention attribute: `error.type`, on a span whose outcome is `failure` or
+`timeout`, carrying that same outcome word. It is the only stable convention
+attribute that applies to a capability invocation. It is not an exception type:
+exception text is never exported, and the convention asks for a low-cardinality
+identifier. A `cancellation` carries none, because the caller withdrew rather
+than the capability failing. Metric attributes are unchanged.
+
+The GenAI and MCP vocabularies are **not** emitted. `gen_ai.operation.name` with
+the value `execute_tool` would assert that every capability is a tool, which is
+false for an HTTP request made by a human, and the tool call argument and result
+attributes are payloads this package never exports. Both vocabularies are also
+still incubating.
+
+If your application genuinely serves capabilities as MCP tools and you want a
+backend's GenAI views, add `mcp.*` and `gen_ai.*` at your MCP layer, where a
+tool identity and a method name actually exist. A transport-neutral capability
+span is the wrong place to claim them.
+
+Two tests check every attribute both hooks emit against the installed
+`opentelemetry-semantic-conventions` package: each must be `agnara.`-namespaced
+or stable, and no incubating name may appear. See
+[proposed ADR 0057](../../docs/adr/0057-semantic-convention-compatibility.md).
+
+No-op benchmarks remain E9.6. See
 [proposed ADR 0054](../../docs/adr/0054-opentelemetry-metrics-bridge.md)
 and [proposed ADR 0055](../../docs/adr/0055-capability-invocation-spans.md).

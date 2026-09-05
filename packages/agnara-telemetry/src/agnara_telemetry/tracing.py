@@ -18,6 +18,13 @@ _OUTCOMES = frozenset({"success", "failure", "timeout", "cancellation"})
 #: reported as an error the capability caused.
 _ERROR_OUTCOMES = frozenset({"failure", "timeout"})
 
+#: The one stable OpenTelemetry convention attribute that applies to a
+#: capability invocation, from ``opentelemetry.semconv.attributes``. Its value
+#: is Agnara's own closed outcome vocabulary, not an exception type: ADR 0055
+#: forbids exporting exception text, and the convention asks for a
+#: low-cardinality identifier rather than a message. See ADR 0057.
+_ERROR_TYPE = "error.type"
+
 
 class OpenTelemetryTracingHook:
     """Open one span per invocation and end it on the matching terminal event.
@@ -83,6 +90,7 @@ class OpenTelemetryTracingHook:
             span.set_attribute("agnara.invocation.outcome", outcome)
             if outcome in _ERROR_OUTCOMES:
                 # The outcome name is a fixed vocabulary, not error text.
+                span.set_attribute(_ERROR_TYPE, outcome)
                 span.set_status(Status(StatusCode.ERROR, outcome))
             elif outcome == "success":
                 span.set_status(Status(StatusCode.OK))

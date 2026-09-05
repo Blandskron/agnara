@@ -379,7 +379,19 @@ expanding that first PR into a complete frontend.
   Recorded in ADR 0056, which remains Proposed. Honouring a caller-supplied
   header is a deployment trust decision, not a framework default. Semantic
   conventions and no-op cost remain E9.5-E9.6. Tracking: GitHub Issue #223.
-- [ ] E9.5 MCP/GenAI semantic convention compatibility.
+- [x] E9.5 MCP/GenAI semantic convention compatibility. Adopted `error.type`
+  on error spans, carrying the existing closed outcome vocabulary rather than
+  an exception type, and nothing else; metric attributes are unchanged because
+  `agnara.invocation.outcome` already carries that signal without fragmenting
+  time series. Rejected the GenAI and MCP vocabularies: a capability is not
+  intrinsically a tool, the tool call argument and result attributes are
+  payloads this project never exports, and both vocabularies are incubating.
+  The boundary is enforced, not asserted: every attribute both hooks emit is
+  checked against the installed conventions package and must be
+  `agnara.`-namespaced or stable, with no incubating name permitted. 7 cases,
+  verified non-vacuous. Recorded in ADR 0057, which remains Proposed. No
+  protocol version or convention compliance is claimed. No-op cost remains
+  E9.6. Tracking: GitHub Issue #225.
 - [ ] E9.6 no-op telemetry cost benchmark.
 
 ## EPIC 10 — v0.1 release gate

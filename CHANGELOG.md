@@ -36,6 +36,11 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Changed
 
+- Capability spans whose outcome is `failure` or `timeout` now also carry the
+  stable OpenTelemetry `error.type` attribute, valued with that same outcome
+  word. It is not an exception type: exception text is still never exported. A
+  `cancellation` carries none. Metric attributes are unchanged, and the GenAI
+  and MCP vocabularies are deliberately not emitted ([#225]).
 - **Breaking (pre-1.0).** `InvocationStartEvent` and `InvocationTerminalEvent`
   now carry a required `invocation_id` that the execution runtime generates
   once per invocation and repeats on the terminal event. It is the supported
@@ -463,3 +468,4 @@ under `0.1.0a2` instead.
 [#216]: https://github.com/Blandskron/agnara/issues/216
 [#219]: https://github.com/Blandskron/agnara/issues/219
 [#221]: https://github.com/Blandskron/agnara/issues/221
+[#225]: https://github.com/Blandskron/agnara/issues/225
