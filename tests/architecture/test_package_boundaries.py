@@ -114,6 +114,36 @@ def test_policy_tests_are_independent_of_transports() -> None:
 # ---------------------------------------------------------------------------
 
 
+def test_core_names_no_tracing_vocabulary() -> None:
+    """E9.3 gave core an invocation identity, deliberately not a span concept.
+
+    ADR 0055 pairs lifecycle events through an opaque ``invocation_id`` so that
+    span creation, context propagation and status mapping stay in the adapter.
+    A core symbol named after a tracer, span or exporter is the first step of
+    that vocabulary migrating inward, which ADR 0023 and AGENTS.md forbid.
+    Prose may still discuss spans: only declared names are checked.
+    """
+    vocabulary = ("span", "tracer", "tracing", "otel", "opentelemetry", "exporter")
+    offenders = []
+    for path in source_files(CORE_DISTRIBUTION):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            match node:
+                case ast.ClassDef(name=name) | ast.FunctionDef(name=name):
+                    declared = name
+                case ast.AsyncFunctionDef(name=name):
+                    declared = name
+                case ast.Name(id=name, ctx=ast.Store()) | ast.arg(arg=name):
+                    declared = name
+                case ast.AnnAssign(target=ast.Name(id=name)):
+                    declared = name
+                case _:
+                    continue
+            lowered = declared.lower()
+            if any(term in lowered for term in vocabulary):
+                offenders.append(f"{path.name}:{node.lineno}: {declared}")
+    assert not offenders, "core must not name tracing concepts: " + ", ".join(offenders)
+
+
 def test_telemetry_declares_api_without_sdk_or_exporter_dependencies() -> None:
     declared = {
         _requirement_name(requirement) for requirement in declared_dependencies("agnara-telemetry")

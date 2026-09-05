@@ -1,6 +1,7 @@
 # agnara-telemetry
 
-An explicit OpenTelemetry metrics bridge for Agnara's execution hooks. This
+Explicit OpenTelemetry metrics and span bridges for Agnara's execution hooks.
+This
 implementation is unreleased repository development beyond `0.1.0a2`.
 It imports `agnara` and `opentelemetry-api`, never a sibling adapter or the SDK.
 
@@ -68,11 +69,55 @@ concurrent, synchronous, non-blocking recording. Do not mutate instruments
 while plans are active. A custom blocking instrument blocks invocation.
 
 Development tests use the pinned OpenTelemetry API/SDK 1.44.0 with an in-memory
-reader: `uv run pytest tests/telemetry tests/architecture`. Tests cover exact
-values/units, attributes, runtime outcomes, nested and concurrent execution,
-thread sharing, API no-op behavior and application-owned lifecycle. They do
-not establish free-threading compatibility, network exporter conformance,
-screening of application-added SDK data or performance superiority.
+reader and an in-memory span exporter:
+`uv run pytest tests/telemetry tests/architecture`. Tests cover exact
+values/units, attributes, span names, status mapping, parent/child nesting,
+released correlation state, redaction, runtime outcomes, nested and concurrent
+execution, thread sharing, API no-op behavior and application-owned lifecycle.
+They do not establish free-threading compatibility, network exporter
+conformance, screening of application-added SDK data or performance
+superiority.
 
-Spans, transport span linking, MCP/GenAI conventions and no-op benchmarks
-remain E9.3-E9.6. See [proposed ADR 0054](../../docs/adr/0054-opentelemetry-metrics-bridge.md).
+## Spans
+
+`OpenTelemetryTracingHook(tracer)` opens one span per invocation and ends it on
+the matching terminal event:
+
+```python
+from opentelemetry.sdk.trace import TracerProvider
+
+from agnara_telemetry import OpenTelemetryTracingHook
+
+provider = TracerProvider(shutdown_on_exit=False)
+# The application adds its own span processor and exporter here.
+try:
+    hook = OpenTelemetryTracingHook(provider.get_tracer("agnara_telemetry"))
+    plan = ExecutionPlan.compile(definition, registry, hooks=[hook])
+finally:
+    provider.shutdown()
+```
+
+The span is named after the capability, is `INTERNAL`, and carries only
+`agnara.capability.id` and `agnara.invocation.outcome`. `success` sets `OK`;
+`failure` and `timeout` set `ERROR` with the outcome word as the description;
+`cancellation` is recorded but left `UNSET`, because the caller withdrew rather
+than the capability failing. No exception text, argument, result, principal,
+transport field or tracking ID is attached, and no span events are recorded.
+
+Pairing uses the runtime's `invocation_id`, never a caller `tracking_id`. That
+identity is not exported: it would be unbounded cardinality on every span, and
+the span ID already identifies the span.
+
+A nested invocation becomes a child span, because the started span is attached
+to the OpenTelemetry context; invocations in sibling tasks are unrelated,
+because each task holds its own copy of that context. Register the hook at most
+once per plan — a second registration opens a second span for one invocation.
+Delivering events to this hook by hand, out of order, is outside the runtime's
+nesting guarantee: the spans still end, but the previous context is not
+restored.
+
+Metrics and span hooks compose on one plan and can be registered together.
+
+Transport span linking, MCP/GenAI conventions and no-op benchmarks remain
+E9.4-E9.6. See [proposed ADR 0054](../../docs/adr/0054-opentelemetry-metrics-bridge.md)
+and [proposed ADR 0055](../../docs/adr/0055-capability-invocation-spans.md).

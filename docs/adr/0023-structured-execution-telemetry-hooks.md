@@ -67,3 +67,22 @@ duck-typed synchronous hooks and the absence of callback execution during
 validation. Existing lifecycle tests cover success, failure, timeout,
 cancellation and ordinary hook failure isolation. OpenTelemetry integration,
 span linking, semantic conventions and no-op cost evidence remain E9.2-E9.6.
+
+## E9.3 invocation identity (Issue #219)
+
+This decision said tracking IDs are not safe storage keys but left observers
+with no key at all, which blocked spans. Both events now also carry a required
+`invocation_id` that the runtime generates once per invocation and repeats on
+the terminal event. It is unique per invocation, never derived from caller
+metadata, and opaque: an in-process correlation key, not a business identifier.
+
+The port shape is otherwise unchanged. Callbacks stay synchronous, exception
+suppression is unchanged, and a hook that only reads events needs no change.
+Because the field is required, code that constructed either event positionally
+must supply it; this is a breaking change recorded in the changelog.
+
+A hook that opens per-invocation state at start must release it in the terminal
+callback keyed by that identity. The runtime suppresses an ordinary exception
+from the start callback, so a terminal event can arrive for an invocation whose
+start never completed; an observer must tolerate that rather than assume a
+balanced pair. Recorded by ADR 0055, which also owns span semantics.
