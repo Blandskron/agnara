@@ -15,6 +15,13 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Fixed
 
+- Telemetry events now report a tracking ID supplied through
+  `ExecutionContext(tracking_id=...)`, not only one found in
+  `Invocation.metadata`. `agnara-mcp` sets that parameter from the JSON-RPC
+  request id, so MCP tool calls previously produced lifecycle events carrying
+  `None`. The explicit parameter takes precedence over metadata, and a
+  non-string metadata value is dropped rather than stringified into a
+  telemetry field. Adapters still export no tracking ID ([#221]).
 - Removed unreachable code at the end of `agnara.execution.runtime.invoke`.
   Four statements followed a `try` block whose every branch returned, so they
   could never execute; this is a readability correction with no behavior
@@ -455,3 +462,4 @@ under `0.1.0a2` instead.
 [#211]: https://github.com/Blandskron/agnara/issues/211
 [#216]: https://github.com/Blandskron/agnara/issues/216
 [#219]: https://github.com/Blandskron/agnara/issues/219
+[#221]: https://github.com/Blandskron/agnara/issues/221

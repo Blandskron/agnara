@@ -86,3 +86,25 @@ callback keyed by that identity. The runtime suppresses an ordinary exception
 from the start callback, so a terminal event can arrive for an invocation whose
 start never completed; an observer must tolerate that rather than assume a
 balanced pair. Recorded by ADR 0055, which also owns span semantics.
+
+## Tracking-ID source correction (Issue #221)
+
+The Decision above says the events carry a `tracking_id` "from the invocation
+metadata". That was only ever half of it. `ExecutionContext` also takes
+`tracking_id` as an explicit constructor parameter, and `agnara-mcp` fills it
+from the JSON-RPC request id, but the runtime read metadata alone, so a
+transport that used the parameter produced events carrying `None`.
+
+Both channels are now resolved, with the explicit parameter taking precedence:
+a transport sets it deliberately, while metadata is a free-form mapping any
+caller may populate. The runtime reads it at invocation time, so a policy or
+interceptor may still attach one before execution.
+
+Only a string is accepted from either source. Metadata is untyped and may hold
+values that must never be exported, so an unusable one is dropped rather than
+coerced into the event's `str | None` field.
+
+This changes what observers see, not what adapters export: `agnara-telemetry`
+still puts no tracking ID on a span or a metric attribute. The field remains an
+operator-facing correlation label, never a pairing key. Pair events by
+`invocation_id`.

@@ -98,10 +98,36 @@ class Journal:
         self.closed: list[str] = []
 
 
+@dataclass
+class _TelemetryJournal:
+    """What an observer saw, reduced to the fields this boundary owns."""
+
+    starts: list[tuple[str, str | None]]
+    terminals: list[tuple[str, str | None, str]]
+
+    def on_invocation_start(self, event: Any) -> None:
+        self.starts.append((str(event.capability_id), event.tracking_id))
+
+    def on_invocation_terminal(self, event: Any) -> None:
+        self.terminals.append((str(event.capability_id), event.tracking_id, event.outcome))
+
+
+@pytest.fixture
+def telemetry() -> _TelemetryJournal:
+    return _TelemetryJournal(starts=[], terminals=[])
+
+
+def _observed_surface(hook: _TelemetryJournal) -> McpToolInvoker:
+    """The same surface, with plans compiled against a telemetry observer."""
+    invoker, _ = surface(hooks=[hook])
+    return invoker
+
+
 def surface(
     *,
     authorized: bool = False,
     timeout: float | None = None,
+    hooks: list[Any] | None = None,
 ) -> tuple[McpToolInvoker, Journal]:
     app = Agnara("dispatch")
     journal = Journal()
@@ -172,7 +198,10 @@ def surface(
     ):
         mcp.tool(capability)
     exposures = mcp.compile()
-    plans = [ExecutionPlan.compile(app.capabilities[key], registry) for key in app.capabilities]
+    plans = [
+        ExecutionPlan.compile(app.capabilities[key], registry, hooks=hooks or [])
+        for key in app.capabilities
+    ]
 
     def identity_to_principal(identity: McpAuthenticatedIdentity) -> Principal:
         return Principal(identity.client_id, scopes=identity.scopes)
@@ -316,6 +345,36 @@ def test_execution_context_carries_transport_facts_without_the_protocol_object()
             "metadata": {"transport": "mcp", "tool": "dispatch.with_context"},
         }
     }
+
+
+def test_a_request_id_reaches_telemetry_and_not_only_the_handler(
+    telemetry: _TelemetryJournal,
+) -> None:
+    """Issue #221: the dispatcher sets ``ExecutionContext.tracking_id``.
+
+    Before the fix the runtime built its lifecycle events from invocation
+    metadata alone, so this adapter's request id never reached an observer.
+    Asserting only that a handler can read ``ctx.tracking_id`` did not catch it.
+    """
+    invoker = _observed_surface(telemetry)
+
+    call(invoker, "dispatch.with_context", {}, request_id="req-7")
+
+    assert telemetry.starts == [("dispatch.with_context", "req-7")]
+    assert telemetry.terminals == [("dispatch.with_context", "req-7", "success")]
+
+
+@pytest.mark.parametrize("request_id", [None, "x" * 129, ["list"]])
+def test_an_unusable_request_id_is_dropped_from_telemetry_too(
+    telemetry: _TelemetryJournal,
+    request_id: object,
+) -> None:
+    """The dispatcher already refuses these; telemetry must not resurrect them."""
+    invoker = _observed_surface(telemetry)
+
+    call(invoker, "dispatch.with_context", {}, request_id=request_id)
+
+    assert telemetry.starts == [("dispatch.with_context", None)]
 
 
 @pytest.mark.parametrize("request_id", [None, "x" * 129, ["list"]])
