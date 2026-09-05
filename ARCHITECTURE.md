@@ -506,6 +506,13 @@ Human UI and machine-readable discovery are separate surfaces. Deployments
 must be able to disable all HTML interfaces while retaining an authorized
 OpenAPI or introspection endpoint, or disable publication entirely.
 
+`agnara-http` serves the introspection snapshot through a discovery endpoint
+that is authorized by construction: it takes a principal resolver, answers
+`401` to an unidentified viewer unless anonymous discovery is opted into
+explicitly, filters per request before serialization, and refuses a
+shared-cacheable directive because the document is viewer-specific. It serves
+the same document `agnara inspect --json` produces. See ADR 0049.
+
 Visibility, schema publication, UI availability and interactive execution are
 independent security decisions. Hiding an operation in a UI does not authorize
 or deauthorize invocation.

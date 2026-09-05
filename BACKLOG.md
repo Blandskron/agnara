@@ -258,8 +258,12 @@ Core imports neither Pydantic nor msgspec.
   command obtains its data from one shared view, so two commands cannot
   disagree under one visibility decision. Recorded by ADR 0048. Tracking:
   GitHub Issue #194.
-- [ ] E8.6 Add an authorized machine-readable discovery endpoint with the same
-  versioned serialization as CLI JSON and explicit cache behavior.
+- [x] E8.6 Add an authorized machine-readable discovery endpoint with the same
+  versioned serialization as CLI JSON and explicit cache behavior. Authorization
+  is a required argument rather than a mode, a shared-cacheable directive is
+  refused at startup, and a cross-surface test proves the endpoint and
+  `agnara inspect --json` publish the same document. Recorded by ADR 0049.
+  Tracking: GitHub Issue #196.
 - [ ] E8.7 Implement `agnara schema openapi` over the same OpenAPI projection
   served by `agnara-http`, with stdout/file output and stable exit behavior.
 - [ ] E8.8 Implement a read-only Agnara Explorer MVP over protocol-neutral

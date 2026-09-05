@@ -34,6 +34,7 @@ from agnara_http._response import _ResponseSerializationError, _send_response
 
 EXPECTED_STATUS = {
     _TransportFailure.INVALID_INPUT: 400,
+    _TransportFailure.UNAUTHENTICATED: 401,
     _TransportFailure.NOT_FOUND: 404,
     _TransportFailure.METHOD_NOT_ALLOWED: 405,
     _TransportFailure.CONTENT_TOO_LARGE: 413,

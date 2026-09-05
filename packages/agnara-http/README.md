@@ -1,6 +1,6 @@
 # agnara-http
 
-HTTP/ASGI exposure adapter. Owns routing, request decoding, response encoding, RFC 9457 mapping and OpenAPI generation.
+HTTP/ASGI exposure adapter. Owns routing, request decoding, response encoding, RFC 9457 mapping, OpenAPI generation and the authorized discovery endpoint.
 
 OpenAPI 3.2 is projected from compiled HTTP exposures and shared capability
 schemas. Optional browser documentation providers consume that generated
@@ -191,3 +191,22 @@ RFC 0003, ADR 0018, EPIC 6 and EPIC 8.
 
 See `ARCHITECTURE.md` sections 3 and 4 for the package boundaries and the
 allowed dependency graph.
+
+## Discovery endpoint
+
+The introspection snapshot is served through a surface that is authorized by
+construction rather than by configuration. It takes a principal resolver — the
+application's authentication boundary, since this package verifies no
+credential — and answers `401` with a declared challenge to an unidentified
+viewer unless anonymous discovery is opted into explicitly.
+
+Filtering happens per request, before serialization, so a document is never
+built for one viewer and reused for another. `public`, `s-maxage` and
+`immutable` are refused at startup because a viewer-specific document must not
+be shared-cacheable, `Vary` is always sent, and the default is
+`private, no-store`. A resolver that raises produces a redacted `500` rather
+than being read as anonymous.
+
+The body is the same document `agnara inspect --json` produces. Seeing a
+capability here authorizes nothing: invocation still runs the normal policy
+pipeline. See ADR 0049.

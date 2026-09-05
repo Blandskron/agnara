@@ -15,6 +15,11 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added the authorized HTTP discovery endpoint, serving the same versioned
+  introspection document `agnara inspect --json` produces. It takes a principal
+  resolver, answers `401` unless anonymous discovery is opted into explicitly,
+  filters per request before serialization, and refuses a shared-cacheable
+  directive because the document is viewer-specific ([#196]).
 - Added `agnara graph`, which draws capability, dependency and provider
   relationships from the same filtered snapshot `agnara inspect` reads. Every
   introspection command now obtains its data from one shared view, so no
@@ -370,3 +375,4 @@ under `0.1.0a2` instead.
 [#190]: https://github.com/Blandskron/agnara/issues/190
 [#192]: https://github.com/Blandskron/agnara/issues/192
 [#194]: https://github.com/Blandskron/agnara/issues/194
+[#196]: https://github.com/Blandskron/agnara/issues/196
