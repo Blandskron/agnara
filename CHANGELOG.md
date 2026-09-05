@@ -22,6 +22,11 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added `OpenTelemetryMetricsHook` in `agnara-telemetry` for terminal invocation
+  counts and duration, using an application-supplied meter. The adapter depends
+  on the OpenTelemetry API; SDK/exporter setup and shutdown remain owned by
+  the application ([#216]).
+
 - Added Explorer application, schema and dependency views: navigation is
   project → application → capability, an input's JSON Schema renders as bounded
   nested structure rather than escaped JSON, and each view disappears when its
@@ -411,3 +416,4 @@ under `0.1.0a2` instead.
 [#204]: https://github.com/Blandskron/agnara/issues/204
 [#206]: https://github.com/Blandskron/agnara/issues/206
 [#211]: https://github.com/Blandskron/agnara/issues/211
+[#216]: https://github.com/Blandskron/agnara/issues/216

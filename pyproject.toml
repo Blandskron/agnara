@@ -36,6 +36,8 @@ dev = [
     # their performance and ergonomics. This is not a core dependency.
     "msgspec>=0.21,<0.22",
     "playwright==1.62.0",
+    # E9.2 integration evidence only; applications own SDK configuration.
+    "opentelemetry-sdk==1.44.0",
     "pydantic>=2.9,<3",
     "pytest>=8.4",
     "ruff>=0.14",
