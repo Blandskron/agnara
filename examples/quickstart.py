@@ -1,11 +1,11 @@
-"""Agnara 0.1.0a1 quick start.
+"""Agnara 0.1.0a2 quick start.
 
 Runs against the published `agnara` distribution using public API only:
 
-    pip install agnara==0.1.0a1
+    pip install agnara==0.1.0a2
     python quickstart.py
 
-It demonstrates the whole `0.1.0a1` surface: capability declaration with
+It demonstrates the whole `0.1.0a2` surface: capability declaration with
 security metadata, startup compilation and freezing, dependency injection,
 schema-validated direct invocation, and canonical results.
 

@@ -15,7 +15,7 @@ depends on nothing but the standard library.
 
 ## Status: alpha
 
-`0.1.0a1` is the first public release — an architectural proof that Agnara
+`0.1.0a2` is the first published release — an architectural proof that Agnara
 installs and runs as a real Python distribution. It is **not
 production-ready**, the public API may change without a deprecation cycle, and
 it makes no claim of protocol conformance, benchmark leadership or security
@@ -24,7 +24,7 @@ guarantees.
 ## Install
 
 ```bash
-pip install agnara==0.1.0a1
+pip install agnara==0.1.0a2
 ```
 
 Requires CPython 3.14 or newer.
@@ -99,7 +99,7 @@ transformation of the function.
 ## What it does not include
 
 The HTTP/ASGI, OpenAPI, MCP and CLI adapters exist in the Agnara repository but
-were **not** published to PyPI in `0.1.0a1`, so they cannot be installed with
+were **not** published to PyPI in `0.1.0a2`, so they cannot be installed with
 `pip` yet. Events, A2A and the telemetry bridge are likewise repository-only.
 
 ## Frozen value semantics
