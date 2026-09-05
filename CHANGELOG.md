@@ -15,6 +15,11 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added the read-only Agnara Explorer: server-rendered HTML over the same
+  filtered snapshot, visibility decision and principal resolver the discovery
+  endpoint uses, with no JavaScript, stylesheet or external asset, deep links
+  on capability identifiers, non-HTTP transport availability, and one `404` for
+  both a hidden and an absent capability ([#204]).
 - Added executable validation of the architecture metadata and of
   cross-surface snapshot consistency: `ARCHITECTURE.md`'s concept list is
   checked against the model, no descriptor field can be published without a
@@ -392,3 +397,4 @@ under `0.1.0a2` instead.
 [#198]: https://github.com/Blandskron/agnara/issues/198
 [#200]: https://github.com/Blandskron/agnara/issues/200
 [#202]: https://github.com/Blandskron/agnara/issues/202
+[#204]: https://github.com/Blandskron/agnara/issues/204
