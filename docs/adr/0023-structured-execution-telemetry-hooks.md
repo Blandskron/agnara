@@ -17,7 +17,7 @@ We need a mechanism to:
 
 We will introduce a `TelemetryHook` protocol and attach immutable tuples of hooks directly to `ExecutionPlan` instances during compilation.
 
-1. **Protocol-neutral Events**: Two frozen slotted dataclasses (`InvocationStartEvent` and `InvocationTerminalEvent`) will represent the lifecycle events. They will carry the `capability_id` and an optional `tracking_id` from the transport metadata.
+1. **Protocol-neutral Events**: Two frozen slotted dataclasses (`InvocationStartEvent` and `InvocationTerminalEvent`) will represent the lifecycle events. They will carry the `capability_id` and an optional `tracking_id` from the invocation metadata.
 2. **Immutable Hook Registration**: Hooks will be provided as an iterable to `ExecutionPlan.compile(..., hooks=...)` and stored as an immutable tuple. There will be no dynamic registry.
 3. **Outcome Semantics**: The terminal event will classify the outcome as a literal string (`"success"`, `"failure"`, `"timeout"`, `"cancellation"`) and record the `duration_ns` using `time.monotonic_ns()`.
 4. **Hook Isolation**: Hooks are synchronous, must not block, and their exceptions will be caught and silently ignored by the runtime so they cannot fail the actual capability execution.
@@ -26,7 +26,7 @@ We will introduce a `TelemetryHook` protocol and attach immutable tuples of hook
 ## Consequences
 
 - The `ExecutionPlan` compiler must now be supplied with any desired telemetry hooks. Adapters will compile their plans with the necessary OpenTelemetry hooks later in EPIC 9.
-- `invoke` now natively handles lifecycle emissions. Because `invoke_result` calls `invoke`, terminal events are emitted exactly once regardless of whether the caller requested ergonomic Python exceptions or canonical HTTP-friendly results.
+- `invoke` now natively handles lifecycle emissions. Because `invoke_result` calls `invoke`, terminal events are emitted exactly once regardless of whether the caller requested ergonomic Python exceptions or canonical protocol-neutral results.
 - OpenTelemetry spans and context propagation are firmly relegated to an external provider package (`agnara-telemetry`), preserving the core's purity.
 
 ## E9.1 implementation clarification (Issue #211)
