@@ -328,7 +328,7 @@ expanding that first PR into a complete frontend.
 - [~] E9.2 OpenTelemetry adapter. Initial application-owned metrics bridge
   over the existing telemetry port; proposed ADR 0054 and Issue #216.
   API/SDK 1.44.0 in-memory evidence: 17 adapter cases and architecture gates;
-  local full suite 1763 passed, 14 browser cases skipped; Ruff and ty pass.
+  local full suite 1763 passed, 31 browser cases skipped; Ruff and ty pass.
   Pending PR/CI and maintainer review.
   Spans, transport links, conventions and benchmarks remain E9.3-E9.6.
 - [ ] E9.3 Common capability spans.

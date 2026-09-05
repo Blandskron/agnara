@@ -30,6 +30,10 @@ without being published. See the `0.1.0a2` scope note below.
   on the OpenTelemetry API; SDK/exporter setup and shutdown remain owned by
   the application ([#216]).
 
+- Added a main content landmark to every Explorer page and required Chromium
+  checks for accessible structure, keyboard navigation, direct links and
+  representative mobile rendering ([#209]).
+
 - Added Explorer application, schema and dependency views: navigation is
   project → application → capability, an input's JSON Schema renders as bounded
   nested structure rather than escaped JSON, and each view disappears when its
@@ -418,6 +422,7 @@ under `0.1.0a2` instead.
 [#202]: https://github.com/Blandskron/agnara/issues/202
 [#204]: https://github.com/Blandskron/agnara/issues/204
 [#206]: https://github.com/Blandskron/agnara/issues/206
+[#208]: https://github.com/Blandskron/agnara/issues/208
 [#209]: https://github.com/Blandskron/agnara/issues/209
 [#211]: https://github.com/Blandskron/agnara/issues/211
 [#216]: https://github.com/Blandskron/agnara/issues/216
