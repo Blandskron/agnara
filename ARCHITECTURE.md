@@ -488,6 +488,11 @@ format is `agnara-introspection` and the version is `"0"`, which states that
 the contract is not yet stable. Exposures are contributed by whoever owns the
 adapters, and transport availability is derived from them. See ADR 0045.
 
+The concept list above is executable. `tests/architecture` reads it out of
+this document and checks the model against it, and asserts that no descriptor
+field can be published without a named decision, so removing a concept from
+either side breaks a test rather than a promise.
+
 Building a snapshot is not publishing one. `filter_snapshot` applies a
 `DiscoveryVisibility` — a visibility rule deciding which capabilities a
 principal may discover, plus an explicit set of published fields — and returns
@@ -505,6 +510,12 @@ contract where possible.
 Human UI and machine-readable discovery are separate surfaces. Deployments
 must be able to disable all HTML interfaces while retaining an authorized
 OpenAPI or introspection endpoint, or disable publication entirely.
+
+Every surface that describes an application — the CLI's text, JSON, graph and
+context renderings, the HTTP discovery endpoint, and MCP `tools/list` — must
+agree for one viewer. `tests/integration` asserts that agreement, including
+for MCP, whose scope filter predates the introspection layer and runs on its
+own code path.
 
 `agnara-http` serves the introspection snapshot through a discovery endpoint
 that is authorized by construction: it takes a principal resolver, answers

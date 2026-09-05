@@ -15,6 +15,11 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added executable validation of the architecture metadata and of
+  cross-surface snapshot consistency: `ARCHITECTURE.md`'s concept list is
+  checked against the model, no descriptor field can be published without a
+  named decision, and six surfaces are asserted to describe one application the
+  same way for one viewer ([#202]).
 - Added `agnara context`, which renders the filtered snapshot as Markdown for a
   model to read. It states in every rendering that seeing a capability is not
   permission to invoke it, and names a withheld field instead of printing its
@@ -386,3 +391,4 @@ under `0.1.0a2` instead.
 [#196]: https://github.com/Blandskron/agnara/issues/196
 [#198]: https://github.com/Blandskron/agnara/issues/198
 [#200]: https://github.com/Blandskron/agnara/issues/200
+[#202]: https://github.com/Blandskron/agnara/issues/202
