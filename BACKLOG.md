@@ -392,7 +392,21 @@ expanding that first PR into a complete frontend.
   verified non-vacuous. Recorded in ADR 0057, which remains Proposed. No
   protocol version or convention compliance is claimed. No-op cost remains
   E9.6. Tracking: GitHub Issue #225.
-- [ ] E9.6 no-op telemetry cost benchmark.
+- [x] E9.6 no-op telemetry cost benchmark. `benchmarks/telemetry_overhead.py`
+  measures six hook configurations, separating the port's fixed cost from the
+  cost of having any observer and from each OpenTelemetry adapter. The first
+  run showed that `invoke` built both lifecycle events on every invocation
+  whether or not a hook existed, costing about 2.2 microseconds an application
+  without hooks could not observe; identity generation, tracking-ID resolution,
+  clock reads and event construction are now guarded, which four
+  order-balanced A/B rounds show saves roughly 2.9-4.4 microseconds on the
+  unobserved path. Nothing is claimed about the hooked paths: their per-round
+  deltas swing further than the change could explain, and that is reported
+  rather than explained away. Correctness is pinned by 12 cases, three of which
+  fail if the guard is removed. Recorded in ADR 0058 and
+  `docs/benchmarks/telemetry-overhead.md`, both Proposed and both limited to
+  one workstation: no portable ranking, no throughput claim, no CI threshold.
+  Tracking: GitHub Issue #227.
 
 ## EPIC 10 — v0.1 release gate
 
