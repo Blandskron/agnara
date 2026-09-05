@@ -123,6 +123,28 @@ evidence terminates it as forbidden. Both outcomes occur before dependency
 construction or handler effects, and `invoke_result()` maps them to stable
 protocol-neutral failure codes.
 
+## Telemetry hooks (repository development)
+
+The core port is `agnara.execution.TelemetryHook`, with synchronous
+`on_invocation_start(InvocationStartEvent)` and
+`on_invocation_terminal(InvocationTerminalEvent)` callbacks. Register observers
+with `ExecutionPlan.compile(definition, registry, hooks=[observer])`; inheriting
+from the protocol is optional. Events expose capability and tracking identity;
+terminal events also contain monotonic duration and execution outcome, without
+handler inputs, returned payloads or exception objects.
+
+Both plan construction paths copy the hook collection to a tuple. Missing or
+non-callable callbacks, coroutine functions and generator functions fail at
+startup with `DefinitionError`. This validation is an unreleased improvement
+over `0.1.0a2`. Valid callbacks accept one event, return `None` synchronously
+and must not block. Their ordinary exceptions are ignored during execution.
+
+Observers own synchronization of their mutable state and must keep their
+callbacks stable after compilation. Tracking IDs are caller-provided and may
+repeat; they are not unique span identifiers and should contain no secrets.
+Exporter startup, flushing and shutdown belong to adapters, not the core
+runtime. The OpenTelemetry bridge remains separate, unfinished work.
+
 ## Links
 
 - Source, architecture and decision records:
