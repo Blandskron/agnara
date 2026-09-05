@@ -15,6 +15,10 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added discovery visibility and redaction: `filter_snapshot` decides which
+  capabilities a principal may discover and which fields are published, as two
+  separate decisions with no default publication set, and marks its result so
+  an unfiltered snapshot cannot be served by mistake ([#190]).
 - Added the protocol-neutral introspection snapshot in `agnara.introspection`:
   frozen descriptors for apps, capabilities, inputs, dependencies, providers,
   policies and adapter-contributed exposures, built from a compiled
@@ -354,3 +358,4 @@ under `0.1.0a2` instead.
 [#185]: https://github.com/Blandskron/agnara/issues/185
 [#186]: https://github.com/Blandskron/agnara/issues/186
 [#188]: https://github.com/Blandskron/agnara/issues/188
+[#190]: https://github.com/Blandskron/agnara/issues/190

@@ -9,13 +9,16 @@ would make a handler, provider, policy or schema object reachable.
 
 from __future__ import annotations
 
+import ast
 import dataclasses
 import inspect
+from pathlib import Path
 
 import pytest
 
 from agnara import introspection
-from agnara.introspection import descriptors
+from agnara.introspection import descriptors, visibility
+from agnara.policy import AnonymousPrincipal
 
 #: Everything a descriptor field is allowed to be. Nothing here can carry a
 #: reference to a live object, so no traversal of a snapshot can reach one.
@@ -88,6 +91,36 @@ def test_the_snapshot_declares_its_own_format_and_version() -> None:
     snapshot = introspection.IntrospectionSnapshot()
     assert snapshot.json_data()["format"] == introspection.INTROSPECTION_FORMAT
     assert snapshot.json_data()["version"] == introspection.INTROSPECTION_VERSION
+
+
+def test_a_visibility_rule_can_only_see_described_values() -> None:
+    """A rule that could reach a definition could reach a handler."""
+    source = ast.parse(Path(visibility.__file__).read_text(encoding="utf-8"))
+    imported = {
+        node.module
+        for node in ast.walk(source)
+        if isinstance(node, ast.ImportFrom) and node.module is not None
+    }
+    forbidden = {
+        "agnara.application",
+        "agnara.capability.definition",
+        "agnara.capability.registry",
+        "agnara.execution.plan",
+        "agnara.core.di.registry",
+    }
+    assert not imported & forbidden, sorted(imported & forbidden)
+
+
+def test_the_filter_marks_its_result_so_an_unfiltered_snapshot_cannot_pass_for_one() -> None:
+    document = introspection.filter_snapshot(
+        introspection.IntrospectionSnapshot(),
+        introspection.DiscoveryVisibility.identity_only(introspection.ScopeVisible()),
+        AnonymousPrincipal(),
+    )
+
+    assert introspection.IntrospectionSnapshot().filtered is False
+    assert document.filtered is True
+    assert document.json_data()["filtered"] is True
 
 
 def test_every_descriptor_type_is_part_of_the_published_contract() -> None:

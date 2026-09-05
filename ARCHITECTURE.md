@@ -488,9 +488,12 @@ format is `agnara-introspection` and the version is `"0"`, which states that
 the contract is not yet stable. Exposures are contributed by whoever owns the
 adapters, and transport availability is derived from them. See ADR 0045.
 
-Building a snapshot is not publishing one. Visibility, redaction and
-authorization filter the snapshot before serialization; that layer is E8.2 and
-is not implemented yet.
+Building a snapshot is not publishing one. `filter_snapshot` applies a
+`DiscoveryVisibility` — a visibility rule deciding which capabilities a
+principal may discover, plus an explicit set of published fields — and returns
+a snapshot marked `filtered`. A surface that serves a snapshot to anyone
+should refuse an unfiltered one. Hiding is discovery-only and never authorizes
+or deauthorizes invocation. See ADR 0046.
 
 ### Agnara Explorer
 
