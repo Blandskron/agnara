@@ -49,10 +49,11 @@ refuses to replace one without `--overwrite`, matching
 `agnara schema openapi`; the two now share one writer, so the refusal reads
 the same whichever command produced it.
 
-This is not `llms.txt`. E8.12 is still research, and the backlog is explicit
-that `llms.txt` must not be treated as an authorization or canonical discovery
-format. This command produces a document at a path the operator chooses, for a
-prompt the operator assembles.
+This is not `llms.txt`. The E8.12 research decision in
+[ADR 0053](0053-llms-txt-documentation-index.md) reserves an optional index for
+documentation publishing and adds no runtime route or format. This command
+produces a document at a path the operator chooses, for a prompt the operator
+assembles. Neither artifact authorizes invocation or replaces canonical discovery.
 
 ## Alternatives
 
@@ -65,8 +66,8 @@ prompt the operator assembles.
   a declared `low` one, and would assert the wrong one confidently.
 - Omit the "not authorization" statement as obvious: rejected. It is obvious to
   the operator and not to the model, and the model is the reader.
-- Emit an `llms.txt` at a well-known path: rejected. E8.12 has not concluded,
-  and a well-known path invites treating the document as canonical discovery.
+- Emit an `llms.txt` at a conventional path: rejected for this command.
+  ADR 0053 separates a future documentation index from runtime discovery.
 - Include dependency and provider detail by default: rejected. It is
   implementation detail a caller cannot act on, and it is what `--visibility`
   already governs for anyone who wants it.

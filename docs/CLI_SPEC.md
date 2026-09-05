@@ -326,7 +326,11 @@ the thing that matters most. The snapshot's format and version appear in the
 header so a stale context is identifiable.
 
 This is not `llms.txt` and must not be presented as canonical discovery or as
-authorization. See ADR 0051.
+authorization. See ADR 0051. The E8.12 research decision in
+[ADR 0053](adr/0053-llms-txt-documentation-index.md) reserves optional
+`llms.txt` generation for documentation publishing; it adds no CLI flag,
+runtime route or output format. Choosing that filename with `--output` does
+not change the meaning of the generated context.
 
 ### `agnara doctor`
 
