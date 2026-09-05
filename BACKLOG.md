@@ -366,7 +366,19 @@ expanding that first PR into a complete frontend.
   architecture rule that core declares no tracing vocabulary. Recorded in
   ADR 0055, which remains Proposed. Transport linking, semantic conventions
   and no-op cost remain E9.4-E9.6. Tracking: GitHub Issue #219.
-- [ ] E9.4 transport span linking.
+- [x] E9.4 transport span linking. Decided that Agnara does not participate
+  in context propagation: no transport adapter reads, writes or validates a
+  propagation header, and an architecture rule now asserts that only
+  `agnara-telemetry` may import or declare OpenTelemetry. A capability span
+  joins a caller's trace because ADR 0055 parents it from the ambient context,
+  which an application establishes with the instrumentation it already runs.
+  Verified over the real HTTP dispatcher and the real MCP invoker: linked under
+  propagation, a root span without it, so linking is never accidental.
+  Malformed headers are inert; an unknown `traceparent` version links, because
+  W3C requires forward compatibility and forbids only `ff`. 17 evidence cases.
+  Recorded in ADR 0056, which remains Proposed. Honouring a caller-supplied
+  header is a deployment trust decision, not a framework default. Semantic
+  conventions and no-op cost remain E9.5-E9.6. Tracking: GitHub Issue #223.
 - [ ] E9.5 MCP/GenAI semantic convention compatibility.
 - [ ] E9.6 no-op telemetry cost benchmark.
 

@@ -114,6 +114,33 @@ def test_policy_tests_are_independent_of_transports() -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize(
+    "dist_name", [name for name in DISTRIBUTIONS if name != "agnara-telemetry"]
+)
+def test_only_the_telemetry_adapter_knows_about_opentelemetry(dist_name: str) -> None:
+    """E9.4: transports do not read, write or depend on trace propagation.
+
+    A capability span joins a caller's trace because it inherits the ambient
+    OpenTelemetry context, not because a transport parsed ``traceparent``.
+    Keeping the dependency in one adapter is what makes that a decision rather
+    than an accident: the moment ``agnara-http`` could import OpenTelemetry, a
+    header parser and a trust decision about caller-supplied trace identity
+    would follow. Recorded by ADR 0056.
+    """
+    imported = [
+        f"{imp.module} at {imp.where()}"
+        for imp in external_imports_of(dist_name)
+        if imp.module == "opentelemetry" or imp.module.startswith("opentelemetry.")
+    ]
+    declared = [
+        requirement
+        for requirement in declared_dependencies(dist_name)
+        if _requirement_name(requirement).startswith("opentelemetry")
+    ]
+    assert not imported, f"{dist_name} must not import OpenTelemetry: " + ", ".join(imported)
+    assert not declared, f"{dist_name} must not declare OpenTelemetry: " + ", ".join(declared)
+
+
 def test_core_names_no_tracing_vocabulary() -> None:
     """E9.3 gave core an invocation identity, deliberately not a span concept.
 

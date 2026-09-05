@@ -118,6 +118,29 @@ restored.
 
 Metrics and span hooks compose on one plan and can be registered together.
 
-Transport span linking, MCP/GenAI conventions and no-op benchmarks remain
-E9.4-E9.6. See [proposed ADR 0054](../../docs/adr/0054-opentelemetry-metrics-bridge.md)
+## Joining a caller's trace
+
+Agnara reads no propagation header. A capability span is parented by whatever
+OpenTelemetry context is current when the invocation starts, so it joins a
+caller's distributed trace exactly when the application has propagated that
+caller's context — typically with the ASGI or client instrumentation the
+application already runs.
+
+The consequence worth stating plainly: a request carrying `traceparent` still
+produces an unlinked root span if nothing extracted it. Linking is opt-in.
+
+This is a deliberate boundary, not an omission. Honouring a caller-supplied
+`traceparent` lets that caller choose the trace identity their operation is
+recorded under, which is reasonable inside a trusted perimeter and rarely so at
+an untrusted edge. That judgment belongs to a deployment, not to a framework
+default. See [proposed ADR 0056](../../docs/adr/0056-transport-span-linking.md).
+
+Verified over the real HTTP dispatcher and the real MCP invoker: with
+propagation the capability span carries the caller's trace ID and parent span;
+without it, a root span. Malformed headers are inert rather than fatal, and an
+unknown `traceparent` version links, because W3C requires forward compatibility
+and forbids only `ff`.
+
+MCP/GenAI conventions and no-op benchmarks remain E9.5-E9.6. See
+[proposed ADR 0054](../../docs/adr/0054-opentelemetry-metrics-bridge.md)
 and [proposed ADR 0055](../../docs/adr/0055-capability-invocation-spans.md).
