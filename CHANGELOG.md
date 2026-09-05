@@ -15,6 +15,11 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added the `agnara` command and `agnara inspect`, which imports a compiled
+  application named as `module:attribute` and presents its filtered
+  introspection snapshot as text or deterministic JSON. Both modes build one
+  snapshot and apply one visibility decision, chosen on the command line
+  ([#192]).
 - Added discovery visibility and redaction: `filter_snapshot` decides which
   capabilities a principal may discover and which fields are published, as two
   separate decisions with no default publication set, and marks its result so
@@ -359,3 +364,4 @@ under `0.1.0a2` instead.
 [#186]: https://github.com/Blandskron/agnara/issues/186
 [#188]: https://github.com/Blandskron/agnara/issues/188
 [#190]: https://github.com/Blandskron/agnara/issues/190
+[#192]: https://github.com/Blandskron/agnara/issues/192

@@ -249,6 +249,40 @@ ordering and no ANSI decoration. Offline inspection still applies a declared
 publication/redaction policy; it is not permission to dump secrets, dependency
 instances or private policy internals.
 
+#### Implemented form
+
+Until `agnara.toml` exists (E0A.2), the application is named explicitly:
+
+```bash
+agnara inspect billing.bootstrap:app
+agnara inspect billing.bootstrap:app --dependencies registry --json
+agnara inspect billing.bootstrap:app --visibility agent --as-scope billing:write
+agnara inspect billing.bootstrap:app --path src --hide billing.reconcile
+```
+
+Importing a target executes the module that defines it; a malformed target is
+rejected before any import happens.
+
+`--dependencies` names a `DIRegistry` in the same module. Without it the
+application compiles against an empty registry, so a capability that declares
+a dependency fails with the reason rather than being described as if it had
+none.
+
+`--visibility` chooses which fields are published: `full` (the default, for
+local inspection of source the operator can already read), `agent` (what a
+caller needs to choose and call a capability) or `identity` (names only).
+`--as-scope` simulates a viewer holding those scopes, applying the same scope
+rule a transport applies. `--hide` removes named capabilities. The text output
+names any withheld fields under the header, so a partial view is legible as
+one.
+
+Exit codes: `0` when the command produced its answer, including "nothing is
+visible"; `1` for a target or application the CLI could not use, reported as a
+diagnostic on stderr rather than a traceback; `2` for an invalid command line.
+
+Exposures are absent, because the CLI imports an application rather than
+composing a server, so no adapter contributes them. See ADR 0047.
+
 ### `agnara graph`
 
 Displays project/app/capability dependency relationships.
