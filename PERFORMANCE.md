@@ -40,6 +40,15 @@ and network cost, rotates scenario order and retains raw samples. ADR 0041
 keeps the direct ASGI boundary; the result is not a portable ranking or CI
 latency threshold.
 
+The E9.6 telemetry cost measurement is implemented by
+`benchmarks/telemetry_overhead.py` and recorded in
+`docs/benchmarks/telemetry-overhead.md`. It separates the port's fixed cost
+from the cost of having any observer and from each OpenTelemetry adapter, with
+in-memory exporters so no network or serialization cost is included. It is what
+justified guarding lifecycle event construction behind hook presence (ADR
+0058); the same caveats apply, and the hooked scenarios are explicitly not a
+claim in either direction on the machine used.
+
 The E7.9 in-process MCP comparison is implemented by
 `benchmarks/mcp_tool_invocation.py` and recorded in
 `docs/benchmarks/mcp-tool-invocation.md`. FastMCP is `MCPServer` in the pinned

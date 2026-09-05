@@ -36,6 +36,12 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Changed
 
+- An invocation whose compiled plan registers no telemetry hook no longer
+  builds lifecycle events. Identity generation, tracking-ID resolution, clock
+  reads and event construction are skipped when nothing can observe them,
+  which measured roughly 2.9-4.4 microseconds per invocation on one
+  workstation. A plan with hooks delivers exactly the same events as before
+  ([#227]).
 - Capability spans whose outcome is `failure` or `timeout` now also carry the
   stable OpenTelemetry `error.type` attribute, valued with that same outcome
   word. It is not an exception type: exception text is still never exported. A
@@ -469,3 +475,4 @@ under `0.1.0a2` instead.
 [#219]: https://github.com/Blandskron/agnara/issues/219
 [#221]: https://github.com/Blandskron/agnara/issues/221
 [#225]: https://github.com/Blandskron/agnara/issues/225
+[#227]: https://github.com/Blandskron/agnara/issues/227

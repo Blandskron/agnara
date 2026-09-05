@@ -52,20 +52,26 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
         rendered = ", ".join(sorted(supplied_protected))
         raise InvocationError(f"invocation payload supplies runtime-owned parameter(s): {rendered}")
 
-    start_ns = time.monotonic_ns()
+    # Building a lifecycle event pair costs roughly two microseconds, and an
+    # application that registered no hook can observe none of it. The work is
+    # therefore guarded rather than unconditional; measured by
+    # benchmarks/telemetry_overhead.py and recorded by ADR 0058.
+    observers = plan.hooks
+    start_ns = time.monotonic_ns() if observers else 0
     # Observers need a key that pairs this start with its terminal event.
     # A caller-supplied tracking ID cannot serve: it is optional, repeatable
     # across invocations and attacker-controlled on a remote transport.
-    invocation_id = uuid4().hex
-    tracking_id = _tracking_id(context)
-    start_event = InvocationStartEvent(
-        capability_id=plan.definition.id,
-        tracking_id=tracking_id,
-        invocation_id=invocation_id,
-    )
-    for hook in plan.hooks:
-        with contextlib.suppress(Exception):
-            hook.on_invocation_start(start_event)
+    invocation_id = uuid4().hex if observers else ""
+    tracking_id = _tracking_id(context) if observers else None
+    if observers:
+        start_event = InvocationStartEvent(
+            capability_id=plan.definition.id,
+            tracking_id=tracking_id,
+            invocation_id=invocation_id,
+        )
+        for hook in observers:
+            with contextlib.suppress(Exception):
+                hook.on_invocation_start(start_event)
 
     outcome = "success"
     try:
@@ -83,16 +89,17 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
         outcome = "failure"
         raise
     finally:
-        terminal_event = InvocationTerminalEvent(
-            capability_id=plan.definition.id,
-            tracking_id=tracking_id,
-            duration_ns=time.monotonic_ns() - start_ns,
-            outcome=outcome,
-            invocation_id=invocation_id,
-        )
-        for hook in plan.hooks:
-            with contextlib.suppress(Exception):
-                hook.on_invocation_terminal(terminal_event)
+        if observers:
+            terminal_event = InvocationTerminalEvent(
+                capability_id=plan.definition.id,
+                tracking_id=tracking_id,
+                duration_ns=time.monotonic_ns() - start_ns,
+                outcome=outcome,
+                invocation_id=invocation_id,
+            )
+            for hook in observers:
+                with contextlib.suppress(Exception):
+                    hook.on_invocation_terminal(terminal_event)
 
 
 async def invoke_result[T](
