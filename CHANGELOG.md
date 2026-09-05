@@ -419,3 +419,5 @@ under `0.1.0a2` instead.
 [#206]: https://github.com/Blandskron/agnara/issues/206
 [#209]: https://github.com/Blandskron/agnara/issues/209
 [#211]: https://github.com/Blandskron/agnara/issues/211
+
+[#208]: https://github.com/Blandskron/agnara/issues/208

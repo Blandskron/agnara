@@ -606,6 +606,32 @@ External projects are sources of lessons, not templates to copy wholesale.
 
 Every imported architectural idea must be evaluated against Agnara's capability-first thesis.
 
+## llms.txt
+
+Reviewed 2026-09-05 for E8.12. These are primary-source observations, not
+measurements of Agnara integrations or model quality.
+
+| Source | Observation | Consequence for Agnara |
+| --- | --- | --- |
+| [Author's proposal](https://llmstxt.org/) | The page identifies itself as v2, modified 2026-08-10. It describes a compact Markdown index at a root or subpath, with the more specific path taking precedence. H1 is required; summary and H2 link lists are optional. It recommends Markdown alternatives and `alternate`/`describedby` link relations. | Review the current proposal rather than assuming only an origin-root file or inventing a `/.well-known/` requirement. The index does not define Agnara capability or authorization semantics. |
+| [Mintlify documentation](https://www.mintlify.com/docs/ai/llmstxt) | Mintlify generates indexes and a separate full-content export. Fully authenticated sites protect both; partially authenticated sites publish only public pages. Its documented discovery headers include vendor-specific relations and a compatibility alias under `/.well-known/`. | Generation is a documentation-publication concern. Vendor behavior is implementation evidence, not a universal client contract or a substitute for Agnara's filtering. |
+| [Cloudflare's published index](https://developers.cloudflare.com/llms.txt) | The fetched document groups links to product-specific indexes. | A hierarchical documentation index is a concrete use case; no runtime capability registry is required to produce it. |
+| [Anthropic's published index](https://platform.claude.com/llms.txt) | A developer-documentation index is publicly fetchable at this URL. | Publication proves availability, not that every agent automatically discovers or consumes it. |
+| [Google Search guidance](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide) | Google says its Search features do not use `llms.txt` for special ranking or visibility benefits. | Do not justify an Agnara feature with a Google Search improvement claim. This says nothing about an explicitly configured documentation client. |
+
+The proposal and vendor docs describe different discovery conventions. Do not
+copy a vendor's aliases or headers as a normative requirement. Likewise,
+`llms-full.txt` is separately described vendor behavior, not the same artifact
+as a concise index.
+
+Agnara's assessment: preserve the versioned filtered snapshot as the runtime
+discovery contract and `agnara context` as its Markdown presentation. Reserve
+optional index generation for a future documentation build with explicit
+public page inputs, working versioned URLs and a measurable consumer use case.
+No such generator or route is implemented by this research. The options,
+revisit criteria and validation boundary are recorded in
+[ADR 0053](adr/0053-llms-txt-documentation-index.md).
+
 ## Django project/app ergonomics
 
 Agnara deliberately learns from Django's project/application separation and `startapp` generator.
