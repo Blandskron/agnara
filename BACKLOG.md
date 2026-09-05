@@ -281,21 +281,36 @@ Core imports neither Pydantic nor msgspec.
   as bounded nested structure rather than escaped JSON, and each view
   disappears when its field is withheld. Recorded in ADR 0052. Tracking: GitHub
   Issue #206.
-- [~] E8.10 Add Explorer authorization, partial-visibility, cache-control and
-  disabled-surface tests.
-- [~] E8.11 Add accessibility, keyboard, screen-reader, deep-link and responsive
-  mobile tests for Agnara Explorer.
-  Implemented locally: 17 Chromium tests pass; ordinary suite: 1669 passed,
-  31 browser cases skipped. Ruff and ty pass. Accessibility-tree evidence is
-  not an actual screen-reader or WCAG claim. Pending PR/CI integration.
+- [x] E8.10 Add Explorer authorization, partial-visibility, cache-control and
+  disabled-surface tests. 33 boundary cases cover every view over GET and
+  HEAD, anonymous opt-in, invalid resolvers, partial visibility, overlapping
+  viewers, source immutability and HTML disabled with discovery still served.
+  Twelve of them reproduced absent cache controls, so Explorer errors now
+  carry `private, no-store` and the existing security headers without changing
+  policy order. Merged by PR #213 with the required checks green.
+  Recorded in ADR 0052, which remains Proposed. Tracking: GitHub Issue #208.
+- [x] E8.11 Add accessibility, keyboard, screen-reader, deep-link and responsive
+  mobile tests for Agnara Explorer. 17 pinned-Chromium cases cover accessible
+  structure and names, a full keyboard round trip, direct links, reload and
+  history, partial and empty views, and 390x844 and 1280x844 layouts. The
+  first run reproduced a missing main landmark on all three views; each page
+  now has one native `main` element, with no added script, stylesheet or
+  weakened content security policy. Merged by PR #214; the required
+  `Documentation browsers` CI lane runs the suite and reported 17 passed on
+  CPython 3.14.7, while the ordinary suite still collects the cases as
+  skipped. This is browser accessibility-tree evidence, not a screen-reader
+  session or a WCAG claim. Recorded in ADR 0052, which remains Proposed.
   Tracking: GitHub Issue #209.
-- [~] E8.12 Research generated `llms.txt` without treating it as an
-  authorization or canonical discovery format.
-  Local research recorded in proposed ADR 0053: reserve an optional index for
-  documentation publishing, retain existing runtime discovery/context, and
-  add no endpoint or generator. Local gate: 1669 passed, 14 browser cases
-  skipped; Ruff and ty pass. Pending ADR review and PR/CI integration.
-  Tracking: GitHub Issue #210.
+- [x] E8.12 Research generated `llms.txt` without treating it as an
+  authorization or canonical discovery format. Dated primary-source research
+  reserves an optional index for documentation publishing, retains existing
+  runtime discovery and context, and adds no endpoint, CLI format or
+  generator; stale references in ADR 0051, `docs/CLI_SPEC.md` and this file
+  were reconciled. Merged by PR #215 with the required checks green. The
+  research is recorded in ADR 0053, which remains Proposed: the decision is
+  documented and reversible, not maintainer-approved, and observed
+  publication is distinguished from evidence of client use. Tracking: GitHub
+  Issue #210.
 - [x] E8.13 Generate agent context from the versioned filtered snapshot.
   `agnara context` renders it as Markdown from the shared view, states in every
   rendering that seeing a capability is not permission to invoke it, and names
@@ -325,12 +340,19 @@ expanding that first PR into a complete frontend.
   1711 passed, 14 browser cases skipped; Ruff and ty pass.
   OpenTelemetry and span semantics remain E9.2-E9.6.
   Tracking: GitHub Issue #211.
-- [~] E9.2 OpenTelemetry adapter. Initial application-owned metrics bridge
-  over the existing telemetry port; proposed ADR 0054 and Issue #216.
-  API/SDK 1.44.0 in-memory evidence: 17 adapter cases and architecture gates;
-  local full suite 1763 passed, 31 browser cases skipped; Ruff and ty pass.
-  Pending PR/CI and maintainer review.
+- [x] E9.2 OpenTelemetry adapter. Initial application-owned metrics bridge
+  over the existing telemetry port. `OpenTelemetryMetricsHook` builds its
+  instruments once and records a terminal invocation counter and a duration
+  histogram in seconds under capability identity and outcome attributes only;
+  the application keeps the meter, provider, reader, exporter, flush and
+  shutdown. No tracking ID, payload, result or exception text is exported and
+  no global provider is mutated. 17 adapter cases with the real SDK 1.44.0
+  in-memory reader, plus package-boundary gates, cover success, failure,
+  timeout, cancellation, repeated tracking IDs and nested and concurrent
+  invocations. Merged by PR #217 with the required checks green. Recorded in
+  ADR 0054, which remains Proposed and does not claim maintainer approval.
   Spans, transport links, conventions and benchmarks remain E9.3-E9.6.
+  Tracking: GitHub Issue #216.
 - [ ] E9.3 Common capability spans.
 - [ ] E9.4 transport span linking.
 - [ ] E9.5 MCP/GenAI semantic convention compatibility.
