@@ -19,10 +19,10 @@ from __future__ import annotations
 import argparse
 import json
 from collections.abc import Callable, Mapping
-from pathlib import Path
 from typing import Any, cast
 
 from agnara_cli._target import TargetError, resolve_attribute
+from agnara_cli._write import write_document
 
 __all__ = ["add_schema_parser", "run_schema"]
 
@@ -160,17 +160,6 @@ def _encode(document: Mapping[str, Any], served: bytes | None, *, pretty: bool) 
         raise TargetError(f"the OpenAPI document cannot be serialized as JSON: {error}") from error
 
 
-def _write(destination: str, body: bytes, *, overwrite: bool) -> None:
-    """Write the document, refusing to destroy a file nobody authorized."""
-    path = Path(destination)
-    if path.exists() and not overwrite:
-        raise TargetError(f"{destination!r} already exists; pass --overwrite to replace it")
-    try:
-        path.write_bytes(body)
-    except OSError as error:
-        raise TargetError(f"cannot write {destination!r}: {error}") from error
-
-
 def run_schema(arguments: argparse.Namespace) -> bytes | None:
     """Export the document, to stdout as exact bytes or to a file."""
     value = resolve_attribute(arguments.target, search_path=arguments.path)
@@ -178,5 +167,5 @@ def run_schema(arguments: argparse.Namespace) -> bytes | None:
     body = _encode(document, served, pretty=arguments.pretty)
     if arguments.output is None:
         return body
-    _write(arguments.output, body, overwrite=arguments.overwrite)
+    write_document(arguments.output, body, overwrite=arguments.overwrite)
     return None

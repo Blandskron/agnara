@@ -28,7 +28,7 @@ from agnara.introspection import (
     IntrospectionSnapshot,
 )
 
-__all__ = ["render_snapshot"]
+__all__ = ["render_snapshot", "schema_summary"]
 
 _INDENT = "  "
 
@@ -37,8 +37,12 @@ def _line(depth: int, text: str) -> str:
     return f"{_INDENT * depth}{text}"
 
 
-def _schema_summary(schema: str) -> str:
-    """Summarize a JSON Schema fragment in one readable phrase."""
+def schema_summary(schema: str) -> str:
+    """Summarize a JSON Schema fragment in one readable phrase.
+
+    Shared with the agent-context renderer, so a reader of either output sees
+    an input described the same way.
+    """
     try:
         document = json.loads(schema)
     except json.JSONDecodeError:  # pragma: no cover - descriptors validate this
@@ -79,7 +83,7 @@ def _capability(
         yield _line(depth + 1, "inputs:")
         for item in capability.inputs:
             requirement = "required" if item.required else "optional"
-            yield _line(depth + 2, f"{item.name}: {_schema_summary(item.schema)} ({requirement})")
+            yield _line(depth + 2, f"{item.name}: {schema_summary(item.schema)} ({requirement})")
 
     if capability.dependencies:
         yield _line(depth + 1, "dependencies:")

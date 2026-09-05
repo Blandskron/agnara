@@ -11,8 +11,9 @@ allowed dependency graph.
 
 ## Status
 
-`agnara inspect`, `agnara graph` and `agnara schema openapi` are implemented.
-Project and app scaffolding and `agnara doctor` remain ahead in the backlog.
+`agnara inspect`, `agnara graph`, `agnara schema openapi` and
+`agnara context` are implemented. Project and app scaffolding and
+`agnara doctor` remain ahead in the backlog.
 
 ## `agnara inspect`
 
@@ -64,3 +65,16 @@ The named attribute may be serialized bytes, the mapping they came from, or a
 zero-argument callable returning either. Bytes are emitted unchanged, so an
 export is byte-identical to what is served. `--output` writes a file and
 refuses to replace one without `--overwrite`. See ADR 0050.
+
+## `agnara context`
+
+```bash
+agnara context billing.bootstrap:app --visibility agent
+agnara context billing.bootstrap:app --output CAPABILITIES.md
+```
+
+Renders the filtered snapshot as Markdown for a model to read, from the same
+shared view `agnara inspect` uses. Every rendering states that seeing a
+capability is not permission to invoke it, and a withheld field is named rather
+than printed as its declared default. Not `llms.txt`, and not a security
+boundary. See ADR 0051.
