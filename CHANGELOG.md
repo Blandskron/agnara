@@ -15,6 +15,10 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added `agnara schema openapi`, which exports the OpenAPI document a
+  composition produced rather than projecting a second one. Serialized bytes
+  are emitted unchanged, so an export is byte-identical to what an HTTP surface
+  serves; `--output` writes a file non-destructively ([#198]).
 - Added the authorized HTTP discovery endpoint, serving the same versioned
   introspection document `agnara inspect --json` produces. It takes a principal
   resolver, answers `401` unless anonymous discovery is opted into explicitly,
@@ -376,3 +380,4 @@ under `0.1.0a2` instead.
 [#192]: https://github.com/Blandskron/agnara/issues/192
 [#194]: https://github.com/Blandskron/agnara/issues/194
 [#196]: https://github.com/Blandskron/agnara/issues/196
+[#198]: https://github.com/Blandskron/agnara/issues/198

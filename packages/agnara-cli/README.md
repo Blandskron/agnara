@@ -11,9 +11,8 @@ allowed dependency graph.
 
 ## Status
 
-`agnara inspect` and `agnara graph` are implemented. Project and app
-scaffolding, `agnara schema openapi` and `agnara doctor` remain ahead in the
-backlog.
+`agnara inspect`, `agnara graph` and `agnara schema openapi` are implemented.
+Project and app scaffolding and `agnara doctor` remain ahead in the backlog.
 
 ## `agnara inspect`
 
@@ -49,3 +48,19 @@ snapshot, with the same target and visibility arguments. There is no second
 discovery path: both commands read one `View`, so neither can show something
 the other withheld. A withheld relationship source is named rather than drawn
 as an empty tree. See ADR 0048.
+
+## `agnara schema openapi`
+
+```bash
+agnara schema openapi billing.bootstrap:served
+agnara schema openapi billing.bootstrap:document --output openapi.json
+```
+
+Exports the OpenAPI document the composition produced. This package must not
+import `agnara-http`, so it does not project one — which is also the safer
+design: a second projection here could disagree with the one a server serves.
+
+The named attribute may be serialized bytes, the mapping they came from, or a
+zero-argument callable returning either. Bytes are emitted unchanged, so an
+export is byte-identical to what is served. `--output` writes a file and
+refuses to replace one without `--overwrite`. See ADR 0050.

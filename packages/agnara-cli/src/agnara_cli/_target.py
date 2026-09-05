@@ -21,7 +21,12 @@ from agnara import Agnara
 from agnara.core.di import DIRegistry
 from agnara.execution import ExecutionPlan
 
-__all__ = ["ResolvedTarget", "TargetError", "resolve_target"]
+__all__ = ["ResolvedTarget", "TargetError", "resolve_attribute", "resolve_target"]
+
+
+#: Distinguishes "the attribute is absent" from "the attribute is None",
+#: which a target may legitimately be.
+_MISSING = object()
 
 
 class TargetError(Exception):
@@ -77,6 +82,22 @@ def _import(module_name: str, search_path: Sequence[str]) -> object:
         sys.path[:] = original
 
 
+def resolve_attribute(target: str, *, search_path: Iterable[str] = ()) -> object:
+    """Import ``module:attribute`` and return whatever it names.
+
+    The generic half of target resolution. A command that needs an application
+    narrows the result itself; a command that needs a document produced by an
+    adapter this package must not import cannot narrow it to a type at all,
+    and reads it structurally instead.
+    """
+    module_name, attribute = _split(target)
+    module = _import(module_name, tuple(search_path))
+    value = getattr(module, attribute, _MISSING)
+    if value is _MISSING:
+        raise TargetError(f"the target module defines no attribute {attribute!r}")
+    return value
+
+
 def _registry(module: object, name: str | None) -> DIRegistry | None:
     if name is None:
         return None
@@ -103,8 +124,8 @@ def resolve_target(
     """
     module_name, attribute = _split(target)
     module = _import(module_name, tuple(search_path))
-    app = getattr(module, attribute, None)
-    if app is None:
+    app = getattr(module, attribute, _MISSING)
+    if app is _MISSING:
         raise TargetError(f"the target module defines no attribute {attribute!r}")
     if not isinstance(app, Agnara):
         raise TargetError(
