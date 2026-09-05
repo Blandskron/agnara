@@ -208,7 +208,7 @@ def test_the_index_lists_every_visible_capability_with_a_deep_link() -> None:
     assert status == 200
     assert headers[b"content-type"] == b"text/html; charset=utf-8"
     assert "<h1>Agnara Explorer</h1>" in body
-    assert "<h2>Application billing</h2>" in body
+    assert f'<a href="{BASE}/app/billing">Application billing</a>' in body
     assert f'<a href="{BASE}/billing.refund">billing.refund</a>' in body
     assert f'<a href="{BASE}/billing.health">billing.health</a>' in body
     assert fallback.paths == []
@@ -257,7 +257,7 @@ def test_a_capability_page_shows_what_was_published() -> None:
     assert "<dt>Idempotency</dt><dd>no</dd>" in body
     assert "<dt>Effects</dt><dd>financial-write</dd>" in body
     assert "<dt>Required scopes</dt><dd>billing:write</dd>" in body
-    assert "<li>payment_id (required)</li>" in body
+    assert "<li>payment_id (required)" in body
     assert "<li>http: POST /refunds</li>" in body
     assert "<li>mcp: billing.refund</li>" in body
     assert "<li>ledger: Ledger</li>" in body

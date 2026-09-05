@@ -28,6 +28,7 @@ publish the existence of something the visibility decision withheld.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass
 from html import escape
@@ -39,6 +40,7 @@ from agnara.introspection import (
     CapabilityDescriptor,
     DiscoveryField,
     DiscoveryVisibility,
+    InputDescriptor,
     IntrospectionSnapshot,
     filter_snapshot,
 )
@@ -67,6 +69,10 @@ type _Send = Callable[[_Message], Awaitable[None]]
 type _HTTPDispatch = Callable[[_Scope, _Receive, _Send], Awaitable[None]]
 
 _HTML_MEDIA_TYPE = b"text/html; charset=utf-8"
+
+#: The first segment of an application's page. A capability id is always one
+#: segment and always contains a dot, so the two address spaces cannot collide.
+_APP_SEGMENT = "app"
 
 #: The page loads nothing, so nothing needs to be allowed. Every directive here
 #: is enforceable precisely because the shell has no script, style, image or
@@ -222,8 +228,19 @@ def _capability_summary(base_path: str, capability: CapabilityDescriptor) -> str
     return f"<li>{link}{transports}{description}</li>"
 
 
+def _app_path(base_path: str, name: str) -> str:
+    """The application's own page.
+
+    Two segments, so it can never be mistaken for a capability id, which is
+    always one. That keeps both addressable without either escaping into the
+    other's namespace.
+    """
+    return f"{base_path}/{_APP_SEGMENT}/{name}"
+
+
 def _app_section(base_path: str, app: AppDescriptor) -> Iterable[str]:
-    yield f"<h2>Application {escape(app.name)}</h2>"
+    heading = _link(_app_path(base_path, app.name), f"Application {app.name}")
+    yield f"<h2>{heading}</h2>"
     transports = ", ".join(app.transports) if app.transports else "none published"
     yield f"<p>Transports: {escape(transports)}</p>"
     yield "<ul>"
@@ -266,7 +283,8 @@ def _capability_body(
     visibility: DiscoveryVisibility,
 ) -> list[str]:
     body: list[str] = [f"<h1>{escape(capability.id)}</h1>"]
-    body.append(f"<p>{_link(base_path, 'Back to the index')}</p>")
+    owner = _link(_app_path(base_path, app.name), f"Application {app.name}")
+    body.append(f"<p>{_link(base_path, 'Back to the index')} · {owner}</p>")
     if capability.description:
         body.append(f"<p>{escape(capability.description)}</p>")
     body.extend(_not_authorization())
@@ -274,7 +292,6 @@ def _capability_body(
 
     body.append("<h2>Facts</h2>")
     body.append("<dl>")
-    body.append(_definition("Application", app.name))
     if visibility.publishes(DiscoveryField.SAFETY):
         body.append(_definition("Risk", capability.risk))
         body.append(_definition("Confirmation", capability.confirmation))
@@ -295,8 +312,7 @@ def _capability_body(
         body.append("<h2>Inputs</h2>")
         body.append("<ul>")
         for item in capability.inputs:
-            requirement = "required" if item.required else "optional"
-            body.append(f"<li>{escape(item.name)} ({escape(requirement)})</li>")
+            body.extend(_input_view(item))
         body.append("</ul>")
     elif visibility.publishes(DiscoveryField.INPUTS):
         body.append("<h2>Inputs</h2><p>This capability takes no inputs.</p>")
@@ -322,6 +338,104 @@ def _capability_body(
             body.append(f"<li>{escape(policy.kind)}</li>")
         body.append("</ul>")
     return body
+
+
+_MAX_SCHEMA_DEPTH = 16
+
+
+def _scalar(value: object) -> str:
+    if value is None:
+        return "null"
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    return str(value)
+
+
+def _schema_rows(fragment: object, depth: int = 0) -> Iterable[str]:
+    """Render a JSON Schema fragment as nested structure rather than a blob.
+
+    A reader wants an input's shape, and escaped JSON on one line is not that.
+    Depth is bounded because this walks data an application produced; the
+    snapshot already refuses anything deeper than 64 levels, so reaching this
+    bound means a legitimately deep schema whose tail is better summarized
+    than unrolled.
+    """
+    if depth > _MAX_SCHEMA_DEPTH:
+        yield "<li>(nested further)</li>"
+        return
+    if isinstance(fragment, Mapping):
+        entries: Iterable[tuple[object, object]] = sorted(
+            fragment.items(), key=lambda item: str(item[0])
+        )
+    elif isinstance(fragment, list):
+        entries = enumerate(fragment)
+    else:
+        yield f"<li>{escape(_scalar(fragment))}</li>"
+        return
+    for key, value in entries:
+        label = escape(str(key))
+        if isinstance(value, Mapping | list):
+            yield f"<li>{label}:<ul>"
+            yield from _schema_rows(value, depth + 1)
+            yield "</ul></li>"
+        else:
+            yield f"<li>{label}: {escape(_scalar(value))}</li>"
+
+
+def _input_view(item: InputDescriptor) -> Iterable[str]:
+    """One input: its name, whether it is required, and its published schema."""
+    requirement = "required" if item.required else "optional"
+    yield f"<li>{escape(item.name)} ({escape(requirement)})"
+    try:
+        fragment = json.loads(item.schema)
+    except json.JSONDecodeError:  # pragma: no cover - descriptors validate this
+        fragment = {}
+    yield "<ul>"
+    yield from _schema_rows(fragment)
+    yield "</ul></li>"
+
+
+def _render_app(
+    base_path: str,
+    snapshot: IntrospectionSnapshot,
+    visibility: DiscoveryVisibility,
+    name: str,
+) -> bytes | None:
+    """Render one application, or ``None`` when this viewer has no such page."""
+    for app in snapshot.apps:
+        if app.name != name:
+            continue
+        title = f"Application {app.name}"
+        body: list[str] = [f"<h1>{escape(title)}</h1>"]
+        body.append(f"<p>{_link(base_path, 'Back to the index')}</p>")
+        body.extend(_not_authorization())
+        body.extend(_withheld(visibility))
+        transports = ", ".join(app.transports) if app.transports else "none published"
+        body.append(f"<p>Transports: {escape(transports)}</p>")
+
+        body.append("<h2>Capabilities</h2>")
+        body.append("<ul>")
+        for capability in app.capabilities:
+            body.append(_capability_summary(base_path, capability))
+        body.append("</ul>")
+
+        if app.providers:
+            body.append("<h2>Providers</h2>")
+            body.append("<ul>")
+            for provider in app.providers:
+                requires = ", ".join(item.name for item in provider.requires)
+                suffix = f" requires {requires}" if requires else ""
+                body.append(
+                    f"<li>{escape(provider.provides.name)}: "
+                    f"{escape(provider.scope)} {escape(provider.kind)}{escape(suffix)}</li>"
+                )
+            body.append("</ul>")
+        elif visibility.publishes(DiscoveryField.PROVIDERS):
+            body.append("<h2>Providers</h2><p>This application binds no providers.</p>")
+        return _document(title, body)
+    return None
 
 
 def _render_capability(
@@ -398,20 +512,33 @@ class _ExplorerDispatcher:
         if path == base:
             body = _render_index(base, document, self._explorer.discovery.visibility)
         else:
-            remainder = path[len(self._explorer.prefix) :]
-            body = (
-                None
-                if not remainder or "/" in remainder
-                else _render_capability(
-                    base, document, self._explorer.discovery.visibility, remainder
-                )
-            )
+            body = self._subpage(base, document, path)
         if body is None:
             # Hidden and absent are the same answer on purpose: telling them
             # apart would publish the existence of something withheld.
             await _send_response(self._not_found(path), send, head=head)
             return
         await _send_response(self._page(body), send, head=head)
+
+    def _subpage(
+        self,
+        base: str,
+        document: IntrospectionSnapshot,
+        path: str,
+    ) -> bytes | None:
+        """Resolve one page under the base path, or nothing this viewer may see.
+
+        One segment is a capability id; two segments beginning with the
+        application marker are an application. Anything else has no page,
+        which is the same answer as a capability withheld from this viewer.
+        """
+        visibility = self._explorer.discovery.visibility
+        segments = path[len(self._explorer.prefix) :].split("/")
+        if len(segments) == 1 and segments[0]:
+            return _render_capability(base, document, visibility, segments[0])
+        if len(segments) == 2 and segments[0] == _APP_SEGMENT and segments[1]:
+            return _render_app(base, document, visibility, segments[1])
+        return None
 
     def _page(self, body: bytes) -> _SerializedResponse:
         return _SerializedResponse(

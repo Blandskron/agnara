@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Date: 2026-09-05
-- Tracking: GitHub Issue #204 (E8.8)
+- Tracking: GitHub Issue #204 (E8.8), extended by GitHub Issue #206 (E8.9)
 
 ## Context
 
@@ -84,6 +84,33 @@ omission from it.
 - Its own principal resolution: rejected. Two resolutions are two chances to
   read a failed resolver as anonymous.
 
+## Extension: application, schema and dependency views (E8.9)
+
+Navigation is project → application → capability. An application has its own
+page at `<base>/app/<name>`: two segments, so it can never be mistaken for a
+capability id, which is always one. Both address spaces stay open without
+either escaping into the other's.
+
+An input's JSON Schema is rendered as nested structure rather than as a blob
+of escaped JSON, because a reader wants the input's shape and a single escaped
+line is not that. Key order is sorted, so two renderings of one schema are
+identical. Depth is bounded at 16 levels with an explicit "(nested further)"
+marker: the renderer walks data an application produced, and the snapshot
+already refuses anything deeper than 64 levels, so reaching the bound means a
+legitimately deep schema whose tail is better summarized than unrolled.
+
+The provider graph moves to the application page, where it answers what
+`agnara graph` answers. It disappears entirely when `PROVIDERS` is withheld,
+as the schema view does when `INPUTS` is.
+
+One limit is worth stating rather than implying. The Explorer renders whatever
+`INPUTS` published, including any `description`, `default` or `title` the
+schema fragment carries. Deciding which schema keywords are publishable is a
+schema-projection concern, not a rendering one: a UI that withheld half a
+published fragment would disagree with the JSON surfaces about the same
+snapshot. A deployment that considers a keyword non-publishable must keep it
+out of the compiled schema, not out of one viewer.
+
 ## Evidence and limits
 
 `tests/http/test_explorer_shell.py` covers base-path validation, subtree
@@ -97,8 +124,15 @@ load, read-only by construction, XSS payloads in every application-controlled
 field on both pages, `405` with `Allow`, `HEAD`, delegation outside the
 subtree, and a nested path that is not a capability.
 
-Limits: no styling, no schema/dependency/policy detail views beyond what the
-shell lists (E8.9), no Explorer-specific authorization and cache-control suite
+`tests/http/test_explorer_views.py` covers the application page and its
+providers, the empty-provider case, provider and schema views disappearing
+when withheld, the capability page's link back to its application, an unknown
+application answering as a hidden one does, the application marker not
+shadowing a capability id, structured schema rendering, deterministic key
+order, the depth bound, a payload inside a schema fragment, and that every new
+page keeps the strict policy and loads nothing.
+
+Limits: no styling, no Explorer-specific authorization and cache-control suite
 (E8.10), no accessibility, keyboard, screen-reader or responsive tests (E8.11),
 no search, no try-it, and no write operation. No real-browser test yet: the
 page has nothing a browser would execute, so the existing browser job's value
