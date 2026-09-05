@@ -264,8 +264,12 @@ Core imports neither Pydantic nor msgspec.
   refused at startup, and a cross-surface test proves the endpoint and
   `agnara inspect --json` publish the same document. Recorded by ADR 0049.
   Tracking: GitHub Issue #196.
-- [ ] E8.7 Implement `agnara schema openapi` over the same OpenAPI projection
+- [x] E8.7 Implement `agnara schema openapi` over the same OpenAPI projection
   served by `agnara-http`, with stdout/file output and stable exit behavior.
+  The CLI exports the document the composition produced rather than projecting
+  a second one, because it must not import a sibling adapter and because a
+  second projection could disagree with what a server serves. Recorded by
+  ADR 0050. Tracking: GitHub Issue #198.
 - [ ] E8.8 Implement a read-only Agnara Explorer MVP over protocol-neutral
   introspection, including non-HTTP transport availability.
 - [ ] E8.9 Add Explorer project/app/capability, schema, dependency and policy

@@ -7,7 +7,7 @@ Exit codes:
 
 ``0``
     the command produced its answer, even when that answer is "nothing is
-    visible"
+    visible" or nothing at all, as when a document was written to a file
 ``1``
     the operator's input or application could not be used, reported as a
     diagnostic on stderr rather than a traceback
@@ -24,6 +24,7 @@ from importlib.metadata import PackageNotFoundError, version
 
 from agnara_cli._graph import add_graph_parser
 from agnara_cli._inspect import add_inspect_parser
+from agnara_cli._schema import add_schema_parser
 from agnara_cli._target import TargetError
 
 __all__ = ["main"]
@@ -49,6 +50,7 @@ def _parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True, metavar="COMMAND")
     add_inspect_parser(subparsers)
     add_graph_parser(subparsers)
+    add_schema_parser(subparsers)
     return parser
 
 
@@ -66,5 +68,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     except TargetError as error:
         print(f"agnara: {error}", file=sys.stderr)
         return EXIT_FAILED
-    print(output)
+    _emit(output)
     return EXIT_OK
+
+
+def _emit(output: str | bytes | None) -> None:
+    """Write a command's answer, or nothing when it produced none.
+
+    Bytes go to the buffer unchanged. A document another surface already
+    serialized must reach a pipe exactly as that surface would send it, and
+    encoding it through the text layer would let the platform's newline
+    translation rewrite it.
+    """
+    if output is None:
+        return
+    if isinstance(output, bytes):
+        sys.stdout.buffer.write(output)
+        sys.stdout.buffer.flush()
+        return
+    print(output)

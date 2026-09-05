@@ -338,8 +338,30 @@ serve. It consumes compiled capabilities, HTTP exposures and schema-port
 output; it does not read a manually maintained parallel schema.
 
 The command should support stdout and an explicit output path, machine-readable
-diagnostics and non-interactive operation. Exact flags remain pending the
-OpenAPI implementation Issue.
+diagnostics and non-interactive operation.
+
+#### Implemented form
+
+```bash
+agnara schema openapi billing.bootstrap:served
+agnara schema openapi billing.bootstrap:document --output openapi.json
+agnara schema openapi billing.bootstrap:build --pretty
+```
+
+`agnara-cli` must not import a sibling adapter, so the CLI does not project a
+document: it exports the one the composition produced. That is also the safer
+design, because a second projection here could disagree with the one a server
+serves.
+
+The named attribute may be the serialized bytes an HTTP surface would serve,
+the mapping those bytes came from, or a zero-argument callable returning
+either. Bytes are emitted unchanged, so an export is byte-identical to what is
+served; a mapping is serialized with the same arguments the HTTP projection
+uses.
+
+`--output` writes the file and prints nothing, refusing to replace an existing
+file without `--overwrite`. `--pretty` indents for a reader and is no longer
+byte-identical to the served document. See ADR 0050.
 
 ### Documentation preview
 
