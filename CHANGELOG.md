@@ -25,6 +25,11 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added `OpenTelemetryMetricsHook` in `agnara-telemetry` for terminal invocation
+  counts and duration, using an application-supplied meter. The adapter depends
+  on the OpenTelemetry API; SDK/exporter setup and shutdown remain owned by
+  the application ([#216]).
+
 - Added a main content landmark to every Explorer page and required Chromium
   checks for accessible structure, keyboard navigation, direct links and
   representative mobile rendering ([#209]).
@@ -417,7 +422,7 @@ under `0.1.0a2` instead.
 [#202]: https://github.com/Blandskron/agnara/issues/202
 [#204]: https://github.com/Blandskron/agnara/issues/204
 [#206]: https://github.com/Blandskron/agnara/issues/206
+[#208]: https://github.com/Blandskron/agnara/issues/208
 [#209]: https://github.com/Blandskron/agnara/issues/209
 [#211]: https://github.com/Blandskron/agnara/issues/211
-
-[#208]: https://github.com/Blandskron/agnara/issues/208
+[#216]: https://github.com/Blandskron/agnara/issues/216

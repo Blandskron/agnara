@@ -4,6 +4,25 @@ Last reviewed: 2026-09-04.
 
 This document records external standards and projects that influence Agnara. It is not a dependency list.
 
+## OpenTelemetry metrics bridge
+
+Reviewed 2026-09-05 for E9.2 / Issue #216. The official Python guidance
+recommends API-only dependencies for instrumented libraries, with the
+application configuring the SDK. The Metrics API assigns instrument creation
+to the meter and configuration to its provider. This supports supplying a
+meter explicitly without global SDK installation in `agnara-telemetry`.
+
+The published API and SDK baseline used for in-memory tests is 1.44.0. The
+adapter consumes terminal count/duration data already available in the core
+port; it does not introduce trace correlation or claim protocol-specific
+semantic convention compatibility. See proposed ADR 0054 for measurements,
+redaction, lifecycle ownership and limitations.
+
+- [Python instrumentation](https://opentelemetry.io/docs/languages/python/instrumentation/)
+- [Metrics API](https://opentelemetry.io/docs/specs/otel/metrics/api/)
+- [API 1.44.0](https://pypi.org/project/opentelemetry-api/1.44.0/)
+- [SDK 1.44.0](https://pypi.org/project/opentelemetry-sdk/1.44.0/)
+
 ## Python 3.14
 
 Agnara intentionally starts at Python 3.14.

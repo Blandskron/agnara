@@ -15,6 +15,8 @@ They must fail when:
 
 from __future__ import annotations
 
+import ast
+
 import pytest
 
 from tests.architecture.boundaries import (
@@ -33,6 +35,7 @@ from tests.architecture.boundaries import (
     find_cycle,
     import_graph,
     is_standard_library,
+    source_files,
 )
 
 # ---------------------------------------------------------------------------
@@ -109,6 +112,31 @@ def test_policy_tests_are_independent_of_transports() -> None:
 # ---------------------------------------------------------------------------
 # Rule 2 — adapters do not import sibling adapters
 # ---------------------------------------------------------------------------
+
+
+def test_telemetry_declares_api_without_sdk_or_exporter_dependencies() -> None:
+    declared = {
+        _requirement_name(requirement) for requirement in declared_dependencies("agnara-telemetry")
+    }
+    assert declared == {"agnara", "opentelemetry-api"}
+
+
+def test_telemetry_imports_no_sdk_or_exporter_implementation() -> None:
+    forbidden = ("opentelemetry.sdk", "opentelemetry.exporter")
+    offenders = []
+    for path in source_files("agnara-telemetry"):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            modules = []
+            if isinstance(node, ast.Import):
+                modules = [alias.name for alias in node.names]
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                modules = [node.module, *(f"{node.module}.{alias.name}" for alias in node.names)]
+            else:
+                continue
+            for module in modules:
+                if any(module == prefix or module.startswith(prefix + ".") for prefix in forbidden):
+                    offenders.append(f"{path.name}:{node.lineno}: {module}")
+    assert not offenders, "telemetry must use only the OpenTelemetry API: " + ", ".join(offenders)
 
 
 @pytest.mark.parametrize("dist_name", ADAPTER_DISTRIBUTIONS)
