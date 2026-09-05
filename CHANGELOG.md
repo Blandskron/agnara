@@ -15,6 +15,9 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Fixed
 
+- Explorer error responses now prevent storage with `private, no-store` and
+  include the same security headers as its pages, preserving authentication
+  challenges and method information ([#208]).
 - Execution plans now reject missing, non-callable, coroutine and generator
   telemetry callbacks at startup. Direct construction also snapshots the
   hook collection, so later changes to the source list cannot change a
@@ -415,5 +418,6 @@ under `0.1.0a2` instead.
 [#202]: https://github.com/Blandskron/agnara/issues/202
 [#204]: https://github.com/Blandskron/agnara/issues/204
 [#206]: https://github.com/Blandskron/agnara/issues/206
+[#208]: https://github.com/Blandskron/agnara/issues/208
 [#211]: https://github.com/Blandskron/agnara/issues/211
 [#216]: https://github.com/Blandskron/agnara/issues/216

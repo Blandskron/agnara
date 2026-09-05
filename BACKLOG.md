@@ -281,17 +281,25 @@ Core imports neither Pydantic nor msgspec.
   as bounded nested structure rather than escaped JSON, and each view
   disappears when its field is withheld. Recorded in ADR 0052. Tracking: GitHub
   Issue #206.
-- [ ] E8.10 Add Explorer authorization, partial-visibility, cache-control and
+- [~] E8.10 Add Explorer authorization, partial-visibility, cache-control and
   disabled-surface tests.
+  Implemented locally with 33 new tests and non-storable Explorer errors.
+  Local gate: 1702 passed, 14 browser tests skipped; Ruff and ty pass.
+  Pending PR/CI integration. Tracking: GitHub Issue #208.
 - [ ] E8.11 Add accessibility, keyboard, screen-reader, deep-link and responsive
   mobile tests for Agnara Explorer.
-- [?] E8.12 Research generated `llms.txt` without treating it as an
+- [~] E8.12 Research generated `llms.txt` without treating it as an
   authorization or canonical discovery format.
+  Local research recorded in proposed ADR 0053: reserve an optional index for
+  documentation publishing, retain existing runtime discovery/context, and
+  add no endpoint or generator. Local gate: 1669 passed, 14 browser cases
+  skipped; Ruff and ty pass. Pending ADR review and PR/CI integration.
+  Tracking: GitHub Issue #210.
 - [x] E8.13 Generate agent context from the versioned filtered snapshot.
   `agnara context` renders it as Markdown from the shared view, states in every
   rendering that seeing a capability is not permission to invoke it, and names
   a withheld field rather than printing its declared default. It is not
-  `llms.txt`, which E8.12 still has to conclude on. Recorded by ADR 0051.
+  `llms.txt`; E8.12 records that separate documentation boundary. Recorded by ADR 0051.
   Tracking: GitHub Issue #200.
 - [x] E8.14 Validate architecture metadata and cross-surface snapshot
   consistency. `ARCHITECTURE.md`'s concept list is now read out of the document
@@ -319,7 +327,7 @@ expanding that first PR into a complete frontend.
 - [~] E9.2 OpenTelemetry adapter. Initial application-owned metrics bridge
   over the existing telemetry port; proposed ADR 0054 and Issue #216.
   API/SDK 1.44.0 in-memory evidence: 17 adapter cases and architecture gates;
-  local full suite 1730 passed, 14 browser cases skipped; Ruff and ty pass.
+  local full suite 1763 passed, 14 browser cases skipped; Ruff and ty pass.
   Pending PR/CI and maintainer review.
   Spans, transport links, conventions and benchmarks remain E9.3-E9.6.
 - [ ] E9.3 Common capability spans.
