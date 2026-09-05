@@ -270,8 +270,11 @@ Core imports neither Pydantic nor msgspec.
   a second one, because it must not import a sibling adapter and because a
   second projection could disagree with what a server serves. Recorded by
   ADR 0050. Tracking: GitHub Issue #198.
-- [ ] E8.8 Implement a read-only Agnara Explorer MVP over protocol-neutral
-  introspection, including non-HTTP transport availability.
+- [x] E8.8 Implement a read-only Agnara Explorer MVP over protocol-neutral
+  introspection, including non-HTTP transport availability. Server-rendered
+  HTML with no JavaScript, stylesheet or external asset, so read-only is
+  structural and the content security policy has no exceptions. Recorded by
+  ADR 0052. Tracking: GitHub Issue #204.
 - [ ] E8.9 Add Explorer project/app/capability, schema, dependency and policy
   views without exposing runtime object values or non-publishable metadata.
 - [ ] E8.10 Add Explorer authorization, partial-visibility, cache-control and

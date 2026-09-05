@@ -504,6 +504,13 @@ or deauthorizes invocation. See ADR 0046.
 
 Agnara Explorer visualizes the filtered protocol-neutral snapshot. It may be
 served through HTTP initially, but HTTP and OpenAPI are not its data model.
+
+The implemented shell is server-rendered HTML with no JavaScript, no
+stylesheet and no external asset, over the same snapshot, visibility decision
+and principal resolver the discovery endpoint uses. Read-only is therefore
+structural rather than configured, and the content security policy can be
+`default-src 'none'` with no exceptions. A hidden capability and an absent one
+are the same `404`. See ADR 0052.
 The CLI, agent tooling and Explorer should consume the same introspection
 contract where possible.
 

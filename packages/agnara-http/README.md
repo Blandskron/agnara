@@ -210,3 +210,19 @@ than being read as anonymous.
 The body is the same document `agnara inspect --json` produces. Seeing a
 capability here authorizes nothing: invocation still runs the normal policy
 pipeline. See ADR 0049.
+
+## Agnara Explorer
+
+A read-only, server-rendered view of the same filtered snapshot the discovery
+endpoint serves, with no JavaScript, no stylesheet and no external asset. That
+makes read-only structural rather than configured and lets the content security
+policy be `default-src 'none'` with no exceptions.
+
+The index lists applications, transport availability — including transports
+OpenAPI cannot describe — and every visible capability, each with a deep link
+to its own page. A capability hidden from the viewer and one that does not
+exist produce the same `404`, because telling them apart would publish the
+existence of something withheld.
+
+Styling, detail views, accessibility and browser tests are separate backlog
+items. See ADR 0052.

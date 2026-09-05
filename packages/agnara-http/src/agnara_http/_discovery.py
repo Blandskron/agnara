@@ -254,7 +254,7 @@ class _DiscoveryDispatcher:
             await _send_response(self._method_not_allowed(path), send)
             return
 
-        principal = self._principal(scope)
+        principal = _principal_or_failure(self._route, scope)
         if principal is None:
             await _send_response(self._unauthenticated(path), send, head=normalized == "HEAD")
             return
@@ -279,23 +279,6 @@ class _DiscoveryDispatcher:
             body,
         )
         await _send_response(response, send, head=normalized == "HEAD")
-
-    def _principal(self, scope: _Scope) -> Principal | _ResolverFailed | None:
-        """Ask the application who is asking, treating any failure as no answer."""
-        try:
-            resolved = self._route.principals(scope)
-        except Exception:
-            # The resolver is application code touching credentials. Whatever
-            # it raised must not reach the client, and must not be read as
-            # "anonymous".
-            return _RESOLVER_FAILED
-        if resolved is None:
-            if self._route.allow_anonymous:
-                return AnonymousPrincipal(metadata={"transport": "http"})
-            return None
-        if not isinstance(resolved, Principal):
-            return _RESOLVER_FAILED
-        return resolved
 
     def _method_not_allowed(self, path: str) -> _SerializedResponse:
         return _serialize_transport_failure(
@@ -335,3 +318,33 @@ class _ResolverFailed:
 
 
 _RESOLVER_FAILED = _ResolverFailed()
+
+
+def _principal_or_failure(
+    route: _CompiledDiscovery,
+    scope: _Scope,
+) -> Principal | _ResolverFailed | None:
+    """Ask the application who is asking, keeping three outcomes distinct.
+
+    A principal, no recognised identity, and a resolver that failed are three
+    different answers, and collapsing any two of them is a security bug: a
+    failed resolver read as anonymous would serve a document to a request
+    nobody identified.
+
+    Shared by every surface that serves the snapshot, so a human reading the
+    Explorer and a program reading the endpoint cannot be identified
+    differently for the same request.
+    """
+    try:
+        resolved = route.principals(scope)
+    except Exception:
+        # The resolver is application code touching credentials. Whatever it
+        # raised must not reach the client, and must not be read as anonymous.
+        return _RESOLVER_FAILED
+    if resolved is None:
+        if route.allow_anonymous:
+            return AnonymousPrincipal(metadata={"transport": "http"})
+        return None
+    if not isinstance(resolved, Principal):
+        return _RESOLVER_FAILED
+    return resolved
