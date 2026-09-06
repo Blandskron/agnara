@@ -146,13 +146,90 @@ jobs:
       - name: Check uv.lock
         run: uv lock --check
 
+  # Packaging is only exercised by `release.yml` today, so a broken build,
+  # a dropped `py.typed` or a missing vendored asset stays invisible until
+  # release day. This builds every distribution and installs the published
+  # one outside the workspace. It deliberately does not repeat the deeper
+  # artifact validation `release.yml` runs against the exact tagged wheel.
+  package:
+    name: Build and install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
+
+      - name: Set up Python 3.14
+        run: uv python install 3.14
+
+      - name: Build every distribution
+        run: uv build --all-packages --out-dir dist/
+
+      - name: Wheels carry their typing marker and vendored assets
+        run: |
+          set -euo pipefail
+          uv run --no-project python - <<'EOF'
+          import pathlib, sys, zipfile
+
+          failures = []
+          wheels = sorted(pathlib.Path("dist").glob("*.whl"))
+          if len(wheels) != 7:
+              failures.append(f"expected 7 wheels, found {len(wheels)}: {[w.name for w in wheels]}")
+
+          for wheel in wheels:
+              names = zipfile.ZipFile(wheel).namelist()
+              # PEP 561: without this file the shipped annotations are ignored.
+              if not any(n.endswith("py.typed") for n in names):
+                  failures.append(f"{wheel.name}: no py.typed")
+              # ADR 0040: the documentation UIs are served from the wheel, so
+              # losing them turns into a 404 only a released user would see.
+              if wheel.name.startswith("agnara_http-"):
+                  assets = [n for n in names if "/_vendor/" in n and n.endswith((".js", ".css"))]
+                  if len(assets) < 4:
+                      failures.append(f"{wheel.name}: vendored UI assets missing ({assets})")
+
+          for failure in failures:
+              print(f"::error::{failure}")
+          if failures:
+              sys.exit(1)
+          # Say what was inspected. A check that prints nothing on success
+          # cannot be told apart from one that never received this script.
+          print(f"checked {len(wheels)} wheels: {', '.join(w.name for w in wheels)}")
+          EOF
+
+      - name: Install the published distribution outside the workspace
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          wheels=("$GITHUB_WORKSPACE"/dist/agnara-*.whl)
+          if [[ "${#wheels[@]}" -ne 1 ]]; then
+            echo "::error::expected exactly one agnara wheel, found ${#wheels[@]}"
+            exit 1
+          fi
+          mkdir -p /tmp/ci-install && cd /tmp/ci-install
+          uv venv --python 3.14 .venv
+          # Address the interpreter directly: `uv run` may resolve an
+          # environment other than the one the wheel was installed into.
+          uv pip install --python .venv/bin/python "${wheels[0]}"
+          .venv/bin/python -c "
+          import agnara
+          from agnara import Agnara, CapabilityId, Risk
+          app = Agnara('smoke')
+          assert app.name == 'smoke'
+          assert '__version__' in agnara.__all__
+          print('imported agnara', agnara.__version__)
+          "
+
   # Aggregates every required check into one status, so branch protection
   # needs a single entry that does not have to be edited when the matrix
   # changes. See BACKLOG.md E0B.4.
   ci:
     name: CI
     if: always()
-    needs: [lint, types, test, browser, lockfile]
+    needs: [lint, types, test, browser, lockfile, package]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job did not succeed

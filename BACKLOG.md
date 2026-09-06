@@ -574,3 +574,40 @@ Generated code must:
 - force-pushes to protected branches are blocked;
 - no workflow requires an impossible self-approval;
 - the complete lifecycle is visible and understandable to a human maintainer.
+
+## Carried technical debt (post-0.1.0a3 audit)
+
+Recorded by the repository audit that followed the `0.1.0a3` release. Each
+item was found with evidence, judged not worth fixing inside that audit, and
+is listed here so it stays visible rather than being rediscovered later.
+
+- [ ] D1 Wire the four dormant release gates. `repository-clean`,
+  `release-commit-identified`, `license-metadata` and
+  `public-api-distinguished` are implemented and tested in
+  `scripts/check_release_readiness.py` but no gate in
+  `docs/releases/release-status.json` declares them, so they never run.
+  They are listed in `UNWIRED_CHECKS`, and a ratchet test refuses any new
+  unwired check. Deferred because the propagation of `0.1.0a3` rewrites that
+  status document; wiring them first would only collide. Do this on top of
+  the propagation, and delete `UNWIRED_CHECKS` when the set empties.
+  Tracking: GitHub Issue #239.
+- [ ] D2 Decide how an adapter depends on the core version. All six adapters
+  declare `dependencies = ["agnara"]` with no bound, while ADR 0021 requires
+  one synchronized version across all seven distributions. Nothing today is
+  wrong: only `agnara` is published, and `[tool.uv.sources]` resolves the
+  workspace locally. It becomes wrong the first time an adapter is published,
+  because `agnara-cli 0.1.0aN` would accept any future core. ADR 0021 does not
+  choose a constraint form; an exact pin matches its intent but adds six more
+  version bumps per release unless the bump is automated. Decide the form and
+  the automation together.
+- [ ] D3 Reconcile the agent-onboarding documentation. `FIRST_AGENT_PROMPT.md`
+  (953 lines), `BUILD_PROMPT.md`, `AGENTS.md`, `AGENT_OPERATING_MODEL.md`,
+  `MULTI_AGENT_PROTOCOL.md` and `GEMINI.md` total roughly 1,900 lines with
+  overlapping reading orders, and `GEMINI.md` restates attribution rules that
+  ADR 0019 and `.github/ai-agent-identities.toml` already own. Two are written
+  in Spanish while the rest of the repository is English. Left alone by the
+  audit: these drive the actual multi-agent workflow, and which of them is
+  live is a maintainer judgement, not an inference from file contents.
+- [ ] D4 `E0B.13` is used by two different backlog items -- the release
+  readiness program (Issue #235) and the AI-agent attribution policy
+  (Issue #12). Renumber one.
