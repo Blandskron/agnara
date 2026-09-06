@@ -290,6 +290,29 @@ Responsibilities:
 - schema generation;
 - diagnostics.
 
+### When a package has a public surface
+
+A distribution's `__init__.py` re-exports names and declares `__all__` only
+once its composition API is one we are prepared to keep. Until then the
+package ships its implementation in underscore-prefixed modules and declares
+`__all__ = []`, which says "no public API yet" rather than leaving a reader to
+guess from an empty file.
+
+The current split:
+
+| Package | Surface | Why |
+| --- | --- | --- |
+| `agnara` | public | the released kernel |
+| `agnara-mcp` | public | MCP's tool and authorization shapes follow the protocol, not our design |
+| `agnara-telemetry` | public | two hook classes over an OpenTelemetry contract |
+| `agnara-cli` | public | supports the `agnara` console script |
+| `agnara-http` | none yet | the `Http(...)` composition API is still the golden-design sketch in `docs/API_DESIGN.md` section 4, not stable syntax |
+| `agnara-a2a`, `agnara-events` | none yet | reserved namespaces holding a package boundary; adapters are Post-v0.1 |
+
+A package with no public surface is not a package without tests. `agnara-http`
+is exercised through its private modules precisely because the transport
+behaviour is settled while the way an application composes it is not.
+
 ## 4. Allowed dependency graph
 
 ```text
