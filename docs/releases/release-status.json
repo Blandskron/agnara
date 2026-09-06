@@ -3,9 +3,9 @@
   "current_target": "0.1.0a3",
   "next_target": "0.1.0a4",
   "previous_release": "0.1.0a2",
-  "status": "IN_PROGRESS",
-  "assessed_on": "2026-09-05",
-  "assessed_commit": "f16f6fc02a5650766d804043af38007617107da4",
+  "status": "RELEASE_READY",
+  "assessed_on": "2026-09-06",
+  "assessed_commit": "647280a6f09feee591d312d993f59550ed68b90b",
   "blocked_reason": null,
   "notes": [
     "Status is recomputed by scripts/check_release_readiness.py. Automated gates are re-derived from the repository and are never read from this file.",
@@ -20,10 +20,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "f16f6fc02a5650766d804043af38007617107da4",
-        "command": "uv run pytest",
-        "result": "2053 passed, 31 skipped (browser-only, run in their own CI lane)",
-        "ci": "https://github.com/Blandskron/agnara/actions/workflows/ci.yml",
+        "commit": "647280a6f09feee591d312d993f59550ed68b90b",
+        "command": "uv run pytest; uv run pytest tests/release tests/architecture -q",
+        "result": "2059 passed, 31 browser-only skipped; dedicated browser run passed all 31; final release/architecture verification passed 225 tests.",
         "paths": [
           "tests"
         ],
@@ -31,8 +30,10 @@
           "packages",
           "tests",
           "pyproject.toml",
-          "uv.lock"
-        ]
+          "uv.lock",
+          "scripts/check_release_readiness.py"
+        ],
+        "note": "Executed on the release preparation content materialized as this commit; the following evidence-only commit does not change covered source."
       }
     },
     {
@@ -42,9 +43,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "f16f6fc02a5650766d804043af38007617107da4",
-        "command": "uv build --package agnara",
-        "result": "built agnara-0.1.0a2-py3-none-any.whl and agnara-0.1.0a2.tar.gz",
+        "commit": "647280a6f09feee591d312d993f59550ed68b90b",
+        "command": "uv build --all-packages --out-dir dist/release-a3",
+        "result": "All seven first-party distributions built as wheel and sdist at 0.1.0a3; all metadata declares >=3.14 and Apache-2.0, archives contain license files, and core has no third-party dependencies.",
         "paths": [
           ".github/workflows/release.yml"
         ],
@@ -53,6 +54,65 @@
           "pyproject.toml",
           "uv.lock",
           ".github/workflows/release.yml"
+        ],
+        "note": "Executed on the release preparation content materialized as this commit; the following evidence-only commit does not change covered source.",
+        "artifacts": [
+          {
+            "artifact": "agnara-0.1.0a3-py3-none-any.whl",
+            "sha256": "149235081d4d8811fceda8fa490f1171106529634af8475f95b9b8d304c9315f"
+          },
+          {
+            "artifact": "agnara_a2a-0.1.0a3-py3-none-any.whl",
+            "sha256": "fadd047e35af097fc4db275491712462a88f719115f31f36f49382e54d3f28af"
+          },
+          {
+            "artifact": "agnara_cli-0.1.0a3-py3-none-any.whl",
+            "sha256": "34bcd11c06f8bccc46c61b7a86d65da791ad4757e120419a836773f2b6dbecf7"
+          },
+          {
+            "artifact": "agnara_events-0.1.0a3-py3-none-any.whl",
+            "sha256": "eede5946e8167fad7e1c5408e53ac948b86cafb7ed2e256451f44a75fa6721bb"
+          },
+          {
+            "artifact": "agnara_http-0.1.0a3-py3-none-any.whl",
+            "sha256": "4acb38bbc03855284f5b209a0ef3e21d15fec158ed0f2f49667a2b1a7020e0d9"
+          },
+          {
+            "artifact": "agnara_mcp-0.1.0a3-py3-none-any.whl",
+            "sha256": "077df5e1fc085958a7e1e8c58fba8bea34c75cacb8fd3bebc0fb39f82370feff"
+          },
+          {
+            "artifact": "agnara_telemetry-0.1.0a3-py3-none-any.whl",
+            "sha256": "0640f2f8f6f38f178da2ca6a2be25fb636725194c970fb7373497982f962df93"
+          },
+          {
+            "artifact": "agnara-0.1.0a3.tar.gz",
+            "sha256": "4bff512d46e051f8dcf61eb1f20d1b868b1978113e0c660b93eb516ad33003a8"
+          },
+          {
+            "artifact": "agnara_a2a-0.1.0a3.tar.gz",
+            "sha256": "25cc5b489cbf111b5db233e28a347d3978170abca82b4e091678de6e9312c3d4"
+          },
+          {
+            "artifact": "agnara_cli-0.1.0a3.tar.gz",
+            "sha256": "c19d6f225442ac7232276f1697230526e7f043ea3c22998a02ec3a395b477cc2"
+          },
+          {
+            "artifact": "agnara_events-0.1.0a3.tar.gz",
+            "sha256": "f76dd507536883a46d312476ef54c4f20c588f89e70d4673673108c4a9260bce"
+          },
+          {
+            "artifact": "agnara_http-0.1.0a3.tar.gz",
+            "sha256": "94202fe48f74c5aacee29cba07cb4bb2e6451e73c29e2b121694bf0a20f6f569"
+          },
+          {
+            "artifact": "agnara_mcp-0.1.0a3.tar.gz",
+            "sha256": "2e9612fb86ce45007d7a827d17e269f3228d29707c394ce8e3aabb00a6283384"
+          },
+          {
+            "artifact": "agnara_telemetry-0.1.0a3.tar.gz",
+            "sha256": "109bf5e6867d8b24dcfd890d06b145fcb3da26d0305427887fa16b34af80e3d2"
+          }
         ]
       }
     },
@@ -63,10 +123,10 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "f16f6fc02a5650766d804043af38007617107da4",
-        "command": "uv venv --python 3.14 && uv pip install <wheel> && python -c 'import agnara'",
-        "result": "agnara 0.1.0a2 imported from site-packages on CPython 3.14.4; public API imports succeed",
-        "note": "The same check runs in release.yml 'Validate built artifacts', which additionally asserts the wheel is not shadowed by the checkout.",
+        "commit": "647280a6f09feee591d312d993f59550ed68b90b",
+        "command": "uv venv --python 3.14 <external-temp>/.venv; uv pip install --python <venv-python> <wheel>; <venv-python> -I quickstart.py; install all seven wheels and import each with -I",
+        "result": "CPython 3.14.4: isolated core installation executed success and invalid_input quickstart paths outside the checkout. All seven 0.1.0a3 wheels imported from site-packages; installed CLI --version and --help passed.",
+        "note": "Executed on the release preparation content materialized as this commit; the following evidence-only commit does not change covered source.",
         "paths": [
           ".github/workflows/release.yml"
         ],
@@ -75,7 +135,8 @@
           "pyproject.toml",
           "uv.lock",
           ".github/workflows/release.yml"
-        ]
+        ],
+        "environment": "External temporary directory, CPython 3.14.4, Python -I; core tested before installing adapters."
       }
     },
     {
@@ -92,9 +153,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "f16f6fc02a5650766d804043af38007617107da4",
-        "command": "uv run pytest tests/http tests/integration",
-        "result": "691 HTTP tests and 25 cross-surface integration tests collected and passing; 31 real-browser cases run in the required 'Documentation browsers' CI lane",
+        "commit": "647280a6f09feee591d312d993f59550ed68b90b",
+        "command": "uv run pytest; AGNARA_RUN_BROWSER_TESTS=1 uv run pytest tests/http/test_documentation_browser.py tests/http/test_explorer_browser.py -m browser",
+        "result": "HTTP and cross-surface integration cases passed within the full suite; all 31 browser cases passed separately (25.69s).",
         "paths": [
           "tests/http",
           "tests/integration"
@@ -104,7 +165,8 @@
           "packages/agnara-http",
           "tests/http",
           "tests/integration"
-        ]
+        ],
+        "note": "Executed on the release preparation content materialized as this commit; the following evidence-only commit does not change covered source."
       }
     },
     {
@@ -114,9 +176,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "f16f6fc02a5650766d804043af38007617107da4",
-        "command": "uv run pytest tests/mcp",
-        "result": "157 tests passing against the pinned official SDK mcp==2.1.1, including tests/mcp/test_sdk_conformance.py",
+        "commit": "647280a6f09feee591d312d993f59550ed68b90b",
+        "command": "uv run pytest",
+        "result": "MCP tests passed within the full suite against pinned mcp==2.1.1, including bounded SDK conformance, result projection and tool invocation. No network or full protocol conformance claim.",
         "paths": [
           "tests/mcp/test_sdk_conformance.py",
           "docs/MCP_CONFORMANCE.md"
@@ -125,7 +187,8 @@
           "packages/agnara",
           "packages/agnara-mcp",
           "tests/mcp"
-        ]
+        ],
+        "note": "Executed on the release preparation content materialized as this commit; the following evidence-only commit does not change covered source."
       }
     },
     {
@@ -135,9 +198,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "f16f6fc02a5650766d804043af38007617107da4",
-        "command": "uv run pytest tests/cli && uv run agnara --version && uv run agnara --help",
-        "result": "200 CLI tests pass; 'agnara 0.1.0a2' and the command list render, covering apps, app, inspect, graph, project and schema",
+        "commit": "647280a6f09feee591d312d993f59550ed68b90b",
+        "command": "uv run pytest; uv run agnara --version; uv run agnara --help; <external-venv-python> -I -m agnara_cli --version; <external-venv-python> -I -m agnara_cli --help",
+        "result": "CLI tests passed in the full suite; checkout and installed CLI both report agnara 0.1.0a3 and render help.",
         "paths": [
           "tests/cli",
           "docs/CLI_SPEC.md"
@@ -146,7 +209,8 @@
           "packages/agnara",
           "packages/agnara-cli",
           "tests/cli"
-        ]
+        ],
+        "note": "Executed on the release preparation content materialized as this commit; the following evidence-only commit does not change covered source."
       }
     },
     {
@@ -156,16 +220,17 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "f16f6fc02a5650766d804043af38007617107da4",
-        "command": "gh issue list --state open && gh run list --branch develop",
-        "result": "0 open issues; CI green on develop; all nine required checks pass on PR #236",
+        "commit": "647280a6f09feee591d312d993f59550ed68b90b",
+        "command": "gh issue list --state open --json number,title,url; gh api repos/Blandskron/agnara/commits/3128172baab60383c506ac2b5f3b43fdb29a77bd/check-runs; uv run pytest",
+        "result": "Open issues are release tracking #237 and delivered readiness tracking #235, not reported product regressions. Source CI passed every required lane; release working-tree suite passed. Final PR CI is a separate required gate before handoff.",
         "paths": [
           "BACKLOG.md"
         ],
         "covers": [
           "packages",
           "tests"
-        ]
+        ],
+        "note": "Executed on the release preparation content materialized as this commit; the following evidence-only commit does not change covered source."
       }
     },
     {
