@@ -22,7 +22,7 @@ from typing import Protocol, runtime_checkable
 
 from agnara._frozen import frozen_slots_dataclass
 from agnara.introspection.descriptors import (
-    AppDescriptor,
+    ApplicationDescriptor,
     CapabilityDescriptor,
     DependencyDescriptor,
     ExposureDescriptor,
@@ -293,7 +293,7 @@ def _capability(
 
 
 def _providers(
-    app: AppDescriptor,
+    app: ApplicationDescriptor,
     visibility: DiscoveryVisibility,
 ) -> tuple[ProviderDescriptor, ...]:
     if not visibility.publishes(DiscoveryField.PROVIDERS):
@@ -338,7 +338,7 @@ def filter_snapshot(
             f"filter_snapshot requires a Principal, got {type(principal).__name__}"
         )
 
-    apps: list[AppDescriptor] = []
+    apps: list[ApplicationDescriptor] = []
     for app in snapshot.apps:
         visible = tuple(
             _capability(capability, visibility)
@@ -348,7 +348,7 @@ def filter_snapshot(
         if not visible:
             continue
         apps.append(
-            AppDescriptor(
+            ApplicationDescriptor(
                 name=app.name,
                 capabilities=visible,
                 providers=_providers(app, visibility),

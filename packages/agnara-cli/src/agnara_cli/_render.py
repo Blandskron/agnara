@@ -21,7 +21,7 @@ import json
 from collections.abc import Iterable
 
 from agnara.introspection import (
-    AppDescriptor,
+    ApplicationDescriptor,
     CapabilityDescriptor,
     DiscoveryField,
     DiscoveryVisibility,
@@ -99,7 +99,7 @@ def _capability(
             yield _line(depth + 2, f"{exposure.transport}: {exposure.name}")
 
 
-def _app(app: AppDescriptor, depth: int, visibility: DiscoveryVisibility) -> Iterable[str]:
+def _app(app: ApplicationDescriptor, depth: int, visibility: DiscoveryVisibility) -> Iterable[str]:
     transports = ", ".join(app.transports) if app.transports else "none published"
     count = len(app.capabilities)
     noun = "capability" if count == 1 else "capabilities"

@@ -17,7 +17,7 @@ import argparse
 from collections.abc import Iterable, Mapping
 
 from agnara.introspection import (
-    AppDescriptor,
+    ApplicationDescriptor,
     DiscoveryField,
     DiscoveryVisibility,
     ProviderDescriptor,
@@ -72,7 +72,7 @@ def _provider_tree(
         yield from _provider_tree(required.name, providers, depth + 1, (*seen, name))
 
 
-def _reachable(app: AppDescriptor, providers: Mapping[str, ProviderDescriptor]) -> set[str]:
+def _reachable(app: ApplicationDescriptor, providers: Mapping[str, ProviderDescriptor]) -> set[str]:
     """Provider names any visible capability reaches, directly or through another.
 
     Transitive, because a provider that only exists to satisfy another provider
@@ -96,7 +96,7 @@ def _reachable(app: AppDescriptor, providers: Mapping[str, ProviderDescriptor]) 
     return reached
 
 
-def _app(app: AppDescriptor, visibility: DiscoveryVisibility) -> Iterable[str]:
+def _app(app: ApplicationDescriptor, visibility: DiscoveryVisibility) -> Iterable[str]:
     providers = {provider.provides.name: provider for provider in app.providers}
     yield f"app {app.name}"
     for capability in app.capabilities:

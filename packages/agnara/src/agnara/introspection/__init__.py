@@ -14,7 +14,7 @@ from .builder import describe_app, snapshot
 from .descriptors import (
     INTROSPECTION_FORMAT,
     INTROSPECTION_VERSION,
-    AppDescriptor,
+    ApplicationDescriptor,
     CapabilityDescriptor,
     DependencyDescriptor,
     ExposureDescriptor,
@@ -40,7 +40,7 @@ __all__ = [
     "INTROSPECTION_FORMAT",
     "INTROSPECTION_VERSION",
     "AllCapabilitiesVisible",
-    "AppDescriptor",
+    "ApplicationDescriptor",
     "CapabilityDescriptor",
     "DependencyDescriptor",
     "DiscoveryField",
