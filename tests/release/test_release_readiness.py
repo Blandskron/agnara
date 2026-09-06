@@ -391,24 +391,14 @@ def test_no_automated_check_is_silently_dead() -> None:
     """
     declared = {gate["id"] for gate in gates() if gate["kind"] == readiness.AUTOMATED}
     unused = set(readiness.AUTOMATED_CHECKS) - declared
-    assert unused == set(readiness.UNWIRED_CHECKS), (
-        "automated checks that no gate runs changed; wire the check into "
-        "docs/releases/release-status.json rather than extending UNWIRED_CHECKS"
+    assert not unused, (
+        f"automated checks that no gate runs: {sorted(unused)}; declare them in "
+        "docs/releases/release-status.json or remove the implementation"
     )
 
 
-def test_unwired_checks_are_real_checks() -> None:
-    """UNWIRED_CHECKS must not outlive the checks it names."""
-    assert set(readiness.AUTOMATED_CHECKS) >= readiness.UNWIRED_CHECKS
-
-
-@pytest.mark.parametrize("gate_id", sorted(readiness.UNWIRED_CHECKS))
-def test_an_unwired_check_still_works(gate_id: str) -> None:
-    """Keep the dormant checks executable, so wiring them is a status edit.
-
-    These do not run during a readiness report today. If they were also never
-    executed, they would rot until the release that finally needed them.
-    """
+@pytest.mark.parametrize("gate_id", sorted(readiness.AUTOMATED_CHECKS))
+def test_every_automated_check_returns_a_known_status(gate_id: str) -> None:
     status, detail = readiness.AUTOMATED_CHECKS[gate_id]()
     assert status in {
         readiness.SATISFIED,
