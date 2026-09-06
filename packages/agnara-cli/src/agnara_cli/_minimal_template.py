@@ -189,13 +189,19 @@ __all__: list[str] = []
 '''
 
 
-def minimal_app_files(project: str, app: str) -> dict[str, str]:
+def minimal_app_files(project: str, app: str, exposures: tuple[str, ...] = ()) -> dict[str, str]:
     """Every file ``agnara app create --architecture minimal`` writes.
 
     Keyed by project-relative path. Templates refer to the app's own package as
     ``{module}`` so the import paths are written once here rather than in every
     template string.
+
+    ``exposures`` must be empty. A minimal app has no ``adapters/`` package to
+    put an inbound adapter in, and giving it one would make it the other
+    template. `agnara app create` refuses the combination before reaching here.
     """
+    if exposures:  # pragma: no cover - the CLI refuses this first
+        raise ValueError("the minimal architecture has no adapters package")
     module = f"{project}.apps.{app}"
     root = f"src/{project}/apps/{app}"
     files = {

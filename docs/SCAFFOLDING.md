@@ -274,4 +274,11 @@ domain imports nothing from the application, and `module.py` is the only
 non-test module that knows both the application and its adapters.
 
 `adapters/inbound/` is created as a documented, empty package. Only requested
-inbound adapters are added, and `--with` is E0A.6.
+inbound adapters are added, selected with `--with` (E0A.6).
+
+A generated inbound adapter imports only this app's application layer: it names
+the capabilities it projects in `EXPOSED` and documents the wiring, rather than
+importing an Agnara adapter distribution. None of them is published to PyPI,
+and a generated project depends on `agnara` alone, so an import would produce a
+project that cannot be installed. This is what makes "no MCP import appears
+outside the MCP adapter file" true by construction. See ADR 0063.

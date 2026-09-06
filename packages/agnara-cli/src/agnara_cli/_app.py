@@ -28,6 +28,7 @@ from agnara_cli._generate import (
 )
 from agnara_cli._manifest import (
     ARCHITECTURES,
+    EXPOSURES,
     MANIFEST_FILENAME,
     ManifestError,
     ProjectManifest,
@@ -43,7 +44,7 @@ __all__ = ["add_app_parser", "run_app_create"]
 #: `vertical` a "potential future profile", so it is a name a manifest may
 #: carry before a generator exists for it. Selecting one that is not here is
 #: refused rather than quietly generating a different layout.
-TEMPLATES: dict[str, Callable[[str, str], dict[str, str]]] = {
+TEMPLATES: dict[str, Callable[[str, str, tuple[str, ...]], dict[str, str]]] = {
     "modular-hexagonal": app_files,
     "minimal": minimal_app_files,
 }
@@ -76,6 +77,16 @@ def add_app_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentParse
         help=(
             "the layout to generate. Defaults to the project's "
             "[defaults] architecture in agnara.toml."
+        ),
+    )
+    create.add_argument(
+        "--with",
+        dest="exposures",
+        metavar="a,b",
+        help=(
+            "comma-separated inbound adapters to scaffold: "
+            + ", ".join(EXPOSURES)
+            + ". Each adds one adapters/inbound/<name>.py."
         ),
     )
     create.add_argument(
@@ -131,18 +142,25 @@ def _manifest(arguments: argparse.Namespace) -> tuple[ProjectManifest, Path]:
     return load_manifest(found), found
 
 
-def _declaration(name: str, project: str, architecture: str) -> str:
+def _declaration(name: str, project: str, architecture: str, exposures: tuple[str, ...]) -> str:
     """The manifest table this app adds, rendered deterministically."""
+    listed = ", ".join(f'"{exposure}"' for exposure in exposures)
     return (
         f"\n[apps.{name}]\n"
         f'module = "{project}.apps.{name}"\n'
         f'path = "src/{project}/apps/{name}"\n'
         f'architecture = "{architecture}"\n'
-        "exposures = []\n"
+        f"exposures = [{listed}]\n"
     )
 
 
-def _updated_manifest(manifest: ProjectManifest, source: Path, name: str, architecture: str) -> str:
+def _updated_manifest(
+    manifest: ProjectManifest,
+    source: Path,
+    name: str,
+    architecture: str,
+    exposures: tuple[str, ...],
+) -> str:
     """Append one app table, preserving everything already in the file.
 
     Appending rather than re-serializing is deliberate: a manifest carries
@@ -152,7 +170,7 @@ def _updated_manifest(manifest: ProjectManifest, source: Path, name: str, archit
     existing = source.read_text(encoding="utf-8")
     if not existing.endswith("\n"):
         existing += "\n"
-    return existing + _declaration(name, manifest.name, architecture)
+    return existing + _declaration(name, manifest.name, architecture, exposures)
 
 
 def _resolved_architecture(requested: str | None, manifest: ProjectManifest, source: Path) -> str:
@@ -180,7 +198,46 @@ def _resolved_architecture(requested: str | None, manifest: ProjectManifest, sou
     )
 
 
-def _plan(arguments: argparse.Namespace) -> tuple[GenerationPlan, ProjectManifest, str, str]:
+def _resolved_exposures(requested: str | None, architecture: str) -> tuple[str, ...]:
+    """The inbound adapters to scaffold, and to record for what was scaffolded.
+
+    Order is the order given, with repeats dropped: the manifest preserves what
+    its author wrote, and ``--with http,mcp`` should read back as it was typed.
+
+    Raises:
+        GenerationError: an empty entry, an unknown exposure, or any exposure
+            at all on an architecture that has no adapters package.
+    """
+    if requested is None:
+        return ()
+
+    seen: list[str] = []
+    for entry in requested.split(","):
+        exposure = entry.strip()
+        if not exposure:
+            raise GenerationError(
+                f"--with {requested!r} has an empty entry; list exposures as "
+                "'http,mcp' with no trailing or repeated commas"
+            )
+        if exposure not in EXPOSURES:
+            raise GenerationError(
+                f"unknown exposure {exposure!r}. Available: {', '.join(EXPOSURES)}"
+            )
+        if exposure not in seen:
+            seen.append(exposure)
+
+    if seen and architecture != "modular-hexagonal":
+        raise GenerationError(
+            f"the {architecture} architecture has no adapters package, so it "
+            f"cannot carry an inbound adapter for {', '.join(seen)}. Generate "
+            "this app with --architecture modular-hexagonal, or leave --with off."
+        )
+    return tuple(seen)
+
+
+def _plan(
+    arguments: argparse.Namespace,
+) -> tuple[GenerationPlan, ProjectManifest, str, str, tuple[str, ...]]:
     name = _validated_name(arguments.name)
     manifest, source = _manifest(arguments)
     if any(app.name == name for app in manifest.apps):
@@ -191,12 +248,13 @@ def _plan(arguments: argparse.Namespace) -> tuple[GenerationPlan, ProjectManifes
     architecture = _resolved_architecture(
         getattr(arguments, "architecture", None), manifest, source
     )
+    exposures = _resolved_exposures(getattr(arguments, "exposures", None), architecture)
 
     root = source.parent
-    files = TEMPLATES[architecture](manifest.name, name)
-    files[MANIFEST_FILENAME] = _updated_manifest(manifest, source, name, architecture)
+    files = TEMPLATES[architecture](manifest.name, name, exposures)
+    files[MANIFEST_FILENAME] = _updated_manifest(manifest, source, name, architecture, exposures)
     plan = build_plan(root, files, updates=(MANIFEST_FILENAME,))
-    return plan, manifest, name, architecture
+    return plan, manifest, name, architecture, exposures
 
 
 def _next_steps(project: str, name: str) -> str:
@@ -210,7 +268,7 @@ def _next_steps(project: str, name: str) -> str:
 
 def run_app_create(arguments: argparse.Namespace) -> str:
     """Plan the app, then write it unless this is a dry run."""
-    plan, manifest, name, _architecture = _plan(arguments)
+    plan, manifest, name, _architecture, _exposures = _plan(arguments)
     if arguments.dry_run:
         if arguments.json:
             return json.dumps(plan_json(plan), indent=2, sort_keys=True)

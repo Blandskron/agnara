@@ -15,6 +15,15 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- `agnara app create --with http,mcp` selects which inbound adapters are
+  scaffolded, adding one `adapters/inbound/<exposure>.py` each and nothing
+  else. The exposure vocabulary is validated, repeats are dropped and the
+  order given is preserved. A generated adapter imports only its own app's
+  application layer and lists the capabilities it projects in `EXPOSED`: no
+  Agnara adapter distribution is published to PyPI and a generated project
+  depends on `agnara` alone, so importing one would produce a project that
+  cannot be installed. The `minimal` architecture refuses an exposure, because
+  it has no adapters package ([#246]).
 - `agnara app create --architecture` selects the layout to generate, falling
   back to the project's `[defaults] architecture` in `agnara.toml`. The
   `minimal` architecture is implemented: a package, `module.py`,
@@ -28,6 +37,10 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Fixed
 
+- `agnara app create` wrote `exposures = []` into every `[apps.<name>]` table
+  regardless of what was requested, so `agnara apps` reported no exposures for
+  an app that had inbound adapters. The resolved exposures are now recorded
+  ([#246]).
 - `agnara app create` recorded the project's default architecture in the new
   `[apps.<name>]` table while always generating the modular-hexagonal tree. A
   project whose `[defaults] architecture` was `minimal` therefore produced a
@@ -474,6 +487,7 @@ under `0.1.0a2` instead.
   `TypeError` ([#3]).
 
 [#244]: https://github.com/Blandskron/agnara/issues/244
+[#246]: https://github.com/Blandskron/agnara/issues/246
 [Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...develop
 [0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3
 [0.1.0a2]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...v0.1.0a2
