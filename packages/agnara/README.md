@@ -15,8 +15,10 @@ depends on nothing but the standard library.
 
 ## Status: alpha
 
-`0.1.0a2` is the first published release — an architectural proof that Agnara
-installs and runs as a real Python distribution. It is **not
+`0.1.0a3` is the integration alpha, following the first published version
+`0.1.0a2`. It adds protocol-neutral introspection, discovery filtering and
+stronger telemetry contracts. Publication of this version is pending until
+the release workflow completes. It is **not
 production-ready**, the public API may change without a deprecation cycle, and
 it makes no claim of protocol conformance, benchmark leadership or security
 guarantees.
@@ -24,7 +26,7 @@ guarantees.
 ## Install
 
 ```bash
-pip install agnara==0.1.0a2
+pip install agnara==0.1.0a3
 ```
 
 Requires CPython 3.14 or newer.
@@ -94,13 +96,15 @@ transformation of the function.
 - execution plans, direct invocation and optional monotonic deadlines;
 - protocol-neutral policies, principals and scope evaluation;
 - canonical `Success` / `Failure` outcomes with stable failure codes;
-- structured execution telemetry hooks.
+- protocol-neutral introspection snapshots and explicit discovery visibility;
+- structured execution telemetry hooks with per-invocation identity.
 
 ## What it does not include
 
 The HTTP/ASGI, OpenAPI, MCP and CLI adapters exist in the Agnara repository but
-were **not** published to PyPI in `0.1.0a2`, so they cannot be installed with
-`pip` yet. Events, A2A and the telemetry bridge are likewise repository-only.
+are **not** published to PyPI by the `0.1.0a3` workflow. Build them from the
+repository when needed. The OpenTelemetry bridge is also repository-only;
+events and A2A remain placeholders.
 
 ## Frozen value semantics
 
@@ -122,6 +126,34 @@ Missing evidence terminates execution with an interaction request. Rejected
 evidence terminates it as forbidden. Both outcomes occur before dependency
 construction or handler effects, and `invoke_result()` maps them to stable
 protocol-neutral failure codes.
+
+## Telemetry hooks
+
+The core port is `agnara.execution.TelemetryHook`, with synchronous
+`on_invocation_start(InvocationStartEvent)` and
+`on_invocation_terminal(InvocationTerminalEvent)` callbacks. Register observers
+with `ExecutionPlan.compile(definition, registry, hooks=[observer])`; inheriting
+from the protocol is optional. Events expose capability, invocation and tracking identity;
+terminal events also contain monotonic duration and execution outcome, without
+handler inputs, returned payloads or exception objects.
+
+Both plan construction paths copy the hook collection to a tuple. Missing or
+non-callable callbacks, coroutine functions and generator functions fail at
+startup with `DefinitionError`. This validation is included in `0.1.0a3`. Valid callbacks accept one event, return `None` synchronously
+and must not block. Their ordinary exceptions are ignored during execution.
+
+Observers own synchronization of their mutable state and must keep their
+callbacks stable after compilation. Tracking IDs are caller-provided and may
+repeat; they are not unique span identifiers and should contain no secrets.
+Exporter startup, flushing and shutdown belong to adapters, not the core
+runtime. The separate `agnara-telemetry` package provides metrics and tracing
+hooks over an application-supplied meter and tracer. It is not published to PyPI.
+
+**Migration from 0.1.0a2:** code constructing `InvocationStartEvent` or
+`InvocationTerminalEvent` must supply the new required `invocation_id`. Use the
+same identity for matching start/terminal events; `tracking_id` is not unique.
+Hooks that only read events are unaffected. Plans without hooks skip event
+construction entirely.
 
 ## Links
 

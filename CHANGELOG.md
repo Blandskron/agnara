@@ -13,7 +13,184 @@ without being published. See the `0.1.0a2` scope note below.
 
 ## [Unreleased]
 
-Nothing yet.
+## [0.1.0a3] - 2026-09-06
+
+Integration alpha. Only `agnara` is published to PyPI; all seven workspace
+distributions share `0.1.0a3`. Adapter functionality below is available from
+the repository. This remains experimental and is not production-ready.
+
+### Fixed
+
+- Release readiness accepts a populated, dated target changelog section after
+  the release cut, checking synchronized target versions and comparison links.
+  A historical release section cannot satisfy a new target ([#237]).
+
+- Telemetry events now report a tracking ID supplied through
+  `ExecutionContext(tracking_id=...)`, not only one found in
+  `Invocation.metadata`. `agnara-mcp` sets that parameter from the JSON-RPC
+  request id, so MCP tool calls previously produced lifecycle events carrying
+  `None`. The explicit parameter takes precedence over metadata, and a
+  non-string metadata value is dropped rather than stringified into a
+  telemetry field. Adapters still export no tracking ID ([#221]).
+- Removed unreachable code at the end of `agnara.execution.runtime.invoke`.
+  Four statements followed a `try` block whose every branch returned, so they
+  could never execute; this is a readability correction with no behavior
+  change ([#219]).
+- Explorer error responses now prevent storage with `private, no-store` and
+  include the same security headers as its pages, preserving authentication
+  challenges and method information ([#208]).
+- Execution plans now reject missing, non-callable, coroutine and generator
+  telemetry callbacks at startup. Direct construction also snapshots the
+  hook collection, so later changes to the source list cannot change a
+  compiled plan's observers ([#211]).
+
+### Changed
+
+- Enabled GitHub private vulnerability reporting and documented the private
+  reporting channel for the experimental-alpha release ([#237]).
+
+- `agnara project create` now reports what it wrote with the same renderer
+  `--dry-run` uses, so a preview and a real run cannot describe the same plan
+  differently ([#233]).
+- An invocation whose compiled plan registers no telemetry hook no longer
+  builds lifecycle events. Identity generation, tracking-ID resolution, clock
+  reads and event construction are skipped when nothing can observe them,
+  which measured roughly 2.9-4.4 microseconds per invocation on one
+  workstation. A plan with hooks delivers exactly the same events as before
+  ([#227]).
+- Capability spans whose outcome is `failure` or `timeout` now also carry the
+  stable OpenTelemetry `error.type` attribute, valued with that same outcome
+  word. It is not an exception type: exception text is still never exported. A
+  `cancellation` carries none. Metric attributes are unchanged, and the GenAI
+  and MCP vocabularies are deliberately not emitted ([#225]).
+- **Breaking (pre-1.0).** `InvocationStartEvent` and `InvocationTerminalEvent`
+  now carry a required `invocation_id` that the execution runtime generates
+  once per invocation and repeats on the terminal event. It is the supported
+  way to pair the two events: a caller `tracking_id` is optional, repeatable
+  and caller-controlled, so it was never a safe key. The field is appended to
+  each event, so code constructing one positionally fails with a missing
+  argument rather than binding a value to the wrong field; supply the identity
+  or construct by keyword. Hooks that only read events are unaffected ([#219]).
+
+### Added
+
+- Added an evidence-based release readiness program:
+  `docs/releases/RELEASE_PLAN.md` defines the path from `0.1.0a2` to `0.1.0`,
+  `docs/releases/release-status.json` and `docs/releases/STATUS.md` record the
+  current state, and `uv run python scripts/check_release_readiness.py`
+  evaluates it. Automated gates are recomputed from the repository, evidence
+  expires when its commit is no longer `HEAD`, and gates needing human
+  judgment are never satisfied by the tool. It supplements `QUALITY_GATES.md`
+  and relaxes nothing ([#235]).
+
+- Added `agnara app create`, which generates a bounded context in the
+  modular-hexagonal layout and declares it in `agnara.toml`. The manifest is
+  appended to, so its comments and ordering survive; an already-declared app,
+  an invalid manifest and a missing one are refused before anything is written.
+  The generated app runs: its capabilities register, compile and invoke against
+  the generated outbound adapter. It does not edit `bootstrap.py`, and prints
+  the lines to add instead ([#233]).
+
+- Added `agnara project create`, the first generator. It writes a composition
+  root, a manifest, a package layout and tests, from a plan built before
+  anything is written: `--dry-run` and `--json` render that same plan, a run
+  that would replace an existing file refuses before writing anything and names
+  every conflict, `--overwrite` authorizes replacement for one run, and the
+  command never prompts. Output is byte-identical for identical inputs. The
+  generated project depends on `agnara` alone ([#231]).
+
+- Added the `agnara.toml` project manifest format and its reader. `agnara apps`
+  lists the apps a project declares with their architecture and exposures, as
+  text or deterministic JSON, without importing any project module.
+  `agnara_cli` exports `ProjectManifest`, `ManifestApp`, `ManifestError`,
+  `parse_manifest`, `load_manifest` and `find_manifest`. Unknown tables and
+  keys are rejected rather than ignored, and an app path may not be absolute or
+  escape the project directory. No new dependency: parsing uses `tomllib`
+  ([#229]).
+
+- Added `OpenTelemetryTracingHook` in `agnara-telemetry`, which opens one span
+  per capability invocation over an application-supplied tracer and ends it on
+  the matching terminal event. A nested invocation becomes a child span, while
+  invocations in sibling tasks stay unrelated. Only the capability identity and
+  a closed outcome vocabulary are recorded; provider, processor, exporter,
+  flush and shutdown remain owned by the application ([#219]).
+
+- Authorized the Anthropic Claude agent identity for Git attribution.
+  `.github/ai-agent-identities.toml` now registers `claude[bot]`, and AGENTS.md
+  states the exact `Co-authored-by: Claude <noreply@anthropic.com>` trailer, so
+  the registry covers every agent that has contributed to this repository
+  ([#219]).
+
+- Added `OpenTelemetryMetricsHook` in `agnara-telemetry` for terminal invocation
+  counts and duration, using an application-supplied meter. The adapter depends
+  on the OpenTelemetry API; SDK/exporter setup and shutdown remain owned by
+  the application ([#216]).
+
+- Added a main content landmark to every Explorer page and required Chromium
+  checks for accessible structure, keyboard navigation, direct links and
+  representative mobile rendering ([#209]).
+
+- Added Explorer application, schema and dependency views: navigation is
+  project → application → capability, an input's JSON Schema renders as bounded
+  nested structure rather than escaped JSON, and each view disappears when its
+  field is withheld ([#206]).
+- Added the read-only Agnara Explorer: server-rendered HTML over the same
+  filtered snapshot, visibility decision and principal resolver the discovery
+  endpoint uses, with no JavaScript, stylesheet or external asset, deep links
+  on capability identifiers, non-HTTP transport availability, and one `404` for
+  both a hidden and an absent capability ([#204]).
+- Added executable validation of the architecture metadata and of
+  cross-surface snapshot consistency: `ARCHITECTURE.md`'s concept list is
+  checked against the model, no descriptor field can be published without a
+  named decision, and six surfaces are asserted to describe one application the
+  same way for one viewer ([#202]).
+- Added `agnara context`, which renders the filtered snapshot as Markdown for a
+  model to read. It states in every rendering that seeing a capability is not
+  permission to invoke it, and names a withheld field instead of printing its
+  declared default ([#200]).
+- Added `agnara schema openapi`, which exports the OpenAPI document a
+  composition produced rather than projecting a second one. Serialized bytes
+  are emitted unchanged, so an export is byte-identical to what an HTTP surface
+  serves; `--output` writes a file non-destructively ([#198]).
+- Added the authorized HTTP discovery endpoint, serving the same versioned
+  introspection document `agnara inspect --json` produces. It takes a principal
+  resolver, answers `401` unless anonymous discovery is opted into explicitly,
+  filters per request before serialization, and refuses a shared-cacheable
+  directive because the document is viewer-specific ([#196]).
+- Added `agnara graph`, which draws capability, dependency and provider
+  relationships from the same filtered snapshot `agnara inspect` reads. Every
+  introspection command now obtains its data from one shared view, so no
+  command has a second discovery path ([#194]).
+- Added the `agnara` command and `agnara inspect`, which imports a compiled
+  application named as `module:attribute` and presents its filtered
+  introspection snapshot as text or deterministic JSON. Both modes build one
+  snapshot and apply one visibility decision, chosen on the command line
+  ([#192]).
+- Added discovery visibility and redaction: `filter_snapshot` decides which
+  capabilities a principal may discover and which fields are published, as two
+  separate decisions with no default publication set, and marks its result so
+  an unfiltered snapshot cannot be served by mistake ([#190]).
+- Added the protocol-neutral introspection snapshot in `agnara.introspection`:
+  frozen descriptors for apps, capabilities, inputs, dependencies, providers,
+  policies and adapter-contributed exposures, built from a compiled
+  application, with a versioned JSON data form and no path from a snapshot to
+  a runtime object ([#188]).
+- Added a comparative MCP tool-invocation benchmark against the pinned SDK's
+  `MCPServer`, measuring the handler and official-client boundaries separately
+  and reporting synchronous and asynchronous tools apart, with the baseline
+  recorded in `docs/benchmarks/mcp-tool-invocation.md` ([#186]).
+- Added the MCP tool invocation dispatcher: `McpToolInvoker` and
+  `build_mcp_server` serve `tools/call` over the same frozen discovery
+  snapshot, enforcing each capability's declared scopes with core's
+  `ScopePolicy` before any effect, projecting canonical outcomes as tool
+  results, refusing task-augmented and resumed calls as protocol errors, and
+  propagating cancellation instead of answering it ([#185]).
+- Added `project_mcp_result` for detached JSON success content, canonical tool
+  errors without internal details and existing interaction-required projection,
+  with explicit rejection of unsupported output values ([#183]).
+- Added bounded MCP SDK conformance coverage for discovery, malformed
+  pagination, unsupported calls and concurrent request identity/cache isolation,
+  with an explicit coverage matrix and exclusions ([#181]).
 
 ## [0.1.0a2] - 2026-09-04
 
@@ -274,7 +451,8 @@ under `0.1.0a2` instead.
   `FrozenInstanceError` instead of CPython 3.14's confusing internal
   `TypeError` ([#3]).
 
-[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...develop
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...develop
+[0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3
 [0.1.0a2]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...v0.1.0a2
 [0.1.0a1]: https://github.com/Blandskron/agnara/releases/tag/v0.1.0a1
 [#3]: https://github.com/Blandskron/agnara/issues/3
@@ -327,3 +505,31 @@ under `0.1.0a2` instead.
 [#125]: https://github.com/Blandskron/agnara/issues/125
 [#133]: https://github.com/Blandskron/agnara/issues/133
 [#135]: https://github.com/Blandskron/agnara/issues/135
+[#181]: https://github.com/Blandskron/agnara/issues/181
+[#183]: https://github.com/Blandskron/agnara/issues/183
+[#185]: https://github.com/Blandskron/agnara/issues/185
+[#186]: https://github.com/Blandskron/agnara/issues/186
+[#188]: https://github.com/Blandskron/agnara/issues/188
+[#190]: https://github.com/Blandskron/agnara/issues/190
+[#192]: https://github.com/Blandskron/agnara/issues/192
+[#194]: https://github.com/Blandskron/agnara/issues/194
+[#196]: https://github.com/Blandskron/agnara/issues/196
+[#198]: https://github.com/Blandskron/agnara/issues/198
+[#200]: https://github.com/Blandskron/agnara/issues/200
+[#202]: https://github.com/Blandskron/agnara/issues/202
+[#204]: https://github.com/Blandskron/agnara/issues/204
+[#206]: https://github.com/Blandskron/agnara/issues/206
+[#208]: https://github.com/Blandskron/agnara/issues/208
+[#209]: https://github.com/Blandskron/agnara/issues/209
+[#211]: https://github.com/Blandskron/agnara/issues/211
+[#216]: https://github.com/Blandskron/agnara/issues/216
+[#219]: https://github.com/Blandskron/agnara/issues/219
+[#221]: https://github.com/Blandskron/agnara/issues/221
+[#225]: https://github.com/Blandskron/agnara/issues/225
+[#227]: https://github.com/Blandskron/agnara/issues/227
+[#229]: https://github.com/Blandskron/agnara/issues/229
+[#231]: https://github.com/Blandskron/agnara/issues/231
+[#233]: https://github.com/Blandskron/agnara/issues/233
+[#235]: https://github.com/Blandskron/agnara/issues/235
+
+[#237]: https://github.com/Blandskron/agnara/issues/237

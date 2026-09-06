@@ -124,6 +124,11 @@ jobs:
           AGNARA_RUN_BROWSER_TESTS: "1"
         run: uv run pytest tests/http/test_documentation_browser.py -m browser
 
+      - name: Explorer browser accessibility and navigation
+        env:
+          AGNARA_RUN_BROWSER_TESTS: "1"
+        run: uv run pytest tests/http/test_explorer_browser.py -m browser
+
   # The lockfile is a merge gate: an unlocked change would let CI and a
   # developer machine resolve different dependency sets.
   lockfile:

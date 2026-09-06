@@ -21,6 +21,11 @@ REQUIRED_FIELDS = {
     "authorized_by",
     "authorized_on",
 }
+#: Vendor addresses whose shape a GitHub noreply pattern cannot describe.
+#: Each is the published trailer address named in AGENTS.md for that agent,
+#: not a convenience exemption: an unlisted address must still be a GitHub
+#: noreply matching its registered login.
+VENDOR_ADDRESSES = frozenset({"codex@openai.com", "noreply@anthropic.com"})
 GITHUB_NOREPLY = re.compile(
     r"^(?P<account_id>[1-9][0-9]*)\+(?P<login>.+)@users\.noreply\.github\.com$"
 )
@@ -51,7 +56,7 @@ def test_identity_keys_are_unique() -> None:
 
 def test_github_noreply_email_matches_the_registered_login() -> None:
     for agent in _registry()["agents"]:
-        if agent["email"] in ("codex@openai.com",):
+        if agent["email"] in VENDOR_ADDRESSES:
             continue
         match = GITHUB_NOREPLY.fullmatch(agent["email"])
         assert match is not None, f"unverified GitHub noreply shape for {agent['id']}"
@@ -64,6 +69,16 @@ def test_identity_evidence_is_public_github_data() -> None:
         assert agent["evidence_url"].startswith("https://github.com/")
 
 
-def test_codex_exact_trailer_is_discoverable_by_future_agents() -> None:
-    trailer = "Co-authored-by: Codex <codex@openai.com>"
-    assert trailer in POLICY.read_text(encoding="utf-8")
+def test_vendor_addresses_are_all_registered() -> None:
+    """An exemption is dead weight unless a registered identity uses it."""
+    registered = {agent["email"] for agent in _registry()["agents"]}
+    assert registered >= VENDOR_ADDRESSES
+
+
+def test_exact_trailers_are_discoverable_by_future_agents() -> None:
+    policy = POLICY.read_text(encoding="utf-8")
+    for trailer in (
+        "Co-authored-by: Codex <codex@openai.com>",
+        "Co-authored-by: Claude <noreply@anthropic.com>",
+    ):
+        assert trailer in policy

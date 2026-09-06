@@ -14,12 +14,14 @@ from .authorization import (
     McpPrincipalMapper,
 )
 from .discovery import build_mcp_discovery_server
+from .dispatch import McpInvocationDefinitionError, McpToolInvoker, build_mcp_server
 from .interaction import McpInteractionProjectionError, project_mcp_interaction_required
 from .protocol import (
     MCP_PROTOCOL_VERSION,
     MCP_PYTHON_SDK_VERSION,
     SUPPORTED_MCP_PROTOCOL_VERSIONS,
 )
+from .result import McpResultProjectionError, project_mcp_result
 from .schema import project_mcp_tools
 from .tools import FrozenMcpTools, Mcp, McpToolDefinitionError, McpToolExposure
 
@@ -33,10 +35,15 @@ __all__ = [
     "McpAuthorization",
     "McpAuthorizationDefinitionError",
     "McpInteractionProjectionError",
+    "McpInvocationDefinitionError",
     "McpPrincipalMapper",
+    "McpResultProjectionError",
     "McpToolDefinitionError",
     "McpToolExposure",
+    "McpToolInvoker",
     "build_mcp_discovery_server",
+    "build_mcp_server",
     "project_mcp_interaction_required",
+    "project_mcp_result",
     "project_mcp_tools",
 ]

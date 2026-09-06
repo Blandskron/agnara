@@ -175,6 +175,43 @@ match await invoke_result(plan, context):
 `FailureCode` is protocol-neutral. An HTTP, MCP or A2A adapter maps it to its
 own representation; core never stores a transport status code.
 
+The implemented MCP result boundary is explicit composition:
+
+```python
+from agnara_mcp import project_mcp_result
+
+mcp_result = project_mcp_result(await invoke_result(plan, context))
+```
+
+Success JSON values are copied into `structuredContent.result` with equivalent
+JSON text. Canonical failures expose only code/message as tool error content;
+interaction requirements use the strict E7.6 projection. This function does not
+validate an outputSchema. See ADR 0043.
+
+A server that also serves `tools/call` composes the same pieces once at
+startup:
+
+```python
+from agnara_mcp import build_mcp_server
+
+server = build_mcp_server(
+    exposures,
+    plans,
+    di_container,
+    name="billing",
+    version="1.0.0",
+    authorization=authorization,
+    timeout=30,
+)
+```
+
+`build_mcp_server` adds invocation over the discovery snapshot
+`build_mcp_discovery_server` already produces, so no name is invocable without
+being discoverable. Each call enforces the capability's declared scopes with
+core's `ScopePolicy` before any effect, invokes the compiled plan and projects
+the canonical outcome. Unknown tools, task-augmented execution and resumption
+attempts are protocol errors; everything else is a tool result. See ADR 0044.
+
 ## 17. Capability introspection
 
 ```python
@@ -184,6 +221,44 @@ print(definition.exposures)
 ```
 
 The final registry API may differ but this must be easy.
+
+For tooling rather than authoring, one protocol-neutral snapshot describes a
+compiled application:
+
+```python
+from agnara.introspection import ExposureDescriptor, describe_app, snapshot
+
+document = snapshot(
+    [
+        describe_app(
+            app,
+            plans,
+            dependencies=registry,
+            exposures={"users.get_user": [ExposureDescriptor.of("http", "GET /users/{id}")]},
+        )
+    ]
+).json_data()
+```
+
+The CLI, an authorized discovery endpoint and Agnara Explorer read this rather
+than deriving answers from OpenAPI or from one another. Descriptors are frozen
+and hold only names, declared metadata and canonical JSON text, so a snapshot
+cannot reach a handler, a dependency instance or a policy object. See ADR 0045.
+
+Serializing is not publishing. Decide what a viewer may see first:
+
+```python
+from agnara.introspection import DiscoveryVisibility, Hiding, ScopeVisible, filter_snapshot
+
+visibility = DiscoveryVisibility.agent_safe(Hiding({"users.reindex"}, ScopeVisible()))
+published = filter_snapshot(document, visibility, principal).json_data()
+```
+
+The visibility rule decides which capabilities this principal may discover;
+the published field set decides what is said about each one, and it has no
+default. `identity_only`, `agent_safe` and `unrestricted` are named starting
+points. Hiding is discovery-only: a hidden capability stays registered and
+stays invocable by anyone the policy layer allows. See ADR 0046.
 
 ## 18. OpenAPI projection
 

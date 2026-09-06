@@ -210,42 +210,119 @@ Core imports neither Pydantic nor msgspec.
   not claimed. Recorded by ADR 0042, which also constrains E7.8. Delivered
   inside the v0.1.0a1 release branch rather than under its own Issue, because
   GitHub API access was unavailable for the whole cycle.
-- [ ] E7.8 Official SDK conformance tests.
-- [ ] E7.9 Benchmark tool invocation overhead against FastMCP where meaningful.
+- [x] E7.8 Add bounded official SDK conformance tests for implemented MCP
+  surfaces, with explicit exclusions in `docs/MCP_CONFORMANCE.md`.
+  Tracking: GitHub Issue #181.
+- [x] E7.8a Project canonical invocation outcomes to official MCP result models.
+  Tracking: GitHub Issue #183. Prerequisite for tool invocation.
+- [x] E7.8b Implement the MCP tool invocation dispatcher and its lifecycle,
+  authorization and cancellation conformance tests before benchmarking calls.
+  Declared scopes are enforced by core `ScopePolicy` before any effect, because
+  discovery filtering is visibility rather than authorization. Recorded by
+  ADR 0044. Tracking: GitHub Issue #185.
+- [x] E7.9 Benchmark tool invocation overhead against FastMCP where meaningful.
+  FastMCP is `MCPServer` in the pinned SDK. `benchmarks/mcp_tool_invocation.py`
+  measures the handler and official-client boundaries separately, and separates
+  synchronous from asynchronous tools because the SDK runs a synchronous tool
+  in a worker thread. Recorded in `docs/benchmarks/mcp-tool-invocation.md`; the
+  result is reproducible evidence on one workstation, not a portable ranking.
 
 ## EPIC 8 — Documentation and introspection
 
 - [x] E8.0 Define the interactive documentation and Agnara Explorer
   architecture. Tracked by Issue #9.
-- [ ] E8.1 Define an immutable, versioned protocol-neutral introspection
+- [x] E8.1 Define an immutable, versioned protocol-neutral introspection
   snapshot for projects, apps, capabilities, exposures, dependencies,
-  policies, effects, risk, idempotency, confirmation and schemas.
-- [ ] E8.2 Define and enforce discovery visibility, redaction and authorization
+  policies, effects, risk, idempotency, confirmation and schemas. Descriptor
+  fields are names, declared metadata and canonical JSON text, so reaching a
+  runtime object is structurally impossible rather than merely discouraged.
+  Recorded by ADR 0045. Tracking: GitHub Issue #188.
+- [x] E8.2 Define and enforce discovery visibility, redaction and authorization
   controls before serialization; private capabilities, secrets, dependency
-  instances and policy internals must not leak.
-- [ ] E8.3 Implement `agnara inspect [app]` as a human-readable presentation of
-  the filtered introspection snapshot.
-- [ ] E8.4 Implement deterministic, versioned `agnara inspect [app] --json`
-  output from the same snapshot rather than HTML or OpenAPI.
-- [ ] E8.5 Implement `agnara graph` as a human-readable relationship view over
-  the same snapshot without a second discovery path.
-- [ ] E8.6 Add an authorized machine-readable discovery endpoint with the same
-  versioned serialization as CLI JSON and explicit cache behavior.
-- [ ] E8.7 Implement `agnara schema openapi` over the same OpenAPI projection
+  instances and policy internals must not leak. `filter_snapshot` separates the
+  visibility rule from an explicit published-field set with no default, drops an
+  application whose capabilities are all hidden, and marks its result so an
+  unfiltered snapshot cannot be served by mistake. Recorded by ADR 0046.
+  Tracking: GitHub Issue #190.
+- [x] E8.3 Implement `agnara inspect [app]` as a human-readable presentation of
+  the filtered introspection snapshot. The application is named explicitly as
+  `module:attribute` until `agnara.toml` exists, and the visibility decision is
+  a command-line argument rather than an assumption. Recorded by ADR 0047.
+  Tracking: GitHub Issue #192.
+- [x] E8.4 Implement deterministic, versioned `agnara inspect [app] --json`
+  output from the same snapshot rather than HTML or OpenAPI. Both modes build
+  one snapshot and apply one filter, differing only in the last call.
+  Tracking: GitHub Issue #192.
+- [x] E8.5 Implement `agnara graph` as a human-readable relationship view over
+  the same snapshot without a second discovery path. Every introspection
+  command obtains its data from one shared view, so two commands cannot
+  disagree under one visibility decision. Recorded by ADR 0048. Tracking:
+  GitHub Issue #194.
+- [x] E8.6 Add an authorized machine-readable discovery endpoint with the same
+  versioned serialization as CLI JSON and explicit cache behavior. Authorization
+  is a required argument rather than a mode, a shared-cacheable directive is
+  refused at startup, and a cross-surface test proves the endpoint and
+  `agnara inspect --json` publish the same document. Recorded by ADR 0049.
+  Tracking: GitHub Issue #196.
+- [x] E8.7 Implement `agnara schema openapi` over the same OpenAPI projection
   served by `agnara-http`, with stdout/file output and stable exit behavior.
-- [ ] E8.8 Implement a read-only Agnara Explorer MVP over protocol-neutral
-  introspection, including non-HTTP transport availability.
-- [ ] E8.9 Add Explorer project/app/capability, schema, dependency and policy
+  The CLI exports the document the composition produced rather than projecting
+  a second one, because it must not import a sibling adapter and because a
+  second projection could disagree with what a server serves. Recorded by
+  ADR 0050. Tracking: GitHub Issue #198.
+- [x] E8.8 Implement a read-only Agnara Explorer MVP over protocol-neutral
+  introspection, including non-HTTP transport availability. Server-rendered
+  HTML with no JavaScript, stylesheet or external asset, so read-only is
+  structural and the content security policy has no exceptions. Recorded by
+  ADR 0052. Tracking: GitHub Issue #204.
+- [x] E8.9 Add Explorer project/app/capability, schema, dependency and policy
   views without exposing runtime object values or non-publishable metadata.
-- [ ] E8.10 Add Explorer authorization, partial-visibility, cache-control and
-  disabled-surface tests.
-- [ ] E8.11 Add accessibility, keyboard, screen-reader, deep-link and responsive
-  mobile tests for Agnara Explorer.
-- [?] E8.12 Research generated `llms.txt` without treating it as an
-  authorization or canonical discovery format.
-- [ ] E8.13 Generate agent context from the versioned filtered snapshot.
-- [ ] E8.14 Validate architecture metadata and cross-surface snapshot
-  consistency.
+  Navigation is project → application → capability, an input's schema renders
+  as bounded nested structure rather than escaped JSON, and each view
+  disappears when its field is withheld. Recorded in ADR 0052. Tracking: GitHub
+  Issue #206.
+- [x] E8.10 Add Explorer authorization, partial-visibility, cache-control and
+  disabled-surface tests. 33 boundary cases cover every view over GET and
+  HEAD, anonymous opt-in, invalid resolvers, partial visibility, overlapping
+  viewers, source immutability and HTML disabled with discovery still served.
+  Twelve of them reproduced absent cache controls, so Explorer errors now
+  carry `private, no-store` and the existing security headers without changing
+  policy order. Merged by PR #213 with the required checks green.
+  Recorded in ADR 0052, which remains Proposed. Tracking: GitHub Issue #208.
+- [x] E8.11 Add accessibility, keyboard, screen-reader, deep-link and responsive
+  mobile tests for Agnara Explorer. 17 pinned-Chromium cases cover accessible
+  structure and names, a full keyboard round trip, direct links, reload and
+  history, partial and empty views, and 390x844 and 1280x844 layouts. The
+  first run reproduced a missing main landmark on all three views; each page
+  now has one native `main` element, with no added script, stylesheet or
+  weakened content security policy. Merged by PR #214; the required
+  `Documentation browsers` CI lane runs the suite and reported 17 passed on
+  CPython 3.14.7, while the ordinary suite still collects the cases as
+  skipped. This is browser accessibility-tree evidence, not a screen-reader
+  session or a WCAG claim. Recorded in ADR 0052, which remains Proposed.
+  Tracking: GitHub Issue #209.
+- [x] E8.12 Research generated `llms.txt` without treating it as an
+  authorization or canonical discovery format. Dated primary-source research
+  reserves an optional index for documentation publishing, retains existing
+  runtime discovery and context, and adds no endpoint, CLI format or
+  generator; stale references in ADR 0051, `docs/CLI_SPEC.md` and this file
+  were reconciled. Merged by PR #215 with the required checks green. The
+  research is recorded in ADR 0053, which remains Proposed: the decision is
+  documented and reversible, not maintainer-approved, and observed
+  publication is distinguished from evidence of client use. Tracking: GitHub
+  Issue #210.
+- [x] E8.13 Generate agent context from the versioned filtered snapshot.
+  `agnara context` renders it as Markdown from the shared view, states in every
+  rendering that seeing a capability is not permission to invoke it, and names
+  a withheld field rather than printing its declared default. It is not
+  `llms.txt`; E8.12 records that separate documentation boundary. Recorded by ADR 0051.
+  Tracking: GitHub Issue #200.
+- [x] E8.14 Validate architecture metadata and cross-surface snapshot
+  consistency. `ARCHITECTURE.md`'s concept list is now read out of the document
+  and checked against the model, no descriptor field can be published without a
+  named decision, and six surfaces — four CLI renderings, the HTTP discovery
+  endpoint and MCP `tools/list` — are asserted to agree for one viewer.
+  Tracking: GitHub Issue #202.
 
 ### Introspection dependency order
 
@@ -257,12 +334,79 @@ expanding that first PR into a complete frontend.
 
 ## EPIC 9 — Telemetry
 
-- [ ] E9.1 Telemetry port in core.
-- [ ] E9.2 OpenTelemetry adapter.
-- [ ] E9.3 Common capability spans.
-- [ ] E9.4 transport span linking.
-- [ ] E9.5 MCP/GenAI semantic convention compatibility.
-- [ ] E9.6 no-op telemetry cost benchmark.
+- [x] E9.1 Telemetry port in core. Reuse E4.8's `TelemetryHook` and events;
+  validate callbacks and freeze registration on both plan construction paths.
+  Verified with 42 configuration regression cases. Full local gate:
+  1711 passed, 14 browser cases skipped; Ruff and ty pass.
+  OpenTelemetry and span semantics remain E9.2-E9.6.
+  Tracking: GitHub Issue #211.
+- [x] E9.2 OpenTelemetry adapter. Initial application-owned metrics bridge
+  over the existing telemetry port. `OpenTelemetryMetricsHook` builds its
+  instruments once and records a terminal invocation counter and a duration
+  histogram in seconds under capability identity and outcome attributes only;
+  the application keeps the meter, provider, reader, exporter, flush and
+  shutdown. No tracking ID, payload, result or exception text is exported and
+  no global provider is mutated. 17 adapter cases with the real SDK 1.44.0
+  in-memory reader, plus package-boundary gates, cover success, failure,
+  timeout, cancellation, repeated tracking IDs and nested and concurrent
+  invocations. Merged by PR #217 with the required checks green. Recorded in
+  ADR 0054, which remains Proposed and does not claim maintainer approval.
+  Spans, transport links, conventions and benchmarks remain E9.3-E9.6.
+  Tracking: GitHub Issue #216.
+- [x] E9.3 Common capability spans. Core now generates an opaque
+  `invocation_id` once per invocation and repeats it on the terminal event,
+  which is the correlation contract ADR 0054 deferred; a caller `tracking_id`
+  is still never a storage key. `OpenTelemetryTracingHook` opens one span per
+  invocation over an application-supplied tracer, ends it on the matching
+  terminal, maps outcomes to a closed status vocabulary, and derives nesting
+  from the OpenTelemetry context so a nested invocation is a child and sibling
+  tasks are not. No tracking ID, payload, result, exception text or invocation
+  identity is exported, and the correlation map is released by every terminal
+  event. 15 core identity cases and 30 real-SDK 1.44.0 span cases, plus a new
+  architecture rule that core declares no tracing vocabulary. Recorded in
+  ADR 0055, which remains Proposed. Transport linking, semantic conventions
+  and no-op cost remain E9.4-E9.6. Tracking: GitHub Issue #219.
+- [x] E9.4 transport span linking. Decided that Agnara does not participate
+  in context propagation: no transport adapter reads, writes or validates a
+  propagation header, and an architecture rule now asserts that only
+  `agnara-telemetry` may import or declare OpenTelemetry. A capability span
+  joins a caller's trace because ADR 0055 parents it from the ambient context,
+  which an application establishes with the instrumentation it already runs.
+  Verified over the real HTTP dispatcher and the real MCP invoker: linked under
+  propagation, a root span without it, so linking is never accidental.
+  Malformed headers are inert; an unknown `traceparent` version links, because
+  W3C requires forward compatibility and forbids only `ff`. 17 evidence cases.
+  Recorded in ADR 0056, which remains Proposed. Honouring a caller-supplied
+  header is a deployment trust decision, not a framework default. Semantic
+  conventions and no-op cost remain E9.5-E9.6. Tracking: GitHub Issue #223.
+- [x] E9.5 MCP/GenAI semantic convention compatibility. Adopted `error.type`
+  on error spans, carrying the existing closed outcome vocabulary rather than
+  an exception type, and nothing else; metric attributes are unchanged because
+  `agnara.invocation.outcome` already carries that signal without fragmenting
+  time series. Rejected the GenAI and MCP vocabularies: a capability is not
+  intrinsically a tool, the tool call argument and result attributes are
+  payloads this project never exports, and both vocabularies are incubating.
+  The boundary is enforced, not asserted: every attribute both hooks emit is
+  checked against the installed conventions package and must be
+  `agnara.`-namespaced or stable, with no incubating name permitted. 7 cases,
+  verified non-vacuous. Recorded in ADR 0057, which remains Proposed. No
+  protocol version or convention compliance is claimed. No-op cost remains
+  E9.6. Tracking: GitHub Issue #225.
+- [x] E9.6 no-op telemetry cost benchmark. `benchmarks/telemetry_overhead.py`
+  measures six hook configurations, separating the port's fixed cost from the
+  cost of having any observer and from each OpenTelemetry adapter. The first
+  run showed that `invoke` built both lifecycle events on every invocation
+  whether or not a hook existed, costing about 2.2 microseconds an application
+  without hooks could not observe; identity generation, tracking-ID resolution,
+  clock reads and event construction are now guarded, which four
+  order-balanced A/B rounds show saves roughly 2.9-4.4 microseconds on the
+  unobserved path. Nothing is claimed about the hooked paths: their per-round
+  deltas swing further than the change could explain, and that is reported
+  rather than explained away. Correctness is pinned by 12 cases, three of which
+  fail if the guard is removed. Recorded in ADR 0058 and
+  `docs/benchmarks/telemetry-overhead.md`, both Proposed and both limited to
+  one workstation: no portable ranking, no throughput claim, no CI threshold.
+  Tracking: GitHub Issue #227.
 
 ## EPIC 10 — v0.1 release gate
 
@@ -296,17 +440,75 @@ complete because the alpha published only the `agnara` core distribution. See
 
 ## EPIC 0A — Project/app scaffolding
 
-- [ ] E0A.1 Implement `agnara project create`.
-- [ ] E0A.2 Define and validate `agnara.toml`.
-- [ ] E0A.3 Implement `agnara app create`.
-- [ ] E0A.4 Implement default `modular-hexagonal` template.
+- [x] E0A.1 Implement `agnara project create`. Generates the tree
+  `docs/CLI_SPEC.md` specifies through a plan built without touching the
+  filesystem, applied in a second step, so `--dry-run` and `--json` render the
+  same plan the real run writes and cannot disagree with it. A conflict is
+  refused before the first write, naming every path, so a refused run leaves
+  the directory exactly as it was; `--overwrite` authorizes replacement for one
+  run and there is never a prompt. Output is byte-identical across runs and
+  uses `
+` endings on every platform. The generated project depends on
+  `agnara` alone, its manifest is accepted by the E0A.2 reader, its own tests
+  pass, and `agnara apps` and `agnara inspect` both read it. 31 cases,
+  including the real Ruff lint and format checks against the generated tree,
+  verified non-vacuous. Recorded in ADR 0060, which remains Proposed.
+  Tracking: GitHub Issue #231.
+- [x] E0A.2 Define and validate `agnara.toml`. The format is decided and read:
+  `[project]`, `[defaults]` and `[apps.<name>]` with the architecture and
+  exposure vocabularies `docs/CLI_SPEC.md` names, inheritance from the project
+  default, preserved declaration order, and no module or path declared twice.
+  Parsed with `tomllib`, so no dependency was added. An unknown table or key is
+  rejected rather than ignored, because a typo that silently disables an app is
+  the worst failure a file agents edit can have; the cost, that a newer
+  manifest is refused by an older Agnara, is recorded rather than hidden. An
+  app `path` must be relative, POSIX and free of `..`, validated now because
+  generators will write to it later. `python` is checked as a non-empty string
+  and explicitly not parsed as a PEP 440 specifier. `agnara apps` ships as the
+  first reader, listing apps, architecture and exposures as text or
+  deterministic JSON without importing anything. 68 cases. Recorded in
+  ADR 0059, which remains Proposed and also answers RFC 0002's source-of-truth
+  question for the manifest's scope: it describes intent, Python composes.
+  Manifest-driven target resolution stays blocked on E0A.1. Tracking: GitHub
+  Issue #229.
+- [x] E0A.3 Implement `agnara app create`. Generates a bounded context and
+  appends `[apps.<name>]` to `agnara.toml`, preserving the comments and
+  ordering already there rather than re-serializing a parsed model. An
+  already-declared app, an invalid manifest and a missing one are all refused
+  before anything is written, and a refused run leaves the manifest unmodified.
+  It reuses the E0A.1 mechanism, which needed one addition to carry a second
+  consumer: an intended metadata update is distinguishable from an unexpected
+  conflict. It does not edit `bootstrap.py` — modifying a user's composition
+  root needs its own decision — and prints the lines to add instead. Recorded
+  in ADR 0061, which remains Proposed. Tracking: GitHub Issue #233.
+- [x] E0A.4 Implement default `modular-hexagonal` template. The generated app
+  runs rather than being a skeleton: domain, application port, capabilities,
+  an in-memory outbound adapter implementing that port, and passing tests. The
+  example is domain-neutral because an invented domain is code its first reader
+  deletes; the dependency direction is not, and four tests enforce it. The
+  generated app passes the real Ruff lint and format checks under the generated
+  project's own configuration. 35 cases. Recorded in ADR 0061.
+  Tracking: GitHub Issue #233.
 - [ ] E0A.5 Implement `minimal` template.
 - [ ] E0A.6 Implement `--with` exposure selection.
 - [ ] E0A.7 Implement profiles: core/api/mcp/agentic/worker/full.
 - [ ] E0A.8 Implement optional CLI aliases without duplicate code paths.
-- [ ] E0A.9 Implement `--dry-run`.
-- [ ] E0A.10 Implement non-destructive conflict detection.
-- [ ] E0A.11 Implement `--json` output for generator plans/results.
+- [x] E0A.9 Implement `--dry-run`.
+  Delivered on the shared plan/apply mechanism (ADR 0060) and proven reusable
+  by a second generator, `agnara app create` (ADR 0061): one renderer now
+  produces both the preview and the applied result, so they cannot drift.
+  Tracking: GitHub Issues #231 and #233.
+- [x] E0A.10 Implement non-destructive conflict detection.
+  Delivered on the shared plan/apply mechanism (ADR 0060). A conflict is found
+  against the whole plan and refused before the first write, so a refused run
+  leaves the directory exactly as it was. E0A.3 added the distinction between
+  an intended metadata update and an unexpected conflict (ADR 0061).
+  Tracking: GitHub Issues #231 and #233.
+- [x] E0A.11 Implement `--json` output for generator plans/results.
+  Delivered on the shared plan/apply mechanism (ADR 0060): a versioned, sorted
+  document describing every file, its action and whether it conflicts, emitted
+  by both generators from the same plan.
+  Tracking: GitHub Issues #231 and #233.
 - [ ] E0A.12 Add golden-file tests for generated projects/apps.
 - [ ] E0A.13 Add Windows/Linux/macOS path tests.
 - [ ] E0A.14 Add architecture tests for generated app dependency direction.
@@ -349,6 +551,17 @@ Generated code must:
   passes and conversations are resolved.
 - [x] E0B.11 Replace placeholder OWNER/REPO in security Issue template.
 - [ ] E0B.12 Document release and hotfix automation evidence.
+- [x] E0B.13 Establish an evidence-based release readiness program.
+  `docs/releases/RELEASE_PLAN.md` defines the progressive path from `0.1.0a2`
+  to `0.1.0` with measurable exit gates and no calendar dates;
+  `docs/releases/release-status.json` records one entry per gate and
+  `docs/releases/STATUS.md` renders it. `scripts/check_release_readiness.py`
+  re-derives automated gates from the repository rather than trusting the file,
+  treats evidence as valid only while its commit is `HEAD`, and never satisfies
+  a gate that needs human judgment. A satisfied gate without evidence is a hard
+  error. 53 cases, including that a 95% score with one open gate is still
+  `IN_PROGRESS`. It supplements `QUALITY_GATES.md` and weakens nothing.
+  Tracking: GitHub Issue #235.
 - [x] E0B.13 Establish permanent AI-agent attribution policy across commits,
   Pull Requests, reviews and squash merges without inventing identities or
   rewriting history. Tracking: GitHub Issue #12.

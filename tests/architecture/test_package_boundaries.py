@@ -15,6 +15,8 @@ They must fail when:
 
 from __future__ import annotations
 
+import ast
+
 import pytest
 
 from tests.architecture.boundaries import (
@@ -33,6 +35,7 @@ from tests.architecture.boundaries import (
     find_cycle,
     import_graph,
     is_standard_library,
+    source_files,
 )
 
 # ---------------------------------------------------------------------------
@@ -109,6 +112,88 @@ def test_policy_tests_are_independent_of_transports() -> None:
 # ---------------------------------------------------------------------------
 # Rule 2 — adapters do not import sibling adapters
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "dist_name", [name for name in DISTRIBUTIONS if name != "agnara-telemetry"]
+)
+def test_only_the_telemetry_adapter_knows_about_opentelemetry(dist_name: str) -> None:
+    """E9.4: transports do not read, write or depend on trace propagation.
+
+    A capability span joins a caller's trace because it inherits the ambient
+    OpenTelemetry context, not because a transport parsed ``traceparent``.
+    Keeping the dependency in one adapter is what makes that a decision rather
+    than an accident: the moment ``agnara-http`` could import OpenTelemetry, a
+    header parser and a trust decision about caller-supplied trace identity
+    would follow. Recorded by ADR 0056.
+    """
+    imported = [
+        f"{imp.module} at {imp.where()}"
+        for imp in external_imports_of(dist_name)
+        if imp.module == "opentelemetry" or imp.module.startswith("opentelemetry.")
+    ]
+    declared = [
+        requirement
+        for requirement in declared_dependencies(dist_name)
+        if _requirement_name(requirement).startswith("opentelemetry")
+    ]
+    assert not imported, f"{dist_name} must not import OpenTelemetry: " + ", ".join(imported)
+    assert not declared, f"{dist_name} must not declare OpenTelemetry: " + ", ".join(declared)
+
+
+def test_core_names_no_tracing_vocabulary() -> None:
+    """E9.3 gave core an invocation identity, deliberately not a span concept.
+
+    ADR 0055 pairs lifecycle events through an opaque ``invocation_id`` so that
+    span creation, context propagation and status mapping stay in the adapter.
+    A core symbol named after a tracer, span or exporter is the first step of
+    that vocabulary migrating inward, which ADR 0023 and AGENTS.md forbid.
+    Prose may still discuss spans: only declared names are checked.
+    """
+    vocabulary = ("span", "tracer", "tracing", "otel", "opentelemetry", "exporter")
+    offenders = []
+    for path in source_files(CORE_DISTRIBUTION):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            match node:
+                case ast.ClassDef(name=name) | ast.FunctionDef(name=name):
+                    declared = name
+                case ast.AsyncFunctionDef(name=name):
+                    declared = name
+                case ast.Name(id=name, ctx=ast.Store()) | ast.arg(arg=name):
+                    declared = name
+                case ast.AnnAssign(target=ast.Name(id=name)):
+                    declared = name
+                case _:
+                    continue
+            lowered = declared.lower()
+            if any(term in lowered for term in vocabulary):
+                offenders.append(f"{path.name}:{node.lineno}: {declared}")
+    assert not offenders, "core must not name tracing concepts: " + ", ".join(offenders)
+
+
+def test_telemetry_declares_api_without_sdk_or_exporter_dependencies() -> None:
+    declared = {
+        _requirement_name(requirement) for requirement in declared_dependencies("agnara-telemetry")
+    }
+    assert declared == {"agnara", "opentelemetry-api"}
+
+
+def test_telemetry_imports_no_sdk_or_exporter_implementation() -> None:
+    forbidden = ("opentelemetry.sdk", "opentelemetry.exporter")
+    offenders = []
+    for path in source_files("agnara-telemetry"):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            modules = []
+            if isinstance(node, ast.Import):
+                modules = [alias.name for alias in node.names]
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                modules = [node.module, *(f"{node.module}.{alias.name}" for alias in node.names)]
+            else:
+                continue
+            for module in modules:
+                if any(module == prefix or module.startswith(prefix + ".") for prefix in forbidden):
+                    offenders.append(f"{path.name}:{node.lineno}: {module}")
+    assert not offenders, "telemetry must use only the OpenTelemetry API: " + ", ".join(offenders)
 
 
 @pytest.mark.parametrize("dist_name", ADAPTER_DISTRIBUTIONS)

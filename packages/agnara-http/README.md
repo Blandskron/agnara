@@ -1,6 +1,6 @@
 # agnara-http
 
-HTTP/ASGI exposure adapter. Owns routing, request decoding, response encoding, RFC 9457 mapping and OpenAPI generation.
+HTTP/ASGI exposure adapter. Owns routing, request decoding, response encoding, RFC 9457 mapping, OpenAPI generation and the authorized discovery endpoint.
 
 OpenAPI 3.2 is projected from compiled HTTP exposures and shared capability
 schemas. Optional browser documentation providers consume that generated
@@ -191,3 +191,40 @@ RFC 0003, ADR 0018, EPIC 6 and EPIC 8.
 
 See `ARCHITECTURE.md` sections 3 and 4 for the package boundaries and the
 allowed dependency graph.
+
+## Discovery endpoint
+
+The introspection snapshot is served through a surface that is authorized by
+construction rather than by configuration. It takes a principal resolver — the
+application's authentication boundary, since this package verifies no
+credential — and answers `401` with a declared challenge to an unidentified
+viewer unless anonymous discovery is opted into explicitly.
+
+Filtering happens per request, before serialization, so a document is never
+built for one viewer and reused for another. `public`, `s-maxage` and
+`immutable` are refused at startup because a viewer-specific document must not
+be shared-cacheable, `Vary` is always sent, and the default is
+`private, no-store`. A resolver that raises produces a redacted `500` rather
+than being read as anonymous.
+
+The body is the same document `agnara inspect --json` produces. Seeing a
+capability here authorizes nothing: invocation still runs the normal policy
+pipeline. See ADR 0049.
+
+## Agnara Explorer
+
+A read-only, server-rendered view of the same filtered snapshot the discovery
+endpoint serves, with no JavaScript, no stylesheet and no external asset. That
+makes read-only structural rather than configured and lets the content security
+policy be `default-src 'none'` with no exceptions.
+
+Navigation is project → application → capability. The index lists
+applications, transport availability — including transports OpenAPI cannot
+describe — and every visible capability. An application page carries its
+provider graph; a capability page renders each published input's JSON Schema as
+nested structure rather than as escaped JSON. A capability hidden from the viewer and one that does not
+exist produce the same `404`, because telling them apart would publish the
+existence of something withheld.
+
+Styling, accessibility and browser tests are separate backlog items. See
+ADR 0052.

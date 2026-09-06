@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Awaitable, Callable, Iterable
 from typing import Any
 
 from mcp.server import Server, ServerRequestContext
 from mcp_types import (
     INVALID_PARAMS,
+    CallToolRequestParams,
+    CallToolResult,
     DiscoverResult,
+    InputRequiredResult,
     ListToolsResult,
     PaginatedRequestParams,
     RequestParams,
@@ -22,6 +25,11 @@ from .protocol import SUPPORTED_MCP_PROTOCOL_VERSIONS
 from .tools import McpToolDefinitionError
 
 __all__ = ["build_mcp_discovery_server"]
+
+type _CallToolHandler = Callable[
+    [ServerRequestContext[Any], CallToolRequestParams],
+    Awaitable[CallToolResult | InputRequiredResult],
+]
 
 
 def _required_text(value: object, *, field: str) -> str:
@@ -73,6 +81,34 @@ def build_mcp_discovery_server(
     The server intentionally serves neither tool invocation nor mutable-list
     notifications. Any cursor is invalid because this first discovery boundary
     returns the complete frozen snapshot in one page.
+
+    Use ``build_mcp_server`` when the same snapshot must also serve
+    ``tools/call``.
+    """
+    return _build_server(
+        tools,
+        name=name,
+        version=version,
+        instructions=instructions,
+        authorization=authorization,
+        on_call_tool=None,
+    )
+
+
+def _build_server(
+    tools: Iterable[Tool],
+    *,
+    name: str,
+    version: str,
+    instructions: str | None,
+    authorization: McpAuthorization | None,
+    on_call_tool: _CallToolHandler | None,
+) -> Server[Any]:
+    """Assemble the shared discovery surface, optionally serving invocation.
+
+    Advertised capabilities follow the handlers actually registered, so a
+    server without ``on_call_tool`` never claims a tool-invocation surface it
+    would answer with ``METHOD_NOT_FOUND``.
     """
     server_name = _required_text(name, field="name")
     server_version = _required_text(version, field="version")
@@ -113,6 +149,7 @@ def build_mcp_discovery_server(
         version=server_version,
         instructions=server_instructions,
         on_list_tools=list_tools,
+        on_call_tool=on_call_tool,
     )
 
     async def discover(

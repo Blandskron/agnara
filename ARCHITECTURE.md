@@ -481,18 +481,55 @@ Conceptual machine-readable shape:
 }
 ```
 
-The exact schema and version are pending RFC/API review.
+`agnara.introspection` implements this contract: frozen slotted descriptors
+whose fields are names, declared metadata and canonical JSON text, built from
+a compiled application by `describe_app` and assembled by `snapshot`. The
+format is `agnara-introspection` and the version is `"0"`, which states that
+the contract is not yet stable. Exposures are contributed by whoever owns the
+adapters, and transport availability is derived from them. See ADR 0045.
+
+The concept list above is executable. `tests/architecture` reads it out of
+this document and checks the model against it, and asserts that no descriptor
+field can be published without a named decision, so removing a concept from
+either side breaks a test rather than a promise.
+
+Building a snapshot is not publishing one. `filter_snapshot` applies a
+`DiscoveryVisibility` — a visibility rule deciding which capabilities a
+principal may discover, plus an explicit set of published fields — and returns
+a snapshot marked `filtered`. A surface that serves a snapshot to anyone
+should refuse an unfiltered one. Hiding is discovery-only and never authorizes
+or deauthorizes invocation. See ADR 0046.
 
 ### Agnara Explorer
 
 Agnara Explorer visualizes the filtered protocol-neutral snapshot. It may be
 served through HTTP initially, but HTTP and OpenAPI are not its data model.
+
+The implemented shell is server-rendered HTML with no JavaScript, no
+stylesheet and no external asset, over the same snapshot, visibility decision
+and principal resolver the discovery endpoint uses. Read-only is therefore
+structural rather than configured, and the content security policy can be
+`default-src 'none'` with no exceptions. A hidden capability and an absent one
+are the same `404`. See ADR 0052.
 The CLI, agent tooling and Explorer should consume the same introspection
 contract where possible.
 
 Human UI and machine-readable discovery are separate surfaces. Deployments
 must be able to disable all HTML interfaces while retaining an authorized
 OpenAPI or introspection endpoint, or disable publication entirely.
+
+Every surface that describes an application — the CLI's text, JSON, graph and
+context renderings, the HTTP discovery endpoint, and MCP `tools/list` — must
+agree for one viewer. `tests/integration` asserts that agreement, including
+for MCP, whose scope filter predates the introspection layer and runs on its
+own code path.
+
+`agnara-http` serves the introspection snapshot through a discovery endpoint
+that is authorized by construction: it takes a principal resolver, answers
+`401` to an unidentified viewer unless anonymous discovery is opted into
+explicitly, filters per request before serialization, and refuses a
+shared-cacheable directive because the document is viewer-specific. It serves
+the same document `agnara inspect --json` produces. See ADR 0049.
 
 Visibility, schema publication, UI availability and interactive execution are
 independent security decisions. Hiding an operation in a UI does not authorize

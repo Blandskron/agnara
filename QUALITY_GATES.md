@@ -38,11 +38,17 @@ reproducible commands are:
 ```bash
 uv run playwright install --with-deps chromium
 AGNARA_RUN_BROWSER_TESTS=1 uv run pytest tests/http/test_documentation_browser.py -m browser
+AGNARA_RUN_BROWSER_TESTS=1 uv run pytest tests/http/test_explorer_browser.py -m browser
 ```
 
 Playwright is version-pinned in the development lock. Without the explicit
 environment flag, pytest still collects these tests and reports them skipped;
 only the dedicated browser job is evidence that they passed.
+
+Explorer browser checks cover semantic landmarks, accessible names and tree
+content, keyboard navigation, direct links/reloads and representative desktop
+and mobile viewports. Accessibility-tree assertions are not evidence of an
+actual screen-reader session or WCAG certification.
 
 ## Where the gates are authoritative
 
@@ -122,6 +128,11 @@ Use property-based tests where contracts are algebraic or combinatorial:
 - metadata normalization.
 
 ## Protocol conformance
+
+MCP's bounded official SDK suite and exclusions are recorded in
+`docs/MCP_CONFORMANCE.md`. Run `uv run pytest tests/mcp tests/architecture`.
+These tests run in the ordinary CI matrix; an in-process modern SDK exchange
+is not evidence of network transport or complete MCP protocol conformance.
 
 Each adapter should record:
 
@@ -288,6 +299,27 @@ Before creating a release tag:
 Documentation of this checklist is not evidence that release or hotfix
 automation has run. Record actual commands, artifacts, hashes and GitHub links
 before completing E0B.12.
+
+## Release readiness program
+
+`docs/releases/RELEASE_PLAN.md` defines the progressive path from the published
+`0.1.0a2` to `0.1.0`, and `scripts/check_release_readiness.py` measures how far
+the current state has come.
+
+That program **supplements** this document and never relaxes it. Where the two
+differ, this document wins. In particular the security gates above keep their
+own scope: the readiness tool reports the observed state of each item and
+refuses to decide whether a given release is still inside the
+"beyond experimental alpha" exemption.
+
+A readiness percentage is informational. A release is ready only when every
+mandatory gate is satisfied, and satisfied means evidence exists — recorded
+against the commit it was produced on, so a green record cannot outlive the
+code it described.
+
+```bash
+uv run python scripts/check_release_readiness.py
+```
 
 ## Attribution integrity gate
 

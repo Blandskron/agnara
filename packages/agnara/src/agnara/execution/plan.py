@@ -57,6 +57,26 @@ class ExecutionPlan:
         }
         object.__setattr__(self, "target_deps", MappingProxyType(immutable_deps))
 
+        hooks = tuple(self.hooks)
+        for index, hook in enumerate(hooks):
+            for name in ("on_invocation_start", "on_invocation_terminal"):
+                callback = getattr(hook, name, None)
+                if not callable(callback):
+                    raise DefinitionError(f"telemetry hook {index} {name} must be callable")
+                # Inspect the callable object's implementation as well as
+                # ordinary/bound functions. Never execute callbacks here.
+                targets = (callback, type(callback).__call__)
+                if any(
+                    inspect.iscoroutinefunction(target)
+                    or inspect.isasyncgenfunction(target)
+                    or inspect.isgeneratorfunction(target)
+                    for target in targets
+                ):
+                    raise DefinitionError(
+                        f"telemetry hook {index} {name} must be synchronous and non-generating"
+                    )
+        object.__setattr__(self, "hooks", hooks)
+
         adapter = schema_adapter if schema_adapter is not None else StandardSchemaAdapter()
         if not isinstance(adapter, SchemaAdapter):
             raise DefinitionError(

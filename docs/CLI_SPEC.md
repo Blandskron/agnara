@@ -53,6 +53,39 @@ commerce/
 
 The generator must create only meaningful files.
 
+#### Implemented form
+
+```bash
+agnara project create commerce
+agnara project create commerce --directory ../workspace
+agnara project create commerce --dry-run
+agnara project create commerce --json
+agnara project create commerce --overwrite
+```
+
+Generation is two phases: a plan built without touching the filesystem, then
+an apply step that writes it. `--dry-run` renders the plan and creates
+nothing, not even the project directory. `--json` emits the same plan, so a
+preview cannot disagree with the result.
+
+A run that would replace an existing file refuses before writing anything,
+naming every conflicting path; `--overwrite` authorizes replacement for that
+run. The command never prompts. Identical inputs produce byte-identical
+output, and generated files use `
+` endings on every platform.
+
+The project name must be a single lower-case Python identifier: it becomes a
+package directory, an import path and `[project] name` in the manifest.
+
+`bootstrap.py` is the composition root and exposes `app`, so the tooling reads
+a freshly generated project:
+
+```bash
+agnara inspect commerce.bootstrap:app --path src --dependencies dependencies
+```
+
+See ADR 0060.
+
 ## App creation
 
 Canonical:
@@ -76,6 +109,38 @@ agnara app create tools --with mcp
 agnara app create payments --with http,mcp,tasks
 agnara app create agents --with mcp,a2a
 ```
+
+#### Implemented form
+
+```bash
+agnara app create payments
+agnara app create payments --project path/to/project
+agnara app create payments --dry-run
+agnara app create payments --json
+```
+
+Generates the modular-hexagonal layout below and appends `[apps.<name>]` to
+`agnara.toml`, preserving the comments and ordering already in that file.
+An already-declared app is refused, and so is an invalid or missing manifest,
+before anything is written.
+
+`--dry-run`, `--json`, `--overwrite` and the never-prompt guarantee are the
+same code `agnara project create` uses. The manifest is reported as an
+intended `UPDATE`, not a conflict; a file the generator meant to create and
+found already there is still a conflict and is still refused.
+
+The generated app is a working example: its capabilities register, compile and
+invoke against the generated outbound adapter. The command does **not** edit
+`bootstrap.py` — modifying a user's composition root needs its own decision —
+so it prints the two lines to add:
+
+```python
+from commerce.apps.payments import module as payments_module
+
+payments_module.register(app, dependencies)
+```
+
+See ADR 0061.
 
 ## Profiles
 
@@ -224,12 +289,31 @@ agnara apps
 agnara capabilities
 agnara inspect payments
 agnara graph
+agnara context
 agnara doctor
 ```
 
 ### `agnara apps`
 
 Lists apps, architecture and exposures.
+
+#### Implemented form
+
+```bash
+agnara apps
+agnara apps --project path/to/project
+agnara apps --json
+```
+
+Reads `agnara.toml`, searching the given directory and its ancestors, and
+defaulting to the working directory. It imports nothing and runs no project
+code, so it reports the composition a project *declares* rather than what a
+compiled application registers; detecting divergence between the two belongs
+to `agnara doctor`.
+
+`--json` emits a versioned, deterministically ordered document with POSIX
+paths on every platform. A missing or invalid manifest is an operator error:
+one line on stderr and a failing exit code, never a traceback. See ADR 0059.
 
 ### `agnara capabilities`
 
@@ -249,9 +333,90 @@ ordering and no ANSI decoration. Offline inspection still applies a declared
 publication/redaction policy; it is not permission to dump secrets, dependency
 instances or private policy internals.
 
+#### Implemented form
+
+`agnara.toml` now exists (E0A.2, ADR 0059) but does not yet resolve a target:
+naming a composed application from the manifest needs a convention for where
+that application lives, which belongs with the generator that creates it
+(E0A.1). Until then the application is named explicitly:
+
+```bash
+agnara inspect billing.bootstrap:app
+agnara inspect billing.bootstrap:app --dependencies registry --json
+agnara inspect billing.bootstrap:app --visibility agent --as-scope billing:write
+agnara inspect billing.bootstrap:app --path src --hide billing.reconcile
+```
+
+Importing a target executes the module that defines it; a malformed target is
+rejected before any import happens.
+
+`--dependencies` names a `DIRegistry` in the same module. Without it the
+application compiles against an empty registry, so a capability that declares
+a dependency fails with the reason rather than being described as if it had
+none.
+
+`--visibility` chooses which fields are published: `full` (the default, for
+local inspection of source the operator can already read), `agent` (what a
+caller needs to choose and call a capability) or `identity` (names only).
+`--as-scope` simulates a viewer holding those scopes, applying the same scope
+rule a transport applies. `--hide` removes named capabilities. The text output
+names any withheld fields under the header, so a partial view is legible as
+one.
+
+Exit codes: `0` when the command produced its answer, including "nothing is
+visible"; `1` for a target or application the CLI could not use, reported as a
+diagnostic on stderr rather than a traceback; `2` for an invalid command line.
+
+Exposures are absent, because the CLI imports an application rather than
+composing a server, so no adapter contributes them. See ADR 0047.
+
 ### `agnara graph`
 
 Displays project/app/capability dependency relationships.
+
+#### Implemented form
+
+```bash
+agnara graph billing.bootstrap:app --dependencies registry
+agnara graph billing.bootstrap:app --visibility agent --as-scope billing:write
+```
+
+`agnara graph` takes the same target and visibility arguments as
+`agnara inspect` and reads the same filtered snapshot, so the two cannot
+disagree about what a viewer may see. It draws each visible capability, its
+dependency parameters, and the provider each resolves to with that provider's
+scope, kind and own requirements.
+
+When the visibility decision withholds dependencies or providers, the command
+names the withheld relationship source instead of drawing an empty tree.
+Providers no visible capability reaches are listed separately, computed
+transitively. See ADR 0048.
+
+### `agnara context`
+
+Renders the same filtered snapshot as Markdown for a model to read.
+
+```bash
+agnara context billing.bootstrap:app --visibility agent
+agnara context billing.bootstrap:app --output CAPABILITIES.md
+```
+
+It takes the same target and visibility arguments as `agnara inspect`, so it
+cannot describe a capability that command would hide from the same viewer.
+
+Every rendering, including an empty one, states that seeing a capability is not
+permission to invoke it. A field the visibility decision withheld is named
+under a "This view is partial" line rather than printed as its declared
+default, because a model told `risk: low` about a withheld risk is misled about
+the thing that matters most. The snapshot's format and version appear in the
+header so a stale context is identifiable.
+
+This is not `llms.txt` and must not be presented as canonical discovery or as
+authorization. See ADR 0051. The E8.12 research decision in
+[ADR 0053](adr/0053-llms-txt-documentation-index.md) reserves optional
+`llms.txt` generation for documentation publishing; it adds no CLI flag,
+runtime route or output format. Choosing that filename with `--output` does
+not change the meaning of the generated context.
 
 ### `agnara doctor`
 
@@ -286,8 +451,30 @@ serve. It consumes compiled capabilities, HTTP exposures and schema-port
 output; it does not read a manually maintained parallel schema.
 
 The command should support stdout and an explicit output path, machine-readable
-diagnostics and non-interactive operation. Exact flags remain pending the
-OpenAPI implementation Issue.
+diagnostics and non-interactive operation.
+
+#### Implemented form
+
+```bash
+agnara schema openapi billing.bootstrap:served
+agnara schema openapi billing.bootstrap:document --output openapi.json
+agnara schema openapi billing.bootstrap:build --pretty
+```
+
+`agnara-cli` must not import a sibling adapter, so the CLI does not project a
+document: it exports the one the composition produced. That is also the safer
+design, because a second projection here could disagree with the one a server
+serves.
+
+The named attribute may be the serialized bytes an HTTP surface would serve,
+the mapping those bytes came from, or a zero-argument callable returning
+either. Bytes are emitted unchanged, so an export is byte-identical to what is
+served; a mapping is serialized with the same arguments the HTTP projection
+uses.
+
+`--output` writes the file and prints nothing, refusing to replace an existing
+file without `--overwrite`. `--pretty` indents for a reader and is no longer
+byte-identical to the served document. See ADR 0050.
 
 ### Documentation preview
 

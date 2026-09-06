@@ -61,11 +61,11 @@ def _input_schema(exposure: McpToolExposure, plan: ExecutionPlan) -> dict[str, A
     return document
 
 
-def project_mcp_tools(
+def _resolve_plans(
     exposures: FrozenMcpTools,
     plans: Iterable[ExecutionPlan],
-) -> tuple[Tool, ...]:
-    """Create detached SDK tools from immutable exposures and execution plans.
+) -> tuple[tuple[McpToolExposure, ExecutionPlan], ...]:
+    """Pair every exposure with the compiled plan that still owns its capability.
 
     Plans are indexed once at startup. Extra plans are permitted so a caller
     can pass the application's complete compiled plan set while exposing only
@@ -84,7 +84,7 @@ def project_mcp_tools(
             raise McpToolDefinitionError(f"duplicate execution plan for {capability_id}")
         by_id[capability_id] = plan
 
-    projected: list[Tool] = []
+    resolved: list[tuple[McpToolExposure, ExecutionPlan]] = []
     for exposure in exposures.exposures:
         plan = by_id.get(exposure.definition.id)
         if plan is None:
@@ -96,6 +96,17 @@ def project_mcp_tools(
                 f"MCP tool {exposure.name!r} plan does not retain its declared capability "
                 f"{exposure.definition.id}"
             )
+        resolved.append((exposure, plan))
+    return tuple(resolved)
+
+
+def project_mcp_tools(
+    exposures: FrozenMcpTools,
+    plans: Iterable[ExecutionPlan],
+) -> tuple[Tool, ...]:
+    """Create detached SDK tools from immutable exposures and execution plans."""
+    projected: list[Tool] = []
+    for exposure, plan in _resolve_plans(exposures, plans):
         projected.append(
             Tool(
                 name=exposure.name,

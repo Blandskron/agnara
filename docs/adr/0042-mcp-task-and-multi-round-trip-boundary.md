@@ -7,7 +7,7 @@
 ## Decision
 
 For the pinned `2026-07-28` baseline, Multi Round-Trip Requests are the only
-resumption mechanism `agnara-mcp` implements. Agnara does not implement,
+resumption mechanism selected for future `agnara-mcp` implementation. Agnara does not implement,
 advertise or claim the Tasks extension.
 
 A resumed round never carries authorization. `requestState` protects the
@@ -121,7 +121,8 @@ as a result of this decision.
 ## Consequences
 
 Clients that expect task-augmented execution against an Agnara server will
-not find it, and must use the MRTR flow the pinned revision defines. Release
+not find it. MRTR resumption is also not implemented yet; the pinned revision
+defines the mechanism for future work. Release
 notes must state that Tasks are unsupported rather than leaving it inferred
 from SDK capability, per ADR 0010.
 

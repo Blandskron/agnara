@@ -61,6 +61,13 @@ def test_the_adapter_publishes_no_resumption_or_request_state_surface() -> None:
     for source in sources:
         text = source.read_text(encoding="utf-8")
         assert "requestState" not in text
-        assert "request_state" not in text
         assert "RequestStateSecurity" not in text
         assert "RequestStateBoundary" not in text
+        if source.name == "dispatch.py":
+            # E7.8b refuses resumption at the boundary. That refusal is the
+            # only permitted mention: the adapter still mints, seals and
+            # echoes nothing.
+            assert text.count("request_state") == 1
+            assert "params.input_responses is not None or params.request_state is not None" in text
+            continue
+        assert "request_state" not in text

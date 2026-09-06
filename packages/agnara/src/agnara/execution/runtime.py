@@ -7,6 +7,7 @@ import contextlib
 import inspect
 import time
 from typing import Any
+from uuid import uuid4
 
 from agnara.errors import (
     InteractionRequiredError,
@@ -51,14 +52,26 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
         rendered = ", ".join(sorted(supplied_protected))
         raise InvocationError(f"invocation payload supplies runtime-owned parameter(s): {rendered}")
 
-    start_ns = time.monotonic_ns()
-    start_event = InvocationStartEvent(
-        capability_id=plan.definition.id,
-        tracking_id=invocation.metadata.get("tracking_id"),
-    )
-    for hook in plan.hooks:
-        with contextlib.suppress(Exception):
-            hook.on_invocation_start(start_event)
+    # Building a lifecycle event pair costs roughly two microseconds, and an
+    # application that registered no hook can observe none of it. The work is
+    # therefore guarded rather than unconditional; measured by
+    # benchmarks/telemetry_overhead.py and recorded by ADR 0058.
+    observers = plan.hooks
+    start_ns = time.monotonic_ns() if observers else 0
+    # Observers need a key that pairs this start with its terminal event.
+    # A caller-supplied tracking ID cannot serve: it is optional, repeatable
+    # across invocations and attacker-controlled on a remote transport.
+    invocation_id = uuid4().hex if observers else ""
+    tracking_id = _tracking_id(context) if observers else None
+    if observers:
+        start_event = InvocationStartEvent(
+            capability_id=plan.definition.id,
+            tracking_id=tracking_id,
+            invocation_id=invocation_id,
+        )
+        for hook in observers:
+            with contextlib.suppress(Exception):
+                hook.on_invocation_start(start_event)
 
     outcome = "success"
     try:
@@ -76,19 +89,17 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
         outcome = "failure"
         raise
     finally:
-        terminal_event = InvocationTerminalEvent(
-            capability_id=plan.definition.id,
-            tracking_id=invocation.metadata.get("tracking_id"),
-            duration_ns=time.monotonic_ns() - start_ns,
-            outcome=outcome,
-        )
-        for hook in plan.hooks:
-            with contextlib.suppress(Exception):
-                hook.on_invocation_terminal(terminal_event)
-    if context.deadline is None:
-        return await _execute(plan, context)
-    async with asyncio.timeout_at(context.deadline):
-        return await _execute(plan, context)
+        if observers:
+            terminal_event = InvocationTerminalEvent(
+                capability_id=plan.definition.id,
+                tracking_id=tracking_id,
+                duration_ns=time.monotonic_ns() - start_ns,
+                outcome=outcome,
+                invocation_id=invocation_id,
+            )
+            for hook in observers:
+                with contextlib.suppress(Exception):
+                    hook.on_invocation_terminal(terminal_event)
 
 
 async def invoke_result[T](
@@ -139,6 +150,26 @@ async def invoke_result[T](
     if isinstance(value, Success | Failure):
         return value
     return Success(value)
+
+
+def _tracking_id(context: ExecutionContext) -> str | None:
+    """Resolve the operator-facing correlation ID reported to observers.
+
+    Two channels carry this concept. ``ExecutionContext(tracking_id=...)`` is
+    an explicit parameter a transport sets deliberately — ``agnara-mcp`` fills
+    it from the JSON-RPC request id — while ``Invocation.metadata`` is a
+    free-form mapping any caller may populate. The explicit parameter wins.
+
+    Only a string is accepted from either source. Metadata is untyped and may
+    hold values that must never be exported, so an unusable one is dropped
+    rather than stringified into telemetry. This is a correlation label for
+    operators, never a pairing key: pair events by ``invocation_id``.
+    """
+    explicit = context.tracking_id
+    if isinstance(explicit, str):
+        return explicit
+    supplied = context.invocation.metadata.get("tracking_id")
+    return supplied if isinstance(supplied, str) else None
 
 
 async def _execute(plan: ExecutionPlan, context: ExecutionContext) -> Any:

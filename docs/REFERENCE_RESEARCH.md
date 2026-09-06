@@ -4,6 +4,25 @@ Last reviewed: 2026-09-04.
 
 This document records external standards and projects that influence Agnara. It is not a dependency list.
 
+## OpenTelemetry metrics bridge
+
+Reviewed 2026-09-05 for E9.2 / Issue #216. The official Python guidance
+recommends API-only dependencies for instrumented libraries, with the
+application configuring the SDK. The Metrics API assigns instrument creation
+to the meter and configuration to its provider. This supports supplying a
+meter explicitly without global SDK installation in `agnara-telemetry`.
+
+The published API and SDK baseline used for in-memory tests is 1.44.0. The
+adapter consumes terminal count/duration data already available in the core
+port; it does not introduce trace correlation or claim protocol-specific
+semantic convention compatibility. See proposed ADR 0054 for measurements,
+redaction, lifecycle ownership and limitations.
+
+- [Python instrumentation](https://opentelemetry.io/docs/languages/python/instrumentation/)
+- [Metrics API](https://opentelemetry.io/docs/specs/otel/metrics/api/)
+- [API 1.44.0](https://pypi.org/project/opentelemetry-api/1.44.0/)
+- [SDK 1.44.0](https://pypi.org/project/opentelemetry-sdk/1.44.0/)
+
 ## Python 3.14
 
 Agnara intentionally starts at Python 3.14.
@@ -510,6 +529,39 @@ client input, so neither can become `ConfirmationEvidence`. A resumption round
 must still evaluate the core policy and call `ConfirmationVerifier.verify`
 with capability identity, invocation and principal. Recorded as ADR 0042.
 
+E7.8 exercises the pinned SDK's modern ClientSession/dispatcher boundary with
+real Agnara projections, malformed requests and concurrent verified identity
+contexts. Its in-process connection uses a direct dispatcher pair rather than
+network transport or JSON-RPC framing. The bounded coverage and unsupported
+surfaces are recorded in `docs/MCP_CONFORMANCE.md`; this is compatibility
+evidence, not full protocol certification.
+
+E7.8a adds explicit canonical result projection (ADR 0043). Successful public
+JSON data is detached into an envelope with matching text, ordinary canonical
+failures use isError tool content without details, and interaction requirements
+reuse the strict E7.6 mapper. The pinned SDK validates the serialized results;
+this does not implement tools/call or extend the transport support claim.
+
+Reviewed 2026-09-05 for E7.8b and E7.9. E7.8b implements `tools/call` and
+answers the open question above: discovery filtering cannot authorize
+invocation, and a compiled plan carries no scope policy because declared
+scopes are metadata (ADR 0008). The dispatcher therefore evaluates core's
+`ScopePolicy` for the capability's declared scopes before any effect, in
+addition to whatever policies the plan already carries. `requestState` and
+`inputResponses` are refused with `INVALID_PARAMS` rather than ignored, so no
+unverified resumption state is accepted while ADR 0042's boundary remains
+unimplemented. Recorded as ADR 0044.
+
+E7.9 compares that dispatcher with the pinned SDK's `MCPServer` (the v1
+`FastMCP` module now raises on import). Two findings shaped the harness. The
+SDK runs a synchronous tool through `anyio.to_thread.run_sync`, so a
+sync-only comparison measures a worker-thread hop rather than dispatch;
+scenarios are therefore split by handler kind. And the official client
+revalidates a result against the tool's `outputSchema`, which only `MCPServer`
+publishes, so the end-to-end boundary is not doing identical work for both.
+Both are recorded in `docs/benchmarks/mcp-tool-invocation.md` rather than
+normalized away.
+
 Task and MRTR references:
 
 - https://py.sdk.modelcontextprotocol.io/handlers/multi-round-trip/
@@ -572,6 +624,32 @@ Reference:
 External projects are sources of lessons, not templates to copy wholesale.
 
 Every imported architectural idea must be evaluated against Agnara's capability-first thesis.
+
+## llms.txt
+
+Reviewed 2026-09-05 for E8.12. These are primary-source observations, not
+measurements of Agnara integrations or model quality.
+
+| Source | Observation | Consequence for Agnara |
+| --- | --- | --- |
+| [Author's proposal](https://llmstxt.org/) | The page identifies itself as v2, modified 2026-08-10. It describes a compact Markdown index at a root or subpath, with the more specific path taking precedence. H1 is required; summary and H2 link lists are optional. It recommends Markdown alternatives and `alternate`/`describedby` link relations. | Review the current proposal rather than assuming only an origin-root file or inventing a `/.well-known/` requirement. The index does not define Agnara capability or authorization semantics. |
+| [Mintlify documentation](https://www.mintlify.com/docs/ai/llmstxt) | Mintlify generates indexes and a separate full-content export. Fully authenticated sites protect both; partially authenticated sites publish only public pages. Its documented discovery headers include vendor-specific relations and a compatibility alias under `/.well-known/`. | Generation is a documentation-publication concern. Vendor behavior is implementation evidence, not a universal client contract or a substitute for Agnara's filtering. |
+| [Cloudflare's published index](https://developers.cloudflare.com/llms.txt) | The fetched document groups links to product-specific indexes. | A hierarchical documentation index is a concrete use case; no runtime capability registry is required to produce it. |
+| [Anthropic's published index](https://platform.claude.com/llms.txt) | A developer-documentation index is publicly fetchable at this URL. | Publication proves availability, not that every agent automatically discovers or consumes it. |
+| [Google Search guidance](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide) | Google says its Search features do not use `llms.txt` for special ranking or visibility benefits. | Do not justify an Agnara feature with a Google Search improvement claim. This says nothing about an explicitly configured documentation client. |
+
+The proposal and vendor docs describe different discovery conventions. Do not
+copy a vendor's aliases or headers as a normative requirement. Likewise,
+`llms-full.txt` is separately described vendor behavior, not the same artifact
+as a concise index.
+
+Agnara's assessment: preserve the versioned filtered snapshot as the runtime
+discovery contract and `agnara context` as its Markdown presentation. Reserve
+optional index generation for a future documentation build with explicit
+public page inputs, working versioned URLs and a measurable consumer use case.
+No such generator or route is implemented by this research. The options,
+revisit criteria and validation boundary are recorded in
+[ADR 0053](adr/0053-llms-txt-documentation-index.md).
 
 ## Django project/app ergonomics
 
