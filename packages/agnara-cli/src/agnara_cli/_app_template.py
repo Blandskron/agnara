@@ -265,7 +265,7 @@ Call it from the project composition root::
 
 from __future__ import annotations
 
-from agnara import Agnara
+from agnara import Agnara, App
 from agnara.core.di import DIRegistry, provider
 
 from {{module}}.adapters.outbound.memory import InMemoryRecordRepository
@@ -274,7 +274,7 @@ from {{module}}.application.ports import RecordRepository
 from {{module}}.domain.models import Record
 from {{module}}.domain.value_objects import Reference
 
-__all__ = ["provide_records", "register"]
+__all__ = ["{app}", "provide_records", "register"]
 
 
 @provider()
@@ -287,15 +287,35 @@ def provide_records() -> RecordRepository:
     return InMemoryRecordRepository([Record(Reference("example-1"), "first example record")])
 
 
+#: This bounded context, and the capabilities it owns. Declared at import
+#: time, so importing this module is enough to inspect or test the app on its
+#: own -- no project required. The name becomes the capability namespace, so
+#: these are ``{app}.get_record`` and ``{app}.list_records`` whichever project
+#: mounts them.
+{app} = App(
+    "{app}",
+    description="The {app} bounded context.",
+    module="{{module}}",
+)
+
+{app}.capability(
+    description="Read one {app} record.",
+    idempotent=True,
+)(get_record)
+{app}.capability(
+    description="List every {app} record.",
+    idempotent=True,
+)(list_records)
+
+
 def register(app: Agnara, dependencies: DIRegistry) -> None:
-    """Register this app's providers and capabilities on a composition.
+    """Bind this app's providers and mount it on a composition.
 
     Registration closes when the project calls ``compile()``, so this must run
     at import time of the composition root, not later.
     """
     dependencies.bind(RecordRepository, provide_records)
-    app.capability(description="Read one {app} record.", idempotent=True)(get_record)
-    app.capability(description="List every {app} record.", idempotent=True)(list_records)
+    app.include({app})
 '''
 
 

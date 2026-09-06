@@ -611,8 +611,25 @@ Generated code must:
 
 ## EPIC 1A — Modular app runtime
 
-- [ ] E1A.1 Define app/module descriptor.
-- [ ] E1A.2 Register app-owned capabilities.
+- [x] E1A.1 Define app/module descriptor. `AppDescriptor` is the frozen,
+  hashable identity of one bounded context: a name that becomes the capability
+  namespace, an optional description and an optional dotted module path. It
+  answers the first open question in RFC 0002, "exact app descriptor API".
+  Recorded in ADR 0065, which remains Proposed. Tracking: GitHub Issue #254.
+- [x] E1A.2 Register app-owned capabilities. `App` declares them and
+  `Agnara.include` mounts them, so a capability id is `<app>.<name>` rather
+  than `<project>.<name>`. This closed a reproducible defect: every generated
+  app registered into the project's single `Agnara`, so two apps from the same
+  scaffold collided on `get_record` and the scaffolder's own output did not
+  compose with itself. The project name deliberately stays out of the id,
+  because a project is renamed far more readily than a bounded context and an
+  id is referenced by policies, audit records and agent manifests. Declaration
+  is separate from mounting, so an app can be imported and tested without a
+  project; `App` has no `compile`, because freezing is project-wide (ADR 0005).
+  The shared decorator behaviour moved to a private module so the two surfaces
+  cannot drift. 32 cases. `Agnara.capability` is untouched, so the published
+  `0.1.0a3` surface and `examples/quickstart.py` are unaffected.
+  Recorded in ADR 0065. Tracking: GitHub Issue #254.
 - [ ] E1A.3 Detect duplicate app identities.
 - [ ] E1A.4 Expose app metadata through introspection.
 - [ ] E1A.5 Define cross-app public contract rules.
@@ -662,6 +679,15 @@ Generated code must:
 - the complete lifecycle is visible and understandable to a human maintainer.
 
 ## Carried technical debt (post-0.1.0a3 audit)
+
+- [ ] D5 Generated code violates its own Ruff configuration when the project
+  or app name is long. `E501` on lines whose length depends on an interpolated
+  name; 26 errors on `develop` for `enterprise_commerce_platform` /
+  `payment_reconciliation_service`. Every generator test uses a short name, so
+  the real Ruff checks that do run never see an overflowing line, and the
+  golden fixture inherits the same blind spot. EPIC 0A acceptance says
+  generated code passes Ruff, so this is an unmet acceptance criterion rather
+  than a nice-to-have. Tracking: GitHub Issue #255.
 
 Recorded by the repository audit that followed the `0.1.0a3` release. Each
 item was found with evidence, judged not worth fixing inside that audit, and

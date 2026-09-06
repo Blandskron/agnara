@@ -150,11 +150,11 @@ def test_the_generated_app_registers_compiles_and_invokes(importable: Path) -> N
     capabilities = app.compile()
 
     assert {str(identifier) for identifier in capabilities} == {
-        "ledger.get_record",
-        "ledger.list_records",
+        "billing.get_record",
+        "billing.list_records",
     }
 
-    plan = ExecutionPlan.compile(capabilities["ledger.get_record"], dependencies)
+    plan = ExecutionPlan.compile(capabilities["billing.get_record"], dependencies)
     # The port is runtime-owned: a caller supplies a reference, never a repository.
     assert set(plan.input_schemas) == {"reference"}
     assert "records" in plan.protected_parameters

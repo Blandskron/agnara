@@ -163,11 +163,11 @@ def test_the_generated_app_registers_compiles_and_invokes(importable: Path) -> N
     capabilities = app.compile()
 
     assert {str(identifier) for identifier in capabilities} == {
-        "depot.get_record",
-        "depot.list_records",
+        "health.get_record",
+        "health.list_records",
     }
 
-    plan = ExecutionPlan.compile(capabilities["depot.get_record"], dependencies)
+    plan = ExecutionPlan.compile(capabilities["health.get_record"], dependencies)
     assert set(plan.input_schemas) == {"reference"}
     # Unlike the hexagonal template, nothing here is runtime-owned: a minimal
     # app declares no ports, so it has no protected parameters at all.
