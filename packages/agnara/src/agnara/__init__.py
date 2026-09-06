@@ -31,6 +31,7 @@ from agnara.capability import (
 from agnara.errors import (
     AgnaraError,
     DefinitionError,
+    DuplicateAppError,
     DuplicateCapabilityError,
     InteractionRequiredError,
     InvocationError,
@@ -79,6 +80,7 @@ __all__ = [
     "ConfirmationVerdict",
     "ConfirmationVerifier",
     "DefinitionError",
+    "DuplicateAppError",
     "DuplicateCapabilityError",
     "FrozenCapabilityRegistry",
     "Idempotency",

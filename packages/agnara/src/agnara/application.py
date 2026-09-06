@@ -22,7 +22,8 @@ call directly, and leaves execution entirely to EPIC 4.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
+from types import MappingProxyType
 from typing import Any, overload
 
 from agnara._declaration import declare_into, validated_namespace
@@ -30,7 +31,7 @@ from agnara.app import App
 from agnara.capability.definition import Handler
 from agnara.capability.metadata import Confirmation, Risk
 from agnara.capability.registry import CapabilityRegistry, FrozenCapabilityRegistry
-from agnara.errors import DefinitionError
+from agnara.errors import DefinitionError, DuplicateAppError, RegistryFrozenError
 
 __all__ = ["Agnara"]
 
@@ -42,11 +43,15 @@ class Agnara:
     on it, so ``Agnara("payments")`` produces ids like ``payments.refund``.
     """
 
-    __slots__ = ("_name", "_registry")
+    __slots__ = ("_apps", "_name", "_registry")
 
     def __init__(self, name: str) -> None:
         self._name = validated_namespace(name, subject="application")
         self._registry = CapabilityRegistry()
+        #: Mounted app identity -> the app object that supplied it. Insertion
+        #: ordered, so a project reports its apps in the order it composed
+        #: them rather than in an order that depends on hashing.
+        self._apps: dict[str, App] = {}
 
     @property
     def name(self) -> str:
@@ -157,15 +162,45 @@ class Agnara:
         Raises:
             DefinitionError: `app` is not an `App`.
             RegistryFrozenError: this application has already compiled.
-            DuplicateCapabilityError: two mounted apps claim the same
-                capability id, which can only happen if they share a name.
+            DuplicateAppError: `app`'s name is already mounted, whether by
+                this same app or by a different bounded context claiming it.
         """
         if not isinstance(app, App):
             raise DefinitionError(f"{self._name}.include expects an App, got {type(app).__name__}")
+        if self._registry.is_frozen:
+            # Check before the identity check, so a late include reports the
+            # freeze rather than a duplicate it would never have reached.
+            raise RegistryFrozenError(
+                f"{self._name} has already compiled; {app.name!r} cannot be included now"
+            )
+
+        mounted = self._apps.get(app.name)
+        if mounted is not None:
+            detail = (
+                "it is already mounted"
+                if mounted is app
+                else "a different app already claims that name"
+            )
+            raise DuplicateAppError(
+                f"cannot include app {app.name!r} on {self._name!r}: {detail}. "
+                "An app name is a bounded context and the namespace of every "
+                "capability it declares, so two apps cannot share one."
+            )
+
         declarations = app.capabilities
         for capability_id in declarations:
             self._registry.register(declarations[capability_id])
+        self._apps[app.name] = app
         return app
+
+    @property
+    def apps(self) -> Mapping[str, App]:
+        """The apps mounted on this application, in the order they were.
+
+        A read-only view: mounting is `include`, so that a project's contents
+        cannot be changed by reaching through this.
+        """
+        return MappingProxyType(self._apps)
 
     def compile(self) -> FrozenCapabilityRegistry:
         """Close registration and return the immutable capability view.
