@@ -49,6 +49,11 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- `Agnara.include` refuses a second app claiming a name already mounted,
+  raising the new `DuplicateAppError` rather than reporting a capability
+  clash. Two apps sharing a name but declaring different capabilities were
+  previously accepted silently. `Agnara.apps` exposes the mounted apps as a
+  read-only view ([#257]).
 - `App` and `AppDescriptor` give a bounded context a runtime identity, and
   `Agnara.include(app)` mounts one on a project. A capability declared on an
   app is namespaced by the app, so it is `payments.get_record` rather than
@@ -527,6 +532,7 @@ under `0.1.0a2` instead.
 [#250]: https://github.com/Blandskron/agnara/issues/250
 [#252]: https://github.com/Blandskron/agnara/issues/252
 [#254]: https://github.com/Blandskron/agnara/issues/254
+[#257]: https://github.com/Blandskron/agnara/issues/257
 [Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...develop
 [0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3
 [0.1.0a2]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...v0.1.0a2

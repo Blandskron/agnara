@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 __all__ = [
     "AgnaraError",
     "DefinitionError",
+    "DuplicateAppError",
     "DuplicateCapabilityError",
     "InteractionRequiredError",
     "InvocationError",
@@ -67,6 +68,21 @@ class InteractionRequiredError(AgnaraError):
 
 class RegistryError(AgnaraError):
     """The capability registry was used in a way its contract forbids."""
+
+
+class DuplicateAppError(RegistryError):
+    """Two apps claimed the same identity on one project.
+
+    An app name is a bounded context and becomes the namespace of every
+    capability it declares (ADR 0065), so two apps sharing one is not a
+    naming inconvenience: the project would present a single context that is
+    really two, and introspection would describe something that does not
+    exist.
+
+    Raised in preference to `DuplicateCapabilityError` when the cause is the
+    app rather than one of its capabilities, because a caller pointed at a
+    capability clash would investigate a capability that is fine.
+    """
 
 
 class DuplicateCapabilityError(RegistryError):

@@ -630,7 +630,20 @@ Generated code must:
   cannot drift. 32 cases. `Agnara.capability` is untouched, so the published
   `0.1.0a3` surface and `examples/quickstart.py` are unaffected.
   Recorded in ADR 0065. Tracking: GitHub Issue #254.
-- [ ] E1A.3 Detect duplicate app identities.
+- [x] E1A.3 Detect duplicate app identities. A project records the app names
+  it has mounted and refuses a second claim on one. Three cases were wrong
+  before: two apps sharing a name but no capability names were accepted
+  **silently**, leaving the project with one bounded context that was really
+  two; a name clash that did overlap was reported as a `DuplicateCapability`
+  error, pointing a reader at a capability that was fine; and including the
+  same app object twice said the same misleading thing. `DuplicateAppError`
+  is a distinct `RegistryError` so a caller can tell an app identity clash
+  from a capability one, and the message distinguishes "already mounted" from
+  "a different app claims that name". `Agnara.apps` exposes the mounted apps
+  as a read-only, insertion-ordered view -- what E1A.4 will project into
+  introspection and E1A.6 will freeze. Declaring the same capability name in
+  two differently named apps stays legal, which is the point of ADR 0065.
+  Removing the check fails six of the 21 cases. Tracking: GitHub Issue #257.
 - [ ] E1A.4 Expose app metadata through introspection.
 - [ ] E1A.5 Define cross-app public contract rules.
 - [ ] E1A.6 Freeze app registry during project compilation.

@@ -18,7 +18,13 @@ import re
 import pytest
 
 from agnara import Agnara, App, AppDescriptor
-from agnara.errors import DefinitionError, DuplicateCapabilityError, RegistryFrozenError
+from agnara.errors import (
+    DefinitionError,
+    DuplicateAppError,
+    DuplicateCapabilityError,
+    RegistryError,
+    RegistryFrozenError,
+)
 
 # ---------------------------------------------------------------------------
 # AppDescriptor
@@ -232,8 +238,13 @@ def test_including_returns_the_app() -> None:
     assert project.include(payments) is payments
 
 
-def test_two_apps_with_the_same_name_still_collide() -> None:
-    """Namespacing fixes accidental collisions, not a duplicated identity."""
+def test_two_apps_with_the_same_name_are_refused() -> None:
+    """Namespacing fixes accidental collisions, not a duplicated identity.
+
+    E1A.3 reports this as a duplicated *app*, not as a capability clash: the
+    capability is fine, and pointing at it would send a reader to investigate
+    the wrong thing.
+    """
     first, second = App("payments"), App("payments")
 
     @first.capability(description="One.")
@@ -247,7 +258,7 @@ def test_two_apps_with_the_same_name_still_collide() -> None:
     project = Agnara("shop")
     project.include(first)
 
-    with pytest.raises(DuplicateCapabilityError, match=re.escape("payments.refund")):
+    with pytest.raises(DuplicateAppError, match="a different app already claims that name"):
         project.include(second)
 
 
@@ -310,3 +321,154 @@ def test_declaring_on_the_application_directly_still_works() -> None:
         "payments.refund",
         "shop.ping",
     ]
+
+
+# ---------------------------------------------------------------------------
+# E1A.3 — duplicate app identity
+# ---------------------------------------------------------------------------
+
+
+def test_two_apps_sharing_a_name_are_refused_even_with_no_capability_clash() -> None:
+    """The case that used to pass silently.
+
+    Two unrelated bounded contexts both called `payments`, declaring different
+    capabilities, were accepted. The project then presented one `payments`
+    namespace that was really two, and nothing said so.
+    """
+    first, second = App("payments"), App("payments")
+
+    @first.capability(description="Refund.")
+    def refund(payment_id: str) -> str:
+        return "a"
+
+    @second.capability(description="Capture.")
+    def capture(payment_id: str) -> str:
+        return "b"
+
+    project = Agnara("shop")
+    project.include(first)
+
+    with pytest.raises(DuplicateAppError, match="a different app already claims that name"):
+        project.include(second)
+
+
+def test_an_app_with_no_capabilities_still_claims_its_name() -> None:
+    """Identity is the app's, not a side effect of what it happens to declare."""
+    project = Agnara("shop")
+    project.include(App("payments"))
+
+    with pytest.raises(DuplicateAppError):
+        project.include(App("payments"))
+
+
+def test_including_the_same_app_twice_says_so() -> None:
+    """Distinguishable from a different app claiming the name."""
+    payments = App("payments")
+
+    @payments.capability(description="Refund.")
+    def refund(payment_id: str) -> str:
+        return "refunded"
+
+    project = Agnara("shop")
+    project.include(payments)
+
+    with pytest.raises(DuplicateAppError, match="it is already mounted"):
+        project.include(payments)
+
+
+def test_a_refused_include_leaves_the_project_unchanged() -> None:
+    """A rejected app must not half-register its capabilities."""
+    first, second = App("payments"), App("payments")
+
+    @first.capability(description="Refund.")
+    def refund(payment_id: str) -> str:
+        return "a"
+
+    @second.capability(description="Capture.")
+    def capture(payment_id: str) -> str:
+        return "b"
+
+    project = Agnara("shop")
+    project.include(first)
+    with pytest.raises(DuplicateAppError):
+        project.include(second)
+
+    assert [str(identifier) for identifier in project.compile()] == ["payments.refund"]
+    assert list(project.apps) == ["payments"]
+
+
+def test_a_duplicate_app_is_not_reported_as_a_capability_clash() -> None:
+    """`DuplicateAppError` is its own type so a caller can tell them apart."""
+    project = Agnara("shop")
+    project.include(App("payments"))
+
+    with pytest.raises(DuplicateAppError) as raised:
+        project.include(App("payments"))
+
+    assert not isinstance(raised.value, DuplicateCapabilityError)
+    assert isinstance(raised.value, RegistryError)
+
+
+def test_the_same_app_may_be_mounted_on_two_projects() -> None:
+    """Identity is per project. An app is not owned by the first to mount it."""
+    payments = App("payments")
+
+    @payments.capability(description="Refund.")
+    def refund(payment_id: str) -> str:
+        return "refunded"
+
+    for project_name in ("shop", "storefront"):
+        project = Agnara(project_name)
+        project.include(payments)
+        assert list(project.apps) == ["payments"]
+
+
+# ---------------------------------------------------------------------------
+# The mounted-app view
+# ---------------------------------------------------------------------------
+
+
+def test_apps_reports_what_was_mounted_in_order() -> None:
+    project = Agnara("shop")
+    payments, catalog = App("payments"), App("catalog")
+
+    project.include(payments)
+    project.include(catalog)
+
+    assert list(project.apps) == ["payments", "catalog"]
+    assert project.apps["payments"] is payments
+
+
+def test_a_project_with_no_apps_reports_none() -> None:
+    assert dict(Agnara("shop").apps) == {}
+
+
+def test_the_apps_view_cannot_be_written_through() -> None:
+    """Mounting is `include`; reaching through this must not work."""
+    project = Agnara("shop")
+
+    with pytest.raises(TypeError):
+        project.apps["payments"] = App("payments")  # ty: ignore[invalid-assignment]
+
+
+def test_declaring_on_the_application_does_not_create_an_app() -> None:
+    """`Agnara.capability` is not an app; only `include` mounts one."""
+    project = Agnara("shop")
+
+    @project.capability(description="Health probe.", idempotent=True)
+    def ping() -> str:
+        return "pong"
+
+    assert dict(project.apps) == {}
+    assert [str(identifier) for identifier in project.compile()] == ["shop.ping"]
+
+
+def test_a_late_include_reports_the_freeze_not_a_duplicate() -> None:
+    """The freeze is the real cause, so it is checked first."""
+    payments = App("payments")
+    project = Agnara("shop")
+    project.include(payments)
+    project.compile()
+
+    with pytest.raises(RegistryFrozenError):
+        project.include(payments)
