@@ -20,6 +20,7 @@ from agnara.core.di.registry import DIRegistry
 from agnara.execution.plan import ExecutionPlan
 from agnara.introspection.descriptors import (
     ApplicationDescriptor,
+    BoundedContextDescriptor,
     CapabilityDescriptor,
     DependencyDescriptor,
     ExposureDescriptor,
@@ -190,6 +191,13 @@ def describe_app(
         name=app.name,
         capabilities=tuple(described),
         providers=() if dependencies is None else _providers(dependencies),
+        apps=tuple(
+            BoundedContextDescriptor(
+                name=mounted.descriptor.name,
+                description=mounted.descriptor.description,
+            )
+            for mounted in app.apps.values()
+        ),
     )
 
 

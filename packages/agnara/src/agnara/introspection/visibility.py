@@ -23,6 +23,7 @@ from typing import Protocol, runtime_checkable
 from agnara._frozen import frozen_slots_dataclass
 from agnara.introspection.descriptors import (
     ApplicationDescriptor,
+    BoundedContextDescriptor,
     CapabilityDescriptor,
     DependencyDescriptor,
     ExposureDescriptor,
@@ -68,6 +69,8 @@ class DiscoveryField(StrEnum):
     DEPENDENCIES = "dependencies"
     #: The application's provider graph.
     PROVIDERS = "providers"
+    #: The bounded contexts an application mounts, and their descriptions.
+    APPS = "apps"
     #: The names of the policy types a capability's plan evaluates.
     POLICIES = "policies"
     #: Exposures, and therefore the derived transport availability: in this
@@ -292,6 +295,21 @@ def _capability(
     )
 
 
+def _mounted_apps(
+    app: ApplicationDescriptor,
+    visibility: DiscoveryVisibility,
+) -> tuple[BoundedContextDescriptor, ...]:
+    """The bounded contexts, when this viewer may see them.
+
+    Filtered as a whole rather than per context: which contexts exist is one
+    publication decision, and a partial list would misdescribe the application
+    more badly than an empty one.
+    """
+    if not visibility.publishes(DiscoveryField.APPS):
+        return ()
+    return app.apps
+
+
 def _providers(
     app: ApplicationDescriptor,
     visibility: DiscoveryVisibility,
@@ -352,6 +370,7 @@ def filter_snapshot(
                 name=app.name,
                 capabilities=visible,
                 providers=_providers(app, visibility),
+                apps=_mounted_apps(app, visibility),
             )
         )
     return IntrospectionSnapshot(
