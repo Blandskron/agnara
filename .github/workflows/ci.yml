@@ -193,7 +193,11 @@ jobs:
 
           for failure in failures:
               print(f"::error::{failure}")
-          sys.exit(1 if failures else 0)
+          if failures:
+              sys.exit(1)
+          # Say what was inspected. A check that prints nothing on success
+          # cannot be told apart from one that never received this script.
+          print(f"checked {len(wheels)} wheels: {', '.join(w.name for w in wheels)}")
           EOF
 
       - name: Install the published distribution outside the workspace
