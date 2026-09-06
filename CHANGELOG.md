@@ -13,6 +13,28 @@ without being published. See the `0.1.0a2` scope note below.
 
 ## [Unreleased]
 
+### Added
+
+- `agnara app create --architecture` selects the layout to generate, falling
+  back to the project's `[defaults] architecture` in `agnara.toml`. The
+  `minimal` architecture is implemented: a package, `module.py`,
+  `capabilities.py` and a test, with none of the domain, application or
+  adapters packages. It declares the same capabilities as the default template
+  and holds their data in the module rather than behind a port, so the choice
+  between the two templates is one difference rather than two unrelated
+  examples. An architecture that is reserved but has no generator, such as
+  `vertical`, is refused with the available alternatives instead of silently
+  producing a different layout ([#244]).
+
+### Fixed
+
+- `agnara app create` recorded the project's default architecture in the new
+  `[apps.<name>]` table while always generating the modular-hexagonal tree. A
+  project whose `[defaults] architecture` was `minimal` therefore produced a
+  manifest entry its own directory contradicted, and `agnara apps` reported the
+  declared value. The declaration and the generated layout now come from one
+  resolved decision ([#244]).
+
 ## [0.1.0a3] - 2026-09-06
 
 Integration alpha. Only `agnara` is published to PyPI; all seven workspace
@@ -451,6 +473,7 @@ under `0.1.0a2` instead.
   `FrozenInstanceError` instead of CPython 3.14's confusing internal
   `TypeError` ([#3]).
 
+[#244]: https://github.com/Blandskron/agnara/issues/244
 [Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...develop
 [0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3
 [0.1.0a2]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...v0.1.0a2
