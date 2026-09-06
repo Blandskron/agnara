@@ -335,3 +335,40 @@ def test_a_missing_status_file_is_reported_rather_than_raised(
 
     assert readiness.main([]) == 2
     assert "inconsistent" in capsys.readouterr().err
+
+
+def test_no_automated_check_is_silently_dead() -> None:
+    """An implemented check that no gate declares never runs.
+
+    `test_every_automated_gate_has_a_real_check` covers the opposite
+    direction. Without this one, a check can be written, imported and tested
+    while contributing nothing to a release decision -- which reads as
+    coverage without being coverage.
+    """
+    declared = {gate["id"] for gate in gates() if gate["kind"] == readiness.AUTOMATED}
+    unused = set(readiness.AUTOMATED_CHECKS) - declared
+    assert unused == set(readiness.UNWIRED_CHECKS), (
+        "automated checks that no gate runs changed; wire the check into "
+        "docs/releases/release-status.json rather than extending UNWIRED_CHECKS"
+    )
+
+
+def test_unwired_checks_are_real_checks() -> None:
+    """UNWIRED_CHECKS must not outlive the checks it names."""
+    assert set(readiness.AUTOMATED_CHECKS) >= readiness.UNWIRED_CHECKS
+
+
+@pytest.mark.parametrize("gate_id", sorted(readiness.UNWIRED_CHECKS))
+def test_an_unwired_check_still_works(gate_id: str) -> None:
+    """Keep the dormant checks executable, so wiring them is a status edit.
+
+    These do not run during a readiness report today. If they were also never
+    executed, they would rot until the release that finally needed them.
+    """
+    status, detail = readiness.AUTOMATED_CHECKS[gate_id]()
+    assert status in {
+        readiness.SATISFIED,
+        readiness.PARTIAL,
+        readiness.UNSATISFIED,
+    }, status
+    assert detail

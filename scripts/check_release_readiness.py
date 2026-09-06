@@ -215,16 +215,35 @@ def check_public_api_declared() -> tuple[str, str]:
 
 #: Automated gate id -> the function that decides it. A gate whose id is listed
 #: here is never read from the status file.
+#:
+#: An entry here only makes a check *available*. A check runs when the status
+#: file declares a gate with the same id, so an entry no status file references
+#: is dead weight that looks like coverage. `UNWIRED_CHECKS` records the ones
+#: knowingly not yet declared, and the test suite refuses any addition to that
+#: list -- see `tests/release/test_release_readiness.py`.
 AUTOMATED_CHECKS = {
     "version-consistency": check_version_consistency,
     "python-baseline": check_python_baseline,
     "changelog-accurate": check_changelog,
-    "changelog-complete": check_changelog,
     "repository-clean": check_repository_clean,
     "release-commit-identified": check_release_commit_identified,
     "license-metadata": check_license_metadata,
     "public-api-distinguished": check_public_api_declared,
 }
+
+#: Implemented checks that no gate in `docs/releases/release-status.json`
+#: currently declares, so they do not run. They are implemented and tested, and
+#: are wired into the status document when the next release cycle rewrites it
+#: (tracked with the v0.1.0a3 propagation in issue #239). Nothing may be added
+#: to this set: a new check must arrive with the gate that runs it.
+UNWIRED_CHECKS = frozenset(
+    {
+        "repository-clean",
+        "release-commit-identified",
+        "license-metadata",
+        "public-api-distinguished",
+    }
+)
 
 
 # ---------------------------------------------------------------------------
