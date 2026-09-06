@@ -15,6 +15,12 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- `agnara app-api`, `agnara app-mcp`, `agnara app-agent` and `agnara
+  app-worker` are shorthands for `agnara app create --profile <name>`. They
+  are the same command with the profile fixed, not a second implementation:
+  they accept every other option unchanged, share every refusal, and produce
+  byte-identical projects. An alias does not accept `--profile`, since it is
+  one ([#250]).
 - `agnara app create --profile api` starts an app from a named set of
   exposures: `core`, `api`, `mcp`, `agentic`, `worker` and `full`, mapped as
   `docs/CLI_SPEC.md` specifies, defaulting to `core`. A profile is scaffolding
@@ -495,6 +501,7 @@ under `0.1.0a2` instead.
 [#244]: https://github.com/Blandskron/agnara/issues/244
 [#246]: https://github.com/Blandskron/agnara/issues/246
 [#248]: https://github.com/Blandskron/agnara/issues/248
+[#250]: https://github.com/Blandskron/agnara/issues/250
 [Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...develop
 [0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3
 [0.1.0a2]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...v0.1.0a2

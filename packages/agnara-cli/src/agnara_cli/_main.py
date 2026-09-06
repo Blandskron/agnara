@@ -22,7 +22,7 @@ import sys
 from collections.abc import Sequence
 from importlib.metadata import PackageNotFoundError, version
 
-from agnara_cli._app import add_app_parser
+from agnara_cli._app import add_app_alias_parsers, add_app_parser
 from agnara_cli._apps import add_apps_parser
 from agnara_cli._context import add_context_parser
 from agnara_cli._generate import GenerationError
@@ -55,6 +55,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"agnara {_version()}")
     subparsers = parser.add_subparsers(dest="command", required=True, metavar="COMMAND")
     add_app_parser(subparsers)
+    add_app_alias_parsers(subparsers)
     add_apps_parser(subparsers)
     add_inspect_parser(subparsers)
     add_graph_parser(subparsers)
