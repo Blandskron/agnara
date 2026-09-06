@@ -537,7 +537,21 @@ complete because the alpha published only the `agnara` core distribution. See
   30 cases; a mutation to override semantics and a wrong `agentic` mapping
   each fail three of them. Recorded in ADR 0064, which remains Proposed.
   Tracking: GitHub Issue #248.
-- [ ] E0A.8 Implement optional CLI aliases without duplicate code paths.
+- [x] E0A.8 Implement optional CLI aliases without duplicate code paths.
+  `agnara app-api`, `app-mcp`, `app-agent` and `app-worker` are the four
+  `docs/CLI_SPEC.md` lists; `core` and `full` get none, because that document
+  also warns against adding scaffolding surface casually. `app-agent` maps to
+  the `agentic` profile -- the alias and the profile are spelled differently,
+  and only the table relates them.
+  The constraint is the item: `docs/CLI_SPEC.md` says twice that these must
+  not be separate code paths. `agnara app create` and every alias are now
+  built by one `_add_create_arguments` and dispatch to one `run_app_create`,
+  so an alias accepts every other option unchanged and shares every refusal.
+  It does not accept `--profile`, because the alias *is* the profile and
+  offering both would let a user write a command that contradicts itself.
+  34 cases, the central one being that an alias and its canonical form produce
+  byte-identical projects. Giving the aliases their own code path with one
+  different default fails 16 of them. Tracking: GitHub Issue #250.
 - [x] E0A.9 Implement `--dry-run`.
   Delivered on the shared plan/apply mechanism (ADR 0060) and proven reusable
   by a second generator, `agnara app create` (ADR 0061): one renderer now

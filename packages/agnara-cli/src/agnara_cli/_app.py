@@ -37,7 +37,21 @@ from agnara_cli._manifest import (
 )
 from agnara_cli._minimal_template import minimal_app_files
 
-__all__ = ["add_app_parser", "run_app_create"]
+__all__ = ["add_app_alias_parsers", "add_app_parser", "run_app_create"]
+
+#: Convenience alias -> the profile it fixes, from `docs/CLI_SPEC.md`
+#: "Convenience aliases". That document lists exactly these four and warns
+#: against adding scaffolding surface casually, so `core` and `full` have no
+#: alias.
+#:
+#: `app-agent` maps to the `agentic` profile: the alias and the profile are
+#: spelled differently on purpose, and only this table relates them.
+ALIASES: dict[str, str] = {
+    "app-api": "api",
+    "app-mcp": "mcp",
+    "app-agent": "agentic",
+    "app-worker": "worker",
+}
 
 #: Architecture -> the template that generates it. `ARCHITECTURES` is the
 #: manifest vocabulary and is deliberately wider: `docs/CLI_SPEC.md` calls
@@ -66,6 +80,75 @@ PROFILES: dict[str, tuple[str, ...]] = {
 }
 
 
+def _add_create_arguments(parser: argparse.ArgumentParser, *, profile: str | None) -> None:
+    """Define ``app create`` once, for the command and for every alias.
+
+    `docs/CLI_SPEC.md` requires the aliases to "not create separate code paths",
+    so they are not a second parser that happens to agree today -- they are this
+    one, with ``profile`` fixed.
+
+    When `profile` is given the parser does not offer ``--profile``: the alias
+    *is* the profile, and exposing both would let a user write
+    ``agnara app-mcp tools --profile worker``, a command that contradicts
+    itself and whose answer would only ever be arbitrary.
+    """
+    parser.add_argument("name", help="the app name; a single lower-case Python identifier")
+    parser.add_argument(
+        "--architecture",
+        # The manifest vocabulary, not just what is implemented: a reserved
+        # name earns the explanation in `_resolved_architecture` rather than
+        # argparse's "invalid choice", which reads like a typo.
+        choices=sorted(ARCHITECTURES),
+        help=(
+            "the layout to generate. Defaults to the project's "
+            "[defaults] architecture in agnara.toml."
+        ),
+    )
+    if profile is None:
+        parser.add_argument(
+            "--profile",
+            choices=sorted(PROFILES),
+            help=(
+                "start from a named set of exposures. Scaffolding only: the "
+                "profile is not recorded, its exposures are. Defaults to core."
+            ),
+        )
+    parser.add_argument(
+        "--with",
+        dest="exposures",
+        metavar="a,b",
+        help=(
+            "comma-separated inbound adapters to scaffold: "
+            + ", ".join(EXPOSURES)
+            + ". Each adds one adapters/inbound/<name>.py."
+        ),
+    )
+    parser.add_argument(
+        "--project",
+        metavar="DIR",
+        help=(
+            f"directory to search for {MANIFEST_FILENAME}; its ancestors are "
+            "searched too. Defaults to the working directory."
+        ),
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="show what would be written and stop, creating nothing",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="allow replacing files that already exist",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="emit the plan as deterministic JSON",
+    )
+    parser.set_defaults(handler=run_app_create, profile=profile)
+
+
 def add_app_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """Register ``app`` and its subcommands on the root parser."""
     parser = subparsers.add_parser(
@@ -83,60 +166,27 @@ def add_app_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentParse
             "never prompts."
         ),
     )
-    create.add_argument("name", help="the app name; a single lower-case Python identifier")
-    create.add_argument(
-        "--architecture",
-        # The manifest vocabulary, not just what is implemented: a reserved
-        # name earns the explanation in `_resolved_architecture` rather than
-        # argparse's "invalid choice", which reads like a typo.
-        choices=sorted(ARCHITECTURES),
-        help=(
-            "the layout to generate. Defaults to the project's "
-            "[defaults] architecture in agnara.toml."
-        ),
-    )
-    create.add_argument(
-        "--profile",
-        choices=sorted(PROFILES),
-        help=(
-            "start from a named set of exposures. Scaffolding only: the "
-            "profile is not recorded, its exposures are. Defaults to core."
-        ),
-    )
-    create.add_argument(
-        "--with",
-        dest="exposures",
-        metavar="a,b",
-        help=(
-            "comma-separated inbound adapters to scaffold: "
-            + ", ".join(EXPOSURES)
-            + ". Each adds one adapters/inbound/<name>.py."
-        ),
-    )
-    create.add_argument(
-        "--project",
-        metavar="DIR",
-        help=(
-            f"directory to search for {MANIFEST_FILENAME}; its ancestors are "
-            "searched too. Defaults to the working directory."
-        ),
-    )
-    create.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="show what would be written and stop, creating nothing",
-    )
-    create.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="allow replacing files that already exist",
-    )
-    create.add_argument(
-        "--json",
-        action="store_true",
-        help="emit the plan as deterministic JSON",
-    )
-    create.set_defaults(handler=run_app_create)
+    _add_create_arguments(create, profile=None)
+
+
+def add_app_alias_parsers(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    """Register the convenience aliases from `docs/CLI_SPEC.md`.
+
+    Each is ``agnara app create`` with one profile fixed. They exist for
+    discoverability, and that document is explicit that they "MUST behave as
+    aliases only", so they share `_add_create_arguments` and `run_app_create`
+    rather than reimplementing either.
+    """
+    for alias, profile in ALIASES.items():
+        parser = subparsers.add_parser(
+            alias,
+            help=f"shorthand for 'app create --profile {profile}'",
+            description=(
+                f"Exactly 'agnara app create NAME --profile {profile}'. Every "
+                "other option of that command applies here unchanged."
+            ),
+        )
+        _add_create_arguments(parser, profile=profile)
 
 
 def _validated_name(name: str) -> str:
