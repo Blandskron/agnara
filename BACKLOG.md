@@ -489,7 +489,24 @@ complete because the alpha published only the `agnara` core distribution. See
   generated app passes the real Ruff lint and format checks under the generated
   project's own configuration. 35 cases. Recorded in ADR 0061.
   Tracking: GitHub Issue #233.
-- [ ] E0A.5 Implement `minimal` template.
+- [x] E0A.5 Implement `minimal` template, and select an architecture
+  explicitly. Generates the layout `docs/SCAFFOLDING.md` fixes -- package,
+  `module.py`, `capabilities.py` and a test -- and nothing else: none of the
+  domain, application or adapters packages. It declares the same two
+  capabilities as the default template over the same vocabulary and holds
+  their data in the module, so choosing between the templates is reading one
+  difference rather than two unrelated examples. `--architecture` selects,
+  falling back to the project's `[defaults] architecture`.
+  This also closed a defect: the manifest recorded the project default while
+  the generator always wrote the hexagonal tree, so a project defaulting to
+  `minimal` produced an `[apps.<name>]` entry its own directory contradicted
+  and `agnara apps` reported the declared value. Declaration and generation
+  now come from one resolved decision. `vertical` is accepted by the flag only
+  to be refused with an explanation, never substituted. 21 cases, 13 of which
+  fail against the previous behaviour; the generated app registers, compiles,
+  invokes, passes its own tests and passes the real Ruff lint and format
+  checks under the generated project's configuration. Recorded in ADR 0062,
+  which remains Proposed. Tracking: GitHub Issue #244.
 - [ ] E0A.6 Implement `--with` exposure selection.
 - [ ] E0A.7 Implement profiles: core/api/mcp/agentic/worker/full.
 - [ ] E0A.8 Implement optional CLI aliases without duplicate code paths.
