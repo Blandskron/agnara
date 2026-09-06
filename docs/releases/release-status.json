@@ -311,6 +311,34 @@
           "docs/benchmarks"
         ]
       }
+    },
+    {
+      "id": "repository-clean",
+      "title": "Working tree is clean at the release commit",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "SATISFIED"
+    },
+    {
+      "id": "release-commit-identified",
+      "title": "The release commit is identified",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "SATISFIED"
+    },
+    {
+      "id": "license-metadata",
+      "title": "LICENSE present and every package declares Apache-2.0",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "SATISFIED"
+    },
+    {
+      "id": "public-api-distinguished",
+      "title": "Every distributable package declares its public surface",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "SATISFIED"
     }
   ]
 }

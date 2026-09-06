@@ -581,16 +581,14 @@ Recorded by the repository audit that followed the `0.1.0a3` release. Each
 item was found with evidence, judged not worth fixing inside that audit, and
 is listed here so it stays visible rather than being rediscovered later.
 
-- [ ] D1 Wire the four dormant release gates. `repository-clean`,
+- [x] D1 Wire the four dormant release gates. `repository-clean`,
   `release-commit-identified`, `license-metadata` and
-  `public-api-distinguished` are implemented and tested in
-  `scripts/check_release_readiness.py` but no gate in
-  `docs/releases/release-status.json` declares them, so they never run.
-  They are listed in `UNWIRED_CHECKS`, and a ratchet test refuses any new
-  unwired check. Deferred because the propagation of `0.1.0a3` rewrites that
-  status document; wiring them first would only collide. Do this on top of
-  the propagation, and delete `UNWIRED_CHECKS` when the set empties.
-  Tracking: GitHub Issue #239.
+  `public-api-distinguished` were implemented in
+  `scripts/check_release_readiness.py` but no gate declared them, so they
+  never ran. They are declared in `docs/releases/release-status.json` now
+  that the `0.1.0a3` propagation (#240) has rewritten that document, and
+  `UNWIRED_CHECKS` is gone because the set it tracked is empty. The test
+  suite asserts every implemented check is reached.
 - [ ] D2 Decide how an adapter depends on the core version. All six adapters
   declare `dependencies = ["agnara"]` with no bound, while ADR 0021 requires
   one synchronized version across all seven distributions. Nothing today is
