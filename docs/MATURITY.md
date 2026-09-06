@@ -1,0 +1,162 @@
+# Subsystem Maturity
+
+This document answers one question: **what exists today?**
+
+It is the authoritative status record. `ROADMAP.md` says where Agnara is
+going, `docs/INITIATIVES.md` says in what order, and this file says what is
+true now. When they disagree, this file wins and the others are wrong.
+
+Every status below was verified against the code on the commit that last
+edited this file, not against another document. Where a status is qualified,
+the qualification is the point: "the runtime propagates cancellation" and
+"the runtime offers a cancellation API" are different claims, and conflating
+them is how a framework acquires documentation nobody trusts.
+
+`tests/architecture/test_documentation_consistency.py` checks the parts of
+this table a machine can check, so a package cannot quietly gain or lose a
+public surface without this file failing.
+
+## Vocabulary
+
+| Status | Meaning |
+| --- | --- |
+| `IMPLEMENTED` | Works today, covered by tests, usable from the published or repository packages. |
+| `EXPERIMENTAL` | Works, but the surface is expected to change and is not a compatibility commitment. |
+| `DESIGNED` | A decision exists in an ADR or RFC; no runtime behaviour yet. |
+| `PLANNED` | Agreed to be built, with no design decision recorded yet. |
+| `RESEARCH` | Not agreed. Needs an RFC before it becomes `PLANNED`. |
+| `DEFERRED` | Deliberately postponed, with the reason recorded. |
+| `DEPRECATED` | Still present, scheduled for removal. |
+| `REMOVED` | Gone; kept here only while references may survive. |
+
+A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
+
+## Distributions
+
+| Package | Status | Published to PyPI | Public names | Notes |
+| --- | --- | --- | --- | --- |
+| `agnara` | `IMPLEMENTED` | yes | 41 | The kernel. Standard library only. |
+| `agnara-http` | `EXPERIMENTAL` | no | 0 | Fully implemented behind private modules; the composition API is not settled. |
+| `agnara-mcp` | `IMPLEMENTED` | no | 20 | Tool projection only; see the MCP table. |
+| `agnara-cli` | `IMPLEMENTED` | no | 17 | Scaffolding and introspection commands. |
+| `agnara-telemetry` | `IMPLEMENTED` | no | 2 | OpenTelemetry metrics and tracing hooks. |
+| `agnara-a2a` | `PLANNED` | no | 0 | Reserved namespace. 13 lines, no implementation. |
+| `agnara-events` | `PLANNED` | no | 0 | Reserved namespace. 14 lines, no implementation. |
+
+Only `agnara` is published. The adapters are versioned and buildable from the
+repository; ADR 0021 keeps every version synchronized.
+
+`agnara-http` is `EXPERIMENTAL` rather than `IMPLEMENTED` for a specific
+reason recorded in `ARCHITECTURE.md` section 3: the transport behaviour is
+settled, the way an application *composes* it is not, so it declares an empty
+public surface instead of committing to one.
+
+## Kernel — `agnara`
+
+| Subsystem | Status | Evidence and limits |
+| --- | --- | --- |
+| Capability declaration and metadata | `IMPLEMENTED` | Effects, risk, confirmation, idempotency, scopes. RFC 0001. |
+| Capability identity | `IMPLEMENTED` | `<namespace>.<name>`; namespace is the owning app. ADR 0065. |
+| Capability registry and freeze | `IMPLEMENTED` | ADR 0005. Registration closes at `compile()`. |
+| App / bounded-context model | `IMPLEMENTED` | `App`, `AppDescriptor`, `Agnara.include`. ADR 0011, ADR 0065. |
+| Duplicate app identity detection | `IMPLEMENTED` | `DuplicateAppError`. |
+| Schema port | `IMPLEMENTED` | ADR 0004. Standard-library adapter ships; Pydantic and msgspec remain experiments. |
+| Dependency injection | `IMPLEMENTED` | Compiled graph, `SINGLETON` and `INVOCATION` scopes, sync/async providers and generators with teardown. |
+| Execution plan compilation | `IMPLEMENTED` | ADR 0005, ADR 0025. Startup-time schema, dependency and policy compilation. |
+| Direct invocation | `IMPLEMENTED` | `invoke_result`; canonical `Success`/`Failure`. ADR 0022. |
+| Canonical failure vocabulary | `IMPLEMENTED` | Ten codes. Transport-neutral. |
+| Deadlines | `IMPLEMENTED` | Enforced with `asyncio.timeout_at`, mapped to `FailureCode.TIMEOUT`. |
+| Cancellation | `IMPLEMENTED` (propagation only) | `CancelledError` is never caught or translated. There is no cooperative cancellation API and no disconnect signal. |
+| Policy engine | `IMPLEMENTED` | Pre-handler evaluation, scopes, principals, confirmation. ADR 0024. |
+| Confirmation requirements | `IMPLEMENTED` | Declaration and verification; no durable pending-approval state. |
+| Telemetry hooks | `IMPLEMENTED` | Start and terminal events. ADR 0023. No span model in the kernel. |
+| Introspection snapshot | `IMPLEMENTED` | Versioned, frozen, no runtime objects reachable. ADR 0045. |
+| Discovery visibility | `IMPLEMENTED` | Per-field publication decisions. ADR 0046. |
+| Idempotency | `IMPLEMENTED` as metadata, `PLANNED` as behaviour | Declared and published; the runtime performs no deduplication or replay. |
+| Streaming results | `RESEARCH` | Nothing in the kernel returns or transports an async iterator. |
+| Audit trail | `PLANNED` | The word appears in docstrings; there is no audit system. |
+| Capability-to-capability composition | `RESEARCH` | No nested `ExecutionContext`, no propagation contract. |
+| Multi-tenancy | `RESEARCH` | No tenant concept anywhere in the kernel. |
+| Free-threaded Python | `RESEARCH` | Immutability after compile is designed for it; nothing is verified under a free-threaded build. |
+
+## HTTP — `agnara-http`
+
+| Subsystem | Status | Notes |
+| --- | --- | --- |
+| ASGI boundary | `IMPLEMENTED` | `http` and `lifespan` scopes. ADR 0041. |
+| Lifespan bridge | `IMPLEMENTED` | ADR 0029. |
+| Routing | `IMPLEMENTED` | Compiled route registry. ADR 0034. |
+| Request binding | `IMPLEMENTED` | Path, query, header and body only. ADR 0026. |
+| Response serialization | `IMPLEMENTED` | Deterministic success responses. ADR 0027. |
+| RFC 9457 problem responses | `IMPLEMENTED` | ADR 0028, ADR 0030. |
+| OpenAPI projection | `IMPLEMENTED` | Deterministic, pinned against a fixture. ADR 0032. |
+| Documentation providers | `IMPLEMENTED` | Swagger UI, ReDoc and Scalar, vendored and version-pinned. ADR 0036-0040. |
+| Discovery endpoint | `IMPLEMENTED` | ADR 0049. |
+| Explorer | `IMPLEMENTED` | Read-only shell. ADR 0052. |
+| Public composition API | `EXPERIMENTAL` | The `Http(...)` shape in `docs/API_DESIGN.md` section 4 is a design sketch, not stable syntax. |
+| Cookies, forms, multipart, uploads | `PLANNED` | No binding source exists for any of them. |
+| Streaming, SSE, WebSockets | `PLANNED` | The ASGI boundary handles no `websocket` scope. |
+| Middleware / interceptors | `RESEARCH` | No extension point. |
+| CORS, compression, static files, proxy headers, trusted hosts | `PLANNED` | None present. |
+| Content negotiation, conditional and range requests | `RESEARCH` | None present. |
+| HTTP/2, HTTP/3 | `RESEARCH` | A server concern today; no Agnara position recorded. |
+
+## MCP — `agnara-mcp`
+
+| Subsystem | Status | Notes |
+| --- | --- | --- |
+| Tool projection | `IMPLEMENTED` | ADR 0043, ADR 0044. |
+| Tool invocation dispatch | `IMPLEMENTED` | |
+| Schema mapping | `IMPLEMENTED` | |
+| Result projection | `IMPLEMENTED` | Canonical results into MCP shapes. |
+| Interaction-required projection | `IMPLEMENTED` | |
+| Authorization and principal mapping | `IMPLEMENTED` | |
+| Protocol version pinning | `IMPLEMENTED` | ADR 0010. |
+| Task boundary | `DESIGNED` | ADR 0042 decides the boundary; no multi-round-trip runtime. |
+| Resources, prompts | `RESEARCH` | Whether capabilities map to them coherently is undecided. |
+| Progress, sessions, notifications | `PLANNED` | |
+| Streamable HTTP, stdio transports | `PLANNED` | |
+| Sampling, elicitation | `RESEARCH` | |
+| Pagination | `PLANNED` | |
+
+## Other surfaces
+
+| Subsystem | Status | Notes |
+| --- | --- | --- |
+| CLI scaffolding | `IMPLEMENTED` | `project create`, `app create`, architectures, `--with`, profiles, aliases. |
+| CLI introspection | `IMPLEMENTED` | `apps`, `inspect`, `graph`, `schema openapi`, `context`. |
+| Project manifest | `IMPLEMENTED` | `agnara.toml`. ADR 0059. No schema version field yet. |
+| Telemetry bridges | `IMPLEMENTED` | OpenTelemetry metrics and spans. ADR 0054-0058. |
+| A2A | `PLANNED` | Namespace reserved. |
+| Events / AsyncAPI | `PLANNED` | Namespace reserved. |
+| Tasks and durable execution | `RESEARCH` | No package, no abstraction. |
+| Workflows | `RESEARCH` | Whether Agnara should own one is undecided. |
+| Realtime | `RESEARCH` | |
+| Testing utilities | `PLANNED` | No first-party harness; the repository tests the framework, not applications built on it. |
+| Plugin system | `RESEARCH` | No discovery, loading or trust model. |
+| Persistence, cache, queue and scheduler integrations | `RESEARCH` | |
+| Typed client generation | `RESEARCH` | |
+| Native acceleration | `DEFERRED` | ADR-level position: only after measured bottlenecks. |
+
+## Quality infrastructure
+
+| Subsystem | Status | Notes |
+| --- | --- | --- |
+| Lint, format, type check | `IMPLEMENTED` | Ruff and ty, enforced in CI. |
+| Test suite | `IMPLEMENTED` | Unit, architecture, contract, conformance, integration and release tiers. |
+| Architecture enforcement tests | `IMPLEMENTED` | Package boundaries, import direction, introspection field decisions, generated-app layering. |
+| Cross-platform CI | `IMPLEMENTED` | Linux, macOS, Windows. |
+| Packaging gate | `IMPLEMENTED` | Builds all seven distributions and installs the published one outside the workspace. |
+| Release readiness program | `IMPLEMENTED` | Evidence expires against the commit it was recorded on. |
+| Benchmarks | `IMPLEMENTED` (baseline only) | Four recorded baselines; no budgets, no regression gate. |
+| Property testing and fuzzing | `PLANNED` | None. |
+| Protocol conformance suites | `PLANNED` | MCP conformance is repository-authored; no upstream suite is run. |
+| Security scanning, SBOM, signing | `PLANNED` | None configured. `SECURITY.md` records this. |
+| Documentation consistency checks | `IMPLEMENTED` | This table is machine-checked where possible. |
+
+## How to change this file
+
+Change the code first. A status here is a claim about the repository, and the
+consistency test exists so that the claim cannot outlive the code that made it
+true. When a subsystem's status changes, the pull request that changes the
+behaviour is the one that updates this row.

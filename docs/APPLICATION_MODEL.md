@@ -163,27 +163,40 @@ Apps must not mutate the global registry after freeze.
 
 ## App descriptor
 
-Each app exposes a small descriptor or registration function.
+This section previously sketched a `Module` / `ModuleBuilder` API. Neither
+ever existed. The design was settled differently by ADR 0065 and shipped as
+`App`, so the sketch is replaced here rather than left for a reader to follow
+into names the framework does not have.
 
-Illustrative API:
+An app declares; a project mounts:
 
 ```python
-from agnara import Module
+from agnara import Agnara, App
+from agnara.core.di import DIRegistry
 
-module = Module(
-    name="payments",
-    description="Payment capabilities",
+payments = App(
+    "payments",
+    description="Payment capabilities.",
+    module="shop.apps.payments",
 )
+
+
+@payments.capability(description="Refund a captured payment.", idempotent=False)
+def refund(payment_id: str) -> str: ...
+
+
+def register(app: Agnara, dependencies: DIRegistry) -> None:
+    app.include(payments)
 ```
 
-or:
+The app name becomes the capability namespace, so the id is
+`payments.refund`. The project name does not appear in it: a project is
+renamed far more readily than a bounded context, and an id is referenced by
+policy rules, audit records and agent manifests.
 
-```python
-def install(module: ModuleBuilder) -> None:
-    ...
-```
-
-The exact API remains subject to the RFC and golden examples.
+`AppDescriptor` is the frozen identity behind `App`, and is what introspection
+projects. Declaration is separate from mounting, so an app can be imported and
+tested without a project.
 
 ## Important invariant
 
