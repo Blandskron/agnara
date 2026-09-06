@@ -47,6 +47,16 @@ without being published. See the `0.1.0a2` scope note below.
   `vertical`, is refused with the available alternatives instead of silently
   producing a different layout ([#244]).
 
+### Changed
+
+- The generators are now pinned by a golden record of what they produce, and
+  the dependency-direction rules for a generated app derive their file set
+  from the generated tree instead of a hardcoded list, so they cover both
+  architectures and an app with inbound adapters. Generated projects are also
+  asserted to use `
+` line endings and POSIX paths on every platform. Four
+  superseded direction tests are removed rather than duplicated ([#252]).
+
 ### Fixed
 
 - `agnara app create` wrote `exposures = []` into every `[apps.<name>]` table
@@ -502,6 +512,7 @@ under `0.1.0a2` instead.
 [#246]: https://github.com/Blandskron/agnara/issues/246
 [#248]: https://github.com/Blandskron/agnara/issues/248
 [#250]: https://github.com/Blandskron/agnara/issues/250
+[#252]: https://github.com/Blandskron/agnara/issues/252
 [Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...develop
 [0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3
 [0.1.0a2]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...v0.1.0a2

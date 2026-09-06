@@ -568,9 +568,36 @@ complete because the alpha published only the `agnara` core distribution. See
   document describing every file, its action and whether it conflicts, emitted
   by both generators from the same plan.
   Tracking: GitHub Issues #231 and #233.
-- [ ] E0A.12 Add golden-file tests for generated projects/apps.
-- [ ] E0A.13 Add Windows/Linux/macOS path tests.
-- [ ] E0A.14 Add architecture tests for generated app dependency direction.
+- [x] E0A.12 Add golden-file tests for generated projects/apps. Four
+  scenarios -- a project, a default app, a minimal app and an app with two
+  exposures -- are pinned in `tests/cli/fixtures/generated_reference.json`,
+  regenerated from the generators themselves by
+  `uv run python -m tests.cli.reference_projects` and never by hand. Stored as
+  JSON rather than a fixture tree of real files, because `.py` files under
+  `tests/` would be linted by Ruff and collected by pytest: a generated
+  `test_capabilities.py` would run as a repository test. A one-word change to
+  a docstring in the default template fails two of these.
+  Tracking: GitHub Issue #252.
+- [x] E0A.13 Add Windows/Linux/macOS path tests. Every generated file uses
+  `
+` on every platform, across all four scenarios; `agnara.toml` and the
+  `--json` plan report POSIX paths; a parsed manifest path is relative,
+  POSIX and free of `..`; nothing generated embeds the directory it happened
+  to be created in; an upper-case app name is refused, because on a
+  case-insensitive filesystem the package and the import would diverge.
+  Previously only `project create` asserted line endings, and `app create`
+  asserted none. Patching the generator to write CRLF fails eight cases.
+  Tracking: GitHub Issue #252.
+- [x] E0A.14 Add architecture tests for generated app dependency direction.
+  The four rules ADR 0061 introduced now derive their file set from the
+  generated tree rather than from a literal `EXPECTED_FILES`, so they run
+  across both architectures and across an app with inbound adapters, and a
+  file the generator starts writing is covered without anyone remembering to
+  list it. Two rules are added: an inbound adapter depends on the application
+  layer and reaches no deeper, and nothing imports an inbound adapter. The
+  four superseded copies in `test_app_create.py` are removed rather than left
+  as duplicates. Making the application layer import a concrete adapter fails
+  six cases. Tracking: GitHub Issue #252.
 
 ### Acceptance
 
