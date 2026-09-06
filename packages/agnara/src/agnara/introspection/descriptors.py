@@ -29,6 +29,7 @@ __all__ = [
     "INTROSPECTION_FORMAT",
     "INTROSPECTION_VERSION",
     "ApplicationDescriptor",
+    "BoundedContextDescriptor",
     "CapabilityDescriptor",
     "DependencyDescriptor",
     "ExposureDescriptor",
@@ -357,12 +358,41 @@ class CapabilityDescriptor:
 
 
 @frozen_slots_dataclass
+class BoundedContextDescriptor:
+    """One app an application mounts: a bounded context, by ADR 0011.
+
+    Named for what ADR 0011 calls it, rather than `AppDescriptor`, because
+    that name belongs to the core type this projects and two public types
+    sharing one name is what #259 removed.
+
+    `AppDescriptor.module` is deliberately not projected. It is source layout,
+    and an authorized discovery endpoint publishing it would tell a viewer who
+    asked what a context offers where its files live instead.
+
+    Which capabilities this context owns is not carried either: a capability id
+    is ``<app>.<name>`` by ADR 0065, so the answer is already in the ids and
+    duplicating it would mean keeping two answers consistent through filtering.
+    """
+
+    name: str
+    description: str | None = None
+
+    def __post_init__(self) -> None:
+        _text(self.name, field="bounded context name")
+        _optional_text(self.description, field="bounded context description")
+
+    def json_data(self) -> dict[str, Any]:
+        return {"name": self.name, "description": self.description}
+
+
+@frozen_slots_dataclass
 class ApplicationDescriptor:
     """One compiled application: its namespace, capabilities and providers."""
 
     name: str
     capabilities: tuple[CapabilityDescriptor, ...] = ()
     providers: tuple[ProviderDescriptor, ...] = ()
+    apps: tuple[BoundedContextDescriptor, ...] = ()
 
     def __post_init__(self) -> None:
         _text(self.name, field="app name")
@@ -378,9 +408,18 @@ class ApplicationDescriptor:
             raise IntrospectionError(
                 "introspection app providers must be a tuple of ProviderDescriptor values"
             )
+        if not isinstance(self.apps, tuple) or any(
+            not isinstance(item, BoundedContextDescriptor) for item in self.apps
+        ):
+            raise IntrospectionError(
+                "introspection apps must be a tuple of BoundedContextDescriptor values"
+            )
         identifiers = [capability.id for capability in self.capabilities]
         if len(identifiers) != len(set(identifiers)):
             raise IntrospectionError(f"introspection app {self.name!r} repeats a capability id")
+        contexts = [context.name for context in self.apps]
+        if len(contexts) != len(set(contexts)):
+            raise IntrospectionError(f"introspection app {self.name!r} repeats a bounded context")
 
     @property
     def transports(self) -> tuple[str, ...]:
@@ -395,6 +434,7 @@ class ApplicationDescriptor:
         return {
             "name": self.name,
             "transports": list(self.transports),
+            "apps": [item.json_data() for item in self.apps],
             "capabilities": [item.json_data() for item in self.capabilities],
             "providers": [item.json_data() for item in self.providers],
         }

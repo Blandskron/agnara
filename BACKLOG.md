@@ -644,7 +644,21 @@ Generated code must:
   introspection and E1A.6 will freeze. Declaring the same capability name in
   two differently named apps stays legal, which is the point of ADR 0065.
   Removing the check fails six of the 21 cases. Tracking: GitHub Issue #257.
-- [ ] E1A.4 Expose app metadata through introspection.
+- [x] E1A.4 Expose app metadata through introspection.
+  `ApplicationDescriptor.apps` carries a `BoundedContextDescriptor` per app an
+  application mounts, populated from `Agnara.apps`. This corrected a mapping
+  the architecture test had been asserting: `ARCHITECTURE.md` section 10
+  promises "Apps", and the concept pointed at `IntrospectionSnapshot.apps`,
+  which holds whole compiled applications -- not apps, by ADR 0011 and
+  ADR 0065. Until E1A.1 there was nothing better to point it at.
+  `AppDescriptor.module` is deliberately not projected: it is source layout,
+  and a discovery endpoint publishing it would tell a viewer who asked what a
+  context offers where its files live. Which capabilities a context owns is
+  not projected either, because a capability id is `<app>.<name>` and
+  duplicating it would mean keeping two answers consistent through filtering.
+  `DiscoveryField.APPS` makes publishing them their own decision, as RFC 0003
+  requires; withholding them leaves the capabilities. 16 cases. Removing the
+  projection fails four. Tracking: GitHub Issue #261.
 - [ ] E1A.5 Define cross-app public contract rules.
 - [ ] E1A.6 Freeze app registry during project compilation.
 
@@ -692,6 +706,14 @@ Generated code must:
 - the complete lifecycle is visible and understandable to a human maintainer.
 
 ## Carried technical debt (post-0.1.0a3 audit)
+
+- [ ] D6 `.apps` means two things. On `ApplicationDescriptor` it is the
+  bounded contexts an application mounts (E1A.4); on `IntrospectionSnapshot`
+  it is a tuple of whole applications, which ADR 0011 says are not apps. #260
+  renamed the misleading *type* but not the field, because a field name is
+  part of the serialized document and changing it needs an
+  `INTROSPECTION_VERSION` bump. Rename it to `applications` in the next
+  snapshot format change rather than separately.
 
 - [ ] D5 Generated code violates its own Ruff configuration when the project
   or app name is long. `E501` on lines whose length depends on an interpolated

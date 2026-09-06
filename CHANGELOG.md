@@ -59,6 +59,11 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- The introspection snapshot names the bounded contexts an application
+  mounts. `ApplicationDescriptor.apps` carries a `BoundedContextDescriptor`
+  per app, and `DiscoveryField.APPS` decides whether they are published. An
+  app's module is deliberately not projected, because it is source layout
+  ([#261]).
 - `Agnara.include` refuses a second app claiming a name already mounted,
   raising the new `DuplicateAppError` rather than reporting a capability
   clash. Two apps sharing a name but declaring different capabilities were
@@ -544,6 +549,7 @@ under `0.1.0a2` instead.
 [#254]: https://github.com/Blandskron/agnara/issues/254
 [#257]: https://github.com/Blandskron/agnara/issues/257
 [#259]: https://github.com/Blandskron/agnara/issues/259
+[#261]: https://github.com/Blandskron/agnara/issues/261
 [Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...develop
 [0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3
 [0.1.0a2]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...v0.1.0a2

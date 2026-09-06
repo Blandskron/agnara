@@ -24,6 +24,7 @@ from agnara.introspection import (
     INTROSPECTION_FORMAT,
     INTROSPECTION_VERSION,
     ApplicationDescriptor,
+    BoundedContextDescriptor,
     CapabilityDescriptor,
     DependencyDescriptor,
     DiscoveryField,
@@ -45,7 +46,10 @@ ARCHITECTURE = WORKSPACE_ROOT / "ARCHITECTURE.md"
 #: either way somebody has to decide which.
 CONCEPT_HOME: dict[str, tuple[type, str]] = {
     "Project": (IntrospectionSnapshot, "project"),
-    "Apps": (IntrospectionSnapshot, "apps"),
+    # E1A.4 moved this: `IntrospectionSnapshot.apps` is a tuple of whole
+    # applications, which ADR 0011 and ADR 0065 say are not apps. The
+    # bounded contexts an application mounts live here.
+    "Apps": (ApplicationDescriptor, "apps"),
     "Capabilities": (ApplicationDescriptor, "capabilities"),
     "Exposures": (CapabilityDescriptor, "exposures"),
     "Dependencies": (CapabilityDescriptor, "dependencies"),
@@ -66,6 +70,7 @@ IDENTITY_FIELDS = {
     (CapabilityDescriptor, "id"),
     (ApplicationDescriptor, "name"),
     (ApplicationDescriptor, "capabilities"),
+    (BoundedContextDescriptor, "name"),
     (IntrospectionSnapshot, "apps"),
     (IntrospectionSnapshot, "project"),
     (IntrospectionSnapshot, "format"),
@@ -86,6 +91,8 @@ FIELD_DECISION: dict[tuple[type, str], DiscoveryField] = {
     (CapabilityDescriptor, "policies"): DiscoveryField.POLICIES,
     (CapabilityDescriptor, "exposures"): DiscoveryField.EXPOSURES,
     (ApplicationDescriptor, "providers"): DiscoveryField.PROVIDERS,
+    (ApplicationDescriptor, "apps"): DiscoveryField.APPS,
+    (BoundedContextDescriptor, "description"): DiscoveryField.APPS,
 }
 
 
@@ -155,6 +162,7 @@ def test_no_descriptor_field_is_published_without_a_named_decision() -> None:
         ProviderDescriptor,
         PolicyDescriptor,
         ExposureDescriptor,
+        BoundedContextDescriptor,
     ):
         for field in dataclasses.fields(owner):
             described.add((owner, field.name))
