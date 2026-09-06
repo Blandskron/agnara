@@ -13,7 +13,17 @@ without being published. See the `0.1.0a2` scope note below.
 
 ## [Unreleased]
 
+## [0.1.0a3] - 2026-09-06
+
+Integration alpha. Only `agnara` is published to PyPI; all seven workspace
+distributions share `0.1.0a3`. Adapter functionality below is available from
+the repository. This remains experimental and is not production-ready.
+
 ### Fixed
+
+- Release readiness accepts a populated, dated target changelog section after
+  the release cut, checking synchronized target versions and comparison links.
+  A historical release section cannot satisfy a new target ([#237]).
 
 - Telemetry events now report a tracking ID supplied through
   `ExecutionContext(tracking_id=...)`, not only one found in
@@ -35,6 +45,9 @@ without being published. See the `0.1.0a2` scope note below.
   compiled plan's observers ([#211]).
 
 ### Changed
+
+- Enabled GitHub private vulnerability reporting and documented the private
+  reporting channel for the experimental-alpha release ([#237]).
 
 - `agnara project create` now reports what it wrote with the same renderer
   `--dry-run` uses, so a preview and a real run cannot describe the same plan
@@ -438,7 +451,8 @@ under `0.1.0a2` instead.
   `FrozenInstanceError` instead of CPython 3.14's confusing internal
   `TypeError` ([#3]).
 
-[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...develop
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...develop
+[0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3
 [0.1.0a2]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...v0.1.0a2
 [0.1.0a1]: https://github.com/Blandskron/agnara/releases/tag/v0.1.0a1
 [#3]: https://github.com/Blandskron/agnara/issues/3
@@ -517,3 +531,5 @@ under `0.1.0a2` instead.
 [#231]: https://github.com/Blandskron/agnara/issues/231
 [#233]: https://github.com/Blandskron/agnara/issues/233
 [#235]: https://github.com/Blandskron/agnara/issues/235
+
+[#237]: https://github.com/Blandskron/agnara/issues/237

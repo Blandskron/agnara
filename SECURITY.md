@@ -6,7 +6,9 @@ Agnara treats security as part of the capability execution model, not as transpo
 
 ## Reporting vulnerabilities
 
-Before public release, configure GitHub Security Advisories or another private reporting channel.
+Report suspected vulnerabilities privately through
+[GitHub private vulnerability reporting](https://github.com/Blandskron/agnara/security/advisories/new).
+The channel was enabled and verified for the `0.1.0a3` release preparation.
 
 Do not request vulnerability details through public issues.
 

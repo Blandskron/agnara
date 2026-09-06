@@ -1,6 +1,6 @@
 [project]
 name = "agnara-mcp"
-version = "0.1.0a2"
+version = "0.1.0a3"
 description = "Model Context Protocol exposure adapter for Agnara capabilities."
 readme = "README.md"
 requires-python = ">=3.14"

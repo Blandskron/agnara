@@ -13,7 +13,7 @@ A capability is defined once and may later be exposed through HTTP, MCP, A2A, ev
 ## Install
 
 ```bash
-pip install agnara==0.1.0a2
+pip install agnara==0.1.0a3
 ```
 
 Or track the newest pre-release:
@@ -25,9 +25,21 @@ pip install --pre agnara
 Requires CPython 3.14 or newer. The core distribution has no third-party
 dependencies.
 
-`0.1.0a2` publishes the `agnara` core kernel only. The HTTP, OpenAPI, MCP and
+`0.1.0a3` publishes the `agnara` core kernel only. The HTTP, OpenAPI, MCP and
 CLI adapters live in sibling packages in this repository and were not uploaded
 to PyPI in this release, so they are not installable with `pip` yet.
+
+## What changes in 0.1.0a3
+
+The core adds protocol-neutral introspection and explicit discovery filtering,
+plus invocation identity and stricter telemetry-hook validation. The repository
+also adds MCP tool dispatch, authorized HTTP discovery, the read-only Explorer,
+CLI inspection and generators, and OpenTelemetry metrics and tracing bridges.
+These adapters are versioned and tested here; only the core is published.
+
+See [the release notes](docs/releases/v0.1.0a3.md) for migration guidance and
+bounded conformance evidence. The install pin above becomes available when the
+release is published; `0.1.0a2` remains the previous published version.
 
 ## Quick start
 
@@ -137,7 +149,7 @@ The capability graph is.
 11. No LLM provider belongs in the core.
 12. Performance claims must be reproducible.
 
-## Target developer experience
+## Target developer experience (design, not current API)
 
 ```python
 from agnara import Agnara
@@ -165,7 +177,7 @@ One telemetry model.
 
 Multiple protocol surfaces.
 
-## Security-aware capabilities
+## Security-aware capabilities (design sketch)
 
 ```python
 @app.capability(
@@ -217,7 +229,7 @@ Execution Runtime
 ```text
 agnara/
 ├── packages/
-│   ├── agnara-core/
+│   ├── agnara/
 │   ├── agnara-http/
 │   ├── agnara-mcp/
 │   ├── agnara-a2a/
@@ -291,7 +303,7 @@ The architecture must be safe under conventional CPython and designed consciousl
 
 ```text
 Status:         Alpha (experimental)
-Latest release: v0.1.0a2
+Release target: v0.1.0a3 (publication pending)
 ```
 
 `v0.1.0a2` is the first published release: an architectural proof that Agnara
@@ -329,7 +341,7 @@ Pinned Swagger UI, ReDoc and Scalar providers are optional consumers of
 generated OpenAPI. They do not belong in `agnara-core`, and none is selected
 as an unconditional default before the shared browser conformance gate.
 
-The richer Agnara Explorer uses a separate protocol-neutral introspection
+The read-only Agnara Explorer uses a separate protocol-neutral introspection
 snapshot so it can show apps, non-HTTP exposures, dependencies, policies,
 effects, risk, idempotency and confirmation. Machine-readable discovery
 remains available without parsing or enabling any HTML UI.
@@ -353,9 +365,9 @@ agnara project create commerce
 
 cd commerce
 
-agnara app create users --with http
-agnara app create payments --with http,mcp,tasks
-agnara app create recommendations --with mcp,a2a
+agnara app create users
+agnara app create payments
+agnara app create recommendations
 ```
 
 The project can contain many apps, but each app is a **business module**, not a protocol-specific application.
@@ -380,7 +392,10 @@ payments/
 └── tests/
 ```
 
-Transport code is generated only when requested.
+The implemented generator supports the default modular-hexagonal layout,
+`--dry-run` and `--json`. Exposure selection (`--with`), profiles and a
+`minimal` template are not implemented. Add each generated capability registry
+to `bootstrap.py` using the printed instructions.
 
 Convenience commands such as:
 
@@ -389,7 +404,7 @@ agnara app-mcp tools
 agnara app-api catalog
 ```
 
-may exist as aliases, but internally they are equivalent to normal app creation plus exposure scaffolding.
+are design proposals and are not implemented in this alpha.
 
 Read:
 

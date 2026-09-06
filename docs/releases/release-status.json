@@ -173,8 +173,20 @@
       "title": "Public documentation reflects the implementation",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "README.md, packages/agnara/README.md and examples/quickstart.py describe the 0.1.0a2 published surface and pin 'pip install agnara==0.1.0a2'. The subsystems added since a2 are documented in docs/ and in ADRs 0051-0061, but the user-facing entry points still frame the project at a2. docs/MAINTAINERS_RELEASE.md places version-reference updates on the release branch, so this gate closes during release preparation."
+      "status": "SATISFIED",
+      "detail": "Maintainer approved the prepared README, package README, quickstart and v0.1.0a3 notes on 2026-09-06: \"Apruebo la documentación del release\". Publication scope, invocation_id migration and experimental-alpha limitations are explicit.",
+      "evidence": {
+        "reviewer": "repository maintainer",
+        "date": "2026-09-06",
+        "decision": "Apruebo la documentación del release",
+        "issue": "https://github.com/Blandskron/agnara/issues/237",
+        "paths": [
+          "README.md",
+          "packages/agnara/README.md",
+          "examples/quickstart.py",
+          "docs/releases/v0.1.0a3.md"
+        ]
+      }
     },
     {
       "id": "changelog-accurate",
@@ -188,8 +200,25 @@
       "title": "Security and release checks required by QUALITY_GATES.md",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "QUALITY_GATES.md scopes threat model, dependency audit, secret scanning, static analysis and a private reporting channel to 'before any release beyond experimental alpha'. Observed state on 2026-09-05: security boundary tests EXIST (Explorer authorization and cache-control, MCP authorization, policy ordering, redaction); threat model ABSENT (BACKLOG EPIC 10 lists it unchecked); dependency audit ABSENT (no tooling configured); secret scanning DISABLED (GitHub repository setting); static analysis ABSENT (no CodeQL workflow); private vulnerability reporting NOT CONFIGURED (SECURITY.md itself says to configure it before public release). Whether 0.1.0a3 remains inside the experimental-alpha exemption is a maintainer decision this tool must not make."
+      "status": "SATISFIED",
+      "detail": "Maintainer explicitly confirmed \"Confirmo alpha experimental\" on 2026-09-06. Threat model, dependency audit, secret scanning and dedicated security static analysis remain pending under the existing experimental-alpha scope; no security guarantee is claimed. Private reporting is enabled and verified. Required discovery/redaction/security tests and all 31 real-browser cases passed during release preparation.",
+      "evidence": {
+        "reviewer": "repository maintainer",
+        "date": "2026-09-06",
+        "decision": "Confirmo alpha experimental",
+        "issue": "https://github.com/Blandskron/agnara/issues/237",
+        "private_reporting": {
+          "command": "gh api repos/Blandskron/agnara/private-vulnerability-reporting",
+          "result": {
+            "enabled": true
+          }
+        },
+        "paths": [
+          "QUALITY_GATES.md",
+          "SECURITY.md",
+          "docs/releases/v0.1.0a3.md"
+        ]
+      }
     },
     {
       "id": "version-consistency",

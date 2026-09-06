@@ -2,7 +2,8 @@
 
 Explicit OpenTelemetry metrics and span bridges for Agnara's execution hooks.
 This
-implementation is unreleased repository development beyond `0.1.0a2`.
+implementation is included in the `0.1.0a3` repository release; this
+distribution is not published to PyPI.
 It imports `agnara` and `opentelemetry-api`, never a sibling adapter or the SDK.
 
 ## Composition

@@ -26,6 +26,7 @@ import subprocess
 import sys
 import tomllib
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -167,7 +168,40 @@ def check_changelog() -> tuple[str, str]:
     body = unreleased[: next_release.start()] if next_release else unreleased
     entries = len(re.findall(r"^- ", body, re.MULTILINE))
     if entries == 0:
-        return UNSATISFIED, "[Unreleased] has no entries; nothing to release"
+        # Release preparation moves the entries into the target's dated
+        # section. Historical releases must not satisfy a new target.
+        document = load_status()
+        target = document["current_target"]
+        previous = document["previous_release"]
+        versions = package_versions()
+        if not versions or set(versions.values()) != {target}:
+            return UNSATISFIED, "empty [Unreleased] requires packages at the target version"
+        heading = re.search(
+            rf"^## \[{re.escape(target)}\] - (\d{{4}}-\d{{2}}-\d{{2}})$",
+            text,
+            re.MULTILINE,
+        )
+        if heading is None:
+            return UNSATISFIED, "[Unreleased] is empty and the dated target section is missing"
+        try:
+            date.fromisoformat(heading[1])
+        except ValueError:
+            return UNSATISFIED, "the target changelog date is invalid"
+        release_body = text[heading.end() :]
+        following = re.search(r"^## \[", release_body, re.MULTILINE)
+        if following:
+            release_body = release_body[: following.start()]
+        entries = len(re.findall(r"^- ", release_body, re.MULTILINE))
+        if not entries:
+            return UNSATISFIED, "the target changelog section has no entries"
+        compare = "https://github.com/Blandskron/agnara/compare/"
+        required_links = (
+            f"[Unreleased]: {compare}v{target}...develop",
+            f"[{target}]: {compare}v{previous}...v{target}",
+        )
+        if not all(link in text.splitlines() for link in required_links):
+            return UNSATISFIED, "target and Unreleased comparison links must match the release"
+        return SATISFIED, f"[{target}] carries {entries} entries with release comparison links"
     return SATISFIED, f"[Unreleased] carries {entries} entries"
 
 
