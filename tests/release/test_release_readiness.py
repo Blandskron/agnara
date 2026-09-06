@@ -62,6 +62,50 @@ def gates() -> list[dict[str, Any]]:
     return document()["gates"]
 
 
+@pytest.mark.parametrize(
+    ("mutation", "expected"),
+    [
+        ("none", readiness.SATISFIED),
+        ("wrong-version", readiness.UNSATISFIED),
+        ("historical-section", readiness.UNSATISFIED),
+        ("empty-section", readiness.UNSATISFIED),
+        ("invalid-date", readiness.UNSATISFIED),
+        ("wrong-compare", readiness.UNSATISFIED),
+    ],
+)
+def test_release_cut_requires_evidence_for_the_exact_target(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mutation: str, expected: str
+) -> None:
+    changelog = tmp_path / "CHANGELOG.md"
+    text = (
+        "## [Unreleased]\n\n## [0.1.0a3] - 2026-09-06\n\n"
+        "### Fixed\n\n- A verified change.\n\n"
+        "## [0.1.0a2] - 2026-09-04\n\n- Historical change.\n\n"
+        "[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...develop\n"
+        "[0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3\n"
+    )
+    versions = {"agnara": "0.1.0a3", "agnara-http": "0.1.0a3"}
+    if mutation == "wrong-version":
+        versions["agnara-http"] = "0.1.0a2"
+    elif mutation == "historical-section":
+        text = text.replace("## [0.1.0a3]", "## [0.1.0a1]")
+    elif mutation == "empty-section":
+        text = text.replace("- A verified change.", "")
+    elif mutation == "invalid-date":
+        text = text.replace("2026-09-06", "2026-02-30")
+    elif mutation == "wrong-compare":
+        text = text.replace("v0.1.0a2...v0.1.0a3", "v0.1.0a1...v0.1.0a2")
+    changelog.write_text(text, encoding="utf-8")
+    monkeypatch.setattr(readiness, "CHANGELOG_PATH", changelog)
+    monkeypatch.setattr(readiness, "package_versions", lambda: versions)
+    monkeypatch.setattr(
+        readiness,
+        "load_status",
+        lambda: {"current_target": "0.1.0a3", "previous_release": "0.1.0a2"},
+    )
+    assert readiness.check_changelog()[0] == expected
+
+
 # ---------------------------------------------------------------------------
 # The status file's own integrity
 # ---------------------------------------------------------------------------

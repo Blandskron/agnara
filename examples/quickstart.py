@@ -1,16 +1,16 @@
-"""Agnara 0.1.0a2 quick start.
+"""Agnara 0.1.0a3 quick start.
 
 Runs against the published `agnara` distribution using public API only:
 
-    pip install agnara==0.1.0a2
+    pip install agnara==0.1.0a3
     python quickstart.py
 
-It demonstrates the whole `0.1.0a2` surface: capability declaration with
+It demonstrates core capability execution in `0.1.0a3`: capability declaration with
 security metadata, startup compilation and freezing, dependency injection,
 schema-validated direct invocation, and canonical results.
 
 Transport adapters (HTTP, OpenAPI, MCP) live in sibling packages that are not
-part of this release. See the release notes for the exact published scope.
+published to PyPI by this release. See the release notes for the exact published scope.
 """
 
 from __future__ import annotations

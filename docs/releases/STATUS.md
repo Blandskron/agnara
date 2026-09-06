@@ -1,124 +1,67 @@
 # Release Status
 
-Generated from `docs/releases/release-status.json` and verified by
-`uv run python scripts/check_release_readiness.py`.
-Assessed on **2026-09-05** against commit **`f16f6fc`**.
+Current target: **0.1.0a3 — Integration Alpha**.
+Previous published release: **0.1.0a2**.
 
-```text
-Current target      0.1.0a3  (Integration Alpha)
-Overall status      IN_PROGRESS
-Readiness           83% of mandatory gates  (10 of 12)
-Previous release    0.1.0a2, published 2026-09-04
-Next target         0.1.0a4  (Application Alpha)
-```
+Assessed 2026-09-06 against preparation commit
+`647280a6f09feee591d312d993f59550ed68b90b`, from validated develop
+`3128172baab60383c506ac2b5f3b43fdb29a77bd`.
 
-The readiness percentage is **informational only**. A release is ready when
-*every* mandatory gate is satisfied, never because a percentage looks high.
+The readiness program reports **RELEASE_READY**: every mandatory maturity gate
+has evidence. This is not publication authorization. Final release PR CI,
+review and explicit owner authorization remain separate release gates.
 
----
+## Evidence
 
-## Satisfied gates
-
-| Gate | Kind | Evidence |
-| --- | --- | --- |
-| Full supported test suite passes | evidence | `uv run pytest` — 2053 passed, 31 skipped (browser-only, run in their own CI lane) |
-| Package build succeeds | evidence | `uv build --package agnara` — wheel and sdist produced |
-| Clean-environment installation smoke test succeeds | evidence | wheel installed into a fresh 3.14.4 venv; `agnara` imports from `site-packages`, not the checkout |
-| Python 3.14 baseline verified | automated | all seven packages declare `requires-python >= 3.14`; CI asserts the interpreter |
-| HTTP integration tests pass | evidence | 691 HTTP + 25 cross-surface integration tests; 31 real-browser cases in the required CI lane |
-| MCP integration and conformance tests pass | evidence | 157 tests against pinned `mcp==2.1.1`, including `tests/mcp/test_sdk_conformance.py` |
-| CLI smoke tests pass | evidence | 200 CLI tests; `agnara --version` and `--help` verified |
-| No known release-blocking regression | evidence | 0 open issues; CI green on `develop`; all nine required checks pass on PR #236 |
-| Changelog accurately describes changes since `0.1.0a2` | automated | 29 entries under `[Unreleased]`; `tests/architecture/test_release_governance.py` enforces structure and references |
-| Version references are internally consistent | automated | all seven first-party packages declare `0.1.0a2` |
-
-Optional, also satisfied: **baseline benchmarks published** — four recorded
-baselines under `docs/benchmarks/`.
-
----
-
-## Remaining gates
-
-### 1. Public documentation reflects the implementation — `NEEDS_REVIEW`
-
-`README.md`, `packages/agnara/README.md` and `examples/quickstart.py` describe
-the **`0.1.0a2` published surface** and pin `pip install agnara==0.1.0a2`. The
-subsystems added since then — Explorer, machine-readable discovery, CLI
-introspection and generators, the project manifest, the telemetry port and its
-OpenTelemetry metrics and span bridges — are documented in `docs/` and in ADRs
-0051–0061, but the user-facing entry points still frame the project at `a2`.
-
-`docs/MAINTAINERS_RELEASE.md` places version-reference updates on the release
-branch, so **this gate closes during release preparation**, not before it.
-
-### 2. Security and release checks required by `QUALITY_GATES.md` — `NEEDS_REVIEW`
-
-`QUALITY_GATES.md` scopes its security list to *"before any release beyond
-experimental alpha"*. Whether `0.1.0a3` is still inside that exemption is a
-maintainer decision. Observed state on 2026-09-05:
-
-| Requirement | Observed |
+| Gate | Actual preparation evidence |
 | --- | --- |
-| Security boundary tests | **present** — Explorer authorization and cache-control, MCP authorization, policy ordering, redaction |
-| Threat model | **absent** — `BACKLOG.md` EPIC 10 lists it unchecked |
-| Dependency audit | **absent** — no tooling configured |
-| Secret scanning | **disabled** — GitHub repository setting |
-| Static analysis (CodeQL or equivalent) | **absent** — no workflow |
-| Private vulnerability reporting | **not configured** — `SECURITY.md` says to configure it before public release |
+| Tests | `uv run pytest`: 2059 passed, 31 browser-only skipped; final release/architecture suite: 225 passed |
+| Browser conformance | Both documented browser suites with `AGNARA_RUN_BROWSER_TESTS=1`: 31 passed |
+| Lint / format / types | Ruff check and format check, ty check: passed |
+| Versions / lockfile | Seven distributions at `0.1.0a3`; `uv lock` regenerated only their seven version records; `uv lock --check` passed |
+| Builds / metadata | `uv build --all-packages --out-dir dist/release-a3`: seven wheels and seven sdists; Apache-2.0, license files, Python >=3.14 verified |
+| Clean installation | External CPython 3.14.4 venv, explicit interpreter with `-I`; core quickstart success/failure paths passed before installing adapters; every installed first-party module resolves from site-packages |
+| CLI | Checkout and installed CLI version/help passed; CLI suite passed within full tests |
+| HTTP / MCP / architecture | Passed within full tests; bounded MCP official SDK conformance only |
+| Changelog | Dated 0.1.0a3 section, empty Unreleased, exact previous/target comparison links |
+| Documentation | Maintainer approved prepared public docs and notes on 2026-09-06 |
+| Security scope | Maintainer confirmed experimental alpha on 2026-09-06; private reporting enabled and verified; security boundary and browser tests passed |
 
-This tool reports the facts and refuses to decide. Nothing here weakens
-`QUALITY_GATES.md`: if the maintainer judges that `0.1.0a3` is beyond
-experimental alpha, these become blocking and the gate stays open.
+Artifact names and SHA-256 values are recorded in `release-status.json`.
+They identify local validation artifacts, not future OIDC-published artifacts.
+Source CI evidence:
+[develop CI](https://github.com/Blandskron/agnara/actions/runs/33999688686).
+Release tracking and recorded maintainer decisions:
+[Issue #237](https://github.com/Blandskron/agnara/issues/237).
 
----
+## Remaining release actions
 
-## Blocking issues
+1. Required release PR CI and documented complete-diff review.
+2. Explicit owner authorization to close `v0.1.0a3`.
+3. Merge to main, annotated immutable tag on the accepted commit, existing
+   Trusted Publishing workflow and external PyPI verification.
+4. Propagate release metadata to develop through a PR, then clean up the
+   release branch. Write the maturity history snapshot only after publication.
 
-None in the code. Both remaining gates are judgment or release-preparation
-work; no defect, regression or failing check blocks `0.1.0a3`.
+## Known non-blocking alpha limitations
 
----
+Only `agnara` is authorized for PyPI publication. The other six distributions
+are versioned and buildable but are not uploaded. Threat modeling, dependency
+audit, secret scanning and dedicated security static analysis remain pending
+under the maintainer-confirmed experimental-alpha scope. No production,
+general security, complete protocol conformance or new performance claim is
+made. See `v0.1.0a3.md` for migration and adapter limitations.
 
-## Recommended next work
+The target remains `0.1.0a3` until publication is externally verified and the
+owner confirms transition. No work toward the next release is started.
 
-**Single most important objective: decide the security scoping question for
-`0.1.0a3`.** It is the only gate that cannot be closed by preparing the
-release, and it determines whether `a3` can close at all.
-
-- If `0.1.0a3` stays inside the experimental-alpha exemption, the remaining
-  work is the documentation pass, which belongs on the release branch, and
-  `a3` can close immediately after it.
-- If it does not, `a3` needs a threat model, a dependency audit, secret
-  scanning enabled, static analysis and a private reporting channel first.
-
-Either way, the cheapest useful next steps are enabling GitHub secret scanning
-and private vulnerability reporting: both are repository settings, neither
-requires code, and both are prerequisites for `0.1.0b1` regardless of the `a3`
-decision.
-
-**Feature freeze:** not recommended yet. `a3` has no code work outstanding, but
-`0.1.0a4` requires reference applications that do not exist, so development
-does not stop when `a3` closes.
-
----
-
-## Evidence freshness
-
-Evidence declares the paths it covers and expires when one of them changes
-between its recorded commit and `HEAD`. Adding a test under `tests/` correctly
-expires the full-suite result; it does not touch the MCP, HTTP, CLI or
-packaging results, because none of them covers that file.
-
-Evidence that declares no coverage expires on any commit. Refusing to guess is
-the safe answer when nothing says what a result depended on.
-
-## How to reproduce this
+## Reproduce
 
 ```bash
-uv run python scripts/check_release_readiness.py --verbose
+uv run python scripts/check_release_readiness.py --verbose --require-ready
 ```
 
-Automated gates are re-derived from the repository on every run. Evidence is
-trusted only while the commit it was recorded on is still `HEAD` — evidence
-recorded on an older commit is reported `STALE`, so this page cannot quietly
-outlive the code it describes.
+Evidence expires when a covered path changes from its recorded commit to HEAD.
+Records without coverage expire on any commit. Automated checks inspect the
+repository; manual decisions retain their human evidence. The evidence-only
+commit following preparation does not change the validated packages or tests.
