@@ -507,7 +507,22 @@ complete because the alpha published only the `agnara` core distribution. See
   invokes, passes its own tests and passes the real Ruff lint and format
   checks under the generated project's configuration. Recorded in ADR 0062,
   which remains Proposed. Tracking: GitHub Issue #244.
-- [ ] E0A.6 Implement `--with` exposure selection.
+- [x] E0A.6 Implement `--with` exposure selection. `--with http,mcp` adds one
+  `adapters/inbound/<exposure>.py` each and nothing else, matching the tree
+  `docs/SCAFFOLDING.md` gives; the vocabulary is validated, repeats are
+  dropped and the order asked for is preserved. This also closed the second
+  half of the declared-versus-actual defect family: `exposures` was written as
+  `[]` whatever was requested, so `agnara apps` reported an empty list for an
+  app that had adapters. A generated adapter imports only this app's
+  application layer and records its capabilities in `EXPOSED`, because no
+  adapter distribution is on PyPI and `agnara-http`, `agnara-a2a` and
+  `agnara-events` declare an empty public surface on purpose -- importing one
+  would produce a project that cannot install, or leak a private name into
+  generated user code. That makes the "no transport import outside its adapter"
+  invariant true by construction. `minimal` refuses an exposure, naming the
+  flag that resolves it, because it has no adapters package. 26 cases, 14 of
+  which fail against the previous behaviour. Recorded in ADR 0063, which
+  remains Proposed. Tracking: GitHub Issue #246.
 - [ ] E0A.7 Implement profiles: core/api/mcp/agentic/worker/full.
 - [ ] E0A.8 Implement optional CLI aliases without duplicate code paths.
 - [x] E0A.9 Implement `--dry-run`.

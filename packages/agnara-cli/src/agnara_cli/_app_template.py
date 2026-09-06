@@ -19,6 +19,8 @@ with the same inputs produce byte-identical output. See ADR 0061.
 
 from __future__ import annotations
 
+from agnara_cli._exposure_template import inbound_adapter
+
 __all__ = ["app_files"]
 
 
@@ -349,11 +351,14 @@ def test_an_empty_repository_lists_nothing() -> None:
 '''
 
 
-def app_files(project: str, app: str) -> dict[str, str]:
+def app_files(project: str, app: str, exposures: tuple[str, ...] = ()) -> dict[str, str]:
     """Every file ``agnara app create`` writes, keyed by project-relative path.
 
     Templates refer to the app's own package as ``{module}`` so the import
     paths are written once here rather than in every template string.
+
+    ``exposures`` adds one ``adapters/inbound/<exposure>.py`` each, which is
+    all `docs/SCAFFOLDING.md` asks ``--with`` to add.
     """
     module = f"{project}.apps.{app}"
     root = f"src/{project}/apps/{app}"
@@ -387,4 +392,6 @@ def app_files(project: str, app: str) -> dict[str, str]:
         f"{root}/tests/__init__.py": _init(f"Tests local to the {app} app."),
         f"{root}/tests/test_capabilities.py": _tests(app),
     }
+    for exposure in exposures:
+        files[f"{root}/adapters/inbound/{exposure}.py"] = inbound_adapter(app, exposure)
     return {path: contents.replace("{module}", module) for path, contents in files.items()}
