@@ -116,16 +116,35 @@ Call it from the project composition root::
 
 from __future__ import annotations
 
-from agnara import Agnara
+from agnara import Agnara, App
 from agnara.core.di import DIRegistry
 
 from {{module}}.capabilities import get_record, list_records
 
-__all__ = ["register"]
+__all__ = ["{app}", "register"]
+
+
+#: This bounded context, and the capabilities it owns. The name becomes the
+#: capability namespace, so these are ``{app}.get_record`` and
+#: ``{app}.list_records`` whichever project mounts them.
+{app} = App(
+    "{app}",
+    description="The {app} bounded context.",
+    module="{{module}}",
+)
+
+{app}.capability(
+    description="Read one {app} record.",
+    idempotent=True,
+)(get_record)
+{app}.capability(
+    description="List every {app} record.",
+    idempotent=True,
+)(list_records)
 
 
 def register(app: Agnara, dependencies: DIRegistry) -> None:
-    """Register this app's capabilities on a composition.
+    """Mount this app on a composition.
 
     ``dependencies`` is unused: a minimal app declares no providers, because
     its capabilities take everything they need as arguments. The parameter
@@ -135,8 +154,7 @@ def register(app: Agnara, dependencies: DIRegistry) -> None:
     Registration closes when the project calls ``compile()``, so this must run
     at import time of the composition root, not later.
     """
-    app.capability(description="Read one {app} record.", idempotent=True)(get_record)
-    app.capability(description="List every {app} record.", idempotent=True)(list_records)
+    app.include({app})
 '''
 
 

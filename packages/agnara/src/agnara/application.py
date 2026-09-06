@@ -22,48 +22,17 @@ call directly, and leaves execution entirely to EPIC 4.
 
 from __future__ import annotations
 
-import inspect
 from collections.abc import Callable, Iterable
 from typing import Any, overload
 
-from agnara.capability.definition import CapabilityDefinition, Handler
-from agnara.capability.identity import CapabilityId
-from agnara.capability.metadata import Confirmation, Idempotency, Risk
+from agnara._declaration import declare_into, validated_namespace
+from agnara.app import App
+from agnara.capability.definition import Handler
+from agnara.capability.metadata import Confirmation, Risk
 from agnara.capability.registry import CapabilityRegistry, FrozenCapabilityRegistry
 from agnara.errors import DefinitionError
 
 __all__ = ["Agnara"]
-
-
-def _describe(handler: Handler) -> str | None:
-    """Use the handler's docstring summary when no description is given.
-
-    Agent consumers need a description to decide whether a capability is the
-    one they want (PRINCIPLES.md P10). Requiring every declaration to repeat
-    the docstring would guarantee the two drift apart, so the docstring is
-    the default and an explicit ``description`` always wins.
-
-    Only the first paragraph is taken; the rest is implementation detail for
-    a human reading the source.
-    """
-    doc = inspect.getdoc(handler)
-    if not doc:
-        return None
-    summary = doc.split("\n\n", 1)[0].strip()
-    return summary or None
-
-
-def _idempotency_from(idempotent: bool | None) -> Idempotency:
-    """Map the authoring surface's boolean onto the honest tri-state.
-
-    ``docs/API_DESIGN.md`` section 11 writes ``idempotent=False``, which is
-    the natural way to say it. The model keeps three states because RFC 0001
-    requires that silence mean ``UNKNOWN`` rather than a false claim, so
-    omitting the argument is not the same as passing ``False``.
-    """
-    if idempotent is None:
-        return Idempotency.UNKNOWN
-    return Idempotency.YES if idempotent else Idempotency.NO
 
 
 class Agnara:
@@ -76,21 +45,7 @@ class Agnara:
     __slots__ = ("_name", "_registry")
 
     def __init__(self, name: str) -> None:
-        if not isinstance(name, str):
-            raise DefinitionError(f"application name must be a string, got {type(name).__name__}")
-        if not name:
-            raise DefinitionError("application name must not be empty")
-        # Validate through CapabilityId so there is one rule for what a
-        # namespace may look like, rather than two that can drift apart.
-        # The probe name never escapes; only the namespace verdict matters.
-        try:
-            CapabilityId(namespace=name, name="probe")
-        except DefinitionError as exc:
-            raise DefinitionError(
-                f"invalid application name {name!r}: it becomes the namespace of "
-                "every capability declared on it, so it must be a single Python identifier"
-            ) from exc
-        self._name = name
+        self._name = validated_namespace(name, subject="application")
         self._registry = CapabilityRegistry()
 
     @property
@@ -163,24 +118,18 @@ class Agnara:
         """
 
         def declare[F: Handler](func: F) -> F:
-            if not callable(func):
-                raise DefinitionError(
-                    f"@{self._name}.capability expects a callable, got {type(func).__name__}"
-                )
-            self._registry.register(
-                CapabilityDefinition.declare(
-                    id=CapabilityId(
-                        namespace=self._name,
-                        name=name if name is not None else getattr(func, "__name__", ""),
-                    ),
-                    handler=func,
-                    description=description if description is not None else _describe(func),
-                    scopes=scopes,
-                    effects=effects,
-                    risk=risk,
-                    confirmation=confirmation,
-                    idempotency=_idempotency_from(idempotent),
-                )
+            declare_into(
+                self._registry,
+                namespace=self._name,
+                owner=self._name,
+                func=func,
+                name=name,
+                description=description,
+                scopes=scopes,
+                effects=effects,
+                risk=risk,
+                confirmation=confirmation,
+                idempotent=idempotent,
             )
             return func
 
@@ -189,6 +138,34 @@ class Agnara:
         if handler is None:
             return declare
         return declare(handler)
+
+    def include(self, app: App) -> App:
+        """Mount an app's capabilities on this application.
+
+        The app keeps its own namespace, so a capability declared on
+        ``App("payments")`` is ``payments.get_record`` however many projects
+        mount it. That is what lets two apps from the same scaffold coexist:
+        they declare the same names in different bounded contexts.
+
+        Args:
+            app: the declared app to mount.
+
+        Returns:
+            `app`, so a composition root can mount and keep a reference in
+            one statement.
+
+        Raises:
+            DefinitionError: `app` is not an `App`.
+            RegistryFrozenError: this application has already compiled.
+            DuplicateCapabilityError: two mounted apps claim the same
+                capability id, which can only happen if they share a name.
+        """
+        if not isinstance(app, App):
+            raise DefinitionError(f"{self._name}.include expects an App, got {type(app).__name__}")
+        declarations = app.capabilities
+        for capability_id in declarations:
+            self._registry.register(declarations[capability_id])
+        return app
 
     def compile(self) -> FrozenCapabilityRegistry:
         """Close registration and return the immutable capability view.
