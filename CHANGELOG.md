@@ -15,6 +15,12 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- `agnara app create --profile api` starts an app from a named set of
+  exposures: `core`, `api`, `mcp`, `agentic`, `worker` and `full`, mapped as
+  `docs/CLI_SPEC.md` specifies, defaulting to `core`. A profile is scaffolding
+  only — it resolves to exposures and is never recorded, so `--profile
+  agentic` and `--with mcp,a2a` produce identical projects. `--with` adds to a
+  profile rather than replacing it ([#248]).
 - `agnara app create --with http,mcp` selects which inbound adapters are
   scaffolded, adding one `adapters/inbound/<exposure>.py` each and nothing
   else. The exposure vocabulary is validated, repeats are dropped and the
@@ -488,6 +494,7 @@ under `0.1.0a2` instead.
 
 [#244]: https://github.com/Blandskron/agnara/issues/244
 [#246]: https://github.com/Blandskron/agnara/issues/246
+[#248]: https://github.com/Blandskron/agnara/issues/248
 [Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...develop
 [0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3
 [0.1.0a2]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...v0.1.0a2

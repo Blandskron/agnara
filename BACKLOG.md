@@ -523,7 +523,20 @@ complete because the alpha published only the `agnara` core distribution. See
   flag that resolves it, because it has no adapters package. 26 cases, 14 of
   which fail against the previous behaviour. Recorded in ADR 0063, which
   remains Proposed. Tracking: GitHub Issue #246.
-- [ ] E0A.7 Implement profiles: core/api/mcp/agentic/worker/full.
+- [x] E0A.7 Implement profiles: core/api/mcp/agentic/worker/full. Each
+  resolves to the exposures its row in `docs/CLI_SPEC.md` specifies and then
+  disappears: no profile name reaches `agnara.toml`, because ADR 0013 makes a
+  profile a scaffolding alias and a persisted one would be a runtime app type
+  in everything but name. `--profile agentic` and `--with mcp,a2a` produce
+  byte-identical projects, which is tested.
+  `docs/CLI_SPEC.md` says profiles are "combined/overridden with `--with`",
+  which permits both; resolved as union, recorded with the rejected
+  alternative in ADR 0064. `--profile full --with http` would otherwise
+  *reduce* an app to HTTP. `minimal` refuses a profile that brings exposures,
+  naming that flag rather than one the user did not pass, and accepts `core`.
+  30 cases; a mutation to override semantics and a wrong `agentic` mapping
+  each fail three of them. Recorded in ADR 0064, which remains Proposed.
+  Tracking: GitHub Issue #248.
 - [ ] E0A.8 Implement optional CLI aliases without duplicate code paths.
 - [x] E0A.9 Implement `--dry-run`.
   Delivered on the shared plan/apply mechanism (ADR 0060) and proven reusable
