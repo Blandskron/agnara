@@ -303,13 +303,13 @@ The architecture must be safe under conventional CPython and designed consciousl
 
 ```text
 Status:         Alpha (experimental)
-Release target: v0.1.0a3 (publication pending)
+Latest release: v0.1.0a3 (PyPI, core distribution only)
 ```
 
-`v0.1.0a2` is the first published release: an architectural proof that Agnara
-installs and runs as a real Python distribution. It is not production-ready,
-the public API may change without a deprecation cycle, and only the `agnara`
-core distribution is on PyPI.
+`v0.1.0a3` is the current release, following `v0.1.0a2`, which was the first
+version to reach PyPI. It is not production-ready, the public API may change
+without a deprecation cycle, and only the `agnara` core distribution is
+published; the adapters are versioned and buildable from this repository.
 
 The repository should not claim production readiness, benchmark leadership, security guarantees, or protocol conformance until those claims are backed by automated evidence.
 
