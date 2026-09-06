@@ -239,7 +239,7 @@ Agnara executes capabilities. Agent reasoning engines are consumers/composers, n
 3. How partial streaming failures are represented.
 4. Canonical authorization principal model.
 5. Public delegation runtime types and verifier API; the security model is
-   defined by RFC 0004.
+   defined by RFC 0005.
 6. Unified interaction-required state.
 7. Capability versioning.
 8. Sync handler execution strategy.

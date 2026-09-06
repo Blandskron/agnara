@@ -1,4 +1,4 @@
-# RFC 0004 — Protocol-neutral delegation
+# RFC 0005 — Protocol-neutral delegation
 
 - Status: Draft
 - Date: 2026-09-02
