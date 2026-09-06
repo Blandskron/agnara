@@ -551,7 +551,7 @@ Generated code must:
   passes and conversations are resolved.
 - [x] E0B.11 Replace placeholder OWNER/REPO in security Issue template.
 - [ ] E0B.12 Document release and hotfix automation evidence.
-- [x] E0B.13 Establish an evidence-based release readiness program.
+- [x] E0B.14 Establish an evidence-based release readiness program.
   `docs/releases/RELEASE_PLAN.md` defines the progressive path from `0.1.0a2`
   to `0.1.0` with measurable exit gates and no calendar dates;
   `docs/releases/release-status.json` records one entry per gate and
@@ -606,6 +606,3 @@ is listed here so it stays visible rather than being rediscovered later.
   in Spanish while the rest of the repository is English. Left alone by the
   audit: these drive the actual multi-agent workflow, and which of them is
   live is a maintainer judgement, not an inference from file contents.
-- [ ] D4 `E0B.13` is used by two different backlog items -- the release
-  readiness program (Issue #235) and the AI-agent attribution policy
-  (Issue #12). Renumber one.
