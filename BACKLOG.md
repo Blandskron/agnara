@@ -10,6 +10,12 @@ Legend:
 
 The agent must update this file as work progresses and must never mark a task complete without the associated acceptance criteria passing.
 
+This file owns **decomposed work that is ready to implement**. It does not own
+the long-term plan: `docs/INITIATIVES.md` owns what to build and in what
+order, `docs/MATURITY.md` owns what already exists, and
+`docs/releases/RELEASE_PLAN.md` owns what a release must satisfy.
+`docs/DOCUMENTATION_MAP.md` records why each owns what it owns.
+
 ## EPIC 0 — Repository foundation
 
 - [x] E0.1 Create `uv` workspace.
@@ -417,26 +423,55 @@ items below remain the conditions for a final `v0.1.0`, and none is marked
 complete because the alpha published only the `agnara` core distribution. See
 `CHANGELOG.md` for the released scope.
 
-- [ ] Capability definition stable enough for alpha.
-- [ ] Direct invocation stable.
-- [ ] HTTP usable.
-- [ ] OpenAPI generated.
-- [ ] MCP usable.
-- [ ] Core has no forbidden dependencies.
-- [ ] Cross-platform CI green.
-- [ ] Baseline benchmarks published.
-- [ ] Security threat model present.
-- [ ] API docs present.
-- [ ] Migration policy for alpha documented.
+Every item below was previously unchecked, with the note that the alpha
+published only the core distribution. That conflated two different questions --
+whether a capability exists, and whether it was published -- and left a reader
+with eleven empty boxes suggesting nothing was done. Most were done. The
+status now reflects the repository, and the ones that are genuinely missing
+are visible instead of hidden among the ones that are not.
+
+- [x] Capability definition stable enough for alpha. Unchanged in shape across
+  three alphas. This is not yet a 1.0 compatibility commitment; `I9` is.
+- [x] Direct invocation stable. `invoke_result`, canonical results, enforced
+  deadlines, untranslated cancellation.
+- [ ] HTTP usable. **Genuinely unmet.** The adapter works but exports nothing:
+  its composition API is unsettled, so there is no supported way to build an
+  HTTP application. Blocked on `I1`.
+- [x] OpenAPI generated. Deterministic projection, pinned against a fixture.
+- [x] MCP usable. Tools only; resources and prompts are undecided.
+- [x] Core has no forbidden dependencies. Enforced by
+  `tests/architecture/test_package_boundaries.py`, not by convention.
+- [x] Cross-platform CI green. Linux, macOS and Windows.
+- [x] Baseline benchmarks published. Four baselines in `docs/benchmarks/`.
+  Budgets and a regression gate are `I14`, and until they exist a regression
+  is invisible.
+- [ ] Security threat model present. **Absent.** `SECURITY.md` says so and the
+  release readiness gate reports it every run. `I10`.
+- [ ] API docs present. Partial: `docs/API_DESIGN.md` records intent, and
+  there is no generated reference for the 41 public names. `I9`, then `I18`.
+- [ ] Migration policy for alpha documented. **Absent.** Needed before any API
+  is called stable. `I9`.
 
 ## Post-v0.1
 
-- [ ] A2A adapter.
-- [ ] Tasks.
-- [ ] AsyncAPI/event abstractions.
-- [ ] WebSocket/SSE enhancements.
-- [ ] plugin marketplace/registry research.
-- [ ] native/Rust acceleration only if benchmarks justify it.
+This was a flat list of six bullets -- "A2A adapter.", "Tasks." -- with no
+scope, no order and no statement of what had to be decided first. It is now
+owned by `docs/INITIATIVES.md`, which clusters the same work into initiatives
+ordered by architectural dependency, because most of these cannot responsibly
+start until the exposure and streaming models exist.
+
+| Was | Now |
+| --- | --- |
+| A2A adapter | `I4`, after `I1` and `I2` |
+| Tasks | `I6`, after `I2` and `I3` |
+| AsyncAPI / event abstractions | `I5`, after `I1`, `I2` and `I3` |
+| WebSocket / SSE enhancements | part of `I2`, then `I7` |
+| Plugin marketplace / registry research | `I13`, `POST-1.0` |
+| Native acceleration | `DEFERRED`; the position is unchanged and is recorded under `I14` |
+
+An initiative is decomposed into items in this file when it reaches the front
+of the queue. Decomposing earlier produces items that are wrong before anyone
+reads them.
 
 ## EPIC 0A — Project/app scaffolding
 

@@ -313,20 +313,31 @@ published; the adapters are versioned and buildable from this repository.
 
 The repository should not claim production readiness, benchmark leadership, security guarantees, or protocol conformance until those claims are backed by automated evidence.
 
-See `CHANGELOG.md` for the released record and the exact published scope.
+See `CHANGELOG.md` for the released record and the exact published scope, and
+`docs/MATURITY.md` for what each subsystem actually supports today. Several
+sections below describe intended design rather than shipped behaviour and say
+so; the maturity table is the authoritative answer when they are unclear.
 
 ## Documentation order for contributors and agents
 
 Read in this order:
 
-1. `VISION.md`
-2. `PRINCIPLES.md`
-3. `ARCHITECTURE.md`
-4. `docs/rfc/0001-capability-runtime.md`
-5. `docs/API_DESIGN.md`
-6. `BACKLOG.md`
-7. `QUALITY_GATES.md`
-8. `AGENTS.md`
+1. `VISION.md` — why Agnara exists
+2. `PRINCIPLES.md` — the rules a decision must not break
+3. `ARCHITECTURE.md` — how the system is structured today
+4. `docs/MATURITY.md` — **what actually exists**, per subsystem
+5. `docs/rfc/0001-capability-runtime.md`
+6. `docs/API_DESIGN.md`
+7. `docs/TARGET_ARCHITECTURE.md` — where the structure is going, and the gaps
+8. `docs/INITIATIVES.md` — what to build, in dependency order
+9. `BACKLOG.md` — decomposed items ready to implement
+10. `QUALITY_GATES.md`
+11. `AGENTS.md`
+
+`docs/DOCUMENTATION_MAP.md` records which document owns which kind of truth.
+Before trusting a status you read anywhere else, check `docs/MATURITY.md`:
+several subsystems in this README are described as designs rather than
+shipped behaviour, and that file is the one that says which is which.
 
 ## HTTP documentation and capability discovery
 
