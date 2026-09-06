@@ -49,6 +49,22 @@ TEMPLATES: dict[str, Callable[[str, str, tuple[str, ...]], dict[str, str]]] = {
     "minimal": minimal_app_files,
 }
 
+#: Profile -> the exposures it starts an app with, in the order it scaffolds
+#: them. The mapping is the table in `docs/CLI_SPEC.md` "Profiles".
+#:
+#: A profile is a scaffolding alias and nothing more (ADR 0013): it resolves to
+#: exposures and then disappears, so no profile name is ever written to
+#: `agnara.toml`. Recording one would make it look like a runtime app type,
+#: which is exactly what ADR 0013 refuses.
+PROFILES: dict[str, tuple[str, ...]] = {
+    "core": (),
+    "api": ("http",),
+    "mcp": ("mcp",),
+    "agentic": ("mcp", "a2a"),
+    "worker": ("tasks", "events"),
+    "full": ("http", "mcp", "a2a", "events", "tasks"),
+}
+
 
 def add_app_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """Register ``app`` and its subcommands on the root parser."""
@@ -77,6 +93,14 @@ def add_app_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentParse
         help=(
             "the layout to generate. Defaults to the project's "
             "[defaults] architecture in agnara.toml."
+        ),
+    )
+    create.add_argument(
+        "--profile",
+        choices=sorted(PROFILES),
+        help=(
+            "start from a named set of exposures. Scaffolding only: the "
+            "profile is not recorded, its exposures are. Defaults to core."
         ),
     )
     create.add_argument(
@@ -198,18 +222,10 @@ def _resolved_architecture(requested: str | None, manifest: ProjectManifest, sou
     )
 
 
-def _resolved_exposures(requested: str | None, architecture: str) -> tuple[str, ...]:
-    """The inbound adapters to scaffold, and to record for what was scaffolded.
-
-    Order is the order given, with repeats dropped: the manifest preserves what
-    its author wrote, and ``--with http,mcp`` should read back as it was typed.
-
-    Raises:
-        GenerationError: an empty entry, an unknown exposure, or any exposure
-            at all on an architecture that has no adapters package.
-    """
+def _requested_exposures(requested: str | None) -> list[str]:
+    """Parse ``--with``, rejecting a malformed list or an unknown exposure."""
     if requested is None:
-        return ()
+        return []
 
     seen: list[str] = []
     for entry in requested.split(","):
@@ -225,12 +241,41 @@ def _resolved_exposures(requested: str | None, architecture: str) -> tuple[str, 
             )
         if exposure not in seen:
             seen.append(exposure)
+    return seen
+
+
+def _resolved_exposures(
+    requested: str | None, profile: str | None, architecture: str
+) -> tuple[str, ...]:
+    """The inbound adapters to scaffold, and to record for what was scaffolded.
+
+    A profile contributes its initial exposures and then disappears: ADR 0013
+    makes profiles scaffolding aliases, not runtime app types, so nothing about
+    the profile reaches the manifest. Only the result does.
+
+    ``--with`` adds to a profile rather than replacing it. `docs/CLI_SPEC.md`
+    permits either reading -- "combined/overridden" -- and ADR 0064 records why
+    union wins.
+
+    Order is the profile's exposures first, then anything ``--with`` adds that
+    the profile did not already bring, with repeats dropped. A manifest should
+    read back as the request that produced it.
+
+    Raises:
+        GenerationError: an empty entry, an unknown exposure, or any exposure
+            at all on an architecture that has no adapters package.
+    """
+    seen = list(PROFILES[profile]) if profile is not None else []
+    for exposure in _requested_exposures(requested):
+        if exposure not in seen:
+            seen.append(exposure)
 
     if seen and architecture != "modular-hexagonal":
+        source = "--with" if profile is None else f"--profile {profile}"
         raise GenerationError(
             f"the {architecture} architecture has no adapters package, so it "
             f"cannot carry an inbound adapter for {', '.join(seen)}. Generate "
-            "this app with --architecture modular-hexagonal, or leave --with off."
+            f"this app with --architecture modular-hexagonal, or leave {source} off."
         )
     return tuple(seen)
 
@@ -248,7 +293,11 @@ def _plan(
     architecture = _resolved_architecture(
         getattr(arguments, "architecture", None), manifest, source
     )
-    exposures = _resolved_exposures(getattr(arguments, "exposures", None), architecture)
+    exposures = _resolved_exposures(
+        getattr(arguments, "exposures", None),
+        getattr(arguments, "profile", None),
+        architecture,
+    )
 
     root = source.parent
     files = TEMPLATES[architecture](manifest.name, name, exposures)
