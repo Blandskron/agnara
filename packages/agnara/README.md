@@ -17,11 +17,9 @@ depends on nothing but the standard library.
 
 `0.1.0a3` is the integration alpha, following the first published version
 `0.1.0a2`. It adds protocol-neutral introspection, discovery filtering and
-stronger telemetry contracts. Publication of this version is pending until
-the release workflow completes. It is **not
-production-ready**, the public API may change without a deprecation cycle, and
-it makes no claim of protocol conformance, benchmark leadership or security
-guarantees.
+stronger telemetry contracts. It is **not production-ready**, the public API
+may change without a deprecation cycle, and it makes no claim of protocol
+conformance, benchmark leadership or security guarantees.
 
 ## Install
 
