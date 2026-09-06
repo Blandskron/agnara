@@ -13,6 +13,16 @@ without being published. See the `0.1.0a2` scope note below.
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking.** `agnara.introspection.AppDescriptor` is renamed to
+  `ApplicationDescriptor`. It describes one compiled application -- a whole
+  project -- and after ADR 0011 and ADR 0065 fixed "app" as a bounded context
+  it was named for something it is not, and collided with the `AppDescriptor`
+  added in #254. Only the Python symbol changed: the field names, the builder
+  functions, `INTROSPECTION_VERSION` and the serialized document are all
+  unchanged, verified byte-for-byte ([#259]).
+
 ### Added
 
 - `agnara app-api`, `agnara app-mcp`, `agnara app-agent` and `agnara
@@ -533,6 +543,7 @@ under `0.1.0a2` instead.
 [#252]: https://github.com/Blandskron/agnara/issues/252
 [#254]: https://github.com/Blandskron/agnara/issues/254
 [#257]: https://github.com/Blandskron/agnara/issues/257
+[#259]: https://github.com/Blandskron/agnara/issues/259
 [Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...develop
 [0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3
 [0.1.0a2]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...v0.1.0a2

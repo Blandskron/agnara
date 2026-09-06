@@ -28,7 +28,7 @@ from agnara.errors import DefinitionError
 __all__ = [
     "INTROSPECTION_FORMAT",
     "INTROSPECTION_VERSION",
-    "AppDescriptor",
+    "ApplicationDescriptor",
     "CapabilityDescriptor",
     "DependencyDescriptor",
     "ExposureDescriptor",
@@ -357,7 +357,7 @@ class CapabilityDescriptor:
 
 
 @frozen_slots_dataclass
-class AppDescriptor:
+class ApplicationDescriptor:
     """One compiled application: its namespace, capabilities and providers."""
 
     name: str
@@ -409,7 +409,7 @@ class IntrospectionSnapshot:
     leaving it unset rather than by inventing a name.
     """
 
-    apps: tuple[AppDescriptor, ...] = ()
+    apps: tuple[ApplicationDescriptor, ...] = ()
     project: str | None = None
     format: str = INTROSPECTION_FORMAT
     version: str = INTROSPECTION_VERSION
@@ -420,10 +420,10 @@ class IntrospectionSnapshot:
 
     def __post_init__(self) -> None:
         if not isinstance(self.apps, tuple) or any(
-            not isinstance(item, AppDescriptor) for item in self.apps
+            not isinstance(item, ApplicationDescriptor) for item in self.apps
         ):
             raise IntrospectionError(
-                "introspection snapshot apps must be a tuple of AppDescriptor values"
+                "introspection snapshot apps must be a tuple of ApplicationDescriptor values"
             )
         names = [app.name for app in self.apps]
         if len(names) != len(set(names)):

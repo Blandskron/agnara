@@ -36,7 +36,7 @@ from types import MappingProxyType
 from typing import Any
 
 from agnara.introspection import (
-    AppDescriptor,
+    ApplicationDescriptor,
     CapabilityDescriptor,
     DiscoveryField,
     DiscoveryVisibility,
@@ -239,7 +239,7 @@ def _app_path(base_path: str, name: str) -> str:
     return f"{base_path}/{_APP_SEGMENT}/{name}"
 
 
-def _app_section(base_path: str, app: AppDescriptor) -> Iterable[str]:
+def _app_section(base_path: str, app: ApplicationDescriptor) -> Iterable[str]:
     heading = _link(_app_path(base_path, app.name), f"Application {app.name}")
     yield f"<h2>{heading}</h2>"
     transports = ", ".join(app.transports) if app.transports else "none published"
@@ -279,7 +279,7 @@ def _definition(term: str, description: str) -> str:
 
 def _capability_body(
     base_path: str,
-    app: AppDescriptor,
+    app: ApplicationDescriptor,
     capability: CapabilityDescriptor,
     visibility: DiscoveryVisibility,
 ) -> list[str]:

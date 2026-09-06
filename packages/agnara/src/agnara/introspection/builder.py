@@ -19,7 +19,7 @@ from agnara.core.di.compiler import _get_dependencies
 from agnara.core.di.registry import DIRegistry
 from agnara.execution.plan import ExecutionPlan
 from agnara.introspection.descriptors import (
-    AppDescriptor,
+    ApplicationDescriptor,
     CapabilityDescriptor,
     DependencyDescriptor,
     ExposureDescriptor,
@@ -137,7 +137,7 @@ def describe_app(
     *,
     exposures: Mapping[str, Iterable[ExposureDescriptor]] | None = None,
     dependencies: DIRegistry | None = None,
-) -> AppDescriptor:
+) -> ApplicationDescriptor:
     """Describe one compiled application as immutable descriptors.
 
     Every declared capability must have a compiled plan. Extra plans are
@@ -186,7 +186,7 @@ def describe_app(
                 exposures=attached.get(str(capability_id), ()),
             )
         )
-    return AppDescriptor(
+    return ApplicationDescriptor(
         name=app.name,
         capabilities=tuple(described),
         providers=() if dependencies is None else _providers(dependencies),
@@ -194,7 +194,7 @@ def describe_app(
 
 
 def snapshot(
-    apps: Iterable[AppDescriptor],
+    apps: Iterable[ApplicationDescriptor],
     *,
     project: str | None = None,
 ) -> IntrospectionSnapshot:
@@ -205,8 +205,9 @@ def snapshot(
     """
     described = tuple(apps)
     for app in described:
-        if not isinstance(app, AppDescriptor):
+        if not isinstance(app, ApplicationDescriptor):
             raise IntrospectionError(
-                f"introspection apps must contain AppDescriptor values, got {type(app).__name__}"
+                "introspection apps must contain ApplicationDescriptor values, "
+                f"got {type(app).__name__}"
             )
     return IntrospectionSnapshot(apps=described, project=project)

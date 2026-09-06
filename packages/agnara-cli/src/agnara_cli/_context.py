@@ -27,7 +27,7 @@ import argparse
 from collections.abc import Iterable
 
 from agnara.introspection import (
-    AppDescriptor,
+    ApplicationDescriptor,
     CapabilityDescriptor,
     DiscoveryField,
     DiscoveryVisibility,
@@ -117,7 +117,7 @@ def _capability(
     yield ""
 
 
-def _app(app: AppDescriptor, visibility: DiscoveryVisibility) -> Iterable[str]:
+def _app(app: ApplicationDescriptor, visibility: DiscoveryVisibility) -> Iterable[str]:
     yield f"## Application `{app.name}`"
     yield ""
     for capability in app.capabilities:

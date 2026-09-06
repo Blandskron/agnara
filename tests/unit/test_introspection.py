@@ -15,7 +15,7 @@ from agnara.execution import ExecutionContext, ExecutionPlan, Invocation
 from agnara.introspection import (
     INTROSPECTION_FORMAT,
     INTROSPECTION_VERSION,
-    AppDescriptor,
+    ApplicationDescriptor,
     CapabilityDescriptor,
     ExposureDescriptor,
     InputDescriptor,
@@ -94,7 +94,7 @@ def surface() -> tuple[Agnara, list[ExecutionPlan], DIRegistry]:
     return app, plans, registry
 
 
-def described() -> AppDescriptor:
+def described() -> ApplicationDescriptor:
     app, plans, registry = surface()
     return describe_app(
         app,
@@ -109,7 +109,7 @@ def described() -> AppDescriptor:
     )
 
 
-def capability(app: AppDescriptor, identifier: str) -> CapabilityDescriptor:
+def capability(app: ApplicationDescriptor, identifier: str) -> CapabilityDescriptor:
     for descriptor in app.capabilities:
         if descriptor.id == identifier:
             return descriptor
@@ -337,12 +337,12 @@ def test_a_snapshot_rejects_repeated_apps_and_an_app_rejects_repeated_capabiliti
     with pytest.raises(IntrospectionError, match="repeats an app name"):
         IntrospectionSnapshot(apps=(app, app))
     with pytest.raises(IntrospectionError, match="repeats a capability id"):
-        AppDescriptor("payments", (app.capabilities[0], app.capabilities[0]))
+        ApplicationDescriptor("payments", (app.capabilities[0], app.capabilities[0]))
 
 
 def test_descriptors_reject_values_of_the_wrong_type() -> None:
     with pytest.raises(IntrospectionError):
-        AppDescriptor("payments", ("not a descriptor",))  # type: ignore
+        ApplicationDescriptor("payments", ("not a descriptor",))  # type: ignore
     with pytest.raises(IntrospectionError):
         IntrospectionSnapshot(apps=("not a descriptor",))  # type: ignore
     with pytest.raises(IntrospectionError):

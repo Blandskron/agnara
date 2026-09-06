@@ -23,7 +23,7 @@ from agnara.capability.metadata import Confirmation, Idempotency, Risk
 from agnara.introspection import (
     INTROSPECTION_FORMAT,
     INTROSPECTION_VERSION,
-    AppDescriptor,
+    ApplicationDescriptor,
     CapabilityDescriptor,
     DependencyDescriptor,
     DiscoveryField,
@@ -46,7 +46,7 @@ ARCHITECTURE = WORKSPACE_ROOT / "ARCHITECTURE.md"
 CONCEPT_HOME: dict[str, tuple[type, str]] = {
     "Project": (IntrospectionSnapshot, "project"),
     "Apps": (IntrospectionSnapshot, "apps"),
-    "Capabilities": (AppDescriptor, "capabilities"),
+    "Capabilities": (ApplicationDescriptor, "capabilities"),
     "Exposures": (CapabilityDescriptor, "exposures"),
     "Dependencies": (CapabilityDescriptor, "dependencies"),
     "Policies": (CapabilityDescriptor, "policies"),
@@ -64,8 +64,8 @@ CONCEPT_HOME: dict[str, tuple[type, str]] = {
 #: field set.
 IDENTITY_FIELDS = {
     (CapabilityDescriptor, "id"),
-    (AppDescriptor, "name"),
-    (AppDescriptor, "capabilities"),
+    (ApplicationDescriptor, "name"),
+    (ApplicationDescriptor, "capabilities"),
     (IntrospectionSnapshot, "apps"),
     (IntrospectionSnapshot, "project"),
     (IntrospectionSnapshot, "format"),
@@ -85,7 +85,7 @@ FIELD_DECISION: dict[tuple[type, str], DiscoveryField] = {
     (CapabilityDescriptor, "dependencies"): DiscoveryField.DEPENDENCIES,
     (CapabilityDescriptor, "policies"): DiscoveryField.POLICIES,
     (CapabilityDescriptor, "exposures"): DiscoveryField.EXPOSURES,
-    (AppDescriptor, "providers"): DiscoveryField.PROVIDERS,
+    (ApplicationDescriptor, "providers"): DiscoveryField.PROVIDERS,
 }
 
 
@@ -148,7 +148,7 @@ def test_no_descriptor_field_is_published_without_a_named_decision() -> None:
     described: set[tuple[type, str]] = set()
     for owner in (
         IntrospectionSnapshot,
-        AppDescriptor,
+        ApplicationDescriptor,
         CapabilityDescriptor,
         InputDescriptor,
         DependencyDescriptor,
