@@ -715,6 +715,18 @@ Generated code must:
   operation is idempotent. Eight focused lifecycle cases and the full quality
   gate pass. Tracking: GitHub Issue #268.
 
+## EPIC 1B — Public API governance
+
+- [x] E1B.1 Classify and snapshot the 41 top-level `agnara` exports. All are
+  `provisional`: intentionally public, without fabricating a stable guarantee
+  during alpha. `docs/public-api.json` is the exact ordered inventory and
+  `docs/PUBLIC_API.md` owns the stability and pre-1.0 change policy. Release
+  readiness now parses literal `__all__` declarations without importing the
+  packages and rejects additions, removals, renames, reordered or duplicate
+  exports, unknown classifications and internal names in the public manifest.
+  Subpackage inventories remain explicit I9 follow-up work. Thirteen focused
+  cases and the full quality gate pass. Tracking: GitHub Issue #270.
+
 ## EPIC 0B — Agentic repository governance
 
 - [x] E0B.1 Establish GitHub Issue labels for type/area/priority.
