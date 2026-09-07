@@ -31,6 +31,22 @@ uv run pytest
 
 Exact command names may evolve, but equivalent gates must remain.
 
+Packaging is verified against installed artifacts rather than the checkout,
+because building a distribution and being able to use it are different claims:
+
+```bash
+uv build --all-packages --out-dir dist/
+uv venv --python 3.14 <external>/.venv
+uv pip install --python <external>/.venv/bin/python dist/*.whl
+<external>/.venv/bin/python -I scripts/check_installed_distributions.py \
+    --workspace "$PWD" --require-installed
+```
+
+Every wheel is installed into one environment so the adapters' third-party
+pins are resolved by a real installer. Without `--require-installed` the same
+command runs against the development environment, where importing from
+`packages/*/src` is correct.
+
 Documentation browser conformance is a separate required CI lane because the
 ordinary cross-platform gate must not depend on a preinstalled browser. Its
 reproducible commands are:

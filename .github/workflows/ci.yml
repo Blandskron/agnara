@@ -168,28 +168,36 @@ jobs:
       - name: Build every distribution
         run: uv build --all-packages --out-dir dist/
 
-      - name: Wheels carry their typing marker and vendored assets
+      - name: Every distribution built exactly one wheel and one sdist
         run: |
           set -euo pipefail
           uv run --no-project python - <<'EOF'
-          import pathlib, sys, zipfile
+          import pathlib, sys
+
+          # Derived from the workspace rather than hardcoded, so adding a
+          # distribution extends this check instead of escaping it.
+          expected = sorted(p.name for p in pathlib.Path("packages").iterdir() if p.is_dir())
+          built = pathlib.Path("dist")
 
           failures = []
-          wheels = sorted(pathlib.Path("dist").glob("*.whl"))
-          if len(wheels) != 7:
-              failures.append(f"expected 7 wheels, found {len(wheels)}: {[w.name for w in wheels]}")
+          for distribution in expected:
+              stem = distribution.replace("-", "_")
+              wheels = sorted(built.glob(f"{stem}-*.whl"))
+              sdists = sorted(built.glob(f"{stem}-*.tar.gz"))
+              if len(wheels) != 1:
+                  failures.append(f"{distribution}: expected 1 wheel, found {[w.name for w in wheels]}")
+              if len(sdists) != 1:
+                  failures.append(f"{distribution}: expected 1 sdist, found {[s.name for s in sdists]}")
 
-          for wheel in wheels:
-              names = zipfile.ZipFile(wheel).namelist()
-              # PEP 561: without this file the shipped annotations are ignored.
-              if not any(n.endswith("py.typed") for n in names):
-                  failures.append(f"{wheel.name}: no py.typed")
-              # ADR 0040: the documentation UIs are served from the wheel, so
-              # losing them turns into a 404 only a released user would see.
-              if wheel.name.startswith("agnara_http-"):
-                  assets = [n for n in names if "/_vendor/" in n and n.endswith((".js", ".css"))]
-                  if len(assets) < 4:
-                      failures.append(f"{wheel.name}: vendored UI assets missing ({assets})")
+          surplus = sorted(
+              path.name
+              for path in built.iterdir()
+              if not any(path.name.startswith(d.replace("-", "_") + "-") for d in expected)
+          )
+          if surplus:
+              # A stale artifact would make a later glob validate something we
+              # are not about to ship.
+              failures.append(f"unexpected artifacts in dist/: {surplus}")
 
           for failure in failures:
               print(f"::error::{failure}")
@@ -197,23 +205,35 @@ jobs:
               sys.exit(1)
           # Say what was inspected. A check that prints nothing on success
           # cannot be told apart from one that never received this script.
-          print(f"checked {len(wheels)} wheels: {', '.join(w.name for w in wheels)}")
+          print(f"built {len(expected)} distributions: {', '.join(expected)}")
           EOF
 
-      - name: Install the published distribution outside the workspace
+      - name: Install every distribution outside the workspace
         run: |
           set -euo pipefail
           shopt -s nullglob
-          wheels=("$GITHUB_WORKSPACE"/dist/agnara-*.whl)
-          if [[ "${#wheels[@]}" -ne 1 ]]; then
-            echo "::error::expected exactly one agnara wheel, found ${#wheels[@]}"
+          wheels=("$GITHUB_WORKSPACE"/dist/*.whl)
+          if [[ "${#wheels[@]}" -eq 0 ]]; then
+            echo "::error::no wheels to install"
             exit 1
           fi
           mkdir -p /tmp/ci-install && cd /tmp/ci-install
           uv venv --python 3.14 .venv
+
+          # One environment holding every distribution, so the third-party
+          # pins the adapters declare -- mcp and opentelemetry-api -- are
+          # resolved by a real installer rather than assumed to be resolvable.
+          # Installing them together also keeps the first-party requirements
+          # satisfied by these wheels instead of by whatever the index offers
+          # under the same version string.
+          uv pip install --python .venv/bin/python "${wheels[@]}"
+
           # Address the interpreter directly: `uv run` may resolve an
-          # environment other than the one the wheel was installed into.
-          uv pip install --python .venv/bin/python "${wheels[0]}"
+          # environment other than the one the wheels were installed into.
+          .venv/bin/python -I "$GITHUB_WORKSPACE/scripts/check_installed_distributions.py" \
+            --workspace "$GITHUB_WORKSPACE" --require-installed
+
+          # The published distribution additionally has to work on its own.
           .venv/bin/python -c "
           import agnara
           from agnara import Agnara, CapabilityId, Risk

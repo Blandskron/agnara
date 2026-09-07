@@ -15,6 +15,18 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Changed
 
+- The packaging gate now installs every distribution instead of one. It
+  built all seven and installed only `agnara`, so the adapters' third-party
+  pins were never resolved by an installer, and the documentation UIs
+  `agnara-http` serves from its own package were checked for presence in
+  the archive but never for reachability once installed.
+  `scripts/check_installed_distributions.py` discovers the expected
+  distributions from the workspace layout, then asserts each imports from
+  an installed location, that every data file in a source package resolves
+  inside the installed one, that versions stay synchronized and that every
+  adapter still declares its dependency on the core. The wheel and sdist
+  count is derived the same way, so adding a distribution extends the gate
+  rather than escaping it ([#278]).
 - The public API manifest now governs every public module of the core
   distribution rather than only the top-level one: 123 exports across
   `agnara`, `agnara.capability`, `agnara.core.di`, `agnara.execution`,
@@ -676,3 +688,4 @@ under `0.1.0a2` instead.
 [#270]: https://github.com/Blandskron/agnara/issues/270
 [#271]: https://github.com/Blandskron/agnara/issues/271
 [#275]: https://github.com/Blandskron/agnara/issues/275
+[#278]: https://github.com/Blandskron/agnara/issues/278
