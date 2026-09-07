@@ -37,22 +37,10 @@ asgi = http.compile(app.compile(), openapi=OpenApiInfo("Users", "1.0"))
 ```
 
 `http` is a typed adapter surface selected by project composition, not a
-capability property. This is now real public API, not a sketch: ADR 0071
-records the seven names and `docs/HTTP_COMPOSITION.md` is the supported guide.
-
-Bindings are explicit, including for path parameters. An earlier revision of
-this section showed `http.get("/users/{user_id}", get_user)` with none, which
-would not compile — ADR 0026 requires every input to name where it is read
-from, so that renaming a capability parameter fails at startup rather than on
-the first request.
-
-`BindingSource` names seven places: `PATH`, `QUERY`, `HEADER`, `BODY`,
-`COOKIE`, `FORM` and `UPLOAD`. The last three are ADR 0072, and the last three
-all read the request body, so a JSON body cannot be combined with a form or an
-upload.
-
-The names are `provisional`. The shape is settled; the spelling is one release
-old.
+capability property. The exposure lifecycle beneath this syntax is implemented
+and settled (ADR 0070); **this constructor is not**. `agnara-http` still
+exports nothing, so the shape above remains a design sketch and the public
+composition API is the next piece of work. Nothing here is stable syntax.
 
 ## 5. MCP exposure
 
@@ -79,10 +67,10 @@ function rather than a method on `Agnara`, because `Agnara.compile()` returns
 a governed type and the composition root should not become a god object
 (`ARCHITECTURE.md` section 5).
 
-Both shipped adapters produce a `SurfaceCompilation` through public API:
-`HttpApplication.exposures` and `Mcp.compile_surface()`. An application can
-therefore compose HTTP and MCP over one capability set and get one answer to
-where each capability is reachable.
+The exposure model is public today; the adapter *builders* that produce a
+`SurfaceCompilation` are only public for MCP. Until HTTP has one, an
+application cannot compose HTTP through supported API — the `0.1.0a4` blocker
+`docs/releases/STATUS.md` tracks.
 
 ## 6. A2A exposure
 

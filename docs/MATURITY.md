@@ -102,10 +102,9 @@ settled; the spelling is not.
 | Documentation providers | `IMPLEMENTED` | Swagger UI, ReDoc and Scalar, vendored and version-pinned. ADR 0036-0040. |
 | Discovery endpoint | `IMPLEMENTED` | ADR 0049. |
 | Explorer | `IMPLEMENTED` | Read-only shell. ADR 0052. |
-| Exposure compilation | `IMPLEMENTED` | `_compile_exposure_surface` derives neutral records from the compiled route table. ADR 0070. Reached through `Http.compile`. |
-| Public composition API | `EXPERIMENTAL` | `Http`, `HttpApplication`, `Binding`, `BindingSource`, `OpenApiInfo`, `OpenApiOperation`, `HttpDefinitionError`. ADR 0071. Routing, bindings, ASGI, lifespan, RFC 9457 failures and OpenAPI are reachable; nothing is `stable`. |
-| Documentation UI publication | `DESIGNED` | Providers render and are tested, and the publication planner compiles placeholder routes; no product path renders a provider into a served route, so it is unreachable from the public API. |
-| Cookies, forms, multipart, uploads | `IMPLEMENTED` | `COOKIE`, `FORM` and `UPLOAD` binding sources; bounded in-memory multipart. ADR 0072. One file per part name; the client filename is not exposed. |
+| Exposure compilation | `IMPLEMENTED` | `_compile_exposure_surface` derives neutral records from the compiled route table. ADR 0070. Still private, because the builder that feeds it is the unsettled part. |
+| Public composition API | `EXPERIMENTAL` | The model beneath it is settled (ADR 0070); the `Http(...)` shape in `docs/API_DESIGN.md` section 4 is still a design sketch, and the distribution still exports nothing. |
+| Cookies, forms, multipart, uploads | `PLANNED` | No binding source exists for any of them. |
 | Streaming, SSE, WebSockets | `PLANNED` | The ASGI boundary handles no `websocket` scope. |
 | Middleware / interceptors | `DEFERRED` | No extension point, deliberately: ADR 0072 keeps cross-cutting concerns at the ASGI layer, which already wraps an `HttpApplication`. |
 | CORS, compression, static files, proxy headers, trusted hosts | `DEFERRED` | None present. ADR 0072 records where each belongs instead: the reverse proxy, the ASGI server, or ASGI middleware around the application. |
