@@ -774,7 +774,7 @@ Tracking: GitHub Issue #282.
   the kernel. Protocol SDKs an adapter legitimately projects into -- `mcp`,
   `opentelemetry-api` -- are deliberately absent. `FORBIDDEN_IN_CORE` gains
   the same technologies at import level.
-- [~] E1D.4 State the open design questions. RFC 0008 asks fifteen: lifecycle,
+- [x] E1D.4 State the open design questions. RFC 0008 asks fifteen: lifecycle,
   routing, container ownership, the context, principal, error and telemetry
   bridges, request abstraction, the async/sync boundary, adapter discovery,
   multiple applications in one process, nested invocation, resource ownership,
