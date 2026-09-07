@@ -45,6 +45,7 @@ EXPECTED_FILES = {
     f"{APP_ROOT}/domain/errors.py",
     f"{APP_ROOT}/application/__init__.py",
     f"{APP_ROOT}/application/capabilities.py",
+    f"{APP_ROOT}/application/contracts.py",
     f"{APP_ROOT}/application/ports.py",
     f"{APP_ROOT}/adapters/__init__.py",
     f"{APP_ROOT}/adapters/inbound/__init__.py",

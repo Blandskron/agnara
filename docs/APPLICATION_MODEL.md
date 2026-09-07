@@ -128,7 +128,18 @@ commerce/
     recommendations/
 ```
 
-Apps should depend on contracts, not reach through each other's internal implementation.
+Apps depend on explicit contracts, not each other's internal implementation.
+
+For a modular app, the only public cross-app Python module is:
+
+```text
+<project>.apps.<app>.application.contracts
+```
+
+It contains transport-neutral types and Protocols that the app offers. Domain
+modules, capability handlers, required ports, adapters, `module.py` and tests
+remain internal. `application.ports` is not the public surface: its ports name
+what that app needs from elsewhere.
 
 Cross-app communication options, in order of preference:
 
@@ -138,6 +149,17 @@ Cross-app communication options, in order of preference:
 4. shared kernel package for genuinely shared primitives.
 
 Direct imports from one app's infrastructure internals into another app are forbidden.
+
+The first option describes the intended semantic boundary, not a direct
+Python call to another handler. Agnara does not yet define internal capability
+invocation: a direct call would bypass the target's policy, dependencies,
+deadline, telemetry and canonical failures. Initiative I8 owns that future
+decision. Until then, project composition may satisfy a public Protocol
+through dependency injection without pretending it invoked a capability.
+
+A minimal app has no application layer and publishes no cross-app contract by
+default. Needing one is a reason to move to the modular architecture rather
+than invent a second public path. See ADR 0066.
 
 ## App portability
 

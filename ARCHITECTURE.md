@@ -625,18 +625,30 @@ Framework-specific transport code lives at adapter edges.
 Across apps:
 
 ```text
-payments ──► public application contract of users
+payments ──► users.application.contracts
 ```
 
 is allowed.
 
 ```text
 payments ──► users.adapters.http
+payments ──► users.application.capabilities
+payments ──► users.domain.models
 ```
 
-is forbidden.
+is forbidden. Another app's `application/contracts.py` is the only public
+cross-app Python import target. It contains transport-neutral types and
+Protocols the app offers; `application/ports.py` instead describes services
+the app requires and remains internal.
 
-Architecture tests should eventually detect common cross-app boundary violations.
+Importing a contract is not invoking a capability. Directly calling another
+app's handler bypasses its compiled policy, dependency, deadline, telemetry
+and failure boundaries. Internal capability invocation remains a separate
+research decision under initiative I8.
+
+Generated projects enforce these directions with a static architecture test
+that resolves both absolute and relative imports without importing application
+code. ADR 0066 records the complete rule and its alternatives.
 
 ## 15. CLI and scaffolding boundary
 

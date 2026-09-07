@@ -36,6 +36,7 @@ EXPECTED_FILES = {
     "src/commerce/bootstrap.py",
     "src/commerce/settings.py",
     "tests/__init__.py",
+    "tests/test_architecture.py",
     "tests/test_bootstrap.py",
 }
 
