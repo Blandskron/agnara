@@ -74,8 +74,11 @@ are cheap to get wrong permanently.
 - **I2 Streaming model.** Nothing in the kernel returns a stream. Adding it
   per adapter would produce incompatible cancellation and backpressure
   semantics.
-- **I9 Public API governance.** 41 unclassified public names in the kernel.
-  This gets more expensive every release it is deferred.
+- **I9 Public API governance.** The seven governed core modules are
+  classified; 23 more declare a public `__all__` that nothing classifies, and
+  no API may be called stable until the deprecation policy exists.
+  `docs/MATURITY.md` owns the status. This gets more expensive every release
+  it is deferred.
 
 ### `NEXT ALPHA` — `0.1.0a4`, exposure and application boundaries
 
