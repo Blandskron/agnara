@@ -1,9 +1,10 @@
 # RFC 0007 — Distribution version identity and dependency constraints
 
-- Status: Proposed
+- Status: Answered by ADR 0069
 - Date: 2026-09-07
 - Tracking: GitHub Issue #280
 - Supplements: ADR 0021
+- Answered by: ADR 0069
 
 ## Summary
 
@@ -178,3 +179,11 @@ ADR 0017 fixes distribution and import names. ADR 0021 fixes synchronized
 versions and the release procedure. This RFC covers the seam none of them
 addresses: what one distribution requires of another once they are separate
 installable artifacts rather than one workspace.
+
+## Resolution
+
+ADR 0069 answers both questions together. During alpha, every adapter requires
+the exact synchronized core version, and `develop` carries the selected current
+target as `<target>.dev0`. The implementation must migrate the project versions,
+six core requirements, lockfile, release tooling and gates atomically; none of
+those metadata changes are part of this decision-only RFC closure.

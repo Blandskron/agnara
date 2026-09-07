@@ -11,7 +11,8 @@ Every ADR in this directory says `Status: Proposed`, including ones whose
 decisions have governed the codebase for three published releases. ADR 0001
 fixes the Python 3.14 baseline that CI enforces. ADR 0005 fixes the startup
 freeze the runtime implements. ADR 0021 governs how every release has been
-versioned. None of them is a proposal in any meaningful sense.
+versioned, and ADR 0069 governs the development identity and adapter-to-core
+constraint. None of them is a proposal in any meaningful sense.
 
 So **the Status field currently carries no information**, and a reader cannot
 use it to tell a settled decision from an open one.

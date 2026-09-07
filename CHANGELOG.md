@@ -15,6 +15,14 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Changed
 
+- ADR 0069 answers both questions in RFC 0007 together. During alpha, every
+  adapter will require the exact synchronized core version, and `develop` will
+  carry the selected current target as `<target>.dev0`; choosing only one
+  leaves a demonstrated incompatible-core substitution possible. The decision
+  requires one atomic, repository-tooled migration of all project versions,
+  six core requirements, `uv.lock`, release checks and installed-artifact
+  gates. No package metadata or version changes in this decision-only step
+  ([#280]).
 - The packaging gate now installs every distribution instead of one. It
   built all seven and installed only `agnara`, so the adapters' third-party
   pins were never resolved by an installer, and the documentation UIs

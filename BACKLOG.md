@@ -904,7 +904,7 @@ is listed here so it stays visible rather than being rediscovered later.
   that the `0.1.0a3` propagation (#240) has rewritten that document, and
   `UNWIRED_CHECKS` is gone because the set it tracked is empty. The test
   suite asserts every implemented check is reached.
-- [ ] D2 Decide how an adapter depends on the core version. All six adapters
+- [x] D2 Decide how an adapter depends on the core version. All six adapters
   declare `dependencies = ["agnara"]` with no bound, while ADR 0021 requires
   one synchronized version across all seven distributions. Nothing today is
   wrong: only `agnara` is published, and `[tool.uv.sources]` resolves the
@@ -929,8 +929,19 @@ is listed here so it stays visible rather than being rediscovered later.
   satisfied by PyPI's `0.1.0a3`. The constraint form and the version `develop`
   carries between releases are independent questions, and the reproduction
   needs both. Stated with the options and their costs in RFC 0007
-  (Issue #280), which decides nothing; the answer belongs in an ADR amending
-  ADR 0021.
+  (Issue #280). ADR 0069 answers both halves together: exact adapter-to-core
+  pins during alpha, plus `<current-target>.dev0` on `develop`. It also fixes
+  the required atomic migration, release-tooling contract, fail-closed gates
+  and beta revisit condition. No package metadata changes in this
+  decision-only task.
+
+- [ ] D2A Implement ADR 0069 atomically. Add repository-owned version
+  transition tooling, replace all six unbounded core requirements with exact
+  synchronized pins, move all seven packages to `0.1.0a4.dev0`, refresh
+  `uv.lock`, strengthen source and installed-metadata gates, prove an isolated
+  installation cannot substitute the public core, and update the operational
+  release procedure. The version and constraint halves must not land
+  separately.
 - [ ] D3 Reconcile the agent-onboarding documentation. `FIRST_AGENT_PROMPT.md`
   (953 lines), `BUILD_PROMPT.md`, `AGENTS.md`, `AGENT_OPERATING_MODEL.md`,
   `MULTI_AGENT_PROTOCOL.md` and `GEMINI.md` total roughly 1,900 lines with
