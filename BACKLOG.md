@@ -879,6 +879,13 @@ is listed here so it stays visible rather than being rediscovered later.
   same version string and a different API. Whether `develop` should carry a
   distinguishable version between releases is part of the same decision, and
   is why the CI gate installs all seven wheels in one command.
+
+  An exact pin was measured and does **not** fix this: `agnara==0.1.0a3` is
+  satisfied by PyPI's `0.1.0a3`. The constraint form and the version `develop`
+  carries between releases are independent questions, and the reproduction
+  needs both. Stated with the options and their costs in RFC 0007
+  (Issue #280), which decides nothing; the answer belongs in an ADR amending
+  ADR 0021.
 - [ ] D3 Reconcile the agent-onboarding documentation. `FIRST_AGENT_PROMPT.md`
   (953 lines), `BUILD_PROMPT.md`, `AGENTS.md`, `AGENT_OPERATING_MODEL.md`,
   `MULTI_AGENT_PROTOCOL.md` and `GEMINI.md` total roughly 1,900 lines with

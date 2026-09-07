@@ -55,6 +55,14 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- RFC 0007 states the open question behind D2: what version of the core an
+  adapter may accept, and what version `develop` carries between releases.
+  Installing one locally built adapter wheel today resolves `agnara` from
+  PyPI, whose published `0.1.0a3` satisfies the unbounded requirement while
+  lacking a rename `develop` made under that same version, so `agnara
+  --version` raises `ImportError`. An exact pin was measured and does not
+  fix it. The RFC records the options and their costs and decides nothing
+  ([#280]).
 - RFC 0006 proposes one compiled exposure lifecycle for HTTP, MCP and future
   adapters. Project composition owns typed declarations; adapters retain their
   protocol-specific runtime artifacts while emitting neutral immutable records
@@ -689,3 +697,4 @@ under `0.1.0a2` instead.
 [#271]: https://github.com/Blandskron/agnara/issues/271
 [#275]: https://github.com/Blandskron/agnara/issues/275
 [#278]: https://github.com/Blandskron/agnara/issues/278
+[#280]: https://github.com/Blandskron/agnara/issues/280

@@ -21,10 +21,11 @@ zero-padded to four digits and never exceed `0999`.
 | 0004 | Transport-neutral dependency injection | `Accepted`. |
 | 0005 | Protocol-neutral delegation | Genuinely open. |
 | 0006 | Unified exposure model | `Proposed`. Genuinely open; blocks I1 implementation. |
+| 0007 | Distribution version identity and dependency constraints | `Proposed`. Open, with a reproduction; supplements ADR 0021. |
 
 ## Read this before trusting a Status line
 
-Four of these six say `Draft`, including RFC 0001, whose subject is the
+Four of these seven say `Draft`, including RFC 0001, whose subject is the
 implemented core of the framework. As with the ADRs, the Status field does not
 currently distinguish a live question from a settled one.
 
