@@ -15,6 +15,26 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- `agnara-http` has a public composition API. It exported nothing across three
+  releases, so composing HTTP meant importing `agnara_http._dispatch`,
+  `_binding`, `_routing`, `_surfaces` and `_asgi` -- which is what the
+  `0.1.0a4` gate `reference-apps-no-internal-imports` forbids, and what this
+  repository's own integration tests did. Seven `provisional` names now cover
+  it: `Http` declares and compiles one named surface, `HttpApplication` is the
+  compiled ASGI 3 application, `Binding` and `BindingSource` say where an
+  input is read from, `OpenApiInfo` and `OpenApiOperation` carry document
+  metadata and the per-operation decision to publish, and
+  `HttpDefinitionError` is the one composition failure. A router, a binder and
+  a dispatcher stay private; the public value types are translated into the
+  internal ones rather than aliased, which is what lets the internals keep
+  moving. `docs/HTTP_COMPOSITION.md` is the guide, `examples/http_service.py`
+  runs outside the checkout as a release gate, and an architecture test fails
+  if any example or guide reaches into a private module. Documentation UI
+  providers, the Explorer and the discovery endpoint stay internal on purpose:
+  the publication planner compiles placeholder routes and no product path
+  renders a provider, so exposing them would publish an API for something that
+  does not work end to end. ADR 0071 ([#295]).
+
 - One exposure model governs every protocol adapter. `agnara.exposure` owns
   neutral identity — adapter kind, project-local surface name, adapter-local
   name — per-surface adapter compilation and a single frozen availability
@@ -34,6 +54,19 @@ without being published. See the `0.1.0a2` scope note below.
   third-party dependency, and no kernel change needed for a third adapter.
   ADR 0070 answers RFC 0006 and records the five spike decisions, the threat
   analysis and the rejected alternatives ([#293]).
+
+### Fixed
+
+- Nothing yet: the first defect dogfooding the new HTTP API found is recorded
+  rather than fixed. A dataclass-typed request body publishes a correct JSON
+  Schema and then rejects every request that matches it, because the schema
+  port validates without coercing and a JSON body decodes to a `dict`. Every
+  HTTP test in this repository uses `dict[str, Any]` for a body, so the shape
+  an application author reaches for first was the one shape nothing exercised.
+  Whether the schema port coerces is a decision about ADR 0004 and ADR 0025
+  that changes direct invocation for every transport, so it is not made inside
+  a task exposing an adapter's API. Tracked as [#296], stated in
+  `docs/HTTP_COMPOSITION.md`, and pinned by a test so the fix is noticed.
 
 ### Changed
 
@@ -777,3 +810,5 @@ under `0.1.0a2` instead.
 [#282]: https://github.com/Blandskron/agnara/issues/282
 [#286]: https://github.com/Blandskron/agnara/issues/286
 [#293]: https://github.com/Blandskron/agnara/issues/293
+[#295]: https://github.com/Blandskron/agnara/issues/295
+[#296]: https://github.com/Blandskron/agnara/issues/296

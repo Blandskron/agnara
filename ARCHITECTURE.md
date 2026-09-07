@@ -219,6 +219,15 @@ Responsibilities:
 
 `agnara-http` may depend on an ASGI utility library only after an ADR demonstrates why direct ASGI is insufficient.
 
+The adapter's public surface is the composition API in
+`agnara_http.composition`: seven names that declare exposures, compile an
+immutable ASGI 3 application and project OpenAPI (ADR 0071). Every other
+module is underscore-prefixed. The documentation UI providers, the Explorer
+and the authorized discovery endpoint are implemented but not reachable from
+that surface, because no product path renders a provider into a served route;
+`docs/MATURITY.md` records their real status and
+`docs/HTTP_COMPOSITION.md` states the limitation.
+
 OpenAPI and browser documentation follow this one-way projection:
 
 ```text

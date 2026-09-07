@@ -13,7 +13,8 @@
     "0.1.0a3 was published on 2026-09-06 and verified on PyPI. Its gate evidence is preserved in docs/releases/history/0.1.0a3.md and is deliberately not carried here as satisfied: 0.1.0a4 must re-establish it against its own candidate commit.",
     "RELEASE_PLAN.md states the first 0.1.0a4 gate as one automated gate, \"Every 0.1.0a3 gate still satisfied\". It is decomposed here into the individual 0.1.0a3 gates, because the checker requires every automated gate to have a real implementation and an aggregate over sibling gates would be circular.",
     "0.1.0a4 is not ready and no gate specific to it is satisfied. Its evidence depends on reference applications built outside this repository, which will be audited separately.",
-    "ADR 0068 inserts 0.1.0a5 between 0.1.0a4 and 0.1.0b1 and fixes what each release owns. Only the current target carries gates in this file; the 0.1.0a5 and 0.1.0b1 gates live in RELEASE_PLAN.md until their target becomes current."
+    "ADR 0068 inserts 0.1.0a5 between 0.1.0a4 and 0.1.0b1 and fixes what each release owns. Only the current target carries gates in this file; the 0.1.0a5 and 0.1.0b1 gates live in RELEASE_PLAN.md until their target becomes current.",
+    "ADR 0071 gives agnara-http a public composition API, removing the second repository blocker docs/releases/STATUS.md recorded. The two HTTP gates stay unsatisfied: they are evidence about external applications, which still need building, and adapter distributions are still unpublished (Issue #291)."
   ],
   "gates": [
     {
@@ -151,7 +152,7 @@
       "kind": "evidence",
       "mandatory": true,
       "status": "UNSATISFIED",
-      "detail": "agnara-http declares an empty public surface, so composing HTTP currently requires importing underscore-prefixed modules. This gate cannot pass for an HTTP application until that surface exists."
+      "detail": "agnara-http now declares a public composition API (ADR 0071), so an HTTP application no longer has to import underscore-prefixed modules; docs/HTTP_COMPOSITION.md is the supported path and an architecture test fails if any example or guide reaches into a private module. The gate stays unsatisfied because it is evidence about applications built outside this workspace, and those do not exist yet."
     },
     {
       "id": "reference-apps-no-monkey-patch",
@@ -167,7 +168,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "A maintainer decides this after the applications are audited. The public API manifest governs only the 41 top-level agnara exports; the subpackage surfaces an application actually imports, including agnara.execution and agnara.core.di, are not yet governed."
+      "detail": "A maintainer decides this after the applications are audited. The manifest governs 130 exports across eight core modules; 23 core leaf modules declaring a non-empty __all__ remain ungoverned and the adapters are governed by their declared __all__ plus docs/MATURITY.md rather than by the manifest (Issue #289). Dogfooding the HTTP composition API has already found one insufficiency: a dataclass-typed request body cannot be filled from JSON (Issue #296)."
     },
     {
       "id": "di-works-naturally",
@@ -191,7 +192,7 @@
       "kind": "evidence",
       "mandatory": true,
       "status": "UNSATISFIED",
-      "detail": "Blocked on the same missing public composition surface as reference-apps-no-internal-imports. RFC 0006 proposes the model; no implementation exists."
+      "detail": "The supported path exists: RFC 0006 is answered by ADR 0070 and the public composition API landed as ADR 0071. Still unsatisfied because no external application has been built and audited against it, and because agnara-http is not on an index, so an application cannot install it normally (see reference-apps-exist)."
     },
     {
       "id": "mcp-exposure-from-application",
