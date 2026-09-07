@@ -14,7 +14,9 @@ mature enough to close a release.
    ↓
 0.1.0a4     external application validation   ← current target
    ↓
-0.1.0b1     usable public framework contract
+0.1.0a5     execution semantics and cost
+   ↓
+0.1.0b1     interoperability and composition
    ↓
 0.1.0rc1    stability candidate
    ↓
@@ -25,6 +27,19 @@ mature enough to close a release.
 are satisfied by evidence, never when a date arrives and never because a
 readiness percentage looks high. The difference between these releases is
 evidence and maturity, not feature count.
+
+**Each release has one question.** ADR 0068 fixes which, because work
+otherwise lands in whichever release is open rather than in the one whose
+question it answers:
+
+| Release | Question | Owns |
+| --- | --- | --- |
+| `0.1.0a4` | Can Agnara be consumed as a framework from outside this repository? | I1, I7, the public exposure and composition surface |
+| `0.1.0a5` | Does execution have streaming, identity and a measured cost? | I2, I3, I14 |
+| `0.1.0b1` | Can the Python ecosystem use Agnara, and Agnara use it? | I20, and the beta contract gates |
+
+Neither alpha may declare stable support for an external framework;
+`EXPERIMENTAL` is the strongest status either may give an integration.
 
 ## How this relates to existing rules
 
@@ -138,15 +153,72 @@ and `agnara-http` declares no public composition surface, so composing HTTP
 means importing private modules — which the second gate above forbids.
 `docs/releases/STATUS.md` tracks both.
 
+**Guardrail (ADR 0068).** `0.1.0a4` is not the FastAPI release, the Django
+release, the SQLAlchemy release or the interoperability release. It may run
+small experiments where they validate I1; an experiment lives in
+`experiments/`, adds no dependency to any distribution, and is named in no
+release note as support. The reason is specific: an integration that hides an
+insufficient public API behind a framework-specific convenience turns the
+"public APIs are sufficient" gate green and deletes the finding it existed to
+surface.
+
 ---
 
-## 0.1.0b1 — First Beta
+## 0.1.0a5 — Execution Alpha
 
-**Proves:** the fundamental public architecture is expected to remain
-recognizable, and a developer can build meaningful applications without
-knowing Agnara's internals.
+**Proves:** execution has the semantics the rest of the architecture waits on.
+Streaming exists as one model rather than per adapter; an execution identity
+outlives a single invocation; declared idempotency changes runtime behaviour;
+and the cost of the framework is measured rather than assumed.
+
+**Does not prove:** that the ecosystem can use Agnara. That is `0.1.0b1`.
+
+**Owns:** I2 streaming model, I3 execution identity and idempotency behaviour,
+I14 performance budgets, and the prerequisites already recorded for them.
+
+| Gate | Kind | Mandatory |
+| --- | --- | --- |
+| Every `0.1.0a4` gate still satisfied | automated | yes |
+| The streaming model is decided in an accepted record | evidence | yes |
+| A streaming capability behaves identically in direct invocation and in at least one adapter | evidence | yes |
+| Cancellation, backpressure and post-partial failure are specified and tested | evidence | yes |
+| Execution identity exists and outlives one invocation | evidence | yes |
+| Declared idempotency changes runtime behaviour rather than only metadata | evidence | yes |
+| A non-idempotent capability is never retried automatically | evidence | yes |
+| Performance budgets exist for the compiled paths | evidence | yes |
+| A regression against a budget fails CI | automated | yes |
+| Benchmarks remain engineering measurements, not rankings | manual | yes |
+| No known release-blocking regression | evidence | yes |
+
+**Guardrail (ADR 0068).** `0.1.0a5` is not the ecosystem integration release,
+the composition beta or a plugin marketplace. It may use an external
+integration as an experimental fixture where that genuinely helps validate
+streaming, idempotency or performance, and must not publish the fixture as a
+contract.
+
+---
+
+## 0.1.0b1 — Interoperability and Composition Beta
+
+**Proves:** two things, and the second is what makes the first credible.
+
+The fundamental public architecture is expected to remain recognizable, and a
+developer can build meaningful applications without knowing Agnara's
+internals — the original beta thesis.
+
+And the Python ecosystem can use Agnara while Agnara uses the ecosystem:
+standalone, as a host of external infrastructure, embedded inside a framework
+that already owns the process, and side by side with one in the same
+application. `docs/INTEROPERABILITY.md` owns the contract, the integration
+matrix and the conformance scenario; I20 owns the work; RFC 0008 holds the
+questions that must be answered before any of it is implemented.
 
 **Beta does not mean production-ready.**
+
+**A green I8 is not sufficient.** Composition inside Agnara and composition
+with the ecosystem are different claims. This release closes only when the
+interoperability gates below carry evidence, not when the initiative that
+enables them is marked done.
 
 | Gate | Kind | Mandatory |
 | --- | --- | --- |
@@ -166,7 +238,7 @@ knowing Agnara's internals.
 | Secret scanning acceptable | evidence | yes |
 | No unresolved P0/P1 framework defect | evidence | yes |
 
-The cross-transport proof is the architectural thesis under test:
+The cross-transport proof is the first architectural thesis under test:
 
 ```text
         one capability
@@ -176,6 +248,47 @@ The cross-transport proof is the architectural thesis under test:
 Direct     HTTP        MCP
 Python
 ```
+
+### Interoperability gates
+
+The second thesis. Every gate below is mandatory, and each is satisfied by a
+conformance run against the scenario in `docs/INTEROPERABILITY.md` section 9,
+not by a demonstration.
+
+| Group | Gate | Kind | Mandatory |
+| --- | --- | --- | --- |
+| Web | Starlette hosts and is hosted by Agnara | evidence | yes |
+| Web | FastAPI hosts and is hosted by Agnara | evidence | yes |
+| Web | Django invokes Agnara capabilities | evidence | yes |
+| Web | One further framework, Flask or Litestar | evidence | yes |
+| Persistence | SQLite through a dependency-provided repository | evidence | yes |
+| Persistence | PostgreSQL with pooling, transaction scope and cleanup | evidence | yes |
+| Persistence | SQLAlchemy synchronous | evidence | yes |
+| Persistence | SQLAlchemy asynchronous, where the driver applies | evidence | yes |
+| Schema | Standard-library adapter remains a first-class path | evidence | yes |
+| Schema | Pydantic adapter | evidence | yes |
+| Schema | A second non-stdlib adapter, ideally msgspec, if ready | evidence | yes |
+| Presentation | Jinja2 or an equivalent HTML rendering path | evidence | yes |
+| Background | At least one real task runtime, preferably Celery | evidence | yes |
+| Observability | OpenTelemetry validated end to end across HTTP, workers and errors | evidence | yes |
+| Protocol composition | HTTP and MCP over one shared capability, no duplicated logic | evidence | yes |
+| Embedding | FastAPI hosts Agnara | evidence | yes |
+| Embedding | Django hosts Agnara | evidence | yes |
+| Side-by-side | One ASGI application serving native routes and Agnara exposures | evidence | yes |
+| Progressive adoption | An existing application adopts Agnara without a full rewrite | evidence | yes |
+| Kernel | `agnara` still imports only the standard library | automated | yes |
+| Kernel | Every shipped integration passes the anti-coupling test | manual | yes |
+
+**Changing one of these is an ADR or RFC**, carrying the evidence that it was
+wrong. A gate is never quietly dropped, relaxed or made non-mandatory during
+release preparation, which is when the pressure to do so peaks.
+
+**Deliberately not blocking.** GraphQL, gRPC, Sanic, Quart, Falcon, aiohttp,
+Robyn, Prefect, Kafka, NATS, and Temporal if I6 is not mature enough, stay in
+research. Each is either an unanswered semantic mapping, a duplicate of
+evidence another gate already produces, or dependent on an initiative that is
+not finished. `docs/INTEROPERABILITY.md` section 6 records which reason
+applies to which.
 
 ---
 

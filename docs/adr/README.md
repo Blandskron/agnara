@@ -40,6 +40,12 @@ proposal is tracked with the documentation initiative in
 An ADR records a decision **after** it has been made. An open question belongs
 in an RFC until it is answered; the RFC then names the ADR that answered it.
 
+Most ADRs here record a technical decision. A few record a governance one —
+ADR 0021 fixes how versions are chosen, ADR 0068 fixes which release owns
+ecosystem interoperability. Both kinds bind, and both are recorded here rather
+than in a planning document, because a planning document is rewritten and a
+decision record is not.
+
 A superseded ADR is never deleted or edited to match the new decision. The
 reasoning that turned out to be wrong is the most useful part of the record.
 

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "current_target": "0.1.0a4",
-  "next_target": "0.1.0b1",
+  "next_target": "0.1.0a5",
   "previous_release": "0.1.0a3",
   "status": "IN_PROGRESS",
   "assessed_on": "2026-09-07",
@@ -12,7 +12,8 @@
     "Evidence expires when a file it declares under 'covers' changes between its recorded commit and HEAD. Evidence with no 'covers' expires on any commit change.",
     "0.1.0a3 was published on 2026-09-06 and verified on PyPI. Its gate evidence is preserved in docs/releases/history/0.1.0a3.md and is deliberately not carried here as satisfied: 0.1.0a4 must re-establish it against its own candidate commit.",
     "RELEASE_PLAN.md states the first 0.1.0a4 gate as one automated gate, \"Every 0.1.0a3 gate still satisfied\". It is decomposed here into the individual 0.1.0a3 gates, because the checker requires every automated gate to have a real implementation and an aggregate over sibling gates would be circular.",
-    "0.1.0a4 is not ready and no gate specific to it is satisfied. Its evidence depends on reference applications built outside this repository, which will be audited separately."
+    "0.1.0a4 is not ready and no gate specific to it is satisfied. Its evidence depends on reference applications built outside this repository, which will be audited separately.",
+    "ADR 0068 inserts 0.1.0a5 between 0.1.0a4 and 0.1.0b1 and fixes what each release owns. Only the current target carries gates in this file; the 0.1.0a5 and 0.1.0b1 gates live in RELEASE_PLAN.md until their target becomes current."
   ],
   "gates": [
     {

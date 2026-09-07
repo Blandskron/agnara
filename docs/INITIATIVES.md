@@ -50,6 +50,13 @@ I8 Composition ─────────→ I11 Workflows
 I9 Public API governance ──→ 1.0
 
 I10 Security program ───────→ BETA
+
+I1 ──┬─→ I20 Interoperability ──→ 0.1.0b1
+I7 ──┤
+I3 ──┤        (I2, I8, I10 gate the parts that touch
+I2 ──┤         streaming, nesting and the principal
+I8 ──┤         bridge — see RFC 0008 section 6)
+I10 ─┘
 ```
 
 `I1` and `I2` are the two initiatives most other work waits on. Neither is
@@ -198,6 +205,12 @@ gap disguised as an ergonomics gap.
 **Must decide:** nested `ExecutionContext`; what propagates and what does not;
 whether policy re-evaluates on an internal call; recursion detection; effect
 aggregation; telemetry parent/child.
+
+**Not the same as I20.** I8 is capability-to-capability composition inside
+Agnara. I20 is composition with the rest of the ecosystem. They meet at one
+question — a capability re-entered through an external host — and RFC 0008 Q12
+requires the same answer for both, because two answers would make the host path
+a policy bypass.
 
 ### I9 — Public API governance
 
@@ -360,6 +373,62 @@ superseded rather than editing them; note in RFC 0001 that its `Context`
 example shipped as `ExecutionContext`; give ADR 0023 the status line it is
 missing.
 
+### I20 — Framework and ecosystem interoperability
+
+**Horizon:** `NOW` (RFC) → `BETA` (implementation, `0.1.0b1`)
+**Status:** `RESEARCH` — RFC 0008 proposed
+**Depends on:** I1, I7; partially on I2, I3, I8, I10
+**Owned release:** `0.1.0b1` (ADR 0068)
+
+**Problem.** Agnara can be run. It cannot be embedded in an application that
+already exists, hosted alongside one, or adopted one operation at a time. No
+contract states what an external host must do to invoke a capability, and none
+states who owns lifecycle, routing, dependency containers, context, principal,
+errors and telemetry when two runtimes share a process.
+
+**Motivation.** A framework that requires the whole stack is adopted only by
+new projects. Almost every application that would benefit from capability
+semantics already has routes, models, sessions, workers and a telemetry
+pipeline, and will not fund a rewrite to get them. Progressive adoption is
+therefore a strategic requirement, not a convenience.
+
+**Invariants.** Fifteen, listed in `docs/INTEROPERABILITY.md` section 4. The
+two that constrain every other decision: `agnara` stays framework-neutral, and
+one integration never dictates another's architecture.
+
+**Architecture.** Four modes — standalone, Agnara as host, Agnara embedded,
+side-by-side — all expressible in the existing ports-and-adapters structure. If
+a mode needs a new architectural style, that is a finding about the current
+boundaries rather than a reason to add one.
+
+**Scope:** the framework embedding contract (what a host needs, in ten steps);
+the infrastructure adapter contract, per category rather than universal; the
+side-by-side composition rules; the progressive adoption path; the integration
+matrix; and a conformance suite that verifies an adapter against one shared
+scenario rather than per-framework demos.
+
+**Non-goals:** becoming an ORM, broker, scheduler, worker runtime, template
+engine, frontend framework, workflow runtime or admin interface; favouring one
+framework; a universal adapter over unlike infrastructure; a plugin discovery
+model (I13); shipping any integration in `0.1.0a4` or `0.1.0a5`.
+
+**Risks.** The first framework shapes the boundary and the second cannot
+implement it. An embedding contract designed before RFC 0006 settles names
+something that then changes. A host's authenticated user is mapped onto a
+`Principal` with more authority than the host established — a confused deputy,
+and part of I10. Two lifecycles in one process disagree about shutdown order
+and in-flight invocations fail at commit.
+
+**Acceptance criteria.** The `0.1.0b1` interoperability gates in
+`docs/releases/RELEASE_PLAN.md`, plus: every shipped integration passes the
+anti-coupling test in `docs/INTEROPERABILITY.md` section 5; `agnara` still
+imports only the standard library; and the standalone mode is no worse than it
+was before any of it existed.
+
+**Requires RFC 0008 to be answered** before implementation. Its questions
+become ADRs, split along the line between the parts that need I2, I3 and I8 and
+the parts that do not.
+
 ## Research questions
 
 Items that need an RFC before they can be scheduled. Listed so they are not
@@ -371,7 +440,7 @@ mistaken for plans.
 | Should Agnara consume *remote* capabilities (MCP/A2A client)? | Federation. Needs trust, discovery, namespacing and failure semantics first. |
 | Do cost and latency metadata have runtime meaning? | Only worth adding if policy or agents act on them. Decorative metadata is rejected. |
 | Is a data classification vocabulary justified? | Would drive redaction and policy. Risk of inventing a framework nobody uses. |
-| GraphQL or gRPC projections? | Only where the semantic mapping is coherent. |
+| GraphQL or gRPC projections? | Only where the semantic mapping is coherent. Recorded as research, never a `0.1.0b1` commitment, in `docs/INTEROPERABILITY.md`. |
 | Framework-level i18n? | Probably an integration pattern, not a framework concern. |
 | Does the schema port need a second shipped adapter? | Pydantic and msgspec are experiments; shipping one is a dependency decision. |
 

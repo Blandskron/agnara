@@ -23,6 +23,8 @@ TARGET ARCH       where the structure is going
    ↓
 INITIATIVES       what to build, in dependency order
    ↓
+INTEROPERABILITY  how Agnara relates to the ecosystem it will not replace
+   ↓
 BACKLOG           decomposed items, close enough to implement
    ↓
 RELEASE PLAN      what a given release must satisfy
@@ -41,6 +43,7 @@ Each level may cite the level above it. None should restate it.
 | One settled decision | the ADR | cite by number |
 | One open design question | the RFC | cite by number |
 | Long-term structure and gaps | `docs/TARGET_ARCHITECTURE.md` | cite |
+| **Interoperability contract and integration matrix** | `docs/INTEROPERABILITY.md` | cite; never restate a priority or a gate |
 | What to build and in what order | `docs/INITIATIVES.md` | cite by initiative id |
 | Decomposed, ready work | `BACKLOG.md` | cite by item id |
 | Release gates and evidence | `docs/releases/RELEASE_PLAN.md` + `release-status.json` | cite |
@@ -64,6 +67,11 @@ one of them is going to be wrong. `docs/MATURITY.md` is the one that is right.
 
 **A roadmap does not contain a backlog.** `ROADMAP.md` states horizons and
 points at initiatives. It does not list tasks.
+
+**A matrix is not a gate.** `docs/INTEROPERABILITY.md` records which
+integrations matter and in which direction. Which of them a release cannot
+close without is `docs/releases/RELEASE_PLAN.md`, and the matrix points at it
+rather than repeating it.
 
 **An ADR records a decision that was made.** Not a speculation. Open questions
 belong in an RFC until they are answered, and an RFC that has been answered

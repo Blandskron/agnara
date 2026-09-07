@@ -23,6 +23,19 @@ Nothing in this repository can satisfy the external gates on its own. Passing
 repository tests is not evidence that an external consumer can do the same
 thing, and the program is designed so that it cannot be mistaken for it.
 
+## The path changed shape
+
+`0.1.0a5` now sits between `0.1.0a4` and `0.1.0b1`, and `0.1.0b1` is the
+interoperability and composition beta. ADR 0068 records the decision and
+`RELEASE_PLAN.md` carries the gates.
+
+Nothing about `0.1.0a4` moved. Its gates, its blockers and its score are
+unchanged; the work that had no release — streaming, execution identity,
+performance budgets, and framework interoperability — now has one each. The
+practical effect on this release is a guardrail rather than a task: `0.1.0a4`
+may not answer its "public APIs are sufficient" gate by shipping a framework
+integration that routes around the API the gate is asking about.
+
 ## Two known blockers
 
 Both are architectural, both are recorded, and neither is a defect introduced

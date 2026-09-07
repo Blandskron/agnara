@@ -45,6 +45,12 @@ WORKSPACE_IMPORT_NAMES: frozenset[str] = frozenset(DISTRIBUTIONS.values())
 #: The allowlist test (standard library only) is the general rule; this
 #: denylist exists so that a regression fails with a message naming the
 #: specific dependency the architecture forbids.
+#:
+#: Every technology in the integration matrix of `docs/INTEROPERABILITY.md`
+#: belongs here, because that document's whole premise is that the kernel
+#: integrates with them from behind a port and never imports one. An entry is
+#: not a prediction that someone will try; it is what turns invariant 2 of
+#: that document into a test failure that names the library.
 #: See AGENTS.md "NEVER couple core to protocols" and PRINCIPLES.md P2/P13.
 FORBIDDEN_IN_CORE: frozenset[str] = frozenset(
     {
@@ -55,6 +61,13 @@ FORBIDDEN_IN_CORE: frozenset[str] = frozenset(
         "django",
         "flask",
         "quart",
+        "sanic",
+        "falcon",
+        "robyn",
+        "tornado",
+        "werkzeug",
+        "ninja",
+        "rest_framework",
         "uvicorn",
         "granian",
         "hypercorn",
@@ -86,8 +99,13 @@ FORBIDDEN_IN_CORE: frozenset[str] = frozenset(
         "llama_index",
         # infrastructure clients
         "sqlalchemy",
+        "sqlmodel",
+        "alembic",
         "psycopg",
+        "psycopg2",
         "asyncpg",
+        "aiosqlite",
+        "pymysql",
         "redis",
         "kafka",
         "aiokafka",
@@ -99,8 +117,112 @@ FORBIDDEN_IN_CORE: frozenset[str] = frozenset(
         "httpx",
         "aiohttp",
         "requests",
+        # template engines
+        "jinja2",
+        "mako",
+        "chameleon",
+        # task runtimes, schedulers and durable execution
+        "celery",
+        "taskiq",
+        "dramatiq",
+        "rq",
+        "temporalio",
+        "prefect",
+        "apscheduler",
+        # error reporting and further protocol projections
+        "sentry_sdk",
+        "strawberry",
+        "graphene",
+        "ariadne",
+        "graphql",
+        "grpc",
+        "grpc_tools",
     }
 )
+
+
+#: Distributions no first-party Agnara package may declare as a dependency.
+#:
+#: ADR 0068 gives ecosystem interoperability to `0.1.0b1` and forbids
+#: `0.1.0a4` and `0.1.0a5` from shipping a framework, database, broker, task
+#: runtime or template engine integration as a supported contract. A denylist
+#: over source imports would not catch that, because an integration arrives as
+#: a *declared dependency* first.
+#:
+#: These are PyPI distribution names, not import names, because that is what a
+#: `pyproject.toml` carries. Protocol SDKs an adapter legitimately depends on
+#: -- `mcp`, `opentelemetry-api` -- are deliberately absent: an adapter for a
+#: protocol Agnara projects into is not an ecosystem integration.
+#:
+#: Removing an entry is a release decision recorded in an ADR, not a test fix.
+ECOSYSTEM_INTEGRATIONS: frozenset[str] = frozenset(
+    {
+        # web frameworks and servers
+        "fastapi",
+        "starlette",
+        "litestar",
+        "django",
+        "djangorestframework",
+        "django-ninja",
+        "flask",
+        "quart",
+        "sanic",
+        "falcon",
+        "aiohttp",
+        "robyn",
+        "tornado",
+        "werkzeug",
+        "uvicorn",
+        "granian",
+        "hypercorn",
+        "daphne",
+        # schema and validation libraries
+        "pydantic",
+        "msgspec",
+        "attrs",
+        "marshmallow",
+        "cattrs",
+        # databases, drivers and migrations
+        "sqlalchemy",
+        "sqlmodel",
+        "alembic",
+        "psycopg",
+        "psycopg2-binary",
+        "asyncpg",
+        "aiosqlite",
+        "pymysql",
+        # caches, brokers and messaging
+        "redis",
+        "kafka-python",
+        "aiokafka",
+        "confluent-kafka",
+        "nats-py",
+        "pika",
+        "aio-pika",
+        # task runtimes, schedulers and durable execution
+        "celery",
+        "taskiq",
+        "dramatiq",
+        "rq",
+        "temporalio",
+        "prefect",
+        "apscheduler",
+        # templates and presentation
+        "jinja2",
+        "mako",
+        # error reporting and further protocol projections
+        "sentry-sdk",
+        "strawberry-graphql",
+        "graphene",
+        "ariadne",
+        "grpcio",
+    }
+)
+
+
+def _normalized_requirement(requirement: str) -> str:
+    """PEP 503 normalized distribution name of a PEP 508 requirement."""
+    return _requirement_name(requirement).lower().replace("_", "-").replace(".", "-")
 
 
 @dataclass(frozen=True, slots=True)
