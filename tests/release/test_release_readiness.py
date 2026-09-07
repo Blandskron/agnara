@@ -120,6 +120,17 @@ def test_the_status_file_declares_a_supported_schema() -> None:
     assert document()["schema_version"] == readiness.SCHEMA_VERSION
 
 
+#: Every module the manifest governs. Drift is checked on each of them,
+#: because governing only the top level was the gap this manifest closed:
+#: `agnara.execution` and `agnara.core.di` are the first two imports in the
+#: README, and a rename there breaks exactly as much as a rename in `agnara`.
+GOVERNED_MODULES = [
+    entry["module"]
+    for entry in json.loads(readiness.PUBLIC_API_PATH.read_text(encoding="utf-8"))["modules"]
+]
+
+
+@pytest.mark.parametrize("module", GOVERNED_MODULES)
 @pytest.mark.parametrize(
     ("mutation", "expected_fragment"),
     [
@@ -135,11 +146,13 @@ def test_the_status_file_declares_a_supported_schema() -> None:
 def test_public_api_gate_rejects_manifest_drift(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    module: str,
     mutation: str,
     expected_fragment: str,
 ) -> None:
     manifest = json.loads(readiness.PUBLIC_API_PATH.read_text(encoding="utf-8"))
-    exports = manifest["exports"]
+    entry = next(item for item in manifest["modules"] if item["module"] == module)
+    exports = entry["exports"]
     if mutation == "renamed":
         exports[0]["name"] = "Renamed"
     elif mutation == "removed":
@@ -162,6 +175,35 @@ def test_public_api_gate_rejects_manifest_drift(
 
     assert status == readiness.UNSATISFIED
     assert expected_fragment in detail
+    assert module in detail
+
+
+def test_the_manifest_governs_every_public_core_module() -> None:
+    """A public subpackage that no manifest names is ungoverned by definition.
+
+    This is the check that would have failed before the subpackage manifests
+    existed, and the one that fails again if a new public subpackage is added
+    without classifying it.
+    """
+    source_root = readiness.CORE_SRC_PATH
+    public = set()
+    for init in source_root.rglob("__init__.py"):
+        relative = init.relative_to(source_root).parent.parts
+        if any(part.startswith("_") for part in relative):
+            continue
+        if readiness._literal_all(init):  # a module exporting nothing is not a surface
+            public.add(".".join(("agnara", *relative)))
+
+    assert public == set(GOVERNED_MODULES)
+
+
+@pytest.mark.parametrize(
+    "module",
+    ["agnara_http", "agnara.._secrets", "os", "agnara.core.di.evil-name"],
+)
+def test_the_manifest_cannot_name_a_module_outside_the_core_package(module: str) -> None:
+    """The manifest resolves names to paths, so it must not resolve anywhere."""
+    assert readiness._module_init_path(module) is None
 
 
 def test_the_current_target_appears_in_the_release_plan() -> None:

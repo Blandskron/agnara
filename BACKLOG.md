@@ -726,6 +726,19 @@ Generated code must:
   exports, unknown classifications and internal names in the public manifest.
   Subpackage inventories remain explicit I9 follow-up work. Thirteen focused
   cases and the full quality gate pass. Tracking: GitHub Issue #270.
+- [x] E1B.2 Govern the public subpackage surfaces. The manifest covered
+  `agnara.__all__` only, while the README and `examples/quickstart.py` both
+  open by importing `agnara.core.di` and `agnara.execution` — 55 public names
+  no release gate would notice being renamed, reordered or removed. The
+  manifest is now one classified export list per public module under
+  `schema_version` 2: 123 exports across seven modules, all `provisional`.
+  The gate still reads each literal `__all__` without importing. A test
+  asserts the manifest names every core module declaring a non-empty
+  `__all__`, so a new public subpackage cannot arrive ungoverned, and another
+  asserts every exported name exists — a gap neither the manifest nor
+  `__all__` could see, because both read the same list. No rename, no
+  re-export, no promotion to `stable`. Recorded as a follow-up in ADR 0067.
+  Tracking: GitHub Issue #275.
 
 ## EPIC 1C — Unified exposure model
 
@@ -787,6 +800,17 @@ Generated code must:
 - the complete lifecycle is visible and understandable to a human maintainer.
 
 ## Carried technical debt (post-0.1.0a3 audit)
+
+- [ ] D7 Decide whether `agnara.core.di` is the right public spelling for
+  dependency injection. It is the second import in the README and in
+  `examples/quickstart.py`, so `core` — a word that reads as an internal
+  namespace — sits on the first screen a new user sees, and an external
+  application cannot avoid it. Found while governing the subpackage surfaces
+  (#275) and deliberately left alone there: a rename is a breaking change with
+  a migration cost, and it does not belong inside a change whose purpose is to
+  make the current surface visible rather than to alter it. Decide with the
+  `0.1.0a4` external evidence, which will show whether the spelling actually
+  confuses anyone, and before any name is considered for `stable`.
 
 - [ ] D6 `.apps` means two things. On `ApplicationDescriptor` it is the
   bounded contexts an application mounts (E1A.4); on `IntrospectionSnapshot`

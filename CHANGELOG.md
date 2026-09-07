@@ -15,16 +15,18 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Changed
 
-- The release record now describes `0.1.0a4` as the current target, after
-  `0.1.0a3` was published and verified on PyPI. `0.1.0a3`'s gate evidence
-  moves to the maturity snapshot `docs/releases/history/0.1.0a3.md` rather
-  than being carried forward as satisfied, because evidence describes the
-  commit it was produced on. `0.1.0a4` is recorded as `IN_PROGRESS` with
-  every gate specific to it unsatisfied: its evidence depends on reference
-  applications built outside this repository, and the two blockers are
-  named — only `agnara` is published, and `agnara-http` exposes no public
-  composition surface. The readiness score drops accordingly, which is the
-  measurement working ([#274]).
+- The public API manifest now governs every public module of the core
+  distribution rather than only the top-level one: 123 exports across
+  `agnara`, `agnara.capability`, `agnara.core.di`, `agnara.execution`,
+  `agnara.introspection`, `agnara.policy` and `agnara.schema`, all
+  `provisional`. Two thirds of the documented entry path were ungoverned —
+  the README and the quickstart both open by importing `agnara.core.di`
+  and `agnara.execution` — so a rename there passed every release gate. A
+  test now asserts the manifest names every core module that declares a
+  non-empty `__all__`, and another asserts every exported name actually
+  exists, which neither the manifest nor `__all__` can detect on its own.
+  `docs/public-api.json` moves to `schema_version` 2; no API is renamed,
+  re-exported or promoted ([#275]).
 - Compiling an `Agnara` project now freezes every mounted `App` registry as
   well as the project's aggregate registry. A mounted app can no longer accept
   declarations that the compiled project could never observe; unmounted apps
@@ -673,4 +675,4 @@ under `0.1.0a2` instead.
 [#268]: https://github.com/Blandskron/agnara/issues/268
 [#270]: https://github.com/Blandskron/agnara/issues/270
 [#271]: https://github.com/Blandskron/agnara/issues/271
-[#274]: https://github.com/Blandskron/agnara/issues/274
+[#275]: https://github.com/Blandskron/agnara/issues/275

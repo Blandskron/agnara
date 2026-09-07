@@ -37,7 +37,8 @@ PLAN_PATH = ROOT / "docs" / "releases" / "RELEASE_PLAN.md"
 CHANGELOG_PATH = ROOT / "CHANGELOG.md"
 PACKAGES_DIR = ROOT / "packages"
 PUBLIC_API_PATH = ROOT / "docs" / "public-api.json"
-CORE_INIT_PATH = PACKAGES_DIR / "agnara" / "src" / "agnara" / "__init__.py"
+CORE_SRC_PATH = PACKAGES_DIR / "agnara" / "src" / "agnara"
+CORE_INIT_PATH = CORE_SRC_PATH / "__init__.py"
 
 SCHEMA_VERSION = 1
 
@@ -274,41 +275,71 @@ def _literal_all(path: Path) -> list[str] | None:
     return None
 
 
-def _classified_public_names() -> tuple[list[str] | None, str | None]:
-    """Validate and return the exact classified top-level core surface."""
+def _module_init_path(module: str) -> Path | None:
+    """The ``__init__.py`` that owns `module`'s ``__all__``, or None if unusable.
+
+    Only modules inside the core distribution are addressable. A manifest entry
+    naming anything else is refused rather than resolved, so the manifest can
+    never be pointed at a path outside the package it claims to describe.
+    """
+    parts = module.split(".")
+    if parts[0] != "agnara" or any(not part.isidentifier() for part in parts):
+        return None
+    return CORE_SRC_PATH.joinpath(*parts[1:], "__init__.py")
+
+
+def _classified_public_names() -> tuple[dict[str, list[str]] | None, str | None]:
+    """Validate the manifest and return each module's exact classified surface."""
     try:
         document = json.loads(PUBLIC_API_PATH.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         return None, f"public API manifest cannot be read: {exc}"
-    if not isinstance(document, dict) or document.get("schema_version") != 1:
-        return None, "public API manifest must use schema_version 1"
-    if document.get("distribution") != "agnara" or document.get("module") != "agnara":
-        return None, "public API manifest must describe the agnara distribution and module"
-    exports = document.get("exports")
-    if not isinstance(exports, list):
-        return None, "public API manifest exports must be a list"
+    if not isinstance(document, dict) or document.get("schema_version") != 2:
+        return None, "public API manifest must use schema_version 2"
+    if document.get("distribution") != "agnara":
+        return None, "public API manifest must describe the agnara distribution"
+    modules = document.get("modules")
+    if not isinstance(modules, list) or not modules:
+        return None, "public API manifest modules must be a non-empty list"
 
-    names: list[str] = []
     allowed = {"stable", "provisional", "experimental", "internal"}
-    for index, item in enumerate(exports):
-        if not isinstance(item, dict) or set(item) != {"name", "stability"}:
-            return None, f"public API export {index} must contain only name and stability"
-        name, stability = item["name"], item["stability"]
-        if not isinstance(name, str) or not name:
-            return None, f"public API export {index} has an invalid name"
-        if stability not in allowed:
-            return None, f"public API export {name!r} has unknown stability {stability!r}"
-        if stability == "internal":
-            return None, f"internal name {name!r} must not appear in the public export manifest"
-        names.append(name)
-    duplicates = sorted(name for name in set(names) if names.count(name) > 1)
-    if duplicates:
-        return None, "public API manifest repeats: " + ", ".join(duplicates)
-    return names, None
+    classified: dict[str, list[str]] = {}
+    for entry in modules:
+        if not isinstance(entry, dict) or set(entry) != {"module", "exports"}:
+            return None, "each manifest module must contain only module and exports"
+        module = entry["module"]
+        if not isinstance(module, str) or _module_init_path(module) is None:
+            return None, f"manifest module {module!r} is not a module of the agnara package"
+        if module in classified:
+            return None, f"public API manifest repeats module {module!r}"
+        exports = entry["exports"]
+        if not isinstance(exports, list):
+            return None, f"{module}: manifest exports must be a list"
+
+        names: list[str] = []
+        for index, item in enumerate(exports):
+            if not isinstance(item, dict) or set(item) != {"name", "stability"}:
+                return None, f"{module}: export {index} must contain only name and stability"
+            name, stability = item["name"], item["stability"]
+            if not isinstance(name, str) or not name:
+                return None, f"{module}: export {index} has an invalid name"
+            if stability not in allowed:
+                return None, f"{module}: export {name!r} has unknown stability {stability!r}"
+            if stability == "internal":
+                return None, f"{module}: internal name {name!r} must not appear in the manifest"
+            names.append(name)
+        duplicates = sorted(name for name in set(names) if names.count(name) > 1)
+        if duplicates:
+            return None, f"{module}: manifest repeats: " + ", ".join(duplicates)
+        classified[module] = names
+
+    if "agnara" not in classified:
+        return None, "public API manifest must classify the top-level agnara module"
+    return classified, None
 
 
 def check_public_api_declared() -> tuple[str, str]:
-    """Every package declares exports; core exports exactly match their classifications."""
+    """Every package declares exports; every governed module matches its manifest."""
     missing = []
     for init in sorted(PACKAGES_DIR.glob("*/src/*/__init__.py")):
         if _literal_all(init) is None:
@@ -319,20 +350,31 @@ def check_public_api_declared() -> tuple[str, str]:
     classified, error = _classified_public_names()
     if error is not None:
         return UNSATISFIED, error
-    implemented = _literal_all(CORE_INIT_PATH)
-    if implemented != classified:
-        assert implemented is not None and classified is not None
-        missing_classification = [name for name in implemented if name not in classified]
-        absent_exports = [name for name in classified if name not in implemented]
-        detail = []
-        if missing_classification:
-            detail.append("unclassified: " + ", ".join(missing_classification))
-        if absent_exports:
-            detail.append("not exported: " + ", ".join(absent_exports))
-        if not detail:
-            detail.append("export order differs from the manifest")
-        return UNSATISFIED, "; ".join(detail)
-    return SATISFIED, f"all {len(classified or ())} agnara exports are classified exactly"
+    assert classified is not None
+
+    problems: list[str] = []
+    for module, expected in classified.items():
+        init = _module_init_path(module)
+        assert init is not None  # validated while parsing the manifest
+        implemented = _literal_all(init)
+        if implemented is None:
+            problems.append(f"{module}: no literal __all__ to compare against")
+            continue
+        if implemented == expected:
+            continue
+        unclassified = [name for name in implemented if name not in expected]
+        absent = [name for name in expected if name not in implemented]
+        if unclassified:
+            problems.append(f"{module}: unclassified: " + ", ".join(unclassified))
+        if absent:
+            problems.append(f"{module}: not exported: " + ", ".join(absent))
+        if not unclassified and not absent:
+            problems.append(f"{module}: export order differs from the manifest")
+    if problems:
+        return UNSATISFIED, "; ".join(problems)
+
+    total = sum(len(names) for names in classified.values())
+    return SATISFIED, f"{total} exports across {len(classified)} modules are classified exactly"
 
 
 #: Automated gate id -> the function that decides it. A gate whose id is listed

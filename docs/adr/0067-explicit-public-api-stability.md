@@ -35,9 +35,9 @@ The automated release gate parses the implementation's literal `__all__` and
 requires its ordered names to equal the manifest. It also validates the
 manifest schema, unique names and classification vocabulary.
 
-This decision governs only `agnara.__all__`. Subpackage entry points remain
-public; follow-up work will inventory them without blocking this first exact
-contract on a larger audit.
+This decision first governed only `agnara.__all__`. Subpackage entry points
+remained public and were inventoried in the follow-up recorded below, without
+blocking the first exact contract on a larger audit.
 
 ## Consequences
 
@@ -47,7 +47,7 @@ contract on a larger audit.
   API to stable.
 - Pre-1.0 incompatible changes retain ADR 0021's changelog and migration
   requirements.
-- I9 remains open for subpackage manifests and eventual stability promotion.
+- I9 remains open for eventual stability promotion.
 
 ## Alternatives considered
 
@@ -65,3 +65,23 @@ can ship independently and makes the remaining scope measurable.
 **Store stability on runtime objects.** Rejected because compatibility
 classification is release metadata, not invocation semantics, and core should
 not carry mutable governance machinery at runtime.
+
+## Follow-up — subpackage manifests (Issue #275)
+
+The manifest carries one classified export list per public module and uses
+`schema_version` 2. It governs `agnara`, `agnara.capability`, `agnara.core.di`,
+`agnara.execution`, `agnara.introspection`, `agnara.policy` and `agnara.schema`
+— 123 exports, all `provisional`.
+
+The alternative "classify every public submodule in one change" was rejected
+above for the *first* contract, and that reasoning held: the top-level gate
+shipped independently and made the remaining scope measurable. This follow-up
+is that measured scope, not a reversal.
+
+Two things were deliberately left alone. Nothing is renamed or re-exported: in
+particular, whether `agnara.core.di` is the right public spelling for
+dependency injection is a design question, and `core` appearing in the first
+import of the README is a real one — but a rename does not belong inside a
+governance change that exists to make the current surface visible. And nothing
+is promoted to `stable`, which still requires the beta and release-candidate
+gates.
