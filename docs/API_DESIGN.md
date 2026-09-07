@@ -35,17 +35,40 @@ http.get("/users/{user_id}", get_user)
 ```
 
 `http` is a typed adapter surface selected by project composition, not a
-capability property. RFC 0006 proposes the shared exposure lifecycle beneath
-this syntax; the exact constructor remains provisional.
+capability property. The exposure lifecycle beneath this syntax is implemented
+and settled (ADR 0070); **this constructor is not**. `agnara-http` still
+exports nothing, so the shape above remains a design sketch and the public
+composition API is the next piece of work. Nothing here is stable syntax.
 
 ## 5. MCP exposure
 
 ```python
+mcp = Mcp(app, surface="agents")
 mcp.tool(get_user)
 ```
 
-MCP owns its tool-name and SDK validation, while contributing the same neutral
-compiled availability record as HTTP. See RFC 0006.
+This one is real. MCP owns its tool-name grammar and SDK validation, and
+`surface` names the deployment so two MCP servers of one project do not
+collide. See ADR 0070.
+
+## 5a. Project composition
+
+```python
+capabilities = project.compile()
+exposures = compile_exposures(capabilities, [http_surface, mcp.compile_surface()])
+```
+
+`compile_exposures` is the aggregation step: it takes one
+`SurfaceCompilation` per selected adapter surface, validates the cross-adapter
+rules and returns the frozen registry that introspection reads. It is a
+function rather than a method on `Agnara`, because `Agnara.compile()` returns
+a governed type and the composition root should not become a god object
+(`ARCHITECTURE.md` section 5).
+
+The exposure model is public today; the adapter *builders* that produce a
+`SurfaceCompilation` are only public for MCP. Until HTTP has one, an
+application cannot compose HTTP through supported API — the `0.1.0a4` blocker
+`docs/releases/STATUS.md` tracks.
 
 ## 6. A2A exposure
 

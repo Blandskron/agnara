@@ -66,31 +66,26 @@ large. Both are design-first.
 
 ### I1 — Unified exposure model
 
-**Horizon:** `NOW` (RFC) → `NEXT ALPHA` (implementation)
-**Status:** `RESEARCH` — RFC 0006 proposed
+**Horizon:** `NEXT ALPHA`
+**Status:** `IMPLEMENTED` — RFC 0006 answered by ADR 0070
 **Blocks:** I4, I5, I7, a stable public composition API, 1.0
 
-HTTP and MCP each compile exposures independently. A third adapter would
-invent a third mechanism, and there is no shared answer to "which surfaces is
-this capability reachable through".
+**Decided and built.** `agnara.exposure` owns neutral identity, per-surface
+adapter compilation and one frozen availability registry. Declaration belongs
+to the composition root; each adapter derives its records from its own
+compiled dispatch artifact; introspection reads the registry instead of being
+told about exposures a second time. Both shipped adapters go through it, and a
+third would need no kernel change. ADR 0070 records the five spike decisions
+and the rejected alternatives.
 
-This is why `agnara-http` exports nothing: the composition API cannot be
-settled until the model beneath it is. `docs/API_DESIGN.md` section 4 is
-explicit that its `Http(...)` shape is a sketch.
+**What this did not deliver.** `agnara-http` still exports nothing. The model
+beneath the composition API is settled; the API itself is the next piece of
+work, and until it exists an application cannot compose HTTP through
+supported entry points. `docs/API_DESIGN.md` section 4 remains a sketch, and
+`docs/releases/STATUS.md` still carries that blocker.
 
-**Must decide before implementing:** whether exposure declaration lives on the
-capability, the app or the composition root; how an adapter contributes
-exposure metadata without the kernel importing it; how availability is derived
-rather than declared twice; what a compiled exposure is.
-
-**Non-goals:** implementing a new adapter to prove the model. Two existing
-adapters are enough evidence.
-
-**RFC 0006 is proposed.** It assigns declarations to project composition,
-keeps typed runtime artifacts in adapters and aggregates adapter-derived
-neutral records into one frozen availability registry. Its implementation
-spike must close the remaining public-spelling and migration questions before
-this becomes an accepted contract.
+**Non-goals, honoured:** no third adapter was built to prove the model, and
+no ecosystem integration was added.
 
 ### I2 — Streaming model
 

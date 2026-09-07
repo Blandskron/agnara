@@ -10,6 +10,7 @@ from types import MappingProxyType
 from typing import Any
 
 from agnara import Agnara, CapabilityDefinition, DefinitionError, UnknownCapabilityError
+from agnara.exposure import CompiledExposure, SurfaceCompilation, SurfaceId
 
 __all__ = [
     "FrozenMcpTools",
@@ -19,6 +20,15 @@ __all__ = [
 ]
 
 _TOOL_NAME = re.compile(r"[A-Za-z0-9_.-]{1,128}\Z")
+
+#: The adapter kind this package contributes to the unified exposure model,
+#: and the ``transport`` value its exposures carry into introspection. A
+#: composition root reads it from ``mcp.surface.adapter`` rather than here, so
+#: it stays a module constant and not a second public spelling.
+_ADAPTER = "mcp"
+
+#: Surface name used when a project does not name one.
+_DEFAULT_SURFACE = "default"
 
 
 class McpToolDefinitionError(DefinitionError):
@@ -82,12 +92,15 @@ class FrozenMcpTools(Mapping[str, McpToolExposure]):
 class Mcp:
     """Declare MCP tool exposures for capabilities owned by one application."""
 
-    __slots__ = ("_app", "_by_name", "_frozen", "_lock", "_snapshot")
+    __slots__ = ("_app", "_by_name", "_frozen", "_lock", "_snapshot", "_surface")
 
-    def __init__(self, app: Agnara) -> None:
+    def __init__(self, app: Agnara, *, surface: str = _DEFAULT_SURFACE) -> None:
         if not isinstance(app, Agnara):
             raise TypeError(f"app must be an Agnara application, got {type(app).__name__}")
         self._app = app
+        #: Validated here rather than at compile time, so a project naming two
+        #: MCP surfaces learns about a bad name while it is still composing.
+        self._surface = SurfaceId(_ADAPTER, surface)
         self._by_name: dict[str, McpToolExposure] = {}
         self._frozen = False
         self._lock = threading.Lock()
@@ -97,6 +110,16 @@ class Mcp:
     def is_compiled(self) -> bool:
         """Whether tool registration has been closed."""
         return self._frozen
+
+    @property
+    def surface(self) -> SurfaceId:
+        """This server's identity in the project-wide exposure registry.
+
+        Two `Mcp` instances with different surface names are two MCP
+        deployments of one project, and may reuse tool names because their
+        full exposure identities differ.
+        """
+        return self._surface
 
     def tool(
         self,
@@ -134,6 +157,33 @@ class Mcp:
                 self._snapshot = FrozenMcpTools(tuple(self._by_name.values()))
                 self._frozen = True
             return self._snapshot
+
+    def compile_surface(self) -> SurfaceCompilation[FrozenMcpTools]:
+        """Close registration and return the tool table with its neutral records.
+
+        This is the value a project aggregates with `compile_exposures`. The
+        records are derived from the frozen tool table, not from the
+        declarations that produced it, so a record cannot name a tool the
+        server will not serve and a served tool cannot go unrecorded
+        (RFC 0006 section 9).
+
+        `compile` remains available and returns the tool table alone. It is
+        what the SDK projection consumes, and it predates the exposure model.
+        """
+        tools = self.compile()
+        return SurfaceCompilation(
+            self._surface,
+            tools,
+            tuple(
+                CompiledExposure.of(
+                    self._surface,
+                    exposure.name,
+                    exposure.definition.id,
+                    {"tool": exposure.name},
+                )
+                for exposure in tools.exposures
+            ),
+        )
 
     def _resolve(
         self, capability: CapabilityDefinition | Callable[..., Any]
@@ -176,4 +226,4 @@ class Mcp:
 
     def __repr__(self) -> str:
         state = "compiled" if self._frozen else "open"
-        return f"Mcp({self._app.name!r}, {len(self)} tools, {state})"
+        return f"Mcp({self._app.name!r}, {self._surface.name!r}, {len(self)} tools, {state})"

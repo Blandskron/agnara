@@ -13,7 +13,7 @@ This document owns compatibility expectations for Agnara's Python API.
 | `experimental` | Public only for evaluation. It may change or disappear in the next pre-1.0 release. |
 | `internal` | Unsupported implementation detail. Internal names are excluded from public manifests and `__all__`. |
 
-No API is classified `stable` during the alpha line. All 123 currently governed
+No API is classified `stable` during the alpha line. All 130 currently governed
 exports are `provisional`: they are deliberate public entry points, but the
 alpha line explicitly makes no compatibility promise. A stable classification
 requires a later, explicit decision supported by the beta and release-candidate
@@ -22,7 +22,7 @@ a Python symbol.
 
 ## Governed surface
 
-The manifest governs the seven package entry points below, not just the
+The manifest governs the eight package entry points below, not just the
 top-level one. A count is not a substitute: the release gate compares the
 ordered names and classifications in the manifest with each module's literal
 `__all__`, read without importing the package.
@@ -36,29 +36,40 @@ ordered names and classifications in the manifest with each module's literal
 | `agnara.policy` | 13 |
 | `agnara.core.di` | 9 |
 | `agnara.capability` | 8 |
+| `agnara.exposure` | 7 |
 
 Governing the subpackages is not a formality. The first three lines of the
 README and of `examples/quickstart.py` import from `agnara`, `agnara.core.di`
 and `agnara.execution`, so two thirds of the documented entry path lived
 outside the governed surface until these manifests existed.
 
-A module the manifest does not name is ungoverned by definition, and 23 of
-them are. Thirty modules of the `agnara` package declare a non-empty
-`__all__`; the seven above are governed. The rest — `agnara.errors`,
-`agnara.application`, `agnara.execution.result` and twenty others — publish
-names that nothing classifies, and Historical Reference Applications
-#001-#009 import thirteen of them. Issue #289 records the measurement and the
-decision it needs: whether each is an entry point, an implementation detail
-that should stop declaring `__all__`, or a module whose names belong on its
-parent package.
+## What the manifest does not reach
 
-No test asserts the reverse direction. The gate reads the manifest and holds
-the implementation to it; it cannot notice a public module the manifest never
-mentions, and it cannot name a leaf module at all, because it resolves a
-manifest entry only to an `__init__.py`. Adding a public *subpackage* without
-classifying it therefore fails nothing today. That test is worth having, but
-it cannot be written before the boundary above is decided, because it would
-fail on 23 modules on the day it landed.
+The completeness check runs in both directions, but only over *packages*.
+`tests/release/test_release_readiness.py::test_the_manifest_governs_every_public_core_module`
+walks every `__init__.py` under `agnara`, skips any whose path contains an
+underscore-prefixed part, keeps the ones declaring a non-empty `__all__`, and
+requires that set to equal the manifest's. Adding a public subpackage without
+classifying it fails that test — `agnara.exposure` did, which is how it got
+into the table above.
+
+Leaf modules are outside it. Thirty-one modules of the `agnara` package
+declare a non-empty `__all__`; the eight above are governed. The remaining 23
+— `agnara.errors`, `agnara.application`, `agnara.execution.result` and twenty
+others — publish names that nothing classifies, and Historical Reference
+Applications #001-#009 import thirteen of them. The manifest cannot name them
+even in principle: `check_release_readiness._module_init_path` resolves an
+entry only to an `__init__.py`, so `agnara.errors` is unaddressable.
+
+Issue #289 records the measurement and the decision it needs: whether each is
+an entry point, an implementation detail that should stop declaring
+`__all__`, or a module whose names belong on its parent package. Extending
+the manifest to leaf modules is a change to the gate, not a documentation
+edit, and it waits on that decision.
+
+An earlier revision of this file claimed the reverse direction was unchecked
+at all. That was wrong; the package-level check has existed since Issue #275.
+The accurate statement is the narrower one above.
 
 The manifest resolves module names to files. It may only name modules of the
 `agnara` package, and a name that does not resolve inside it is refused rather

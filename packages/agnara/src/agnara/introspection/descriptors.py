@@ -17,10 +17,10 @@ model rather than repairing it.
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
 from typing import Any, Final
 
 from agnara._frozen import frozen_slots_dataclass
+from agnara._json import canonical_json, json_data
 from agnara.capability.identity import CapabilityId
 from agnara.capability.metadata import Confirmation, Idempotency, Risk
 from agnara.errors import DefinitionError
@@ -49,11 +49,6 @@ INTROSPECTION_FORMAT: Final = "agnara-introspection"
 #: version and of OpenAPI. ``"0"`` states that the contract is not yet stable.
 INTROSPECTION_VERSION: Final = "0"
 
-#: Deepest JSON structure copied out of a schema fragment or exposure detail.
-#: A cycle is impossible below this, and a hostile or accidental deep value
-#: cannot make a later serializer recurse without bound.
-_MAX_DEPTH: Final = 64
-
 
 class IntrospectionError(DefinitionError):
     """A snapshot cannot be built from the supplied compiled surface."""
@@ -73,54 +68,14 @@ def _optional_text(value: object, *, field: str) -> str | None:
     return value
 
 
-def _json_data(value: object, *, field: str, depth: int = 0) -> Any:
-    """Detach plain JSON data, refusing anything a snapshot must not carry.
-
-    Copying matters as much as validating: a schema fragment or exposure
-    detail supplied by an adapter stays owned by that adapter, and a snapshot
-    that shared it could change after it was read.
-    """
-    if depth > _MAX_DEPTH:
-        raise IntrospectionError(f"introspection {field} nests deeper than {_MAX_DEPTH} levels")
-    if value is None or isinstance(value, str | bool | int):
-        return value
-    if isinstance(value, float):
-        if value != value or value in (float("inf"), float("-inf")):
-            raise IntrospectionError(f"introspection {field} contains a non-finite number")
-        return value
-    if isinstance(value, Mapping):
-        copied: dict[str, Any] = {}
-        for key, item in value.items():
-            if not isinstance(key, str):
-                raise IntrospectionError(
-                    f"introspection {field} contains a non-string object key {key!r}"
-                )
-            copied[key] = _json_data(item, field=f"{field}.{key}", depth=depth + 1)
-        return copied
-    if isinstance(value, list | tuple):
-        return [
-            _json_data(item, field=f"{field}[{index}]", depth=depth + 1)
-            for index, item in enumerate(value)
-        ]
-    raise IntrospectionError(
-        f"introspection {field} contains a non-JSON value of type {type(value).__name__}"
-    )
+def _json_data(value: object, *, field: str) -> Any:
+    """Detach plain JSON data under this subsystem's diagnostics."""
+    return json_data(value, field=f"introspection {field}", error=IntrospectionError)
 
 
 def _frozen_json(value: object, *, field: str) -> str:
-    """Freeze detached JSON data into its canonical text.
-
-    A frozen slotted dataclass cannot hold a mutable mapping and stay honest
-    about immutability, and a read-only proxy would still be a view of
-    something a caller could mutate. Canonical text is immutable, hashable,
-    comparable and trivially deterministic to serialize.
-    """
-    return json.dumps(
-        _json_data(value, field=field),
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    )
+    """Freeze detached JSON data into its canonical text."""
+    return canonical_json(value, field=f"introspection {field}", error=IntrospectionError)
 
 
 @frozen_slots_dataclass

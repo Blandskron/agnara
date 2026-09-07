@@ -146,15 +146,17 @@ def test_constructor_and_target_type_errors_are_actionable() -> None:
         Mcp(app).tool(42)  # ty: ignore[invalid-argument-type]
 
 
-def test_repr_reports_application_count_and_state() -> None:
+def test_repr_reports_application_surface_count_and_state() -> None:
+    """The surface name is in the repr because two servers can now share an app."""
     app = Agnara("users")
 
     @app.capability
     def get_user() -> None: ...
 
     mcp = Mcp(app)
-    assert repr(mcp) == "Mcp('users', 0 tools, open)"
+    assert repr(mcp) == "Mcp('users', 'default', 0 tools, open)"
     mcp.tool(get_user)
     tools = mcp.compile()
-    assert repr(mcp) == "Mcp('users', 1 tools, compiled)"
+    assert repr(mcp) == "Mcp('users', 'default', 1 tools, compiled)"
     assert repr(tools) == "FrozenMcpTools(1 tools)"
+    assert repr(Mcp(app, surface="agents")) == "Mcp('users', 'agents', 0 tools, open)"
