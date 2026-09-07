@@ -24,5 +24,11 @@ records:
 Taken together these turn the repository's history into evidence of how Agnara
 matured, rather than a list of version numbers.
 
-No snapshot exists yet: `0.1.0a1` and `0.1.0a2` predate this program, and their
-release notes remain the record for them.
+## Snapshots
+
+| Release | Snapshot |
+| --- | --- |
+| `0.1.0a3` | [`0.1.0a3.md`](0.1.0a3.md) |
+
+`0.1.0a1` and `0.1.0a2` predate this program, and their release notes remain
+the record for them.

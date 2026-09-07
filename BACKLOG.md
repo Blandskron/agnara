@@ -780,6 +780,15 @@ Generated code must:
 - [x] E0B.13 Establish permanent AI-agent attribution policy across commits,
   Pull Requests, reviews and squash merges without inventing identities or
   rewriting history. Tracking: GitHub Issue #12.
+- [x] E0B.15 Advance the release record to `0.1.0a4` after `0.1.0a3` shipped.
+  The record still declared `0.1.0a3` as the current target at
+  `RELEASE_READY` while the tag, the GitHub pre-release and PyPI all showed it
+  published, and `STATUS.md` claimed no work toward the next release had
+  started after seven merged pull requests. `0.1.0a3`'s evidence is preserved
+  as the first maturity snapshot; the target advances with its own gates
+  unsatisfied and the two structural blockers named. Readiness reports 20% and
+  `IN_PROGRESS`, which is the honest number. No version bump, no release
+  preparation, no maturity claim. Tracking: GitHub Issue #274.
 
 ### Acceptance
 

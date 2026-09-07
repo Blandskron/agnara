@@ -1,67 +1,99 @@
 # Release Status
 
-Current target: **0.1.0a3 — Integration Alpha**.
-Previous published release: **0.1.0a2**.
+Current target: **0.1.0a4 — Application Alpha**.
+Previous published release: **0.1.0a3**, published 2026-09-06 and verified on
+PyPI.
 
-Assessed 2026-09-06 against preparation commit
-`647280a6f09feee591d312d993f59550ed68b90b`, from validated develop
-`3128172baab60383c506ac2b5f3b43fdb29a77bd`.
+Assessed 2026-09-07 against `develop`.
 
-The readiness program reports **RELEASE_READY**: every mandatory maturity gate
-has evidence. This is not publication authorization. Final release PR CI,
-review and explicit owner authorization remain separate release gates.
+The readiness program reports **IN_PROGRESS**. `0.1.0a4` is **not** ready, and
+most of its gates cannot produce evidence yet. That is the expected state, not
+a regression: `0.1.0a4` is the release that asks whether Agnara can be consumed
+from outside this repository, and the applications that answer it are still
+being built.
 
-## Evidence
+## What `0.1.0a4` has to prove
 
-| Gate | Actual preparation evidence |
+That Agnara can be consumed as a framework rather than exercised internally.
+Its evidence comes from applications outside this workspace — currently being
+built in `agnara-project` — and those applications will be audited separately
+before any gate here is recorded as satisfied.
+
+Nothing in this repository can satisfy the external gates on its own. Passing
+repository tests is not evidence that an external consumer can do the same
+thing, and the program is designed so that it cannot be mistaken for it.
+
+## Two known blockers
+
+Both are architectural, both are recorded, and neither is a defect introduced
+since `0.1.0a3`:
+
+1. **Only `agnara` is published.** The six sibling distributions are versioned
+   and buildable but not uploaded, so an application that needs HTTP or MCP
+   cannot install an adapter as an ordinary dependency. This blocks
+   `reference-apps-exist` and `mcp-exposure-from-application`.
+2. **`agnara-http` declares no public composition surface.** Composing HTTP
+   requires importing underscore-prefixed modules, which is exactly what
+   `reference-apps-no-internal-imports` forbids. RFC 0006 proposes the unified
+   exposure model beneath it; no implementation exists, and the design is
+   deliberately waiting for external evidence rather than preceding it.
+
+## Gate state
+
+Run the checker for the current per-gate detail:
+
+```bash
+uv run python scripts/check_release_readiness.py --verbose
+```
+
+| Group | State |
 | --- | --- |
-| Tests | `uv run pytest`: 2059 passed, 31 browser-only skipped; final release/architecture suite: 225 passed |
-| Browser conformance | Both documented browser suites with `AGNARA_RUN_BROWSER_TESTS=1`: 31 passed |
-| Lint / format / types | Ruff check and format check, ty check: passed |
-| Versions / lockfile | Seven distributions at `0.1.0a3`; `uv lock` regenerated only their seven version records; `uv lock --check` passed |
-| Builds / metadata | `uv build --all-packages --out-dir dist/release-a3`: seven wheels and seven sdists; Apache-2.0, license files, Python >=3.14 verified |
-| Clean installation | External CPython 3.14.4 venv, explicit interpreter with `-I`; core quickstart success/failure paths passed before installing adapters; every installed first-party module resolves from site-packages |
-| CLI | Checkout and installed CLI version/help passed; CLI suite passed within full tests |
-| HTTP / MCP / architecture | Passed within full tests; bounded MCP official SDK conformance only |
-| Changelog | Dated 0.1.0a3 section, empty Unreleased, exact previous/target comparison links |
-| Documentation | Maintainer approved prepared public docs and notes on 2026-09-06 |
-| Security scope | Maintainer confirmed experimental alpha on 2026-09-06; private reporting enabled and verified; security boundary and browser tests passed |
+| `0.1.0a3` automated gates | re-derived every run; satisfied on a clean tree |
+| `0.1.0a3` evidence gates | reset — must be re-established against a `0.1.0a4` candidate commit |
+| `0.1.0a3` manual gates | reset to review — the `0.1.0a3` decisions covered `0.1.0a3` |
+| `0.1.0a4` evidence gates | unsatisfied, pending the external applications |
+| `0.1.0a4` manual gates | pending maintainer judgment after the audit |
 
-Artifact names and SHA-256 values are recorded in `release-status.json`.
-They identify local validation artifacts, not future OIDC-published artifacts.
-Source CI evidence:
-[develop CI](https://github.com/Blandskron/agnara/actions/runs/33999688686).
-Release tracking and recorded maintainer decisions:
-[Issue #237](https://github.com/Blandskron/agnara/issues/237).
+`RELEASE_PLAN.md` states the first `0.1.0a4` gate as a single automated gate,
+"Every `0.1.0a3` gate still satisfied". It is decomposed into the individual
+`0.1.0a3` gates in `release-status.json`, because the checker requires every
+automated gate to have a real implementation and an aggregate gate over its
+siblings would be circular. The decomposition also reports *which* part is
+unsatisfied instead of one opaque failure.
 
-## Remaining release actions
+## Where the `0.1.0a3` evidence went
 
-1. Required release PR CI and documented complete-diff review.
-2. Explicit owner authorization to close `v0.1.0a3`.
-3. Merge to main, annotated immutable tag on the accepted commit, existing
-   Trusted Publishing workflow and external PyPI verification.
-4. Propagate release metadata to develop through a PR, then clean up the
-   release branch. Write the maturity history snapshot only after publication.
+It is preserved in [`history/0.1.0a3.md`](history/0.1.0a3.md), the maturity
+snapshot `RELEASE_PLAN.md` requires after publication. That file records what
+`0.1.0a3` proved, on what evidence, what it did not prove, and the limitations
+it carried forward.
 
-## Known non-blocking alpha limitations
+It is deliberately not carried into this file as satisfied. Evidence describes
+the commit it was produced on; `0.1.0a3`'s evidence describes `0.1.0a3`.
 
-Only `agnara` is authorized for PyPI publication. The other six distributions
-are versioned and buildable but are not uploaded. Threat modeling, dependency
-audit, secret scanning and dedicated security static analysis remain pending
-under the maintainer-confirmed experimental-alpha scope. No production,
-general security, complete protocol conformance or new performance claim is
-made. See `v0.1.0a3.md` for migration and adapter limitations.
+## Remaining actions before `0.1.0a4` can be assessed
 
-The target remains `0.1.0a3` until publication is externally verified and the
-owner confirms transition. No work toward the next release is started.
+1. The reference applications in `agnara-project` are completed.
+2. Those applications are audited against the `0.1.0a4` gates, and every
+   framework deficiency they surface is filed as an Issue rather than worked
+   around inside the application.
+3. The two blockers above are resolved or explicitly deferred with a recorded
+   decision.
+4. The `0.1.0a3` evidence gates are re-established against a `0.1.0a4`
+   candidate commit.
+
+Only then does a readiness assessment mean anything. Until then this file
+records an honest low score rather than an encouraging one.
 
 ## Reproduce
 
 ```bash
-uv run python scripts/check_release_readiness.py --verbose --require-ready
+uv run python scripts/check_release_readiness.py --verbose
 ```
+
+Add `--require-ready` to exit non-zero unless the target is `RELEASE_READY`;
+it currently exits non-zero, which is correct.
 
 Evidence expires when a covered path changes from its recorded commit to HEAD.
 Records without coverage expire on any commit. Automated checks inspect the
-repository; manual decisions retain their human evidence. The evidence-only
-commit following preparation does not change the validated packages or tests.
+repository; manual decisions retain their human evidence.

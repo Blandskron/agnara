@@ -1,144 +1,20 @@
 {
   "schema_version": 1,
-  "current_target": "0.1.0a3",
-  "next_target": "0.1.0a4",
-  "previous_release": "0.1.0a2",
-  "status": "RELEASE_READY",
-  "assessed_on": "2026-09-06",
-  "assessed_commit": "647280a6f09feee591d312d993f59550ed68b90b",
+  "current_target": "0.1.0a4",
+  "next_target": "0.1.0b1",
+  "previous_release": "0.1.0a3",
+  "status": "IN_PROGRESS",
+  "assessed_on": "2026-09-07",
+  "assessed_commit": null,
   "blocked_reason": null,
   "notes": [
     "Status is recomputed by scripts/check_release_readiness.py. Automated gates are re-derived from the repository and are never read from this file.",
-    "Evidence expires when a file it declares under 'covers' changes between its recorded commit and HEAD. Evidence with no 'covers' expires on any commit.",
-    "This file records measurement only. It authorizes no tag, release or upload."
+    "Evidence expires when a file it declares under 'covers' changes between its recorded commit and HEAD. Evidence with no 'covers' expires on any commit change.",
+    "0.1.0a3 was published on 2026-09-06 and verified on PyPI. Its gate evidence is preserved in docs/releases/history/0.1.0a3.md and is deliberately not carried here as satisfied: 0.1.0a4 must re-establish it against its own candidate commit.",
+    "RELEASE_PLAN.md states the first 0.1.0a4 gate as one automated gate, \"Every 0.1.0a3 gate still satisfied\". It is decomposed here into the individual 0.1.0a3 gates, because the checker requires every automated gate to have a real implementation and an aggregate over sibling gates would be circular.",
+    "0.1.0a4 is not ready and no gate specific to it is satisfied. Its evidence depends on reference applications built outside this repository, which will be audited separately."
   ],
   "gates": [
-    {
-      "id": "test-suite",
-      "title": "Full supported test suite passes",
-      "kind": "evidence",
-      "mandatory": true,
-      "status": "SATISFIED",
-      "evidence": {
-        "commit": "647280a6f09feee591d312d993f59550ed68b90b",
-        "command": "uv run pytest; uv run pytest tests/release tests/architecture -q",
-        "result": "2059 passed, 31 browser-only skipped; dedicated browser run passed all 31; final release/architecture verification passed 225 tests.",
-        "paths": [
-          "tests"
-        ],
-        "covers": [
-          "packages",
-          "tests",
-          "pyproject.toml",
-          "uv.lock",
-          "scripts/check_release_readiness.py"
-        ],
-        "note": "Executed on the release preparation content materialized as this commit; the following evidence-only commit does not change covered source."
-      }
-    },
-    {
-      "id": "packaging-build",
-      "title": "Package build succeeds",
-      "kind": "evidence",
-      "mandatory": true,
-      "status": "SATISFIED",
-      "evidence": {
-        "commit": "647280a6f09feee591d312d993f59550ed68b90b",
-        "command": "uv build --all-packages --out-dir dist/release-a3",
-        "result": "All seven first-party distributions built as wheel and sdist at 0.1.0a3; all metadata declares >=3.14 and Apache-2.0, archives contain license files, and core has no third-party dependencies.",
-        "paths": [
-          ".github/workflows/release.yml"
-        ],
-        "covers": [
-          "packages",
-          "pyproject.toml",
-          "uv.lock",
-          ".github/workflows/release.yml"
-        ],
-        "note": "Executed on the release preparation content materialized as this commit; the following evidence-only commit does not change covered source.",
-        "artifacts": [
-          {
-            "artifact": "agnara-0.1.0a3-py3-none-any.whl",
-            "sha256": "149235081d4d8811fceda8fa490f1171106529634af8475f95b9b8d304c9315f"
-          },
-          {
-            "artifact": "agnara_a2a-0.1.0a3-py3-none-any.whl",
-            "sha256": "fadd047e35af097fc4db275491712462a88f719115f31f36f49382e54d3f28af"
-          },
-          {
-            "artifact": "agnara_cli-0.1.0a3-py3-none-any.whl",
-            "sha256": "34bcd11c06f8bccc46c61b7a86d65da791ad4757e120419a836773f2b6dbecf7"
-          },
-          {
-            "artifact": "agnara_events-0.1.0a3-py3-none-any.whl",
-            "sha256": "eede5946e8167fad7e1c5408e53ac948b86cafb7ed2e256451f44a75fa6721bb"
-          },
-          {
-            "artifact": "agnara_http-0.1.0a3-py3-none-any.whl",
-            "sha256": "4acb38bbc03855284f5b209a0ef3e21d15fec158ed0f2f49667a2b1a7020e0d9"
-          },
-          {
-            "artifact": "agnara_mcp-0.1.0a3-py3-none-any.whl",
-            "sha256": "077df5e1fc085958a7e1e8c58fba8bea34c75cacb8fd3bebc0fb39f82370feff"
-          },
-          {
-            "artifact": "agnara_telemetry-0.1.0a3-py3-none-any.whl",
-            "sha256": "0640f2f8f6f38f178da2ca6a2be25fb636725194c970fb7373497982f962df93"
-          },
-          {
-            "artifact": "agnara-0.1.0a3.tar.gz",
-            "sha256": "4bff512d46e051f8dcf61eb1f20d1b868b1978113e0c660b93eb516ad33003a8"
-          },
-          {
-            "artifact": "agnara_a2a-0.1.0a3.tar.gz",
-            "sha256": "25cc5b489cbf111b5db233e28a347d3978170abca82b4e091678de6e9312c3d4"
-          },
-          {
-            "artifact": "agnara_cli-0.1.0a3.tar.gz",
-            "sha256": "c19d6f225442ac7232276f1697230526e7f043ea3c22998a02ec3a395b477cc2"
-          },
-          {
-            "artifact": "agnara_events-0.1.0a3.tar.gz",
-            "sha256": "f76dd507536883a46d312476ef54c4f20c588f89e70d4673673108c4a9260bce"
-          },
-          {
-            "artifact": "agnara_http-0.1.0a3.tar.gz",
-            "sha256": "94202fe48f74c5aacee29cba07cb4bb2e6451e73c29e2b121694bf0a20f6f569"
-          },
-          {
-            "artifact": "agnara_mcp-0.1.0a3.tar.gz",
-            "sha256": "2e9612fb86ce45007d7a827d17e269f3228d29707c394ce8e3aabb00a6283384"
-          },
-          {
-            "artifact": "agnara_telemetry-0.1.0a3.tar.gz",
-            "sha256": "109bf5e6867d8b24dcfd890d06b145fcb3da26d0305427887fa16b34af80e3d2"
-          }
-        ]
-      }
-    },
-    {
-      "id": "install-smoke",
-      "title": "Clean-environment installation smoke test succeeds",
-      "kind": "evidence",
-      "mandatory": true,
-      "status": "SATISFIED",
-      "evidence": {
-        "commit": "647280a6f09feee591d312d993f59550ed68b90b",
-        "command": "uv venv --python 3.14 <external-temp>/.venv; uv pip install --python <venv-python> <wheel>; <venv-python> -I quickstart.py; install all seven wheels and import each with -I",
-        "result": "CPython 3.14.4: isolated core installation executed success and invalid_input quickstart paths outside the checkout. All seven 0.1.0a3 wheels imported from site-packages; installed CLI --version and --help passed.",
-        "note": "Executed on the release preparation content materialized as this commit; the following evidence-only commit does not change covered source.",
-        "paths": [
-          ".github/workflows/release.yml"
-        ],
-        "covers": [
-          "packages",
-          "pyproject.toml",
-          "uv.lock",
-          ".github/workflows/release.yml"
-        ],
-        "environment": "External temporary directory, CPython 3.14.4, Python -I; core tested before installing adapters."
-      }
-    },
     {
       "id": "python-baseline",
       "title": "Python 3.14 baseline verified",
@@ -147,143 +23,11 @@
       "status": "SATISFIED"
     },
     {
-      "id": "http-integration",
-      "title": "HTTP integration tests pass",
-      "kind": "evidence",
-      "mandatory": true,
-      "status": "SATISFIED",
-      "evidence": {
-        "commit": "647280a6f09feee591d312d993f59550ed68b90b",
-        "command": "uv run pytest; AGNARA_RUN_BROWSER_TESTS=1 uv run pytest tests/http/test_documentation_browser.py tests/http/test_explorer_browser.py -m browser",
-        "result": "HTTP and cross-surface integration cases passed within the full suite; all 31 browser cases passed separately (25.69s).",
-        "paths": [
-          "tests/http",
-          "tests/integration"
-        ],
-        "covers": [
-          "packages/agnara",
-          "packages/agnara-http",
-          "tests/http",
-          "tests/integration"
-        ],
-        "note": "Executed on the release preparation content materialized as this commit; the following evidence-only commit does not change covered source."
-      }
-    },
-    {
-      "id": "mcp-conformance",
-      "title": "MCP integration and conformance tests pass",
-      "kind": "evidence",
-      "mandatory": true,
-      "status": "SATISFIED",
-      "evidence": {
-        "commit": "647280a6f09feee591d312d993f59550ed68b90b",
-        "command": "uv run pytest",
-        "result": "MCP tests passed within the full suite against pinned mcp==2.1.1, including bounded SDK conformance, result projection and tool invocation. No network or full protocol conformance claim.",
-        "paths": [
-          "tests/mcp/test_sdk_conformance.py",
-          "docs/MCP_CONFORMANCE.md"
-        ],
-        "covers": [
-          "packages/agnara",
-          "packages/agnara-mcp",
-          "tests/mcp"
-        ],
-        "note": "Executed on the release preparation content materialized as this commit; the following evidence-only commit does not change covered source."
-      }
-    },
-    {
-      "id": "cli-smoke",
-      "title": "CLI smoke tests pass",
-      "kind": "evidence",
-      "mandatory": true,
-      "status": "SATISFIED",
-      "evidence": {
-        "commit": "647280a6f09feee591d312d993f59550ed68b90b",
-        "command": "uv run pytest; uv run agnara --version; uv run agnara --help; <external-venv-python> -I -m agnara_cli --version; <external-venv-python> -I -m agnara_cli --help",
-        "result": "CLI tests passed in the full suite; checkout and installed CLI both report agnara 0.1.0a3 and render help.",
-        "paths": [
-          "tests/cli",
-          "docs/CLI_SPEC.md"
-        ],
-        "covers": [
-          "packages/agnara",
-          "packages/agnara-cli",
-          "tests/cli"
-        ],
-        "note": "Executed on the release preparation content materialized as this commit; the following evidence-only commit does not change covered source."
-      }
-    },
-    {
-      "id": "no-blocking-regression",
-      "title": "No known release-blocking regression",
-      "kind": "evidence",
-      "mandatory": true,
-      "status": "SATISFIED",
-      "evidence": {
-        "commit": "647280a6f09feee591d312d993f59550ed68b90b",
-        "command": "gh issue list --state open --json number,title,url; gh api repos/Blandskron/agnara/commits/3128172baab60383c506ac2b5f3b43fdb29a77bd/check-runs; uv run pytest",
-        "result": "Open issues are release tracking #237 and delivered readiness tracking #235, not reported product regressions. Source CI passed every required lane; release working-tree suite passed. Final PR CI is a separate required gate before handoff.",
-        "paths": [
-          "BACKLOG.md"
-        ],
-        "covers": [
-          "packages",
-          "tests"
-        ],
-        "note": "Executed on the release preparation content materialized as this commit; the following evidence-only commit does not change covered source."
-      }
-    },
-    {
-      "id": "docs-reflect-implementation",
-      "title": "Public documentation reflects the implementation",
-      "kind": "manual",
-      "mandatory": true,
-      "status": "SATISFIED",
-      "detail": "Maintainer approved the prepared README, package README, quickstart and v0.1.0a3 notes on 2026-09-06: \"Apruebo la documentación del release\". Publication scope, invocation_id migration and experimental-alpha limitations are explicit.",
-      "evidence": {
-        "reviewer": "repository maintainer",
-        "date": "2026-09-06",
-        "decision": "Apruebo la documentación del release",
-        "issue": "https://github.com/Blandskron/agnara/issues/237",
-        "paths": [
-          "README.md",
-          "packages/agnara/README.md",
-          "examples/quickstart.py",
-          "docs/releases/v0.1.0a3.md"
-        ]
-      }
-    },
-    {
       "id": "changelog-accurate",
-      "title": "Changelog accurately describes changes since 0.1.0a2",
+      "title": "Changelog accurately describes changes since 0.1.0a3",
       "kind": "automated",
       "mandatory": true,
       "status": "SATISFIED"
-    },
-    {
-      "id": "security-release-checks",
-      "title": "Security and release checks required by QUALITY_GATES.md",
-      "kind": "manual",
-      "mandatory": true,
-      "status": "SATISFIED",
-      "detail": "Maintainer explicitly confirmed \"Confirmo alpha experimental\" on 2026-09-06. Threat model, dependency audit, secret scanning and dedicated security static analysis remain pending under the existing experimental-alpha scope; no security guarantee is claimed. Private reporting is enabled and verified. Required discovery/redaction/security tests and all 31 real-browser cases passed during release preparation.",
-      "evidence": {
-        "reviewer": "repository maintainer",
-        "date": "2026-09-06",
-        "decision": "Confirmo alpha experimental",
-        "issue": "https://github.com/Blandskron/agnara/issues/237",
-        "private_reporting": {
-          "command": "gh api repos/Blandskron/agnara/private-vulnerability-reporting",
-          "result": {
-            "enabled": true
-          }
-        },
-        "paths": [
-          "QUALITY_GATES.md",
-          "SECURITY.md",
-          "docs/releases/v0.1.0a3.md"
-        ]
-      }
     },
     {
       "id": "version-consistency",
@@ -291,26 +35,6 @@
       "kind": "automated",
       "mandatory": true,
       "status": "SATISFIED"
-    },
-    {
-      "id": "benchmarks-published",
-      "title": "Baseline benchmarks published",
-      "kind": "evidence",
-      "mandatory": false,
-      "status": "SATISFIED",
-      "evidence": {
-        "commit": "f16f6fc02a5650766d804043af38007617107da4",
-        "command": "uv run python benchmarks/runtime_invocation.py",
-        "result": "four recorded baselines: runtime invocation, HTTP frameworks, MCP tool invocation and telemetry overhead",
-        "paths": [
-          "docs/benchmarks",
-          "benchmarks"
-        ],
-        "covers": [
-          "benchmarks",
-          "docs/benchmarks"
-        ]
-      }
     },
     {
       "id": "repository-clean",
@@ -339,6 +63,210 @@
       "kind": "automated",
       "mandatory": true,
       "status": "SATISFIED"
+    },
+    {
+      "id": "test-suite",
+      "title": "Full supported test suite passes",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "Carried forward from 0.1.0a3, which this evidence described. It must be re-established against a 0.1.0a4 candidate commit; the 0.1.0a3 record is preserved in docs/releases/history/0.1.0a3.md."
+    },
+    {
+      "id": "packaging-build",
+      "title": "Package build succeeds",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "Carried forward from 0.1.0a3, which this evidence described. It must be re-established against a 0.1.0a4 candidate commit; the 0.1.0a3 record is preserved in docs/releases/history/0.1.0a3.md."
+    },
+    {
+      "id": "install-smoke",
+      "title": "Clean-environment installation smoke test succeeds",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "Carried forward from 0.1.0a3, which this evidence described. It must be re-established against a 0.1.0a4 candidate commit; the 0.1.0a3 record is preserved in docs/releases/history/0.1.0a3.md."
+    },
+    {
+      "id": "http-integration",
+      "title": "HTTP integration tests pass",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "Carried forward from 0.1.0a3, which this evidence described. It must be re-established against a 0.1.0a4 candidate commit; the 0.1.0a3 record is preserved in docs/releases/history/0.1.0a3.md."
+    },
+    {
+      "id": "mcp-conformance",
+      "title": "MCP integration and conformance tests pass",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "Carried forward from 0.1.0a3, which this evidence described. It must be re-established against a 0.1.0a4 candidate commit; the 0.1.0a3 record is preserved in docs/releases/history/0.1.0a3.md."
+    },
+    {
+      "id": "cli-smoke",
+      "title": "CLI smoke tests pass",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "Carried forward from 0.1.0a3, which this evidence described. It must be re-established against a 0.1.0a4 candidate commit; the 0.1.0a3 record is preserved in docs/releases/history/0.1.0a3.md."
+    },
+    {
+      "id": "no-blocking-regression",
+      "title": "No known release-blocking regression",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "Carried forward from 0.1.0a3, which this evidence described. It must be re-established against a 0.1.0a4 candidate commit; the 0.1.0a3 record is preserved in docs/releases/history/0.1.0a3.md."
+    },
+    {
+      "id": "docs-reflect-implementation",
+      "title": "Public documentation reflects the implementation",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "The 0.1.0a3 approval covered the 0.1.0a3 documentation set. A maintainer must review the documentation again against whatever 0.1.0a4 ships, including any composition API the reference applications require."
+    },
+    {
+      "id": "security-release-checks",
+      "title": "Security and release checks required by QUALITY_GATES.md",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "The 0.1.0a3 decision recorded experimental-alpha scope on 2026-09-06. Whether that exemption still holds for 0.1.0a4 is a maintainer decision. Threat model, dependency audit, secret scanning and dedicated security static analysis remain unconfigured."
+    },
+    {
+      "id": "reference-apps-exist",
+      "title": "Reference applications exist and install Agnara as an ordinary dependency",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "Applications are being built externally in agnara-project. Note that only agnara is published to PyPI: an application needing HTTP or MCP cannot install an adapter as an ordinary dependency today."
+    },
+    {
+      "id": "reference-apps-no-internal-imports",
+      "title": "No reference application imports Agnara internals",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "agnara-http declares an empty public surface, so composing HTTP currently requires importing underscore-prefixed modules. This gate cannot pass for an HTTP application until that surface exists."
+    },
+    {
+      "id": "reference-apps-no-monkey-patch",
+      "title": "No reference application requires a monkey patch",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "No evidence can exist until the reference applications being built in agnara-project are complete and audited."
+    },
+    {
+      "id": "public-api-sufficient",
+      "title": "Public APIs are sufficient to build the reference applications",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "A maintainer decides this after the applications are audited. The public API manifest governs only the 41 top-level agnara exports; the subpackage surfaces an application actually imports, including agnara.execution and agnara.core.di, are not yet governed."
+    },
+    {
+      "id": "di-works-naturally",
+      "title": "Dependency injection works naturally from an application",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "Requires maintainer judgment against real external usage, not repository tests."
+    },
+    {
+      "id": "capabilities-declared-cleanly",
+      "title": "Capabilities can be declared cleanly from an application",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "Requires maintainer judgment against real external usage."
+    },
+    {
+      "id": "http-exposure-from-application",
+      "title": "HTTP exposure works from an application",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "Blocked on the same missing public composition surface as reference-apps-no-internal-imports. RFC 0006 proposes the model; no implementation exists."
+    },
+    {
+      "id": "mcp-exposure-from-application",
+      "title": "MCP exposure works from an application, where applicable",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "agnara-mcp does declare a public surface, but the distribution is not published, so an external application cannot depend on it normally."
+    },
+    {
+      "id": "schemas-coherent-across-transports",
+      "title": "Schemas stay coherent across transports",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "Cross-surface agreement is tested inside this repository. This gate asks for the same evidence from an external application. No evidence can exist until the reference applications being built in agnara-project are complete and audited."
+    },
+    {
+      "id": "policies-consistent-across-transports",
+      "title": "Policies behave consistently across transports",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "No evidence can exist until the reference applications being built in agnara-project are complete and audited."
+    },
+    {
+      "id": "failures-structured-across-transports",
+      "title": "Failures stay structured across transports",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "No evidence can exist until the reference applications being built in agnara-project are complete and audited."
+    },
+    {
+      "id": "cli-introspection-helps",
+      "title": "CLI and introspection materially help a developer",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "A maintainer decides this from the experience of building the reference applications, not from the CLI test suite."
+    },
+    {
+      "id": "docs-reproduce-applications",
+      "title": "Documentation is sufficient to reproduce the applications",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "A maintainer decides this by reproducing an application from the documentation alone."
+    },
+    {
+      "id": "dogfooding-deficiencies-tracked",
+      "title": "Every framework deficiency found by dogfooding is tracked",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "UNSATISFIED",
+      "detail": "RELEASE_PLAN.md requires each workaround a reference application needs because of Agnara to be recorded as a framework defect with an Issue, never hidden inside the application. No evidence can exist until the reference applications being built in agnara-project are complete and audited."
+    },
+    {
+      "id": "benchmarks-published",
+      "title": "Baseline benchmarks published",
+      "kind": "evidence",
+      "mandatory": false,
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "f16f6fc02a5650766d804043af38007617107da4",
+        "command": "uv run python benchmarks/runtime_invocation.py",
+        "result": "four recorded baselines: runtime invocation, HTTP frameworks, MCP tool invocation and telemetry overhead",
+        "paths": [
+          "docs/benchmarks",
+          "benchmarks"
+        ],
+        "covers": [
+          "benchmarks",
+          "docs/benchmarks"
+        ]
+      }
     }
   ]
 }
