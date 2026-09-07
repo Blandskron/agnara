@@ -9,8 +9,8 @@ It composes one HTTP surface, drives four requests through the compiled ASGI
 application without a server, prints the generated OpenAPI paths, and shows
 that the same capabilities feed the protocol-neutral exposure registry.
 
-`agnara-http` is not published to PyPI in this release, so it must be
-installed from a locally built wheel. See the release notes and issue #291.
+`agnara-http` is publication-ready but not yet on PyPI, so this candidate must
+be installed from a locally built wheel. See ADR 0073 and issue #291.
 
 To serve it for real, hand `asgi` to any ASGI server:
 
@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from dataclasses import dataclass
 from typing import Any
 
 from agnara import Agnara, Risk, StandardEffect
@@ -33,14 +34,22 @@ class Ledger:
     """A stand-in for whatever the application really talks to."""
 
     def __init__(self) -> None:
-        self._orders: dict[str, dict[str, Any]] = {"A-1": {"sku": "widget", "quantity": 3}}
+        self._orders: dict[str, Order] = {"A-1": Order("widget", 3)}
 
-    def read(self, order_id: str) -> dict[str, Any] | None:
+    def read(self, order_id: str) -> Order | None:
         return self._orders.get(order_id)
 
-    def write(self, order_id: str, order: dict[str, Any]) -> str:
+    def write(self, order_id: str, order: Order) -> str:
         self._orders[order_id] = order
         return order_id
+
+
+@dataclass(frozen=True, slots=True)
+class Order:
+    """The application input HTTP materializes from the declared JSON shape."""
+
+    sku: str
+    quantity: int
 
 
 @provider(scope=Scope.SINGLETON)
@@ -59,18 +68,18 @@ def show_order(order_id: str, ledger: Ledger) -> dict[str, Any]:
     order = ledger.read(order_id)
     if order is None:
         return {"found": False}
-    return {"found": True, "order": order}
+    return {
+        "found": True,
+        "order": {"sku": order.sku, "quantity": order.quantity},
+    }
 
 
-# `dict[str, Any]` rather than a dataclass: a dataclass-typed body cannot be
-# filled from JSON yet, which is a framework defect tracked as issue #296
-# rather than something this example works around quietly.
 @app.capability(
     description="Create or replace one order.",
     effects=(StandardEffect.EXTERNAL_WRITE,),
     risk=Risk.MEDIUM,
 )
-def put_order(order_id: str, order: dict[str, Any], ledger: Ledger) -> dict[str, Any]:
+def put_order(order_id: str, order: Order, ledger: Ledger) -> dict[str, Any]:
     return {"stored": ledger.write(order_id, order)}
 
 

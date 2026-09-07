@@ -37,6 +37,28 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Changed
 
+- Public API governance now covers every non-private core module that declares
+  exports: 218 provisional names across 30 package and leaf modules. The
+  readiness gate resolves both `__init__.py` and leaf `.py` modules and scans
+  source in reverse, so an unclassified public module fails immediately.
+  `ConfirmationPolicy` is also available from `agnara.policy`; genuinely
+  private `_frozen` and `_tracking_id` helpers remain private with documented
+  public alternatives (ADRs 0074, [#288], [#289]).
+- The `0.1.0a4` publication boundary now covers the explicit seven-package
+  workspace set instead of building, installing and publishing only `agnara`.
+  The release gate inspects all fourteen wheel/sdist artifacts for synchronized
+  versions, Python floor, license and README metadata/files, dependencies,
+  project metadata, console scripts, package data, safe paths and accidental
+  development or credential files. It then resolves only MCP/OpenTelemetry
+  dependencies from the index and installs all first-party wheels with
+  `--no-index`, proving isolated imports originate in `site-packages` and the
+  `agnara` entry point works. The publish job promotes those same files, is
+  unreachable from manual dispatch, keeps OIDC confined to a pushed tag and
+  explicitly enables metadata verification and Trusted Publishing
+  attestations. All six adapter names remain unpublished until the authorized
+  release; A2A and events are honest zero-API reserved namespaces, not support
+  claims (ADR 0073, [#291]).
+
 - Workspace version transitions are now atomic and repository-owned. The new
   `scripts/set_workspace_version.py` command moves all seven distributions and
   six exact adapter-to-core pins together between `<target>.dev0` development
@@ -74,10 +96,9 @@ without being published. See the `0.1.0a2` scope note below.
   the README and the quickstart both open by importing `agnara.core.di`
   and `agnara.execution` — so a rename there passed every release gate. A
   test now asserts every exported name actually exists, which neither the
-  manifest nor `__all__` can detect on its own. This entry previously also
-  claimed a test asserting the manifest names every core module with a
-  non-empty `__all__`; no such test was added, and 23 core modules declaring
-  one remain ungoverned (Issue #289).
+  manifest nor `__all__` can detect on its own. ADR 0074 subsequently extended
+  that governance to every exported leaf module and added the missing reverse
+  completeness check.
   `docs/public-api.json` moves to `schema_version` 2; no API is renamed,
   re-exported or promoted ([#275]).
 - Compiling an `Agnara` project now freezes every mounted `App` registry as
@@ -93,6 +114,15 @@ without being published. See the `0.1.0a2` scope note below.
   added in #254. Only the Python symbol changed: the field names, the builder
   functions, `INTROSPECTION_VERSION` and the serialized document are all
   unchanged, verified byte-for-byte ([#259]).
+
+### Fixed
+
+- HTTP JSON bodies matching a standard-library dataclass schema now
+  materialize the declared dataclass recursively before strict core
+  validation. Nested dataclasses, containers, tuples, unions and JSON-valued
+  enums follow the same compiled schema graph; unknown and missing fields fail
+  without exposing constructor errors. Direct core invocation remains strict
+  as ADR 0025 requires (ADR 0075, [#296]).
 
 ### Added
 
@@ -775,3 +805,7 @@ under `0.1.0a2` instead.
 [#282]: https://github.com/Blandskron/agnara/issues/282
 [#286]: https://github.com/Blandskron/agnara/issues/286
 [#293]: https://github.com/Blandskron/agnara/issues/293
+[#288]: https://github.com/Blandskron/agnara/issues/288
+[#289]: https://github.com/Blandskron/agnara/issues/289
+[#296]: https://github.com/Blandskron/agnara/issues/296
+[#291]: https://github.com/Blandskron/agnara/issues/291

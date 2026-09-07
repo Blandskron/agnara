@@ -2,8 +2,11 @@
 
 Model Context Protocol exposure adapter. Owns MCP server projection, tool discovery, invocation dispatch, schema mapping and MCP authorization integration.
 
+This distribution is publication-ready for `0.1.0a4`, but is not published to
+PyPI yet.
+
 - Import package: `agnara_mcp`
-- Depends on: `agnara-core`
+- Depends on: the exact synchronized `agnara` version, plus `mcp==2.1.1`
 - Must not import: sibling adapter packages
 
 See `ARCHITECTURE.md` sections 3 and 4 for the package boundaries and the

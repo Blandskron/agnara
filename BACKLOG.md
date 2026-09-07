@@ -434,9 +434,9 @@ are visible instead of hidden among the ones that are not.
   three alphas. This is not yet a 1.0 compatibility commitment; `I9` is.
 - [x] Direct invocation stable. `invoke_result`, canonical results, enforced
   deadlines, untranslated cancellation.
-- [ ] HTTP usable. **Genuinely unmet.** The adapter works but exports nothing:
-  its composition API is unsettled, so there is no supported way to build an
-  HTTP application. Blocked on `I1`.
+- [x] HTTP usable for the `0.1.0a4` scope. Seven provisional composition
+  exports build an ASGI application through public API; ADR 0072 records the
+  bounded request surface and its explicit deferrals.
 - [x] OpenAPI generated. Deterministic projection, pinned against a fixture.
 - [x] MCP usable. Tools only; resources and prompts are undecided.
 - [x] Core has no forbidden dependencies. Enforced by
@@ -757,13 +757,11 @@ Generated code must:
   canonical JSON rather than the `ExposureDescriptor` the RFC sketched: that
   field would have made availability depend on publication and closed an
   import cycle. Tracking: GitHub Issue #293.
-- [ ] E1C.3 Build the public HTTP composition API on the model (RFC 0006
-  phase 3). `agnara-http` still exports nothing, so this is what actually
-  unblocks `reference-apps-no-internal-imports` and
-  `http-exposure-from-application`. It should also retire the `describe_app`
-  mapping form, the second `Mcp` compile entry point, and the collision
-  between an RFC 0006 adapter surface and `_HTTPSurface` inside
-  `agnara-http`.
+- [x] E1C.3 Build the public HTTP composition API on the model (RFC 0006
+  phase 3). `Http`, explicit `Binding` values and `HttpApplication` provide
+  the supported application path; ADR 0071 governs the seven provisional
+  exports and the architecture gate rejects private imports in examples and
+  the guide. Tracking: GitHub Issue #295.
 
 ## EPIC 1D — Framework and ecosystem interoperability
 
@@ -878,37 +876,24 @@ Tracking: GitHub Issue #282.
 
 ## Carried technical debt (post-0.1.0a3 audit)
 
-- [ ] D9 Reference applications reach past the public surface, and each time
-  because nothing public covers the need. #007 imports
-  `agnara._frozen.frozen_slots_dataclass`, whose module is underscore-prefixed
-  and declares `__all__ = []`, to get the frozen slotted value type ADR 0020
-  endorses. #008 imports `agnara.execution.runtime._tracking_id` to test a
-  redaction property it documents as a security guarantee. #003 imports
-  `agnara.policy.confirmation.ConfirmationPolicy`, which its own module
-  publishes but `agnara.policy` does not re-export, unlike `ScopePolicy`
-  beside it. The `0.1.0a4` gate "No reference application imports Agnara
-  internals" cannot pass while any of the three stands, and
-  `docs/releases/RELEASE_PLAN.md` requires the fix in the framework rather
-  than in the application. Found by the `0.1.0a4` baseline audit against
-  #001-#009 at their default branches on 2026-09-07; none of the nine was
-  modified. Tracking: GitHub Issue #288.
+- [x] D9 Audit reference-application internal imports and provide supported
+  outcomes. `agnara.policy.confirmation` is now an explicitly governed public
+  module, and `ConfirmationPolicy` is also re-exported from `agnara.policy`.
+  The other two imports do not justify enlarging the framework API:
+  `agnara._frozen` is explicitly an internal CPython compatibility shim and
+  ordinary application values use `dataclasses.dataclass`; `_tracking_id` is
+  an implementation detail whose supported observable result is already on
+  public `TelemetryHook` events. Historical applications remain unchanged;
+  their audits must use those supported paths rather than turning private test
+  helpers into framework contracts. Tracking: GitHub Issue #288.
 
-- [ ] D8 Decide the governance boundary for the 23 core modules that declare a
-  public `__all__` and are classified by nothing. Thirty modules of the
-  `agnara` package declare a non-empty `__all__`; the manifest governs seven.
-  Reference applications #001-#009 import thirteen of the remaining 23, most
-  often `agnara.execution.result`, `agnara.errors` and
-  `agnara.capability.identity`. Every name they reach that way except
-  `ConfirmationPolicy` and `_tracking_id` (D9) is also on the governed parent
-  package, so these are avoidable deep imports rather than API gaps — but
-  nothing states which spelling is supported and nothing fails when an
-  application picks the other one. Each module is an entry point, an
-  implementation detail that should stop declaring `__all__`, or a set of
-  names belonging on its parent; that is an I9 decision, not an editorial one.
-  The audit corrected `docs/PUBLIC_API.md` and the `[Unreleased]` changelog
-  entry, which both claimed a completeness test that was never added, and left
-  the decision and the test it would enable to be taken deliberately.
-  Tracking: GitHub Issue #289.
+- [x] D8 Govern every non-private core module with a non-empty literal
+  `__all__`. The manifest now classifies all 218 exports across 30 modules,
+  including all 22 leaf modules, and the release checker walks source in the
+  reverse direction so a future package or leaf cannot arrive unclassified.
+  The boundary is objective: a non-private module declaring exports is a
+  provisional entry point; an implementation detail uses a private path or no
+  public exports. ADR 0074 records the decision. Tracking: GitHub Issue #289.
 
 - [ ] D7 Decide whether `agnara.core.di` is the right public spelling for
   dependency injection. It is the second import in the README and in
@@ -995,6 +980,13 @@ is listed here so it stays visible rather than being rediscovered later.
   installation cannot substitute the public core, and update the operational
   release procedure. The version and constraint halves must not land
   separately.
+- [x] D2B Make the synchronized adapter set publication-ready for `0.1.0a4`.
+  Build and inspect all seven wheels and sdists, install the complete local
+  candidate with first-party index access disabled, define an explicit
+  publication allowlist, harden the tag-only Trusted Publishing workflow,
+  verify every installed origin and console entry point, and document the two
+  reserved zero-API namespaces honestly. Tracking: GitHub Issue #291 and ADR
+  0073. This task does not publish, tag or create a GitHub Release.
 - [ ] D3 Reconcile the agent-onboarding documentation. `FIRST_AGENT_PROMPT.md`
   (953 lines), `BUILD_PROMPT.md`, `AGENTS.md`, `AGENT_OPERATING_MODEL.md`,
   `MULTI_AGENT_PROTOCOL.md` and `GEMINI.md` total roughly 1,900 lines with

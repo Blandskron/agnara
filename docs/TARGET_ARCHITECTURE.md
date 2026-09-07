@@ -128,16 +128,16 @@ capability means, which is the one thing adapters must never do.
 The systems the thesis requires and Agnara does not have. Ordered by how much
 of the rest depends on them, not by size.
 
-### G1 — Unified exposure model
+### G1 — Unified exposure model (resolved for `0.1.0a4`)
 
-HTTP and MCP each compile exposures their own way. A third adapter would
-invent a third. There is no shared notion of "this capability is reachable
-through these surfaces", so exposure availability is derived per adapter and
-the public composition API remains unsettled — which is why `agnara-http`
-exports nothing.
+ADR 0070 now gives HTTP and MCP one neutral compiled availability model, and
+ADR 0071 builds the public HTTP composition API on it. A third adapter can
+contribute a compiled surface without changing the kernel. Streaming and
+future protocol-specific behavior remain separate gaps rather than reasons to
+reopen this model.
 
-*Blocks:* A2A, events, tasks, any stable public composition API, and
-therefore the road to a stable 1.0.
+*Former blockers removed:* public adapter composition and protocol-neutral
+exposure introspection. Stability remains a later explicit decision.
 
 ### G2 — Streaming
 

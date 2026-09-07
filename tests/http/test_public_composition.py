@@ -16,7 +16,8 @@ import asyncio
 import json
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any
 
 import pytest
@@ -49,10 +50,25 @@ PUBLIC_NAMES = [
 
 
 @dataclass
+class ShippingAddress:
+    city: str
+
+
+class OrderState(StrEnum):
+    NEW = "new"
+    PAID = "paid"
+
+
+@dataclass
 class Order:
-    """Issue #296: a dataclass-typed body cannot be filled from JSON yet."""
+    """An ordinary application input materialized from a JSON object."""
 
     sku: str
+    quantity: int = 1
+    shipping: ShippingAddress | None = None
+    tags: list[str] = field(default_factory=list)
+    coordinates: tuple[int, int] = (0, 0)
+    state: OrderState = OrderState.NEW
 
 
 class Ledger:
@@ -82,12 +98,9 @@ def app() -> Agnara:
     def show(order_id: str, verbose: bool = False) -> dict[str, Any]:
         return {"id": order_id, "verbose": verbose}
 
-    # `dict[str, Any]` rather than a dataclass: a dataclass-typed body cannot
-    # succeed today, and Issue #296 records that as a framework defect instead
-    # of it being worked around silently here.
     @application.capability(description="Create an order.")
-    def create(order: dict[str, Any], ledger: Ledger) -> dict[str, Any]:
-        return {"sku": order["sku"], "note": ledger.record(str(order["sku"]))}
+    def create(order: Order, ledger: Ledger) -> dict[str, Any]:
+        return {"sku": order.sku, "note": ledger.record(order.sku)}
 
     @application.capability(description="Archive every order.", risk=Risk.HIGH)
     def archive() -> None:
@@ -1033,18 +1046,12 @@ def test_a_body_limit_can_be_tightened_per_route() -> None:
     assert json.loads(payload)["code"] == "content_too_large"
 
 
-def test_a_dataclass_body_still_fails_and_the_defect_is_tracked() -> None:
-    """Issue #296. Pinned so the fix is noticed here rather than in an application.
-
-    A dataclass-typed input publishes a correct JSON Schema and then rejects
-    every request that matches it, because the schema port validates without
-    coercing. This is recorded as a framework defect rather than worked around,
-    and the test documents current behaviour so changing it is deliberate.
-    """
+def test_a_dataclass_body_is_materialized_from_its_published_json_shape() -> None:
+    """Issue #296: the accepted request now agrees with its OpenAPI schema."""
     application = Agnara("tiny")
 
     @application.capability
-    def create(order: Order) -> str:  # pragma: no cover - never reached
+    def create(order: Order) -> str:
         return order.sku
 
     http = Http()
@@ -1056,11 +1063,9 @@ def test_a_dataclass_body_still_fails_and_the_defect_is_tracked() -> None:
     )
     asgi = http.compile(application.compile(), openapi=OpenApiInfo("Tiny", "1.0"))
 
-    # The published schema promises an object with a `sku` string...
     body_schema = asgi.openapi()["paths"]["/orders"]["post"]["requestBody"]
     assert body_schema["content"]["application/json"]["schema"]["type"] == "object"
 
-    # ...and a request matching it is refused.
     status, _, payload = request(
         asgi,
         "POST",
@@ -1069,8 +1074,84 @@ def test_a_dataclass_body_still_fails_and_the_defect_is_tracked() -> None:
         headers=((b"content-type", b"application/json"),),
     )
 
+    assert status == 200
+    assert json.loads(payload) == "X"
+
+
+def test_a_dataclass_body_materializes_nested_json_only_types() -> None:
+    application = Agnara("nested")
+
+    @application.capability
+    def create(order: Order) -> dict[str, Any]:
+        assert order.shipping is not None
+        return {
+            "city": order.shipping.city,
+            "tags": order.tags,
+            "coordinates": order.coordinates,
+            "state": order.state.value,
+        }
+
+    http = Http()
+    http.post("/orders", create, Binding("order", BindingSource.BODY))
+    asgi = http.compile(application.compile())
+
+    status, _, payload = request(
+        asgi,
+        "POST",
+        "/orders",
+        body=json.dumps(
+            {
+                "sku": "X",
+                "shipping": {"city": "Santiago"},
+                "tags": ["priority"],
+                "coordinates": [1, 2],
+                "state": "paid",
+            }
+        ).encode(),
+        headers=((b"content-type", b"application/json"),),
+    )
+
+    assert status == 200
+    assert json.loads(payload) == {
+        "city": "Santiago",
+        "tags": ["priority"],
+        "coordinates": [1, 2],
+        "state": "paid",
+    }
+
+
+@pytest.mark.parametrize(
+    ("body", "detail", "location"),
+    [
+        (b"{}", "field is missing", "body.sku"),
+        (b'{"sku":"X","admin":true}', "unexpected field", "body.admin"),
+    ],
+)
+def test_a_dataclass_body_rejects_missing_and_surplus_fields(
+    body: bytes, detail: str, location: str
+) -> None:
+    application = Agnara("closed")
+
+    @application.capability
+    def create(order: Order) -> str:  # pragma: no cover - rejected first
+        return order.sku
+
+    http = Http()
+    http.post("/orders", create, Binding("order", BindingSource.BODY))
+    asgi = http.compile(application.compile())
+
+    status, _, payload = request(
+        asgi,
+        "POST",
+        "/orders",
+        body=body,
+        headers=((b"content-type", b"application/json"),),
+    )
+
+    problem = json.loads(payload)
     assert status == 400
-    assert json.loads(payload)["detail"] == "expected Order, got dict"
+    assert problem["detail"] == detail
+    assert problem["details"]["location"] == location
 
 
 # ---------------------------------------------------------------------------

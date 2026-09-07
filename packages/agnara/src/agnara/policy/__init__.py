@@ -1,6 +1,7 @@
 __all__ = [
     "AnonymousPrincipal",
     "ConfirmationEvidence",
+    "ConfirmationPolicy",
     "ConfirmationVerdict",
     "ConfirmationVerifier",
     "InteractionKind",
@@ -25,6 +26,7 @@ from agnara.policy.base import (
 )
 from agnara.policy.confirmation import (
     ConfirmationEvidence,
+    ConfirmationPolicy,
     ConfirmationVerdict,
     ConfirmationVerifier,
 )

@@ -344,17 +344,45 @@ def _literal_all(path: Path) -> list[str] | None:
     return None
 
 
-def _module_init_path(module: str) -> Path | None:
-    """The ``__init__.py`` that owns `module`'s ``__all__``, or None if unusable.
+def _module_path(module: str) -> Path | None:
+    """The source file that owns `module`'s ``__all__``, or None if unusable.
 
     Only modules inside the core distribution are addressable. A manifest entry
     naming anything else is refused rather than resolved, so the manifest can
     never be pointed at a path outside the package it claims to describe.
     """
     parts = module.split(".")
-    if parts[0] != "agnara" or any(not part.isidentifier() for part in parts):
+    if parts[0] != "agnara" or any(
+        not part.isidentifier() or part.startswith("_") for part in parts
+    ):
         return None
-    return CORE_SRC_PATH.joinpath(*parts[1:], "__init__.py")
+    if len(parts) == 1:
+        return CORE_SRC_PATH / "__init__.py"
+    relative = Path(*parts[1:])
+    package = CORE_SRC_PATH / relative / "__init__.py"
+    leaf = (CORE_SRC_PATH / relative).with_suffix(".py")
+    candidates = [path for path in (package, leaf) if path.is_file()]
+    return candidates[0] if len(candidates) == 1 else None
+
+
+def _public_core_modules() -> set[str]:
+    """Every non-private core module that deliberately exports names."""
+    public: set[str] = set()
+    for path in CORE_SRC_PATH.rglob("*.py"):
+        relative = path.relative_to(CORE_SRC_PATH)
+        directories = relative.parts[:-1]
+        if any(part.startswith("_") for part in directories):
+            continue
+        if path.name.startswith("_") and path.name != "__init__.py":
+            continue
+        if not _literal_all(path):
+            continue
+        if path.name == "__init__.py":
+            suffix = ".".join(directories)
+        else:
+            suffix = ".".join((*directories, path.stem))
+        public.add("agnara" + (f".{suffix}" if suffix else ""))
+    return public
 
 
 def _classified_public_names() -> tuple[dict[str, list[str]] | None, str | None]:
@@ -377,7 +405,7 @@ def _classified_public_names() -> tuple[dict[str, list[str]] | None, str | None]
         if not isinstance(entry, dict) or set(entry) != {"module", "exports"}:
             return None, "each manifest module must contain only module and exports"
         module = entry["module"]
-        if not isinstance(module, str) or _module_init_path(module) is None:
+        if not isinstance(module, str) or _module_path(module) is None:
             return None, f"manifest module {module!r} is not a module of the agnara package"
         if module in classified:
             return None, f"public API manifest repeats module {module!r}"
@@ -422,10 +450,13 @@ def check_public_api_declared() -> tuple[str, str]:
     assert classified is not None
 
     problems: list[str] = []
+    ungoverned = sorted(_public_core_modules().difference(classified))
+    if ungoverned:
+        problems.append("unclassified public modules: " + ", ".join(ungoverned))
     for module, expected in classified.items():
-        init = _module_init_path(module)
-        assert init is not None  # validated while parsing the manifest
-        implemented = _literal_all(init)
+        source = _module_path(module)
+        assert source is not None  # validated while parsing the manifest
+        implemented = _literal_all(source)
         if implemented is None:
             problems.append(f"{module}: no literal __all__ to compare against")
             continue

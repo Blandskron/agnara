@@ -195,8 +195,12 @@ def test_public_api_gate_rejects_manifest_drift(
     elif mutation == "extra":
         exports.append({"name": "FutureAPI", "stability": "provisional"})
     elif mutation == "reordered":
+        if len(exports) < 2:
+            pytest.skip("one-name modules have no meaningful order mutation")
         exports[0], exports[1] = exports[1], exports[0]
     elif mutation == "duplicate":
+        if len(exports) < 2:
+            pytest.skip("one-name modules cannot contain an in-place duplicate")
         exports[1]["name"] = exports[0]["name"]
     elif mutation == "unknown-stability":
         exports[0]["stability"] = "mysterious"
@@ -214,22 +218,8 @@ def test_public_api_gate_rejects_manifest_drift(
 
 
 def test_the_manifest_governs_every_public_core_module() -> None:
-    """A public subpackage that no manifest names is ungoverned by definition.
-
-    This is the check that would have failed before the subpackage manifests
-    existed, and the one that fails again if a new public subpackage is added
-    without classifying it.
-    """
-    source_root = readiness.CORE_SRC_PATH
-    public = set()
-    for init in source_root.rglob("__init__.py"):
-        relative = init.relative_to(source_root).parent.parts
-        if any(part.startswith("_") for part in relative):
-            continue
-        if readiness._literal_all(init):  # a module exporting nothing is not a surface
-            public.add(".".join(("agnara", *relative)))
-
-    assert public == set(GOVERNED_MODULES)
+    """Both packages and leaf modules with exports must be classified."""
+    assert readiness._public_core_modules() == set(GOVERNED_MODULES)
 
 
 @pytest.mark.parametrize(
@@ -238,7 +228,35 @@ def test_the_manifest_governs_every_public_core_module() -> None:
 )
 def test_the_manifest_cannot_name_a_module_outside_the_core_package(module: str) -> None:
     """The manifest resolves names to paths, so it must not resolve anywhere."""
-    assert readiness._module_init_path(module) is None
+    assert readiness._module_path(module) is None
+
+
+def test_public_api_gate_rejects_an_unclassified_leaf_module(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "agnara"
+    source.mkdir()
+    (source / "__init__.py").write_text('__all__ = ["Root"]\n', encoding="utf-8")
+    (source / "leaf.py").write_text('__all__ = ["Leaf"]\n', encoding="utf-8")
+    manifest = {
+        "schema_version": 2,
+        "distribution": "agnara",
+        "modules": [
+            {
+                "module": "agnara",
+                "exports": [{"name": "Root", "stability": "provisional"}],
+            }
+        ],
+    }
+    path = tmp_path / "public-api.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    monkeypatch.setattr(readiness, "CORE_SRC_PATH", source)
+    monkeypatch.setattr(readiness, "PUBLIC_API_PATH", path)
+
+    status, detail = readiness.check_public_api_declared()
+
+    assert status == readiness.UNSATISFIED
+    assert "unclassified public modules: agnara.leaf" in detail
 
 
 def test_the_current_target_appears_in_the_release_plan() -> None:

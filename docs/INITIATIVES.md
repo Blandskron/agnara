@@ -78,11 +78,17 @@ told about exposures a second time. Both shipped adapters go through it, and a
 third would need no kernel change. ADR 0070 records the five spike decisions
 and the rejected alternatives.
 
-**What this did not deliver.** `agnara-http` still exports nothing. The model
-beneath the composition API is settled; the API itself is the next piece of
-work, and until it exists an application cannot compose HTTP through
-supported entry points. `docs/API_DESIGN.md` section 4 remains a sketch, and
-`docs/releases/STATUS.md` still carries that blocker.
+**Phase 3 is done too.** `agnara-http` now declares a public composition API
+(ADR 0071): an application composes exposures, compiles an ASGI 3 application
+and projects OpenAPI without a private import.
+`docs/HTTP_COMPOSITION.md` is the guide.
+
+**What remains behind it.** The documentation UI providers, the Explorer and
+the authorized discovery endpoint are implemented but unreachable from public
+API, because no product path renders a provider into a served route. I7 owns
+the request-surface gaps. Issue #291 and ADR 0073 make the adapter set
+publication-ready; the authorized `0.1.0a4` release still owns the actual PyPI
+upload.
 
 **Non-goals, honoured:** no third adapter was built to prove the model, and
 no ecosystem integration was added.
@@ -109,7 +115,7 @@ completion semantics; how telemetry spans a stream rather than a call.
 ### I3 — Execution identity and idempotency behaviour
 
 **Horizon:** `LATER ALPHA`
-**Status:** `PLANNED`
+**Status:** `IMPLEMENTED` — ADR 0074
 **Blocks:** I6, resilience, event delivery semantics
 
 Idempotency is declared and published; the runtime does nothing with it. Safe
@@ -222,19 +228,11 @@ a policy bypass.
 **Status:** `PLANNED`
 **Blocks:** 1.0
 
-Every public name was once an implicit commitment. ADR 0067 and its follow-up
-closed the first part of this: 123 exports across seven core modules are
-classified `provisional`, and the release gate compares the manifest with each
-module's literal `__all__`.
-
-**Remaining scope:** decide the boundary for the 23 further core modules that
-declare a public `__all__` and are governed by nothing (Issue #289); add the
-completeness test once that decision makes it passable; write the deprecation
-policy before the surface is large enough to make one painful; and decide
-which names, if any, are promoted to `stable`, which the beta and
-release-candidate gates own.
-
-Cheap, and it gets more expensive every release it is deferred.
+Every public core name is now an explicit commitment. The manifest classifies
+all 218 exports across all 30 non-private modules with a non-empty `__all__`,
+and the release gate checks in both directions. A new package or leaf module
+cannot silently become public. All remain `provisional`; promotion to `stable`
+is still owned by the beta and release-candidate gates.
 
 ### I10 — Security program
 

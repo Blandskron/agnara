@@ -11,7 +11,8 @@ must not be duplicated: what the expected set of distributions *is*. It is
 discovered from the workspace layout rather than listed, so adding a
 distribution extends these checks instead of escaping them.
 
-Built artifacts, before anything is installed:
+Built artifacts, before anything is installed, including their metadata,
+archive contents, package data and entry points:
 
     python scripts/check_distributions.py --workspace <checkout> --dist dist/
 
@@ -34,17 +35,47 @@ importing from the source tree is correct rather than a defect.
 from __future__ import annotations
 
 import argparse
+import configparser
+import email.parser
 import importlib
 import importlib.metadata
 import importlib.resources
 import os
 import re
+import tarfile
+import tomllib
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 #: `packages/<distribution>/src/<import name>/__init__.py`, the layout
 #: `tests/architecture/test_workspace_layout.py` enforces and ADR 0017 fixes.
 SRC_LAYOUT = "src"
+
+#: The release contract is deliberately explicit. Workspace discovery still
+#: detects additions, while this allowlist prevents a newly added package from
+#: being uploaded merely because ``uv build --all-packages`` found it.
+SHIPPED_DISTRIBUTIONS: dict[str, str] = {
+    "agnara": "agnara",
+    "agnara-a2a": "agnara_a2a",
+    "agnara-cli": "agnara_cli",
+    "agnara-events": "agnara_events",
+    "agnara-http": "agnara_http",
+    "agnara-mcp": "agnara_mcp",
+    "agnara-telemetry": "agnara_telemetry",
+}
+
+FORBIDDEN_ARCHIVE_PARTS = frozenset(
+    {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "experiments", "tests"}
+)
+SENSITIVE_FILENAMES = frozenset({".env", ".pypirc", "id_rsa", "id_ed25519"})
+SECRET_SIGNATURES = (
+    re.compile(rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
+    re.compile(rb"(?<![A-Za-z0-9_-])pypi-[A-Za-z0-9_-]{50,255}(?![A-Za-z0-9_-])"),
+    re.compile(rb"(?<![A-Za-z0-9_])gh[pousr]_[A-Za-z0-9]{36,255}(?![A-Za-z0-9])"),
+    re.compile(rb"(?<![0-9A-Z])AKIA[0-9A-Z]{16}(?![0-9A-Z])"),
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,6 +84,24 @@ class Distribution:
 
     name: str
     import_name: str
+
+
+def check_release_set(distributions: list[Distribution]) -> list[str]:
+    """The discovered workspace must equal the reviewed publication set."""
+    actual = {distribution.name: distribution.import_name for distribution in distributions}
+    if actual == SHIPPED_DISTRIBUTIONS:
+        return []
+    missing = sorted(set(SHIPPED_DISTRIBUTIONS) - set(actual))
+    unexpected = sorted(set(actual) - set(SHIPPED_DISTRIBUTIONS))
+    mismatched = sorted(
+        name
+        for name in set(actual) & set(SHIPPED_DISTRIBUTIONS)
+        if actual[name] != SHIPPED_DISTRIBUTIONS[name]
+    )
+    return [
+        "workspace distribution set differs from the reviewed release set: "
+        f"missing={missing}, unexpected={unexpected}, import-name mismatches={mismatched}"
+    ]
 
 
 def discover(workspace: Path) -> tuple[list[Distribution], list[str]]:
@@ -204,10 +253,312 @@ def check_built_artifacts(
     return problems
 
 
+def _project(workspace: Path, distribution: Distribution) -> dict[str, Any]:
+    path = workspace / "packages" / distribution.name / "pyproject.toml"
+    return tomllib.loads(path.read_text(encoding="utf-8"))["project"]
+
+
+def _normalized_name(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def _canonical_requirement(requirement: str) -> tuple[str, str, tuple[str, ...], str]:
+    """Enough PEP 508 normalization for repository-owned dependency metadata."""
+    match = re.fullmatch(
+        r"\s*([A-Za-z0-9][A-Za-z0-9._-]*)(\[[^\]]+\])?\s*([^;@]*?)\s*(?:;\s*(.*))?",
+        requirement,
+    )
+    if match is None or "@" in requirement:
+        raise ValueError(f"unsupported direct/editable dependency: {requirement!r}")
+    extras = ""
+    if match[2]:
+        extras = ",".join(sorted(part.strip().lower() for part in match[2][1:-1].split(",")))
+    clauses = tuple(sorted(part.strip() for part in match[3].split(",") if part.strip()))
+    marker = re.sub(r"\s+", " ", match[4] or "").strip()
+    return _normalized_name(match[1]), extras, clauses, marker
+
+
+def _safe_archive_names(names: list[str], distribution: str) -> list[str]:
+    problems: list[str] = []
+    for name in names:
+        normalized = name.replace("\\", "/")
+        parts = tuple(part for part in normalized.split("/") if part)
+        if name.startswith(("/", "\\")) or "\\" in name or ".." in parts:
+            problems.append(f"{distribution}: unsafe archive member {name!r}")
+        lowered = {part.lower() for part in parts}
+        if lowered & FORBIDDEN_ARCHIVE_PARTS or any(
+            part.endswith((".pyc", ".pyo")) for part in lowered
+        ):
+            problems.append(f"{distribution}: development/cache file shipped: {name}")
+        if lowered & SENSITIVE_FILENAMES:
+            problems.append(f"{distribution}: sensitive filename shipped: {name}")
+    return problems
+
+
+def _contains_workspace_path(payload: bytes, workspace: Path) -> bool:
+    """Whether artifact bytes retain either native or URI build-host provenance."""
+    normalized = str(workspace.resolve()).replace("\\", "/").encode().lower()
+    uri = workspace.resolve().as_uri().encode().lower()
+    candidate = payload.replace(b"\\", b"/").lower()
+    return normalized in candidate or uri in candidate
+
+
+def _contains_secret_signature(payload: bytes) -> bool:
+    """Detect credential formats that must never occur in a distribution."""
+    return any(pattern.search(payload) is not None for pattern in SECRET_SIGNATURES)
+
+
+def _check_wheel(
+    distribution: Distribution,
+    *,
+    workspace: Path,
+    wheel: Path,
+) -> list[str]:
+    project = _project(workspace, distribution)
+    problems: list[str] = []
+    with zipfile.ZipFile(wheel) as archive:
+        names = archive.namelist()
+        problems.extend(_safe_archive_names(names, distribution.name))
+        payloads = {name: archive.read(name) for name in names if not name.endswith("/")}
+        leaking = [
+            name
+            for name, payload in payloads.items()
+            if _contains_workspace_path(payload, workspace)
+        ]
+        if leaking:
+            problems.append(f"{distribution.name}: wheel retains the local build path in {leaking}")
+        secrets = [
+            name
+            for name, payload in payloads.items()
+            if "/_vendor/" not in f"/{name}" and _contains_secret_signature(payload)
+        ]
+        if secrets:
+            problems.append(
+                f"{distribution.name}: wheel contains a recognized credential "
+                f"signature in {secrets}"
+            )
+        metadata_names = [name for name in names if name.endswith(".dist-info/METADATA")]
+        if len(metadata_names) != 1:
+            return [*problems, f"{distribution.name}: wheel must contain exactly one METADATA"]
+        raw_metadata = archive.read(metadata_names[0]).replace(b"\r\n", b"\n")
+        metadata = email.parser.BytesParser().parsebytes(raw_metadata)
+
+        expected_headers = {
+            "Name": distribution.name,
+            "Version": project["version"],
+            "Requires-Python": ">=3.14",
+            "License": "Apache-2.0",
+            "Description-Content-Type": "text/markdown",
+            "Author-email": "Agnara Maintainers <maintainers@agnara.dev>",
+        }
+        for header, expected in expected_headers.items():
+            actual = metadata.get(header)
+            if header == "Name" and actual is not None:
+                matches = _normalized_name(actual) == _normalized_name(expected)
+            else:
+                matches = actual == expected
+            if not matches:
+                problems.append(
+                    f"{distribution.name}: wheel {header} is {actual!r}, expected {expected!r}"
+                )
+        readme = project.get("readme")
+        expected_readme = (
+            (workspace / "packages" / distribution.name / readme).read_text(encoding="utf-8")
+            if isinstance(readme, str)
+            else ""
+        )
+        _, separator, raw_description = raw_metadata.partition(b"\n\n")
+        description = raw_description.decode("utf-8") if separator else ""
+        if not description.strip():
+            problems.append(f"{distribution.name}: wheel contains no README description")
+        elif description.strip() != expected_readme.strip():
+            problems.append(
+                f"{distribution.name}: wheel description differs from the source README"
+            )
+        if "LICENSE" not in (metadata.get_all("License-File") or []):
+            problems.append(f"{distribution.name}: wheel metadata does not declare LICENSE")
+        expected_urls = {f"{label}, {url}" for label, url in project.get("urls", {}).items()}
+        actual_urls = set(metadata.get_all("Project-URL") or [])
+        if actual_urls != expected_urls:
+            problems.append(
+                f"{distribution.name}: project URLs differ from pyproject.toml: "
+                f"expected={sorted(expected_urls)}, actual={sorted(actual_urls)}"
+            )
+        expected_classifiers = set(project.get("classifiers", []))
+        actual_classifiers = set(metadata.get_all("Classifier") or [])
+        if actual_classifiers != expected_classifiers:
+            problems.append(
+                f"{distribution.name}: classifiers differ from pyproject.toml: "
+                f"expected={sorted(expected_classifiers)}, actual={sorted(actual_classifiers)}"
+            )
+
+        try:
+            expected_requirements = {
+                _canonical_requirement(requirement)
+                for requirement in project.get("dependencies", [])
+            }
+            actual_requirements = {
+                _canonical_requirement(requirement)
+                for requirement in (metadata.get_all("Requires-Dist") or [])
+            }
+        except ValueError as exc:
+            problems.append(f"{distribution.name}: {exc}")
+        else:
+            if actual_requirements != expected_requirements:
+                problems.append(
+                    f"{distribution.name}: wheel dependencies differ from pyproject.toml: "
+                    f"expected={sorted(expected_requirements)}, "
+                    f"actual={sorted(actual_requirements)}"
+                )
+
+        expected_scripts = project.get("scripts", {})
+        entry_names = [name for name in names if name.endswith(".dist-info/entry_points.txt")]
+        actual_scripts: dict[str, str] = {}
+        if entry_names:
+            if len(entry_names) != 1:
+                problems.append(
+                    f"{distribution.name}: wheel contains multiple entry_points.txt files"
+                )
+            else:
+                parser = configparser.ConfigParser()
+                parser.optionxform = str
+                parser.read_string(archive.read(entry_names[0]).decode("utf-8"))
+                if parser.has_section("console_scripts"):
+                    actual_scripts = dict(parser["console_scripts"])
+        if actual_scripts != expected_scripts:
+            problems.append(
+                f"{distribution.name}: console scripts differ from pyproject.toml: "
+                f"expected={expected_scripts}, actual={actual_scripts}"
+            )
+
+        data = data_files(workspace, distribution)
+        required = [f"{distribution.import_name}/__init__.py"]
+        required.extend(f"{distribution.import_name}/{relative}" for relative in data)
+        missing = [name for name in required if name not in names]
+        if missing:
+            problems.append(f"{distribution.name}: wheel is missing package files: {missing}")
+        mismatched_data = [
+            relative
+            for relative in data
+            if f"{distribution.import_name}/{relative}" in names
+            and archive.read(f"{distribution.import_name}/{relative}")
+            != (
+                workspace
+                / "packages"
+                / distribution.name
+                / SRC_LAYOUT
+                / distribution.import_name
+                / relative
+            ).read_bytes()
+        ]
+        if mismatched_data:
+            problems.append(
+                f"{distribution.name}: wheel package data differs from source: {mismatched_data}"
+            )
+        license_names = [name for name in names if name.endswith(".dist-info/licenses/LICENSE")]
+        if len(license_names) != 1:
+            problems.append(f"{distribution.name}: wheel does not contain LICENSE")
+        elif archive.read(license_names[0]) != (workspace / "LICENSE").read_bytes():
+            problems.append(f"{distribution.name}: wheel LICENSE differs from repository LICENSE")
+    return problems
+
+
+def _check_sdist(
+    distribution: Distribution,
+    *,
+    workspace: Path,
+    sdist: Path,
+) -> list[str]:
+    project = _project(workspace, distribution)
+    root = f"{distribution.name.replace('-', '_')}-{project['version']}"
+    problems: list[str] = []
+    with tarfile.open(sdist, mode="r:gz") as archive:
+        names = archive.getnames()
+        problems.extend(_safe_archive_names(names, distribution.name))
+        leaking: list[str] = []
+        secrets: list[str] = []
+        for member in archive.getmembers():
+            if not member.isfile():
+                continue
+            stream = archive.extractfile(member)
+            if stream is not None:
+                payload = stream.read()
+                if _contains_workspace_path(payload, workspace):
+                    leaking.append(member.name)
+                if "/_vendor/" not in f"/{member.name}" and _contains_secret_signature(payload):
+                    secrets.append(member.name)
+        if leaking:
+            problems.append(f"{distribution.name}: sdist retains the local build path in {leaking}")
+        if secrets:
+            problems.append(
+                f"{distribution.name}: sdist contains a recognized credential "
+                f"signature in {secrets}"
+            )
+        required = {
+            f"{root}/LICENSE",
+            f"{root}/README.md",
+            f"{root}/pyproject.toml",
+            f"{root}/src/{distribution.import_name}/__init__.py",
+        }
+        missing = sorted(required - set(names))
+        if missing:
+            problems.append(f"{distribution.name}: sdist is missing required files: {missing}")
+        source_files = {
+            "LICENSE": workspace / "LICENSE",
+            "README.md": workspace / "packages" / distribution.name / "README.md",
+            "pyproject.toml": workspace / "packages" / distribution.name / "pyproject.toml",
+        }
+        mismatched: list[str] = []
+        for relative, source in source_files.items():
+            member_name = f"{root}/{relative}"
+            try:
+                member = archive.getmember(member_name)
+            except KeyError:
+                continue
+            stream = archive.extractfile(member)
+            if stream is None or stream.read() != source.read_bytes():
+                mismatched.append(relative)
+        if mismatched:
+            problems.append(f"{distribution.name}: sdist files differ from source: {mismatched}")
+        roots = {name.split("/", 1)[0] for name in names}
+        if roots != {root}:
+            problems.append(
+                f"{distribution.name}: sdist has unexpected archive roots: {sorted(roots)}"
+            )
+    return problems
+
+
+def check_artifact_contents(
+    distributions: list[Distribution],
+    *,
+    workspace: Path,
+    dist_dir: Path,
+) -> list[str]:
+    """Inspect wheel/sdist contents and metadata before either can be published."""
+    problems: list[str] = []
+    for distribution in distributions:
+        project = _project(workspace, distribution)
+        stem = distribution.name.replace("-", "_")
+        wheel = dist_dir / f"{stem}-{project['version']}-py3-none-any.whl"
+        sdist = dist_dir / f"{stem}-{project['version']}.tar.gz"
+        if wheel.is_file():
+            try:
+                problems.extend(_check_wheel(distribution, workspace=workspace, wheel=wheel))
+            except zipfile.BadZipFile as exc:
+                problems.append(f"{distribution.name}: invalid wheel archive: {exc}")
+        if sdist.is_file():
+            try:
+                problems.extend(_check_sdist(distribution, workspace=workspace, sdist=sdist))
+            except tarfile.TarError as exc:
+                problems.append(f"{distribution.name}: invalid sdist archive: {exc}")
+    return problems
+
+
 def check_metadata(
     distributions: list[Distribution],
     *,
     core: str = "agnara",
+    expected_version: str | None = None,
 ) -> list[str]:
     """Versions agree, and every adapter pins that exact core version."""
     problems: list[str] = []
@@ -230,6 +581,10 @@ def check_metadata(
         # ADR 0021 keeps every pre-one version synchronized.
         detail = ", ".join(f"{name}=={version}" for name, version in sorted(versions.items()))
         problems.append(f"installed versions are not synchronized: {detail}")
+    if expected_version is not None:
+        wrong = {name: version for name, version in versions.items() if version != expected_version}
+        if wrong:
+            problems.append(f"installed versions do not match expected {expected_version}: {wrong}")
 
     normalized_core = core.lower().replace("_", "-")
     for adapter, declared in sorted(requirements.items()):
@@ -263,14 +618,28 @@ def run(
     *,
     require_installed: bool = False,
     dist_dir: Path | None = None,
+    expected_version: str | None = None,
 ) -> tuple[int, list[str]]:
     """Returns an exit code and the lines to report."""
     distributions, problems = discover(workspace)
+    problems.extend(check_release_set(distributions))
+    if expected_version is not None:
+        wrong = {
+            distribution.name: _project(workspace, distribution)["version"]
+            for distribution in distributions
+            if _project(workspace, distribution)["version"] != expected_version
+        }
+        if wrong:
+            problems.append(f"workspace versions do not match expected {expected_version}: {wrong}")
 
     if dist_dir is not None:
         # Artifacts are checked before anything is installed, so importing
         # here would report failures that say nothing about the build.
         problems.extend(check_built_artifacts(distributions, dist_dir))
+        if not problems:
+            problems.extend(
+                check_artifact_contents(distributions, workspace=workspace, dist_dir=dist_dir)
+            )
         if problems:
             return 1, problems
         names = ", ".join(distribution.name for distribution in distributions)
@@ -287,7 +656,7 @@ def run(
             # Resolving resources in a package that did not import reports the
             # import failure a second time rather than anything new.
             problems.extend(check_package_data(distribution, workspace=workspace))
-    problems.extend(check_metadata(distributions))
+    problems.extend(check_metadata(distributions, expected_version=expected_version))
 
     if problems:
         return 1, problems
@@ -314,12 +683,18 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="also assert nothing resolved from the workspace source tree",
     )
+    parser.add_argument(
+        "--expected-version",
+        default=None,
+        help="require every source and installed distribution to match this version",
+    )
     arguments = parser.parse_args(argv)
 
     code, lines = run(
         arguments.workspace,
         require_installed=arguments.require_installed,
         dist_dir=arguments.dist,
+        expected_version=arguments.expected_version,
     )
     for line in lines:
         # Say what was inspected on success too. A gate that prints nothing
