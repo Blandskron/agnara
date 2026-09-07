@@ -60,7 +60,7 @@ large. Both are design-first.
 ### I1 — Unified exposure model
 
 **Horizon:** `NOW` (RFC) → `NEXT ALPHA` (implementation)
-**Status:** `RESEARCH`
+**Status:** `RESEARCH` — RFC 0006 proposed
 **Blocks:** I4, I5, I7, a stable public composition API, 1.0
 
 HTTP and MCP each compile exposures independently. A third adapter would
@@ -79,8 +79,11 @@ rather than declared twice; what a compiled exposure is.
 **Non-goals:** implementing a new adapter to prove the model. Two existing
 adapters are enough evidence.
 
-**Requires an RFC.** This becomes one of Agnara's most permanent public
-contracts.
+**RFC 0006 is proposed.** It assigns declarations to project composition,
+keeps typed runtime artifacts in adapters and aggregates adapter-derived
+neutral records into one frozen availability registry. Its implementation
+spike must close the remaining public-spelling and migration questions before
+this becomes an accepted contract.
 
 ### I2 — Streaming model
 

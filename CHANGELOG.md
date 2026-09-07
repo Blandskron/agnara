@@ -31,6 +31,11 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- RFC 0006 proposes one compiled exposure lifecycle for HTTP, MCP and future
+  adapters. Project composition owns typed declarations; adapters retain their
+  protocol-specific runtime artifacts while emitting neutral immutable records
+  into a project-wide availability registry. Discovery, publication and
+  authorization remain independent decisions ([#271]).
 - The 41 top-level `agnara` exports now have an explicit provisional
   classification and an exact machine-readable snapshot. Release readiness
   detects additions, removals, renames, reordered exports, duplicate entries
@@ -657,3 +662,4 @@ under `0.1.0a2` instead.
 [#266]: https://github.com/Blandskron/agnara/issues/266
 [#268]: https://github.com/Blandskron/agnara/issues/268
 [#270]: https://github.com/Blandskron/agnara/issues/270
+[#271]: https://github.com/Blandskron/agnara/issues/271
