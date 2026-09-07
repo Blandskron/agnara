@@ -10,11 +10,11 @@ from __future__ import annotations
 import json
 import math
 import re
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from agnara_http._binding import _BindingSource
+from agnara_http._binding import _BODY_SOURCES, _BindingSource
 from agnara_http._dispatch import _CompiledExposure
 from agnara_http._routing import _FrozenRouteRegistry, _parse_template
 
@@ -126,13 +126,31 @@ def _operation(
         operation["deprecated"] = True
 
     parameters: list[dict[str, Any]] = []
+    form: dict[str, dict[str, Any]] = {}
+    required_fields: list[str] = []
+    encoding: dict[str, dict[str, Any]] = {}
     for binding in exposure.binding.bindings:
         schema = _schema_value(exposure.plan.input_schemas[binding.input_name].json_schema())
+        required = binding.input_name in exposure.plan.required_inputs
         if binding.source is _BindingSource.BODY:
             operation["requestBody"] = {
-                "required": binding.input_name in exposure.plan.required_inputs,
+                "required": required,
                 "content": {"application/json": {"schema": schema}},
             }
+            continue
+        if binding.source in _BODY_SOURCES:
+            # A form field and an upload are properties of one request body
+            # object, not parameters. RFC 7578 gives a file part its own
+            # content type, which OpenAPI carries in `encoding`.
+            form[binding.wire_name] = (
+                {"type": "string", "format": "binary"}
+                if binding.source is _BindingSource.UPLOAD
+                else schema
+            )
+            if binding.source is _BindingSource.UPLOAD:
+                encoding[binding.wire_name] = {"contentType": "application/octet-stream"}
+            if required:
+                required_fields.append(binding.wire_name)
             continue
         if (
             binding.source is _BindingSource.HEADER
@@ -144,16 +162,54 @@ def _operation(
         parameter: dict[str, Any] = {
             "name": binding.wire_name,
             "in": binding.source.value,
-            "required": (
-                binding.source is _BindingSource.PATH
-                or binding.input_name in exposure.plan.required_inputs
-            ),
+            "required": (binding.source is _BindingSource.PATH or required),
             "schema": schema,
         }
         parameters.append(parameter)
+
+    if form:
+        operation["requestBody"] = _form_request_body(exposure, form, required_fields, encoding)
     if parameters:
         operation["parameters"] = parameters
     return operation
+
+
+def _form_request_body(
+    exposure: _CompiledExposure,
+    form: Mapping[str, dict[str, Any]],
+    required_fields: Iterable[str],
+    encoding: Mapping[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """Describe form fields and uploads as the one request body they are.
+
+    The media type is the one the adapter actually accepts. A route with an
+    upload accepts `multipart/form-data` only, because a URL-encoded body
+    cannot carry a file part; a route with fields alone accepts either, so
+    both are advertised and an HTML form works with either `enctype`.
+    """
+    schema: dict[str, Any] = {
+        "type": "object",
+        "properties": dict(sorted(form.items())),
+        "additionalProperties": False,
+    }
+    required = sorted(required_fields)
+    if required:
+        schema["required"] = required
+    media: dict[str, Any] = {"schema": schema}
+    if encoding:
+        media["encoding"] = dict(sorted(encoding.items()))
+    has_upload = any(
+        binding.source is _BindingSource.UPLOAD for binding in exposure.binding.bindings
+    )
+    types = (
+        ("multipart/form-data",)
+        if has_upload
+        else ("application/x-www-form-urlencoded", "multipart/form-data")
+    )
+    return {
+        "required": bool(required),
+        "content": dict.fromkeys(types, media),
+    }
 
 
 def _responses(method: str) -> dict[str, Any]:

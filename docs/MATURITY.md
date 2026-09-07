@@ -92,7 +92,7 @@ settled; the spelling is not.
 | ASGI boundary | `IMPLEMENTED` | `http` and `lifespan` scopes. ADR 0041. |
 | Lifespan bridge | `IMPLEMENTED` | ADR 0029. |
 | Routing | `IMPLEMENTED` | Compiled route registry. ADR 0034. |
-| Request binding | `IMPLEMENTED` | Path, query, header and body only. ADR 0026. |
+| Request binding | `IMPLEMENTED` | Path, query, header, JSON body, cookie, form field and file upload. ADR 0026, ADR 0072. Repeated values and collections are refused by decision. |
 | Response serialization | `IMPLEMENTED` | Deterministic success responses. ADR 0027. |
 | RFC 9457 problem responses | `IMPLEMENTED` | ADR 0028, ADR 0030. |
 | OpenAPI projection | `IMPLEMENTED` | Deterministic, pinned against a fixture. ADR 0032. |
@@ -104,8 +104,8 @@ settled; the spelling is not.
 | Documentation UI publication | `DESIGNED` | Providers render and are tested, and the publication planner compiles placeholder routes; no product path renders a provider into a served route, so it is unreachable from the public API. |
 | Cookies, forms, multipart, uploads | `PLANNED` | No binding source exists for any of them. |
 | Streaming, SSE, WebSockets | `PLANNED` | The ASGI boundary handles no `websocket` scope. |
-| Middleware / interceptors | `RESEARCH` | No extension point. |
-| CORS, compression, static files, proxy headers, trusted hosts | `PLANNED` | None present. |
+| Middleware / interceptors | `DEFERRED` | No extension point, deliberately: ADR 0072 keeps cross-cutting concerns at the ASGI layer, which already wraps an `HttpApplication`. |
+| CORS, compression, static files, proxy headers, trusted hosts | `DEFERRED` | None present. ADR 0072 records where each belongs instead: the reverse proxy, the ASGI server, or ASGI middleware around the application. |
 | Content negotiation, conditional and range requests | `RESEARCH` | None present. |
 | HTTP/2, HTTP/3 | `RESEARCH` | A server concern today; no Agnara position recorded. |
 

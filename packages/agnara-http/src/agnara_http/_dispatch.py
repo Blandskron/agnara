@@ -19,6 +19,7 @@ from typing import Any
 from agnara.core.di.resolver import DIContainer
 from agnara.execution import ExecutionContext, ExecutionPlan, Invocation, invoke_result
 from agnara_http._binding import (
+    _DEFAULT_MAX_PARTS,
     _bind_request,
     _BindingDefinitionError,
     _BindingFailure,
@@ -94,6 +95,7 @@ class _HTTPExposure:
     plan: ExecutionPlan
     bindings: tuple[_InputBinding, ...] = ()
     max_body_bytes: int = 1_048_576
+    max_parts: int = _DEFAULT_MAX_PARTS
     openapi: _OpenAPIPublication | None = None
 
 
@@ -124,6 +126,7 @@ def _compile_exposures(
             parameter_names,
             exposure.bindings,
             max_body_bytes=exposure.max_body_bytes,
+            max_parts=exposure.max_parts,
         )
         registry.register(
             exposure.method,
