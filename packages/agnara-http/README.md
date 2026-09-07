@@ -2,6 +2,14 @@
 
 HTTP/ASGI exposure adapter. Owns routing, request decoding, response encoding, RFC 9457 mapping, OpenAPI generation and the authorized discovery endpoint.
 
+## Status
+
+The `0.1.0a4` candidate exposes the seven-name public composition API described
+in `docs/HTTP_COMPOSITION.md`, including path, query, header, JSON, cookie,
+form and upload bindings. Documentation providers, Explorer and the discovery
+endpoint are implemented internally but are not yet reachable from that public
+composition surface. This distribution is publication-ready, not yet published.
+
 OpenAPI 3.2 is projected from compiled HTTP exposures and shared capability
 schemas. Optional browser documentation providers consume that generated
 contract; Swagger UI, ReDoc, Scalar or any other UI must remain replaceable
@@ -30,9 +38,9 @@ single JSON body during startup. Runtime binding performs strict query
 percent/UTF-8 decoding, case-insensitive header lookup, documented scalar wire
 conversion, bounded chunked JSON reads, and deterministic duplicate/error
 handling. It produces an invocation payload for the shared core validation
-path and never substitutes for capability schema validation. Multipart, forms,
-files, cookies, public exposure syntax, and HTTP response mapping remain out of
-scope.
+path and never substitutes for capability schema validation. The `0.1.0a4`
+surface adds multipart, forms, files, cookies and public exposure syntax over
+this compiled boundary.
 
 E6.4 adds deterministic internal success-response serialization. Successful
 values are projected recursively to compact UTF-8 JSON and emitted as one ASGI
@@ -181,12 +189,11 @@ The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 - https://asgi.readthedocs.io/en/latest/specs/main.html
 - https://asgi.readthedocs.io/en/latest/specs/www.html
 
-This is not yet a public HTTP composition API or a complete ASGI/HTTP,
-OpenAPI or WCAG conformance claim. Explorer remains separate roadmap work; see
-RFC 0003, ADR 0018, EPIC 6 and EPIC 8.
+This is not a complete ASGI/HTTP, OpenAPI or WCAG conformance claim. The public
+composition API is experimental; see RFC 0003, ADR 0018, ADR 0071 and ADR 0072.
 
 - Import package: `agnara_http`
-- Depends on: `agnara-core`
+- Depends on: the exact synchronized `agnara` version
 - Must not import: sibling adapter packages
 
 See `ARCHITECTURE.md` sections 3 and 4 for the package boundaries and the
@@ -226,5 +233,5 @@ nested structure rather than as escaped JSON. A capability hidden from the viewe
 exist produce the same `404`, because telling them apart would publish the
 existence of something withheld.
 
-Styling, accessibility and browser tests are separate backlog items. See
-ADR 0052.
+The shell has browser accessibility and navigation smoke coverage, but remains
+unreachable from public composition. See ADR 0052 and `docs/MATURITY.md`.

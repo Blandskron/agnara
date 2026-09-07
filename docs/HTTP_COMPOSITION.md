@@ -385,9 +385,11 @@ so a capability carrying a `ScopePolicy` always answers `403`. Nothing here can
 produce a `401`. Authentication integration is part of the security program
 (I10, `0.1.0b1`).
 
-**Not published to PyPI.** Only the `agnara` core distribution is uploaded, so
-`agnara-http` must currently be installed from a locally built wheel. Tracked
-as [issue #291](https://github.com/Blandskron/agnara/issues/291).
+**Publication-ready, not published.** Only the `agnara` core distribution is
+uploaded today, so `agnara-http` must currently be installed from a locally
+built wheel. ADR 0073 and
+[issue #291](https://github.com/Blandskron/agnara/issues/291) make the tagged
+workflow ready to publish the synchronized set; they do not perform a release.
 
 **No compatibility promise.** Every name here is `provisional`. The alpha line
 may change any of them; `docs/PUBLIC_API.md` records the policy and ADR 0021

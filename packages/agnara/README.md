@@ -15,11 +15,12 @@ depends on nothing but the standard library.
 
 ## Status: alpha
 
-`0.1.0a3` is the integration alpha, following the first published version
-`0.1.0a2`. It adds protocol-neutral introspection, discovery filtering and
-stronger telemetry contracts. It is **not production-ready**, the public API
-may change without a deprecation cycle, and it makes no claim of protocol
-conformance, benchmark leadership or security guarantees.
+`0.1.0a3` is the currently published integration alpha. The repository carries
+the `0.1.0a4` application-alpha candidate, which adds public application and
+exposure boundaries and makes the synchronized adapter set publication-ready.
+It is **not production-ready**, the public API may change without a deprecation
+cycle, and it makes no claim of protocol conformance, benchmark leadership or
+security guarantees.
 
 ## Install
 
@@ -99,10 +100,11 @@ transformation of the function.
 
 ## What it does not include
 
-The HTTP/ASGI, OpenAPI, MCP and CLI adapters exist in the Agnara repository but
-are **not** published to PyPI by the `0.1.0a3` workflow. Build them from the
-repository when needed. The OpenTelemetry bridge is also repository-only;
-events and A2A remain placeholders.
+The HTTP/ASGI, OpenAPI, MCP, CLI and OpenTelemetry functionality lives in
+separate distributions; it is not bundled into this standard-library-only
+kernel. Those distributions are publication-ready for `0.1.0a4` but remain
+unpublished until the authorized release. Events and A2A remain zero-API
+reserved namespaces.
 
 ## Frozen value semantics
 

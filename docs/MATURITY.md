@@ -36,15 +36,18 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 | Package | Status | Published to PyPI | Public names | Notes |
 | --- | --- | --- | --- | --- |
 | `agnara` | `IMPLEMENTED` | yes | 41 | The kernel. Standard library only. |
-| `agnara-http` | `EXPERIMENTAL` | no | 7 | Public composition API; documentation UI, Explorer and discovery stay internal. |
-| `agnara-mcp` | `IMPLEMENTED` | no | 20 | Tool projection only; see the MCP table. |
-| `agnara-cli` | `IMPLEMENTED` | no | 17 | Scaffolding and introspection commands. |
-| `agnara-telemetry` | `IMPLEMENTED` | no | 2 | OpenTelemetry metrics and tracing hooks. |
-| `agnara-a2a` | `PLANNED` | no | 0 | Reserved namespace. 13 lines, no implementation. |
-| `agnara-events` | `PLANNED` | no | 0 | Reserved namespace. 14 lines, no implementation. |
+| `agnara-http` | `EXPERIMENTAL` | no | 7 | Publication-ready public composition API; documentation UI, Explorer and discovery stay internal. |
+| `agnara-mcp` | `IMPLEMENTED` | no | 20 | Publication-ready tool projection; see the MCP table. |
+| `agnara-cli` | `IMPLEMENTED` | no | 17 | Publication-ready scaffolding, introspection and `agnara` script. |
+| `agnara-telemetry` | `IMPLEMENTED` | no | 2 | Publication-ready OpenTelemetry metrics and tracing hooks. |
+| `agnara-a2a` | `PLANNED` | no | 0 | Publication-ready reserved namespace; no implementation. |
+| `agnara-events` | `PLANNED` | no | 0 | Publication-ready reserved namespace; no implementation. |
 
-Only `agnara` is published. The adapters are versioned and buildable from the
-repository; ADR 0021 keeps every version synchronized.
+Only `agnara` is published. All seven distributions are versioned, buildable,
+installable from their artifacts and ready for the tag workflow to publish as
+one reviewed set; ADR 0021 keeps every version synchronized and ADR 0073 fixes
+the publication boundary. Publication-ready is not published: the six new
+PyPI projects still require their Pending Trusted Publishers before the tag.
 
 `agnara-http` now declares a public surface: seven `provisional` names that
 compose capabilities, compile an ASGI 3 application and project OpenAPI.
@@ -157,7 +160,7 @@ settled; the spelling is not.
 | Test suite | `IMPLEMENTED` | Unit, architecture, contract, conformance, integration and release tiers. |
 | Architecture enforcement tests | `IMPLEMENTED` | Package boundaries, import direction, introspection field decisions, generated-app layering. |
 | Cross-platform CI | `IMPLEMENTED` | Linux, macOS, Windows. |
-| Packaging gate | `IMPLEMENTED` | Builds all seven distributions and installs the published one outside the workspace. |
+| Packaging gate | `IMPLEMENTED` | Builds and inspects all seven wheels/sdists, then installs all seven wheels outside the workspace with first-party index access disabled. |
 | Release readiness program | `IMPLEMENTED` | Evidence expires against the commit it was recorded on. |
 | Benchmarks | `IMPLEMENTED` (baseline only) | Four recorded baselines; no budgets, no regression gate. |
 | Property testing and fuzzing | `PLANNED` | None. |

@@ -37,6 +37,21 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Changed
 
+- The `0.1.0a4` publication boundary now covers the explicit seven-package
+  workspace set instead of building, installing and publishing only `agnara`.
+  The release gate inspects all fourteen wheel/sdist artifacts for synchronized
+  versions, Python floor, license and README metadata/files, dependencies,
+  project metadata, console scripts, package data, safe paths and accidental
+  development or credential files. It then resolves only MCP/OpenTelemetry
+  dependencies from the index and installs all first-party wheels with
+  `--no-index`, proving isolated imports originate in `site-packages` and the
+  `agnara` entry point works. The publish job promotes those same files, is
+  unreachable from manual dispatch, keeps OIDC confined to a pushed tag and
+  explicitly enables metadata verification and Trusted Publishing
+  attestations. All six adapter names remain unpublished until the authorized
+  release; A2A and events are honest zero-API reserved namespaces, not support
+  claims (ADR 0073, [#291]).
+
 - Workspace version transitions are now atomic and repository-owned. The new
   `scripts/set_workspace_version.py` command moves all seven distributions and
   six exact adapter-to-core pins together between `<target>.dev0` development
@@ -775,3 +790,7 @@ under `0.1.0a2` instead.
 [#282]: https://github.com/Blandskron/agnara/issues/282
 [#286]: https://github.com/Blandskron/agnara/issues/286
 [#293]: https://github.com/Blandskron/agnara/issues/293
+[#295]: https://github.com/Blandskron/agnara/issues/295
+[#296]: https://github.com/Blandskron/agnara/issues/296
+[#298]: https://github.com/Blandskron/agnara/issues/298
+[#291]: https://github.com/Blandskron/agnara/issues/291
