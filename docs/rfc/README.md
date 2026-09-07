@@ -20,10 +20,11 @@ zero-padded to four digits and never exceed `0999`.
 | 0003 | HTTP documentation and capability explorer | Implemented; see ADR 0033 and ADR 0036-0040. |
 | 0004 | Transport-neutral dependency injection | `Accepted`. |
 | 0005 | Protocol-neutral delegation | Genuinely open. |
+| 0006 | Unified exposure model | `Proposed`. Genuinely open; blocks I1 implementation. |
 
 ## Read this before trusting a Status line
 
-Four of these five say `Draft`, including RFC 0001, whose subject is the
+Four of these six say `Draft`, including RFC 0001, whose subject is the
 implemented core of the framework. As with the ADRs, the Status field does not
 currently distinguish a live question from a settled one.
 
@@ -35,7 +36,8 @@ the files.
 
 `docs/INITIATIVES.md` lists the initiatives that require an RFC before any
 implementation. The two that block the most other work are the unified
-exposure model (`I1`) and the streaming model (`I2`).
+exposure model (`I1`), now proposed in RFC 0006, and the streaming model
+(`I2`), which still has no record.
 
 An RFC is worth writing when the design is genuinely open and the decision
 will be expensive to reverse. It is not a place for notes, and it is not a

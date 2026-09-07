@@ -727,6 +727,13 @@ Generated code must:
   Subpackage inventories remain explicit I9 follow-up work. Thirteen focused
   cases and the full quality gate pass. Tracking: GitHub Issue #270.
 
+## EPIC 1C — Unified exposure model
+
+- [~] E1C.1 Define the unified exposure model RFC. Resolve declaration
+  ownership, neutral identity, typed adapter compilation, project aggregation,
+  introspection derivation, security ordering and migration without shipping a
+  runtime API. Initiative I1. Tracking: GitHub Issue #271.
+
 ## EPIC 0B — Agentic repository governance
 
 - [x] E0B.1 Establish GitHub Issue labels for type/area/priority.

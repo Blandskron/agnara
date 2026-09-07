@@ -34,17 +34,28 @@ async def get_user(user_id: str) -> User:
 http.get("/users/{user_id}", get_user)
 ```
 
+`http` is a typed adapter surface selected by project composition, not a
+capability property. RFC 0006 proposes the shared exposure lifecycle beneath
+this syntax; the exact constructor remains provisional.
+
 ## 5. MCP exposure
 
 ```python
 mcp.tool(get_user)
 ```
 
+MCP owns its tool-name and SDK validation, while contributing the same neutral
+compiled availability record as HTTP. See RFC 0006.
+
 ## 6. A2A exposure
 
 ```python
 a2a.skill(get_user)
 ```
+
+The unified model does not make a tool, route and skill interchangeable. It
+standardizes identity, ownership and compilation while each adapter retains
+its protocol semantics.
 
 ## 7. Same capability, multiple surfaces
 
@@ -220,7 +231,10 @@ print(definition.effects)
 print(definition.exposures)
 ```
 
-The final registry API may differ but this must be easy.
+The final registry API may differ but this must be easy. RFC 0006 places
+compiled exposure availability in a project-wide frozen registry rather than
+mutating `CapabilityDefinition`; this line remains an ergonomic sketch, not a
+decision that a capability owns deployment configuration.
 
 For tooling rather than authoring, one protocol-neutral snapshot describes a
 compiled application:
@@ -239,6 +253,10 @@ document = snapshot(
     ]
 ).json_data()
 ```
+
+The explicit mapping is the implemented transitional API. RFC 0006 proposes
+deriving it from the same neutral records emitted by compiled HTTP and MCP
+surfaces, so introspection cannot drift from dispatch.
 
 The CLI, an authorized discovery endpoint and Agnara Explorer read this rather
 than deriving answers from OpenAPI or from one another. Descriptors are frozen
