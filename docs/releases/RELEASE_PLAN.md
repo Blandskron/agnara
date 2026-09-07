@@ -1,6 +1,6 @@
 # Agnara Release Plan
 
-This document defines the progressive path from the published `0.1.0a2` to the
+This document defines the progressive path from the published `0.1.0a3` to the
 first stable `0.1.0`. It is a **measurement mechanism, not a feature backlog**.
 `BACKLOG.md` decides what gets built; this decides when what has been built is
 mature enough to close a release.
@@ -8,11 +8,11 @@ mature enough to close a release.
 ## Path
 
 ```text
-0.1.0a2  (published 2026-09-04)
+0.1.0a2     (published 2026-09-04)
    ↓
-0.1.0a3     subsystem integration
+0.1.0a3     subsystem integration      (published 2026-09-06)
    ↓
-0.1.0a4     external application validation
+0.1.0a4     external application validation   ← current target
    ↓
 0.1.0b1     usable public framework contract
    ↓
@@ -126,10 +126,17 @@ internally. The emphasis moves from feature creation to dogfooding.
 workaround because of Agnara, it is recorded as a framework defect with an
 Issue. It is never hidden inside the application.
 
-**Current ecosystem note.** As of this plan's creation no repository under the
-owner's account consumes Agnara; the other projects are unrelated Django
-applications. `0.1.0a4` therefore requires reference applications to be
-created or identified before its gates can produce any evidence at all.
+**Current ecosystem note.** When this plan was written no repository under the
+owner's account consumed Agnara. Reference applications are now being built in
+`agnara-project`, outside this workspace. They are not finished and have not
+been audited, so no gate above draws evidence from them yet.
+
+Two structural blockers stand between those applications and these gates, and
+both are properties of this repository rather than of the applications: only
+`agnara` is published to PyPI, so an adapter cannot be an ordinary dependency;
+and `agnara-http` declares no public composition surface, so composing HTTP
+means importing private modules — which the second gate above forbids.
+`docs/releases/STATUS.md` tracks both.
 
 ---
 
