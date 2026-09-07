@@ -146,12 +146,11 @@ owner's account consumed Agnara. Reference applications are now being built in
 `agnara-project`, outside this workspace. They are not finished and have not
 been audited, so no gate above draws evidence from them yet.
 
-Two structural blockers stand between those applications and these gates, and
-both are properties of this repository rather than of the applications: only
-`agnara` is published to PyPI, so an adapter cannot be an ordinary dependency;
-and `agnara-http` declares no public composition surface, so composing HTTP
-means importing private modules — which the second gate above forbids.
-`docs/releases/STATUS.md` tracks both.
+One structural blocker stands between those applications and these gates, and
+it is a property of this repository rather than of the applications: only
+`agnara` is published to PyPI, so an adapter cannot be an ordinary dependency.
+The second blocker — `agnara-http` declaring no public composition surface —
+was resolved by ADR 0071. `docs/releases/STATUS.md` tracks both.
 
 **Guardrail (ADR 0068).** `0.1.0a4` is not the FastAPI release, the Django
 release, the SQLAlchemy release or the interoperability release. It may run

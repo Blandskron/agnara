@@ -36,7 +36,7 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 | Package | Status | Published to PyPI | Public names | Notes |
 | --- | --- | --- | --- | --- |
 | `agnara` | `IMPLEMENTED` | yes | 41 | The kernel. Standard library only. |
-| `agnara-http` | `EXPERIMENTAL` | no | 0 | Fully implemented behind private modules; the composition API is not settled. |
+| `agnara-http` | `EXPERIMENTAL` | no | 7 | Public composition API; documentation UI, Explorer and discovery stay internal. |
 | `agnara-mcp` | `IMPLEMENTED` | no | 20 | Tool projection only; see the MCP table. |
 | `agnara-cli` | `IMPLEMENTED` | no | 17 | Scaffolding and introspection commands. |
 | `agnara-telemetry` | `IMPLEMENTED` | no | 2 | OpenTelemetry metrics and tracing hooks. |
@@ -46,10 +46,15 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 Only `agnara` is published. The adapters are versioned and buildable from the
 repository; ADR 0021 keeps every version synchronized.
 
-`agnara-http` is `EXPERIMENTAL` rather than `IMPLEMENTED` for a specific
-reason recorded in `ARCHITECTURE.md` section 3: the transport behaviour is
-settled, the way an application *composes* it is not, so it declares an empty
-public surface instead of committing to one.
+`agnara-http` now declares a public surface: seven `provisional` names that
+compose capabilities, compile an ASGI 3 application and project OpenAPI.
+`docs/HTTP_COMPOSITION.md` is the supported guide.
+
+It stays `EXPERIMENTAL` rather than becoming `IMPLEMENTED` because three
+implemented subsystems are deliberately not reachable through it — the
+documentation UI providers, the Explorer and the authorized discovery endpoint
+— and because the surface is one release old. The transport behaviour is
+settled; the spelling is not.
 
 ## Kernel — `agnara`
 
@@ -94,8 +99,9 @@ public surface instead of committing to one.
 | Documentation providers | `IMPLEMENTED` | Swagger UI, ReDoc and Scalar, vendored and version-pinned. ADR 0036-0040. |
 | Discovery endpoint | `IMPLEMENTED` | ADR 0049. |
 | Explorer | `IMPLEMENTED` | Read-only shell. ADR 0052. |
-| Exposure compilation | `IMPLEMENTED` | `_compile_exposure_surface` derives neutral records from the compiled route table. ADR 0070. Still private, because the builder that feeds it is the unsettled part. |
-| Public composition API | `EXPERIMENTAL` | The model beneath it is settled (ADR 0070); the `Http(...)` shape in `docs/API_DESIGN.md` section 4 is still a design sketch, and the distribution still exports nothing. |
+| Exposure compilation | `IMPLEMENTED` | `_compile_exposure_surface` derives neutral records from the compiled route table. ADR 0070. Reached through `Http.compile`. |
+| Public composition API | `EXPERIMENTAL` | `Http`, `HttpApplication`, `Binding`, `BindingSource`, `OpenApiInfo`, `OpenApiOperation`, `HttpDefinitionError`. ADR 0071. Routing, bindings, ASGI, lifespan, RFC 9457 failures and OpenAPI are reachable; nothing is `stable`. |
+| Documentation UI publication | `DESIGNED` | Providers render and are tested, and the publication planner compiles placeholder routes; no product path renders a provider into a served route, so it is unreachable from the public API. |
 | Cookies, forms, multipart, uploads | `PLANNED` | No binding source exists for any of them. |
 | Streaming, SSE, WebSockets | `PLANNED` | The ASGI boundary handles no `websocket` scope. |
 | Middleware / interceptors | `RESEARCH` | No extension point. |

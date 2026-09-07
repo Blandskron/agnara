@@ -339,6 +339,24 @@ Before trusting a status you read anywhere else, check `docs/MATURITY.md`:
 several subsystems in this README are described as designs rather than
 shipped behaviour, and that file is the one that says which is which.
 
+## Serving capabilities over HTTP
+
+```python
+from agnara_http import Binding, BindingSource, Http, OpenApiInfo
+
+http = Http("public")
+http.get("/orders/{order_id}", show_order, Binding("order_id", BindingSource.PATH))
+asgi = http.compile(app.compile(), openapi=OpenApiInfo("Shop API", "1.0.0"))
+```
+
+`asgi` is an ASGI 3 application; hand it to any ASGI server. Seven public
+names cover the whole surface, and `docs/HTTP_COMPOSITION.md` is the guide —
+including what `0.1.0a4` does not expose yet. `examples/http_service.py` is a
+runnable version.
+
+`agnara-http` is not published to PyPI in this release; only the `agnara` core
+distribution is.
+
 ## HTTP documentation and capability discovery
 
 Agnara keeps familiar HTTP documentation without making it the semantic
