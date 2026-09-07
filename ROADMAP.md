@@ -37,6 +37,7 @@ its limits are in `docs/MATURITY.md`.
 | **Dependency graph** | Compiled resolution, singleton and invocation scopes, generator teardown. |
 | **Compiled execution** | Plans, policy stage, enforced deadlines, canonical failures, telemetry hooks. |
 | **HTTP adapter** | ASGI, routing, binding, RFC 9457, OpenAPI 3.2, documentation providers, discovery, Explorer. Composition API still `EXPERIMENTAL`. |
+| **Exposure model** | One neutral availability registry both adapters compile into; introspection derives from it. ADR 0070. |
 | **MCP adapter** | Tool projection, invocation, schema mapping, authorization, result projection. |
 | **Introspection** | Versioned protocol-neutral snapshot with per-field publication decisions. |
 | **Telemetry** | OpenTelemetry metrics and span bridges over the core hook port. |
@@ -64,13 +65,6 @@ mapping is written down.
 
 ### `NOW` — decide before building more
 
-The two initiatives most other work waits on are both design-first, and both
-are cheap to get wrong permanently.
-
-- **I1 Unified exposure model.** HTTP and MCP each compile exposures their own
-  way. Until there is one model, a third adapter invents a third mechanism and
-  the public composition API cannot be settled — which is why `agnara-http`
-  exports nothing today.
 - **I2 Streaming model.** Nothing in the kernel returns a stream. Adding it
   per adapter would produce incompatible cancellation and backpressure
   semantics.
@@ -82,8 +76,11 @@ are cheap to get wrong permanently.
 
 ### `NEXT ALPHA` — `0.1.0a4`, exposure and application boundaries
 
+- **I1 Unified exposure model** — done. One model governs HTTP and MCP
+  exposure declaration and availability. ADR 0070 answers RFC 0006.
+- The **public HTTP composition surface**, on top of it. `agnara-http` still
+  exports nothing, which is what keeps two `0.1.0a4` gates unsatisfiable.
 - **I7 HTTP request surface** — cookies, forms, multipart, uploads.
-- **I1** implementation, once its RFC lands.
 
 Not an integrations release. ADR 0068 records why, and what it may not
 declare.

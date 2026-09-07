@@ -20,7 +20,7 @@ zero-padded to four digits and never exceed `0999`.
 | 0003 | HTTP documentation and capability explorer | Implemented; see ADR 0033 and ADR 0036-0040. |
 | 0004 | Transport-neutral dependency injection | `Accepted`. |
 | 0005 | Protocol-neutral delegation | Genuinely open. |
-| 0006 | Unified exposure model | `Proposed`. Genuinely open; blocks I1 implementation. |
+| 0006 | Unified exposure model | Answered by ADR 0070. Implemented; phase 3, the public composition API, is still open. |
 | 0007 | Distribution version identity and dependency constraints | Answered by ADR 0069: exact alpha pins plus `<target>.dev0` on `develop`. |
 | 0008 | Framework embedding and ecosystem composition | `Proposed`. Fifteen open questions; decides none. Implementation belongs to `0.1.0b1` per ADR 0068. |
 
@@ -37,9 +37,9 @@ the files.
 ## What still belongs here
 
 `docs/INITIATIVES.md` lists the initiatives that require an RFC before any
-implementation. The two that block the most other work are the unified
-exposure model (`I1`), now proposed in RFC 0006, and the streaming model
-(`I2`), which still has no record.
+implementation. The unified exposure model (`I1`) has been answered and built,
+so the one that now blocks the most other work is the streaming model (`I2`),
+which still has no record.
 
 RFC 0008 is deliberately the largest open record in the directory and answers
 nothing. Several of its questions depend on I1, I2, I3, I8 and I10; writing an

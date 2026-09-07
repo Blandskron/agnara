@@ -203,6 +203,18 @@ def exploding() -> None:
     raise RuntimeError("postgres://agnara:s3cret@db.internal refused the connection")
 
 
+def sign_in(email: str, remember: bool = False) -> dict[str, Any]:
+    return {"email": email, "remember": remember}
+
+
+def whoami(session: str = "anonymous") -> dict[str, Any]:
+    return {"session": session}
+
+
+def store(caption: str, blob: bytes) -> dict[str, Any]:
+    return {"caption": caption, "size": len(blob)}
+
+
 def unserializable() -> object:
     return object()
 
@@ -228,6 +240,32 @@ def application() -> _ASGIBoundary:
                 max_body_bytes=32,
             ),
             _HTTPExposure("DELETE", "/v1/orders", plan(archive, "archive")),
+            _HTTPExposure(
+                "POST",
+                "/v1/sessions",
+                plan(sign_in, "sign_in"),
+                (
+                    _InputBinding("email", _BindingSource.FORM),
+                    _InputBinding("remember", _BindingSource.FORM),
+                ),
+            ),
+            _HTTPExposure(
+                "GET",
+                "/v1/whoami",
+                plan(whoami, "whoami"),
+                (_InputBinding("session", _BindingSource.COOKIE, "sid"),),
+            ),
+            _HTTPExposure(
+                "POST",
+                "/v1/blobs",
+                plan(store, "store"),
+                (
+                    _InputBinding("caption", _BindingSource.FORM),
+                    _InputBinding("blob", _BindingSource.UPLOAD, "file"),
+                ),
+                max_body_bytes=256,
+                max_parts=3,
+            ),
             _HTTPExposure("GET", "/v1/empty", plan(archive, "empty")),
             _HTTPExposure("GET", "/v1/conflict", plan(conflicted, "conflict")),
             _HTTPExposure("GET", "/v1/boom", plan(exploding, "boom")),
@@ -297,6 +335,30 @@ def exchange(
 
 #: Every request the suite performs, and the status it must produce. Adding a
 #: row is how a new response path joins the conformance checks.
+#: Request headers for the I7 body encodings, and the multipart writer that
+#: builds a body a browser would actually send.
+BOUNDARY = "xConformancex"
+FORM_REQUEST = ((b"content-type", b"application/x-www-form-urlencoded"),)
+MULTIPART_REQUEST = ((b"content-type", f"multipart/form-data; boundary={BOUNDARY}".encode()),)
+COOKIE_REQUEST = ((b"cookie", b"sid=session-7; unrelated=x"),)
+
+
+def _multipart(*parts: bytes) -> bytes:
+    delimiter = f"--{BOUNDARY}".encode("ascii")
+    joined = b"".join(b"\r\n" + part + b"\r\n" + delimiter for part in parts)
+    return delimiter + joined + b"--\r\n"
+
+
+def _text(name: str, value: str) -> bytes:
+    head = f'Content-Disposition: form-data; name="{name}"'.encode()
+    return head + b"\r\n\r\n" + value.encode("utf-8")
+
+
+def _file(name: str, filename: str, content: bytes) -> bytes:
+    head = f'Content-Disposition: form-data; name="{name}"; filename="{filename}"'.encode()
+    return head + b"\r\nContent-Type: application/octet-stream\r\n\r\n" + content
+
+
 MATRIX: tuple[tuple[str, dict[str, Any], int], ...] = (
     ("static schema surface", {"method": "GET", "path": "/openapi.json"}, 200),
     ("success", {"method": "GET", "path": "/v1/orders/7"}, 200),
@@ -340,6 +402,77 @@ MATRIX: tuple[tuple[str, dict[str, Any], int], ...] = (
             "path": "/v1/orders",
             "headers": ((b"content-type", b"text/plain"),),
             "body": b"{}",
+        },
+        415,
+    ),
+    (
+        "urlencoded form",
+        {
+            "method": "POST",
+            "path": "/v1/sessions",
+            "headers": FORM_REQUEST,
+            "body": b"email=a%40b.com&remember=true",
+        },
+        200,
+    ),
+    (
+        "multipart form",
+        {
+            "method": "POST",
+            "path": "/v1/sessions",
+            "headers": MULTIPART_REQUEST,
+            "body": _multipart(_text("email", "a@b.com")),
+        },
+        200,
+    ),
+    ("cookie", {"method": "GET", "path": "/v1/whoami", "headers": COOKIE_REQUEST}, 200),
+    (
+        "multipart upload",
+        {
+            "method": "POST",
+            "path": "/v1/blobs",
+            "headers": MULTIPART_REQUEST,
+            "body": _multipart(_text("caption", "c"), _file("file", "a.bin", b"binary")),
+        },
+        200,
+    ),
+    (
+        "oversized upload",
+        {
+            "method": "POST",
+            "path": "/v1/blobs",
+            "headers": MULTIPART_REQUEST,
+            "body": _multipart(_text("caption", "c"), _file("file", "a.bin", b"x" * 512)),
+        },
+        413,
+    ),
+    (
+        "too many parts",
+        {
+            "method": "POST",
+            "path": "/v1/blobs",
+            "headers": MULTIPART_REQUEST,
+            "body": _multipart(*(_text(f"f{index}", "") for index in range(4))),
+        },
+        413,
+    ),
+    (
+        "malformed multipart",
+        {
+            "method": "POST",
+            "path": "/v1/blobs",
+            "headers": MULTIPART_REQUEST,
+            "body": b"not multipart",
+        },
+        400,
+    ),
+    (
+        "upload route declines urlencoded",
+        {
+            "method": "POST",
+            "path": "/v1/blobs",
+            "headers": FORM_REQUEST,
+            "body": b"caption=c",
         },
         415,
     ),
@@ -471,7 +604,7 @@ def test_every_problem_shares_one_document_shape() -> None:
     problems = [
         conformance(exchange(**kwargs)).document() for _, kwargs, status in MATRIX if status >= 400
     ]
-    assert len(problems) == len([row for row in MATRIX if row[2] >= 400]) == 8
+    assert len(problems) == len([row for row in MATRIX if row[2] >= 400]) == 12
     for document in problems:
         assert {"type", "title", "status", "code"} <= set(document)
         assert set(document) <= {"type", "title", "status", "detail", "instance", "code", "details"}

@@ -742,10 +742,28 @@ Generated code must:
 
 ## EPIC 1C — Unified exposure model
 
-- [~] E1C.1 Define the unified exposure model RFC. Resolve declaration
+- [x] E1C.1 Define the unified exposure model RFC. Resolve declaration
   ownership, neutral identity, typed adapter compilation, project aggregation,
   introspection derivation, security ordering and migration without shipping a
   runtime API. Initiative I1. Tracking: GitHub Issue #271.
+- [x] E1C.2 Implement the model and answer the RFC. `agnara.exposure` ships
+  neutral identity, the generic per-surface compilation envelope and
+  `compile_exposures`; `agnara-http` derives records from its compiled route
+  table and `agnara-mcp` from its frozen tool table; `describe_app` derives
+  descriptors from the registry instead of accepting a handwritten third
+  answer. Surface identity reaches introspection as canonical detail, so
+  `filter_snapshot` redacts deployment topology by default. ADR 0070 answers
+  RFC 0006's five spike questions and records why `CompiledExposure` carries
+  canonical JSON rather than the `ExposureDescriptor` the RFC sketched: that
+  field would have made availability depend on publication and closed an
+  import cycle. Tracking: GitHub Issue #293.
+- [ ] E1C.3 Build the public HTTP composition API on the model (RFC 0006
+  phase 3). `agnara-http` still exports nothing, so this is what actually
+  unblocks `reference-apps-no-internal-imports` and
+  `http-exposure-from-application`. It should also retire the `describe_app`
+  mapping form, the second `Mcp` compile entry point, and the collision
+  between an RFC 0006 adapter surface and `_HTTPSurface` inside
+  `agnara-http`.
 
 ## EPIC 1D — Framework and ecosystem interoperability
 

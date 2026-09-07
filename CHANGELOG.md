@@ -13,6 +13,28 @@ without being published. See the `0.1.0a2` scope note below.
 
 ## [Unreleased]
 
+### Added
+
+- One exposure model governs every protocol adapter. `agnara.exposure` owns
+  neutral identity — adapter kind, project-local surface name, adapter-local
+  name — per-surface adapter compilation and a single frozen availability
+  registry, and both shipped adapters now compile into it. Before this,
+  `agnara-http` compiled a private route registry, `agnara-mcp` froze an
+  independent tool table, and `describe_app(..., exposures=...)` accepted a
+  third answer written by hand. The third one was not merely redundant, it was
+  empty: nothing outside tests ever filled it, so every real application served
+  HTTP and MCP traffic while its introspection snapshot reported no exposures
+  at all. Snapshots now derive exposures from compiled availability and can
+  neither omit nor invent one. An adapter returns its dispatch artifact and its
+  records in one value and derives the records from the artifact, so the two
+  cannot drift; two named surfaces of one protocol became expressible;
+  duplicate identities, unknown capabilities and post-freeze registration fail
+  at startup. `Mcp` gains a keyword-only `surface` and `compile_surface()`
+  beside the existing `compile()`. Seven new `provisional` exports, no
+  third-party dependency, and no kernel change needed for a third adapter.
+  ADR 0070 answers RFC 0006 and records the five spike decisions, the threat
+  analysis and the rejected alternatives ([#293]).
+
 ### Changed
 
 - Workspace version transitions are now atomic and repository-owned. The new
@@ -752,3 +774,4 @@ under `0.1.0a2` instead.
 [#280]: https://github.com/Blandskron/agnara/issues/280
 [#282]: https://github.com/Blandskron/agnara/issues/282
 [#286]: https://github.com/Blandskron/agnara/issues/286
+[#293]: https://github.com/Blandskron/agnara/issues/293

@@ -311,6 +311,39 @@
       ]
     },
     {
+      "module": "agnara.exposure",
+      "exports": [
+        {
+          "name": "CompiledExposure",
+          "stability": "provisional"
+        },
+        {
+          "name": "ExposureError",
+          "stability": "provisional"
+        },
+        {
+          "name": "ExposureId",
+          "stability": "provisional"
+        },
+        {
+          "name": "FrozenExposureRegistry",
+          "stability": "provisional"
+        },
+        {
+          "name": "SurfaceCompilation",
+          "stability": "provisional"
+        },
+        {
+          "name": "SurfaceId",
+          "stability": "provisional"
+        },
+        {
+          "name": "compile_exposures",
+          "stability": "provisional"
+        }
+      ]
+    },
+    {
       "module": "agnara.introspection",
       "exports": [
         {

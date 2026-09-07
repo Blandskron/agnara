@@ -13,7 +13,7 @@ This document owns compatibility expectations for Agnara's Python API.
 | `experimental` | Public only for evaluation. It may change or disappear in the next pre-1.0 release. |
 | `internal` | Unsupported implementation detail. Internal names are excluded from public manifests and `__all__`. |
 
-No API is classified `stable` during the alpha line. All 123 currently governed
+No API is classified `stable` during the alpha line. All 130 currently governed
 exports are `provisional`: they are deliberate public entry points, but the
 alpha line explicitly makes no compatibility promise. A stable classification
 requires a later, explicit decision supported by the beta and release-candidate
@@ -36,6 +36,7 @@ ordered names and classifications in the manifest with each module's literal
 | `agnara.policy` | 13 |
 | `agnara.core.di` | 9 |
 | `agnara.capability` | 8 |
+| `agnara.exposure` | 7 |
 
 Governing the subpackages is not a formality. The first three lines of the
 README and of `examples/quickstart.py` import from `agnara`, `agnara.core.di`

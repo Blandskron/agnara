@@ -19,6 +19,14 @@ Its evidence comes from applications outside this workspace — currently being
 built in `agnara-project` — and those applications will be audited separately
 before any gate here is recorded as satisfied.
 
+Dogfooding the new HTTP composition API has already produced its first
+framework defect: a dataclass-typed request body publishes a correct JSON
+Schema and then rejects every request matching it (Issue #296). Every HTTP
+test in this repository uses `dict[str, Any]` for a body, so the shape an
+application author reaches for first was the one shape nothing exercised. That
+is the release thesis working as intended, and it is recorded rather than
+worked around.
+
 Nothing in this repository can satisfy the external gates on its own. Passing
 repository tests is not evidence that an external consumer can do the same
 thing, and the program is designed so that it cannot be mistaken for it.
@@ -36,10 +44,10 @@ practical effect on this release is a guardrail rather than a task: `0.1.0a4`
 may not answer its "public APIs are sufficient" gate by shipping a framework
 integration that routes around the API the gate is asking about.
 
-## Two known blockers
+## Known blockers
 
-Both are architectural, both are recorded, and neither is a defect introduced
-since `0.1.0a3`:
+One remains. Both were architectural, both were recorded, and neither was a
+defect introduced since `0.1.0a3`:
 
 1. **Only `agnara` is published.** The six sibling distributions are versioned
    and buildable but not uploaded, so an application that needs HTTP or MCP
@@ -47,9 +55,16 @@ since `0.1.0a3`:
    `reference-apps-exist` and `mcp-exposure-from-application`.
 2. **`agnara-http` declares no public composition surface.** Composing HTTP
    requires importing underscore-prefixed modules, which is exactly what
-   `reference-apps-no-internal-imports` forbids. RFC 0006 proposes the unified
-   exposure model beneath it; no implementation exists, and the design is
-   deliberately waiting for external evidence rather than preceding it.
+   `reference-apps-no-internal-imports` forbids.
+
+   The architectural half of this blocker is now resolved: the unified
+   exposure model is implemented and RFC 0006 is answered by ADR 0070, so the
+   model a composition API would sit on is settled and both adapters compile
+   through it. **The blocker itself is unchanged.** `agnara-http` still
+   exports nothing, an application still cannot compose HTTP through
+   supported entry points, and this gate and `http-exposure-from-application`
+   remain unsatisfiable. What changed is that the remaining work is an API on
+   a decided model rather than a design question. `BACKLOG.md` E1C.3 owns it.
 
 ## Gate state
 
@@ -90,8 +105,8 @@ the commit it was produced on; `0.1.0a3`'s evidence describes `0.1.0a3`.
 2. Those applications are audited against the `0.1.0a4` gates, and every
    framework deficiency they surface is filed as an Issue rather than worked
    around inside the application.
-3. The two blockers above are resolved or explicitly deferred with a recorded
-   decision.
+3. Blocker 1 above is resolved or explicitly deferred with a recorded
+   decision. Blocker 2 is resolved (ADR 0071).
 4. The `0.1.0a3` evidence gates are re-established against a `0.1.0a4`
    candidate commit.
 
