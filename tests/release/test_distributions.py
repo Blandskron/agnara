@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +33,9 @@ def _load_checker() -> Any:
 
 
 checker = _load_checker()
+WORKSPACE_VERSION = tomllib.loads(
+    (WORKSPACE_ROOT / "packages" / "agnara" / "pyproject.toml").read_text(encoding="utf-8")
+)["project"]["version"]
 
 
 def _workspace(tmp_path: Path, packages: dict[str, list[str]]) -> Path:
@@ -201,6 +205,34 @@ def test_an_adapter_that_lost_its_core_dependency_fails() -> None:
     assert any("does not declare a dependency" in problem for problem in problems)
 
 
+@pytest.mark.parametrize(
+    "requirement",
+    ["agnara", "agnara>=0.1.0a4.dev0", "agnara==0.1.0a3", "agnara[extra]==0.1.0a4.dev0"],
+)
+def test_an_adapter_without_the_exact_matching_core_pin_fails(
+    monkeypatch: pytest.MonkeyPatch, requirement: str
+) -> None:
+    adapter = checker.Distribution(name="agnara-http", import_name="agnara_http")
+    monkeypatch.setattr(checker.importlib.metadata, "version", lambda name: "0.1.0a4.dev0")
+    monkeypatch.setattr(checker.importlib.metadata, "requires", lambda name: [requirement])
+
+    problems = checker.check_metadata([adapter])
+
+    assert any("must require agnara==0.1.0a4.dev0 exactly" in problem for problem in problems)
+
+
+def test_normalized_exact_core_pin_passes(monkeypatch: pytest.MonkeyPatch) -> None:
+    adapter = checker.Distribution(name="agnara-http", import_name="agnara_http")
+    monkeypatch.setattr(checker.importlib.metadata, "version", lambda name: "0.1.0a4.dev0")
+    monkeypatch.setattr(
+        checker.importlib.metadata,
+        "requires",
+        lambda name: ["Agnara == 0.1.0a4.dev0"],
+    )
+
+    assert checker.check_metadata([adapter]) == []
+
+
 def test_unsynchronized_versions_fail(monkeypatch: pytest.MonkeyPatch) -> None:
     """ADR 0021 keeps every pre-one version identical across the seven packages."""
     found, _ = checker.discover(WORKSPACE_ROOT)
@@ -266,7 +298,10 @@ def _artifacts_for(distributions: list[Any]) -> list[str]:
     names = []
     for distribution in distributions:
         stem = distribution.name.replace("-", "_")
-        names += [f"{stem}-0.1.0a3-py3-none-any.whl", f"{stem}-0.1.0a3.tar.gz"]
+        names += [
+            f"{stem}-{WORKSPACE_VERSION}-py3-none-any.whl",
+            f"{stem}-{WORKSPACE_VERSION}.tar.gz",
+        ]
     return names
 
 
@@ -293,7 +328,8 @@ def test_uv_s_own_gitignore_is_not_an_artifact(tmp_path: Path) -> None:
 def test_a_missing_wheel_fails(tmp_path: Path) -> None:
     found, _ = checker.discover(WORKSPACE_ROOT)
     names = _artifacts_for(found)
-    dist = _built(tmp_path, [n for n in names if n != "agnara_http-0.1.0a3-py3-none-any.whl"])
+    missing = f"agnara_http-{WORKSPACE_VERSION}-py3-none-any.whl"
+    dist = _built(tmp_path, [n for n in names if n != missing])
 
     problems = checker.check_built_artifacts(found, dist)
 
@@ -303,7 +339,8 @@ def test_a_missing_wheel_fails(tmp_path: Path) -> None:
 def test_a_missing_sdist_fails(tmp_path: Path) -> None:
     found, _ = checker.discover(WORKSPACE_ROOT)
     names = _artifacts_for(found)
-    dist = _built(tmp_path, [n for n in names if n != "agnara_mcp-0.1.0a3.tar.gz"])
+    missing = f"agnara_mcp-{WORKSPACE_VERSION}.tar.gz"
+    dist = _built(tmp_path, [n for n in names if n != missing])
 
     problems = checker.check_built_artifacts(found, dist)
 

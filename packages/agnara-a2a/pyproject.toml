@@ -1,11 +1,11 @@
 [project]
 name = "agnara-a2a"
-version = "0.1.0a3"
+version = "0.1.0a4.dev0"
 description = "Agent-to-Agent exposure adapter for Agnara capabilities."
 readme = "README.md"
 requires-python = ">=3.14"
 license = {text = "Apache-2.0"}
-dependencies = ["agnara"]
+dependencies = ["agnara==0.1.0a4.dev0"]
 
 [build-system]
 requires = ["hatchling"]

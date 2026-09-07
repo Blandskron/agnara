@@ -23,6 +23,7 @@ Target commands:
 
 ```bash
 uv sync
+python scripts/set_workspace_version.py development <current-target> --check
 uv run ruff check .
 uv run ruff format --check .
 uv run ty check
@@ -38,15 +39,21 @@ because building a distribution and being able to use it are different claims:
 uv build --all-packages --out-dir dist/
 python scripts/check_distributions.py --workspace "$PWD" --dist dist/
 uv venv --python 3.14 <external>/.venv
-uv pip install --python <external>/.venv/bin/python dist/*.whl
+uv pip install --python <external>/.venv/bin/python \
+    "mcp==2.1.1" "opentelemetry-api>=1.44,<2"
+uv pip install --python <external>/.venv/bin/python \
+    --no-index --find-links dist/ dist/*.whl
 <external>/.venv/bin/python -I scripts/check_distributions.py \
     --workspace "$PWD" --require-installed
 ```
 
-Every wheel is installed into one environment so the adapters' third-party
-pins are resolved by a real installer. Without `--require-installed` the same
-command runs against the development environment, where importing from
-`packages/*/src` is correct.
+Every wheel is installed into one environment. Adapter-owned third-party
+dependencies are resolved first; the complete first-party wheel set is then
+installed with index access and dependency fetching disabled. The metadata
+gate separately proves that each adapter wheel retained its exact core pin,
+so no public-index core can substitute for the locally built one. Without
+`--require-installed` the same command runs against the development
+environment, where importing from `packages/*/src` is correct.
 
 Documentation browser conformance is a separate required CI lane because the
 ordinary cross-platform gate must not depend on a preinstalled browser. Its
@@ -300,8 +307,9 @@ Every PR records one of these outcomes:
 
 Before creating a release tag:
 
-- every first-party `pyproject.toml` contains the exact selected PEP 440
-  version;
+- `python scripts/set_workspace_version.py release <version> --check` proves
+  every first-party `pyproject.toml` contains the exact selected PEP 440
+  version and every adapter pins that exact core version;
 - the selected version is not `0.0.0`;
 - `uv.lock` is refreshed and current;
 - `CHANGELOG.md` has a dated section for that exact version and a new

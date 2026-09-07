@@ -56,8 +56,6 @@ AUTOMATED = "automated"
 EVIDENCE = "evidence"
 MANUAL = "manual"
 
-#: Version references that are release-preparation work rather than defects.
-#: `docs/MAINTAINERS_RELEASE.md` sets them on the release branch, not here.
 UNRELEASED_HEADING = "## [Unreleased]"
 
 
@@ -124,6 +122,51 @@ def package_versions() -> dict[str, str]:
     return versions
 
 
+def package_core_requirements(core: str = "agnara") -> dict[str, list[str]]:
+    """Core requirements declared by every adapter, keyed by distribution."""
+    requirements: dict[str, list[str]] = {}
+    normalized_core = core.lower().replace("_", "-")
+    for path in sorted(PACKAGES_DIR.glob("*/pyproject.toml")):
+        project = tomllib.loads(path.read_text(encoding="utf-8"))["project"]
+        name = project["name"]
+        if name == core:
+            continue
+        selected = []
+        for requirement in project.get("dependencies", []):
+            match = re.match(r"^\s*([A-Za-z0-9][A-Za-z0-9._-]*)(.*)$", requirement)
+            if match and match[1].lower().replace("_", "-") == normalized_core:
+                selected.append(requirement)
+        requirements[name] = selected
+    return requirements
+
+
+def normalized_core_constraints(requirements: list[str]) -> list[tuple[str | None, str]]:
+    """Normalize the extras and specifier portion of source core requirements."""
+    normalized = []
+    for requirement in requirements:
+        match = re.match(
+            r"^\s*[A-Za-z0-9][A-Za-z0-9._-]*(\[[^\]]+\])?\s*(.*)$",
+            requirement,
+        )
+        if match:
+            normalized.append((match[1], re.sub(r"\s+", "", match[2])))
+    return normalized
+
+
+def unreleased_entry_count() -> int | None:
+    """Count active changelog entries, or return None for a malformed section."""
+    try:
+        text = CHANGELOG_PATH.read_text(encoding="utf-8")
+    except OSError, UnicodeError:
+        return None
+    if text.count(UNRELEASED_HEADING) != 1:
+        return None
+    unreleased = text.split(UNRELEASED_HEADING, 1)[1]
+    next_release = re.search(r"^## \[", unreleased, re.MULTILINE)
+    body = unreleased[: next_release.start()] if next_release else unreleased
+    return len(re.findall(r"^- ", body, re.MULTILINE))
+
+
 def declared_python_baseline() -> set[str]:
     baselines: set[str] = set()
     for path in sorted(PACKAGES_DIR.glob("*/pyproject.toml")):
@@ -148,7 +191,33 @@ def check_version_consistency() -> tuple[str, str]:
     version = distinct[0]
     if version == "0.0.0":
         return UNSATISFIED, "the 0.0.0 development sentinel must never be released"
-    return SATISFIED, f"all {len(versions)} first-party packages declare {version}"
+    try:
+        target = load_status()["current_target"]
+    except StatusError, KeyError:
+        return UNSATISFIED, "the current release target could not be determined"
+    entries = unreleased_entry_count()
+    if entries is None:
+        return UNSATISFIED, "the [Unreleased] changelog section could not be interpreted"
+    expected = f"{target}.dev0" if entries else target
+    phase = "development" if entries else "release"
+    if version != expected:
+        return (
+            UNSATISFIED,
+            f"{phase} workspace must declare {expected}, found synchronized {version}",
+        )
+
+    problems = []
+    for adapter, requirements in sorted(package_core_requirements().items()):
+        exact = f"=={version}"
+        if normalized_core_constraints(requirements) != [(None, exact)]:
+            problems.append(f"{adapter}={requirements!r}")
+    if problems:
+        return UNSATISFIED, "adapter core requirements are not exact: " + ", ".join(problems)
+    return (
+        SATISFIED,
+        f"all {len(versions)} first-party packages declare {version}; "
+        f"all {len(versions) - 1} adapters pin agnara=={version}",
+    )
 
 
 def check_python_baseline() -> tuple[str, str]:

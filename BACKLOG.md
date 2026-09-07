@@ -935,7 +935,7 @@ is listed here so it stays visible rather than being rediscovered later.
   and beta revisit condition. No package metadata changes in this
   decision-only task.
 
-- [ ] D2A Implement ADR 0069 atomically. Add repository-owned version
+- [x] D2A Implement ADR 0069 atomically. Add repository-owned version
   transition tooling, replace all six unbounded core requirements with exact
   synchronized pins, move all seven packages to `0.1.0a4.dev0`, refresh
   `uv.lock`, strengthen source and installed-metadata gates, prove an isolated

@@ -49,12 +49,15 @@ Publication is triggered by pushing the version tag; everything before that is
 manual and reviewable.
 
 ADR 0021 keeps every first-party package on one synchronized version, so a
-release updates all seven, not only the published one.
+release updates all seven, not only the published one. ADR 0069 additionally
+requires every adapter to pin that exact core version; these thirteen values
+are changed only through the workspace transition tool.
 
 1. Branch `release/v<version>` from `develop`.
-2. Set the same version in **every** `packages/*/pyproject.toml` (e.g.
-   `0.1.0a1`).
-3. Run `uv lock` and confirm `uv lock --check` is clean.
+2. Run `python scripts/set_workspace_version.py release <version>`. The command
+   validates the complete workspace before writing, updates all project
+   versions and adapter core pins, and refreshes `uv.lock` as one operation.
+3. Run `python scripts/set_workspace_version.py release <version> --check`.
 4. Close `CHANGELOG.md`: rename `[Unreleased]` to `[<version>] - YYYY-MM-DD`,
    open a new empty `[Unreleased]`, and update the comparison links.
 5. Build and validate the artifacts, then install the wheel into a clean
@@ -68,7 +71,10 @@ git tag -a v0.1.0a1 -m "Agnara v0.1.0a1 — First Public Alpha"
 git push origin v0.1.0a1
 ```
 
-8. Propagate the release-only commits back to `develop` through a PR.
+8. Propagate the release-only commits back to `develop` through a PR. Once the
+   next `current_target` is selected, run
+   `python scripts/set_workspace_version.py development <next-version>` so
+   `develop` carries `<next-version>.dev0`.
 
 Write `docs/releases/v<version>.md` before tagging. `release.yml` uses it as
 the GitHub Release body and appends the generated PR list underneath, so a
@@ -98,4 +104,3 @@ Upon receiving the tag `v*.*.*`, `.github/workflows/release.yml` executes:
 ## 6. TestPyPI (Optional but recommended)
 
 TestPyPI is an entirely separate registry from PyPI. To publish to TestPyPI before production, a Pending Trusted Publisher must also be configured there. Configuring it is a repository-owner action in the TestPyPI web interface. Once a Pending Trusted Publisher exists there, an intermediate `publish-testpypi` job targeting a `testpypi` environment can be added before the `publish` job.
-

@@ -188,13 +188,14 @@ jobs:
           mkdir -p /tmp/ci-install && cd /tmp/ci-install
           uv venv --python 3.14 .venv
 
-          # One environment holding every distribution, so the third-party
-          # pins the adapters declare -- mcp and opentelemetry-api -- are
-          # resolved by a real installer rather than assumed to be resolvable.
-          # Installing them together also keeps the first-party requirements
-          # satisfied by these wheels instead of by whatever the index offers
-          # under the same version string.
-          uv pip install --python .venv/bin/python "${wheels[@]}"
+          # Resolve adapter-owned third-party dependencies from the index,
+          # then close the index before installing the complete first-party
+          # wheel set. The installed-metadata gate below independently checks
+          # that every adapter retained its exact core requirement.
+          uv pip install --python .venv/bin/python \
+            "mcp==2.1.1" "opentelemetry-api>=1.44,<2"
+          uv pip install --python .venv/bin/python \
+            --no-index --find-links "$GITHUB_WORKSPACE/dist" "${wheels[@]}"
 
           # Address the interpreter directly: `uv run` may resolve an
           # environment other than the one the wheels were installed into.

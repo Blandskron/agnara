@@ -38,6 +38,7 @@ import importlib
 import importlib.metadata
 import importlib.resources
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -208,9 +209,10 @@ def check_metadata(
     *,
     core: str = "agnara",
 ) -> list[str]:
-    """Versions agree, and every adapter still declares its dependency on core."""
+    """Versions agree, and every adapter pins that exact core version."""
     problems: list[str] = []
     versions: dict[str, str] = {}
+    requirements: dict[str, list[str]] = {}
 
     for distribution in distributions:
         try:
@@ -221,25 +223,38 @@ def check_metadata(
 
         if distribution.name == core:
             continue
-        requires = importlib.metadata.requires(distribution.name) or []
-        # `Requires-Dist: agnara` and `agnara>=1; extra == "x"` both start with
-        # the name, so compare the leading identifier rather than the whole
-        # specifier -- this asserts the dependency exists, not its bound.
-        declared = {requirement.split(maxsplit=1)[0].split(";")[0] for requirement in requires}
-        declared = {
-            name.split("[")[0].split("=")[0].split("<")[0].split(">")[0] for name in declared
-        }
-        if core not in declared:
-            problems.append(
-                f"{distribution.name}: installed metadata does not declare a "
-                f"dependency on {core} (requires: {sorted(declared)})"
-            )
+        requirements[distribution.name] = importlib.metadata.requires(distribution.name) or []
 
     distinct = set(versions.values())
     if len(distinct) > 1:
         # ADR 0021 keeps every pre-one version synchronized.
         detail = ", ".join(f"{name}=={version}" for name, version in sorted(versions.items()))
         problems.append(f"installed versions are not synchronized: {detail}")
+
+    normalized_core = core.lower().replace("_", "-")
+    for adapter, declared in sorted(requirements.items()):
+        core_requirements: list[tuple[str | None, str]] = []
+        for requirement in declared:
+            match = re.match(
+                r"^\s*([A-Za-z0-9][A-Za-z0-9._-]*)(\[[^\]]+\])?\s*(.*)$",
+                requirement,
+            )
+            if match and match[1].lower().replace("_", "-") == normalized_core:
+                core_requirements.append((match[2], re.sub(r"\s+", "", match[3])))
+        if not core_requirements:
+            problems.append(
+                f"{adapter}: installed metadata does not declare a dependency on {core}"
+            )
+            continue
+        expected = f"=={versions[adapter]}"
+        if core_requirements != [(None, expected)]:
+            rendered = [
+                f"{core}{extra or ''}{constraint}" for extra, constraint in core_requirements
+            ]
+            problems.append(
+                f"{adapter}: installed metadata must require {core}{expected} exactly "
+                f"(found: {rendered})"
+            )
     return problems
 
 

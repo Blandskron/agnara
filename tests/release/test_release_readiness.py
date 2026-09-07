@@ -106,6 +106,41 @@ def test_release_cut_requires_evidence_for_the_exact_target(
     assert readiness.check_changelog()[0] == expected
 
 
+@pytest.mark.parametrize(
+    ("entries", "version", "requirement", "expected"),
+    [
+        (1, "0.1.0a4.dev0", "agnara==0.1.0a4.dev0", readiness.SATISFIED),
+        (1, "0.1.0a4", "agnara==0.1.0a4", readiness.UNSATISFIED),
+        (0, "0.1.0a4", "agnara==0.1.0a4", readiness.SATISFIED),
+        (0, "0.1.0a4.dev0", "agnara==0.1.0a4.dev0", readiness.UNSATISFIED),
+        (1, "0.1.0a4.dev0", "agnara", readiness.UNSATISFIED),
+        (1, "0.1.0a4.dev0", "agnara>=0.1.0a4.dev0", readiness.UNSATISFIED),
+        (1, "0.1.0a4.dev0", "Agnara == 0.1.0a4.dev0", readiness.SATISFIED),
+    ],
+)
+def test_version_gate_distinguishes_development_release_and_exact_pins(
+    monkeypatch: pytest.MonkeyPatch,
+    entries: int,
+    version: str,
+    requirement: str,
+    expected: str,
+) -> None:
+    monkeypatch.setattr(
+        readiness,
+        "package_versions",
+        lambda: {"agnara": version, "agnara-http": version},
+    )
+    monkeypatch.setattr(
+        readiness,
+        "package_core_requirements",
+        lambda: {"agnara-http": [requirement]},
+    )
+    monkeypatch.setattr(readiness, "unreleased_entry_count", lambda: entries)
+    monkeypatch.setattr(readiness, "load_status", lambda: {"current_target": "0.1.0a4"})
+
+    assert readiness.check_version_consistency()[0] == expected
+
+
 # ---------------------------------------------------------------------------
 # The status file's own integrity
 # ---------------------------------------------------------------------------

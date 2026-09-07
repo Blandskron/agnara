@@ -242,7 +242,8 @@ def test_adapter_does_not_import_a_sibling_adapter(dist_name: str) -> None:
 def test_adapter_declares_only_core_as_a_workspace_dependency(dist_name: str) -> None:
     """Packaging metadata must agree with the import rule."""
     declared = declared_workspace_dependencies(dist_name)
-    assert declared == [CORE_DISTRIBUTION], (
+    normalized = [_requirement_name(requirement) for requirement in declared]
+    assert normalized == [CORE_DISTRIBUTION], (
         f"{dist_name} must declare exactly one workspace dependency "
         f"({CORE_DISTRIBUTION}); found {declared}"
     )
@@ -322,7 +323,8 @@ def test_adapter_may_import_the_core(dist_name: str) -> None:
     """
     siblings = {DISTRIBUTIONS[other] for other in ADAPTER_DISTRIBUTIONS if other != dist_name}
     assert CORE_IMPORT_NAME not in siblings
-    assert CORE_DISTRIBUTION in declared_dependencies(dist_name)
+    declared = {_requirement_name(requirement) for requirement in declared_dependencies(dist_name)}
+    assert CORE_DISTRIBUTION in declared
 
 
 #: Browser documentation renderers and their runtimes. ADR 0018 keeps every

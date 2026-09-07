@@ -44,7 +44,8 @@ def test_every_documentation_asset_has_packaged_license_and_hash_evidence() -> N
 def test_built_wheel_contains_the_complete_verified_resource_tree(tmp_path: Path) -> None:
     project = tomllib.loads((PACKAGE_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert project["tool"]["hatch"]["build"]["targets"]["wheel"]["packages"] == ["src/agnara_http"]
-    assert project["project"]["dependencies"] == ["agnara"]
+    version = project["project"]["version"]
+    assert project["project"]["dependencies"] == [f"agnara=={version}"]
 
     uv = shutil.which("uv")
     assert uv is not None, "the documented release tool must be available"
@@ -71,7 +72,7 @@ def test_built_wheel_contains_the_complete_verified_resource_tree(tmp_path: Path
         metadata_name = next(name for name in names if name.endswith(".dist-info/METADATA"))
         metadata = archive.read(metadata_name).decode("utf-8")
         dependencies = [line for line in metadata.splitlines() if line.startswith("Requires-Dist:")]
-        assert dependencies == ["Requires-Dist: agnara"]
+        assert dependencies == [f"Requires-Dist: agnara=={version}"]
 
     assert expected
     assert all(path.startswith("agnara_http/_vendor/") for path in expected)
