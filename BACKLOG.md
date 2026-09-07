@@ -766,6 +766,20 @@ Generated code must:
   passes and conversations are resolved.
 - [x] E0B.11 Replace placeholder OWNER/REPO in security Issue template.
 - [ ] E0B.12 Document release and hotfix automation evidence.
+- [x] E0B.16 Verify every distribution installs and imports outside the
+  workspace. The gate built seven distributions and installed one, so the
+  adapters' `mcp==2.1.1` and `opentelemetry-api>=1.44,<2` pins were never
+  resolved by an installer, and ADR 0040's vendored documentation UIs were
+  checked for presence in the archive but never for reachability from an
+  installed package. `0.1.0a3` covered this by hand during release
+  preparation. `scripts/check_distributions.py` uses only the
+  standard library, so it runs in an environment holding nothing but the built
+  wheels; it discovers the expected distributions from the workspace layout,
+  and asserts installed origin, data-file reachability, synchronized versions
+  and the declared core dependency. 26 focused cases including empty and
+  ambiguous workspaces. Verified end to end against a real external CPython
+  3.14.4 venv, and against removal of an adapter, a vendored asset and a
+  `py.typed`. Tracking: GitHub Issue #278.
 - [x] E0B.14 Establish an evidence-based release readiness program.
   `docs/releases/RELEASE_PLAN.md` defines the progressive path from `0.1.0a2`
   to `0.1.0` with measurable exit gates and no calendar dates;
@@ -854,6 +868,17 @@ is listed here so it stays visible rather than being rediscovered later.
   choose a constraint form; an exact pin matches its intent but adds six more
   version bumps per release unless the bump is automated. Decide the form and
   the automation together.
+
+  This now has a reproduction, found while building the #278 gate. Installing
+  a locally built adapter wheel without the matching core wheel resolves
+  `agnara` from PyPI, and the published `0.1.0a3` satisfies the unbounded
+  requirement even though `develop`'s `0.1.0a3` has since renamed
+  `AppDescriptor` to `ApplicationDescriptor`. `import agnara_cli` then fails
+  with an `ImportError`. So the constraint is not only wrong once adapters are
+  published: an adapter built from `develop` already binds to a core with the
+  same version string and a different API. Whether `develop` should carry a
+  distinguishable version between releases is part of the same decision, and
+  is why the CI gate installs all seven wheels in one command.
 - [ ] D3 Reconcile the agent-onboarding documentation. `FIRST_AGENT_PROMPT.md`
   (953 lines), `BUILD_PROMPT.md`, `AGENTS.md`, `AGENT_OPERATING_MODEL.md`,
   `MULTI_AGENT_PROTOCOL.md` and `GEMINI.md` total roughly 1,900 lines with
