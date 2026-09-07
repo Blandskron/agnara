@@ -21,7 +21,7 @@ zero-padded to four digits and never exceed `0999`.
 | 0004 | Transport-neutral dependency injection | `Accepted`. |
 | 0005 | Protocol-neutral delegation | Genuinely open. |
 | 0006 | Unified exposure model | `Proposed`. Genuinely open; blocks I1 implementation. |
-| 0007 | Distribution version identity and dependency constraints | `Proposed`. Open, with a reproduction; supplements ADR 0021. |
+| 0007 | Distribution version identity and dependency constraints | Answered by ADR 0069: exact alpha pins plus `<target>.dev0` on `develop`. |
 | 0008 | Framework embedding and ecosystem composition | `Proposed`. Fifteen open questions; decides none. Implementation belongs to `0.1.0b1` per ADR 0068. |
 
 ## Read this before trusting a Status line
