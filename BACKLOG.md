@@ -765,6 +765,21 @@ Generated code must:
   translated rather than aliased. `docs/HTTP_COMPOSITION.md` is the guide and
   `examples/http_service.py` is a release gate that runs outside the checkout.
   ADR 0071. Tracking: GitHub Issue #295.
+- [x] E1C.6 Complete the `0.1.0a4` HTTP request surface. `COOKIE`, `FORM` and
+  `UPLOAD` binding sources, a bounded in-memory multipart reader, `max_parts`
+  beside `max_body_bytes`, truthful OpenAPI for all three, and a scope
+  classification for every deferred HTTP feature. Initiative I7. ADR 0072.
+  Tracking: GitHub Issue #298.
+- [ ] E1C.7 Design collection bindings. ADR 0026 refused repeated scalar
+  values deliberately and ADR 0072 shows what that costs: no multiple files
+  and no repeated form fields. The decision is not HTTP-local — it fixes how a
+  list arrives through every transport — so it needs an RFC before
+  implementation.
+- [ ] E1C.8 Design the upload value type. Exposing a client filename or a
+  per-part content type needs a public type carrying filename, content type
+  and content, and that is a core-visible schema shape MCP and introspection
+  project too. Issue #296 shows what happens when a projected schema and the
+  accepted value disagree, so this waits on that decision as well.
 - [ ] E1C.4 Retire the transitional paths E1C.3 left standing: the
   `describe_app(..., exposures=<mapping>)` form, the second `Mcp` compile entry
   point, and the collision between an RFC 0006 adapter surface and

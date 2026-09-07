@@ -18,7 +18,7 @@ Seven names, from `agnara_http`:
 | `Http` | Declare which capabilities one named HTTP surface exposes, and compile it. |
 | `HttpApplication` | The compiled result: an immutable ASGI 3 application. |
 | `Binding` | Read one capability input from one place in the request. |
-| `BindingSource` | Which place: `PATH`, `QUERY`, `HEADER`, `BODY`. |
+| `BindingSource` | Which place: `PATH`, `QUERY`, `HEADER`, `BODY`, `COOKIE`, `FORM`, `UPLOAD`. |
 | `OpenApiInfo` | OpenAPI document metadata. |
 | `OpenApiOperation` | The per-operation decision to publish, and its metadata. |
 | `HttpDefinitionError` | One composition mistake, raised at startup. |
@@ -167,9 +167,98 @@ HTTP exists:
 http.get("/me", show, Binding("account_id", BindingSource.HEADER, wire_name="x-account-id"))
 ```
 
-Supported body annotations today are `dict[str, Any]`, `list[T]`, primitives,
-tuples, unions, `Literal` and `Enum`. **A dataclass-typed body does not work**
-— see Limitations.
+Supported JSON body annotations today are `dict[str, Any]`, `list[T]`,
+primitives, tuples, unions, `Literal` and `Enum`. **A dataclass-typed body does
+not work** — see Limitations.
+
+## Cookies, forms and uploads
+
+ADR 0072 fixes what `0.1.0a4` owns of the request surface. Three sources join
+the four above, and they are the difference between "serves JSON" and "serves
+an ordinary web application".
+
+### A session cookie
+
+```python
+http.get("/profile", profile, Binding("session", BindingSource.COOKIE, wire_name="sid"))
+```
+
+One RFC 6265 pair, read by name, validated like any other scalar. Cookie names
+are **case-sensitive**, unlike headers. A value is opaque text: percent,
+base64 and quoted forms arrive exactly as sent, because guessing an encoding
+would corrupt a value your capability is about to validate.
+
+A cookie pair your application never set, whose name is not an HTTP token, is
+skipped rather than failing the request. A repeated cookie *is* refused, like
+any repeated scalar.
+
+Sessions are yours: a cookie binding plus your own store. Agnara ships no
+session framework.
+
+### An HTML form
+
+```python
+http.post(
+    "/sessions",
+    sign_in,
+    Binding("email", BindingSource.FORM),
+    Binding("password", BindingSource.FORM),
+    Binding("remember", BindingSource.FORM),
+)
+```
+
+One declaration reads **both** `application/x-www-form-urlencoded` and
+`multipart/form-data`, because you asked for a field and an HTML form picks
+the encoding from its `enctype`. Fields are scalars and are type-checked;
+`+` decodes to a space; a repeated field is refused.
+
+### A file upload
+
+```python
+http.post(
+    "/avatar",
+    store,
+    Binding("caption", BindingSource.FORM),
+    Binding("avatar", BindingSource.UPLOAD, wire_name="file"),
+    max_body_bytes=4 * 1024 * 1024,
+    max_parts=8,
+)
+
+
+@app.capability
+def store(caption: str, avatar: bytes) -> dict[str, Any]: ...
+```
+
+An upload binds to **`bytes`**, and the input must be annotated `bytes` — the
+compiler refuses anything else, because decoding arbitrary uploaded bytes as
+text fails on the first PNG.
+
+What you should know before using it:
+
+- **It is buffered in memory**, bounded by `max_body_bytes` (1 MiB by
+  default). A route that raises the limit to 100 MB will hold 100 MB per
+  concurrent request. That is your decision; nothing streams in `0.1.0a4`.
+- **Nothing touches the filesystem.** There is no temporary file, so there is
+  nothing to leak and nothing to clean up on cancellation or error. The bytes
+  are owned by the invocation and released with it.
+- **The client filename is not exposed.** It is attacker-controlled, and every
+  safe use of it generates a name anyway. If you need an extension, ask for it
+  as a form field. Exposing a filename needs the upload value type ADR 0072
+  defers.
+- **`max_parts` bounds the part count** (64 by default), separately from
+  total size, because a small body can still carry thousands of empty parts.
+- **One file per part name.** Several files need the collection binding
+  ADR 0026 deferred.
+
+### One request has one body
+
+`BODY`, `FORM` and `UPLOAD` all read the request body. Combining `BODY` with
+either of the others is refused at compile time — one request has one body and
+the adapter will not guess. `FORM` and `UPLOAD` combine freely, which is what
+an upload form posts.
+
+A route with an upload accepts `multipart/form-data` only; a route with fields
+alone accepts either encoding. The OpenAPI document advertises exactly that.
 
 ## OpenAPI
 
@@ -188,6 +277,13 @@ has not decided what to publish publishes nothing.
 `openapi_path` serves the document. There is no default path: publishing an API
 description is a deliberate act.
 
+The request surface projects truthfully. A cookie is `in: cookie`. Form fields
+and uploads are properties of one `requestBody` object with
+`additionalProperties: false` — they are a body, not parameters — an upload is
+`{"type": "string", "format": "binary"}`, and `encoding` carries the part's
+content type as RFC 7578 requires. The advertised media types are the ones the
+route accepts and no others.
+
 `publish_description` is separate from `summary` because a capability docstring
 is written for developers reading the code and may say more than a public
 document should.
@@ -205,6 +301,9 @@ machine-readable discriminator.
 | Query, header or body cannot be decoded | 400 | `invalid_input` (`details.location`) |
 | Value fails its compiled schema | 400 | `invalid_input` (`details.path`) |
 | Body exceeds the limit | 413 | `content_too_large` |
+| Multipart carries more than `max_parts` | 413 | `content_too_large` |
+| Malformed multipart body or part | 400 | `invalid_input` |
+| Form field is not valid UTF-8 | 400 | `invalid_input` (`details.location`) |
 | A policy denies the invocation | 403 | `forbidden` |
 | Deadline exceeded | 504 | `timeout` |
 | Handler raised | 500 | `internal_failure` (message redacted) |
@@ -260,10 +359,20 @@ publish an API for something that does not yet work end to end. Their
 configuration is also security-sensitive — content security policy, asset
 policy, principal resolution, redaction — and deserves its own review.
 
-**Not implemented.** Cookies, form bodies, multipart and file uploads
-(initiative I7). Streaming, server-sent events and **WebSocket**s (I2,
-`0.1.0a5`). Middleware and interceptors, CORS, compression, static files, proxy
-headers and trusted hosts. Content negotiation, conditional and range requests.
+**Not implemented, and where to put it instead.** ADR 0072 classifies every
+deferred request feature rather than leaving it implicit.
+
+| Deferred | Why, and what to do in `0.1.0a4` |
+| --- | --- |
+| Multiple files, repeated form fields | Both need a collection binding, which ADR 0026 deferred deliberately and which decides how a list arrives through *every* transport. Use distinct part names. |
+| Client filename, per-part content type | Both need a public upload value type, and that is a core-visible schema shape MCP and introspection project too. Ask for a filename as a form field if you need one. |
+| Streaming request bodies, large uploads | Needs the streaming model, I2, `0.1.0a5`. Until then an upload is bounded `bytes`. |
+| Streaming responses, server-sent events, **WebSocket**s | I2, `0.1.0a5`. The ASGI boundary handles no `websocket` scope. |
+| CORS, compression, trusted hosts, proxy header trust | Put them in the reverse proxy or ASGI server in front of the application, or wrap the `HttpApplication` in any third-party ASGI middleware — it is an ASGI 3 callable, so they compose. |
+| Static files | A web server or CDN. Agnara serves capabilities. |
+| Middleware / interceptor hook | Deliberately absent. `docs/INITIATIVES.md` states why: "middleware in most frameworks is where transport types leak into application code, and Agnara must not reproduce that". Wrapping from outside, at the ASGI layer, keeps transport concerns where they belong. |
+| Sessions | A cookie binding plus your own store. |
+| Content negotiation, conditional and range requests | A response-model question, not a request one. Needs an RFC. |
 
 **Known defect.** A dataclass-typed request body publishes a correct JSON
 Schema and then rejects every request that matches it, because the schema port

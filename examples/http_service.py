@@ -79,6 +79,19 @@ def health() -> str:
     return "ok"
 
 
+@app.capability(description="Attach a note and a document to one order.")
+def attach(order_id: str, session: str, note: str, document: bytes) -> dict[str, Any]:
+    """A cookie, a form field and an upload: the 0.1.0a4 request surface."""
+    return {
+        "order_id": order_id,
+        "session": session,
+        "note": note,
+        # The client filename is never exposed (ADR 0072), so an application
+        # names its own artefacts. Here that means reporting a size.
+        "bytes": len(document),
+    }
+
+
 # 1. Declare which capabilities this HTTP surface exposes. Bindings are
 #    explicit, including for path parameters (ADR 0026).
 http = Http("public")
@@ -97,6 +110,17 @@ http.put(
 )
 # No `openapi=`, so this one is served and stays out of the document (ADR 0035).
 http.get("/health", health)
+http.post(
+    "/orders/{order_id}/attachments",
+    attach,
+    Binding("order_id", BindingSource.PATH),
+    Binding("session", BindingSource.COOKIE, wire_name="sid"),
+    Binding("note", BindingSource.FORM),
+    Binding("document", BindingSource.UPLOAD, wire_name="file"),
+    openapi=OpenApiOperation(summary="Attach a document", tags=("orders",)),
+    max_body_bytes=64 * 1024,
+    max_parts=4,
+)
 
 # 2. Freeze the capabilities, then compile the surface. Both calls belong to
 #    the application: nothing is registered globally.
@@ -108,6 +132,28 @@ asgi = http.compile(
     openapi_path="/openapi.json",
     request_timeout=5.0,
 )
+
+
+#: The line ending every HTTP message format uses, spelled once.
+CRLF = b"\r\n"
+BOUNDARY = "xExamplex"
+
+
+def multipart(*parts: bytes) -> bytes:
+    """Assemble a multipart body the way a browser puts one on the wire."""
+    delimiter = f"--{BOUNDARY}".encode("ascii")
+    joined = b"".join(CRLF + part + CRLF + delimiter for part in parts)
+    return delimiter + joined + b"--" + CRLF
+
+
+def text_part(name: str, value: str) -> bytes:
+    head = f'Content-Disposition: form-data; name="{name}"'.encode()
+    return head + CRLF + CRLF + value.encode("utf-8")
+
+
+def file_part(name: str, filename: str, media_type: str, content: bytes) -> bytes:
+    head = f'Content-Disposition: form-data; name="{name}"; filename="{filename}"'.encode()
+    return head + CRLF + f"Content-Type: {media_type}".encode() + CRLF + CRLF + content
 
 
 def request(
@@ -158,6 +204,36 @@ def main() -> None:
     status, payload = request("GET", "/orders")
     problem = json.loads(payload)
     print(f"missing  -> {status} {problem['code']}")
+
+    # A cookie, a form field and an upload, in one request (ADR 0072).
+    status, payload = request(
+        "POST",
+        "/orders/A-1/attachments",
+        body=multipart(
+            text_part("note", "Signed copy"),
+            file_part("file", "contract.pdf", "application/pdf", b"%PDF-1.7 ..."),
+        ),
+        headers=(
+            (b"content-type", f"multipart/form-data; boundary={BOUNDARY}".encode()),
+            (b"cookie", b"sid=session-7; unrelated=x"),
+        ),
+    )
+    print(f"attach   -> {status} {payload.decode()}")
+
+    # An upload beyond the route's limit is a structured 413, never a crash.
+    status, payload = request(
+        "POST",
+        "/orders/A-1/attachments",
+        body=multipart(
+            text_part("note", "Too big"),
+            file_part("file", "huge.bin", "application/octet-stream", b"x" * 70_000),
+        ),
+        headers=(
+            (b"content-type", f"multipart/form-data; boundary={BOUNDARY}".encode()),
+            (b"cookie", b"sid=session-7"),
+        ),
+    )
+    print(f"oversize -> {status} {json.loads(payload)['code']}")
 
     status, payload = request("GET", "/openapi.json")
     document = json.loads(payload)

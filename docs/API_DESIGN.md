@@ -46,6 +46,11 @@ would not compile — ADR 0026 requires every input to name where it is read
 from, so that renaming a capability parameter fails at startup rather than on
 the first request.
 
+`BindingSource` names seven places: `PATH`, `QUERY`, `HEADER`, `BODY`,
+`COOKIE`, `FORM` and `UPLOAD`. The last three are ADR 0072, and the last three
+all read the request body, so a JSON body cannot be combined with a form or an
+upload.
+
 The names are `provisional`. The shape is settled; the spelling is one release
 old.
 
