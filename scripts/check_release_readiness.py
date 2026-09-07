@@ -37,8 +37,27 @@ PLAN_PATH = ROOT / "docs" / "releases" / "RELEASE_PLAN.md"
 CHANGELOG_PATH = ROOT / "CHANGELOG.md"
 PACKAGES_DIR = ROOT / "packages"
 PUBLIC_API_PATH = ROOT / "docs" / "public-api.json"
-CORE_SRC_PATH = PACKAGES_DIR / "agnara" / "src" / "agnara"
-CORE_INIT_PATH = CORE_SRC_PATH / "__init__.py"
+
+#: Distribution name -> top-level import package, per ADR 0017.
+#:
+#: Spelled out rather than discovered so that a package that stops shipping,
+#: or a new one that nobody classified, is a diff in this file rather than a
+#: silent change in what the public API gate covers.
+DISTRIBUTIONS = {
+    "agnara": "agnara",
+    "agnara-a2a": "agnara_a2a",
+    "agnara-cli": "agnara_cli",
+    "agnara-events": "agnara_events",
+    "agnara-http": "agnara_http",
+    "agnara-mcp": "agnara_mcp",
+    "agnara-telemetry": "agnara_telemetry",
+}
+
+#: Import package -> the source root the manifest may address.
+SOURCE_ROOTS = {
+    import_name: PACKAGES_DIR / distribution / "src" / import_name
+    for distribution, import_name in DISTRIBUTIONS.items()
+}
 
 SCHEMA_VERSION = 1
 
@@ -345,31 +364,42 @@ def _literal_all(path: Path) -> list[str] | None:
 
 
 def _module_path(module: str) -> Path | None:
-    """The source file that owns `module`'s ``__all__``, or None if unusable.
+    """The source file that owns a module's ``__all__``, or None if unusable.
 
-    Only modules inside the core distribution are addressable. A manifest entry
+    Only modules inside a workspace distribution are addressable, and the
+    distribution is chosen by the module's own import root. A manifest entry
     naming anything else is refused rather than resolved, so the manifest can
-    never be pointed at a path outside the package it claims to describe.
+    never be pointed at a path outside the packages it claims to describe.
     """
     parts = module.split(".")
-    if parts[0] != "agnara" or any(
-        not part.isidentifier() or part.startswith("_") for part in parts
-    ):
+    if any(not part.isidentifier() or part.startswith("_") for part in parts):
+        return None
+    source_root = SOURCE_ROOTS.get(parts[0])
+    if source_root is None:
         return None
     if len(parts) == 1:
-        return CORE_SRC_PATH / "__init__.py"
+        return source_root / "__init__.py"
     relative = Path(*parts[1:])
-    package = CORE_SRC_PATH / relative / "__init__.py"
-    leaf = (CORE_SRC_PATH / relative).with_suffix(".py")
+    package = source_root / relative / "__init__.py"
+    leaf = (source_root / relative).with_suffix(".py")
     candidates = [path for path in (package, leaf) if path.is_file()]
     return candidates[0] if len(candidates) == 1 else None
 
 
-def _public_core_modules() -> set[str]:
-    """Every non-private core module that deliberately exports names."""
+def _public_modules(import_name: str) -> set[str]:
+    """Every non-private module of a distribution that deliberately exports names.
+
+    The boundary is the source declaration, not a second subjective allowlist:
+    a module is public when no part of its path is underscore-prefixed and it
+    declares a non-empty literal ``__all__``. A module that exports nothing is
+    not forced into the manifest, but it may still be listed there -- that is
+    how the reserved `agnara-a2a` and `agnara-events` namespaces are held to an
+    empty surface rather than merely left undescribed.
+    """
+    source_root = SOURCE_ROOTS[import_name]
     public: set[str] = set()
-    for path in CORE_SRC_PATH.rglob("*.py"):
-        relative = path.relative_to(CORE_SRC_PATH)
+    for path in source_root.rglob("*.py"):
+        relative = path.relative_to(source_root)
         directories = relative.parts[:-1]
         if any(part.startswith("_") for part in directories):
             continue
@@ -381,62 +411,91 @@ def _public_core_modules() -> set[str]:
             suffix = ".".join(directories)
         else:
             suffix = ".".join((*directories, path.stem))
-        public.add("agnara" + (f".{suffix}" if suffix else ""))
+        public.add(import_name + (f".{suffix}" if suffix else ""))
     return public
 
 
-def _classified_public_names() -> tuple[dict[str, list[str]] | None, str | None]:
-    """Validate the manifest and return each module's exact classified surface."""
+def _classified_public_names() -> tuple[dict[str, dict[str, list[str]]] | None, str | None]:
+    """Validate the manifest and return each distribution's classified surface.
+
+    The result maps distribution name -> module -> exact ordered export list.
+    """
     try:
         document = json.loads(PUBLIC_API_PATH.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         return None, f"public API manifest cannot be read: {exc}"
-    if not isinstance(document, dict) or document.get("schema_version") != 2:
-        return None, "public API manifest must use schema_version 2"
-    if document.get("distribution") != "agnara":
-        return None, "public API manifest must describe the agnara distribution"
-    modules = document.get("modules")
-    if not isinstance(modules, list) or not modules:
-        return None, "public API manifest modules must be a non-empty list"
+    if not isinstance(document, dict) or document.get("schema_version") != 3:
+        return None, "public API manifest must use schema_version 3"
+    distributions = document.get("distributions")
+    if not isinstance(distributions, list) or not distributions:
+        return None, "public API manifest distributions must be a non-empty list"
 
     allowed = {"stable", "provisional", "experimental", "internal"}
-    classified: dict[str, list[str]] = {}
-    for entry in modules:
-        if not isinstance(entry, dict) or set(entry) != {"module", "exports"}:
-            return None, "each manifest module must contain only module and exports"
-        module = entry["module"]
-        if not isinstance(module, str) or _module_path(module) is None:
-            return None, f"manifest module {module!r} is not a module of the agnara package"
-        if module in classified:
-            return None, f"public API manifest repeats module {module!r}"
-        exports = entry["exports"]
-        if not isinstance(exports, list):
-            return None, f"{module}: manifest exports must be a list"
+    classified: dict[str, dict[str, list[str]]] = {}
+    for entry in distributions:
+        if not isinstance(entry, dict) or set(entry) != {"distribution", "import_name", "modules"}:
+            return None, (
+                "each manifest distribution must contain only distribution, import_name and modules"
+            )
+        distribution, import_name = entry["distribution"], entry["import_name"]
+        if SOURCE_ROOTS.get(import_name) is None or DISTRIBUTIONS.get(distribution) != import_name:
+            return None, f"manifest distribution {distribution!r} is not a workspace distribution"
+        if distribution in classified:
+            return None, f"public API manifest repeats distribution {distribution!r}"
+        modules = entry["modules"]
+        if not isinstance(modules, list) or not modules:
+            return None, f"{distribution}: manifest modules must be a non-empty list"
 
-        names: list[str] = []
-        for index, item in enumerate(exports):
-            if not isinstance(item, dict) or set(item) != {"name", "stability"}:
-                return None, f"{module}: export {index} must contain only name and stability"
-            name, stability = item["name"], item["stability"]
-            if not isinstance(name, str) or not name:
-                return None, f"{module}: export {index} has an invalid name"
-            if stability not in allowed:
-                return None, f"{module}: export {name!r} has unknown stability {stability!r}"
-            if stability == "internal":
-                return None, f"{module}: internal name {name!r} must not appear in the manifest"
-            names.append(name)
-        duplicates = sorted(name for name in set(names) if names.count(name) > 1)
-        if duplicates:
-            return None, f"{module}: manifest repeats: " + ", ".join(duplicates)
-        classified[module] = names
+        surface: dict[str, list[str]] = {}
+        for module_entry in modules:
+            if not isinstance(module_entry, dict) or set(module_entry) != {"module", "exports"}:
+                return None, f"{distribution}: each manifest module has only module and exports"
+            module = module_entry["module"]
+            if not isinstance(module, str) or _module_path(module) is None:
+                return None, f"manifest module {module!r} is not a module of a workspace package"
+            if module.split(".")[0] != import_name:
+                return None, f"{distribution}: manifest module {module!r} is another package's"
+            if module in surface:
+                return None, f"{distribution}: manifest repeats module {module!r}"
+            exports = module_entry["exports"]
+            if not isinstance(exports, list):
+                return None, f"{module}: manifest exports must be a list"
 
-    if "agnara" not in classified:
-        return None, "public API manifest must classify the top-level agnara module"
+            names: list[str] = []
+            for index, item in enumerate(exports):
+                if not isinstance(item, dict) or set(item) != {"name", "stability"}:
+                    return None, f"{module}: export {index} must contain only name and stability"
+                name, stability = item["name"], item["stability"]
+                if not isinstance(name, str) or not name:
+                    return None, f"{module}: export {index} has an invalid name"
+                if stability not in allowed:
+                    return None, f"{module}: export {name!r} has unknown stability {stability!r}"
+                if stability == "internal":
+                    return None, f"{module}: internal name {name!r} must not appear in the manifest"
+                names.append(name)
+            duplicates = sorted(name for name in set(names) if names.count(name) > 1)
+            if duplicates:
+                return None, f"{module}: manifest repeats: " + ", ".join(duplicates)
+            surface[module] = names
+
+        if import_name not in surface:
+            return None, f"{distribution}: manifest must classify the {import_name} entry point"
+        classified[distribution] = surface
+
+    missing = sorted(set(DISTRIBUTIONS) - set(classified))
+    if missing:
+        return None, "distributions absent from the public API manifest: " + ", ".join(missing)
     return classified, None
 
 
 def check_public_api_declared() -> tuple[str, str]:
-    """Every package declares exports; every governed module matches its manifest."""
+    """Every shipped distribution's public surface is classified exactly.
+
+    This is the whole workspace, not the kernel. An application consuming
+    Agnara from outside the repository imports `agnara_http` and `agnara_mcp`
+    as readily as `agnara`, so a governed core beside an ungoverned adapter is
+    not a governed framework (ADR 0076).
+    """
     missing = []
     for init in sorted(PACKAGES_DIR.glob("*/src/*/__init__.py")):
         if _literal_all(init) is None:
@@ -450,31 +509,36 @@ def check_public_api_declared() -> tuple[str, str]:
     assert classified is not None
 
     problems: list[str] = []
-    ungoverned = sorted(_public_core_modules().difference(classified))
-    if ungoverned:
-        problems.append("unclassified public modules: " + ", ".join(ungoverned))
-    for module, expected in classified.items():
-        source = _module_path(module)
-        assert source is not None  # validated while parsing the manifest
-        implemented = _literal_all(source)
-        if implemented is None:
-            problems.append(f"{module}: no literal __all__ to compare against")
-            continue
-        if implemented == expected:
-            continue
-        unclassified = [name for name in implemented if name not in expected]
-        absent = [name for name in expected if name not in implemented]
-        if unclassified:
-            problems.append(f"{module}: unclassified: " + ", ".join(unclassified))
-        if absent:
-            problems.append(f"{module}: not exported: " + ", ".join(absent))
-        if not unclassified and not absent:
-            problems.append(f"{module}: export order differs from the manifest")
+    for distribution, surface in sorted(classified.items()):
+        ungoverned = sorted(_public_modules(DISTRIBUTIONS[distribution]).difference(surface))
+        if ungoverned:
+            problems.append("unclassified public modules: " + ", ".join(ungoverned))
+        for module, expected in surface.items():
+            source = _module_path(module)
+            assert source is not None  # validated while parsing the manifest
+            implemented = _literal_all(source)
+            if implemented is None:
+                problems.append(f"{module}: no literal __all__ to compare against")
+                continue
+            if implemented == expected:
+                continue
+            unclassified = [name for name in implemented if name not in expected]
+            absent = [name for name in expected if name not in implemented]
+            if unclassified:
+                problems.append(f"{module}: unclassified: " + ", ".join(unclassified))
+            if absent:
+                problems.append(f"{module}: not exported: " + ", ".join(absent))
+            if not unclassified and not absent:
+                problems.append(f"{module}: export order differs from the manifest")
     if problems:
         return UNSATISFIED, "; ".join(problems)
 
-    total = sum(len(names) for names in classified.values())
-    return SATISFIED, f"{total} exports across {len(classified)} modules are classified exactly"
+    modules = sum(len(surface) for surface in classified.values())
+    total = sum(len(names) for surface in classified.values() for names in surface.values())
+    return SATISFIED, (
+        f"{total} exports across {modules} modules "
+        f"of {len(classified)} distributions are classified exactly"
+    )
 
 
 #: Automated gate id -> the function that decides it. A gate whose id is listed

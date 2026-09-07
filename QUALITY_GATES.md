@@ -32,6 +32,22 @@ uv run pytest
 
 Exact command names may evolve, but equivalent gates must remain.
 
+Public API consumption is verified mechanically rather than by review. The
+manifest classifies every export of every shipped distribution, and the same
+rule can be pointed at a tree outside this workspace:
+
+```bash
+python scripts/check_public_imports.py examples README.md docs/HTTP_COMPOSITION.md
+python scripts/check_public_imports.py <path-to-an-application-built-on-agnara>
+```
+
+It reports every import naming an unclassified module or pulling an
+unclassified name out of a classified one, in Python files and in the Python
+shown in Markdown fences. `docs/PUBLIC_API.md` owns which trees the repository
+enforces this on and which are exempt; `pytest tests/architecture` runs it, so
+CI fails on an example, guide or generated project that reaches into an
+internal.
+
 Packaging is verified against installed artifacts rather than the checkout,
 because building a distribution and being able to use it are different claims:
 

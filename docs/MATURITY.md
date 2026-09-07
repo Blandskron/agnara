@@ -38,7 +38,7 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 | `agnara` | `IMPLEMENTED` | yes | 41 | The kernel. Standard library only. |
 | `agnara-http` | `EXPERIMENTAL` | no | 7 | Publication-ready public composition API; documentation UI, Explorer and discovery stay internal. |
 | `agnara-mcp` | `IMPLEMENTED` | no | 20 | Publication-ready tool projection; see the MCP table. |
-| `agnara-cli` | `IMPLEMENTED` | no | 17 | Publication-ready scaffolding, introspection and `agnara` script. |
+| `agnara-cli` | `IMPLEMENTED` | no | 4 | Publication-ready scaffolding, introspection and `agnara` script. |
 | `agnara-telemetry` | `IMPLEMENTED` | no | 2 | Publication-ready OpenTelemetry metrics and tracing hooks. |
 | `agnara-a2a` | `PLANNED` | no | 0 | Publication-ready reserved namespace; no implementation. |
 | `agnara-events` | `PLANNED` | no | 0 | Publication-ready reserved namespace; no implementation. |
@@ -48,6 +48,13 @@ installable from their artifacts and ready for the tag workflow to publish as
 one reviewed set; ADR 0021 keeps every version synchronized and ADR 0073 fixes
 the publication boundary. Publication-ready is not published: the six new
 PyPI projects still require their Pending Trusted Publishers before the tag.
+
+Every distribution's public surface is classified in
+`docs/public-api.json` and enforced in both directions by the release gate:
+280 exports across 47 modules, all `provisional`. `agnara-cli` dropped from 17
+public names to 4 in `0.1.0a4`, because the other thirteen were implementation
+helpers re-exported from underscore-prefixed modules and never documented,
+used or designed as an API (ADR 0076).
 
 `agnara-http` now declares a public surface: seven `provisional` names that
 compose capabilities, compile an ASGI 3 application and project OpenAPI.

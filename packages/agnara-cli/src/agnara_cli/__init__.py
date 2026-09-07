@@ -19,34 +19,19 @@ Depends on ``agnara-core``. Must not import a sibling adapter.
 See ``ARCHITECTURE.md`` section 15, ``docs/CLI_SPEC.md`` and EPIC 0A.
 """
 
-from ._generate import FileAction, GenerationError, GenerationPlan
+#: The supported programmatic surface of this distribution.
+#:
+#: ``agnara-cli`` is consumed as the ``agnara`` command. The four names below
+#: are what a caller needs to run that command in-process — a test harness, a
+#: task runner, a wrapper script — and nothing else is a contract. Manifest
+#: parsing, generation planning and target resolution are how the commands are
+#: implemented; they were re-exported from underscore-prefixed modules without
+#: ever being documented, used or designed as an API (ADR 0076).
 from ._main import EXIT_FAILED, EXIT_OK, EXIT_USAGE, main
-from ._manifest import (
-    ManifestApp,
-    ManifestError,
-    ProjectManifest,
-    find_manifest,
-    load_manifest,
-    parse_manifest,
-)
-from ._target import ResolvedTarget, TargetError, resolve_attribute, resolve_target
 
 __all__ = [
     "EXIT_FAILED",
     "EXIT_OK",
     "EXIT_USAGE",
-    "FileAction",
-    "GenerationError",
-    "GenerationPlan",
-    "ManifestApp",
-    "ManifestError",
-    "ProjectManifest",
-    "ResolvedTarget",
-    "TargetError",
-    "find_manifest",
-    "load_manifest",
     "main",
-    "parse_manifest",
-    "resolve_attribute",
-    "resolve_target",
 ]

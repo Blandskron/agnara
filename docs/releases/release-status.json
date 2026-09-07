@@ -152,7 +152,7 @@
       "kind": "evidence",
       "mandatory": true,
       "status": "UNSATISFIED",
-      "detail": "agnara-http now declares a public composition API (ADR 0071), so an HTTP application no longer has to import underscore-prefixed modules; docs/HTTP_COMPOSITION.md is the supported path and an architecture test fails if any example or guide reaches into a private module. The gate stays unsatisfied because it is evidence about applications built outside this workspace, and those do not exist yet."
+      "detail": "agnara-http declares a public composition API (ADR 0071) and every shipped distribution's public surface is now classified in docs/public-api.json (ADR 0076), so this gate is decidable rather than a matter of review: scripts/check_public_imports.py audits any tree, inside or outside this workspace, and reports every import that names an unclassified module or pulls an unclassified name out of a classified one. It runs green today on examples/, README.md, the guides under docs/ and the CLI's generated projects. The gate stays unsatisfied because it is evidence about applications built outside this workspace, and those do not exist yet."
     },
     {
       "id": "reference-apps-no-monkey-patch",
@@ -168,7 +168,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "A maintainer decides this after the applications are audited. The manifest now classifies all 218 exports across all 30 public core modules and the release gate rejects any newly unclassified package or leaf module (ADR 0074). HTTP JSON bodies materialize standard-library dataclasses at the transport boundary before strict core validation (ADR 0075)."
+      "detail": "A maintainer decides this after the applications are audited. The manifest now classifies 280 exports across 47 public modules in all seven distributions, and the release gate rejects any newly unclassified package or leaf module in any of them (ADR 0074, ADR 0076). agnara-cli dropped 13 undocumented implementation helpers from its public surface in the same change. HTTP JSON bodies materialize standard-library dataclasses at the transport boundary before strict core validation (ADR 0075). Sufficiency itself remains unproven: no application has been built against this surface."
     },
     {
       "id": "di-works-naturally",
