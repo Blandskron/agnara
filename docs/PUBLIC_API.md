@@ -43,33 +43,6 @@ README and of `examples/quickstart.py` import from `agnara`, `agnara.core.di`
 and `agnara.execution`, so two thirds of the documented entry path lived
 outside the governed surface until these manifests existed.
 
-## Adapter surfaces
-
-The manifest governs the **core** distribution: its `distribution` field is
-`agnara`, and a test refuses an entry naming anything else, because the release
-gate resolves a manifest module to a file inside the `agnara` package. The
-adapters are governed one level less precisely — each declares a literal
-`__all__`, and `docs/MATURITY.md` records the count, which a test checks.
-
-| Distribution | Exports | Classification |
-| --- | --- | --- |
-| `agnara-http` | 7 | all `provisional` (ADR 0071) |
-| `agnara-mcp` | 20 | all `provisional` |
-| `agnara-cli` | 17 | all `provisional` |
-| `agnara-telemetry` | 2 | all `provisional` |
-| `agnara-a2a`, `agnara-events` | 0 | reserved namespaces |
-
-`agnara-http` exports `Binding`, `BindingSource`, `Http`, `HttpApplication`,
-`HttpDefinitionError`, `OpenApiInfo` and `OpenApiOperation`.
-`tests/architecture/test_public_http_surface.py` pins that list by name rather
-than by count, so a rename fails, and asserts that no example or guide reaches
-into a private module. The change policy below applies to an adapter export
-exactly as it does to a core one.
-
-Extending the machine-readable manifest to cover adapters is a change to its
-schema and to the release gate, not a documentation edit. It belongs with the
-governance decision in Issue #289.
-
 ## What the manifest does not reach
 
 The completeness check runs in both directions, but only over *packages*.

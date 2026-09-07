@@ -36,7 +36,7 @@ its limits are in `docs/MATURITY.md`.
 | **Schema port** | Transport- and library-neutral, with a standard-library adapter. |
 | **Dependency graph** | Compiled resolution, singleton and invocation scopes, generator teardown. |
 | **Compiled execution** | Plans, policy stage, enforced deadlines, canonical failures, telemetry hooks. |
-| **HTTP adapter** | ASGI, routing, binding — path, query, header, JSON, cookie, form, upload — RFC 9457, OpenAPI 3.2, documentation providers, discovery, Explorer. Public composition API, `EXPERIMENTAL`. |
+| **HTTP adapter** | ASGI, routing, binding, RFC 9457, OpenAPI 3.2, documentation providers, discovery, Explorer. Composition API still `EXPERIMENTAL`. |
 | **Exposure model** | One neutral availability registry both adapters compile into; introspection derives from it. ADR 0070. |
 | **MCP adapter** | Tool projection, invocation, schema mapping, authorization, result projection. |
 | **Introspection** | Versioned protocol-neutral snapshot with per-field publication decisions. |
@@ -78,12 +78,9 @@ mapping is written down.
 
 - **I1 Unified exposure model** — done. One model governs HTTP and MCP
   exposure declaration and availability. ADR 0070 answers RFC 0006.
-- **Public HTTP composition surface** — done. Seven `provisional` names
-  compose capabilities, compile an ASGI 3 application and project OpenAPI.
-  ADR 0071; `docs/HTTP_COMPOSITION.md` is the guide.
-- **I7 HTTP request surface** — done for what a4 owns. Cookies, form fields
-  and bounded file uploads are binding sources; ADR 0072 classifies every
-  deferred HTTP feature rather than leaving it implicit.
+- The **public HTTP composition surface**, on top of it. `agnara-http` still
+  exports nothing, which is what keeps two `0.1.0a4` gates unsatisfiable.
+- **I7 HTTP request surface** — cookies, forms, multipart, uploads.
 
 Not an integrations release. ADR 0068 records why, and what it may not
 declare.

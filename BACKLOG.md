@@ -757,43 +757,13 @@ Generated code must:
   canonical JSON rather than the `ExposureDescriptor` the RFC sketched: that
   field would have made availability depend on publication and closed an
   import cycle. Tracking: GitHub Issue #293.
-- [x] E1C.3 Build the public HTTP composition API on the model (RFC 0006
-  phase 3). Seven `provisional` names -- `Http`, `HttpApplication`, `Binding`,
-  `BindingSource`, `OpenApiInfo`, `OpenApiOperation`, `HttpDefinitionError` --
-  compose exposures, compile an immutable ASGI 3 application, project OpenAPI
-  and contribute to the project-wide exposure registry. Public value types are
-  translated rather than aliased. `docs/HTTP_COMPOSITION.md` is the guide and
-  `examples/http_service.py` is a release gate that runs outside the checkout.
-  ADR 0071. Tracking: GitHub Issue #295.
-- [x] E1C.6 Complete the `0.1.0a4` HTTP request surface. `COOKIE`, `FORM` and
-  `UPLOAD` binding sources, a bounded in-memory multipart reader, `max_parts`
-  beside `max_body_bytes`, truthful OpenAPI for all three, and a scope
-  classification for every deferred HTTP feature. Initiative I7. ADR 0072.
-  Tracking: GitHub Issue #298.
-- [ ] E1C.7 Design collection bindings. ADR 0026 refused repeated scalar
-  values deliberately and ADR 0072 shows what that costs: no multiple files
-  and no repeated form fields. The decision is not HTTP-local — it fixes how a
-  list arrives through every transport — so it needs an RFC before
-  implementation.
-- [ ] E1C.8 Design the upload value type. Exposing a client filename or a
-  per-part content type needs a public type carrying filename, content type
-  and content, and that is a core-visible schema shape MCP and introspection
-  project too. Issue #296 shows what happens when a projected schema and the
-  accepted value disagree, so this waits on that decision as well.
-- [ ] E1C.4 Retire the transitional paths E1C.3 left standing: the
-  `describe_app(..., exposures=<mapping>)` form, the second `Mcp` compile entry
-  point, and the collision between an RFC 0006 adapter surface and
-  `_HTTPSurface` inside `agnara-http`. None blocks a `0.1.0a4` gate, so none
-  was worth a breaking change during this task; each needs migration guidance
-  under ADR 0021.
-- [ ] E1C.5 Decide whether the documentation UI, the Explorer and the
-  authorized discovery endpoint get public composition entry points. They are
-  implemented and tested, but `_compile_publication` compiles placeholder
-  routes and no product path renders a provider into a served route, so there
-  is nothing to expose yet. Wiring them is a feature, and their configuration
-  is security-sensitive -- content security policy, asset policy, principal
-  resolution, discovery redaction. `docs/MATURITY.md` now records
-  documentation UI publication as `DESIGNED` rather than `IMPLEMENTED`.
+- [ ] E1C.3 Build the public HTTP composition API on the model (RFC 0006
+  phase 3). `agnara-http` still exports nothing, so this is what actually
+  unblocks `reference-apps-no-internal-imports` and
+  `http-exposure-from-application`. It should also retire the `describe_app`
+  mapping form, the second `Mcp` compile entry point, and the collision
+  between an RFC 0006 adapter surface and `_HTTPSurface` inside
+  `agnara-http`.
 
 ## EPIC 1D — Framework and ecosystem interoperability
 
