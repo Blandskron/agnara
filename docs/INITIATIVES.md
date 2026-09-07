@@ -78,15 +78,11 @@ told about exposures a second time. Both shipped adapters go through it, and a
 third would need no kernel change. ADR 0070 records the five spike decisions
 and the rejected alternatives.
 
-**Phase 3 is done too.** `agnara-http` now declares a public composition API
-(ADR 0071): an application composes exposures, compiles an ASGI 3 application
-and projects OpenAPI without a private import.
-`docs/HTTP_COMPOSITION.md` is the guide.
-
-**What remains behind it.** The documentation UI providers, the Explorer and
-the authorized discovery endpoint are implemented but unreachable from public
-API, because no product path renders a provider into a served route. I7 owns
-the request-surface gaps. Adapter publication to PyPI is Issue #291.
+**What this did not deliver.** `agnara-http` still exports nothing. The model
+beneath the composition API is settled; the API itself is the next piece of
+work, and until it exists an application cannot compose HTTP through
+supported entry points. `docs/API_DESIGN.md` section 4 remains a sketch, and
+`docs/releases/STATUS.md` still carries that blocker.
 
 **Non-goals, honoured:** no third adapter was built to prove the model, and
 no ecosystem integration was added.

@@ -53,19 +53,18 @@ defect introduced since `0.1.0a3`:
    and buildable but not uploaded, so an application that needs HTTP or MCP
    cannot install an adapter as an ordinary dependency. This blocks
    `reference-apps-exist` and `mcp-exposure-from-application`.
-2. **~~`agnara-http` declares no public composition surface.~~ Resolved.**
-   `agnara-http` exports seven `provisional` names that compose exposures,
-   compile an ASGI 3 application and project OpenAPI (ADR 0071), on the
-   exposure model ADR 0070 settled. `docs/HTTP_COMPOSITION.md` is the guide,
-   and an architecture test fails if any example or guide reaches into a
-   private module.
+2. **`agnara-http` declares no public composition surface.** Composing HTTP
+   requires importing underscore-prefixed modules, which is exactly what
+   `reference-apps-no-internal-imports` forbids.
 
-   **This removes a repository blocker, not a gate.**
-   `reference-apps-no-internal-imports` and `http-exposure-from-application`
-   are *evidence* gates about applications built outside this workspace. They
-   now have a supported path to be built against; they still need those
-   applications, and they still need blocker 1, because an external
-   application cannot install `agnara-http` from an index today.
+   The architectural half of this blocker is now resolved: the unified
+   exposure model is implemented and RFC 0006 is answered by ADR 0070, so the
+   model a composition API would sit on is settled and both adapters compile
+   through it. **The blocker itself is unchanged.** `agnara-http` still
+   exports nothing, an application still cannot compose HTTP through
+   supported entry points, and this gate and `http-exposure-from-application`
+   remain unsatisfiable. What changed is that the remaining work is an API on
+   a decided model rather than a design question. `BACKLOG.md` E1C.3 owns it.
 
 ## Gate state
 

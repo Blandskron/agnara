@@ -79,10 +79,10 @@ function rather than a method on `Agnara`, because `Agnara.compile()` returns
 a governed type and the composition root should not become a god object
 (`ARCHITECTURE.md` section 5).
 
-Both shipped adapters produce a `SurfaceCompilation` through public API:
-`HttpApplication.exposures` and `Mcp.compile_surface()`. An application can
-therefore compose HTTP and MCP over one capability set and get one answer to
-where each capability is reachable.
+The exposure model is public today; the adapter *builders* that produce a
+`SurfaceCompilation` are only public for MCP. Until HTTP has one, an
+application cannot compose HTTP through supported API — the `0.1.0a4` blocker
+`docs/releases/STATUS.md` tracks.
 
 ## 6. A2A exposure
 
