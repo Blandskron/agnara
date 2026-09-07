@@ -206,9 +206,19 @@ class Agnara:
         """Close registration and return the immutable capability view.
 
         This is the freeze step ADR 0005 places at the end of startup
-        compilation. Later phases — schemas, dependencies, policies,
-        exposures — will hang off this method as they are implemented.
+        compilation. It closes every mounted app's declaration registry before
+        the project's aggregate registry, so neither source of capabilities
+        can diverge from the compiled view afterward. Later phases — schemas,
+        dependencies, policies, exposures — will hang off this method as they
+        are implemented.
         """
+        for app in self._apps.values():
+            declarations = app.capabilities.freeze()
+            for capability_id in declarations:
+                definition = declarations[capability_id]
+                if capability_id in self._registry and self._registry[capability_id] is definition:
+                    continue
+                self._registry.register(definition)
         return self._registry.freeze()
 
     def __repr__(self) -> str:

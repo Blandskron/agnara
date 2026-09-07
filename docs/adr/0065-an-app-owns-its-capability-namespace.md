@@ -93,6 +93,15 @@ come to mean something slightly different depending on where it was declared.
 Freezing is a project-wide decision. An app that could freeze itself would let
 one module close a registry another module was still writing to.
 
+When `Agnara.compile()` makes that decision, it freezes every mounted app's
+registry before freezing the project's aggregate registry. A mounted app can
+therefore be reused by another project, but its declaration set is immutable
+after the first project compiles. Apps not mounted on that project remain open.
+The registry freeze is idempotent, so compiling another project that already
+mounted the same app remains valid. Capabilities declared after mounting but
+before compilation are synchronized into the project during that freeze;
+mounting does not close registration early.
+
 ## Consequences
 
 - Two apps from the same scaffold compose. The defect above is closed, and
@@ -106,6 +115,9 @@ one module close a registry another module was still writing to.
   instead of as a capability error.
 - `AppDescriptor.module` gives E1A.4 somewhere to point a reader at the
   source, and matches what `agnara.toml` already records.
+- A compiled project closes both places capabilities can be declared: its own
+  registry and every mounted app registry. No late app declaration can appear
+  inspectable on the app while being absent from the compiled project.
 
 ## Alternatives considered
 

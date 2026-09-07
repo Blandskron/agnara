@@ -15,6 +15,12 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Changed
 
+- Compiling an `Agnara` project now freezes every mounted `App` registry as
+  well as the project's aggregate registry. A mounted app can no longer accept
+  declarations that the compiled project could never observe; unmounted apps
+  remain open, and shared apps can still be compiled by multiple projects
+  because freezing is idempotent. Declarations added after mounting but before
+  compilation are included in the compiled project ([#268]).
 - **Breaking.** `agnara.introspection.AppDescriptor` is renamed to
   `ApplicationDescriptor`. It describes one compiled application -- a whole
   project -- and after ADR 0011 and ADR 0065 fixed "app" as a bounded context
@@ -643,3 +649,4 @@ under `0.1.0a2` instead.
 [#237]: https://github.com/Blandskron/agnara/issues/237
 [#255]: https://github.com/Blandskron/agnara/issues/255
 [#266]: https://github.com/Blandskron/agnara/issues/266
+[#268]: https://github.com/Blandskron/agnara/issues/268

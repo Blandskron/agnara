@@ -472,3 +472,121 @@ def test_a_late_include_reports_the_freeze_not_a_duplicate() -> None:
 
     with pytest.raises(RegistryFrozenError):
         project.include(payments)
+
+
+# ---------------------------------------------------------------------------
+# E1A.6 — project compilation freezes mounted apps
+# ---------------------------------------------------------------------------
+
+
+def test_compiling_a_project_freezes_its_mounted_app() -> None:
+    payments = App("payments")
+    project = Agnara("shop")
+    project.include(payments)
+
+    project.compile()
+
+    with pytest.raises(RegistryFrozenError, match="startup compilation"):
+
+        @payments.capability(description="Too late.")
+        def refund(payment_id: str) -> str:
+            return payment_id
+
+
+def test_compiling_a_project_freezes_an_empty_mounted_app() -> None:
+    payments = App("payments")
+    project = Agnara("shop")
+    project.include(payments)
+
+    assert len(project.compile()) == 0
+
+    with pytest.raises(RegistryFrozenError):
+
+        @payments.capability(description="Too late.")
+        def refund(payment_id: str) -> str:
+            return payment_id
+
+
+def test_compiling_does_not_freeze_an_unmounted_app() -> None:
+    payments = App("payments")
+
+    Agnara("shop").compile()
+
+    @payments.capability(description="Still open.")
+    def refund(payment_id: str) -> str:
+        return payment_id
+
+    assert "payments.refund" in payments.capabilities
+
+
+def test_a_frozen_shared_app_can_compile_in_another_project() -> None:
+    payments = App("payments")
+
+    @payments.capability(description="Refund.")
+    def refund(payment_id: str) -> str:
+        return payment_id
+
+    shop = Agnara("shop")
+    storefront = Agnara("storefront")
+    shop.include(payments)
+    storefront.include(payments)
+
+    assert list(shop.compile()) == list(storefront.compile())
+    assert "payments.refund" in storefront.capabilities
+
+
+def test_repeated_project_compilation_keeps_the_app_frozen() -> None:
+    payments = App("payments")
+    project = Agnara("shop")
+    project.include(payments)
+
+    first = project.compile()
+    second = project.compile()
+
+    assert list(first) == list(second)
+    assert payments.capabilities.is_frozen
+
+
+def test_capabilities_declared_before_mounting_are_in_the_compiled_project() -> None:
+    payments = App("payments")
+
+    @payments.capability(description="Refund.")
+    def refund(payment_id: str) -> str:
+        return payment_id
+
+    project = Agnara("shop")
+    project.include(payments)
+
+    assert project.compile()["payments.refund"].handler is refund
+
+
+def test_capabilities_declared_after_mounting_but_before_compile_are_included() -> None:
+    """Registration stays open until project compilation, not mounting."""
+    payments = App("payments")
+    project = Agnara("shop")
+    project.include(payments)
+
+    @payments.capability(description="Declared during startup.")
+    def refund(payment_id: str) -> str:
+        return payment_id
+
+    assert project.compile()["payments.refund"].handler is refund
+
+
+def test_a_late_app_declaration_cannot_hide_a_project_capability() -> None:
+    """Synchronization must retain ordinary duplicate-id diagnostics."""
+    project = Agnara("shop")
+
+    @project.capability(description="Project declaration.")
+    def status() -> str:
+        return "project"
+
+    bounded_context = App("shop")
+    project.include(bounded_context)
+
+    @bounded_context.capability(name="status", description="App declaration.")
+    def other_status() -> str:
+        return "app"
+
+    with pytest.raises(DuplicateCapabilityError, match=r"shop\.status"):
+        project.compile()
