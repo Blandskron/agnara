@@ -86,7 +86,9 @@ and projects OpenAPI without a private import.
 **What remains behind it.** The documentation UI providers, the Explorer and
 the authorized discovery endpoint are implemented but unreachable from public
 API, because no product path renders a provider into a served route. I7 owns
-the request-surface gaps. Adapter publication to PyPI is Issue #291.
+the request-surface gaps. Issue #291 and ADR 0073 make the adapter set
+publication-ready; the authorized `0.1.0a4` release still owns the actual PyPI
+upload.
 
 **Non-goals, honoured:** no third adapter was built to prove the model, and
 no ecosystem integration was added.

@@ -44,15 +44,18 @@ practical effect on this release is a guardrail rather than a task: `0.1.0a4`
 may not answer its "public APIs are sufficient" gate by shipping a framework
 integration that routes around the API the gate is asking about.
 
-## Known blockers
+## Publication state and known blockers
 
-One remains. Both were architectural, both were recorded, and neither was a
-defect introduced since `0.1.0a3`:
+One public-index blocker remains. The repository-side packaging defect is
+resolved, but this task deliberately did not publish anything:
 
-1. **Only `agnara` is published.** The six sibling distributions are versioned
-   and buildable but not uploaded, so an application that needs HTTP or MCP
-   cannot install an adapter as an ordinary dependency. This blocks
-   `reference-apps-exist` and `mcp-exposure-from-application`.
+1. **Only `agnara` is published.** The six sibling distributions are still not
+   uploaded, so an application using only PyPI cannot install HTTP or MCP yet.
+   All seven are now publication-ready: the tag workflow builds and validates
+   the explicit fourteen-file set, installs every wheel with first-party index
+   access disabled, and will publish those same files with Trusted Publishing
+   attestations (ADR 0073). The six new PyPI names need Pending Trusted
+   Publishers before the authorized release tag is pushed.
 2. **~~`agnara-http` declares no public composition surface.~~ Resolved.**
    `agnara-http` exports seven `provisional` names that compose exposures,
    compile an ASGI 3 application and project OpenAPI (ADR 0071), on the
@@ -106,8 +109,10 @@ the commit it was produced on; `0.1.0a3`'s evidence describes `0.1.0a3`.
 2. Those applications are audited against the `0.1.0a4` gates, and every
    framework deficiency they surface is filed as an Issue rather than worked
    around inside the application.
-3. Blocker 1 above is resolved or explicitly deferred with a recorded
-   decision. Blocker 2 is resolved (ADR 0071).
+3. The six Pending Trusted Publishers are configured and the authorized a4
+   release publishes the already publication-ready set. The former
+   repository-side workflow blocker is resolved (ADR 0073); blocker 2 is
+   resolved (ADR 0071).
 4. The `0.1.0a3` evidence gates are re-established against a `0.1.0a4`
    candidate commit.
 

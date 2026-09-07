@@ -1,6 +1,6 @@
 """Building a distribution and being able to use it are different claims.
 
-`scripts/check_installed_distributions.py` is the gate that makes the second
+`scripts/check_distributions.py` is the gate that makes the second
 one checkable. These tests hold the properties that make it worth running: it
 discovers what to check instead of being told, it fails when a distribution is
 absent, misplaced, incomplete or inconsistent, and it never passes by finding
@@ -10,8 +10,11 @@ nothing to look at.
 from __future__ import annotations
 
 import importlib.util
+import io
 import sys
+import tarfile
 import tomllib
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -248,6 +251,17 @@ def test_unsynchronized_versions_fail(monkeypatch: pytest.MonkeyPatch) -> None:
     assert any("versions are not synchronized" in problem for problem in problems)
 
 
+def test_an_installed_version_that_does_not_match_the_tag_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    core = checker.Distribution(name="agnara", import_name="agnara")
+    monkeypatch.setattr(checker.importlib.metadata, "version", lambda name: "0.1.0a4")
+
+    problems = checker.check_metadata([core], expected_version="0.1.0a5")
+
+    assert any("do not match expected 0.1.0a5" in problem for problem in problems)
+
+
 # ---------------------------------------------------------------------------
 # The command
 # ---------------------------------------------------------------------------
@@ -374,12 +388,187 @@ def test_a_missing_build_directory_is_reported(tmp_path: Path) -> None:
     assert any("no build output directory" in problem for problem in problems)
 
 
-def test_the_artifact_mode_never_imports_anything(tmp_path: Path) -> None:
+def test_the_artifact_mode_never_imports_anything(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """It runs before installation, so an import failure would say nothing."""
     found, _ = checker.discover(WORKSPACE_ROOT)
     dist = _built(tmp_path, _artifacts_for(found))
+    monkeypatch.setattr(checker, "check_artifact_contents", lambda *args, **kwargs: [])
 
     code, lines = checker.run(WORKSPACE_ROOT, dist_dir=dist)
 
     assert code == 0
     assert any("built 7 distributions" in line for line in lines)
+
+
+def test_the_release_set_is_explicit_and_matches_the_architecture() -> None:
+    assert checker.SHIPPED_DISTRIBUTIONS == DISTRIBUTIONS
+
+
+def test_an_accidental_workspace_distribution_is_not_publishable() -> None:
+    found, _ = checker.discover(WORKSPACE_ROOT)
+    found.append(checker.Distribution("agnara-accidental", "agnara_accidental"))
+
+    problems = checker.check_release_set(found)
+
+    assert any("unexpected=['agnara-accidental']" in problem for problem in problems)
+
+
+def test_a_direct_or_git_dependency_is_rejected() -> None:
+    for requirement in (
+        "agnara @ file:///tmp/agnara.whl",
+        "agnara @ git+https://example.invalid/agnara.git@develop",
+    ):
+        with pytest.raises(ValueError, match="unsupported direct/editable dependency"):
+            checker._canonical_requirement(requirement)
+
+
+def test_archive_paths_reject_development_files_secrets_and_traversal() -> None:
+    problems = checker._safe_archive_names(
+        ["pkg/tests/test_hidden.py", "pkg/.env", "../outside"], "agnara"
+    )
+
+    assert any("development/cache" in problem for problem in problems)
+    assert any("sensitive filename" in problem for problem in problems)
+    assert any("unsafe archive member" in problem for problem in problems)
+
+
+def test_local_build_paths_are_detected_in_artifact_content() -> None:
+    native = f"generated at {WORKSPACE_ROOT}".encode()
+    uri = f"source = {WORKSPACE_ROOT.as_uri()}".encode()
+
+    assert checker._contains_workspace_path(native, WORKSPACE_ROOT)
+    assert checker._contains_workspace_path(uri, WORKSPACE_ROOT)
+    assert not checker._contains_workspace_path(b"portable package content", WORKSPACE_ROOT)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        b"-----BEGIN PRIVATE KEY-----",
+        b"pypi-" + b"A" * 60,
+        b"ghp_" + b"A" * 40,
+        b"AKIA" + b"A" * 16,
+    ],
+)
+def test_recognized_secret_signatures_are_detected(payload: bytes) -> None:
+    assert checker._contains_secret_signature(payload)
+
+
+def test_ordinary_package_text_is_not_a_secret_signature() -> None:
+    assert not checker._contains_secret_signature(b"no credentials are stored here")
+
+
+def test_invalid_archives_fail_instead_of_crashing(tmp_path: Path) -> None:
+    found, _ = checker.discover(WORKSPACE_ROOT)
+    dist = _built(tmp_path, _artifacts_for(found))
+
+    problems = checker.check_artifact_contents(found, workspace=WORKSPACE_ROOT, dist_dir=dist)
+
+    assert any("invalid wheel archive" in problem for problem in problems)
+    assert any("invalid sdist archive" in problem for problem in problems)
+
+
+def _metadata(distribution: str, *, body: str | None = None) -> bytes:
+    project = tomllib.loads(
+        (WORKSPACE_ROOT / "packages" / distribution / "pyproject.toml").read_text(encoding="utf-8")
+    )["project"]
+    lines = [
+        "Metadata-Version: 2.5",
+        f"Name: {project['name']}",
+        f"Version: {project['version']}",
+        "Author-email: Agnara Maintainers <maintainers@agnara.dev>",
+        "License: Apache-2.0",
+        "License-File: LICENSE",
+        f"Requires-Python: {project['requires-python']}",
+        "Description-Content-Type: text/markdown",
+    ]
+    lines.extend(f"Project-URL: {name}, {url}" for name, url in project["urls"].items())
+    lines.extend(f"Classifier: {classifier}" for classifier in project["classifiers"])
+    lines.extend(f"Requires-Dist: {requirement}" for requirement in project["dependencies"])
+    if body is None:
+        body = (WORKSPACE_ROOT / "packages" / distribution / "README.md").read_text(
+            encoding="utf-8"
+        )
+    return ("\n".join(lines) + "\n\n" + body).encode()
+
+
+@pytest.mark.parametrize("distribution", sorted(DISTRIBUTIONS))
+def test_complete_wheel_metadata_and_entry_points_pass(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, distribution: str
+) -> None:
+    found = checker.Distribution(distribution, DISTRIBUTIONS[distribution])
+    project = tomllib.loads(
+        (WORKSPACE_ROOT / "packages" / distribution / "pyproject.toml").read_text(encoding="utf-8")
+    )["project"]
+    wheel = tmp_path / "candidate.whl"
+    dist_info = f"{distribution.replace('-', '_')}-{project['version']}.dist-info"
+    monkeypatch.setattr(checker, "data_files", lambda *args: ["py.typed"])
+    with zipfile.ZipFile(wheel, "w") as archive:
+        archive.writestr(f"{found.import_name}/__init__.py", "")
+        archive.writestr(f"{found.import_name}/py.typed", "")
+        archive.writestr(f"{dist_info}/METADATA", _metadata(distribution))
+        archive.writestr(f"{dist_info}/licenses/LICENSE", (WORKSPACE_ROOT / "LICENSE").read_bytes())
+        scripts = project.get("scripts", {})
+        if scripts:
+            rendered = "[console_scripts]\n" + "\n".join(
+                f"{name} = {target}" for name, target in scripts.items()
+            )
+            archive.writestr(f"{dist_info}/entry_points.txt", rendered)
+
+    assert checker._check_wheel(found, workspace=WORKSPACE_ROOT, wheel=wheel) == []
+
+
+def test_a_wheel_without_a_readme_description_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    found = checker.Distribution("agnara", "agnara")
+    version = WORKSPACE_VERSION
+    wheel = tmp_path / "candidate.whl"
+    monkeypatch.setattr(checker, "data_files", lambda *args: ["py.typed"])
+    with zipfile.ZipFile(wheel, "w") as archive:
+        archive.writestr("agnara/__init__.py", "")
+        archive.writestr("agnara/py.typed", "")
+        archive.writestr(f"agnara-{version}.dist-info/METADATA", _metadata("agnara", body=""))
+        archive.writestr(
+            f"agnara-{version}.dist-info/licenses/LICENSE",
+            (WORKSPACE_ROOT / "LICENSE").read_bytes(),
+        )
+
+    problems = checker._check_wheel(found, workspace=WORKSPACE_ROOT, wheel=wheel)
+
+    assert any("contains no README description" in problem for problem in problems)
+
+
+def _add_tar_text(archive: tarfile.TarFile, name: str, text: str = "") -> None:
+    payload = text.encode()
+    member = tarfile.TarInfo(name)
+    member.size = len(payload)
+    archive.addfile(member, io.BytesIO(payload))
+
+
+def test_sdist_requires_license_readme_project_and_package(tmp_path: Path) -> None:
+    found = checker.Distribution("agnara", "agnara")
+    root = f"agnara-{WORKSPACE_VERSION}"
+    sdist = tmp_path / "candidate.tar.gz"
+    with tarfile.open(sdist, "w:gz") as archive:
+        source_files = {
+            "LICENSE": WORKSPACE_ROOT / "LICENSE",
+            "README.md": WORKSPACE_ROOT / "packages" / "agnara" / "README.md",
+            "pyproject.toml": WORKSPACE_ROOT / "packages" / "agnara" / "pyproject.toml",
+            "src/agnara/__init__.py": (
+                WORKSPACE_ROOT / "packages" / "agnara" / "src" / "agnara" / "__init__.py"
+            ),
+        }
+        for relative, source in source_files.items():
+            _add_tar_text(archive, f"{root}/{relative}", source.read_text(encoding="utf-8"))
+
+    assert checker._check_sdist(found, workspace=WORKSPACE_ROOT, sdist=sdist) == []
+
+    missing = tmp_path / "missing.tar.gz"
+    with tarfile.open(missing, "w:gz") as archive:
+        _add_tar_text(archive, f"{root}/LICENSE")
+
+    problems = checker._check_sdist(found, workspace=WORKSPACE_ROOT, sdist=missing)
+    assert any("README.md" in problem for problem in problems)

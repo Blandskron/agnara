@@ -1025,6 +1025,13 @@ is listed here so it stays visible rather than being rediscovered later.
   installation cannot substitute the public core, and update the operational
   release procedure. The version and constraint halves must not land
   separately.
+- [x] D2B Make the synchronized adapter set publication-ready for `0.1.0a4`.
+  Build and inspect all seven wheels and sdists, install the complete local
+  candidate with first-party index access disabled, define an explicit
+  publication allowlist, harden the tag-only Trusted Publishing workflow,
+  verify every installed origin and console entry point, and document the two
+  reserved zero-API namespaces honestly. Tracking: GitHub Issue #291 and ADR
+  0073. This task does not publish, tag or create a GitHub Release.
 - [ ] D3 Reconcile the agent-onboarding documentation. `FIRST_AGENT_PROMPT.md`
   (953 lines), `BUILD_PROMPT.md`, `AGENTS.md`, `AGENT_OPERATING_MODEL.md`,
   `MULTI_AGENT_PROTOCOL.md` and `GEMINI.md` total roughly 1,900 lines with

@@ -1,9 +1,13 @@
 # agnara-events
 
-Event exposure abstractions and AsyncAPI projection. Broker specifics belong in separate plugin packages.
+Reserved namespace for future event exposure abstractions and AsyncAPI projection.
+
+This `0.1.0a4` package deliberately has no public API or event runtime. It is
+publication-ready with the synchronized workspace set to reserve the official
+package boundary, not to claim broker or AsyncAPI support.
 
 - Import package: `agnara_events`
-- Depends on: `agnara-core`
+- Depends on: the exact synchronized `agnara` version
 - Must not import: sibling adapter packages
 
 See `ARCHITECTURE.md` sections 3 and 4 for the package boundaries and the

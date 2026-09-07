@@ -37,14 +37,16 @@ because building a distribution and being able to use it are different claims:
 
 ```bash
 uv build --all-packages --out-dir dist/
-python scripts/check_distributions.py --workspace "$PWD" --dist dist/
+python scripts/check_distributions.py --workspace "$PWD" --dist dist/ \
+    --expected-version <candidate-version>
 uv venv --python 3.14 <external>/.venv
 uv pip install --python <external>/.venv/bin/python \
     "mcp==2.1.1" "opentelemetry-api>=1.44,<2"
 uv pip install --python <external>/.venv/bin/python \
     --no-index --find-links dist/ dist/*.whl
 <external>/.venv/bin/python -I scripts/check_distributions.py \
-    --workspace "$PWD" --require-installed
+    --workspace "$PWD" --require-installed \
+    --expected-version <candidate-version>
 ```
 
 Every wheel is installed into one environment. Adapter-owned third-party
@@ -54,6 +56,13 @@ gate separately proves that each adapter wheel retained its exact core pin,
 so no public-index core can substitute for the locally built one. Without
 `--require-installed` the same command runs against the development
 environment, where importing from `packages/*/src` is correct.
+
+The pre-install gate also fixes the reviewed seven-name publication set and
+checks each wheel/sdist's metadata, license, README, Python floor,
+dependencies, console scripts, package data, archive paths, local build-path
+leaks and recognized credential signatures. Vendored documentation assets use
+their separate hash/license gate because minified bundles contain example
+credential syntax that is not a secret.
 
 Documentation browser conformance is a separate required CI lane because the
 ordinary cross-platform gate must not depend on a preinstalled browser. Its
