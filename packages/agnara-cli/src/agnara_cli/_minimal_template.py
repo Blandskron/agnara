@@ -22,6 +22,8 @@ with the same inputs produce byte-identical output. See ADR 0061.
 
 from __future__ import annotations
 
+from agnara_cli._template_format import format_python_template
+
 __all__ = ["minimal_app_files"]
 
 
@@ -119,7 +121,7 @@ from __future__ import annotations
 from agnara import Agnara, App
 from agnara.core.di import DIRegistry
 
-from {{module}}.capabilities import get_record, list_records
+from .capabilities import get_record, list_records
 
 __all__ = ["{app}", "register"]
 
@@ -169,7 +171,7 @@ from __future__ import annotations
 
 import pytest
 
-from {{module}}.capabilities import RecordNotFound, get_record, list_records
+from ..capabilities import RecordNotFound, get_record, list_records
 
 
 def test_get_record_returns_the_stored_record() -> None:
@@ -229,4 +231,7 @@ def minimal_app_files(project: str, app: str, exposures: tuple[str, ...] = ()) -
         f"{root}/tests/__init__.py": _tests_init(app),
         f"{root}/tests/test_capabilities.py": _tests(app),
     }
-    return {path: contents.replace("{module}", module) for path, contents in files.items()}
+    return {
+        path: format_python_template(contents.replace("{module}", module))
+        for path, contents in files.items()
+    }

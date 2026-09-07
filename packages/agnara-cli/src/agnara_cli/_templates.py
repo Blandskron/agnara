@@ -13,6 +13,8 @@ application layer before the project has decided it wants one, which
 
 from __future__ import annotations
 
+from agnara_cli._template_format import format_python_template
+
 __all__ = ["project_files"]
 
 
@@ -287,7 +289,7 @@ def project_files(name: str) -> dict[str, str]:
 
     Paths use ``/`` so one project generates identically on every platform.
     """
-    return {
+    files = {
         "pyproject.toml": _pyproject(name),
         "agnara.toml": _manifest(name),
         "README.md": _readme(name),
@@ -298,4 +300,8 @@ def project_files(name: str) -> dict[str, str]:
         f"src/{name}/apps/__init__.py": _apps_init(name),
         "tests/__init__.py": _tests_init(),
         "tests/test_bootstrap.py": _test_bootstrap(name),
+    }
+    return {
+        path: format_python_template(contents) if path.endswith(".py") else contents
+        for path, contents in files.items()
     }

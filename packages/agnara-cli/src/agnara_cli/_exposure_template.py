@@ -101,7 +101,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from {{module}}.application.capabilities import get_record, list_records
+from ...application.capabilities import get_record, list_records
 
 __all__ = ["EXPOSED"]
 

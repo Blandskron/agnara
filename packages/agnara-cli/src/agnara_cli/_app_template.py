@@ -20,6 +20,7 @@ with the same inputs produce byte-identical output. See ADR 0061.
 from __future__ import annotations
 
 from agnara_cli._exposure_template import inbound_adapter
+from agnara_cli._template_format import format_python_template
 
 __all__ = ["app_files"]
 
@@ -93,7 +94,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from {{module}}.domain.value_objects import Reference
+from .value_objects import Reference
 
 __all__ = ["Record"]
 
@@ -121,7 +122,7 @@ an MCP error looks like; the domain only says what went wrong.
 
 from __future__ import annotations
 
-from {{module}}.domain.value_objects import Reference
+from .value_objects import Reference
 
 __all__ = ["{prefix}Error", "RecordNotFound"]
 
@@ -156,8 +157,8 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from {{module}}.domain.models import Record
-from {{module}}.domain.value_objects import Reference
+from ..domain.models import Record
+from ..domain.value_objects import Reference
 
 __all__ = ["RecordRepository"]
 
@@ -190,9 +191,9 @@ schema and a caller cannot pass one.
 
 from __future__ import annotations
 
-from {{module}}.application.ports import RecordRepository
-from {{module}}.domain.errors import RecordNotFound
-from {{module}}.domain.value_objects import Reference
+from ..domain.errors import RecordNotFound
+from ..domain.value_objects import Reference
+from .ports import RecordRepository
 
 __all__ = ["get_record", "list_records"]
 
@@ -226,8 +227,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from {{module}}.domain.models import Record
-from {{module}}.domain.value_objects import Reference
+from ...domain.models import Record
+from ...domain.value_objects import Reference
 
 __all__ = ["InMemoryRecordRepository"]
 
@@ -268,11 +269,11 @@ from __future__ import annotations
 from agnara import Agnara, App
 from agnara.core.di import DIRegistry, provider
 
-from {{module}}.adapters.outbound.memory import InMemoryRecordRepository
-from {{module}}.application.capabilities import get_record, list_records
-from {{module}}.application.ports import RecordRepository
-from {{module}}.domain.models import Record
-from {{module}}.domain.value_objects import Reference
+from .adapters.outbound.memory import InMemoryRecordRepository
+from .application.capabilities import get_record, list_records
+from .application.ports import RecordRepository
+from .domain.models import Record
+from .domain.value_objects import Reference
 
 __all__ = ["{app}", "provide_records", "register"]
 
@@ -331,11 +332,11 @@ from __future__ import annotations
 
 import pytest
 
-from {{module}}.adapters.outbound.memory import InMemoryRecordRepository
-from {{module}}.application.capabilities import get_record, list_records
-from {{module}}.domain.errors import RecordNotFound
-from {{module}}.domain.models import Record
-from {{module}}.domain.value_objects import Reference
+from ..adapters.outbound.memory import InMemoryRecordRepository
+from ..application.capabilities import get_record, list_records
+from ..domain.errors import RecordNotFound
+from ..domain.models import Record
+from ..domain.value_objects import Reference
 
 
 def repository() -> InMemoryRecordRepository:
@@ -414,4 +415,7 @@ def app_files(project: str, app: str, exposures: tuple[str, ...] = ()) -> dict[s
     }
     for exposure in exposures:
         files[f"{root}/adapters/inbound/{exposure}.py"] = inbound_adapter(app, exposure)
-    return {path: contents.replace("{module}", module) for path, contents in files.items()}
+    return {
+        path: format_python_template(contents.replace("{module}", module))
+        for path, contents in files.items()
+    }

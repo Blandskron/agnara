@@ -190,7 +190,7 @@ def test_an_adapter_projects_this_app_s_capabilities(project: Path) -> None:
     assert create_app(APP, "--project", str(project), "--with", "http") == EXIT_OK
 
     source = (project / INBOUND / "http.py").read_text(encoding="utf-8")
-    assert "from depot.apps.payments.application.capabilities import" in source
+    assert "from ...application.capabilities import" in source
     assert "EXPOSED" in source
 
 
