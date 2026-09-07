@@ -750,14 +750,18 @@ Generated code must:
   `INTROSPECTION_VERSION` bump. Rename it to `applications` in the next
   snapshot format change rather than separately.
 
-- [ ] D5 Generated code violates its own Ruff configuration when the project
+- [x] D5 Generated code violates its own Ruff configuration when the project
   or app name is long. `E501` on lines whose length depends on an interpolated
   name; 26 errors on `develop` for `enterprise_commerce_platform` /
   `payment_reconciliation_service`. Every generator test uses a short name, so
   the real Ruff checks that do run never see an overflowing line, and the
   golden fixture inherits the same blind spot. EPIC 0A acceptance says
   generated code passes Ruff, so this is an unmet acceptance criterion rather
-  than a nice-to-have. Tracking: GitHub Issue #255.
+  than a nice-to-have. Generated app internals now use package-relative
+  imports, and a deterministic formatter wraps name-dependent docstrings,
+  comments and composition examples. The long-name regression runs real Ruff
+  lint and format checks and proves byte-identical output. Tracking: GitHub
+  Issue #255.
 
 Recorded by the repository audit that followed the `0.1.0a3` release. Each
 item was found with evidence, judged not worth fixing inside that audit, and

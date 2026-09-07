@@ -92,6 +92,10 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Fixed
 
+- Generated apps now use package-relative imports and wrap docstring openings,
+  comments and composition examples whose width depends on project or app
+  names, so long identifiers pass both Ruff lint and format checks under the
+  generated project's configuration ([#255]).
 - `agnara app create` wrote `exposures = []` into every `[apps.<name>]` table
   regardless of what was requested, so `agnara apps` reported no exposures for
   an app that had inbound adapters. The resolved exposures are now recorded
@@ -632,3 +636,4 @@ under `0.1.0a2` instead.
 [#235]: https://github.com/Blandskron/agnara/issues/235
 
 [#237]: https://github.com/Blandskron/agnara/issues/237
+[#255]: https://github.com/Blandskron/agnara/issues/255

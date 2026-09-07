@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import asyncio
 import importlib
-import importlib.util
 import json
 import subprocess
 import sys
@@ -178,12 +177,7 @@ def test_the_generated_app_registers_compiles_and_invokes(importable: Path) -> N
 
 
 def test_the_generated_app_tests_pass_when_executed(importable: Path) -> None:
-    location = importable / APP_ROOT / "tests" / "test_capabilities.py"
-    spec = importlib.util.spec_from_file_location("generated_app_tests", location)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module = importlib.import_module("ledger.apps.billing.tests.test_capabilities")
 
     cases = [name for name in dir(module) if name.startswith("test_")]
     assert len(cases) >= 4
