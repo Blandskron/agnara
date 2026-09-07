@@ -13,18 +13,43 @@ This document owns compatibility expectations for Agnara's Python API.
 | `experimental` | Public only for evaluation. It may change or disappear in the next pre-1.0 release. |
 | `internal` | Unsupported implementation detail. Internal names are excluded from public manifests and `__all__`. |
 
-No API is classified `stable` during the alpha line. The 41 current exports of
-the `agnara` top-level module are all `provisional`: they are deliberate public
-entry points, but `0.1.0a3` explicitly makes no compatibility promise. A stable
-classification requires a later, explicit decision supported by the beta and
-release-candidate gates; descriptive phrases such as "stable identifier" do
-not silently promote a Python symbol.
+No API is classified `stable` during the alpha line. All 123 currently governed
+exports are `provisional`: they are deliberate public entry points, but the
+alpha line explicitly makes no compatibility promise. A stable classification
+requires a later, explicit decision supported by the beta and release-candidate
+gates; descriptive phrases such as "stable identifier" do not silently promote
+a Python symbol.
 
-This first governed surface is exactly `agnara.__all__`. Public subpackage
-surfaces such as `agnara.execution`, `agnara.core.di` and
-`agnara.introspection` remain public and documented, but need their own
-follow-up manifests. A count is not a substitute: the release gate compares
-the ordered names and classifications in the manifest with the implementation.
+## Governed surface
+
+The manifest governs every public module of the core distribution, not just the
+top-level one. A count is not a substitute: the release gate compares the
+ordered names and classifications in the manifest with each module's literal
+`__all__`, read without importing the package.
+
+| Module | Exports |
+| --- | --- |
+| `agnara` | 41 |
+| `agnara.introspection` | 23 |
+| `agnara.schema` | 15 |
+| `agnara.execution` | 14 |
+| `agnara.policy` | 13 |
+| `agnara.core.di` | 9 |
+| `agnara.capability` | 8 |
+
+Governing the subpackages is not a formality. The first three lines of the
+README and of `examples/quickstart.py` import from `agnara`, `agnara.core.di`
+and `agnara.execution`, so two thirds of the documented entry path lived
+outside the governed surface until these manifests existed.
+
+A public module the manifest does not name is ungoverned by definition, so a
+test asserts that the set of manifest modules equals the set of core modules
+declaring a non-empty `__all__`. Adding a public subpackage without
+classifying it fails that test.
+
+The manifest resolves module names to files. It may only name modules of the
+`agnara` package, and a name that does not resolve inside it is refused rather
+than followed.
 
 ## Change policy
 

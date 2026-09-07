@@ -15,6 +15,18 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Changed
 
+- The public API manifest now governs every public module of the core
+  distribution rather than only the top-level one: 123 exports across
+  `agnara`, `agnara.capability`, `agnara.core.di`, `agnara.execution`,
+  `agnara.introspection`, `agnara.policy` and `agnara.schema`, all
+  `provisional`. Two thirds of the documented entry path were ungoverned —
+  the README and the quickstart both open by importing `agnara.core.di`
+  and `agnara.execution` — so a rename there passed every release gate. A
+  test now asserts the manifest names every core module that declares a
+  non-empty `__all__`, and another asserts every exported name actually
+  exists, which neither the manifest nor `__all__` can detect on its own.
+  `docs/public-api.json` moves to `schema_version` 2; no API is renamed,
+  re-exported or promoted ([#275]).
 - Compiling an `Agnara` project now freezes every mounted `App` registry as
   well as the project's aggregate registry. A mounted app can no longer accept
   declarations that the compiled project could never observe; unmounted apps
@@ -663,3 +675,4 @@ under `0.1.0a2` instead.
 [#268]: https://github.com/Blandskron/agnara/issues/268
 [#270]: https://github.com/Blandskron/agnara/issues/270
 [#271]: https://github.com/Blandskron/agnara/issues/271
+[#275]: https://github.com/Blandskron/agnara/issues/275
