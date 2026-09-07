@@ -22,10 +22,11 @@ zero-padded to four digits and never exceed `0999`.
 | 0005 | Protocol-neutral delegation | Genuinely open. |
 | 0006 | Unified exposure model | `Proposed`. Genuinely open; blocks I1 implementation. |
 | 0007 | Distribution version identity and dependency constraints | `Proposed`. Open, with a reproduction; supplements ADR 0021. |
+| 0008 | Framework embedding and ecosystem composition | `Proposed`. Fifteen open questions; decides none. Implementation belongs to `0.1.0b1` per ADR 0068. |
 
 ## Read this before trusting a Status line
 
-Four of these seven say `Draft`, including RFC 0001, whose subject is the
+Four of these eight say `Draft`, including RFC 0001, whose subject is the
 implemented core of the framework. As with the ADRs, the Status field does not
 currently distinguish a live question from a settled one.
 
@@ -39,6 +40,11 @@ the files.
 implementation. The two that block the most other work are the unified
 exposure model (`I1`), now proposed in RFC 0006, and the streaming model
 (`I2`), which still has no record.
+
+RFC 0008 is deliberately the largest open record in the directory and answers
+nothing. Several of its questions depend on I1, I2, I3, I8 and I10; writing an
+answer before those exist would be inventing an implementation rather than
+recording a decision.
 
 An RFC is worth writing when the design is genuinely open and the decision
 will be expensive to reverse. It is not a place for notes, and it is not a

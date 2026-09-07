@@ -24,9 +24,11 @@ from tests.architecture.boundaries import (
     CORE_DISTRIBUTION,
     CORE_IMPORT_NAME,
     DISTRIBUTIONS,
+    ECOSYSTEM_INTEGRATIONS,
     FORBIDDEN_IN_CORE,
     WORKSPACE_ROOT,
     _file_imports,
+    _normalized_requirement,
     _requirement_name,
     declared_dependencies,
     declared_workspace_dependencies,
@@ -66,6 +68,32 @@ def test_core_does_not_import_forbidden_dependencies() -> None:
     assert not offenders, (
         "agnara imports a dependency forbidden by AGENTS.md and ADR 0003:\n"
         + "\n".join(f"  {imp.where()} imports {imp.module!r}" for imp in offenders)
+    )
+
+
+@pytest.mark.parametrize("distribution", sorted(DISTRIBUTIONS))
+def test_no_distribution_declares_an_ecosystem_integration(distribution: str) -> None:
+    """ADR 0068: ecosystem interoperability belongs to `0.1.0b1`.
+
+    A framework integration does not arrive as an import. It arrives as a line
+    in a ``pyproject.toml``, and by the time anything imports it the decision
+    has already been made. This is the rule that makes the ``0.1.0a4`` and
+    ``0.1.0a5`` guardrails in ``docs/releases/RELEASE_PLAN.md`` fail loudly
+    rather than being remembered.
+
+    ``docs/INTEROPERABILITY.md`` invariant 3 is the general form: every
+    external framework is optional. A declared dependency is not optional.
+    """
+    offenders = sorted(
+        dep
+        for dep in declared_dependencies(distribution)
+        if _normalized_requirement(dep) in ECOSYSTEM_INTEGRATIONS
+    )
+    assert not offenders, (
+        f"{distribution} declares an ecosystem integration as a dependency: {offenders}. "
+        "ADR 0068 gives these to 0.1.0b1, behind a port and an optional "
+        "dependency group. Removing an entry from ECOSYSTEM_INTEGRATIONS is a "
+        "release decision recorded in an ADR, not a test fix."
     )
 
 

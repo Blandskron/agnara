@@ -45,6 +45,21 @@ its limits are in `docs/MATURITY.md`.
 
 Three alphas are published. Only the `agnara` core distribution reaches PyPI.
 
+## Which release owns what
+
+Horizons are the ordering; a release is the thing that closes. The mapping is
+fixed by ADR 0068 so that work lands where its question belongs rather than in
+whichever release happens to be open.
+
+| Release | Its one question |
+| --- | --- |
+| `0.1.0a4` | Can Agnara be consumed as a framework from outside this repository? |
+| `0.1.0a5` | Does execution have streaming, identity and a measured cost? |
+| `0.1.0b1` | Can the Python ecosystem use Agnara, and Agnara use it? |
+
+A release with two theses proves neither, which is the whole reason the
+mapping is written down.
+
 ## Horizons
 
 ### `NOW` — decide before building more
@@ -62,20 +77,27 @@ are cheap to get wrong permanently.
 - **I9 Public API governance.** 41 unclassified public names in the kernel.
   This gets more expensive every release it is deferred.
 
-### `NEXT ALPHA`
+### `NEXT ALPHA` — `0.1.0a4`, exposure and application boundaries
 
 - **I7 HTTP request surface** — cookies, forms, multipart, uploads.
 - **I1** implementation, once its RFC lands.
 
-### `LATER ALPHA`
+Not an integrations release. ADR 0068 records why, and what it may not
+declare.
+
+### `LATER ALPHA` — `0.1.0a5`, execution semantics
 
 - **I3 Execution identity and idempotency behaviour.**
 - **I2** implementation.
 - **I14 Performance budgets** — baselines exist; a regression is currently
   invisible.
 
-### `BETA`
+### `BETA` — `0.1.0b1`, interoperability and composition
 
+- **I20 Framework and ecosystem interoperability** — the release's thesis.
+  Agnara standalone, as a host, embedded inside an existing framework, and
+  side by side with one. `docs/INTEROPERABILITY.md` owns the contract and the
+  integration matrix; RFC 0008 holds the open questions.
 - **I10 Security program** — threat model, invariants with tests, supply
   chain. `SECURITY.md` already records these as absent.
 - **I4 A2A**, **I5 Events**, **I17 Audit**, **I8 Composition**,
@@ -109,6 +131,10 @@ shipped schema adapter.
 An ORM, a broker, a scheduler, a worker runtime, a frontend framework, an
 admin UI, or an LLM framework. `docs/TARGET_ARCHITECTURE.md` section 7 records
 why for each, so the question stops recurring.
+
+The corollary is `docs/INTEROPERABILITY.md`: Agnara does not replace the
+ecosystem, so it has to be able to work with it — alone, embedded, alongside,
+integrated.
 
 ## The governing trade
 

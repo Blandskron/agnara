@@ -203,6 +203,21 @@ and telemetry is far harder than designing the propagation now.
 an implicit commitment. Before the surface grows, each needs to be `stable`,
 `provisional`, `experimental` or `internal`.
 
+### G11 — Ecosystem interoperability
+
+Agnara can be run and cannot be embedded. No contract says what an external
+host must do to invoke a capability, and none says who owns lifecycle,
+routing, dependency containers, context, principal, errors and telemetry when
+two runtimes share a process.
+
+The consequence is not a missing feature; it is that every application that
+already exists must choose between adopting Agnara wholesale and not adopting
+it. `docs/INTEROPERABILITY.md` states the contract this gap has to close and
+RFC 0008 states the open questions.
+
+*Blocks:* embedding, side-by-side composition, progressive adoption, and
+`0.1.0b1` (ADR 0068).
+
 ## 5. Package roadmap
 
 What each package is eventually responsible for, and what it must never own.
@@ -267,6 +282,11 @@ Recorded so the question stops recurring.
 - **Not an LLM framework.** No provider belongs in any Agnara package.
   Capabilities should be consumable *by* agent frameworks without Agnara
   choosing one.
+
+The complement of this list is `docs/INTEROPERABILITY.md`. Declining to become
+these systems only works if Agnara can cooperate with the ones that already
+are — which is why the interoperability contract is part of the architecture
+rather than a marketing concern.
 
 ## 8. North-star properties
 

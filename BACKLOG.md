@@ -747,6 +747,51 @@ Generated code must:
   introspection derivation, security ordering and migration without shipping a
   runtime API. Initiative I1. Tracking: GitHub Issue #271.
 
+## EPIC 1D — Framework and ecosystem interoperability
+
+Initiative I20. Release owner `0.1.0b1` (ADR 0068). Nothing in this epic
+implements an integration; the implementation items are decomposed when I20
+reaches the front of the queue and its prerequisites are complete.
+Tracking: GitHub Issue #282.
+
+- [x] E1D.1 State the interoperability contract. `docs/INTEROPERABILITY.md`
+  owns the four modes, the two directions, the fifteen kernel invariants, the
+  anti-coupling test, the integration matrix, the framework embedding
+  contract, the per-category infrastructure adapter contract, the conformance
+  scenario, the validation order and the historical reference strategy.
+  `docs/DOCUMENTATION_MAP.md` records the ownership so it does not become a
+  second copy of the release gates.
+- [x] E1D.2 Give ecosystem interoperability a release. ADR 0068 inserts
+  `0.1.0a5` between `0.1.0a4` and `0.1.0b1`, fixes the one question each
+  release answers, and records the guardrails that keep integrations out of
+  both alphas. `docs/releases/RELEASE_PLAN.md` carries the `0.1.0a5` gates and
+  the twenty-one `0.1.0b1` interoperability gates.
+- [x] E1D.3 Make the guardrail fail rather than be remembered. A framework
+  integration arrives as a declared dependency before anything imports it, so
+  `ECOSYSTEM_INTEGRATIONS` denies web frameworks, ORMs, drivers, migrations,
+  caches, brokers, task runtimes, durable execution engines, template engines,
+  error reporters and GraphQL/gRPC libraries to *every* distribution, not only
+  the kernel. Protocol SDKs an adapter legitimately projects into -- `mcp`,
+  `opentelemetry-api` -- are deliberately absent. `FORBIDDEN_IN_CORE` gains
+  the same technologies at import level.
+- [~] E1D.4 State the open design questions. RFC 0008 asks fifteen: lifecycle,
+  routing, container ownership, the context, principal, error and telemetry
+  bridges, request abstraction, the async/sync boundary, adapter discovery,
+  multiple applications in one process, nested invocation, resource ownership,
+  shutdown order and where the conformance suite lives. It answers none, and
+  says which initiative each answer waits on.
+- [!] E1D.5 Answer RFC 0008 in ADRs, split between the questions that need I2,
+  I3 and I8 and the questions that do not. Blocked on RFC 0006 landing: an
+  embedding contract cannot name a compiled exposure before I1 decides what
+  one is.
+- [!] E1D.6 Build the conformance suite. Blocked on E1D.5 and on the decision
+  about where it lives -- installing FastAPI, Django and SQLAlchemy into this
+  workspace makes them development dependencies, which is its own decision.
+- [!] E1D.7 Implement the integrations in `0.1.0b1`, in the validation order
+  in `docs/INTEROPERABILITY.md` section 13. Blocked on E1D.5, E1D.6 and the
+  `0.1.0a4` and `0.1.0a5` prerequisites RFC 0008 section 6 names per
+  integration.
+
 ## EPIC 0B — Agentic repository governance
 
 - [x] E0B.1 Establish GitHub Issue labels for type/area/priority.

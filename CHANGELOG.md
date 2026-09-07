@@ -55,6 +55,39 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Ecosystem interoperability has a contract and a release. Agnara could be
+  run and could not be embedded: nothing stated what an external host must do
+  to invoke a capability, or who owns lifecycle, routing, dependency
+  containers, context, principal, errors and telemetry when two runtimes share
+  a process. `docs/INTEROPERABILITY.md` now owns the interoperability contract
+  and the integration matrix -- four deployment modes, two directions per
+  technology with the meaningless ones discarded rather than left blank,
+  fifteen kernel invariants, the anti-coupling test, the ten-step framework
+  embedding contract, per-category infrastructure adapter contracts, one
+  conformance scenario for every framework, and the historical reference
+  strategy. RFC 0008 states fifteen open design questions and deliberately
+  answers none, because several depend on I1, I2, I3, I8 and I10. Initiative
+  I20 owns the work ([#282]).
+- ADR 0068 gives that work a release rather than letting it land in whichever
+  one is open. `0.1.0a5` is inserted between `0.1.0a4` and `0.1.0b1`, so
+  streaming, execution identity and performance budgets stop being homeless;
+  `0.1.0b1` becomes the interoperability and composition beta and gains
+  twenty-one mandatory gates covering web, persistence, schema, presentation,
+  background execution, observability, protocol composition, embedding,
+  side-by-side composition and progressive adoption. Both alphas gain an
+  explicit guardrail: neither may declare stable support for an external
+  framework, because an integration that hides an insufficient public API
+  behind a framework-specific convenience turns the `0.1.0a4` "public APIs are
+  sufficient" gate green and deletes the finding it exists to surface
+  ([#282]).
+- The guardrail is a test rather than a promise. A framework integration
+  arrives as a declared dependency before anything imports it, so
+  `ECOSYSTEM_INTEGRATIONS` denies web frameworks, ORMs, drivers, migrations,
+  caches, brokers, task runtimes, durable execution engines, template engines,
+  error reporters and GraphQL/gRPC libraries to every distribution rather than
+  only the kernel -- while leaving the protocol SDKs an adapter legitimately
+  projects into. The import-level `FORBIDDEN_IN_CORE` denylist gains the same
+  technologies ([#282]).
 - RFC 0007 states the open question behind D2: what version of the core an
   adapter may accept, and what version `develop` carries between releases.
   Installing one locally built adapter wheel today resolves `agnara` from
@@ -698,3 +731,4 @@ under `0.1.0a2` instead.
 [#275]: https://github.com/Blandskron/agnara/issues/275
 [#278]: https://github.com/Blandskron/agnara/issues/278
 [#280]: https://github.com/Blandskron/agnara/issues/280
+[#282]: https://github.com/Blandskron/agnara/issues/282
