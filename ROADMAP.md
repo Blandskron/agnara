@@ -67,7 +67,7 @@ mapping is written down.
 
 - **I2 Streaming model.** Nothing in the kernel returns a stream. Adding it
   per adapter would produce incompatible cancellation and backpressure
-  semantics. Design-first, and cheap to get wrong permanently.
+  semantics.
 - **I9 Public API governance.** The seven governed core modules are
   classified; 23 more declare a public `__all__` that nothing classifies, and
   no API may be called stable until the deprecation policy exists.
