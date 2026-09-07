@@ -193,12 +193,13 @@ from __future__ import annotations
 
 from ..domain.errors import RecordNotFound
 from ..domain.value_objects import Reference
+from .contracts import RecordView
 from .ports import RecordRepository
 
 __all__ = ["get_record", "list_records"]
 
 
-def get_record(reference: str, records: RecordRepository) -> dict[str, str]:
+def get_record(reference: str, records: RecordRepository) -> RecordView:
     """Read one record by its reference."""
     identifier = Reference(reference)
     found = records.get(identifier)
@@ -207,11 +208,35 @@ def get_record(reference: str, records: RecordRepository) -> dict[str, str]:
     return {{"reference": found.reference.value, "label": found.label}}
 
 
-def list_records(records: RecordRepository) -> list[dict[str, str]]:
+def list_records(records: RecordRepository) -> list[RecordView]:
     """List every record this app holds."""
     return [
         {{"reference": record.reference.value, "label": record.label}} for record in records.all()
     ]
+'''
+
+
+def _contracts(app: str) -> str:
+    return f'''"""Public application contracts offered by the {app} app.
+
+Another app may import types and protocols from this module. Everything else
+inside this app remains an implementation detail. A contract describes data
+or behaviour; it never imports an adapter and never calls a capability
+directly, because an internal call must not bypass runtime policy.
+"""
+
+from __future__ import annotations
+
+from typing import TypedDict
+
+__all__ = ["RecordView"]
+
+
+class RecordView(TypedDict):
+    """The stable record shape this app offers to other application code."""
+
+    reference: str
+    label: str
 '''
 
 
@@ -394,6 +419,7 @@ def app_files(project: str, app: str, exposures: tuple[str, ...] = ()) -> dict[s
             f"Use cases of the {app} app, and the ports they depend on."
         ),
         f"{root}/application/capabilities.py": _capabilities(project, app),
+        f"{root}/application/contracts.py": _contracts(app),
         f"{root}/application/ports.py": _ports(app),
         f"{root}/adapters/__init__.py": _init(
             f"Protocol and infrastructure adapters of the {app} app."

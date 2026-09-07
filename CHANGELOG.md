@@ -25,6 +25,11 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Generated modular apps expose transport-neutral types and Protocols through
+  the explicit `application.contracts` module, and generated projects include
+  a static architecture test that allows only that target across apps. Direct
+  handler imports remain forbidden because they bypass runtime policy and
+  internal capability invocation is still an I8 research decision ([#266]).
 - `agnara app-api`, `agnara app-mcp`, `agnara app-agent` and `agnara
   app-worker` are shorthands for `agnara app create --profile <name>`. They
   are the same command with the profile fixed, not a second implementation:
@@ -637,3 +642,4 @@ under `0.1.0a2` instead.
 
 [#237]: https://github.com/Blandskron/agnara/issues/237
 [#255]: https://github.com/Blandskron/agnara/issues/255
+[#266]: https://github.com/Blandskron/agnara/issues/266

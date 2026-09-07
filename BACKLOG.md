@@ -694,7 +694,16 @@ Generated code must:
   `DiscoveryField.APPS` makes publishing them their own decision, as RFC 0003
   requires; withholding them leaves the capabilities. 16 cases. Removing the
   projection fails four. Tracking: GitHub Issue #261.
-- [ ] E1A.5 Define cross-app public contract rules.
+- [x] E1A.5 Define cross-app public contract rules. Another modular app's
+  exact `application.contracts` module is the only public Python import target;
+  domain, capability implementations, required ports, adapters, composition
+  and tests remain internal. Calling a handler directly is explicitly not
+  capability invocation, because it bypasses the compiled policy and execution
+  boundary that initiative I8 must design. Generated projects enforce absolute
+  and relative imports with a standard-library AST test, and the generated
+  example's `RecordView` makes `contracts.py` executable documentation rather
+  than an empty marker. Eleven focused boundary cases plus the full quality gate
+  pass. Recorded in ADR 0066. Tracking: GitHub Issue #266.
 - [ ] E1A.6 Freeze app registry during project compilation.
 
 ## EPIC 0B — Agentic repository governance
