@@ -1,4 +1,4 @@
-"""Assert every first-party distribution is usable once installed.
+"""Assert the first-party distributions are built and usable.
 
 The packaging gate used to build seven distributions and install one. Building
 a wheel proves it can be produced; it does not prove an installer can resolve
@@ -6,16 +6,24 @@ its dependencies, or that the package it contains imports from where it was
 installed to. Those are different claims, and only the second is what a user
 experiences.
 
-This script makes the second claim checkable. It runs inside an environment
-that holds nothing but the built wheels, so it imports **only the standard
-library** -- adding a third-party import here would make the gate depend on a
-package the gate exists to validate.
+Both are checked here, in two modes, because they share the one thing that
+must not be duplicated: what the expected set of distributions *is*. It is
+discovered from the workspace layout rather than listed, so adding a
+distribution extends these checks instead of escaping them.
 
-Expected distributions are discovered from the workspace layout rather than
-listed, so adding a distribution extends this check instead of escaping it.
+Built artifacts, before anything is installed:
 
-    python scripts/check_installed_distributions.py --workspace <checkout> \
+    python scripts/check_distributions.py --workspace <checkout> --dist dist/
+
+Installed distributions, from inside the environment they were installed into:
+
+    python scripts/check_distributions.py --workspace <checkout> \
         --require-installed
+
+The second mode runs in an environment that holds nothing but the built
+wheels, so this script imports **only the standard library** -- a third-party
+import here would make the gate depend on a package the gate exists to
+validate.
 
 ``--require-installed`` additionally asserts that nothing resolved from the
 workspace source tree. It is off by default because the development
@@ -153,6 +161,48 @@ def check_package_data(
     ]
 
 
+#: What `uv build` emits per distribution, and the only files that count as
+#: artifacts. `uv build` also writes its own `.gitignore` into the output
+#: directory; that is its bookkeeping, not something being shipped.
+ARTIFACT_SUFFIXES = (".whl", ".tar.gz")
+
+
+def check_built_artifacts(
+    distributions: list[Distribution],
+    dist_dir: Path,
+) -> list[str]:
+    """Exactly one wheel and one sdist per distribution, and nothing else."""
+    if not dist_dir.is_dir():
+        return [f"no build output directory at {dist_dir}"]
+
+    artifacts = sorted(
+        path
+        for path in dist_dir.iterdir()
+        if path.is_file() and path.name.endswith(ARTIFACT_SUFFIXES)
+    )
+
+    problems: list[str] = []
+    for distribution in distributions:
+        # PEP 427/625 normalize the hyphen in a distribution name to an
+        # underscore in the artifact filename.
+        stem = distribution.name.replace("-", "_") + "-"
+        wheels = [path.name for path in artifacts if path.name.startswith(stem)]
+        sdists = [name for name in wheels if name.endswith(".tar.gz")]
+        wheels = [name for name in wheels if name.endswith(".whl")]
+        if len(wheels) != 1:
+            problems.append(f"{distribution.name}: expected 1 wheel, found {wheels}")
+        if len(sdists) != 1:
+            problems.append(f"{distribution.name}: expected 1 sdist, found {sdists}")
+
+    known = tuple(d.name.replace("-", "_") + "-" for d in distributions)
+    surplus = sorted(path.name for path in artifacts if not path.name.startswith(known))
+    if surplus:
+        # A stale artifact would let a later glob validate, or publish,
+        # something this build did not produce.
+        problems.append(f"unexpected artifacts in {dist_dir}: {surplus}")
+    return problems
+
+
 def check_metadata(
     distributions: list[Distribution],
     *,
@@ -193,9 +243,24 @@ def check_metadata(
     return problems
 
 
-def run(workspace: Path, *, require_installed: bool) -> tuple[int, list[str]]:
+def run(
+    workspace: Path,
+    *,
+    require_installed: bool = False,
+    dist_dir: Path | None = None,
+) -> tuple[int, list[str]]:
     """Returns an exit code and the lines to report."""
     distributions, problems = discover(workspace)
+
+    if dist_dir is not None:
+        # Artifacts are checked before anything is installed, so importing
+        # here would report failures that say nothing about the build.
+        problems.extend(check_built_artifacts(distributions, dist_dir))
+        if problems:
+            return 1, problems
+        names = ", ".join(distribution.name for distribution in distributions)
+        return 0, [f"built {len(distributions)} distributions: {names}"]
+
     for distribution in distributions:
         failures = check_import(
             distribution,
@@ -224,13 +289,23 @@ def main(argv: list[str] | None = None) -> int:
         help="the repository checkout that defines the expected distributions",
     )
     parser.add_argument(
+        "--dist",
+        type=Path,
+        default=None,
+        help="check the built artifacts in this directory instead of the installation",
+    )
+    parser.add_argument(
         "--require-installed",
         action="store_true",
         help="also assert nothing resolved from the workspace source tree",
     )
     arguments = parser.parse_args(argv)
 
-    code, lines = run(arguments.workspace, require_installed=arguments.require_installed)
+    code, lines = run(
+        arguments.workspace,
+        require_installed=arguments.require_installed,
+        dist_dir=arguments.dist,
+    )
     for line in lines:
         # Say what was inspected on success too. A gate that prints nothing
         # cannot be told apart from one that never ran.

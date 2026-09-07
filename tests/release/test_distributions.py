@@ -21,8 +21,8 @@ from tests.architecture.boundaries import DISTRIBUTIONS, WORKSPACE_ROOT
 
 def _load_checker() -> Any:
     """Load the script by path; `scripts/` is tooling, not an importable package."""
-    location = WORKSPACE_ROOT / "scripts" / "check_installed_distributions.py"
-    spec = importlib.util.spec_from_file_location("agnara_installed_distributions", location)
+    location = WORKSPACE_ROOT / "scripts" / "check_distributions.py"
+    spec = importlib.util.spec_from_file_location("agnara_distributions", location)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     # `@dataclass` resolves annotations through `sys.modules[cls.__module__]`.
@@ -247,3 +247,102 @@ def test_failures_are_reported_as_workflow_errors(
 
     assert code == 1
     assert "::error::" in captured.out
+
+
+# ---------------------------------------------------------------------------
+# Built artifacts
+# ---------------------------------------------------------------------------
+
+
+def _built(tmp_path: Path, names: list[str]) -> Path:
+    dist = tmp_path / "dist"
+    dist.mkdir(exist_ok=True)
+    for name in names:
+        (dist / name).write_bytes(b"")
+    return dist
+
+
+def _artifacts_for(distributions: list[Any]) -> list[str]:
+    names = []
+    for distribution in distributions:
+        stem = distribution.name.replace("-", "_")
+        names += [f"{stem}-0.1.0a3-py3-none-any.whl", f"{stem}-0.1.0a3.tar.gz"]
+    return names
+
+
+def test_a_complete_build_passes(tmp_path: Path) -> None:
+    found, _ = checker.discover(WORKSPACE_ROOT)
+    dist = _built(tmp_path, _artifacts_for(found))
+
+    assert checker.check_built_artifacts(found, dist) == []
+
+
+def test_uv_s_own_gitignore_is_not_an_artifact(tmp_path: Path) -> None:
+    """`uv build` writes a .gitignore into the output directory it creates.
+
+    Treating it as a stray artifact failed the packaging job on a clean
+    checkout, where `dist/` does not exist until the build makes it.
+    """
+    found, _ = checker.discover(WORKSPACE_ROOT)
+    dist = _built(tmp_path, _artifacts_for(found))
+    (dist / ".gitignore").write_text("*", encoding="utf-8")
+
+    assert checker.check_built_artifacts(found, dist) == []
+
+
+def test_a_missing_wheel_fails(tmp_path: Path) -> None:
+    found, _ = checker.discover(WORKSPACE_ROOT)
+    names = _artifacts_for(found)
+    dist = _built(tmp_path, [n for n in names if n != "agnara_http-0.1.0a3-py3-none-any.whl"])
+
+    problems = checker.check_built_artifacts(found, dist)
+
+    assert any("agnara-http: expected 1 wheel, found []" in problem for problem in problems)
+
+
+def test_a_missing_sdist_fails(tmp_path: Path) -> None:
+    found, _ = checker.discover(WORKSPACE_ROOT)
+    names = _artifacts_for(found)
+    dist = _built(tmp_path, [n for n in names if n != "agnara_mcp-0.1.0a3.tar.gz"])
+
+    problems = checker.check_built_artifacts(found, dist)
+
+    assert any("agnara-mcp: expected 1 sdist, found []" in problem for problem in problems)
+
+
+def test_a_stale_artifact_from_another_release_fails(tmp_path: Path) -> None:
+    """Two versions of one distribution would let a glob validate the wrong one."""
+    found, _ = checker.discover(WORKSPACE_ROOT)
+    dist = _built(tmp_path, [*_artifacts_for(found), "agnara-0.1.0a2-py3-none-any.whl"])
+
+    problems = checker.check_built_artifacts(found, dist)
+
+    assert any("expected 1 wheel" in problem for problem in problems)
+
+
+def test_an_artifact_from_an_unknown_distribution_fails(tmp_path: Path) -> None:
+    found, _ = checker.discover(WORKSPACE_ROOT)
+    dist = _built(tmp_path, [*_artifacts_for(found), "somethingelse-1.0-py3-none-any.whl"])
+
+    problems = checker.check_built_artifacts(found, dist)
+
+    assert any("unexpected artifacts" in problem for problem in problems)
+
+
+def test_a_missing_build_directory_is_reported(tmp_path: Path) -> None:
+    found, _ = checker.discover(WORKSPACE_ROOT)
+
+    problems = checker.check_built_artifacts(found, tmp_path / "absent")
+
+    assert any("no build output directory" in problem for problem in problems)
+
+
+def test_the_artifact_mode_never_imports_anything(tmp_path: Path) -> None:
+    """It runs before installation, so an import failure would say nothing."""
+    found, _ = checker.discover(WORKSPACE_ROOT)
+    dist = _built(tmp_path, _artifacts_for(found))
+
+    code, lines = checker.run(WORKSPACE_ROOT, dist_dir=dist)
+
+    assert code == 0
+    assert any("built 7 distributions" in line for line in lines)

@@ -772,7 +772,7 @@ Generated code must:
   resolved by an installer, and ADR 0040's vendored documentation UIs were
   checked for presence in the archive but never for reachability from an
   installed package. `0.1.0a3` covered this by hand during release
-  preparation. `scripts/check_installed_distributions.py` uses only the
+  preparation. `scripts/check_distributions.py` uses only the
   standard library, so it runs in an environment holding nothing but the built
   wheels; it discovers the expected distributions from the workspace layout,
   and asserts installed origin, data-file reachability, synchronized versions

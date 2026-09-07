@@ -20,7 +20,7 @@ without being published. See the `0.1.0a2` scope note below.
   pins were never resolved by an installer, and the documentation UIs
   `agnara-http` serves from its own package were checked for presence in
   the archive but never for reachability once installed.
-  `scripts/check_installed_distributions.py` discovers the expected
+  `scripts/check_distributions.py` discovers the expected
   distributions from the workspace layout, then asserts each imports from
   an installed location, that every data file in a source package resolves
   inside the installed one, that versions stay synchronized and that every

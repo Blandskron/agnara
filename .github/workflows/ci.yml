@@ -146,11 +146,13 @@ jobs:
       - name: Check uv.lock
         run: uv lock --check
 
-  # Packaging is only exercised by `release.yml` today, so a broken build,
-  # a dropped `py.typed` or a missing vendored asset stays invisible until
-  # release day. This builds every distribution and installs the published
-  # one outside the workspace. It deliberately does not repeat the deeper
-  # artifact validation `release.yml` runs against the exact tagged wheel.
+  # Packaging is otherwise only exercised by `release.yml`, so a broken
+  # build, a dropped `py.typed` or a missing vendored asset would stay
+  # invisible until release day. This builds every distribution and installs
+  # all of them into one clean environment outside the workspace, which is
+  # what resolves the adapters' third-party pins. It deliberately does not
+  # repeat the deeper artifact validation `release.yml` runs against the
+  # exact tagged wheel.
   package:
     name: Build and install
     runs-on: ubuntu-latest
@@ -171,42 +173,8 @@ jobs:
       - name: Every distribution built exactly one wheel and one sdist
         run: |
           set -euo pipefail
-          uv run --no-project python - <<'EOF'
-          import pathlib, sys
-
-          # Derived from the workspace rather than hardcoded, so adding a
-          # distribution extends this check instead of escaping it.
-          expected = sorted(p.name for p in pathlib.Path("packages").iterdir() if p.is_dir())
-          built = pathlib.Path("dist")
-
-          failures = []
-          for distribution in expected:
-              stem = distribution.replace("-", "_")
-              wheels = sorted(built.glob(f"{stem}-*.whl"))
-              sdists = sorted(built.glob(f"{stem}-*.tar.gz"))
-              if len(wheels) != 1:
-                  failures.append(f"{distribution}: expected 1 wheel, found {[w.name for w in wheels]}")
-              if len(sdists) != 1:
-                  failures.append(f"{distribution}: expected 1 sdist, found {[s.name for s in sdists]}")
-
-          surplus = sorted(
-              path.name
-              for path in built.iterdir()
-              if not any(path.name.startswith(d.replace("-", "_") + "-") for d in expected)
-          )
-          if surplus:
-              # A stale artifact would make a later glob validate something we
-              # are not about to ship.
-              failures.append(f"unexpected artifacts in dist/: {surplus}")
-
-          for failure in failures:
-              print(f"::error::{failure}")
-          if failures:
-              sys.exit(1)
-          # Say what was inspected. A check that prints nothing on success
-          # cannot be told apart from one that never received this script.
-          print(f"built {len(expected)} distributions: {', '.join(expected)}")
-          EOF
+          uv run --no-project python scripts/check_distributions.py \
+            --workspace "$GITHUB_WORKSPACE" --dist dist/
 
       - name: Install every distribution outside the workspace
         run: |
@@ -230,7 +198,7 @@ jobs:
 
           # Address the interpreter directly: `uv run` may resolve an
           # environment other than the one the wheels were installed into.
-          .venv/bin/python -I "$GITHUB_WORKSPACE/scripts/check_installed_distributions.py" \
+          .venv/bin/python -I "$GITHUB_WORKSPACE/scripts/check_distributions.py" \
             --workspace "$GITHUB_WORKSPACE" --require-installed
 
           # The published distribution additionally has to work on its own.

@@ -36,9 +36,10 @@ because building a distribution and being able to use it are different claims:
 
 ```bash
 uv build --all-packages --out-dir dist/
+python scripts/check_distributions.py --workspace "$PWD" --dist dist/
 uv venv --python 3.14 <external>/.venv
 uv pip install --python <external>/.venv/bin/python dist/*.whl
-<external>/.venv/bin/python -I scripts/check_installed_distributions.py \
+<external>/.venv/bin/python -I scripts/check_distributions.py \
     --workspace "$PWD" --require-installed
 ```
 
