@@ -115,7 +115,7 @@ completion semantics; how telemetry spans a stream rather than a call.
 ### I3 — Execution identity and idempotency behaviour
 
 **Horizon:** `LATER ALPHA`
-**Status:** `PLANNED`
+**Status:** `IMPLEMENTED` — ADR 0074
 **Blocks:** I6, resilience, event delivery semantics
 
 Idempotency is declared and published; the runtime does nothing with it. Safe
@@ -228,19 +228,11 @@ a policy bypass.
 **Status:** `PLANNED`
 **Blocks:** 1.0
 
-Every public name was once an implicit commitment. ADR 0067 and its follow-up
-closed the first part of this: 123 exports across seven core modules are
-classified `provisional`, and the release gate compares the manifest with each
-module's literal `__all__`.
-
-**Remaining scope:** decide the boundary for the 23 further core modules that
-declare a public `__all__` and are governed by nothing (Issue #289); add the
-completeness test once that decision makes it passable; write the deprecation
-policy before the surface is large enough to make one painful; and decide
-which names, if any, are promoted to `stable`, which the beta and
-release-candidate gates own.
-
-Cheap, and it gets more expensive every release it is deferred.
+Every public core name is now an explicit commitment. The manifest classifies
+all 218 exports across all 30 non-private modules with a non-empty `__all__`,
+and the release gate checks in both directions. A new package or leaf module
+cannot silently become public. All remain `provisional`; promotion to `stable`
+is still owned by the beta and release-candidate gates.
 
 ### I10 — Security program
 

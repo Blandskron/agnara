@@ -13,7 +13,7 @@ This document owns compatibility expectations for Agnara's Python API.
 | `experimental` | Public only for evaluation. It may change or disappear in the next pre-1.0 release. |
 | `internal` | Unsupported implementation detail. Internal names are excluded from public manifests and `__all__`. |
 
-No API is classified `stable` during the alpha line. All 130 currently governed
+No API is classified `stable` during the alpha line. All 218 currently governed
 exports are `provisional`: they are deliberate public entry points, but the
 alpha line explicitly makes no compatibility promise. A stable classification
 requires a later, explicit decision supported by the beta and release-candidate
@@ -22,10 +22,11 @@ a Python symbol.
 
 ## Governed surface
 
-The manifest governs the seven package entry points below, not just the
-top-level one. A count is not a substitute: the release gate compares the
-ordered names and classifications in the manifest with each module's literal
-`__all__`, read without importing the package.
+The manifest governs every non-private core module that declares a non-empty
+`__all__`: eight package entry points and 22 leaf modules. A count is not a
+substitute. The release gate compares each ordered export list and also walks
+the source tree in the reverse direction, so adding a public package or leaf
+module without classifying it fails the release gate.
 
 | Module | Exports |
 | --- | --- |
@@ -33,37 +34,54 @@ ordered names and classifications in the manifest with each module's literal
 | `agnara.introspection` | 23 |
 | `agnara.schema` | 15 |
 | `agnara.execution` | 14 |
-| `agnara.policy` | 13 |
+| `agnara.policy` | 14 |
 | `agnara.core.di` | 9 |
 | `agnara.capability` | 8 |
 | `agnara.exposure` | 7 |
+| `agnara.app` | 2 |
+| `agnara.application` | 1 |
+| `agnara.capability.definition` | 1 |
+| `agnara.capability.identity` | 1 |
+| `agnara.capability.metadata` | 4 |
+| `agnara.capability.registry` | 2 |
+| `agnara.errors` | 12 |
+| `agnara.execution.context` | 1 |
+| `agnara.execution.invocation` | 1 |
+| `agnara.execution.plan` | 1 |
+| `agnara.execution.result` | 4 |
+| `agnara.execution.runtime` | 2 |
+| `agnara.execution.telemetry` | 3 |
+| `agnara.introspection.builder` | 2 |
+| `agnara.introspection.descriptors` | 13 |
+| `agnara.introspection.visibility` | 8 |
+| `agnara.policy.base` | 7 |
+| `agnara.policy.confirmation` | 4 |
+| `agnara.policy.principal` | 2 |
+| `agnara.policy.scopes` | 1 |
+| `agnara.schema.port` | 3 |
+| `agnara.schema.standard` | 12 |
+
+The 22 governed leaf modules include `agnara.errors`, `agnara.application`,
+`agnara.execution.result`, `agnara.policy.confirmation` and the implementation
+modules underneath the governed packages. Their 87 exports intentionally
+remain valid provisional entry points for the alpha line. No symbol was
+renamed, promoted or made stable by classifying these spellings.
 
 Governing the subpackages is not a formality. The first three lines of the
 README and of `examples/quickstart.py` import from `agnara`, `agnara.core.di`
 and `agnara.execution`, so two thirds of the documented entry path lived
 outside the governed surface until these manifests existed.
 
-A module the manifest does not name is ungoverned by definition, and 23 of
-them are. Thirty modules of the `agnara` package declare a non-empty
-`__all__`; the seven above are governed. The rest — `agnara.errors`,
-`agnara.application`, `agnara.execution.result` and twenty others — publish
-names that nothing classifies, and Historical Reference Applications
-#001-#009 import thirteen of them. Issue #289 records the measurement and the
-decision it needs: whether each is an entry point, an implementation detail
-that should stop declaring `__all__`, or a module whose names belong on its
-parent package.
+The boundary decision is literal and reviewable: a non-private module with a
+non-empty literal `__all__` is public and must be classified. An internal
+module uses an underscore-prefixed path or declares no public exports. This
+keeps the source declaration, human policy, machine manifest and release gate
+in agreement instead of maintaining a second subjective module allowlist.
 
-No test asserts the reverse direction. The gate reads the manifest and holds
-the implementation to it; it cannot notice a public module the manifest never
-mentions, and it cannot name a leaf module at all, because it resolves a
-manifest entry only to an `__init__.py`. Adding a public *subpackage* without
-classifying it therefore fails nothing today. That test is worth having, but
-it cannot be written before the boundary above is decided, because it would
-fail on 23 modules on the day it landed.
-
-The manifest resolves module names to files. It may only name modules of the
-`agnara` package, and a name that does not resolve inside it is refused rather
-than followed.
+The manifest resolves both package `__init__.py` files and leaf `.py` modules.
+It may only name real non-private modules inside the `agnara` package; anything
+outside that root, syntactically invalid, ambiguous or absent is refused rather
+than followed (ADR 0074, Issue #289).
 
 ## Change policy
 

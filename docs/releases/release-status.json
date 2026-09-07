@@ -168,7 +168,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "A maintainer decides this after the applications are audited. The manifest governs 130 exports across eight core modules; 23 core leaf modules declaring a non-empty __all__ remain ungoverned and the adapters are governed by their declared __all__ plus docs/MATURITY.md rather than by the manifest (Issue #289). Dogfooding the HTTP composition API has already found one insufficiency: a dataclass-typed request body cannot be filled from JSON (Issue #296)."
+      "detail": "A maintainer decides this after the applications are audited. The manifest now classifies all 218 exports across all 30 public core modules and the release gate rejects any newly unclassified package or leaf module (ADR 0074). HTTP JSON bodies materialize standard-library dataclasses at the transport boundary before strict core validation (ADR 0075)."
     },
     {
       "id": "di-works-naturally",

@@ -19,13 +19,10 @@ Its evidence comes from applications outside this workspace — currently being
 built in `agnara-project` — and those applications will be audited separately
 before any gate here is recorded as satisfied.
 
-Dogfooding the new HTTP composition API has already produced its first
-framework defect: a dataclass-typed request body publishes a correct JSON
-Schema and then rejects every request matching it (Issue #296). Every HTTP
-test in this repository uses `dict[str, Any]` for a body, so the shape an
-application author reaches for first was the one shape nothing exercised. That
-is the release thesis working as intended, and it is recorded rather than
-worked around.
+Dogfooding the new HTTP composition API found and resolved its first framework
+defect: JSON objects bound to standard-library dataclasses are now materialized
+at the HTTP boundary and then validated by the unchanged strict core schema
+path (ADR 0075, Issue #296). The public example exercises that path directly.
 
 Nothing in this repository can satisfy the external gates on its own. Passing
 repository tests is not evidence that an external consumer can do the same

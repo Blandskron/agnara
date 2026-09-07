@@ -37,6 +37,13 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Changed
 
+- Public API governance now covers every non-private core module that declares
+  exports: 218 provisional names across 30 package and leaf modules. The
+  readiness gate resolves both `__init__.py` and leaf `.py` modules and scans
+  source in reverse, so an unclassified public module fails immediately.
+  `ConfirmationPolicy` is also available from `agnara.policy`; genuinely
+  private `_frozen` and `_tracking_id` helpers remain private with documented
+  public alternatives (ADRs 0074, [#288], [#289]).
 - The `0.1.0a4` publication boundary now covers the explicit seven-package
   workspace set instead of building, installing and publishing only `agnara`.
   The release gate inspects all fourteen wheel/sdist artifacts for synchronized
@@ -89,10 +96,9 @@ without being published. See the `0.1.0a2` scope note below.
   the README and the quickstart both open by importing `agnara.core.di`
   and `agnara.execution` — so a rename there passed every release gate. A
   test now asserts every exported name actually exists, which neither the
-  manifest nor `__all__` can detect on its own. This entry previously also
-  claimed a test asserting the manifest names every core module with a
-  non-empty `__all__`; no such test was added, and 23 core modules declaring
-  one remain ungoverned (Issue #289).
+  manifest nor `__all__` can detect on its own. ADR 0074 subsequently extended
+  that governance to every exported leaf module and added the missing reverse
+  completeness check.
   `docs/public-api.json` moves to `schema_version` 2; no API is renamed,
   re-exported or promoted ([#275]).
 - Compiling an `Agnara` project now freezes every mounted `App` registry as
@@ -108,6 +114,15 @@ without being published. See the `0.1.0a2` scope note below.
   added in #254. Only the Python symbol changed: the field names, the builder
   functions, `INTROSPECTION_VERSION` and the serialized document are all
   unchanged, verified byte-for-byte ([#259]).
+
+### Fixed
+
+- HTTP JSON bodies matching a standard-library dataclass schema now
+  materialize the declared dataclass recursively before strict core
+  validation. Nested dataclasses, containers, tuples, unions and JSON-valued
+  enums follow the same compiled schema graph; unknown and missing fields fail
+  without exposing constructor errors. Direct core invocation remains strict
+  as ADR 0025 requires (ADR 0075, [#296]).
 
 ### Added
 
@@ -790,7 +805,7 @@ under `0.1.0a2` instead.
 [#282]: https://github.com/Blandskron/agnara/issues/282
 [#286]: https://github.com/Blandskron/agnara/issues/286
 [#293]: https://github.com/Blandskron/agnara/issues/293
-[#295]: https://github.com/Blandskron/agnara/issues/295
+[#288]: https://github.com/Blandskron/agnara/issues/288
+[#289]: https://github.com/Blandskron/agnara/issues/289
 [#296]: https://github.com/Blandskron/agnara/issues/296
-[#298]: https://github.com/Blandskron/agnara/issues/298
 [#291]: https://github.com/Blandskron/agnara/issues/291

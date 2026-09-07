@@ -167,9 +167,10 @@ HTTP exists:
 http.get("/me", show, Binding("account_id", BindingSource.HEADER, wire_name="x-account-id"))
 ```
 
-Supported JSON body annotations today are `dict[str, Any]`, `list[T]`,
-primitives, tuples, unions, `Literal` and `Enum`. **A dataclass-typed body does
-not work** — see Limitations.
+Supported JSON body annotations today are standard-library dataclasses,
+`dict[str, T]`, `list[T]`, primitives, tuples, unions, `Literal` and `Enum`.
+Dataclasses are materialized recursively at this HTTP boundary before the
+shared strict validation path runs (ADR 0075).
 
 ## Cookies, forms and uploads
 
@@ -374,11 +375,12 @@ deferred request feature rather than leaving it implicit.
 | Sessions | A cookie binding plus your own store. |
 | Content negotiation, conditional and range requests | A response-model question, not a request one. Needs an RFC. |
 
-**Known defect.** A dataclass-typed request body publishes a correct JSON
-Schema and then rejects every request that matches it, because the schema port
-validates without coercing. Tracked as
-[issue #296](https://github.com/Blandskron/agnara/issues/296); use
-`dict[str, Any]` until it is decided.
+**Dataclass bodies.** A JSON object bound to a standard-library dataclass is
+materialized recursively before core validation, including nested dataclasses,
+lists, dictionaries, tuples, unions and JSON-valued enums. Unknown fields and
+missing required fields fail at the HTTP boundary. Direct core invocation
+remains strict: only the transport that knows it received JSON performs this
+conversion (ADR 0075, [issue #296](https://github.com/Blandskron/agnara/issues/296)).
 
 **No authentication.** Every HTTP invocation runs as the anonymous principal,
 so a capability carrying a `ScopePolicy` always answers `403`. Nothing here can

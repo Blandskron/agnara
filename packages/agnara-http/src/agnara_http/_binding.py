@@ -12,7 +12,17 @@ from types import MappingProxyType
 from typing import Any
 from urllib.parse import unquote_to_bytes
 
+from agnara import ValidationError
 from agnara.execution import ExecutionPlan
+from agnara.schema import (
+    DataclassSchema,
+    DictionarySchema,
+    EnumSchema,
+    ListSchema,
+    TupleSchema,
+    TypeSchema,
+    UnionSchema,
+)
 
 _INTEGER = re.compile(r"[+-]?\d+\Z")
 _NUMBER = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?\Z")
@@ -113,6 +123,7 @@ class _CompiledBinding:
     wire_name: str
     scalar_type: str | None
     binary: bool = False
+    schema: TypeSchema | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -214,7 +225,14 @@ class _HTTPBindingPlan:
                         f"upload input {binding.input_name!r} must be annotated `bytes`"
                     )
             compiled.append(
-                _CompiledBinding(binding.input_name, binding.source, wire_name, scalar_type, binary)
+                _CompiledBinding(
+                    binding.input_name,
+                    binding.source,
+                    wire_name,
+                    scalar_type,
+                    binary,
+                    execution_plan.input_schemas[binding.input_name],
+                )
             )
 
         missing = sorted(execution_plan.required_inputs.difference(seen_inputs))
@@ -370,13 +388,94 @@ def _bind_json(payload: dict[str, Any], plan: _HTTPBindingPlan, raw_body: bytes)
         return
     try:
         text = raw_body.decode("utf-8")
-        payload[binding.input_name] = json.loads(
+        decoded = json.loads(
             text,
             parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)),
             object_pairs_hook=_object_without_duplicates,
         )
     except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
         raise _RequestBindingError("invalid UTF-8 JSON body", location="body") from error
+    assert binding.schema is not None  # populated by compilation for every binding
+    payload[binding.input_name] = _materialize_json(binding.schema, decoded, location="body")
+
+
+def _materialize_json(schema: TypeSchema, value: Any, *, location: str) -> Any:
+    """Materialize standard-library object types that JSON cannot represent.
+
+    Core validation deliberately remains strict (ADR 0025). HTTP owns this
+    conversion because JSON has objects and arrays, but no dataclass, tuple or
+    Enum values. Unknown/custom schemas receive the decoded JSON unchanged and
+    retain full control through ``TypeSchema.validate``.
+    """
+    if isinstance(schema, DataclassSchema) and type(value) is dict:
+        object_value: dict[str, Any] = value
+        fields = {field.name: field for field in schema.fields}
+        unexpected = sorted(set(object_value).difference(fields))
+        if unexpected:
+            raise _RequestBindingError("unexpected field", location=f"{location}.{unexpected[0]}")
+        missing = sorted(
+            field.name
+            for field in schema.fields
+            if field.required and field.name not in object_value
+        )
+        if missing:
+            raise _RequestBindingError("field is missing", location=f"{location}.{missing[0]}")
+        arguments = {
+            name: _materialize_json(
+                fields[name].schema,
+                item,
+                location=f"{location}.{name}",
+            )
+            for name, item in object_value.items()
+        }
+        try:
+            return schema.dataclass_type(**arguments)
+        except (TypeError, ValueError) as error:
+            raise _RequestBindingError(
+                "could not construct the declared dataclass", location=location
+            ) from error
+
+    if isinstance(schema, ListSchema) and type(value) is list:
+        return [
+            _materialize_json(schema.item_schema, item, location=f"{location}.{index}")
+            for index, item in enumerate(value)
+        ]
+
+    if isinstance(schema, DictionarySchema) and type(value) is dict:
+        return {
+            name: _materialize_json(schema.value_schema, item, location=f"{location}.{name}")
+            for name, item in value.items()
+        }
+
+    if isinstance(schema, TupleSchema) and type(value) is list:
+        item_schemas = (
+            (schema.item_schemas[0] for _ in value)
+            if schema.variadic
+            else iter(schema.item_schemas)
+        )
+        if not schema.variadic and len(value) != len(schema.item_schemas):
+            return tuple(value)
+        return tuple(
+            _materialize_json(item_schema, item, location=f"{location}.{index}")
+            for index, (item, item_schema) in enumerate(zip(value, item_schemas, strict=True))
+        )
+
+    if isinstance(schema, EnumSchema):
+        try:
+            return schema.enum_type(value)
+        except TypeError, ValueError:
+            return value
+
+    if isinstance(schema, UnionSchema):
+        for choice in schema.choices:
+            candidate = _materialize_json(choice, value, location=location)
+            try:
+                choice.validate(candidate)
+            except ValidationError:
+                continue
+            return candidate
+
+    return value
 
 
 def _content_type(header_values: Mapping[str, list[str]]) -> tuple[str, str]:
