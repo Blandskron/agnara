@@ -178,17 +178,26 @@ human approval, compensation, observability.
 ### I7 — HTTP request surface
 
 **Horizon:** `NEXT ALPHA`
-**Status:** `PLANNED`
+**Status:** `IMPLEMENTED` for what `0.1.0a4` owns — ADR 0072
 **Depends on:** I1
 
-Cookies, forms, multipart and file uploads. These are the gaps that stop
-`agnara-http` being usable for ordinary applications, and each is a new
-binding source rather than new architecture.
+**Done.** Cookies, form fields and file uploads are binding sources, exactly
+as predicted: new sources, not new architecture. A login form, a session
+cookie and an upload are expressible through public API, their OpenAPI is
+truthful, and every failure is a structured RFC 9457 problem.
 
-Then, separately: CORS, compression, static files, proxy headers, trusted
-hosts. And an extension point for cross-cutting concerns, which needs its own
-design — "middleware" in most frameworks is where transport types leak into
-application code, and Agnara must not reproduce that.
+**Deferred, each with a recorded reason** (ADR 0072): multiple files and
+repeated form fields, which need the collection binding ADR 0026 deferred; the
+client filename and per-part content type, which need a core-visible upload
+value type; streaming request bodies, which need I2; and CORS, compression,
+static files, proxy headers and trusted hosts, which belong at the ASGI layer
+or the reverse proxy.
+
+**Still deliberately absent:** an extension point for cross-cutting concerns.
+"Middleware" in most frameworks is where transport types leak into application
+code, and Agnara must not reproduce that. An `HttpApplication` is an ASGI 3
+callable, so ordinary ASGI middleware already wraps it from outside, which is
+where transport concerns belong.
 
 ### I8 — Capability composition
 

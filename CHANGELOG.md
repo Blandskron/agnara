@@ -15,6 +15,41 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- The HTTP request surface `0.1.0a4` owns: cookies, form fields and file
+  uploads. `BindingSource` gains `COOKIE`, `FORM` and `UPLOAD` -- three enum
+  members and no new public type, because ADR 0026 built the machinery and
+  `docs/INITIATIVES.md` predicted correctly that each of these is a new
+  binding source rather than new architecture. A login form, a session cookie
+  and an upload are now expressible, which is most of what "ordinary HTTP
+  application" means.
+
+  One `FORM` declaration reads both `application/x-www-form-urlencoded` and
+  `multipart/form-data`, because an application asked for a field and an HTML
+  form picks the encoding from its `enctype`. An upload binds to `bytes` and
+  the input must be annotated `bytes`. `BODY`, `FORM` and `UPLOAD` all read
+  the body, so combining a JSON body with either of the others is refused at
+  compile time.
+
+  Bounded by construction: the media type and multipart boundary are settled
+  from the headers before a single byte is read, so a request this route
+  cannot decode never buffers; the body stays under `max_body_bytes`; and a
+  new `max_parts` bounds the part count separately, because a small body can
+  still carry thousands of empty parts. Nothing touches the filesystem, so
+  there is no temporary file to leak and nothing to clean up on cancellation.
+  The client filename is deliberately never exposed.
+
+  OpenAPI describes exactly what each route accepts: a cookie as `in: cookie`,
+  form fields and uploads as one `requestBody` object with
+  `additionalProperties: false`, an upload as `string`/`format: binary` with
+  RFC 7578 `encoding`, and multipart only where an upload is declared. The
+  pinned reference fixture now exercises all of it.
+
+  ADR 0072 carries the decision, the threat analysis, and a classification of
+  every deferred HTTP feature -- multiple files, repeated fields, filenames,
+  streaming, CORS, compression, static files, proxy headers, trusted hosts and
+  a middleware hook -- with the reason for each and where an application puts
+  it in the meantime ([#298]).
+
 - `agnara-http` has a public composition API. It exported nothing across three
   releases, so composing HTTP meant importing `agnara_http._dispatch`,
   `_binding`, `_routing`, `_surfaces` and `_asgi` -- which is what the
@@ -812,3 +847,4 @@ under `0.1.0a2` instead.
 [#293]: https://github.com/Blandskron/agnara/issues/293
 [#295]: https://github.com/Blandskron/agnara/issues/295
 [#296]: https://github.com/Blandskron/agnara/issues/296
+[#298]: https://github.com/Blandskron/agnara/issues/298

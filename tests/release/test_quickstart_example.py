@@ -66,13 +66,19 @@ def test_the_http_example_runs_outside_the_repository(tmp_path: Path) -> None:
     """
     output = _run(HTTP_EXAMPLE, tmp_path)
 
-    assert "compiled: HttpApplication('http:public', 3 routes)" in output
+    assert "compiled: HttpApplication('http:public', 4 routes)" in output
     assert 'read     -> 200 {"found":true' in output
     assert 'write    -> 200 {"stored":"B-2"}' in output
     assert "missing  -> 404 not_found" in output
-    assert "openapi  -> 200 3.2.0 paths=['/orders/{order_id}']" in output
+    assert "'/orders/{order_id}/attachments'" in output
     # The undocumented route is served and stays out of the document.
     assert "health   -> 200 documented=False" in output
+    # A cookie, a form field and an upload in one request (ADR 0072), and the
+    # per-route limit answering a structured 413 rather than crashing.
+    assert '"session":"session-7"' in output
+    assert '"note":"Signed copy"' in output
+    assert '"bytes":12' in output
+    assert "oversize -> 413 content_too_large" in output
     assert "http:public GET /health" in output
 
 

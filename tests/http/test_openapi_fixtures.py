@@ -116,7 +116,22 @@ def test_the_fixture_covers_every_projection_feature_the_adapter_implements() ->
         for _, _, operation in operations(doc)
         for parameter in operation.get("parameters", [])
     }
-    assert locations == {"path", "query", "header"}
+    assert locations == {"path", "query", "header", "cookie"}
+    media_types = {
+        media
+        for _, _, operation in operations(doc)
+        for media in operation.get("requestBody", {}).get("content", {})
+    }
+    assert media_types == {
+        "application/json",
+        "application/x-www-form-urlencoded",
+        "multipart/form-data",
+    }
+    assert any(
+        "encoding" in media
+        for _, _, operation in operations(doc)
+        for media in operation.get("requestBody", {}).get("content", {}).values()
+    ), "the fixture should exercise an upload encoding"
     assert refs(doc), "the fixture should exercise a shared component reference"
 
 
@@ -179,9 +194,11 @@ def test_every_parameter_and_body_declares_a_schema() -> None:
         for parameter in operation.get("parameters", []):
             assert "schema" in parameter, f"{method.upper()} {path}: {parameter['name']} has none"
         body = operation.get("requestBody")
-        if body is not None:
-            assert "application/json" in body["content"]
-            assert "schema" in body["content"]["application/json"]
+        if body is None:
+            continue
+        assert body["content"], f"{method.upper()} {path}: request body declares no media type"
+        for media_type, media in body["content"].items():
+            assert "schema" in media, f"{method.upper()} {path}: {media_type} has no schema"
 
 
 def test_operation_ids_are_unique_and_stable_across_projections_and_order() -> None:

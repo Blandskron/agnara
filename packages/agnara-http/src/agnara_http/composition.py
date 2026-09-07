@@ -140,14 +140,27 @@ class HttpDefinitionError(DefinitionError):
 class BindingSource(StrEnum):
     """Where in a request one capability input is read from.
 
-    Cookies, forms, multipart bodies and uploads are not here because no
-    binding source exists for them yet; they are initiative I7.
+    ``BODY``, ``FORM`` and ``UPLOAD`` each read the request body, so a route
+    combining a JSON body with either of the others is refused: one request
+    has one body and the adapter will not guess which encoding was meant
+    (ADR 0072).
+
+    ``FORM`` and ``UPLOAD`` may be combined freely, which is what an ordinary
+    upload form posts: some text fields and a file.
     """
 
     PATH = "path"
     QUERY = "query"
     HEADER = "header"
     BODY = "body"
+    #: One RFC 6265 cookie, read by name. Case-sensitive, unlike a header.
+    COOKIE = "cookie"
+    #: One form field, from either an URL-encoded or a multipart body. An
+    #: application asks for a field, not for an encoding.
+    FORM = "form"
+    #: One uploaded file part, as ``bytes``. The input must be annotated
+    #: ``bytes``; the client filename is deliberately not exposed.
+    UPLOAD = "upload"
 
 
 _SOURCES: dict[BindingSource, _BindingSource] = {
@@ -155,6 +168,9 @@ _SOURCES: dict[BindingSource, _BindingSource] = {
     BindingSource.QUERY: _BindingSource.QUERY,
     BindingSource.HEADER: _BindingSource.HEADER,
     BindingSource.BODY: _BindingSource.BODY,
+    BindingSource.COOKIE: _BindingSource.COOKIE,
+    BindingSource.FORM: _BindingSource.FORM,
+    BindingSource.UPLOAD: _BindingSource.UPLOAD,
 }
 
 
@@ -326,10 +342,28 @@ class OpenApiOperation:
         return f"OpenApiOperation(summary={self._summary!r}, tags={self._tags!r})"
 
 
+def _limits(declaration: _Declaration) -> dict[str, int]:
+    """Only the limits this route overrode, so adapter defaults still apply."""
+    limits: dict[str, int] = {}
+    if declaration.max_body_bytes is not None:
+        limits["max_body_bytes"] = declaration.max_body_bytes
+    if declaration.max_parts is not None:
+        limits["max_parts"] = declaration.max_parts
+    return limits
+
+
 class _Declaration:
     """One recorded route, before any capability or plan is resolved."""
 
-    __slots__ = ("bindings", "max_body_bytes", "method", "openapi", "path", "target")
+    __slots__ = (
+        "bindings",
+        "max_body_bytes",
+        "max_parts",
+        "method",
+        "openapi",
+        "path",
+        "target",
+    )
 
     def __init__(
         self,
@@ -339,6 +373,7 @@ class _Declaration:
         bindings: tuple[Binding, ...],
         openapi: OpenApiOperation | None,
         max_body_bytes: int | None,
+        max_parts: int | None,
     ) -> None:
         self.method = method
         self.path = path
@@ -346,6 +381,7 @@ class _Declaration:
         self.bindings = bindings
         self.openapi = openapi
         self.max_body_bytes = max_body_bytes
+        self.max_parts = max_parts
 
     def describe(self) -> str:
         return f"{self.method} {self.path}"
@@ -501,6 +537,7 @@ class Http:
         *bindings: Binding,
         openapi: OpenApiOperation | None = None,
         max_body_bytes: int | None = None,
+        max_parts: int | None = None,
     ) -> Self:
         """Expose one capability at one method and path.
 
@@ -518,6 +555,10 @@ class Http:
                 the OpenAPI document. Omit it and the operation is served but
                 not documented.
             max_body_bytes: override the request body limit for this route.
+            max_parts: override how many parts a multipart body may carry.
+                Total size is already bounded by ``max_body_bytes``; this
+                bounds the count, because a small body can still hold many
+                empty parts.
 
         Returns:
             This builder, so declarations can be chained.
@@ -548,12 +589,19 @@ class Http:
                 f"{method} {path}: openapi must be an OpenApiOperation or None, got "
                 f"{type(openapi).__name__}"
             )
-        if max_body_bytes is not None and (
-            isinstance(max_body_bytes, bool) or not isinstance(max_body_bytes, int)
-        ):
-            raise HttpDefinitionError(f"{method} {path}: max_body_bytes must be an integer or None")
+        for name, limit in (("max_body_bytes", max_body_bytes), ("max_parts", max_parts)):
+            if limit is not None and (isinstance(limit, bool) or not isinstance(limit, int)):
+                raise HttpDefinitionError(f"{method} {path}: {name} must be an integer or None")
         self._declarations.append(
-            _Declaration(method.upper(), path, capability, bindings, openapi, max_body_bytes)
+            _Declaration(
+                method.upper(),
+                path,
+                capability,
+                bindings,
+                openapi,
+                max_body_bytes,
+                max_parts,
+            )
         )
         return self
 
@@ -574,10 +622,17 @@ class Http:
         *bindings: Binding,
         openapi: OpenApiOperation | None = None,
         max_body_bytes: int | None = None,
+        max_parts: int | None = None,
     ) -> Self:
         """Expose a capability at ``POST path``."""
         return self.route(
-            "POST", path, capability, *bindings, openapi=openapi, max_body_bytes=max_body_bytes
+            "POST",
+            path,
+            capability,
+            *bindings,
+            openapi=openapi,
+            max_body_bytes=max_body_bytes,
+            max_parts=max_parts,
         )
 
     def put(
@@ -587,10 +642,17 @@ class Http:
         *bindings: Binding,
         openapi: OpenApiOperation | None = None,
         max_body_bytes: int | None = None,
+        max_parts: int | None = None,
     ) -> Self:
         """Expose a capability at ``PUT path``."""
         return self.route(
-            "PUT", path, capability, *bindings, openapi=openapi, max_body_bytes=max_body_bytes
+            "PUT",
+            path,
+            capability,
+            *bindings,
+            openapi=openapi,
+            max_body_bytes=max_body_bytes,
+            max_parts=max_parts,
         )
 
     def patch(
@@ -600,10 +662,17 @@ class Http:
         *bindings: Binding,
         openapi: OpenApiOperation | None = None,
         max_body_bytes: int | None = None,
+        max_parts: int | None = None,
     ) -> Self:
         """Expose a capability at ``PATCH path``."""
         return self.route(
-            "PATCH", path, capability, *bindings, openapi=openapi, max_body_bytes=max_body_bytes
+            "PATCH",
+            path,
+            capability,
+            *bindings,
+            openapi=openapi,
+            max_body_bytes=max_body_bytes,
+            max_parts=max_parts,
         )
 
     def delete(
@@ -727,11 +796,7 @@ class Http:
                 declaration.path,
                 plans[capability_id],
                 tuple(binding._internal() for binding in declaration.bindings),
-                **(
-                    {}
-                    if declaration.max_body_bytes is None
-                    else {"max_body_bytes": declaration.max_body_bytes}
-                ),
+                **_limits(declaration),
                 openapi=None if declaration.openapi is None else declaration.openapi._internal(),
             )
             for declaration, capability_id in resolved

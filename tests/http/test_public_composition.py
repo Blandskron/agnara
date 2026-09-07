@@ -1071,3 +1071,287 @@ def test_a_dataclass_body_still_fails_and_the_defect_is_tracked() -> None:
 
     assert status == 400
     assert json.loads(payload)["detail"] == "expected Order, got dict"
+
+
+# ---------------------------------------------------------------------------
+# The 0.1.0a4 request surface, through public API (I7, ADR 0072)
+# ---------------------------------------------------------------------------
+
+
+def surface_app() -> HttpApplication:
+    """A login form, a session cookie and an upload: the ordinary trio."""
+    application = Agnara("portal")
+
+    @application.capability(description="Sign in.")
+    def sign_in(email: str, password: str, remember: bool = False) -> dict[str, Any]:
+        del password
+        return {"email": email, "remember": remember}
+
+    @application.capability(description="Read the signed-in profile.")
+    def profile(session: str = "anonymous") -> dict[str, Any]:
+        return {"session": session}
+
+    @application.capability(description="Store an avatar.")
+    def store(caption: str, avatar: bytes) -> dict[str, Any]:
+        return {"caption": caption, "size": len(avatar)}
+
+    http = Http("public")
+    http.post(
+        "/sessions",
+        sign_in,
+        Binding("email", BindingSource.FORM),
+        Binding("password", BindingSource.FORM),
+        Binding("remember", BindingSource.FORM),
+        openapi=OpenApiOperation(summary="Sign in"),
+    )
+    http.get("/profile", profile, Binding("session", BindingSource.COOKIE, wire_name="sid"))
+    http.post(
+        "/avatar",
+        store,
+        Binding("caption", BindingSource.FORM),
+        Binding("avatar", BindingSource.UPLOAD, wire_name="file"),
+        openapi=OpenApiOperation(summary="Store an avatar"),
+        max_body_bytes=4096,
+        max_parts=4,
+    )
+    return http.compile(application.compile(), openapi=OpenApiInfo("Portal", "1.0.0"))
+
+
+type Posted = tuple[bytes, tuple[tuple[bytes, bytes], ...]]
+
+
+def form_body(**fields: str) -> Posted:
+    body = "&".join(f"{name}={value}" for name, value in fields.items()).encode("utf-8")
+    return body, ((b"content-type", b"application/x-www-form-urlencoded"),)
+
+
+def multipart_body(*parts: bytes, boundary: str = "xBOUNDARYx") -> Posted:
+    delimiter = f"--{boundary}".encode("ascii")
+    joined = b"".join(b"\r\n" + part + b"\r\n" + delimiter for part in parts)
+    body = delimiter + joined + b"--\r\n"
+    return body, ((b"content-type", f"multipart/form-data; boundary={boundary}".encode()),)
+
+
+def text_part(name: str, value: str) -> bytes:
+    head = f'Content-Disposition: form-data; name="{name}"'.encode()
+    return head + b"\r\n\r\n" + value.encode("utf-8")
+
+
+def file_part(name: str, filename: str, content: bytes) -> bytes:
+    head = f'Content-Disposition: form-data; name="{name}"; filename="{filename}"'.encode()
+    return head + b"\r\nContent-Type: application/octet-stream\r\n\r\n" + content
+
+
+def test_an_html_form_post_reaches_a_capability() -> None:
+    body, headers = form_body(email="a%40b.com", password="hunter2", remember="true")
+
+    status, _, payload = request(surface_app(), "POST", "/sessions", body=body, headers=headers)
+
+    assert status == 200
+    assert json.loads(payload) == {"email": "a@b.com", "remember": True}
+
+
+def test_the_same_declaration_also_reads_a_multipart_form() -> None:
+    """An application asked for a field, not for an enctype."""
+    body, headers = multipart_body(text_part("email", "a@b.com"), text_part("password", "hunter2"))
+
+    status, _, payload = request(surface_app(), "POST", "/sessions", body=body, headers=headers)
+
+    assert status == 200
+    assert json.loads(payload) == {"email": "a@b.com", "remember": False}
+
+
+def test_a_session_cookie_reaches_a_capability() -> None:
+    status, _, payload = request(
+        surface_app(), "GET", "/profile", headers=((b"cookie", b"sid=s-42; other=x"),)
+    )
+
+    assert status == 200
+    assert json.loads(payload) == {"session": "s-42"}
+
+
+def test_a_missing_cookie_leaves_the_capability_default() -> None:
+    assert json.loads(request(surface_app(), "GET", "/profile")[2]) == {"session": "anonymous"}
+
+
+def test_an_upload_arrives_as_bytes_beside_its_form_fields() -> None:
+    content = b"\x89PNG\r\n\x1a\n" + b"x" * 40
+    body, headers = multipart_body(
+        text_part("caption", "Portrait"),
+        file_part("file", "me.png", content),
+    )
+
+    status, _, payload = request(surface_app(), "POST", "/avatar", body=body, headers=headers)
+
+    assert status == 200
+    assert json.loads(payload) == {"caption": "Portrait", "size": len(content)}
+
+
+def test_a_hostile_filename_cannot_reach_the_capability() -> None:
+    """ADR 0072: the client filename is never exposed, so it cannot be misused."""
+    body, headers = multipart_body(
+        text_part("caption", "c"),
+        file_part("file", "../../etc/passwd.png", b"data"),
+    )
+
+    status, _, payload = request(surface_app(), "POST", "/avatar", body=body, headers=headers)
+
+    assert status == 200
+    assert b"passwd" not in payload
+
+
+def test_an_oversized_upload_is_refused_with_a_structured_problem() -> None:
+    body, headers = multipart_body(
+        text_part("caption", "c"), file_part("file", "big.bin", b"x" * 8192)
+    )
+
+    status, response_headers, payload = request(
+        surface_app(), "POST", "/avatar", body=body, headers=headers
+    )
+
+    assert status == 413
+    assert response_headers[b"content-type"] == b"application/problem+json"
+    assert json.loads(payload)["code"] == "content_too_large"
+
+
+def test_too_many_parts_are_refused() -> None:
+    body, headers = multipart_body(*(text_part(f"f{index}", "") for index in range(5)))
+
+    status, _, payload = request(surface_app(), "POST", "/avatar", body=body, headers=headers)
+
+    assert status == 413
+    assert json.loads(payload)["code"] == "content_too_large"
+
+
+def test_a_wrong_encoding_for_an_upload_route_is_415() -> None:
+    body, headers = form_body(caption="c")
+
+    status, _, payload = request(surface_app(), "POST", "/avatar", body=body, headers=headers)
+
+    assert status == 415
+    assert json.loads(payload)["code"] == "unsupported_media_type"
+
+
+def test_a_malformed_multipart_body_is_400_and_repeats_no_content() -> None:
+    status, _, payload = request(
+        surface_app(),
+        "POST",
+        "/avatar",
+        body=b"not multipart at all",
+        headers=((b"content-type", b"multipart/form-data; boundary=xBOUNDARYx"),),
+    )
+
+    problem = json.loads(payload)
+    assert status == 400
+    assert problem["code"] == "invalid_input"
+    assert "not multipart" not in json.dumps(problem)
+
+
+def test_a_form_validation_failure_names_the_field_and_not_the_value() -> None:
+    """A password must never reach a problem document or a log line."""
+    application = Agnara("portal")
+
+    @application.capability
+    def sign_in(attempts: int, password: str) -> None: ...
+
+    http = Http()
+    http.post(
+        "/sessions",
+        sign_in,
+        Binding("attempts", BindingSource.FORM),
+        Binding("password", BindingSource.FORM),
+    )
+    asgi = http.compile(application.compile())
+    body, headers = form_body(attempts="many", password="hunter2")
+
+    status, _, payload = request(asgi, "POST", "/sessions", body=body, headers=headers)
+    problem = json.loads(payload)
+
+    assert status == 400
+    assert problem["details"]["location"] == "form.attempts"
+    assert "hunter2" not in json.dumps(problem)
+
+
+def test_a_cookie_value_never_reaches_a_problem_document() -> None:
+    application = Agnara("portal")
+
+    @application.capability
+    def profile(visits: int) -> None: ...
+
+    http = Http()
+    http.get("/profile", profile, Binding("visits", BindingSource.COOKIE))
+    asgi = http.compile(application.compile())
+
+    status, _, payload = request(
+        asgi, "GET", "/profile", headers=((b"cookie", b"visits=secret-token"),)
+    )
+    problem = json.loads(payload)
+
+    assert status == 400
+    assert problem["details"]["location"] == "cookie.visits"
+    assert "secret-token" not in json.dumps(problem)
+
+
+def test_the_openapi_document_describes_the_new_sources_truthfully() -> None:
+    document = surface_app().openapi()
+
+    sessions = document["paths"]["/sessions"]["post"]
+    assert sorted(sessions["requestBody"]["content"]) == [
+        "application/x-www-form-urlencoded",
+        "multipart/form-data",
+    ]
+    avatar = document["paths"]["/avatar"]["post"]
+    assert list(avatar["requestBody"]["content"]) == ["multipart/form-data"]
+    media = avatar["requestBody"]["content"]["multipart/form-data"]
+    assert media["schema"]["properties"]["file"] == {"type": "string", "format": "binary"}
+    assert media["encoding"] == {"file": {"contentType": "application/octet-stream"}}
+    # `/profile` declared no OpenApiOperation, so it is served and undocumented.
+    assert "/profile" not in document["paths"]
+
+
+def test_a_json_body_cannot_be_combined_with_a_form_through_public_api() -> None:
+    application = Agnara("portal")
+
+    @application.capability
+    def confused(payload: dict[str, Any], extra: str) -> None: ...
+
+    http = Http()
+    http.post(
+        "/confused",
+        confused,
+        Binding("payload", BindingSource.BODY),
+        Binding("extra", BindingSource.FORM),
+    )
+
+    with pytest.raises(HttpDefinitionError, match="one request has one body"):
+        http.compile(application.compile())
+
+
+def test_an_upload_input_must_be_bytes_through_public_api() -> None:
+    application = Agnara("portal")
+
+    @application.capability
+    def store(avatar: str) -> None: ...
+
+    http = Http()
+    http.post("/avatar", store, Binding("avatar", BindingSource.UPLOAD))
+
+    with pytest.raises(HttpDefinitionError, match="must be annotated `bytes`"):
+        http.compile(application.compile())
+
+
+def test_a_nonsense_part_limit_is_refused_at_declaration() -> None:
+    with pytest.raises(HttpDefinitionError, match="max_parts must be an integer"):
+        Http().post("/a", lambda: None, max_parts="many")  # ty: ignore[invalid-argument-type]
+
+
+def test_every_binding_source_is_public_and_ordered() -> None:
+    assert [member.value for member in BindingSource] == [
+        "path",
+        "query",
+        "header",
+        "body",
+        "cookie",
+        "form",
+        "upload",
+    ]
