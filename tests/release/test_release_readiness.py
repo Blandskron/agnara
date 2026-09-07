@@ -120,6 +120,50 @@ def test_the_status_file_declares_a_supported_schema() -> None:
     assert document()["schema_version"] == readiness.SCHEMA_VERSION
 
 
+@pytest.mark.parametrize(
+    ("mutation", "expected_fragment"),
+    [
+        ("renamed", "unclassified"),
+        ("removed", "unclassified"),
+        ("extra", "not exported"),
+        ("reordered", "order differs"),
+        ("duplicate", "repeats"),
+        ("unknown-stability", "unknown stability"),
+        ("internal", "must not appear"),
+    ],
+)
+def test_public_api_gate_rejects_manifest_drift(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mutation: str,
+    expected_fragment: str,
+) -> None:
+    manifest = json.loads(readiness.PUBLIC_API_PATH.read_text(encoding="utf-8"))
+    exports = manifest["exports"]
+    if mutation == "renamed":
+        exports[0]["name"] = "Renamed"
+    elif mutation == "removed":
+        exports.pop(0)
+    elif mutation == "extra":
+        exports.append({"name": "FutureAPI", "stability": "provisional"})
+    elif mutation == "reordered":
+        exports[0], exports[1] = exports[1], exports[0]
+    elif mutation == "duplicate":
+        exports[1]["name"] = exports[0]["name"]
+    elif mutation == "unknown-stability":
+        exports[0]["stability"] = "mysterious"
+    else:
+        exports[0]["stability"] = "internal"
+    path = tmp_path / "public-api.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    monkeypatch.setattr(readiness, "PUBLIC_API_PATH", path)
+
+    status, detail = readiness.check_public_api_declared()
+
+    assert status == readiness.UNSATISFIED
+    assert expected_fragment in detail
+
+
 def test_the_current_target_appears_in_the_release_plan() -> None:
     """A target nobody planned is a typo, not a release."""
     assert document()["current_target"] in PLAN_PATH.read_text(encoding="utf-8")

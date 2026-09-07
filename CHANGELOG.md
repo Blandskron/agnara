@@ -31,6 +31,12 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- The 41 top-level `agnara` exports now have an explicit provisional
+  classification and an exact machine-readable snapshot. Release readiness
+  detects additions, removals, renames, reordered exports, duplicate entries
+  and unknown stability labels instead of treating the presence of `__all__`
+  as sufficient. The accompanying policy defines pre-1.0 change and future
+  stable deprecation expectations ([#270]).
 - Generated modular apps expose transport-neutral types and Protocols through
   the explicit `application.contracts` module, and generated projects include
   a static architecture test that allows only that target across apps. Direct
@@ -650,3 +656,4 @@ under `0.1.0a2` instead.
 [#255]: https://github.com/Blandskron/agnara/issues/255
 [#266]: https://github.com/Blandskron/agnara/issues/266
 [#268]: https://github.com/Blandskron/agnara/issues/268
+[#270]: https://github.com/Blandskron/agnara/issues/270

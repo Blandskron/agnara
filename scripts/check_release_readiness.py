@@ -20,6 +20,7 @@ Uses the standard library only, like the rest of the repository's own tooling.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import re
 import subprocess
@@ -35,6 +36,8 @@ STATUS_PATH = ROOT / "docs" / "releases" / "release-status.json"
 PLAN_PATH = ROOT / "docs" / "releases" / "RELEASE_PLAN.md"
 CHANGELOG_PATH = ROOT / "CHANGELOG.md"
 PACKAGES_DIR = ROOT / "packages"
+PUBLIC_API_PATH = ROOT / "docs" / "public-api.json"
+CORE_INIT_PATH = PACKAGES_DIR / "agnara" / "src" / "agnara" / "__init__.py"
 
 SCHEMA_VERSION = 1
 
@@ -236,15 +239,100 @@ def check_license_metadata() -> tuple[str, str]:
     return SATISFIED, "LICENSE present and every package declares Apache-2.0"
 
 
+def _literal_all(path: Path) -> list[str] | None:
+    """Read a module's literal ``__all__`` without importing the package."""
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    except OSError, SyntaxError, UnicodeError:
+        return None
+    for node in tree.body:
+        if not (
+            (
+                isinstance(node, ast.Assign)
+                and any(
+                    isinstance(target, ast.Name) and target.id == "__all__"
+                    for target in node.targets
+                )
+            )
+            or (
+                isinstance(node, ast.AnnAssign)
+                and isinstance(node.target, ast.Name)
+                and node.target.id == "__all__"
+            )
+        ):
+            continue
+        value = node.value
+        if value is None:
+            return None
+        try:
+            exported = ast.literal_eval(value)
+        except ValueError, TypeError:
+            return None
+        if isinstance(exported, list) and all(isinstance(name, str) for name in exported):
+            return exported
+        return None
+    return None
+
+
+def _classified_public_names() -> tuple[list[str] | None, str | None]:
+    """Validate and return the exact classified top-level core surface."""
+    try:
+        document = json.loads(PUBLIC_API_PATH.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        return None, f"public API manifest cannot be read: {exc}"
+    if not isinstance(document, dict) or document.get("schema_version") != 1:
+        return None, "public API manifest must use schema_version 1"
+    if document.get("distribution") != "agnara" or document.get("module") != "agnara":
+        return None, "public API manifest must describe the agnara distribution and module"
+    exports = document.get("exports")
+    if not isinstance(exports, list):
+        return None, "public API manifest exports must be a list"
+
+    names: list[str] = []
+    allowed = {"stable", "provisional", "experimental", "internal"}
+    for index, item in enumerate(exports):
+        if not isinstance(item, dict) or set(item) != {"name", "stability"}:
+            return None, f"public API export {index} must contain only name and stability"
+        name, stability = item["name"], item["stability"]
+        if not isinstance(name, str) or not name:
+            return None, f"public API export {index} has an invalid name"
+        if stability not in allowed:
+            return None, f"public API export {name!r} has unknown stability {stability!r}"
+        if stability == "internal":
+            return None, f"internal name {name!r} must not appear in the public export manifest"
+        names.append(name)
+    duplicates = sorted(name for name in set(names) if names.count(name) > 1)
+    if duplicates:
+        return None, "public API manifest repeats: " + ", ".join(duplicates)
+    return names, None
+
+
 def check_public_api_declared() -> tuple[str, str]:
-    """Every distributable package states its public surface with __all__."""
+    """Every package declares exports; core exports exactly match their classifications."""
     missing = []
     for init in sorted(PACKAGES_DIR.glob("*/src/*/__init__.py")):
-        if "__all__" not in init.read_text(encoding="utf-8"):
+        if _literal_all(init) is None:
             missing.append(init.parent.name)
     if missing:
-        return UNSATISFIED, "packages without a declared __all__: " + ", ".join(missing)
-    return SATISFIED, "every first-party package declares __all__"
+        return UNSATISFIED, "packages without a literal __all__: " + ", ".join(missing)
+
+    classified, error = _classified_public_names()
+    if error is not None:
+        return UNSATISFIED, error
+    implemented = _literal_all(CORE_INIT_PATH)
+    if implemented != classified:
+        assert implemented is not None and classified is not None
+        missing_classification = [name for name in implemented if name not in classified]
+        absent_exports = [name for name in classified if name not in implemented]
+        detail = []
+        if missing_classification:
+            detail.append("unclassified: " + ", ".join(missing_classification))
+        if absent_exports:
+            detail.append("not exported: " + ", ".join(absent_exports))
+        if not detail:
+            detail.append("export order differs from the manifest")
+        return UNSATISFIED, "; ".join(detail)
+    return SATISFIED, f"all {len(classified or ())} agnara exports are classified exactly"
 
 
 #: Automated gate id -> the function that decides it. A gate whose id is listed

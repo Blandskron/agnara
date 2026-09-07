@@ -52,6 +52,7 @@ Each level may cite the level above it. None should restate it.
 | Generated project layout | `docs/SCAFFOLDING.md` | cite |
 | Manifest format | `docs/PROJECT_MANIFEST.md` | cite |
 | Public API shape and intent | `docs/API_DESIGN.md` | cite |
+| Public API inventory and stability policy | `docs/PUBLIC_API.md` + `docs/public-api.json` | cite |
 | External standards studied | `docs/REFERENCE_RESEARCH.md` | cite |
 | Contribution and git process | `CONTRIBUTING.md`, `GIT_WORKFLOW.md` | cite |
 | Agent operating rules | `AGENTS.md` | cite |
@@ -82,7 +83,8 @@ agree.
 this that a machine can check:
 
 - every package listed in `docs/MATURITY.md` exists, and vice versa;
-- the public-name counts in the maturity table match the packages;
+- the public-name counts in the maturity table match the packages, and the
+  exact top-level core exports match their stability manifest;
 - every status token used is in the declared vocabulary;
 - every canonical document this map names exists;
 - every ADR and RFC referenced by the planning documents exists;
