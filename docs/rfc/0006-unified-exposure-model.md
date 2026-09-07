@@ -1,9 +1,10 @@
 # RFC 0006 — Unified Exposure Model
 
-- Status: Proposed
+- Status: Answered by ADR 0070
 - Date: 2026-09-06
 - Tracking: GitHub Issue #271
 - Initiative: I1
+- Answered by: ADR 0070
 
 ## 1. Summary
 
@@ -402,23 +403,55 @@ separate MCP servers. Protocol kind plus local name cannot distinguish them.
 Rejected. It would make core understand paths, tool grammars and every future
 adapter's semantics.
 
-## 17. Open questions for the implementation spike
+## 17. Questions the implementation spike answered
 
-1. Exact public names and whether the generic compilation envelope is public.
-2. Whether `ExposureId` is a dedicated value or a structural mapping key.
-3. How surface identity enters introspection version 0 without creating a
-   premature serialized compatibility promise.
-4. Whether orchestration first lands as a standalone project compiler or an
-   extension of `Agnara.compile()`.
-5. The compatibility window for provisional `Mcp`, `FrozenMcpTools` and
-   direct `describe_app(..., exposures=...)` entry points.
+ADR 0070 records the decisions and the reasoning. In summary:
 
-These are bounded API choices. They do not reopen ownership, the two-layer
-model, compilation order or the separation of availability and authorization.
+1. **Exact public names, and whether the compilation envelope is public.**
+   `SurfaceId`, `ExposureId`, `CompiledExposure`, `SurfaceCompilation`,
+   `FrozenExposureRegistry`, `compile_exposures` and `ExposureError`, exported
+   from `agnara.exposure` and classified `provisional`. The envelope is
+   public and generic over the runtime artifact, because it is the adapter
+   compiler contract: without a named type for it, each adapter invents its
+   own handoff shape and the fourth lifecycle this RFC exists to prevent
+   reappears as a helper.
+
+2. **Whether `ExposureId` is a dedicated value or a structural mapping key.**
+   A dedicated frozen value. A duplicate must be named in a diagnostic before
+   its record exists, and a lookup should not require constructing the record
+   being looked up.
+
+3. **How surface identity enters introspection version 0.** As
+   adapter-namespaced canonical detail under the kernel-owned key `surface`,
+   with no `INTROSPECTION_VERSION` bump. `filter_snapshot` already redacts
+   exposure detail, so deployment topology is withheld by default — which a
+   descriptor field would not have been.
+
+4. **Standalone project compiler or an extension of `Agnara.compile()`.**
+   Standalone. `Agnara.compile()` returns a governed public type that every
+   Historical Reference Application depends on, and `ARCHITECTURE.md`
+   section 5 warns against growing `Agnara` into a god object.
+
+5. **The compatibility window for provisional `Mcp`, `FrozenMcpTools` and
+   direct `describe_app(..., exposures=...)`.** All three keep working
+   through `0.1.0a4`. `Mcp` gains a keyword-only `surface` and a
+   `compile_surface()` beside the existing `compile()`; `describe_app` accepts
+   the frozen registry as the supported shape and the mapping as the legacy
+   one. Phase 3 below retires the legacy paths, with migration examples,
+   once the public composition API exists.
+
+One decision changed this RFC's own proposal rather than merely selecting
+from it. Section 8 sketched `CompiledExposure.discovery: ExposureDescriptor`;
+the implementation carries canonical JSON detail instead and lets
+`agnara.introspection` derive the descriptor. `ExposureDescriptor` lives in
+the introspection package, so the sketched field would have made availability
+depend on publication and closed an import cycle. ADR 0070 records the
+reasoning; the separation this RFC states in section 12 is now structural and
+enforced by an architecture test.
 
 ## 18. Acceptance evidence for implementation
 
-The later implementation is not complete until tests prove:
+The implementation is complete when tests prove:
 
 - one capability exposed through HTTP and MCP yields two records from actual
   compiled dispatch surfaces;
@@ -430,3 +463,8 @@ The later implementation is not complete until tests prove:
 - HTTP and MCP dispatch retain their current protocol-specific behavior;
 - core imports no adapter or SDK;
 - frozen registries are deterministic and safe for concurrent reads.
+
+Every item is covered by `tests/unit/test_exposure_model.py`,
+`tests/integration/test_exposure_aggregation.py` and
+`tests/architecture/test_exposure_boundaries.py`. The remaining work is phase
+3: the public composition API, which is a separate task.

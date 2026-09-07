@@ -47,9 +47,16 @@ since `0.1.0a3`:
    `reference-apps-exist` and `mcp-exposure-from-application`.
 2. **`agnara-http` declares no public composition surface.** Composing HTTP
    requires importing underscore-prefixed modules, which is exactly what
-   `reference-apps-no-internal-imports` forbids. RFC 0006 proposes the unified
-   exposure model beneath it; no implementation exists, and the design is
-   deliberately waiting for external evidence rather than preceding it.
+   `reference-apps-no-internal-imports` forbids.
+
+   The architectural half of this blocker is now resolved: the unified
+   exposure model is implemented and RFC 0006 is answered by ADR 0070, so the
+   model a composition API would sit on is settled and both adapters compile
+   through it. **The blocker itself is unchanged.** `agnara-http` still
+   exports nothing, an application still cannot compose HTTP through
+   supported entry points, and this gate and `http-exposure-from-application`
+   remain unsatisfiable. What changed is that the remaining work is an API on
+   a decided model rather than a design question. `BACKLOG.md` E1C.3 owns it.
 
 ## Gate state
 

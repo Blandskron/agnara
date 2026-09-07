@@ -70,7 +70,8 @@ public surface instead of committing to one.
 | Policy engine | `IMPLEMENTED` | Pre-handler evaluation, scopes, principals, confirmation. ADR 0024. |
 | Confirmation requirements | `IMPLEMENTED` | Declaration and verification; no durable pending-approval state. |
 | Telemetry hooks | `IMPLEMENTED` | Start and terminal events. ADR 0023. No span model in the kernel. |
-| Introspection snapshot | `IMPLEMENTED` | Versioned, frozen, no runtime objects reachable. ADR 0045. |
+| Unified exposure model | `IMPLEMENTED` | `agnara.exposure`: neutral identity, per-surface adapter compilation, one frozen availability registry. ADR 0070, RFC 0006. Both shipped adapters go through it. |
+| Introspection snapshot | `IMPLEMENTED` | Versioned, frozen, no runtime objects reachable. ADR 0045. Exposures are derived from the frozen exposure registry. |
 | Discovery visibility | `IMPLEMENTED` | Per-field publication decisions. ADR 0046. |
 | Idempotency | `IMPLEMENTED` as metadata, `PLANNED` as behaviour | Declared and published; the runtime performs no deduplication or replay. |
 | Streaming results | `RESEARCH` | Nothing in the kernel returns or transports an async iterator. |
@@ -93,7 +94,8 @@ public surface instead of committing to one.
 | Documentation providers | `IMPLEMENTED` | Swagger UI, ReDoc and Scalar, vendored and version-pinned. ADR 0036-0040. |
 | Discovery endpoint | `IMPLEMENTED` | ADR 0049. |
 | Explorer | `IMPLEMENTED` | Read-only shell. ADR 0052. |
-| Public composition API | `EXPERIMENTAL` | The `Http(...)` shape in `docs/API_DESIGN.md` section 4 is a design sketch, not stable syntax. |
+| Exposure compilation | `IMPLEMENTED` | `_compile_exposure_surface` derives neutral records from the compiled route table. ADR 0070. Still private, because the builder that feeds it is the unsettled part. |
+| Public composition API | `EXPERIMENTAL` | The model beneath it is settled (ADR 0070); the `Http(...)` shape in `docs/API_DESIGN.md` section 4 is still a design sketch, and the distribution still exports nothing. |
 | Cookies, forms, multipart, uploads | `PLANNED` | No binding source exists for any of them. |
 | Streaming, SSE, WebSockets | `PLANNED` | The ASGI boundary handles no `websocket` scope. |
 | Middleware / interceptors | `RESEARCH` | No extension point. |
@@ -106,6 +108,7 @@ public surface instead of committing to one.
 | Subsystem | Status | Notes |
 | --- | --- | --- |
 | Tool projection | `IMPLEMENTED` | ADR 0043, ADR 0044. |
+| Exposure surface | `IMPLEMENTED` | `Mcp(app, surface=...)` and `compile_surface()` contribute neutral records. ADR 0070. |
 | Tool invocation dispatch | `IMPLEMENTED` | |
 | Schema mapping | `IMPLEMENTED` | |
 | Result projection | `IMPLEMENTED` | Canonical results into MCP shapes. |

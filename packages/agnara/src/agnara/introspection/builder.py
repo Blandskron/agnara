@@ -18,6 +18,7 @@ from agnara.capability.identity import CapabilityId
 from agnara.core.di.compiler import _get_dependencies
 from agnara.core.di.registry import DIRegistry
 from agnara.execution.plan import ExecutionPlan
+from agnara.exposure import FrozenExposureRegistry
 from agnara.introspection.descriptors import (
     ApplicationDescriptor,
     BoundedContextDescriptor,
@@ -99,8 +100,39 @@ def _providers(registry: DIRegistry) -> tuple[ProviderDescriptor, ...]:
     )
 
 
+#: Either the compiled exposure registry, which derives its own descriptors,
+#: or the transitional handwritten mapping keyed by capability id.
+type ExposureSource = FrozenExposureRegistry | Mapping[str, Iterable[ExposureDescriptor]]
+
+
+def _from_registry(
+    registry: FrozenExposureRegistry,
+    known: frozenset[str],
+) -> dict[str, tuple[ExposureDescriptor, ...]]:
+    """Derive descriptors from compiled availability, never from a second list.
+
+    A capability id outside `known` belongs to another application of the same
+    project, and that application's own descriptor reports it. Filtering here
+    is therefore not omission; passing one project-wide registry while
+    describing each application in turn is the intended use.
+    """
+    described: dict[str, list[ExposureDescriptor]] = {}
+    for exposure in registry.values():
+        capability_id = str(exposure.capability_id)
+        if capability_id not in known:
+            continue
+        described.setdefault(capability_id, []).append(
+            ExposureDescriptor.of(
+                exposure.id.adapter,
+                exposure.id.name,
+                exposure.published_detail(),
+            )
+        )
+    return {capability_id: tuple(items) for capability_id, items in described.items()}
+
+
 def _exposures(
-    exposures: Mapping[str, Iterable[ExposureDescriptor]] | None,
+    exposures: ExposureSource | None,
     known: frozenset[str],
 ) -> dict[str, tuple[ExposureDescriptor, ...]]:
     """Attach adapter-contributed exposures, refusing one that names nothing.
@@ -111,9 +143,12 @@ def _exposures(
     """
     if exposures is None:
         return {}
+    if isinstance(exposures, FrozenExposureRegistry):
+        return _from_registry(exposures, known)
     if not isinstance(exposures, Mapping):
         raise IntrospectionError(
-            f"introspection exposures must be a mapping, got {type(exposures).__name__}"
+            "introspection exposures must be a FrozenExposureRegistry or a mapping, got "
+            f"{type(exposures).__name__}"
         )
     attached: dict[str, tuple[ExposureDescriptor, ...]] = {}
     for capability_id, described in exposures.items():
@@ -136,15 +171,23 @@ def describe_app(
     app: Agnara,
     plans: Iterable[ExecutionPlan],
     *,
-    exposures: Mapping[str, Iterable[ExposureDescriptor]] | None = None,
+    exposures: ExposureSource | None = None,
     dependencies: DIRegistry | None = None,
 ) -> ApplicationDescriptor:
     """Describe one compiled application as immutable descriptors.
 
     Every declared capability must have a compiled plan. Extra plans are
     permitted, so a caller may pass a project-wide plan set while describing
-    one application. ``exposures`` is keyed by capability id and supplied by
-    whoever owns the adapters, because core imports none of them.
+    one application.
+
+    ``exposures`` is the `FrozenExposureRegistry` from
+    `agnara.exposure.compile_exposures`, and descriptors are derived from it.
+    That is the supported path, because a snapshot cannot then omit or invent
+    an exposure the runtime actually compiled. A mapping of capability id to
+    descriptors is still accepted for callers written before the exposure
+    model existed; it asserts what someone remembers composing, and RFC 0006
+    section 15 retires it once the composition API lands.
+
     ``dependencies`` adds the provider graph; without it a capability's
     dependencies are still named, but their scopes and relationships are not.
     """
