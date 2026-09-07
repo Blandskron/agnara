@@ -860,6 +860,38 @@ Tracking: GitHub Issue #282.
 
 ## Carried technical debt (post-0.1.0a3 audit)
 
+- [ ] D9 Reference applications reach past the public surface, and each time
+  because nothing public covers the need. #007 imports
+  `agnara._frozen.frozen_slots_dataclass`, whose module is underscore-prefixed
+  and declares `__all__ = []`, to get the frozen slotted value type ADR 0020
+  endorses. #008 imports `agnara.execution.runtime._tracking_id` to test a
+  redaction property it documents as a security guarantee. #003 imports
+  `agnara.policy.confirmation.ConfirmationPolicy`, which its own module
+  publishes but `agnara.policy` does not re-export, unlike `ScopePolicy`
+  beside it. The `0.1.0a4` gate "No reference application imports Agnara
+  internals" cannot pass while any of the three stands, and
+  `docs/releases/RELEASE_PLAN.md` requires the fix in the framework rather
+  than in the application. Found by the `0.1.0a4` baseline audit against
+  #001-#009 at their default branches on 2026-09-07; none of the nine was
+  modified. Tracking: GitHub Issue #288.
+
+- [ ] D8 Decide the governance boundary for the 23 core modules that declare a
+  public `__all__` and are classified by nothing. Thirty modules of the
+  `agnara` package declare a non-empty `__all__`; the manifest governs seven.
+  Reference applications #001-#009 import thirteen of the remaining 23, most
+  often `agnara.execution.result`, `agnara.errors` and
+  `agnara.capability.identity`. Every name they reach that way except
+  `ConfirmationPolicy` and `_tracking_id` (D9) is also on the governed parent
+  package, so these are avoidable deep imports rather than API gaps — but
+  nothing states which spelling is supported and nothing fails when an
+  application picks the other one. Each module is an entry point, an
+  implementation detail that should stop declaring `__all__`, or a set of
+  names belonging on its parent; that is an I9 decision, not an editorial one.
+  The audit corrected `docs/PUBLIC_API.md` and the `[Unreleased]` changelog
+  entry, which both claimed a completeness test that was never added, and left
+  the decision and the test it would enable to be taken deliberately.
+  Tracking: GitHub Issue #289.
+
 - [ ] D7 Decide whether `agnara.core.di` is the right public spelling for
   dependency injection. It is the second import in the README and in
   `examples/quickstart.py`, so `core` — a word that reads as an internal
@@ -869,7 +901,10 @@ Tracking: GitHub Issue #282.
   a migration cost, and it does not belong inside a change whose purpose is to
   make the current surface visible rather than to alter it. Decide with the
   `0.1.0a4` external evidence, which will show whether the spelling actually
-  confuses anyone, and before any name is considered for `stable`.
+  confuses anyone, and before any name is considered for `stable`. First
+  evidence: eight of the nine reference applications import `agnara.core.di`,
+  at 35 sites, and none found a way around it — it is the most imported module
+  of the core after the top-level package.
 
 - [ ] D6 `.apps` means two things. On `ApplicationDescriptor` it is the
   bounded contexts an application mounts (E1A.4); on `IntrospectionSnapshot`

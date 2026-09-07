@@ -51,9 +51,11 @@ without being published. See the `0.1.0a2` scope note below.
   `provisional`. Two thirds of the documented entry path were ungoverned —
   the README and the quickstart both open by importing `agnara.core.di`
   and `agnara.execution` — so a rename there passed every release gate. A
-  test now asserts the manifest names every core module that declares a
-  non-empty `__all__`, and another asserts every exported name actually
-  exists, which neither the manifest nor `__all__` can detect on its own.
+  test now asserts every exported name actually exists, which neither the
+  manifest nor `__all__` can detect on its own. This entry previously also
+  claimed a test asserting the manifest names every core module with a
+  non-empty `__all__`; no such test was added, and 23 core modules declaring
+  one remain ungoverned (Issue #289).
   `docs/public-api.json` moves to `schema_version` 2; no API is renamed,
   re-exported or promoted ([#275]).
 - Compiling an `Agnara` project now freezes every mounted `App` registry as

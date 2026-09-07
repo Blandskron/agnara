@@ -218,13 +218,17 @@ a policy bypass.
 **Status:** `PLANNED`
 **Blocks:** 1.0
 
-41 public names in the kernel, none classified. Every one is an implicit
-commitment.
+Every public name was once an implicit commitment. ADR 0067 and its follow-up
+closed the first part of this: 123 exports across seven core modules are
+classified `provisional`, and the release gate compares the manifest with each
+module's literal `__all__`.
 
-**Scope:** classify every public symbol as `stable`, `provisional`,
-`experimental` or `internal`; add an API-surface snapshot test so additions
-are deliberate; write the deprecation policy before the surface is large
-enough to make one painful.
+**Remaining scope:** decide the boundary for the 23 further core modules that
+declare a public `__all__` and are governed by nothing (Issue #289); add the
+completeness test once that decision makes it passable; write the deprecation
+policy before the surface is large enough to make one painful; and decide
+which names, if any, are promoted to `stable`, which the beta and
+release-candidate gates own.
 
 Cheap, and it gets more expensive every release it is deferred.
 
