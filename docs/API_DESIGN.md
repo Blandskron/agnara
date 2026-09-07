@@ -31,7 +31,9 @@ async def get_user(user_id: str) -> User:
 ## 4. HTTP exposure
 
 ```python
-http.get("/users/{user_id}", get_user)
+http = Http("public")
+http.get("/users/{user_id}", get_user, Binding("user_id", BindingSource.PATH))
+asgi = http.compile(app.compile(), openapi=OpenApiInfo("Users", "1.0"))
 ```
 
 `http` is a typed adapter surface selected by project composition, not a

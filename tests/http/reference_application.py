@@ -66,6 +66,18 @@ def internal_probe() -> str:
     return "ok"
 
 
+def sign_in(email: str, password: str, remember: bool = False) -> dict[str, Any]:
+    """Sign in with an ordinary HTML form post."""
+    del password, remember
+    return {"email": email}
+
+
+def replace_avatar(order_id: int, session: str, caption: str, avatar: bytes) -> dict[str, Any]:
+    """Replace an avatar from a multipart upload."""
+    del session, caption
+    return {"order_id": order_id, "size": len(avatar)}
+
+
 def _plan(handler: Any, name: str) -> ExecutionPlan:
     return ExecutionPlan.compile(
         CapabilityDefinition(
@@ -117,6 +129,33 @@ def exposures() -> tuple[_HTTPExposure, ...]:
             _plan(retire_order, "retire_order"),
             (_InputBinding("order_id", _BindingSource.PATH),),
             openapi=_OpenAPIPublication(summary="Retire an order", deprecated=True),
+        ),
+        _HTTPExposure(
+            "POST",
+            "/v1/sessions",
+            _plan(sign_in, "sign_in"),
+            (
+                _InputBinding("email", _BindingSource.FORM),
+                _InputBinding("password", _BindingSource.FORM),
+                _InputBinding("remember", _BindingSource.FORM),
+            ),
+            openapi=_OpenAPIPublication(
+                summary="Sign in",
+                publish_description=True,
+                tags=("sessions",),
+            ),
+        ),
+        _HTTPExposure(
+            "PUT",
+            "/v1/orders/{order_id}/avatar",
+            _plan(replace_avatar, "replace_avatar"),
+            (
+                _InputBinding("order_id", _BindingSource.PATH),
+                _InputBinding("session", _BindingSource.COOKIE, "sid"),
+                _InputBinding("caption", _BindingSource.FORM),
+                _InputBinding("avatar", _BindingSource.UPLOAD, "file"),
+            ),
+            openapi=_OpenAPIPublication(summary="Replace an avatar", tags=("orders",)),
         ),
         _HTTPExposure(
             "GET",

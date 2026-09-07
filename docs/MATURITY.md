@@ -36,7 +36,7 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 | Package | Status | Published to PyPI | Public names | Notes |
 | --- | --- | --- | --- | --- |
 | `agnara` | `IMPLEMENTED` | yes | 41 | The kernel. Standard library only. |
-| `agnara-http` | `EXPERIMENTAL` | no | 0 | Fully implemented behind private modules; the composition API is not settled. |
+| `agnara-http` | `EXPERIMENTAL` | no | 7 | Public composition API; documentation UI, Explorer and discovery stay internal. |
 | `agnara-mcp` | `IMPLEMENTED` | no | 20 | Tool projection only; see the MCP table. |
 | `agnara-cli` | `IMPLEMENTED` | no | 17 | Scaffolding and introspection commands. |
 | `agnara-telemetry` | `IMPLEMENTED` | no | 2 | OpenTelemetry metrics and tracing hooks. |
@@ -46,10 +46,15 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 Only `agnara` is published. The adapters are versioned and buildable from the
 repository; ADR 0021 keeps every version synchronized.
 
-`agnara-http` is `EXPERIMENTAL` rather than `IMPLEMENTED` for a specific
-reason recorded in `ARCHITECTURE.md` section 3: the transport behaviour is
-settled, the way an application *composes* it is not, so it declares an empty
-public surface instead of committing to one.
+`agnara-http` now declares a public surface: seven `provisional` names that
+compose capabilities, compile an ASGI 3 application and project OpenAPI.
+`docs/HTTP_COMPOSITION.md` is the supported guide.
+
+It stays `EXPERIMENTAL` rather than becoming `IMPLEMENTED` because three
+implemented subsystems are deliberately not reachable through it — the
+documentation UI providers, the Explorer and the authorized discovery endpoint
+— and because the surface is one release old. The transport behaviour is
+settled; the spelling is not.
 
 ## Kernel — `agnara`
 
@@ -87,7 +92,7 @@ public surface instead of committing to one.
 | ASGI boundary | `IMPLEMENTED` | `http` and `lifespan` scopes. ADR 0041. |
 | Lifespan bridge | `IMPLEMENTED` | ADR 0029. |
 | Routing | `IMPLEMENTED` | Compiled route registry. ADR 0034. |
-| Request binding | `IMPLEMENTED` | Path, query, header and body only. ADR 0026. |
+| Request binding | `IMPLEMENTED` | Path, query, header, JSON body, cookie, form field and file upload. ADR 0026, ADR 0072. Repeated values and collections are refused by decision. |
 | Response serialization | `IMPLEMENTED` | Deterministic success responses. ADR 0027. |
 | RFC 9457 problem responses | `IMPLEMENTED` | ADR 0028, ADR 0030. |
 | OpenAPI projection | `IMPLEMENTED` | Deterministic, pinned against a fixture. ADR 0032. |
@@ -98,8 +103,8 @@ public surface instead of committing to one.
 | Public composition API | `EXPERIMENTAL` | The model beneath it is settled (ADR 0070); the `Http(...)` shape in `docs/API_DESIGN.md` section 4 is still a design sketch, and the distribution still exports nothing. |
 | Cookies, forms, multipart, uploads | `PLANNED` | No binding source exists for any of them. |
 | Streaming, SSE, WebSockets | `PLANNED` | The ASGI boundary handles no `websocket` scope. |
-| Middleware / interceptors | `RESEARCH` | No extension point. |
-| CORS, compression, static files, proxy headers, trusted hosts | `PLANNED` | None present. |
+| Middleware / interceptors | `DEFERRED` | No extension point, deliberately: ADR 0072 keeps cross-cutting concerns at the ASGI layer, which already wraps an `HttpApplication`. |
+| CORS, compression, static files, proxy headers, trusted hosts | `DEFERRED` | None present. ADR 0072 records where each belongs instead: the reverse proxy, the ASGI server, or ASGI middleware around the application. |
 | Content negotiation, conditional and range requests | `RESEARCH` | None present. |
 | HTTP/2, HTTP/3 | `RESEARCH` | A server concern today; no Agnara position recorded. |
 
