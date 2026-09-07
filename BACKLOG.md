@@ -704,7 +704,16 @@ Generated code must:
   example's `RecordView` makes `contracts.py` executable documentation rather
   than an empty marker. Eleven focused boundary cases plus the full quality gate
   pass. Recorded in ADR 0066. Tracking: GitHub Issue #266.
-- [ ] E1A.6 Freeze app registry during project compilation.
+- [x] E1A.6 Freeze app registry during project compilation.
+  `Agnara.compile()` now freezes every mounted `App` registry before the
+  project's aggregate registry, so a compiled project cannot diverge from a
+  still-mutable bounded context. Mounting does not close startup registration:
+  declarations added after `include()` but before `compile()` are synchronized
+  into the project, retaining normal duplicate-capability diagnostics. Apps
+  not mounted on the project remain open, while an app shared by multiple
+  projects freezes on the first compilation and remains reusable because the
+  operation is idempotent. Eight focused lifecycle cases and the full quality
+  gate pass. Tracking: GitHub Issue #268.
 
 ## EPIC 0B — Agentic repository governance
 

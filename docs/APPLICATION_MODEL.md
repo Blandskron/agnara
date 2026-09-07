@@ -181,7 +181,13 @@ DISCOVER
 → START
 ```
 
-Apps must not mutate the global registry after freeze.
+Project compilation freezes both the project's aggregate capability registry
+and every app registry mounted on it. A mounted app may still be shared with
+another project, but its declarations are immutable after the first project
+compiles; apps not mounted on that project remain open. The freeze is
+idempotent, so later compilation of another project using the same app is
+valid. Mounting itself does not close registration: declarations added to a
+mounted app before compilation are synchronized into the compiled project.
 
 ## App descriptor
 
