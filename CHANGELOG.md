@@ -15,6 +15,15 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Changed
 
+- Workspace version transitions are now atomic and repository-owned. The new
+  `scripts/set_workspace_version.py` command moves all seven distributions and
+  six exact adapter-to-core pins together between `<target>.dev0` development
+  state and the public release target, refreshes `uv.lock`, supports a
+  no-write check, and rolls back source metadata if lock generation fails.
+  Release-readiness and installed-wheel gates now fail on an unbounded,
+  ranged, mismatched or marked core requirement. The isolated packaging lane
+  closes index access while installing all locally built first-party wheels,
+  preventing substitution by a public core ([#286]).
 - ADR 0069 answers both questions in RFC 0007 together. During alpha, every
   adapter will require the exact synchronized core version, and `develop` will
   carry the selected current target as `<target>.dev0`; choosing only one
@@ -740,3 +749,4 @@ under `0.1.0a2` instead.
 [#278]: https://github.com/Blandskron/agnara/issues/278
 [#280]: https://github.com/Blandskron/agnara/issues/280
 [#282]: https://github.com/Blandskron/agnara/issues/282
+[#286]: https://github.com/Blandskron/agnara/issues/286

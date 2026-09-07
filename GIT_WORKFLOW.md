@@ -584,9 +584,10 @@ No unrelated feature work.
 The release tracking Issue records the selected version and acceptance gates.
 On the branch:
 
-1. set every `packages/*/pyproject.toml` project version to the exact same PEP
-   440 value;
-2. refresh and verify `uv.lock`;
+1. run `python scripts/set_workspace_version.py release <version>` to update
+   every project version, all exact adapter-to-core pins, and `uv.lock` as one
+   validated operation;
+2. run `python scripts/set_workspace_version.py release <version> --check`;
 3. move current `[Unreleased]` entries in `CHANGELOG.md` to
    `[version] — YYYY-MM-DD`;
 4. create a fresh empty `[Unreleased]` section and update comparison links;
@@ -649,11 +650,18 @@ Do not use `hotfix/` as a shortcut around `develop`.
 If a hotfix produces a release, it must:
 
 - select the next compatible synchronized PEP 440 version;
-- update every first-party package version and `uv.lock`;
+- record it as `current_target`, then use
+  `python scripts/set_workspace_version.py release <version>` to update every
+  first-party package version, adapter core pin and `uv.lock`;
 - add the fix under `[Unreleased]`, then cut the dated changelog section;
 - pass the same release consistency, build, CI and attribution gates;
 - tag the exact accepted `main` commit with annotated `v<version>`;
 - propagate code, version and changelog changes back to `develop` by PR.
+
+After any release propagation, select the next target and run
+`python scripts/set_workspace_version.py development <next-version>` on its
+own reviewed development PR. Manual sweeps of package versions or core
+requirements are unsupported.
 
 ## Merge conflict policy
 
