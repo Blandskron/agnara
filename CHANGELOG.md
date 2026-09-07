@@ -55,19 +55,6 @@ without being published. See the `0.1.0a2` scope note below.
   ADR 0070 answers RFC 0006 and records the five spike decisions, the threat
   analysis and the rejected alternatives ([#293]).
 
-### Fixed
-
-- Nothing yet: the first defect dogfooding the new HTTP API found is recorded
-  rather than fixed. A dataclass-typed request body publishes a correct JSON
-  Schema and then rejects every request that matches it, because the schema
-  port validates without coercing and a JSON body decodes to a `dict`. Every
-  HTTP test in this repository uses `dict[str, Any]` for a body, so the shape
-  an application author reaches for first was the one shape nothing exercised.
-  Whether the schema port coerces is a decision about ADR 0004 and ADR 0025
-  that changes direct invocation for every transport, so it is not made inside
-  a task exposing an adapter's API. Tracked as [#296], stated in
-  `docs/HTTP_COMPOSITION.md`, and pinned by a test so the fix is noticed.
-
 ### Changed
 
 - Workspace version transitions are now atomic and repository-owned. The new
