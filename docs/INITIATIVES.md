@@ -225,14 +225,24 @@ a policy bypass.
 ### I9 — Public API governance
 
 **Horizon:** `NOW`
-**Status:** `PLANNED`
+**Status:** `IMPLEMENTED` for classification — ADR 0067, ADR 0074, ADR 0076
 **Blocks:** 1.0
 
-Every public core name is now an explicit commitment. The manifest classifies
-all 218 exports across all 30 non-private modules with a non-empty `__all__`,
-and the release gate checks in both directions. A new package or leaf module
-cannot silently become public. All remain `provisional`; promotion to `stable`
-is still owned by the beta and release-candidate gates.
+Every public name in every shipped distribution is an explicit commitment. The
+manifest classifies 280 exports across 47 non-private modules with a literal
+`__all__`, in all seven distributions, and the release gate checks in both
+directions: a module whose exports drift from the manifest fails, and so does a
+new public package or leaf module nobody classified. The two reserved
+namespaces classify an empty surface so that a first export cannot appear
+ungoverned. `scripts/check_public_imports.py` decides the same question for a
+tree outside this workspace, which is what makes an application built on
+Agnara auditable rather than merely reviewable.
+
+**Still open, and why this blocks 1.0.** Every export is `provisional`. Nothing
+is `stable`, and promotion is owned by the beta and release-candidate gates,
+not by this machinery: classifying a name records intent, it does not create a
+compatibility promise. The deprecation window a `stable` classification implies
+is undecided, and no symbol may be promoted before it is.
 
 ### I10 — Security program
 

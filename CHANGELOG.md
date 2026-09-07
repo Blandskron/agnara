@@ -37,6 +37,27 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Changed
 
+- Public API governance now covers every shipped distribution, not the kernel
+  alone. `docs/public-api.json` moves to `schema_version` 3 and classifies 280
+  provisional exports across 47 public modules in all seven distributions;
+  `agnara-mcp`, `agnara-telemetry` and `agnara-cli` were governed by nothing but
+  a count in `docs/MATURITY.md`, and `agnara-http` by a hand-written tuple in one
+  test. The readiness gate now resolves each module against the source root of
+  the distribution that claims it, refuses a manifest entry that reaches into a
+  sibling package, fails when any distribution is missing, and scans every
+  package's source in reverse so a new public module fails immediately. The
+  reserved `agnara-a2a` and `agnara-events` namespaces classify their empty
+  surface, because an empty `__all__` is skipped by the reverse walk and would
+  otherwise be the one place a first export could appear ungoverned. Nothing is
+  promoted: the alpha line still makes no compatibility promise (ADR 0076).
+- `docs/INITIATIVES.md` recorded I9 as `PLANNED` while its own body described
+  shipped, enforced machinery. I9 is `IMPLEMENTED` for classification and stays
+  open for stability promotion, which the beta and release-candidate gates own.
+- RFC 0001's proposed-API sketch is marked as what it is. It shows
+  `from agnara import Agnara, Context`, an API that was never built, and the
+  import audit found it presented as though it were current. The proposal text
+  is unchanged; the reasoning that led away from it is the useful part of the
+  record.
 - Public API governance now covers every non-private core module that declares
   exports: 218 provisional names across 30 package and leaf modules. The
   readiness gate resolves both `__init__.py` and leaf `.py` modules and scans
@@ -114,6 +135,23 @@ without being published. See the `0.1.0a2` scope note below.
   added in #254. Only the Python symbol changed: the field names, the builder
   functions, `INTROSPECTION_VERSION` and the serialized document are all
   unchanged, verified byte-for-byte ([#259]).
+
+### Removed
+
+- `agnara-cli` no longer publishes thirteen implementation helpers. `FileAction`,
+  `GenerationError`, `GenerationPlan`, `ManifestApp`, `ManifestError`,
+  `ProjectManifest`, `ResolvedTarget`, `TargetError`, `find_manifest`,
+  `load_manifest`, `parse_manifest`, `resolve_attribute` and `resolve_target`
+  were re-exported from underscore-prefixed modules through `0.1.0a3` without
+  ever being documented, used anywhere in the workspace, or designed as an API.
+  The distribution is consumed as the `agnara` command; `EXIT_OK`,
+  `EXIT_FAILED`, `EXIT_USAGE` and `main` remain, and are what a caller needs to
+  run that command in-process. **Migration:** code that needs one of the removed
+  names is reading the CLI's implementation and should import the private module
+  that defines it — `agnara_cli._generate` for the generation-plan names,
+  `agnara_cli._manifest` for the `agnara.toml` names, `agnara_cli._target` for
+  the target-resolution names — accepting that a private module carries no
+  compatibility promise (ADR 0076).
 
 ### Fixed
 

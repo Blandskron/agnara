@@ -1,10 +1,15 @@
-"""I9: the public core API is exact, classified and reviewable.
+"""I9: the public API of every shipped distribution is exact and classified.
 
 The manifest is checked twice on purpose. `scripts/check_release_readiness.py`
 reads each module's literal ``__all__`` with `ast`, because a release gate must
 not import the package it is judging. These tests import the modules, so they
 also see what the source text cannot: whether every exported name is really
 there.
+
+The governed surface is the whole workspace, not the kernel. An application
+consuming Agnara from outside this repository imports `agnara_http` and
+`agnara_mcp` as readily as `agnara`, so a governed core beside an ungoverned
+adapter is not a governed framework (ADR 0076).
 """
 
 from __future__ import annotations
@@ -15,7 +20,7 @@ from typing import Any
 
 import pytest
 
-from tests.architecture.boundaries import WORKSPACE_ROOT
+from tests.architecture.boundaries import DISTRIBUTIONS, WORKSPACE_ROOT
 
 MANIFEST = WORKSPACE_ROOT / "docs" / "public-api.json"
 POLICY = WORKSPACE_ROOT / "docs" / "PUBLIC_API.md"
@@ -26,25 +31,55 @@ def document() -> dict[str, Any]:
     return json.loads(MANIFEST.read_text(encoding="utf-8"))
 
 
-def modules() -> list[dict[str, Any]]:
-    return document()["modules"]
+def distributions() -> list[dict[str, Any]]:
+    return document()["distributions"]
 
 
-MODULE_NAMES = [entry["module"] for entry in modules()]
+DISTRIBUTION_NAMES = [entry["distribution"] for entry in distributions()]
+
+#: (distribution, module) for every classified module, so a failure names both.
+GOVERNED = [
+    (entry["distribution"], module["module"])
+    for entry in distributions()
+    for module in entry["modules"]
+]
+
+MODULE_NAMES = [module for _, module in GOVERNED]
 
 
 def exports_of(module: str) -> list[dict[str, str]]:
-    return next(entry for entry in modules() if entry["module"] == module)["exports"]
+    return next(
+        item for entry in distributions() for item in entry["modules"] if item["module"] == module
+    )["exports"]
 
 
 def test_manifest_identifies_its_contract() -> None:
-    assert document()["schema_version"] == 2
-    assert document()["distribution"] == "agnara"
+    assert document()["schema_version"] == 3
 
 
-def test_the_top_level_module_is_governed() -> None:
+def test_every_shipped_distribution_is_governed() -> None:
+    """A package nobody classified is a package nobody reviewed."""
+    assert set(DISTRIBUTION_NAMES) == set(DISTRIBUTIONS)
+
+
+def test_no_distribution_is_classified_twice() -> None:
+    assert len(DISTRIBUTION_NAMES) == len(set(DISTRIBUTION_NAMES))
+
+
+@pytest.mark.parametrize("entry", distributions(), ids=DISTRIBUTION_NAMES)
+def test_each_distribution_governs_its_own_entry_point(entry: dict[str, Any]) -> None:
     """Every other module is optional to add; this one is the released surface."""
-    assert "agnara" in MODULE_NAMES
+    import_name = entry["import_name"]
+
+    assert DISTRIBUTIONS[entry["distribution"]] == import_name
+    assert import_name in [module["module"] for module in entry["modules"]]
+
+
+@pytest.mark.parametrize(("distribution", "module"), GOVERNED)
+def test_a_module_is_governed_by_the_distribution_that_ships_it(
+    distribution: str, module: str
+) -> None:
+    assert module.split(".")[0] == DISTRIBUTIONS[distribution]
 
 
 def test_no_module_is_classified_twice() -> None:
@@ -84,8 +119,25 @@ def test_every_exported_name_actually_exists(module: str) -> None:
 
 
 @pytest.mark.parametrize("module", MODULE_NAMES)
+def test_no_public_name_is_underscore_prefixed(module: str) -> None:
+    """`__version__` is the one dunder a distribution may publish."""
+    offenders = [
+        entry["name"]
+        for entry in exports_of(module)
+        if entry["name"].startswith("_") and entry["name"] != "__version__"
+    ]
+
+    assert not offenders, f"{module} publishes private-looking names: {offenders}"
+
+
+@pytest.mark.parametrize("module", MODULE_NAMES)
 def test_alpha_makes_no_stable_api_claim(module: str) -> None:
-    assert {entry["stability"] for entry in exports_of(module)} == {"provisional"}
+    """No symbol is `stable` merely because it is useful.
+
+    A module that exports nothing -- a reserved namespace -- makes no claim at
+    all, which is the honest classification for a package with no code.
+    """
+    assert {entry["stability"] for entry in exports_of(module)} <= {"provisional"}
 
 
 def test_policy_defines_every_stability_term() -> None:
@@ -99,9 +151,14 @@ def test_policy_names_the_machine_readable_inventory() -> None:
     assert "public-api.json" in POLICY.read_text(encoding="utf-8")
 
 
-def test_policy_lists_every_governed_module() -> None:
+@pytest.mark.parametrize("distribution", DISTRIBUTION_NAMES)
+def test_policy_lists_every_governed_distribution(distribution: str) -> None:
+    assert f"`{distribution}`" in POLICY.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("module", MODULE_NAMES)
+def test_policy_lists_every_governed_module(module: str) -> None:
     """The human-facing policy must not describe a smaller surface than the gate."""
     policy = POLICY.read_text(encoding="utf-8")
 
-    for module in MODULE_NAMES:
-        assert f"`{module}`" in policy, module
+    assert f"`{module}`" in policy, module
