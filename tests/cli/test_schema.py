@@ -200,7 +200,7 @@ def test_an_absent_attribute_is_refused(project: Path, capsys: pytest.CaptureFix
     code, _, err = run(project, "absent", capsys=capsys)
 
     assert code == EXIT_FAILED
-    assert "defines no attribute 'absent'" in err
+    assert "has no attribute 'absent'" in err
 
 
 def test_a_format_must_be_named() -> None:

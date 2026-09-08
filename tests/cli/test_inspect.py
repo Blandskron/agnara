@@ -238,7 +238,7 @@ def test_an_empty_result_is_still_a_valid_json_document(
         (":app", "expected 'module:attribute'"),
         ("billing:", "expected 'module:attribute'"),
         ("bill ing:app", "is not a module path"),
-        ("billing:not an attribute", "is not an attribute name"),
+        ("billing:not an attribute", "is not an attribute path"),
     ],
 )
 def test_a_malformed_target_is_rejected_before_anything_is_imported(
@@ -278,9 +278,9 @@ def test_a_target_module_that_raises_reports_the_reason(
 @pytest.mark.parametrize(
     ("target", "arguments", "expected"),
     [
-        ("billing:absent", (), "defines no attribute 'absent'"),
-        ("billing:not_an_app", (), "is a object, not an Agnara application"),
-        ("billing:app", ("--dependencies", "absent"), "defines no attribute 'absent'"),
+        ("billing:absent", (), "has no attribute 'absent'"),
+        ("billing:registry", (), "is a DIRegistry, not an Agnara application"),
+        ("billing:app", ("--dependencies", "absent"), "has no attribute 'absent'"),
         ("billing:app", ("--dependencies", "not_a_registry"), "not a DIRegistry"),
     ],
 )

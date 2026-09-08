@@ -60,8 +60,9 @@ def _split(target: str) -> tuple[str, str]:
     for part in module_name.split("."):
         if not part.isidentifier():
             raise TargetError(f"invalid target {target!r}: {module_name!r} is not a module path")
-    if not attribute.isidentifier():
-        raise TargetError(f"invalid target {target!r}: {attribute!r} is not an attribute name")
+    for part in attribute.split("."):
+        if not part.isidentifier():
+            raise TargetError(f"invalid target {target!r}: {attribute!r} is not an attribute path")
     return module_name, attribute
 
 
@@ -92,18 +93,22 @@ def resolve_attribute(target: str, *, search_path: Iterable[str] = ()) -> object
     """
     module_name, attribute = _split(target)
     module = _import(module_name, tuple(search_path))
-    value = getattr(module, attribute, _MISSING)
-    if value is _MISSING:
-        raise TargetError(f"the target module defines no attribute {attribute!r}")
+    value = module
+    for part in attribute.split("."):
+        value = getattr(value, part, _MISSING)
+        if value is _MISSING:
+            raise TargetError(f"module has no attribute {attribute!r} (failed at {part!r})")
     return value
 
 
 def _registry(module: object, name: str | None) -> DIRegistry | None:
     if name is None:
         return None
-    registry = getattr(module, name, None)
-    if registry is None:
-        raise TargetError(f"the target module defines no attribute {name!r}")
+    registry = module
+    for part in name.split("."):
+        registry = getattr(registry, part, None)
+        if registry is None:
+            raise TargetError(f"module has no attribute {name!r} (failed at {part!r})")
     if not isinstance(registry, DIRegistry):
         raise TargetError(f"attribute {name!r} is a {type(registry).__name__}, not a DIRegistry")
     return registry
@@ -124,9 +129,11 @@ def resolve_target(
     """
     module_name, attribute = _split(target)
     module = _import(module_name, tuple(search_path))
-    app = getattr(module, attribute, _MISSING)
-    if app is _MISSING:
-        raise TargetError(f"the target module defines no attribute {attribute!r}")
+    app = module
+    for part in attribute.split("."):
+        app = getattr(app, part, _MISSING)
+        if app is _MISSING:
+            raise TargetError(f"module has no attribute {attribute!r} (failed at {part!r})")
     if not isinstance(app, Agnara):
         raise TargetError(
             f"attribute {attribute!r} is a {type(app).__name__}, not an Agnara application"
@@ -139,5 +146,8 @@ def resolve_target(
             for capability_id in app.capabilities
         )
     except Exception as error:
-        raise TargetError(f"compiling {app.name!r} failed: {error}") from error
+        hint = ""
+        if dependencies is None and "is not supported by StandardSchemaAdapter" in str(error):
+            hint = " (did you forget to pass --dependencies, or is a dependency unregistered?)"
+        raise TargetError(f"compiling {app.name!r} failed: {error}{hint}") from error
     return ResolvedTarget(app, plans, registry)
