@@ -6,14 +6,26 @@ It does not authorize a release and does not replace
 in `release-status.json`.
 
 Audit baseline: `develop` at
-`c160fbd34ae69a34d1159698a0cb2a3b1be5bc1c`, 2026-09-08.
+`575d944a481f38598a290df8ba8c6cf0c72cbc2d`, 2026-09-08, re-audited from
+`c160fbd34ae69a34d1159698a0cb2a3b1be5bc1c`.
 
 ## Current verdict
 
 The candidate is technically coherent but is **not release-ready**. All seven
-automated gates and all sixteen mandatory evidence gates pass. Seven manual
-gates still require the release owner's judgment. External security controls
-and the six new PyPI Trusted Publishers are not yet verified as ready.
+automated gates, all sixteen mandatory evidence gates and the optional
+benchmark gate pass. Seven manual gates still require the release owner's
+judgment, and the six new PyPI Trusted Publishers are confirmed **not
+configured**, which is the one hard external blocker.
+
+The A4-R4 re-audit (recorded in `STATUS.md`) tested the recorded evidence
+rather than inheriting it: it re-derived every automated gate, re-ran the
+engineering baseline, rebuilt all fourteen artifacts and revalidated external
+consumption, the installed CLI and the adversarial security properties against
+those artifacts in a wheel-only environment. It found and fixed one
+consumer-facing documentation defect in `agnara-mcp` and one dangling evidence
+commit, and re-established the twelve evidence records that the former
+correctly expired. Required cross-platform CI has not yet run on the resulting
+commit, which is the remaining mechanical step before owner review.
 
 ## Cycle 1 — Locked runtime dependency audit
 
