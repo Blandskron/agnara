@@ -15,6 +15,18 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- A threat model for the surface `0.1.0a4` publishes. `docs/THREAT_MODEL.md`
+  records assets, trust boundaries, attacker-controlled inputs and abuse cases,
+  and separates protections that name the test proving them from assumptions
+  delegated to ASGI servers, proxies and applications. `tests/security/`
+  regresses it: adversarial HTTP and ASGI events, authorization and disclosure
+  properties across both transports, and a repository-wide credential scan that
+  covers the fixtures, docs and workflows a distribution gate never sees. It is
+  scoped to a4 and is not the beta security program; the document ends with
+  what the audit did not do. One finding is open and recorded rather than
+  fixed: `scopes=` is enforced over MCP and ignored over HTTP, which is an
+  architectural decision rather than an adapter patch ([#308]).
+
 - One exposure model governs every protocol adapter. `agnara.exposure` owns
   neutral identity — adapter kind, project-local surface name, adapter-local
   name — per-surface adapter compilation and a single frozen availability
@@ -34,6 +46,25 @@ without being published. See the `0.1.0a2` scope note below.
   third-party dependency, and no kernel change needed for a third adapter.
   ADR 0070 answers RFC 0006 and records the five spike decisions, the threat
   analysis and the rejected alternatives ([#293]).
+
+### Fixed
+
+- A JSON request body nested beyond the decoder's stack raised `RecursionError`
+  out of the HTTP dispatcher. 80 KB was enough -- far inside the 1 MiB default
+  limit -- from an unauthenticated client, before any capability ran: the
+  dispatcher sent nothing and the ASGI server decided what the client and the
+  operator's log received, bypassing the reviewed problem mapping and its
+  redaction. It is now a `400` naming the reason without echoing the body. A
+  value nested deeper than the interpreter can walk reached the same escape at
+  the response boundary and now ends at the existing redacted `500`.
+- `_read_body` bounded a request body's total bytes but not the number of ASGI
+  events carrying it. An empty chunk moves `max_body_bytes` no closer to its
+  limit, so a client sending them with `more_body` set held a worker open
+  indefinitely while growing a list without bound. Empty events are now capped.
+- `request_timeout` was documented as a per-request deadline. It starts once
+  the request is bound, so it bounds capability execution and not how long a
+  client may take to send its body; that belongs to the ASGI server or the
+  proxy. The documentation now says which ([#308]).
 
 ### Changed
 
@@ -842,6 +873,7 @@ under `0.1.0a2` instead.
 [#280]: https://github.com/Blandskron/agnara/issues/280
 [#282]: https://github.com/Blandskron/agnara/issues/282
 [#286]: https://github.com/Blandskron/agnara/issues/286
+[#308]: https://github.com/Blandskron/agnara/issues/308
 [#293]: https://github.com/Blandskron/agnara/issues/293
 [#288]: https://github.com/Blandskron/agnara/issues/288
 [#289]: https://github.com/Blandskron/agnara/issues/289

@@ -445,8 +445,11 @@ are visible instead of hidden among the ones that are not.
 - [x] Baseline benchmarks published. Four baselines in `docs/benchmarks/`.
   Budgets and a regression gate are `I14`, and until they exist a regression
   is invisible.
-- [ ] Security threat model present. **Absent.** `SECURITY.md` says so and the
-  release readiness gate reports it every run. `I10`.
+- [~] Security threat model present. Partial: `docs/THREAT_MODEL.md` covers the
+  a4 surface -- assets, boundaries, abuse cases, verified protections with
+  their evidence, and delegated assumptions -- and `tests/security/` regresses
+  it. It is not the beta security program: no fuzzing, penetration test or
+  dependency vulnerability scan stands behind it. `I10`.
 - [ ] API docs present. Partial: `docs/API_DESIGN.md` records intent, and
   there is no generated reference for the 41 public names. `I9`, then `I18`.
 - [ ] Migration policy for alpha documented. **Absent.** Needed before any API

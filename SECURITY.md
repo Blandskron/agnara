@@ -12,6 +12,17 @@ The channel was enabled and verified for the `0.1.0a3` release preparation.
 
 Do not request vulnerability details through public issues.
 
+## Threat model
+
+`docs/THREAT_MODEL.md` records the analysis for the surface `0.1.0a4`
+publishes: assets, trust boundaries, attacker-controlled inputs, the
+protections each of which names the test that proves it, the findings this
+audit produced, and the assumptions delegated to ASGI servers, proxies and
+applications.
+
+It is scoped to a4 and is not the beta security program (`I10`). Read what it
+says it did not do before citing it.
+
 ## Security boundaries
 
 Agnara must explicitly distinguish:

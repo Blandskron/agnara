@@ -249,9 +249,10 @@ is undecided, and no symbol may be promoted before it is.
 **Horizon:** `BETA`
 **Status:** `PLANNED`
 
-`SECURITY.md` already records that the threat model, dependency audit, secret
-scanning, static analysis and private vulnerability reporting are absent, and
-the release readiness gate reports it every run.
+`docs/THREAT_MODEL.md` now covers the `0.1.0a4` surface and `tests/security/`
+regresses it, which is the smallest part of this initiative. The dependency
+audit, supply-chain scanning and the authentication design that the threat
+model's open finding H-3 depends on remain absent.
 
 **Scope:** threat model; security invariants with architecture tests;
 authentication integration contracts mapping onto one `Principal`; delegation

@@ -51,6 +51,7 @@ Each level may cite the level above it. None should restate it.
 | Quality gate definitions | `QUALITY_GATES.md` | cite |
 | Performance method and results | `PERFORMANCE.md`, `docs/benchmarks/` | cite |
 | Security posture and gaps | `SECURITY.md` | cite |
+| Threat model, verified protections and delegated assumptions | `docs/THREAT_MODEL.md` | cite; never restate a protection as broader |
 | CLI surface | `docs/CLI_SPEC.md` | cite |
 | Generated project layout | `docs/SCAFFOLDING.md` | cite |
 | Manifest format | `docs/PROJECT_MANIFEST.md` | cite |
