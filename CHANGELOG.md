@@ -22,6 +22,14 @@ unchanged — no runtime source file differs — and replaces the release system
 that published one of fourteen artifacts and reported nothing wrong with the
 other thirteen.
 
+### Security
+
+- Publication-readiness diagnostics now redact URL credentials, query data,
+  fragments and recognizable secret formats before writing terminal output or
+  GitHub Actions annotations. Index errors retain the safe origin, HTTP status,
+  project and version context, while control characters and encoded newlines
+  cannot inject additional workflow commands.
+
 ### Fixed
 
 - `0.1.0a4` was published partially. The upload accepted

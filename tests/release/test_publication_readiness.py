@@ -13,9 +13,12 @@ failure and asserts the script reports it.
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
 import shutil
 import sys
+import urllib.error
+from email.message import Message
 from pathlib import Path
 from typing import Any
 
@@ -189,7 +192,7 @@ def test_an_unverified_trusted_publisher_refuses_the_release(workspace: Path) ->
 
     assert code == 1
     assert len(problems) == len(MANIFEST.names)
-    assert all("trusted_publisher is 'UNVERIFIED'" in problem for problem in problems)
+    assert all("trusted_publisher is not VERIFIED" in problem for problem in problems)
 
 
 def test_a_confirmation_recorded_for_another_version_does_not_carry_over(
@@ -266,7 +269,7 @@ def test_a_different_publisher_tuple_is_refused(workspace: Path) -> None:
     code, problems = _run(workspace)
 
     assert code == 1
-    assert any("publisher tuple must be" in problem for problem in problems)
+    assert any("publisher tuple does not match" in problem for problem in problems)
 
 
 def test_the_record_must_name_the_version_being_published(workspace: Path) -> None:
@@ -488,6 +491,97 @@ def test_a_complete_index_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert problems == []
     assert len(notes) == len(MANIFEST.names)
+
+
+# ---------------------------------------------------------------------------
+# Log and GitHub annotation safety
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "unsafe",
+    [
+        "https://user:supersecret@example.com",
+        "https://example.com/?token=supersecret",
+        "https://example.com/#supersecret",
+    ],
+)
+def test_sensitive_urls_are_redacted_from_log_messages(unsafe: str) -> None:
+    sanitized = tool.sanitize_for_log(f"cannot query {unsafe}: HTTP 404")
+
+    assert "supersecret" not in sanitized
+    assert sanitized == "cannot query https://example.com HTTP 404"
+
+
+def test_network_exceptions_do_not_retain_a_sensitive_index(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    index = "https://user:supersecret@example.com/?token=supersecret#supersecret"
+
+    def refuse(*args: Any, **kwargs: Any) -> None:
+        raise urllib.error.HTTPError(
+            f"{index}/pypi/agnara/json", 403, "token=supersecret", Message(), io.BytesIO()
+        )
+
+    monkeypatch.setattr(tool.urllib.request, "urlopen", refuse)
+
+    with pytest.raises(tool.Refusal) as caught:
+        tool._index_json(index, "agnara")
+
+    cause = caught.value.__cause__
+    assert isinstance(cause, urllib.error.HTTPError)
+    cause.close()
+    message = tool.sanitize_for_log(caught.value)
+    assert "supersecret" not in message
+    assert message == "https://example.com returned HTTP 403 for agnara"
+
+
+def test_main_sanitizes_external_exceptions_before_annotation(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def refuse(*args: Any, **kwargs: Any) -> None:
+        raise tool.Refusal(
+            "request to https://user:supersecret@example.com/?token=supersecret#supersecret failed"
+        )
+
+    monkeypatch.setattr(tool, "run", refuse)
+
+    assert tool.main(["--version", VERSION]) == 2
+    captured = capsys.readouterr()
+    assert "supersecret" not in captured.out
+    assert "supersecret" not in captured.err
+    assert captured.out == (
+        "::error::publication readiness could not be evaluated: "
+        "request to https://example.com failed\n"
+    )
+
+
+def test_annotations_cannot_inject_new_workflow_commands(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    injected = "failure\n::warning::token=supersecret\rnext\x00line%0A::notice::surprise"
+    monkeypatch.setattr(tool, "run", lambda *args, **kwargs: (1, [injected], []))
+
+    assert tool.main(["--version", VERSION]) == 1
+    captured = capsys.readouterr()
+    assert "supersecret" not in captured.out
+    assert captured.err == ""
+    assert captured.out.count("::error::") == 1
+    assert "\n::warning::" not in captured.out
+    assert "%0A" not in captured.out
+
+
+@pytest.mark.parametrize(
+    "unsafe",
+    [
+        "password=supersecret",
+        "api_key:supersecret",
+        "Authorization: Bearer supersecret",
+        "github_pat_supersecret",
+    ],
+)
+def test_recognizable_secret_formats_are_redacted(unsafe: str) -> None:
+    assert "supersecret" not in tool.sanitize_for_log(f"request failed: {unsafe}")
 
 
 # ---------------------------------------------------------------------------

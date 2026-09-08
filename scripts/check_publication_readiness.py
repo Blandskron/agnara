@@ -49,7 +49,9 @@ import re
 import subprocess
 import sys
 import tomllib
+import unicodedata
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -81,9 +83,58 @@ NETWORK_TIMEOUT = 30
 #: PEP 440 restricted to what ADR 0021 permits during v0.x.
 VERSION_PATTERN = re.compile(r"^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:(?:a|b|rc)\d+)?$")
 
+URL_PATTERN = re.compile(r"(?i)\b[a-z][a-z0-9+.-]*://[^\s<>\"']+")
+SECRET_ASSIGNMENT_PATTERN = re.compile(
+    r"(?i)\b(password|passwd|pwd|token|api[-_ ]?key|secret|authorization|credential|"
+    r"access[-_ ]?key)(\s*[:=]\s*)([^\s,;]+)"
+)
+SECRET_TOKEN_PATTERN = re.compile(
+    r"(?i)\b(?:bearer\s+)[a-z0-9._~+/=-]+|"
+    r"\b(?:gh[pousr]_[a-z0-9_]+|github_pat_[a-z0-9_]+|pypi-[a-z0-9_-]+)\b"
+)
+
 
 class Refusal(Exception):
     """Publication readiness could not even be evaluated."""
+
+
+def _safe_url_for_log(value: str) -> str:
+    """Keep only a URL's non-secret origin for diagnostics."""
+    try:
+        parsed = urllib.parse.urlsplit(value)
+        host = parsed.hostname
+        if not parsed.scheme or host is None:
+            return "<redacted-url>"
+        port = f":{parsed.port}" if parsed.port is not None else ""
+    except ValueError:
+        return "<redacted-url>"
+    return f"{parsed.scheme}://{host}{port}"
+
+
+def sanitize_for_log(value: object) -> str:
+    """Return one log-safe line without URLs or recognizable credentials."""
+    message = URL_PATTERN.sub(lambda match: _safe_url_for_log(match.group()), str(value))
+    message = SECRET_TOKEN_PATTERN.sub("<redacted>", message)
+    message = SECRET_ASSIGNMENT_PATTERN.sub(
+        lambda match: f"{match.group(1)}{match.group(2)}<redacted>", message
+    )
+    return "".join(
+        character if not unicodedata.category(character).startswith("C") else " "
+        for character in message
+    )
+
+
+def _emit(message: object) -> None:
+    safe = sanitize_for_log(message)
+    # A plain diagnostic must never become an unintended workflow command.
+    print(f" {safe}" if safe.startswith("::") else safe)
+
+
+def _emit_error(message: object) -> None:
+    # GitHub workflow command data requires percent escaping. Newlines and all
+    # other control characters have already been collapsed by sanitize_for_log.
+    safe = sanitize_for_log(message).replace("%", "%25")
+    print(f"::error::{safe}")
 
 
 # ---------------------------------------------------------------------------
@@ -295,8 +346,8 @@ def check_publisher_record(
     publisher = document.get("publisher")
     if publisher != REQUIRED_PUBLISHER:
         problems.append(
-            f"{PUBLICATION_RELATIVE.as_posix()}: publisher tuple must be "
-            f"{REQUIRED_PUBLISHER}, found {publisher}"
+            f"{PUBLICATION_RELATIVE.as_posix()}: publisher tuple does not match "
+            "the required GitHub Trusted Publisher identity"
         )
 
     projects = document.get("projects")
@@ -314,8 +365,8 @@ def check_publisher_record(
         entry = recorded[name]
         if entry.get("trusted_publisher") != VERIFIED:
             problems.append(
-                f"{name}: trusted_publisher is {entry.get('trusted_publisher')!r}; "
-                f"the owner must confirm the pending or active publisher and record {VERIFIED}"
+                f"{name}: trusted_publisher is not {VERIFIED}; the owner must confirm "
+                f"the pending or active publisher and record {VERIFIED}"
             )
         elif entry.get("verified_for_target") != version:
             problems.append(
@@ -339,9 +390,11 @@ def _index_json(index: str, name: str) -> dict[str, Any] | None:
     except urllib.error.HTTPError as exc:
         if exc.code == 404:
             return None
-        raise Refusal(f"{index} returned HTTP {exc.code} for {name}") from exc
+        raise Refusal(f"{_safe_url_for_log(index)} returned HTTP {exc.code} for {name}") from exc
     except (urllib.error.URLError, TimeoutError, ValueError) as exc:
-        raise Refusal(f"cannot query {index} for {name}: {exc}") from exc
+        raise Refusal(
+            f"cannot query {_safe_url_for_log(index)} for {name}: {sanitize_for_log(exc)}"
+        ) from exc
 
 
 def check_index(
@@ -360,12 +413,13 @@ def check_index(
     """
     problems: list[str] = []
     notes: list[str] = []
+    safe_index = _safe_url_for_log(index)
     for distribution in manifest.distributions:
         name = distribution.name
         document = _index_json(index, name)
         if document is None:
             if require_published:
-                problems.append(f"{name}: no project on {index} after publication")
+                problems.append(f"{name}: no project on {safe_index} after publication")
             else:
                 notes.append(
                     f"{name}: no project yet; the first upload must be created by a "
@@ -379,12 +433,13 @@ def check_index(
             wanted = {f"{stem}-{version}-py3-none-any.whl", f"{stem}-{version}.tar.gz"}
             absent = sorted(wanted - set(files))
             if absent:
-                problems.append(f"{name} {version} is incomplete on {index}; missing {absent}")
+                problems.append(f"{name} {version} is incomplete on {safe_index}; missing {absent}")
             else:
                 notes.append(f"{name} {version}: wheel and sdist present")
         elif files:
             problems.append(
-                f"{name} {version} already has {len(files)} file(s) on {index}: {sorted(files)}. "
+                f"{name} {version} already has {len(files)} file(s) on {safe_index}: "
+                f"{sorted(files)}. "
                 "PyPI files are immutable; select the next version rather than republishing"
             )
         else:
@@ -467,17 +522,17 @@ def main(argv: list[str] | None = None) -> int:
             index=arguments.index,
         )
     except (Refusal, distributions.ManifestError) as exc:
-        print(f"::error::publication readiness could not be evaluated: {exc}")
+        _emit_error(f"publication readiness could not be evaluated: {exc}")
         return 2
 
     for note in notes:
-        print(note)
+        _emit(note)
     for problem in problems:
-        print(f"::error::{problem}")
+        _emit_error(problem)
     verdict = "NOT READY" if code else "READY"
     where = PUBLICATION_RELATIVE.as_posix()
     confirmed = "" if code else f" (registry configuration confirmed in {where})"
-    print(f"PUBLISH {verdict} for {arguments.version}{confirmed}")
+    _emit(f"PUBLISH {verdict} for {arguments.version}{confirmed}")
     return code
 
 
