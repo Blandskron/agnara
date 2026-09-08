@@ -71,6 +71,29 @@ Core should minimize dependencies.
 
 All protocol adapters should pin or bound critical protocol dependencies and record supported versions.
 
+### Repository controls and alert triage
+
+GitHub secret scanning, push protection, Dependabot alerts and Dependabot
+security updates are enabled for this repository. Read back repository
+settings during release preflight; their state is external to Git history.
+The a4 closure record names optional controls that remain unavailable or
+disabled. Dependency update PRs follow the normal review and required-check
+workflow and are never automatically merged by this configuration.
+
+Required CI analyzes Python and GitHub Actions using SHA-pinned CodeQL
+actions. Only the analysis job receives `security-events: write`; it does not
+receive publication credentials or execute an application build. Its result
+is uploaded to GitHub code scanning. Successful analysis means the tool ran,
+not that every alert is resolved. Review open alerts and their analyzed commit
+before release; record fixes or justified dispositions privately where the
+finding is exploitable. Do not close or suppress alerts merely to get green CI.
+
+For dependencies, repeat the locked runtime `pip-audit` procedure in
+`docs/releases/A4_RELEASE_CLOSURE.md` on the final candidate. Dependency alerts
+on the default branch do not prove that an unreleased `develop` lockfile is
+clean. Secret-scanning alerts must be handled in the private security UI;
+never copy credential values into Issues, PRs or build logs.
+
 ## Documentation and discovery surfaces
 
 OpenAPI, capability introspection and human documentation UIs are publication

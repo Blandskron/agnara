@@ -121,3 +121,19 @@ def test_documentation_browser_conformance_is_an_explicit_required_job(
     assert 'AGNARA_RUN_BROWSER_TESTS: "1"' in workflow_text
     assert "pytest tests/http/test_documentation_browser.py -m browser" in workflow_text
     assert "pytest tests/http/test_explorer_browser.py -m browser" in workflow_text
+
+
+def test_security_analysis_is_bounded_and_cannot_skip_the_required_gate(workflow_text: str) -> None:
+    """A4-R3: scanning runs without application execution or broad write access."""
+    security = workflow_text.split("  security:\n", 1)[1].split("  lint:\n", 1)[0]
+    assert "language: [python, actions]" in security
+    assert "build-mode: none" in security
+    assert "persist-credentials: false" in security
+    assert "      contents: read\n      security-events: write" in security
+    assert "id-token:" not in security
+    assert "secrets:" not in security
+    assert "continue-on-error" not in security
+    assert "pull_request_target" not in workflow_text
+    assert "contains(needs.*.result, 'skipped')" in workflow_text
+    for action in ("init", "analyze"):
+        assert re.search(rf"github/codeql-action/{action}@[0-9a-f]{{40}}", security)

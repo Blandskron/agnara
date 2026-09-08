@@ -15,6 +15,12 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Required CI now analyzes Python and GitHub Actions with SHA-pinned CodeQL
+  actions and job-scoped security-result upload permissions, including during
+  release validation. A skipped required job fails the aggregate CI check.
+  Repository secret scanning, push protection and Dependabot alerts/security
+  updates are enabled; automated updates still require normal PR review.
+
 - A CLI target's attribute may be a dotted path. `agnara inspect`,
   `agnara graph`, `agnara context` and `agnara schema openapi` accept
   `billing.bootstrap:container.app`, and `--dependencies` accepts

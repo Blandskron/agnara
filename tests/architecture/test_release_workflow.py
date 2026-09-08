@@ -60,3 +60,12 @@ def test_release_actions_are_pinned_to_exact_versions() -> None:
     for action in actions:
         _, _, version = action.partition("@")
         assert version.count(".") >= 2 or len(version) == 40, action
+
+
+def test_reusable_quality_gate_can_upload_security_results_without_publication_rights() -> None:
+    validation = _text().split("  validate:\n", 1)[1].split("  build:\n", 1)[0]
+    assert "      contents: read\n      security-events: write" in validation
+    assert "id-token:" not in validation
+    assert "contents: write" not in validation
+    assert "secrets:" not in validation
+    assert "uses: ./.github/workflows/ci.yml" in validation

@@ -97,16 +97,41 @@ documentation manual gates remains a separate owner decision.
 
 ## Cycle 3 — Repository-native security controls
 
-**Owner: security/repository maintainer. State: pending.**
+**Owner: security/repository maintainer. State: implemented and validated in
+Issue #326; manual security acceptance remains pending.**
 
-Current GitHub state:
+GitHub settings read back on 2026-09-08:
 
 - private vulnerability reporting: enabled;
-- secret scanning: disabled;
-- push protection: disabled;
+- secret scanning: enabled;
+- push protection: enabled;
 - non-provider pattern and validity checks: disabled;
-- Dependabot alerts and security updates: disabled;
-- CodeQL or equivalent dedicated static analysis: absent.
+- Dependabot alerts and security updates: enabled;
+- CodeQL Python/Actions analysis: both passed with zero results, zero errors
+  and zero warnings on the PR #327 integration tree
+  `873924f088384c1733f3859e3f2f453d34176fbc` for source commit
+  `ec44a8b6e2a8e9099778202136a19e5050024db8`.
+
+The non-provider-pattern enable request returned successfully but readback
+still reported `disabled`; it is not recorded as enabled. Validity checks were
+not enabled. Initial private API queries returned zero open secret-scanning
+and Dependabot alerts; this snapshot does not prove that background scanning
+has completed or that every candidate dependency is covered. No credential
+values are copied into this record.
+
+The threat model now includes the local CLI trust boundary and the two
+reserved distributions in the seven-package publication set. It names the
+existing dry-run, overwrite, target-validation and manifest tests without
+claiming hostile-filesystem or protocol security for unimplemented adapters.
+
+Evidence: [CI run 34231370311](https://github.com/Blandskron/agnara/actions/runs/34231370311)
+passed its Linux/macOS/Windows tests, browser conformance, lint, type, lockfile,
+package-build/install and CodeQL jobs. Local CPython 3.14.6 validation reported
+3,469 passed and 53 expected skips; the docs/architecture/release selection
+reported 1,125 passed and 22 expected skips. A fresh `pip-audit==2.10.1` run
+over the locked runtime export again reported 29 dependencies and zero known
+vulnerabilities. No runtime dependency or application code changed in this
+cycle. The readback of open CodeQL alerts for the PR returned zero.
 
 Exit criteria:
 
@@ -127,6 +152,24 @@ reporting.
 ## Cycle 4 — PyPI and release-environment preflight
 
 **Owner: repository/PyPI owner. State: pending external verification.**
+
+On 2026-09-08 the owner confirmed that the six Pending Trusted Publishers
+have **not yet been configured**. This is an explicit publication blocker.
+In PyPI account settings, open **Publishing**, choose GitHub, and add one
+pending publisher for each name below:
+
+| Field | Value |
+| --- | --- |
+| PyPI project name | `agnara-http`, `agnara-mcp`, `agnara-cli`, `agnara-telemetry`, `agnara-a2a`, `agnara-events` (one form each) |
+| Owner | `Blandskron` |
+| Repository name | `agnara` |
+| Workflow name | `release.yml` (filename only) |
+| Environment name | `pypi` |
+
+Follow the [official pending-publisher instructions](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/).
+Creating a pending publisher neither uploads a release nor reserves the name.
+The existing `agnara` project uses its project-level Publishing settings;
+verify its existing publisher rather than creating a pending duplicate.
 
 Only `agnara==0.1.0a3` is public today. The six adapter/reserved distribution
 names are not yet on PyPI. The `pypi` GitHub Environment exists but currently

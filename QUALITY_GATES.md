@@ -277,6 +277,13 @@ Record:
 
 ## Security gates
 
+Required CI runs SHA-pinned CodeQL analysis for Python and GitHub Actions.
+The aggregate waits for both analyses and rejects failed, cancelled or skipped
+required jobs. SARIF upload permission is scoped to the analysis job and
+explicitly passed by the reusable release-validation caller. Check completion
+is not an alert disposition: release review must also inspect open code-scanning,
+Dependabot and secret-scanning alerts for the candidate (see `SECURITY.md`).
+
 Before any release beyond experimental alpha:
 
 - threat model;
