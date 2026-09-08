@@ -730,8 +730,12 @@ class Http:
                 lifespan cycle. Startup enters it, shutdown exits it.
                 Application state belongs in dependency providers, which is
                 why the lifecycle cannot hand a value back.
-            request_timeout: a per-request deadline in seconds, enforced by
-                the runtime and reported as a timeout failure.
+            request_timeout: a deadline in seconds for the capability
+                invocation, enforced by the runtime and reported as a timeout
+                failure. It starts once the request has been bound, so it
+                bounds execution rather than how long a client may take to
+                send its body; that belongs to the ASGI server or the proxy in
+                front of it (`docs/THREAT_MODEL.md`).
             problem_base_uri: an absolute URI prefix for RFC 9457 problem
                 types. Without it every problem keeps the standard
                 ``about:blank`` type and the ``code`` extension member stays

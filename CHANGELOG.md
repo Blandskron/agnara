@@ -26,12 +26,18 @@ without being published. See the `0.1.0a2` scope note below.
   A compile failure with no registry named now also suggests `--dependencies`,
   because core cannot distinguish an unbound dependency from an unsupported
   annotation ([#313]).
-- Added a table-driven `0.1.0a4` conformance matrix for direct runtime,
-  HTTP/OpenAPI and MCP schemas, policies and structured failures. The public
-  `materialize_json` schema helper gives JSON transports one recursive
-  dataclass/enum/tuple conversion while direct Python invocation stays strict;
-  all intentional protocol transformations and redaction limits are recorded
-  in ADR 0077 and `docs/CROSS_SURFACE_CONFORMANCE.md` ([#307]).
+
+- A threat model for the surface `0.1.0a4` publishes. `docs/THREAT_MODEL.md`
+  records assets, trust boundaries, attacker-controlled inputs and abuse cases,
+  and separates protections that name the test proving them from assumptions
+  delegated to ASGI servers, proxies and applications. `tests/security/`
+  regresses it: adversarial HTTP and ASGI events, authorization and disclosure
+  properties across both transports, and a repository-wide credential scan that
+  covers the fixtures, docs and workflows a distribution gate never sees. It is
+  scoped to a4 and is not the beta security program; the document ends with
+  what the audit did not do. The audit's cross-transport scope finding was
+  resolved by the common execution-plan policy implemented for A4-09
+  ([#307], [#308], [#309]).
 
 - One exposure model governs every protocol adapter. `agnara.exposure` owns
   neutral identity — adapter kind, project-local surface name, adapter-local
@@ -52,6 +58,27 @@ without being published. See the `0.1.0a2` scope note below.
   third-party dependency, and no kernel change needed for a third adapter.
   ADR 0070 answers RFC 0006 and records the five spike decisions, the threat
   analysis and the rejected alternatives ([#293]).
+
+### Fixed
+
+- A JSON request body nested beyond the decoder's stack raised `RecursionError`
+  out of the HTTP dispatcher. 80 KB was enough -- far inside the 1 MiB default
+  limit -- from an unauthenticated client, before any capability ran: the
+  dispatcher sent nothing and the ASGI server decided what the client and the
+  operator's log received, bypassing the reviewed problem mapping and its
+  redaction. A platform-independent nesting ceiling now rejects it with a `400`
+  before decoding or capability execution, naming the reason without echoing
+  the body. A
+  value nested deeper than the interpreter can walk reached the same escape at
+  the response boundary and now ends at the existing redacted `500`.
+- `_read_body` bounded a request body's total bytes but not the number of ASGI
+  events carrying it. An empty chunk moves `max_body_bytes` no closer to its
+  limit, so a client sending them with `more_body` set held a worker open
+  indefinitely while growing a list without bound. Empty events are now capped.
+- `request_timeout` was documented as a per-request deadline. It starts once
+  the request is bound, so it bounds capability execution and not how long a
+  client may take to send its body; that belongs to the ASGI server or the
+  proxy. The documentation now says which ([#308]).
 
 ### Changed
 
@@ -869,6 +896,8 @@ under `0.1.0a2` instead.
 [#280]: https://github.com/Blandskron/agnara/issues/280
 [#282]: https://github.com/Blandskron/agnara/issues/282
 [#286]: https://github.com/Blandskron/agnara/issues/286
+[#309]: https://github.com/Blandskron/agnara/issues/309
+[#308]: https://github.com/Blandskron/agnara/issues/308
 [#293]: https://github.com/Blandskron/agnara/issues/293
 [#288]: https://github.com/Blandskron/agnara/issues/288
 [#289]: https://github.com/Blandskron/agnara/issues/289

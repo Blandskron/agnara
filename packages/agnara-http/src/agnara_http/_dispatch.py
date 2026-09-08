@@ -229,8 +229,11 @@ class _HTTPDispatcher:
                 problem_types=self._options.problem_types,
                 instance=instance,
             )
-        except _ResponseSerializationError:
+        except _ResponseSerializationError, RecursionError:
             # Nothing has been sent yet, so the last resort is still available.
+            # A value nested deeper than this interpreter can walk reaches the
+            # same conclusion as one of an unsupported type: the server cannot
+            # represent it, and says so without describing it.
             response = _INTERNAL_PROBLEM
         await _send_response(response, send, head=head)
 

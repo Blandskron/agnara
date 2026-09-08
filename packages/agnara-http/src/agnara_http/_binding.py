@@ -31,6 +31,18 @@ _DISPOSITION_PARAMETER = re.compile(r';\s*([!#$%&\'*+\-.^_`|~0-9A-Za-z]+)\s*=\s*
 #: dictionary entry and a header parse. Bounded independently of total size.
 _DEFAULT_MAX_PARTS = 64
 
+#: Deeply nested JSON consumes interpreter stack in both decoding and later
+#: schema/result traversal. Reject it before the platform-specific recursion
+#: ceiling decides whether the request reaches a capability.
+_MAX_JSON_NESTING = 128
+
+#: Most zero-length `http.request` events one body may arrive in. A chunk that
+#: carries no bytes moves `max_body_bytes` no closer to its limit, so a client
+#: sending them with `more_body` set keeps the request open for as long as it
+#: likes: the size limit alone never ends the read. A real sender emits none of
+#: these, so the bound is generous and still terminates the abuse.
+_MAX_EMPTY_BODY_EVENTS = 64
+
 type _Message = dict[str, Any]
 type _Receive = Callable[[], Awaitable[_Message]]
 
@@ -379,14 +391,54 @@ def _bind_json(payload: dict[str, Any], plan: _HTTPBindingPlan, raw_body: bytes)
         return
     try:
         text = raw_body.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise _RequestBindingError("invalid UTF-8 JSON body", location="body") from error
+
+    _check_json_nesting(text)
+    try:
         decoded = json.loads(
             text,
             parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)),
             object_pairs_hook=_object_without_duplicates,
         )
-    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
+    except RecursionError as error:
+        # CPython decodes a JSON array or object by recursing, so nesting deep
+        # enough exhausts the stack before any capability runs. Unhandled it
+        # would leave the dispatcher without a response and hand the server an
+        # exception, which is the one outcome this boundary must never produce.
+        raise _RequestBindingError("JSON body is nested too deeply", location="body") from error
+    except (json.JSONDecodeError, ValueError) as error:
         raise _RequestBindingError("invalid UTF-8 JSON body", location="body") from error
     payload[binding.input_name] = decoded
+
+
+def _check_json_nesting(text: str) -> None:
+    """Reject nesting independently of the interpreter's recursion ceiling.
+
+    This is a lexical preflight, not a second JSON parser. It ignores brackets
+    and braces inside strings, including escaped quotes; ``json.loads`` remains
+    responsible for syntax and balanced delimiters.
+    """
+    depth = 0
+    in_string = False
+    escaped = False
+    for character in text:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+            continue
+        if character == '"':
+            in_string = True
+        elif character in "[{":
+            depth += 1
+            if depth > _MAX_JSON_NESTING:
+                raise _RequestBindingError("JSON body is nested too deeply", location="body")
+        elif character in "]}":
+            depth -= 1
 
 
 def _content_type(header_values: Mapping[str, list[str]]) -> tuple[str, str]:
@@ -605,6 +657,7 @@ def _convert_scalar(value: str, binding: _CompiledBinding) -> Any:
 async def _read_body(receive: _Receive, limit: int) -> bytes:
     chunks: list[bytes] = []
     size = 0
+    empty_events = 0
     while True:
         message = await receive()
         if not isinstance(message, dict):
@@ -621,6 +674,14 @@ async def _read_body(receive: _Receive, limit: int) -> bytes:
         chunk = message.get("body", b"")
         if not isinstance(chunk, bytes):
             raise _RequestBindingError("ASGI body chunk must be bytes", location="body")
+        if not chunk:
+            empty_events += 1
+            if empty_events > _MAX_EMPTY_BODY_EVENTS:
+                raise _RequestBindingError(
+                    "request body arrived in too many empty chunks",
+                    location="body",
+                    failure=_BindingFailure.MALFORMED,
+                )
         size += len(chunk)
         if size > limit:
             raise _RequestBindingError(
