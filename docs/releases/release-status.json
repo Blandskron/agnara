@@ -171,7 +171,14 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "The 0.1.0a3 decision recorded experimental-alpha scope on 2026-09-06. Whether that exemption still holds for 0.1.0a4 is a maintainer decision. Repository security tests pass and private vulnerability reporting is enabled; GitHub secret scanning, push protection, Dependabot alerts/updates, a release threat model, dependency audit and dedicated security static analysis are not configured."
+      "detail": "Whether 0.1.0a4 remains inside the experimental-alpha exemption is a maintainer decision. Repository security tests pass, docs/THREAT_MODEL.md covers the a4 surface, private vulnerability reporting is enabled, and a 2026-09-08 pip-audit 2.10.1 run found zero known vulnerabilities across 29 locked runtime dependencies. GitHub secret scanning, push protection, Dependabot alerts/updates and dedicated CodeQL/equivalent analysis remain disabled or absent; the owner must accept or close those gaps.",
+      "evidence": {
+        "commit": "c160fbd34ae69a34d1159698a0cb2a3b1be5bc1c",
+        "command": "uv export --locked --all-packages --no-dev --no-emit-workspace --no-hashes --format requirements.txt; uvx --from pip-audit==2.10.1 pip-audit -r runtime-requirements.txt --format json",
+        "result": "29 locked runtime dependencies audited on 2026-09-08; zero known vulnerabilities; docs/THREAT_MODEL.md and named boundary tests present. This evidence informs but does not satisfy the owner-only gate.",
+        "paths": ["docs/THREAT_MODEL.md", "docs/releases/A4_RELEASE_CLOSURE.md"],
+        "covers": ["packages", "pyproject.toml", "uv.lock", "docs/THREAT_MODEL.md", "tests/security"]
+      }
     },
     {
       "id": "reference-apps-exist",

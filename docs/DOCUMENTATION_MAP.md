@@ -47,6 +47,7 @@ Each level may cite the level above it. None should restate it.
 | What to build and in what order | `docs/INITIATIVES.md` | cite by initiative id |
 | Decomposed, ready work | `BACKLOG.md` | cite by item id |
 | Release gates and evidence | `docs/releases/RELEASE_PLAN.md` + `release-status.json` | cite |
+| Current a4 closure sequencing | `docs/releases/A4_RELEASE_CLOSURE.md` | cite; it schedules work but does not satisfy a gate |
 | What a release actually contained | `docs/releases/v*.md`, `CHANGELOG.md` | never edit retroactively |
 | Quality gate definitions | `QUALITY_GATES.md` | cite |
 | Performance method and results | `PERFORMANCE.md`, `docs/benchmarks/` | cite |
