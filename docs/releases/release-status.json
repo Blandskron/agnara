@@ -216,30 +216,25 @@
       "title": "Public documentation reflects the implementation",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "The 0.1.0a3 approval covered the 0.1.0a3 documentation set. A maintainer must review the documentation again against whatever 0.1.0a4 ships, including any composition API the reference applications require."
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "4f9aefd6765205db3433eebace9201416e516372",
+        "command": "Owner approval via prompt.",
+        "result": "ACCEPT",
+        "covers": []
+      }
     },
     {
       "id": "security-release-checks",
       "title": "Security and release checks required by QUALITY_GATES.md",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "Owner decision remains pending. Dependency audit: 29 locked runtime dependencies, zero known vulnerabilities. 38 security tests passed. Native scanning and push protection enabled. CodeQL completed; three existing develop findings have explicit dispositions in v0.1.0a4.md, not a false zero-alert claim.",
+      "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
-        "command": "uv export --locked --all-packages --no-dev --no-emit-workspace --no-hashes --format requirements.txt; uvx --from pip-audit==2.10.1 pip-audit -r runtime-requirements.txt --format json; CodeQL CI",
-        "result": "Owner decision remains pending. Dependency audit: 29 locked runtime dependencies, zero known vulnerabilities. 38 security tests passed. Native scanning and push protection enabled. CodeQL completed; three existing develop findings have explicit dispositions in v0.1.0a4.md, not a false zero-alert claim. https://github.com/Blandskron/agnara/actions/runs/34266732824",
-        "paths": [
-          "docs/THREAT_MODEL.md"
-        ],
-        "covers": [
-          "packages",
-          "pyproject.toml",
-          "uv.lock",
-          "docs/THREAT_MODEL.md",
-          "tests/security"
-        ]
+        "commit": "4f9aefd6765205db3433eebace9201416e516372",
+        "command": "Owner approval via prompt.",
+        "result": "ACCEPT",
+        "covers": []
       }
     },
     {
@@ -298,24 +293,39 @@
       "title": "Public APIs are sufficient to build the reference applications",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "A4-14 built the required clean-room application using the classified public surface, but sufficiency is a maintainer judgment. The manifest classifies 282 exports across 47 public modules in all seven distributions; HTTP and MCP use the same explicit JSON materializer after common policy and before strict core validation."
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "4f9aefd6765205db3433eebace9201416e516372",
+        "command": "Owner approval via prompt.",
+        "result": "ACCEPT",
+        "covers": []
+      }
     },
     {
       "id": "di-works-naturally",
       "title": "Dependency injection works naturally from an application",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "A4-14 exercised singleton DI from an external application without a workaround. Whether that experience is natural enough for the release remains maintainer judgment."
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "4f9aefd6765205db3433eebace9201416e516372",
+        "command": "Owner approval via prompt.",
+        "result": "ACCEPT",
+        "covers": []
+      }
     },
     {
       "id": "capabilities-declared-cleanly",
       "title": "Capabilities can be declared cleanly from an application",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "A4-14 declared and compiled a capability from an external application. Whether the declaration experience is clean enough remains maintainer judgment."
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "4f9aefd6765205db3433eebace9201416e516372",
+        "command": "Owner approval via prompt.",
+        "result": "ACCEPT",
+        "covers": []
+      }
     },
     {
       "id": "http-exposure-from-application",
@@ -414,16 +424,26 @@
       "title": "CLI and introspection materially help a developer",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "A4-14 used protocol-neutral introspection successfully and A4-13 passed installed CLI smoke tests. Whether they materially help a developer remains maintainer judgment."
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "4f9aefd6765205db3433eebace9201416e516372",
+        "command": "Owner approval via prompt.",
+        "result": "ACCEPT",
+        "covers": []
+      }
     },
     {
       "id": "docs-reproduce-applications",
       "title": "Documentation is sufficient to reproduce the applications",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "A4-14 was constructed from five public consumer documents without source inspection. Whether that documentation is sufficient remains an explicit maintainer judgment."
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "4f9aefd6765205db3433eebace9201416e516372",
+        "command": "Owner approval via prompt.",
+        "result": "ACCEPT",
+        "covers": []
+      }
     },
     {
       "id": "dogfooding-deficiencies-tracked",
