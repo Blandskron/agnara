@@ -185,5 +185,5 @@ def test_an_unresolvable_annotation_is_a_definition_error_naming_the_handler():
     # attached at runtime so static analysis does not flag the deliberate error.
     my_cap.__annotations__ = {"repo": "NeverDefined", "return": None}
 
-    with pytest.raises(DependencyResolutionError, match="my_cap.*NameError.*NeverDefined"):
+    with pytest.raises(DependencyResolutionError, match=r"my_cap.*NameError.*NeverDefined"):
         compile_dag(DIRegistry(), [my_cap])
