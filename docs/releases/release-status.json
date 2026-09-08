@@ -171,7 +171,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "The 0.1.0a3 decision recorded experimental-alpha scope on 2026-09-06. Whether that exemption still holds for 0.1.0a4 is a maintainer decision. Threat model, dependency audit, secret scanning and dedicated security static analysis remain unconfigured."
+      "detail": "The 0.1.0a3 decision recorded experimental-alpha scope on 2026-09-06. Whether that exemption still holds for 0.1.0a4 is a maintainer decision. Repository security tests pass and private vulnerability reporting is enabled; GitHub secret scanning, push protection, Dependabot alerts/updates, a release threat model, dependency audit and dedicated security static analysis are not configured."
     },
     {
       "id": "reference-apps-exist",

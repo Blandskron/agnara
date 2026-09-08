@@ -77,8 +77,9 @@ The release owner must explicitly decide and record:
 1. public documentation reflects the implementation;
 2. the experimental-alpha security/release posture satisfies
    `QUALITY_GATES.md`, including the chosen threat-model and dependency-audit
-   scope, secret-scanning posture, dedicated security analysis and private
-   vulnerability reporting readiness;
+   scope, secret-scanning posture and dedicated security analysis. Repository
+   security tests pass and private vulnerability reporting is enabled; GitHub
+   secret scanning/push protection and Dependabot alerts/updates are disabled;
 3. the public API is sufficient for the demonstrated applications;
 4. dependency injection works naturally;
 5. capabilities can be declared cleanly;
@@ -99,8 +100,8 @@ The owner package for those decisions is:
 Only `agnara==0.1.0a3` exists on PyPI today. The six new names return 404 from
 the public index, as expected before the first synchronized publication. Before
 authorizing the release, the owner must confirm the six Pending Trusted
-Publishers are configured for the exact GitHub environment/workflow and that
-private vulnerability reporting is available.
+Publishers are configured for the exact GitHub environment/workflow. Private
+vulnerability reporting is already enabled.
 
 After all manual decisions and external prerequisites are recorded, release
 preparation may cut versions and changelog on a release branch and re-run the
