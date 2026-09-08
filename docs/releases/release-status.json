@@ -71,9 +71,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
+        "commit": "99b9e81bc6c5e55d21dd6e359ec50146d0a243e3",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. Skips: 31 browser tests run separately in CI, 22 inapplicable export-mutation cases.",
+        "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. Skips: 31 browser tests run separately in CI, 22 inapplicable export-mutation cases. Re-anchored to 99b9e81bc6 after the release-branch CI fix, whose only covered change is tests/release/test_workspace_version.py. Re-run at that commit on Windows CPython 3.14.6: 3535 passed and 53 justified skips, with Ruff lint, Ruff format and the 618-test architecture suite clean. The single local failure is environment-only: tests/http/test_documentation_assets.py requires uv on PATH, which the CI job installs and this shell lacked. Required cross-platform CI must re-confirm on the pull request before the owner accepts this candidate.",
         "covers": [
           "packages",
           "tests",
@@ -192,9 +192,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
+        "commit": "99b9e81bc6c5e55d21dd6e359ec50146d0a243e3",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. The two release findings were fixed by #333. Security findings are explicitly triaged in v0.1.0a4.md; no uncorrected runtime blocker found.",
+        "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. The two release findings were fixed by #333. Security findings are explicitly triaged in v0.1.0a4.md; no uncorrected runtime blocker found. Re-anchored to 99b9e81bc6 after the release-branch CI fix, whose only covered change is tests/release/test_workspace_version.py. Re-run at that commit on Windows CPython 3.14.6: 3535 passed and 53 justified skips, with Ruff lint, Ruff format and the 618-test architecture suite clean. The single local failure is environment-only: tests/http/test_documentation_assets.py requires uv on PATH, which the CI job installs and this shell lacked. Required cross-platform CI must re-confirm on the pull request before the owner accepts this candidate.",
         "covers": [
           "packages",
           "tests",
