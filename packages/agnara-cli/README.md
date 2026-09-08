@@ -2,8 +2,12 @@
 
 Project introspection and scaffolding CLI. Owns project/app generators, templates and diagnostics.
 
-This distribution is publication-ready for `0.1.0a4`, but is not published to
-PyPI yet. It installs the `agnara` console script.
+This distribution is built and versioned with the synchronized workspace
+set. Which versions exist on an index is answered by its PyPI project page,
+not by this file: a README ships inside the artifact and cannot describe
+the state of a publication that happens after it is built.
+
+It installs the `agnara` console script.
 
 - Import package: `agnara_cli`
 - Depends on: the exact synchronized `agnara` version
@@ -14,9 +18,13 @@ allowed dependency graph.
 
 ## Status
 
-`agnara project create`, `agnara app create`, `agnara inspect`, `agnara graph`,
-`agnara schema openapi` and `agnara context` are implemented. `agnara doctor`
-remains ahead in the backlog.
+`agnara project create`, `agnara app create` with its `app-api`, `app-mcp`,
+`app-agent` and `app-worker` profile shorthands, `agnara apps`,
+`agnara inspect`, `agnara graph`, `agnara schema openapi` and `agnara context`
+are implemented. `agnara doctor` remains ahead in the backlog.
+
+`agnara --help` lists the commands the installed version actually has, which is
+the answer to trust over any list written down elsewhere.
 
 ## `agnara inspect`
 
