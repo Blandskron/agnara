@@ -138,7 +138,10 @@ def test_a_capability_is_described_by_its_declared_metadata() -> None:
     assert refund.risk == "high"
     assert refund.confirmation == "required"
     assert refund.idempotency == "no"
-    assert refund.policies == (PolicyDescriptor("ConfirmationPolicy"),)
+    assert refund.policies == (
+        PolicyDescriptor("ScopePolicy"),
+        PolicyDescriptor("ConfirmationPolicy"),
+    )
 
 
 def test_inputs_keep_signature_order_and_report_their_compiled_schema() -> None:
@@ -258,7 +261,10 @@ def test_json_data_reproduces_every_descriptor_field() -> None:
     assert refund["dependencies"] == [
         {"parameter": "ledger", "type": {"name": "Ledger", "module": __name__}}
     ]
-    assert refund["policies"] == [{"kind": "ConfirmationPolicy"}]
+    assert refund["policies"] == [
+        {"kind": "ScopePolicy"},
+        {"kind": "ConfirmationPolicy"},
+    ]
 
 
 def test_describing_an_uncompiled_capability_is_refused() -> None:

@@ -31,15 +31,21 @@ At invocation time the runtime preserves this order:
 1. verify plan/context composition and reject runtime-owned payload keys;
 2. begin the telemetry scope and caller deadline;
 3. evaluate pre-handler policies in declaration order;
-4. reject unexpected or missing inputs and validate supplied values;
-5. construct invocation-scoped dependencies;
-6. invoke the handler with validated values.
+4. apply an explicitly supplied wire materializer, when an adapter has one;
+5. reject unexpected or missing inputs and validate supplied values;
+6. construct invocation-scoped dependencies;
+7. invoke the handler with validated values.
 
 The value returned by each `TypeSchema.validate` call is passed to the handler,
 so a boundary-specific schema adapter may perform documented coercion. The
 original invocation payload is never mutated. Validation failures use the
 existing protocol-neutral `ValidationError` and canonical `INVALID_INPUT`
 mapping.
+
+ADR 0077 adds the explicit materialization phase here rather than in an
+adapter before invocation. HTTP and MCP use the shared JSON materializer;
+direct Python invocation remains strict. This prevents dataclass construction
+from running before authorization.
 
 ## Consequences
 

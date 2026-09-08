@@ -27,6 +27,7 @@ from agnara.execution import (
     Success,
     invoke_result,
 )
+from agnara.policy import Principal
 
 
 class Ledger:
@@ -95,6 +96,7 @@ async def main() -> None:
                 metadata={},
             ),
             DIContainer(dependencies),
+            principal=Principal("quickstart", scopes={"billing:write"}),
         ),
     )
     match outcome:
@@ -113,6 +115,7 @@ async def main() -> None:
                 metadata={},
             ),
             DIContainer(dependencies),
+            principal=Principal("quickstart", scopes={"billing:write"}),
         ),
     )
     match rejected:

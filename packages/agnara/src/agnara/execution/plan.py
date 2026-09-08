@@ -15,7 +15,7 @@ from agnara.core.di import DIRegistry, compile_dag
 from agnara.errors import DefinitionError, SchemaError
 from agnara.execution.context import ExecutionContext
 from agnara.execution.telemetry import TelemetryHook
-from agnara.policy import ConfirmationVerifier, Policy
+from agnara.policy import ConfirmationVerifier, Policy, ScopePolicy
 from agnara.policy.confirmation import ConfirmationPolicy
 from agnara.schema import SchemaAdapter, StandardSchemaAdapter, TypeSchema
 
@@ -156,8 +156,11 @@ class ExecutionPlan:
             )
         if not isinstance(registry, DIRegistry):
             raise DefinitionError(f"registry must be a DIRegistry, got {type(registry).__name__}")
-        policies = list(definition.policies)
-        if definition.confirmation is Confirmation.POLICY and not policies:
+        policies: list[Policy] = []
+        if definition.scopes:
+            policies.append(ScopePolicy(definition.scopes))
+        policies.extend(definition.policies)
+        if definition.confirmation is Confirmation.POLICY and not definition.policies:
             raise DefinitionError(
                 f"capability {definition.id} declares policy confirmation "
                 "but has no explicit policies"

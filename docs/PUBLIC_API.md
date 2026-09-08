@@ -13,7 +13,7 @@ This document owns compatibility expectations for Agnara's Python API.
 | `experimental` | Public only for evaluation. It may change or disappear in the next pre-1.0 release. |
 | `internal` | Unsupported implementation detail. Internal names are excluded from public manifests and `__all__`. |
 
-No API is classified `stable` during the alpha line. All 280 currently governed
+No API is classified `stable` during the alpha line. All 282 currently governed
 exports are `provisional`: they are deliberate public entry points, but the
 alpha line explicitly makes no compatibility promise. A stable classification
 requires a later, explicit decision supported by the beta and release-candidate
@@ -36,7 +36,7 @@ ungoverned adapter is not a governed framework (ADR 0076).
 
 | Distribution | Import root | Governed modules | Classified exports | Entry point exports |
 | --- | --- | --- | --- | --- |
-| `agnara` | `agnara` | 30 | 218 | 41 |
+| `agnara` | `agnara` | 30 | 220 | 41 |
 | `agnara-a2a` | `agnara_a2a` | 1 | 0 | 0 |
 | `agnara-cli` | `agnara_cli` | 1 | 4 | 4 |
 | `agnara-events` | `agnara_events` | 1 | 0 | 0 |
@@ -44,7 +44,7 @@ ungoverned adapter is not a governed framework (ADR 0076).
 | `agnara-mcp` | `agnara_mcp` | 9 | 40 | 20 |
 | `agnara-telemetry` | `agnara_telemetry` | 3 | 4 | 2 |
 
-280 exports across 47 modules. A count is not a substitute for the list. The
+282 exports across 47 modules. A count is not a substitute for the list. The
 release gate compares each module's ordered export list against the manifest
 and also walks each distribution's source tree in the reverse direction, so
 adding a public package or leaf module without classifying it fails the gate.
@@ -84,9 +84,9 @@ from; that is why a distribution's export total exceeds its entry-point count.
 | `agnara.policy.confirmation` | 4 |
 | `agnara.policy.principal` | 2 |
 | `agnara.policy.scopes` | 1 |
-| `agnara.schema` | 15 |
+| `agnara.schema` | 16 |
 | `agnara.schema.port` | 3 |
-| `agnara.schema.standard` | 12 |
+| `agnara.schema.standard` | 13 |
 
 Governing the subpackages is not a formality. The first three lines of the
 README and of `examples/quickstart.py` import from `agnara`, `agnara.core.di`

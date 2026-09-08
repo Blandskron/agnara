@@ -207,6 +207,20 @@ match await invoke_result(plan, context):
         ...
 ```
 
+JSON transports pass the explicit schema-boundary conversion without changing
+direct Python semantics:
+
+```python
+from agnara.schema import materialize_json
+
+result = await invoke_result(plan, context, input_materializer=materialize_json)
+```
+
+The runtime performs that conversion after policies and before strict schema
+validation. Declared scopes compile into the common plan's first policy, so a
+transport cannot omit their enforcement. See ADR 0077 and
+`docs/CROSS_SURFACE_CONFORMANCE.md`.
+
 `FailureCode` is protocol-neutral. An HTTP, MCP or A2A adapter maps it to its
 own representation; core never stores a transport status code.
 
@@ -220,6 +234,7 @@ mcp_result = project_mcp_result(await invoke_result(plan, context))
 
 Success JSON values are copied into `structuredContent.result` with equivalent
 JSON text. Canonical failures expose only code/message as tool error content;
+`internal_failure` always uses fixed redacted text;
 interaction requirements use the strict E7.6 projection. This function does not
 validate an outputSchema. See ADR 0043.
 

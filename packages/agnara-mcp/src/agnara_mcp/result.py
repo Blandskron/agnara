@@ -66,7 +66,12 @@ def project_mcp_result(outcome: CanonicalResult[object]) -> CallToolResult | Inp
         raise McpResultProjectionError("MCP result projection requires Success or Failure")
     if outcome.code is FailureCode.INTERACTION_REQUIRED:
         return project_mcp_interaction_required(outcome)
+    message = (
+        "capability invocation failed"
+        if outcome.code is FailureCode.INTERNAL_FAILURE
+        else outcome.message
+    )
     return CallToolResult(
-        content=[_text({"code": outcome.code.value, "message": outcome.message})],
+        content=[_text({"code": outcome.code.value, "message": message})],
         is_error=True,
     )

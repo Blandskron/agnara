@@ -6,6 +6,7 @@ import asyncio
 import contextlib
 import inspect
 import time
+from collections.abc import Callable
 from typing import Any
 from uuid import uuid4
 
@@ -21,6 +22,7 @@ from agnara.execution.plan import ExecutionPlan
 from agnara.execution.result import CanonicalResult, Failure, FailureCode, Success
 from agnara.execution.telemetry import InvocationStartEvent, InvocationTerminalEvent
 from agnara.policy import PolicyFailure, PolicyInteractionRequired, PolicySuccess
+from agnara.schema import TypeSchema
 
 __all__ = ["invoke", "invoke_result"]
 
@@ -35,6 +37,15 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
     when the handler raises, awaiting its result fails, or the owning task is
     cancelled. Cancellation is never caught or translated here.
     """
+    return await _invoke(plan, context, input_materializer=None)
+
+
+async def _invoke(
+    plan: ExecutionPlan,
+    context: ExecutionContext,
+    *,
+    input_materializer: Callable[[TypeSchema, object], object] | None,
+) -> Any:
     if not isinstance(plan, ExecutionPlan):
         raise TypeError(f"plan must be an ExecutionPlan, got {type(plan).__name__}")
     if not isinstance(context, ExecutionContext):
@@ -76,9 +87,9 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
     outcome = "success"
     try:
         if context.deadline is None:
-            return await _execute(plan, context)
+            return await _execute(plan, context, input_materializer)
         async with asyncio.timeout_at(context.deadline):
-            return await _execute(plan, context)
+            return await _execute(plan, context, input_materializer)
     except asyncio.CancelledError:
         outcome = "cancellation"
         raise
@@ -105,6 +116,8 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
 async def invoke_result[T](
     plan: ExecutionPlan,
     context: ExecutionContext,
+    *,
+    input_materializer: Callable[[TypeSchema, object], object] | None = None,
 ) -> CanonicalResult[T]:
     """Execute a plan and return its protocol-neutral canonical outcome.
 
@@ -114,10 +127,12 @@ async def invoke_result[T](
     cancellation is deliberately not converted into a capability failure.
 
     Use :func:`invoke` for ergonomic in-process calls that should retain
-    ordinary Python value/exception semantics.
+    ordinary Python value/exception semantics. A JSON transport may pass the
+    explicit ``materialize_json`` schema helper as ``input_materializer``;
+    conversion then runs after policy and before strict schema validation.
     """
     try:
-        value = await invoke(plan, context)
+        value = await _invoke(plan, context, input_materializer=input_materializer)
     except asyncio.CancelledError:
         raise
     except ValidationError as error:
@@ -172,7 +187,11 @@ def _tracking_id(context: ExecutionContext) -> str | None:
     return supplied if isinstance(supplied, str) else None
 
 
-async def _execute(plan: ExecutionPlan, context: ExecutionContext) -> Any:
+async def _execute(
+    plan: ExecutionPlan,
+    context: ExecutionContext,
+    input_materializer: Callable[[TypeSchema, object], object] | None,
+) -> Any:
     """Enforce policies, validate inputs, resolve dependencies, and call the handler."""
     for policy in plan.policies:
         result = await policy.evaluate(context)
@@ -184,7 +203,10 @@ async def _execute(plan: ExecutionPlan, context: ExecutionContext) -> Any:
             raise InteractionRequiredError(result.request)
         raise TypeError(f"policy returned an invalid result: {type(result).__name__}")
 
-    arguments = _validate_inputs(plan, context.invocation.payload)
+    payload = context.invocation.payload
+    if input_materializer is not None:
+        payload = _materialize_inputs(plan, payload, input_materializer)
+    arguments = _validate_inputs(plan, payload)
     async with context.di_container.resolve_dependencies(
         plan.definition.handler,
         plan.target_deps,
@@ -217,3 +239,22 @@ def _validate_inputs(plan: ExecutionPlan, payload: dict[str, Any]) -> dict[str, 
         except ValidationError as error:
             raise error.at(name) from error
     return arguments
+
+
+def _materialize_inputs(
+    plan: ExecutionPlan,
+    payload: dict[str, Any],
+    materializer: Callable[[TypeSchema, object], object],
+) -> dict[str, Any]:
+    """Apply one explicit wire conversion after policy and before validation."""
+    materialized: dict[str, Any] = {}
+    for name, value in payload.items():
+        schema = plan.input_schemas.get(name)
+        if schema is None:
+            materialized[name] = value
+            continue
+        try:
+            materialized[name] = materializer(schema, value)
+        except ValidationError as error:
+            raise error.at(name) from error
+    return materialized

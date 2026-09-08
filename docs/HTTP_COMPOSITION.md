@@ -309,6 +309,16 @@ machine-readable discriminator.
 | Deadline exceeded | 504 | `timeout` |
 | Handler raised | 500 | `internal_failure` (message redacted) |
 
+Decoded JSON is materialized after policy and before strict validation. This
+is why a nested dataclass error uses canonical `details.path` beginning with
+the capability input name rather than transport `details.location`. Direct
+Python invocation remains strict. See ADR 0077 and
+`CROSS_SURFACE_CONFORMANCE.md`.
+
+Capability dispatch in `0.1.0a4` has no HTTP authentication bridge and runs as
+anonymous. Because declared scopes compile into the common plan, a scoped HTTP
+capability fails closed with `403`; discovery visibility is not authorization.
+
 `type` is `about:blank` unless you pass `problem_base_uri`, because Agnara does
 not invent a documentation origin for your errors.
 

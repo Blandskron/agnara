@@ -954,6 +954,10 @@
             {
               "name": "UnionSchema",
               "stability": "provisional"
+            },
+            {
+              "name": "materialize_json",
+              "stability": "provisional"
             }
           ]
         },
@@ -1023,6 +1027,10 @@
             },
             {
               "name": "UnionSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "materialize_json",
               "stability": "provisional"
             }
           ]
