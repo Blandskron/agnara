@@ -879,6 +879,11 @@ Tracking: GitHub Issue #282.
 
 ## Carried technical debt (post-0.1.0a3 audit)
 
+- [x] A4-R2 Reconcile current HTTP/introspection documentation and the a3-to-a4
+  migration guide with the implemented candidate. Distinguish development
+  artifacts from release artifacts and validate exact installation commands,
+  executable documentation and governed imports. Tracking: GitHub Issue #324.
+
 - [x] D10 Verify schema, policy and structured-failure consistency across the
   direct runtime, HTTP/OpenAPI and MCP a4 surfaces. JSON materialization is now
   shared and runs after policy; declared scopes compile into the common plan;

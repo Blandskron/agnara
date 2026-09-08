@@ -295,9 +295,10 @@ document = snapshot(
 ).json_data()
 ```
 
-The explicit mapping is the implemented transitional API. RFC 0006 proposes
-deriving it from the same neutral records emitted by compiled HTTP and MCP
-surfaces, so introspection cannot drift from dispatch.
+The explicit mapping remains a supported transitional API. ADR 0070 implements
+the RFC 0006 model: `describe_app(exposures=...)` also accepts the
+`FrozenExposureRegistry` aggregated from compiled HTTP and MCP surfaces, so
+introspection can describe the same availability as dispatch.
 
 The CLI, an authorized discovery endpoint and Agnara Explorer read this rather
 than deriving answers from OpenAPI or from one another. Descriptors are frozen

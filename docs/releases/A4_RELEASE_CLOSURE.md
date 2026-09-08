@@ -53,14 +53,35 @@ fuzzing, cryptographic or full CLI/A2A/events review.
 
 ## Cycle 2 — Public-document consistency
 
-**Owner: documentation/architecture maintainer. State: pending.**
+**Owner: documentation/architecture maintainer. State: corrections prepared in
+Issue #324; owner review pending.**
 
-The deep review found a concrete contradiction in `ARCHITECTURE.md` section 3:
-its public-surface table still says `agnara-http` has no public API and that its
-tests use private modules while composition remains unsettled. ADR 0071, the
-implemented package and the later application-composition section already say
-the opposite: HTTP exposes seven provisional public names and A4-14 consumed
-them successfully.
+The review found stale HTTP public-surface claims in `ARCHITECTURE.md` and
+`docs/MATURITY.md`, and a stale introspection proposal in `docs/API_DESIGN.md`.
+Issue #324 reconciles them with ADRs 0070/0071 and the governed exports. The
+migration guide now separates `0.1.0a4.dev0` from the future release, pins the
+core/HTTP install commands and distinguishes source-environment docs tests
+from installed-artifact evidence. Historical a3 snapshots and ADR context
+remain historical; ecosystem interoperability remains research.
+
+Local validation on 2026-09-08, CPython 3.14.6, for the Issue #324 working
+tree based on `54bed7e7a9abb94e0e2689142ec859182e727803`:
+
+- lint, format, typing and synchronized development-version checks passed;
+- `uv run pytest -q -o cache_dir=dist/a4-pytest-cache` reported 3,467 passed
+  and 53 expected skips (31 explicit browser-job cases and 22 inapplicable
+  release-test parameterizations);
+- the governed example/README/HTTP-guide import audit passed; the migration's
+  old a3 import intentionally fails a raw whole-file a4 import audit;
+- seven wheels and seven sdists built and passed `check_distributions.py`;
+- the migration's exact offline core/HTTP installation succeeded in a fresh
+  external venv, and both complete programs executed with `python -I` from
+  those installed wheels.
+
+This is local working-tree evidence, not CI approval for the pending diff or
+validation of final `0.1.0a4` release artifacts. The existing base-commit CI
+is green; the changed branch still needs integration review and CI. No manual
+readiness gate is satisfied by this record.
 
 Exit criteria:
 
@@ -71,8 +92,8 @@ Exit criteria:
 4. Present the exact diff to the owner for the `docs-reflect-implementation`
    and `docs-reproduce-applications` decisions.
 
-The documentation manual gates cannot be accepted while this known
-contradiction remains.
+The corrections remove the known contradictions. Acceptance of the two
+documentation manual gates remains a separate owner decision.
 
 ## Cycle 3 — Repository-native security controls
 

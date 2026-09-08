@@ -1,6 +1,10 @@
 # Migrating from `0.1.0a3` to `0.1.0a4`
 
-`0.1.0a4` is an alpha, so the public API may change without a deprecation
+`0.1.0a4` is the planned alpha release. The current development candidate is
+`0.1.0a4.dev0`; this guide describes its intended migration, not evidence that
+the final release has been published. See [release status](releases/STATUS.md).
+
+The public API may change without a deprecation
 cycle. That is a licence to change the API, not a licence to surprise you. This
 page lists every change a `0.1.0a3` user has to act on, and says plainly which
 ones require no action at all.
@@ -10,14 +14,17 @@ migration example. Internal refactoring is deliberately absent: if it never
 appeared in your code, it is not on this page.
 
 The changes were derived by diffing the public surface of the published
-`agnara==0.1.0a3` against the `0.1.0a4` build, not from the changelog.
+`agnara==0.1.0a3` against the development candidate for `0.1.0a4`, not from
+the changelog. Final release validation must repeat the artifact checks after
+the version cut.
 
 Two conventions for the code below. Blocks shown as a matched `a3` / `a4` pair
 are excerpts of your code, not programs — the `a3` half is expected to fail on
 `a4`, which is the point. The complete programs are the ones under "Apps and
 bounded contexts" and "Serving over HTTP"; both are executed against an
-installed `0.1.0a4` build as part of this repository's documentation
-reproduction check.
+installed candidate in the documentation reproduction audit. The repository's
+`tests/docs/test_documented_examples.py` also executes both blocks against the
+active test environment; that test alone does not prove installed-wheel usage.
 
 ## At a glance
 
@@ -35,9 +42,11 @@ reproduction check.
 | Declared `scopes=` are enforced | **Yes**, an invocation without the scope now fails |
 | `materialize_json` exported from `agnara.schema` | No, additive |
 
-Everything else you wrote against `0.1.0a3` keeps working. Capability
-declaration, the registry, dependency injection, execution plans, policies,
-canonical results, telemetry hooks and frozen value semantics are unchanged.
+The sections below describe the reviewed public migration surface. Capability
+declaration, the registry, dependency injection, canonical results, telemetry
+hooks and frozen value semantics retain their public shape. Policy enforcement
+changes as described in section 10. Private imports have no compatibility
+promise; check application imports using `scripts/check_public_imports.py`.
 
 ## 1. `AppDescriptor` is now `ApplicationDescriptor`
 
@@ -123,23 +132,30 @@ the repository but could not be installed as ordinary dependencies.
 ones you need are available on your index:
 
 ```bash
-pip install agnara agnara-http
+python -m pip install --upgrade "agnara==0.1.0a4" "agnara-http==0.1.0a4"
 ```
 
-Availability is the thing to check first, and this page deliberately does not
-assert it: at the time of writing only `agnara` resolves from PyPI, and the
-command above fails on `agnara-http`. Each distribution's PyPI project page is
-the authority.
+This command is for the completed release. Before publication, use the
+candidate instructions below. Exact versions select the intended alpha and
+upgrade an existing a3 installation; an unversioned install can leave a3
+installed. Check the index you use for availability of both exact versions.
 
 Until an adapter is on your index, install it from the built wheels:
 
 ```bash
-uv build --all-packages --out-dir dist/
-pip install --no-index --find-links dist/ agnara agnara-http
+uv build --all-packages --out-dir dist/a4-candidate/
+python -m pip install --no-index --find-links dist/a4-candidate/ "agnara==0.1.0a4.dev0" "agnara-http==0.1.0a4.dev0"
 ```
 
+Run the build from the repository on `develop` and install into a fresh Python
+3.14 environment. This core/HTTP pair needs no third-party runtime packages.
+MCP and telemetry have additional dependencies: the complete offline wheel-set
+procedure in [QUALITY_GATES.md](../QUALITY_GATES.md) resolves those first.
+
 Adapter versions are pinned to the exact matching kernel version, so upgrade
-them together.
+all adapters you use together. Development wheels must come from one commit:
+`.dev0` identifies a development cycle, not a unique build. For final release
+wheels, use `0.1.0a4` in place of `0.1.0a4.dev0` after the authorized version cut.
 
 ## 4. Apps and bounded contexts
 

@@ -302,7 +302,8 @@ Responsibilities:
 ### When a package has a public surface
 
 A distribution's `__init__.py` re-exports names and declares `__all__` only
-once its composition API is one we are prepared to keep. Until then the
+once its composition API has an explicit governed contract. Alpha exports
+remain provisional; public does not mean stable. Until then the
 package ships its implementation in underscore-prefixed modules and declares
 `__all__ = []`, which says "no public API yet" rather than leaving a reader to
 guess from an empty file.
@@ -315,12 +316,13 @@ The current split:
 | `agnara-mcp` | public | MCP's tool and authorization shapes follow the protocol, not our design |
 | `agnara-telemetry` | public | two hook classes over an OpenTelemetry contract |
 | `agnara-cli` | public | supports the `agnara` console script |
-| `agnara-http` | none yet | the `Http(...)` composition API is still the golden-design sketch in `docs/API_DESIGN.md` section 4, not stable syntax |
+| `agnara-http` | public, provisional | seven composition exports implemented under ADR 0071; see `docs/HTTP_COMPOSITION.md` |
 | `agnara-a2a`, `agnara-events` | none yet | reserved namespaces holding a package boundary; adapters are Post-v0.1 |
 
-A package with no public surface is not a package without tests. `agnara-http`
-is exercised through its private modules precisely because the transport
-behaviour is settled while the way an application composes it is not.
+HTTP application examples and consumer tests use the public composition API.
+Internal adapter tests may still exercise private modules; that does not make
+those modules supported application imports. `agnara-a2a` and `agnara-events`
+retain empty public surfaces and do not claim implemented protocol support.
 
 ## 4. Allowed dependency graph
 

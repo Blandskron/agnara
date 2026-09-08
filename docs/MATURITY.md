@@ -154,7 +154,7 @@ settled; the spelling is not.
 | Plugin system | `RESEARCH` | No discovery, loading or trust model. |
 | Persistence, cache, queue and scheduler integrations | `RESEARCH` | No port, no adapter, no dependency. `docs/INTEROPERABILITY.md` records the intent; I20 owns the work. |
 | Framework embedding contract | `RESEARCH` | RFC 0008 states the questions. Nothing exists that an external host could call. |
-| Side-by-side composition with an external framework | `RESEARCH` | Untested. Requires a public composition surface, which `agnara-http` does not declare. |
+| Side-by-side composition with an external framework | `RESEARCH` | HTTP now has a public composition surface (ADR 0071); interoperability with an external framework still requires its own conformance evidence and belongs to beta. |
 | Second shipped schema adapter | `RESEARCH` | Pydantic and msgspec remain `experiments/`; neither is packaged or supported. |
 | Typed client generation | `RESEARCH` | |
 | Native acceleration | `DEFERRED` | ADR-level position: only after measured bottlenecks. |
