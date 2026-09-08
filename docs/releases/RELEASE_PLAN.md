@@ -158,7 +158,7 @@ to publish it without package-specific surgery. The six new names still need
 their external Pending Trusted Publisher configuration and the authorized
 release tag. The second blocker —
 `agnara-http` declaring no public composition surface — was resolved by ADR
-0071.
+0071. `docs/releases/release-status.json` tracks the operational state.
 
 **Guardrail (ADR 0068).** `0.1.0a4` is not the FastAPI release, the Django
 release, the SQLAlchemy release or the interoperability release. It may run
@@ -357,8 +357,8 @@ and external usability to establish a first stable public contract.
 ## Operating rules
 
 **Feature freeze.** When only release validation remains for the current
-target, the release status records `FEATURE FREEZE RECOMMENDED`. During that stage the
-priorities are regressions, documentation, tests, compatibility, security,
+target, `docs/releases/release-status.json` records
+`FEATURE FREEZE RECOMMENDED`. During that stage the priorities are regressions, documentation, tests, compatibility, security,
 packaging, release notes, cleanup and dogfooding.
 
 **Transition.** When a target becomes `RELEASE_READY`, the current target does

@@ -78,7 +78,19 @@ rather than repeating it.
 belong in an RFC until they are answered, and an RFC that has been answered
 says so and names the ADR.
 
-**Release history is immutable.** Historical releases are preserved through Git tags, GitHub Releases, and PyPI. The active repository only keeps the current and next release documentation.
+**Release history is immutable, and it is not stored here.** A published
+release is preserved by its Git tag, its GitHub Release and its PyPI
+distribution. The working tree keeps only the release being prepared and, while
+it is still useful to an upgrader, the one before it. A release document is
+never corrected to match a later reality; it is removed once its only remaining
+value is historical.
+
+**Completed planning leaves the planning documents.** `ROADMAP.md`,
+`docs/INITIATIVES.md` and `BACKLOG.md` describe work that is still open. When
+an item ships, it does not become a `[x]` entry that accumulates -- it leaves,
+and whatever durable requirement it carried moves to the document that owns
+that kind of truth. `docs/MATURITY.md` is where shipped work becomes visible
+again.
 
 **Prefer a citation to a copy.** A reader who follows a link to one accurate
 paragraph is better served than one who reads four paragraphs that used to
@@ -96,6 +108,11 @@ this that a machine can check:
 - every canonical document this map names exists;
 - every ADR and RFC referenced by the planning documents exists;
 - no planning document references a file that has been deleted.
+
+`tests/architecture/test_repository_encoding.py` additionally rejects the
+text-corruption modes that a lossy Windows write has twice introduced into
+this repository's documentation: replaced characters, cp1252 mojibake, a
+byte-order mark and a stray control byte.
 
 Everything else is a human judgement, and this file is where the judgement is
 recorded so the next reader does not have to reconstruct it.

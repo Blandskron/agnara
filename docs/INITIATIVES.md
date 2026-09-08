@@ -27,6 +27,25 @@ evidence about when any of this will be done.
 | `POST-1.0` | Deliberately after 1.0. |
 | `RESEARCH` | Needs an RFC before it can be scheduled at all. |
 
+## Delivered
+
+These initiatives have shipped, so they are no longer carried as open work
+above. They keep one row each because the dependency graph below,
+`BACKLOG.md`, `docs/releases/RELEASE_PLAN.md` and several ADRs still cite them
+by id. For what any of them actually produced, read `docs/MATURITY.md` and the
+record that settled it -- not an implementation history.
+
+| Id | Subject | Settled by | Still open |
+| --- | --- | --- | --- |
+| `I1` | Unified exposure model | ADR 0070, and ADR 0071 for phase 3 | nothing |
+| `I3` | Execution identity and idempotency behaviour | ADR 0074 | nothing; `0.1.0a5` still gates the behaviour |
+| `I7` | HTTP request surface | ADR 0072 | scope beyond what `0.1.0a4` owns, classified in ADR 0072 |
+| `I9` | Public API governance | ADR 0067, ADR 0074, ADR 0076 | stability promotion, and a generated reference for the public names |
+| `I18` | Documentation and DX program | first increment only | progressive examples, error-message quality, startup diagnostics |
+
+The open remainder of `I9` and `I18` is tracked as backlog items rather than
+as initiatives, because it is already decomposed.
+
 ## Dependency order
 
 The arrows are hard. An initiative cannot responsibly start before what it
@@ -59,8 +78,8 @@ I8 ──┤         bridge — see RFC 0008 section 6)
 I10 ─┘
 ```
 
-`I1` and `I2` are the two initiatives most other work waits on. Neither is
-large. Both are design-first.
+`I1` is delivered, which leaves `I2` as the initiative most other work waits
+on. It is not large, and it is design-first.
 
 ## The initiatives
 

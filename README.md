@@ -333,12 +333,12 @@ Read in this order:
 2. `PRINCIPLES.md` — the rules a decision must not break
 3. `ARCHITECTURE.md` — how the system is structured today
 4. `docs/MATURITY.md` — **what actually exists**, per subsystem
-6. `docs/API_DESIGN.md`
-7. `docs/TARGET_ARCHITECTURE.md` — where the structure is going, and the gaps
-8. `docs/INITIATIVES.md` — what to build, in dependency order
-9. `BACKLOG.md` — decomposed items ready to implement
-10. `QUALITY_GATES.md`
-11. `AGENTS.md`
+5. `docs/API_DESIGN.md`
+6. `docs/TARGET_ARCHITECTURE.md` — where the structure is going, and the gaps
+7. `docs/INITIATIVES.md` — what to build, in dependency order
+8. `BACKLOG.md` — decomposed items ready to implement
+9. `QUALITY_GATES.md`
+10. `AGENTS.md`
 
 `docs/DOCUMENTATION_MAP.md` records which document owns which kind of truth.
 Before trusting a status you read anywhere else, check `docs/MATURITY.md`:
@@ -472,7 +472,7 @@ Read:
 
 - `GIT_WORKFLOW.md`
 - `AGENT_OPERATING_MODEL.md`
-- `FIRST_AGENT_PROMPT.md`
+- `AGENTS.md`
 
 Agents are expected to leave a normal, auditable GitHub trail that remains understandable to human maintainers.
 

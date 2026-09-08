@@ -255,7 +255,7 @@ behaviour changes for an application that does not use the new model.
 One deliberate break, in an internal path: `Mcp.__repr__` now includes the
 surface name, because `Mcp('users', 0 tools, open)` could no longer identify
 which of two servers it described. A repr is a diagnostic rather than a
-contract, and alpha release documentation scopes the alpha public API as
+contract, and `docs/releases/v0.1.0a4.md` scopes the alpha public API as
 changeable; the repository's own test was updated in the same change.
 
 `Mcp(app)` keeps its signature; `surface` is keyword-only with a `"default"`

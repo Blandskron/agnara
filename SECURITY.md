@@ -76,8 +76,8 @@ All protocol adapters should pin or bound critical protocol dependencies and rec
 GitHub secret scanning, push protection, Dependabot alerts and Dependabot
 security updates are enabled for this repository. Read back repository
 settings during release preflight; their state is external to Git history.
-The a4 closure record names optional controls that remain unavailable or
-disabled. Dependency update PRs follow the normal review and required-check
+`docs/releases/release-status.json` names the optional controls that remain
+unavailable or disabled. Dependency update PRs follow the normal review and required-check
 workflow and are never automatically merged by this configuration.
 
 Required CI analyzes Python and GitHub Actions using SHA-pinned CodeQL
@@ -88,10 +88,21 @@ not that every alert is resolved. Review open alerts and their analyzed commit
 before release; record fixes or justified dispositions privately where the
 finding is exploitable. Do not close or suppress alerts merely to get green CI.
 
-For dependencies, repeat the locked runtime `pip-audit` procedure in
-`the release closure document` on the final candidate. Dependency alerts
-on the default branch do not prove that an unreleased `develop` lockfile is
-clean. Secret-scanning alerts must be handled in the private security UI;
+For dependencies, re-run the locked runtime audit on the final candidate:
+
+```powershell
+uv export --locked --all-packages --no-dev --no-emit-workspace `
+  --no-hashes --format requirements.txt --output-file runtime-requirements.txt
+uvx --from pip-audit==2.10.1 pip-audit `
+  -r runtime-requirements.txt --format json --output pip-audit.json
+```
+
+Run it from the exact release commit, after the version and changelog cut and
+before tagging. A zero-result audit is evidence only for the vulnerability
+database and lockfile observed at execution time, so it expires: dependency
+alerts on the default branch do not prove that an unreleased `develop`
+lockfile is clean. Record the result against the candidate SHA in
+`docs/releases/release-status.json`. Secret-scanning alerts must be handled in the private security UI;
 never copy credential values into Issues, PRs or build logs.
 
 ## Documentation and discovery surfaces

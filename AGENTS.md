@@ -21,9 +21,9 @@ Before implementing:
 1. `VISION.md`
 2. `PRINCIPLES.md`
 3. `ARCHITECTURE.md`
-5. `docs/API_DESIGN.md`
-6. `BACKLOG.md`
-7. `QUALITY_GATES.md`
+4. `docs/API_DESIGN.md`
+5. `BACKLOG.md`
+6. `QUALITY_GATES.md`
 
 Do not start by generating hundreds of files.
 
@@ -249,7 +249,7 @@ Nunca utilizar la identidad de otro agente.
 Si la identidad oficial/verificable de un agente es desconocida, debe investigarse antes de agregarla.
 
 ### Reglas Específicas
-- **Gemini**: Lee el documento canónico `GEMINI.md` para usar la identidad oficial y el workflow asociado.
+- **Gemini**: Utiliza estrictamente `Co-authored-by: gemini-cli <218195315+gemini-cli@users.noreply.github.com>`. No uses `antigravity@google.com`, `gemini@google.com` ni seudónimos como `antigravity[bot]`: el ID numérico `218195315` es lo que vincula la identidad con el sistema noreply de GitHub.
 - **Codex**: Utiliza estrictamente `Co-authored-by: Codex <codex@openai.com>`. No uses variantes como noreply ni identidades inventadas, salvo nueva disposición de GitHub.
 - **Claude**: Utiliza estrictamente `Co-authored-by: Claude <noreply@anthropic.com>`. No incluyas la versión del modelo en el nombre: la identidad registrada es estable y no cambia con cada release.
 

@@ -13,16 +13,28 @@ zero-padded to four digits and never exceed `0999`.
 
 ## Current records
 
-| RFC | Subject | Note |
-| --- | --- | --- |
-| 0001 | Capability runtime | The runtime it proposes shipped across three alphas. Its `Context` example shipped as `ExecutionContext`. |
-| 0002 | Project and app scaffolding | Its first open question, "exact app descriptor API", was answered by ADR 0065. |
-| 0003 | HTTP documentation and capability explorer | Implemented; see ADR 0033 and ADR 0036-0040. |
-| 0004 | Transport-neutral dependency injection | `Accepted`. |
-| 0005 | Protocol-neutral delegation | Genuinely open. |
-| 0006 | Unified exposure model | Answered by ADR 0070. Implemented; phase 3, the public composition API, is still open. |
-| 0007 | Distribution version identity and dependency constraints | Answered by ADR 0069: exact alpha pins plus `<target>.dev0` on `develop`. |
-| 0008 | Framework embedding and ecosystem composition | `Proposed`. Fifteen open questions; decides none. Implementation belongs to `0.1.0b1` per ADR 0068. |
+The **Lifecycle** column is the reviewed classification, not the file's own
+`Status` line. `OPEN` means the question is still live. `IMPLEMENTED` means the
+question was answered and built, and the record is retained because ADRs, code
+and tests still cite its numbered sections as the normative statement of the
+problem -- deleting it would break the decision chain that ADR 0069, ADR 0070
+and ADR 0071 depend on.
+
+| RFC | Subject | Lifecycle | Note |
+| --- | --- | --- | --- |
+| 0001 | Capability runtime | `IMPLEMENTED` | The runtime it proposes shipped across three alphas. Its `Context` example shipped as `ExecutionContext`. Cited by the core capability modules. |
+| 0002 | Project and app scaffolding | `IMPLEMENTED` | Its first open question, "exact app descriptor API", was answered by ADR 0065. |
+| 0003 | HTTP documentation and capability explorer | `IMPLEMENTED` | See ADR 0033 and ADR 0036-0040. The most heavily cited record in `agnara-http`. |
+| 0004 | Transport-neutral dependency injection | `ACCEPTED` | `Accepted`; not yet fully implemented. |
+| 0005 | Protocol-neutral delegation | `OPEN` | Genuinely open. Required by `I8` before any delegation work. |
+| 0006 | Unified exposure model | `PARTLY OPEN` | Answered by ADR 0070 and implemented. Phase 3, the public composition API, is ADR 0071. |
+| 0007 | Distribution version identity and dependency constraints | `IMPLEMENTED` | Answered by ADR 0069: exact alpha pins plus `<target>.dev0` on `develop`. |
+| 0008 | Framework embedding and ecosystem composition | `OPEN` | `Proposed`. Fifteen open questions; decides none. Implementation belongs to `0.1.0b1` per ADR 0068. |
+
+An `IMPLEMENTED` record is not historical noise and is not a candidate for
+deletion while anything still cites it. Before removing one, check
+`docs/adr/`, `packages/` and `tests/` for citations of its number, and move
+whatever they rely on into the ADR that answers it.
 
 ## Read this before trusting a Status line
 
