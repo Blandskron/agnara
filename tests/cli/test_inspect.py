@@ -56,6 +56,18 @@ def refund(payment_id: str, ledger: Ledger, amount_cents: int = 0) -> str:
 def health() -> str:
     """Report service health."""
     return "ok"
+
+
+class Container:
+    """An application assembled inside a container, reached by a dotted path."""
+
+
+container = Container()
+container.app = app
+container.registry = registry
+container.depth = Container()
+container.depth.app = app
+none_registry = None
 '''
 
 EXPLODING = "raise RuntimeError('module import failed on purpose')\n"
@@ -308,6 +320,83 @@ def test_a_capability_that_cannot_compile_reports_why(
 
     assert code == EXIT_FAILED
     assert "compiling 'billing' failed" in err
+
+
+def test_a_dotted_target_resolves_an_application_inside_a_container(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """An app assembled inside a container is a target, not a refactor."""
+    code, out, _ = run(
+        project, "--dependencies", "registry", capsys=capsys, target="billing:container.app"
+    )
+
+    assert code == EXIT_OK
+    assert "billing.refund" in out
+
+
+def test_a_dotted_path_may_be_more_than_two_segments(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    code, out, _ = run(
+        project,
+        "--dependencies",
+        "registry",
+        capsys=capsys,
+        target="billing:container.depth.app",
+    )
+
+    assert code == EXIT_OK
+    assert "billing.refund" in out
+
+
+def test_a_dotted_registry_is_resolved_the_same_way(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    code, out, _ = run(project, "--dependencies", "container.registry", capsys=capsys)
+
+    assert code == EXIT_OK
+    assert "billing.refund" in out
+
+
+def test_a_dotted_path_names_the_segment_that_failed(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Half a path being wrong is the whole reason to report which half."""
+    code, _, err = run(project, capsys=capsys, target="billing:container.missing")
+
+    assert code == EXIT_FAILED
+    assert "container.missing" in err
+    assert "'missing'" in err
+
+
+def test_a_registry_attribute_that_is_none_reports_its_type(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """`None` is a value the module defines, not an attribute it lacks.
+
+    The resolver distinguishes the two through `_MISSING`, so an attribute
+    holding `None` must be refused for being the wrong type rather than
+    reported as absent.
+    """
+    code, _, err = run(project, "--dependencies", "none_registry", capsys=capsys)
+
+    assert code == EXIT_FAILED
+    assert "not a DIRegistry" in err
+    assert "has no attribute" not in err
+
+
+def test_a_compile_failure_without_a_registry_suggests_dependencies(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The likeliest cause is named, without repeating core's wording.
+
+    Core cannot tell an unbound dependency from an unsupported annotation, so
+    the CLI adds the hint it can: a registry was never named.
+    """
+    code, _, err = run(project, capsys=capsys)
+
+    assert code == EXIT_FAILED
+    assert "--dependencies" in err
 
 
 def test_an_unknown_command_line_is_a_usage_error() -> None:

@@ -41,6 +41,13 @@ from OpenAPI.
 Importing the target executes the module that defines it. A malformed target
 is rejected before any import happens.
 
+The attribute may be a dotted path, so an application held inside a container
+or a factory result needs no rearranging to be inspectable:
+
+```bash
+agnara inspect billing.bootstrap:container.app --dependencies container.registry
+```
+
 `--visibility` selects `full` (default), `agent` or `identity`; `--as-scope`
 simulates a viewer's scopes; `--hide` removes named capabilities. Offline
 inspection is therefore not a documented bypass of a publication decision.

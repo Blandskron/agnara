@@ -2,7 +2,9 @@
 
 There is no project manifest yet (E0A.2), so the target is explicit:
 ``package.module:attribute``, the convention `uvicorn` and `gunicorn` already
-established, resolved with the ordinary import system.
+established, resolved with the ordinary import system. The attribute may be a
+dotted path, so an application held inside a container or a settings object is
+reachable as ``package.module:container.app``.
 
 Importing a target runs the user's module. That is inherent — a compiled
 application only exists once its declarations have executed — and it is the
@@ -17,7 +19,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from agnara import Agnara
+from agnara import Agnara, SchemaError
 from agnara.core.di import DIRegistry
 from agnara.execution import ExecutionPlan
 
@@ -27,6 +29,26 @@ __all__ = ["ResolvedTarget", "TargetError", "resolve_attribute", "resolve_target
 #: Distinguishes "the attribute is absent" from "the attribute is None",
 #: which a target may legitimately be.
 _MISSING = object()
+
+
+def _attribute(module: object, path: str) -> object:
+    """Walk a dotted attribute path from an imported module.
+
+    ``billing.bootstrap:app`` is the common case, but an application assembled
+    inside a container or a factory result is reached as
+    ``billing.bootstrap:container.app``. Each segment is already known to be an
+    identifier: `_split` checks that before anything is imported.
+
+    Naming the segment that failed is what makes a dotted path debuggable:
+    "no attribute 'container.app'" leaves an operator guessing which half is
+    wrong.
+    """
+    value = module
+    for part in path.split("."):
+        value = getattr(value, part, _MISSING)
+        if value is _MISSING:
+            raise TargetError(f"module has no attribute {path!r} (failed at {part!r})")
+    return value
 
 
 class TargetError(Exception):
@@ -93,22 +115,13 @@ def resolve_attribute(target: str, *, search_path: Iterable[str] = ()) -> object
     """
     module_name, attribute = _split(target)
     module = _import(module_name, tuple(search_path))
-    value = module
-    for part in attribute.split("."):
-        value = getattr(value, part, _MISSING)
-        if value is _MISSING:
-            raise TargetError(f"module has no attribute {attribute!r} (failed at {part!r})")
-    return value
+    return _attribute(module, attribute)
 
 
 def _registry(module: object, name: str | None) -> DIRegistry | None:
     if name is None:
         return None
-    registry = module
-    for part in name.split("."):
-        registry = getattr(registry, part, None)
-        if registry is None:
-            raise TargetError(f"module has no attribute {name!r} (failed at {part!r})")
+    registry = _attribute(module, name)
     if not isinstance(registry, DIRegistry):
         raise TargetError(f"attribute {name!r} is a {type(registry).__name__}, not a DIRegistry")
     return registry
@@ -129,11 +142,7 @@ def resolve_target(
     """
     module_name, attribute = _split(target)
     module = _import(module_name, tuple(search_path))
-    app = module
-    for part in attribute.split("."):
-        app = getattr(app, part, _MISSING)
-        if app is _MISSING:
-            raise TargetError(f"module has no attribute {attribute!r} (failed at {part!r})")
+    app = _attribute(module, attribute)
     if not isinstance(app, Agnara):
         raise TargetError(
             f"attribute {attribute!r} is a {type(app).__name__}, not an Agnara application"
@@ -146,8 +155,12 @@ def resolve_target(
             for capability_id in app.capabilities
         )
     except Exception as error:
+        # A schema error with no registry named is nearly always a dependency
+        # the CLI was never told about: core cannot tell a handler's unbound
+        # dependency from an unsupported annotation. Keyed on the exception
+        # type rather than its wording, which belongs to another distribution.
         hint = ""
-        if dependencies is None and "is not supported by StandardSchemaAdapter" in str(error):
-            hint = " (did you forget to pass --dependencies, or is a dependency unregistered?)"
+        if dependencies is None and isinstance(error, SchemaError):
+            hint = " (a handler parameter may be a dependency; try --dependencies)"
         raise TargetError(f"compiling {app.name!r} failed: {error}{hint}") from error
     return ResolvedTarget(app, plans, registry)

@@ -15,6 +15,17 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- A CLI target's attribute may be a dotted path. `agnara inspect`,
+  `agnara graph`, `agnara context` and `agnara schema openapi` accept
+  `billing.bootstrap:container.app`, and `--dependencies` accepts
+  `container.registry`, so an application assembled inside a container or
+  returned by a factory no longer has to be re-exported at module level to be
+  usable from the command line. Each segment is validated as an identifier
+  before anything is imported, and a missing segment is named in the error
+  rather than leaving the operator to guess which half of the path was wrong.
+  A compile failure with no registry named now also suggests `--dependencies`,
+  because core cannot distinguish an unbound dependency from an unsupported
+  annotation ([#313]).
 - Added a table-driven `0.1.0a4` conformance matrix for direct runtime,
   HTTP/OpenAPI and MCP schemas, policies and structured failures. The public
   `materialize_json` schema helper gives JSON transports one recursive
@@ -863,4 +874,5 @@ under `0.1.0a2` instead.
 [#289]: https://github.com/Blandskron/agnara/issues/289
 [#296]: https://github.com/Blandskron/agnara/issues/296
 [#291]: https://github.com/Blandskron/agnara/issues/291
+[#313]: https://github.com/Blandskron/agnara/issues/313
 [#307]: https://github.com/Blandskron/agnara/issues/307
