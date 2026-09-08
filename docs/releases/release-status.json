@@ -4,8 +4,8 @@
   "next_target": "0.1.0a5",
   "previous_release": "0.1.0a3",
   "status": "IN_PROGRESS",
-  "assessed_on": "2026-09-07",
-  "assessed_commit": "45d09979c042124932ec67cc45b90bc194e09994",
+  "assessed_on": "2026-09-08",
+  "assessed_commit": "ec44a8b6e2a8e9099778202136a19e5050024db8",
   "blocked_reason": null,
   "notes": [
     "Status is recomputed by scripts/check_release_readiness.py. Automated gates are re-derived from the repository and are never read from this file.",
@@ -73,9 +73,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
-        "command": "uv run python -m pytest",
-        "result": "A4-13: 3467 passed, 53 browser-job skips; 613 architecture tests passed; exact-SHA CI passed on Ubuntu, macOS and Windows. Documentation/release selection after the documentation-only follow-up: 510 passed, 22 expected parameterization skips. Evidence: https://github.com/Blandskron/agnara/issues/317#issuecomment-5577945027",
+        "commit": "ec44a8b6e2a8e9099778202136a19e5050024db8",
+        "command": "uv run pytest; required CI including Python/Actions CodeQL",
+        "result": "A4-R3: local CPython 3.14.6 full suite 3469 passed, 53 expected skips; documentation/architecture/release selection 1125 passed, 22 expected skips. Linux/macOS/Windows and browser CI jobs passed for the source tree. Evidence: https://github.com/Blandskron/agnara/actions/runs/34231370311",
         "covers": ["packages", "tests", "scripts", "examples", "README.md", "CHANGELOG.md", "pyproject.toml", "uv.lock", ".github"]
       }
     },
@@ -86,9 +86,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
-        "command": "uv build --all-packages; check_release_artifacts.py",
-        "result": "A4-13 built and validated exactly seven wheels and seven sdists at 0.1.0a4.dev0, including metadata, license, package data and exact first-party pins. Evidence: https://github.com/Blandskron/agnara/issues/317#issuecomment-5577945027",
+        "commit": "ec44a8b6e2a8e9099778202136a19e5050024db8",
+        "command": "CI uv build --all-packages and external installed-distribution gate",
+        "result": "A4-R3 CI Build and install passed for all seven candidate distributions, preserving exact core pins and installing outside the checkout. Evidence: https://github.com/Blandskron/agnara/actions/runs/34231370311",
         "covers": ["packages", "scripts", "pyproject.toml", "uv.lock", ".github/workflows"]
       }
     },
@@ -151,9 +151,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
-        "command": "full quality gate, exact-SHA CI, open P0/P1 Issue and blocking RFC audit",
-        "result": "No release-blocking regression was found; exact-SHA required CI passed and the final audit found no open framework P0/P1 issue or unresolved a4 decision. Evidence: https://github.com/Blandskron/agnara/issues/317#issuecomment-5577945027",
+        "commit": "ec44a8b6e2a8e9099778202136a19e5050024db8",
+        "command": "full tests, CodeQL results and open-Issue audit",
+        "result": "A4-R3 full suite and cross-platform CI jobs passed; Python and Actions CodeQL reported zero results/errors/warnings. No new framework regression was found. Release-owner decisions and external publication prerequisites remain pending. Evidence: https://github.com/Blandskron/agnara/actions/runs/34231370311",
         "covers": ["packages", "tests", "scripts", "examples", "README.md", "CHANGELOG.md", "pyproject.toml", "uv.lock", ".github", "ARCHITECTURE.md", "PRINCIPLES.md", "QUALITY_GATES.md"]
       }
     },
@@ -171,11 +171,11 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "Whether 0.1.0a4 remains inside the experimental-alpha exemption is a maintainer decision. Repository security tests pass, docs/THREAT_MODEL.md covers the a4 surface, private vulnerability reporting is enabled, and a 2026-09-08 pip-audit 2.10.1 run found zero known vulnerabilities across 29 locked runtime dependencies. Cycle 3 enabled GitHub secret scanning, push protection and Dependabot alerts/security updates on 2026-09-08. Required Python/Actions CodeQL analysis is being validated in Issue #326. Non-provider patterns and validity checks remain disabled. These controls and the bounded CLI/reserved-package threat analysis inform but do not accept the owner-only security gate.",
+      "detail": "Whether 0.1.0a4 remains inside the experimental-alpha exemption is a maintainer decision. Repository security tests pass, docs/THREAT_MODEL.md covers the a4 surface, private vulnerability reporting is enabled, and a 2026-09-08 pip-audit 2.10.1 run found zero known vulnerabilities across 29 locked runtime dependencies. Cycle 3 enabled GitHub secret scanning, push protection and Dependabot alerts/security updates on 2026-09-08. Required Python/Actions CodeQL analysis passed with zero results in Issue #326. Non-provider patterns and validity checks remain disabled. These controls and the bounded CLI/reserved-package threat analysis inform but do not accept the owner-only security gate.",
       "evidence": {
-        "commit": "c160fbd34ae69a34d1159698a0cb2a3b1be5bc1c",
-        "command": "uv export --locked --all-packages --no-dev --no-emit-workspace --no-hashes --format requirements.txt; uvx --from pip-audit==2.10.1 pip-audit -r runtime-requirements.txt --format json",
-        "result": "29 locked runtime dependencies audited on 2026-09-08; zero known vulnerabilities; docs/THREAT_MODEL.md and named boundary tests present. This evidence informs but does not satisfy the owner-only gate.",
+        "commit": "ec44a8b6e2a8e9099778202136a19e5050024db8",
+        "command": "uv export --locked --all-packages --no-dev --no-emit-workspace --no-hashes --format requirements.txt; uvx --from pip-audit==2.10.1 pip-audit -r runtime-requirements.txt --format json; CodeQL CI",
+        "result": "A4-R3 on 2026-09-08: 29 locked runtime dependencies, zero known vulnerabilities; 3469 local tests passed; Python/Actions CodeQL zero results/errors/warnings. Native secret scanning/push protection and Dependabot settings read back enabled. Non-provider patterns and validity checks remain disabled. This informs but does not satisfy the owner gate. Evidence: https://github.com/Blandskron/agnara/actions/runs/34231370311",
         "paths": ["docs/THREAT_MODEL.md", "docs/releases/A4_RELEASE_CLOSURE.md"],
         "covers": ["packages", "pyproject.toml", "uv.lock", "docs/THREAT_MODEL.md", "tests/security"]
       }

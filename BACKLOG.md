@@ -879,7 +879,7 @@ Tracking: GitHub Issue #282.
 
 ## Carried technical debt (post-0.1.0a3 audit)
 
-- [~] A4-R3 Establish repository-native secret/dependency controls and required
+- [x] A4-R3 Establish repository-native secret/dependency controls and required
   CodeQL analysis, reconcile the seven-package threat-model scope and record
   actual security evidence without accepting owner-only release gates.
   Tracking: GitHub Issue #326.

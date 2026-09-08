@@ -4,11 +4,11 @@ Current target: **0.1.0a4 — Application Alpha**.
 Previous published release: **0.1.0a3**, published 2026-09-06 and verified on
 PyPI.
 
-Assessed 2026-09-07 from candidate
-`45d09979c042124932ec67cc45b90bc194e09994`. The starting engineering candidate
-was `7bd2525d4c68be63fd9f347c7dd3c6de1c847f30`; the merged candidate adds only
-release/public documentation and re-runs the affected documentation and public
-import checks.
+Assessed 2026-09-08 from source candidate
+`ec44a8b6e2a8e9099778202136a19e5050024db8` in PR #327. A4-R2 corrected public
+documentation; A4-R3 added required CodeQL and refreshed the affected quality,
+packaging and security evidence. Earlier external-consumer evidence remains
+valid only for its unchanged covered paths.
 
 The readiness program reports **IN_PROGRESS**. The automated and recorded
 engineering/application evidence is green, but seven mandatory manual gates
@@ -65,7 +65,7 @@ uv run python scripts/check_release_readiness.py --verbose
 | Automated gates | 7 satisfied; re-derived on every run |
 | Evidence gates | 16 satisfied with commit and coverage records |
 | Manual gates | 7 need owner review |
-| Optional benchmark gate | satisfied and non-stale |
+| Optional benchmark gate | stale: the recorded commit range is unavailable; non-blocking |
 
 The expected derived status remains `IN_PROGRESS`, not `RELEASE_READY`. Manual
 gates are never inferred from passing tests or from agent judgment.
@@ -81,7 +81,7 @@ The release owner must explicitly decide and record:
    on 2026-09-08; repository security tests pass; and private reporting is
    enabled. Cycle 3 enabled GitHub secret scanning/push protection and
    Dependabot alerts/security updates. Required Python/Actions CodeQL analysis
-   is being validated in Issue #326. Non-provider patterns and validity checks
+   passed with zero results in Issue #326. Non-provider patterns and validity checks
    remain disabled; the manual security decision remains pending;
 3. the public API is sufficient for the demonstrated applications;
 4. dependency injection works naturally;
@@ -101,11 +101,11 @@ The owner package for those decisions is:
 
 ## Publication control and external prerequisites
 
-Only `agnara==0.1.0a3` exists on PyPI today. The six new names return 404 from
-the public index, as expected before the first synchronized publication. Before
-authorizing the release, the owner must confirm the six Pending Trusted
-Publishers are configured for the exact GitHub environment/workflow. Private
-vulnerability reporting is already enabled.
+The publication baseline is `agnara==0.1.0a3`; the six new names await their
+first synchronized publication. On 2026-09-08 the owner confirmed that the six
+Pending Trusted Publishers are not configured. This is a publication blocker;
+Cycle 4 lists the exact fields to configure and verify. Private vulnerability
+reporting is already enabled.
 
 After all manual decisions and external prerequisites are recorded, release
 preparation may cut versions and changelog on a release branch and re-run the
