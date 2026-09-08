@@ -76,10 +76,11 @@ The release owner must explicitly decide and record:
 
 1. public documentation reflects the implementation;
 2. the experimental-alpha security/release posture satisfies
-   `QUALITY_GATES.md`, including the chosen threat-model and dependency-audit
-   scope, secret-scanning posture and dedicated security analysis. Repository
-   security tests pass and private vulnerability reporting is enabled; GitHub
-   secret scanning/push protection and Dependabot alerts/updates are disabled;
+   `QUALITY_GATES.md`. The a4 threat model and its named boundary tests exist;
+   a locked audit of 29 runtime dependencies found zero known vulnerabilities
+   on 2026-09-08; repository security tests pass; and private reporting is
+   enabled. GitHub secret scanning/push protection and Dependabot remain
+   disabled, and dedicated CodeQL/equivalent analysis is absent;
 3. the public API is sufficient for the demonstrated applications;
 4. dependency injection works naturally;
 5. capabilities can be declared cleanly;
@@ -93,7 +94,8 @@ The owner package for those decisions is:
 - curated delta: [`../../CHANGELOG.md`](../../CHANGELOG.md) `[Unreleased]`;
 - engineering evidence: Issue #317;
 - clean-room evidence: Issue #318; and
-- this derived gate record plus `release-status.json`.
+- this derived gate record plus `release-status.json`; and
+- the bounded [`A4_RELEASE_CLOSURE.md`](A4_RELEASE_CLOSURE.md) cycle plan.
 
 ## Publication control and external prerequisites
 
