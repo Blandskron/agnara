@@ -32,7 +32,8 @@ reproduction check.
 | MCP invocation surface (`agnara_mcp`) | No, new |
 | `agnara` console script (`agnara-cli`) | No, new |
 | `ConfirmationPolicy` exported from `agnara.policy` | No, additive |
-| Declared `scopes=` become enforced | **Yes** — see "Pending" below |
+| Declared `scopes=` are enforced | **Yes**, an invocation without the scope now fails |
+| `materialize_json` exported from `agnara.schema` | No, additive |
 
 Everything else you wrote against `0.1.0a3` keeps working. Capability
 declaration, the registry, dependency injection, execution plans, policies,
@@ -237,20 +238,18 @@ freezes. `a4` adds project-wide freezing over mounted apps — an `App` has no
 
 **Migration.** None. Registering after a freeze still raises, as in `a3`.
 
-## Pending: declared scopes become enforced
+## 10. Declared scopes are enforced
 
-> This change is **not merged at the time of writing**. It is tracked by
-> [#309](https://github.com/Blandskron/agnara/issues/309) and implemented in
-> [#307](https://github.com/Blandskron/agnara/issues/307). Treat this section
-> as advance notice, and re-check it against the released `0.1.0a4`.
+This is the one change that can turn working `a3` code into a denial, so it is
+worth reading even if nothing else here applies.
 
-**`a3` and `0.1.0a4` before that change.** `@app.capability(scopes={...})` is
-metadata. Nothing evaluates it unless the application attaches a policy, except
-`agnara-mcp`, which compiles its own `ScopePolicy` per tool.
+**`a3`.** `@app.capability(scopes={...})` was metadata. Nothing evaluated it
+unless the application attached a policy itself — except `agnara-mcp`, which
+compiled its own `ScopePolicy` per tool.
 
-**`0.1.0a4` after that change.** `ExecutionPlan.compile` attaches a
-`ScopePolicy` built from the declared scopes, so the declaration is enforced on
-every transport and by direct invocation.
+**`a4`.** `ExecutionPlan.compile` attaches a `ScopePolicy` built from the
+declared scopes, so one declaration is enforced identically by direct
+invocation, over HTTP and over MCP.
 
 **Why.** One capability was authorization-checked when reached as an MCP tool
 and unchecked over HTTP, with no diagnostic telling the author which they had.
@@ -273,9 +272,19 @@ outcome = await invoke_result(
 )
 ```
 
-Passing a principal is already valid before the change, so adding it now is
-safe either way. Scopes are matched exactly: no prefix, wildcard, case fold or
-trimming, so `billing` does not satisfy `billing:write`.
+Without it, a capability declaring `billing:write` returns:
+
+```text
+Failure(code=FailureCode.FORBIDDEN, message='missing required scopes: billing:write')
+```
+
+Scopes are matched exactly: no prefix, wildcard, case fold or trimming, so
+`billing` does not satisfy `billing:write`, and `Billing:Write` does not either.
+
+The `a3` behaviour is still available for a capability that genuinely needs it:
+leave `scopes=` off the declaration and attach whatever policy the application
+wants. What `a4` removes is the case where a declared scope looked like a
+control and was not one.
 
 `docs/THREAT_MODEL.md` records the security reasoning.
 
@@ -297,4 +306,8 @@ Worth stating, because most `a3` code is in this list:
 - the confirmation boundary and `ConfirmationVerifier`, with
   `ConfirmationPolicy` now importable from `agnara.policy` for applications
   that attach it themselves;
+- schema validation, with `materialize_json` newly exported from
+  `agnara.schema` so a JSON transport can convert wire values into the declared
+  standard-library types before strict validation. Applications do not call it;
+  `agnara-http` and `agnara-mcp` do;
 - Python 3.14 as the minimum runtime.
