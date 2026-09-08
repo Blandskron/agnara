@@ -354,6 +354,12 @@ class TestSerializeJson:
             "name": "Ñ",
         }
 
+    def test_string_and_integer_enum_members_become_plain_values(self) -> None:
+        projected = serialize_json([Colour.RED, Priority.HIGH])
+        assert projected == ["red", Priority.HIGH.value]
+        assert type(projected[0]) is str
+        assert type(projected[1]) is int
+
     def test_returns_detached_plain_data(self) -> None:
         source = {"items": [1, 2]}
         projected = serialize_json(source)

@@ -626,14 +626,17 @@ def serialize_json(value: object) -> Any:
 
 
 def _serialize_json(value: object, active: set[int], depth: int) -> Any:
+    if isinstance(value, Enum):
+        # Before the scalar checks: a StrEnum or IntEnum member is also a str
+        # or int, and the transport should receive the plain value, not the
+        # member.
+        return _serialize_json(value.value, active, depth)
     if value is None or isinstance(value, str | bool | int):
         return value
     if isinstance(value, float):
         if not isfinite(value):
             raise ValidationError("non-finite float is not JSON")
         return value
-    if isinstance(value, Enum):
-        return _serialize_json(value.value, active, depth)
     if depth >= _MAX_OUTPUT_DEPTH:
         raise ValidationError(f"output nests deeper than {_MAX_OUTPUT_DEPTH} levels")
 
