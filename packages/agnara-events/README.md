@@ -3,7 +3,7 @@
 Reserved namespace for future event exposure abstractions and AsyncAPI projection.
 
 This `0.1.0a4` package deliberately has no public API or event runtime. It is
-publication-ready with the synchronized workspace set to reserve the official
+built and versioned with the synchronized workspace set to reserve the official
 package boundary, not to claim broker or AsyncAPI support.
 
 - Import package: `agnara_events`
