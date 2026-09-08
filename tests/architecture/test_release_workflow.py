@@ -27,6 +27,28 @@ def test_release_builds_and_validates_the_complete_workspace() -> None:
     assert "uv build --package agnara" not in workflow
 
 
+def test_publish_readiness_is_checked_before_and_between_every_upload() -> None:
+    """Three times, because the release passes through three different states.
+
+    In `build` the artifacts have just been produced; in `publish-preflight`
+    the index is consulted before any credential exists; in `publish` the
+    bundle has crossed a job boundary and is about to be uploaded. `0.1.0a4`
+    checked none of them, and found out at the second file.
+    """
+    for job, until, expected in (
+        ("build", "test-artifact", "--dist dist/ --tag"),
+        ("publish-preflight", "publish", "--online"),
+        ("publish", "verify-published", "--dist dist/ --tag"),
+    ):
+        body = _job(job, until)
+        assert "scripts/check_publication_readiness.py" in body, job
+        assert expected in body, job
+
+    # And once more afterwards, where the claim is completeness rather than
+    # readiness -- the check `agnara 0.1.0a4` would fail today.
+    assert "--online --require-published" in _job("verify-published", "github-release")
+
+
 def test_release_install_cannot_substitute_a_public_first_party_package() -> None:
     """Third-party first, then the candidate wheels with the index closed.
 

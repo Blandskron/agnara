@@ -94,17 +94,21 @@ jobs:
       # have: it fails on an unconfirmed Trusted Publisher, a missing release
       # note, an unsynchronized lockfile or an incomplete artifact set, before
       # any credential exists anywhere in the pipeline.
+      #
+      # Tag pushes only. A manual dispatch validates a development workspace,
+      # where the version carries `.dev0`, no dated changelog section exists
+      # and no publisher has been confirmed -- none of which is a defect, and
+      # none of which a dispatch is entitled to act on. The structural half of
+      # this contract is asserted on every branch by
+      # `tests/release/test_publication_set.py` in the CI suite above.
       - name: Publish readiness (offline)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         run: |
           set -euo pipefail
-          tag=()
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            tag=(--tag "${GITHUB_REF#refs/tags/}")
-          fi
           uv run --no-project python scripts/check_publication_readiness.py \
             --workspace "$GITHUB_WORKSPACE" \
             --version "${{ steps.resolve.outputs.version }}" \
-            --dist dist/ "${tag[@]}"
+            --dist dist/ --tag "${GITHUB_REF#refs/tags/}"
 
       - name: Record artifact digests
         run: |
