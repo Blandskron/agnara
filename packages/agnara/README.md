@@ -162,7 +162,7 @@ Exporter startup, flushing and shutdown belong to adapters, not the core
 runtime. The separate `agnara-telemetry` package provides metrics and tracing
 hooks over an application-supplied meter and tracer.
 
-**Migration:** `docs/MIGRATION_a3_to_a4.md` covers every user-visible change
+**Migration:** the migration guide in `docs/releases/v0.1.0a4.md` covers every user-visible change
 from `0.1.0a3`. For the hook types specifically, code constructing
 `InvocationStartEvent` or `InvocationTerminalEvent` has had to supply
 `invocation_id` since `0.1.0a3`. Use the same identity for matching

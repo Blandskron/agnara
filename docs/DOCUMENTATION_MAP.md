@@ -47,12 +47,10 @@ Each level may cite the level above it. None should restate it.
 | What to build and in what order | `docs/INITIATIVES.md` | cite by initiative id |
 | Decomposed, ready work | `BACKLOG.md` | cite by item id |
 | Release gates and evidence | `docs/releases/RELEASE_PLAN.md` + `release-status.json` | cite |
-| Current a4 closure sequencing | `docs/releases/A4_RELEASE_CLOSURE.md` | cite; it schedules work but does not satisfy a gate |
 | What a release actually contained | `docs/releases/v*.md`, `CHANGELOG.md` | never edit retroactively |
 | Quality gate definitions | `QUALITY_GATES.md` | cite |
 | Performance method and results | `PERFORMANCE.md`, `docs/benchmarks/` | cite |
 | Security posture and gaps | `SECURITY.md` | cite |
-| What a `0.1.0a3` user must change | `docs/MIGRATION_a3_to_a4.md` | cite; never document an internal change as user migration work |
 | CLI surface | `docs/CLI_SPEC.md` | cite |
 | Generated project layout | `docs/SCAFFOLDING.md` | cite |
 | Manifest format | `docs/PROJECT_MANIFEST.md` | cite |
@@ -80,9 +78,7 @@ rather than repeating it.
 belong in an RFC until they are answered, and an RFC that has been answered
 says so and names the ADR.
 
-**Release history is immutable.** `docs/releases/v0.1.0a1.md` describes what
-`0.1.0a1` was, including what was wrong with it. It is never corrected to
-match a later reality.
+**Release history is immutable.** Historical releases are preserved through Git tags, GitHub Releases, and PyPI. The active repository only keeps the current and next release documentation.
 
 **Prefer a citation to a copy.** A reader who follows a link to one accurate
 paragraph is better served than one who reads four paragraphs that used to

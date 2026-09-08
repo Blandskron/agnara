@@ -89,7 +89,7 @@ before release; record fixes or justified dispositions privately where the
 finding is exploitable. Do not close or suppress alerts merely to get green CI.
 
 For dependencies, repeat the locked runtime `pip-audit` procedure in
-`docs/releases/A4_RELEASE_CLOSURE.md` on the final candidate. Dependency alerts
+`the release closure document` on the final candidate. Dependency alerts
 on the default branch do not prove that an unreleased `develop` lockfile is
 clean. Secret-scanning alerts must be handled in the private security UI;
 never copy credential values into Issues, PRs or build logs.

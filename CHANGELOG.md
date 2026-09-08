@@ -443,7 +443,7 @@ the repository. This remains experimental and is not production-ready.
 
 - Added an evidence-based release readiness program:
   `docs/releases/RELEASE_PLAN.md` defines the path from `0.1.0a2` to `0.1.0`,
-  `docs/releases/release-status.json` and `docs/releases/STATUS.md` record the
+  `docs/releases/release-status.json` records the
   current state, and `uv run python scripts/check_release_readiness.py`
   evaluates it. Automated gates are recomputed from the repository, evidence
   expires when its commit is no longer `HEAD`, and gates needing human

@@ -21,7 +21,6 @@ Before implementing:
 1. `VISION.md`
 2. `PRINCIPLES.md`
 3. `ARCHITECTURE.md`
-4. `docs/rfc/0001-capability-runtime.md`
 5. `docs/API_DESIGN.md`
 6. `BACKLOG.md`
 7. `QUALITY_GATES.md`
@@ -279,7 +278,6 @@ Read before changing generator behavior:
 - `docs/CLI_SPEC.md`
 - `docs/SCAFFOLDING.md`
 - `docs/PROJECT_MANIFEST.md`
-- `docs/rfc/0002-project-app-scaffolding.md`
 
 An app represents a bounded context.
 
@@ -306,7 +304,6 @@ Generators must:
 Read before changing OpenAPI generation, documentation routes/providers,
 introspection or Agnara Explorer behavior:
 
-- `docs/rfc/0003-http-documentation-and-capability-explorer.md`
 - `docs/adr/0018-replaceable-documentation-providers.md`
 - `docs/REFERENCE_RESEARCH.md`
 

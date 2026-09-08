@@ -25,8 +25,8 @@ REPOSITORY = Path(__file__).resolve().parents[2]
 EXECUTABLE: tuple[tuple[str, str], ...] = (
     ("packages/agnara/README.md", "Quick start"),
     ("packages/agnara-mcp/README.md", "Execution plans"),
-    ("docs/MIGRATION_a3_to_a4.md", "4. Apps and bounded contexts"),
-    ("docs/MIGRATION_a3_to_a4.md", "6. Serving over HTTP"),
+    ("docs/releases/v0.1.0a4.md", "4. Apps and bounded contexts"),
+    ("docs/releases/v0.1.0a4.md", "6. Serving over HTTP"),
 )
 
 

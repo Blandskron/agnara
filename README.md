@@ -40,8 +40,8 @@ materialization across transports, and strengthened policy, failure and
 observability conformance.
 
 See the [draft release notes](docs/releases/v0.1.0a4.md), the
-[a3-to-a4 migration guide](docs/MIGRATION_a3_to_a4.md), and the
-[release status](docs/releases/STATUS.md). The install command above remains
+[a3-to-a4 migration guide](docs/releases/v0.1.0a4.md#migration-guide), and the
+release status. The install command above remains
 the published version until the owner authorizes and completes the a4 release.
 
 ## Quick start
@@ -333,7 +333,6 @@ Read in this order:
 2. `PRINCIPLES.md` — the rules a decision must not break
 3. `ARCHITECTURE.md` — how the system is structured today
 4. `docs/MATURITY.md` — **what actually exists**, per subsystem
-5. `docs/rfc/0001-capability-runtime.md`
 6. `docs/API_DESIGN.md`
 7. `docs/TARGET_ARCHITECTURE.md` — where the structure is going, and the gaps
 8. `docs/INITIATIVES.md` — what to build, in dependency order
@@ -385,7 +384,6 @@ remains available without parsing or enabling any HTML UI.
 
 The design and security boundaries are specified in:
 
-- `docs/rfc/0003-http-documentation-and-capability-explorer.md`
 - `docs/adr/0018-replaceable-documentation-providers.md`
 - `docs/REFERENCE_RESEARCH.md`
 
@@ -449,7 +447,6 @@ Read:
 - `docs/CLI_SPEC.md`
 - `docs/SCAFFOLDING.md`
 - `docs/PROJECT_MANIFEST.md`
-- `docs/rfc/0002-project-app-scaffolding.md`
 
 ## Agentic development lifecycle
 
