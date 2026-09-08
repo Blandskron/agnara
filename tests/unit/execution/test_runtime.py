@@ -126,18 +126,49 @@ def test_rejects_invocation_for_another_capability() -> None:
 
 @pytest.mark.parametrize("reserved_name", ["database", "context"])
 def test_rejects_payload_values_for_runtime_owned_parameters(reserved_name: str) -> None:
+    """A runtime-owned parameter is not an input, so naming one is unexpected input."""
+
     async def run_test() -> None:
         registry = DIRegistry()
         registry.bind(Database, provide_database)
 
         def refund(database: Database, context: ExecutionContext) -> None:
-            pass
+            raise AssertionError("handler must not run")
 
         plan = ExecutionPlan.compile(definition(refund), registry)
         direct_context = context_for(plan, registry, {reserved_name: object()})
 
-        with pytest.raises(InvocationError, match=reserved_name):
+        with pytest.raises(ValidationError) as caught:
             await invoke(plan, direct_context)
+        assert caught.value.message == "unexpected input"
+        assert caught.value.path == (reserved_name,)
+
+    asyncio.run(run_test())
+
+
+def test_policies_run_before_a_runtime_owned_parameter_is_noticed() -> None:
+    """An unauthorized caller must not learn dependency or context parameter
+    names from the difference between "forbidden" and "unexpected input"."""
+
+    async def run_test() -> None:
+        registry = DIRegistry()
+        registry.bind(Database, provide_database)
+
+        def refund(database: Database) -> None:
+            raise AssertionError("handler must not run")
+
+        plan = ExecutionPlan.compile(
+            CapabilityDefinition.declare(
+                id=CapabilityId("payments", "refund"),
+                handler=refund,
+                scopes={"payments:write"},
+            ),
+            registry,
+        )
+        probing = context_for(plan, registry, {"database": "forged"})
+
+        with pytest.raises(PolicyDeniedError):
+            await invoke(plan, probing)
 
     asyncio.run(run_test())
 

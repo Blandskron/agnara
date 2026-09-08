@@ -38,6 +38,7 @@ from mcp import MCPError
 
 from .authorization import McpAuthorization
 from .discovery import _build_server
+from .interaction import McpInteractionProjectionError
 from .result import McpResultProjectionError, project_mcp_result
 from .schema import _resolve_plans, project_mcp_tools
 from .tools import FrozenMcpTools
@@ -47,11 +48,6 @@ __all__ = ["McpInvocationDefinitionError", "McpToolInvoker", "build_mcp_server"]
 #: Longest client request id copied into invocation telemetry. A request id is
 #: caller-controlled, so an unbounded one must not reach every telemetry sink.
 _MAX_TRACKING_ID = 128
-
-#: Core's message for an input that no compiled schema declares. Reused so a
-#: runtime-owned parameter is indistinguishable from an unknown one, and the
-#: names of dependency and context parameters stay unpublished.
-_UNEXPECTED_INPUT = "unexpected input"
 
 
 class McpInvocationDefinitionError(DefinitionError):
@@ -85,13 +81,14 @@ def _tracking_id(request_id: object) -> str | None:
 def _project(outcome: CanonicalResult[object]) -> CallToolResult | InputRequiredResult:
     """Project a canonical outcome, degrading a projection defect to a tool error.
 
-    A capability that returns data MCP cannot represent is a server-side
+    A capability that returns data MCP cannot represent, or a hand-built
+    interaction failure that lacks the canonical detail shape, is a server-side
     defect, not a protocol error, and the caller must still receive a result
     that says so without echoing the offending value.
     """
     try:
         return project_mcp_result(outcome)
-    except McpResultProjectionError:
+    except McpResultProjectionError, McpInteractionProjectionError:
         return project_mcp_result(
             Failure(FailureCode.INTERNAL_FAILURE, "capability result cannot be represented")
         )
@@ -173,8 +170,9 @@ class McpToolInvoker:
             tracking_id=_tracking_id(ctx.request_id),
             principal=self._principal(),
         )
-        if route.plan.protected_parameters.intersection(context.invocation.payload):
-            return _project(Failure(FailureCode.INVALID_INPUT, _UNEXPECTED_INPUT))
+        # A payload naming a runtime-owned parameter is rejected by core as
+        # unexpected input, after policies: rejecting it here first would let
+        # an unauthorized caller enumerate dependency and context parameters.
         return _project(
             await invoke_result(route.plan, context, input_materializer=materialize_json)
         )

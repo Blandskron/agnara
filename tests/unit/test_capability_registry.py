@@ -114,6 +114,21 @@ class TestLookup:
     def test_containment_of_an_unrelated_type_is_false(self) -> None:
         assert 42 not in CapabilityRegistry([REFUND])
 
+    def test_lookup_of_an_unparseable_string_is_a_miss(self) -> None:
+        """`__getitem__` agrees with `__contains__`: a malformed id is absent.
+
+        It must be a `KeyError`, or ``Mapping.get`` and every other caller that
+        only expects a miss would see a `DefinitionError` escape instead.
+        """
+        registry = CapabilityRegistry([REFUND])
+        with pytest.raises(UnknownCapabilityError):
+            registry["not-an-id"]
+        frozen = registry.freeze()
+        with pytest.raises(UnknownCapabilityError):
+            frozen["not-an-id"]
+        assert frozen.get("not-an-id") is None
+        assert frozen.get("not-an-id", REFUND) is REFUND
+
     def test_a_miss_raises_unknown_capability(self) -> None:
         with pytest.raises(UnknownCapabilityError, match=re.escape("payments.missing")):
             CapabilityRegistry([REFUND])["payments.missing"]

@@ -58,11 +58,6 @@ async def _invoke(
             f"{plan.definition.id}"
         )
 
-    supplied_protected = plan.protected_parameters.intersection(invocation.payload)
-    if supplied_protected:
-        rendered = ", ".join(sorted(supplied_protected))
-        raise InvocationError(f"invocation payload supplies runtime-owned parameter(s): {rendered}")
-
     # Building a lifecycle event pair costs roughly two microseconds, and an
     # application that registered no hook can observe none of it. The work is
     # therefore guarded rather than unconditional; measured by
@@ -221,7 +216,15 @@ async def _execute(
 
 
 def _validate_inputs(plan: ExecutionPlan, payload: dict[str, Any]) -> dict[str, Any]:
-    """Validate a payload against precompiled schemas without mutating it."""
+    """Validate a payload against precompiled schemas without mutating it.
+
+    A runtime-owned parameter -- one bound to a dependency or to the execution
+    context -- is not an input, so a payload naming one is "unexpected input"
+    like any other undeclared key. It is deliberately not told apart: the
+    check runs after policies, and answering differently would let a caller
+    who is not even authorized to invoke the capability enumerate the names of
+    its dependency and context parameters.
+    """
     unexpected = sorted(set(payload).difference(plan.input_schemas))
     if unexpected:
         raise ValidationError("unexpected input", path=(unexpected[0],))

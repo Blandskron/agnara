@@ -532,16 +532,30 @@ def test_a_path_with_only_a_textual_mount_prefix_does_not_match() -> None:
     assert events[0]["status"] == 404
 
 
-def test_a_target_that_is_not_a_uri_reference_omits_the_instance() -> None:
+def test_a_non_ascii_target_is_percent_encoded_in_the_instance() -> None:
     def ping() -> str:
         return "pong"
 
     served = dispatcher(_HTTPExposure("GET", "/ping", plan(ping)))
     events = request(served, "GET", "/órdenes")
 
-    # The 404 still serializes; it simply does not claim an instance.
     assert events[0]["status"] == 404
-    assert "instance" not in document(events)
+    assert document(events)["instance"] == "/%C3%B3rdenes"
+
+
+def test_the_instance_re_encodes_a_decoded_path_so_it_stays_one_path() -> None:
+    """The ASGI path is percent-decoded. Copied as is, ``/x%3Fq=1`` would be
+    published as ``/x?q=1``: a different path carrying a query, which the
+    instance promises never to include."""
+
+    def ping() -> str:
+        return "pong"
+
+    served = dispatcher(_HTTPExposure("GET", "/ping", plan(ping)))
+    events = request(served, "GET", "/nope?secret=1#frag")
+
+    body = document(events)
+    assert body["instance"] == "/nope%3Fsecret=1%23frag"
 
 
 def test_the_problem_instance_never_carries_the_query_string() -> None:

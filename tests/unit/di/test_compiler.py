@@ -4,9 +4,11 @@ from agnara.core.di import (
     DependencyCycleError,
     DependencyResolutionError,
     DIRegistry,
+    Scope,
     compile_dag,
     provider,
 )
+from agnara.errors import DefinitionError
 
 
 class Database:
@@ -107,3 +109,65 @@ def test_registry_bind_invalid():
 
     with pytest.raises(TypeError, match="must be a ProviderDefinition"):
         registry.bind(Database, plain_func)
+
+
+def test_dependency_errors_are_definition_errors():
+    """Graph compilation is a startup step, so its failures are declaration
+    failures an application can catch as `AgnaraError` like every other."""
+    assert issubclass(DependencyCycleError, DefinitionError)
+    assert issubclass(DependencyResolutionError, DefinitionError)
+
+
+def test_compile_dag_rejects_a_singleton_capturing_an_invocation_scoped_provider():
+    """A singleton outlives every invocation; a value built for one invocation
+    is torn down when it ends. The graph refuses the capture at startup rather
+    than letting the singleton keep a released resource."""
+
+    class Connection:
+        pass
+
+    class Cache:
+        pass
+
+    @provider(scope=Scope.INVOCATION)
+    def provide_connection() -> Connection:
+        return Connection()
+
+    @provider(scope=Scope.SINGLETON)
+    def provide_cache(connection: Connection) -> Cache:
+        return Cache()
+
+    registry = DIRegistry()
+    registry.bind(Connection, provide_connection)
+    registry.bind(Cache, provide_cache)
+
+    def my_cap(cache: Cache) -> None:
+        pass
+
+    with pytest.raises(DependencyResolutionError, match="Singleton provider for Cache"):
+        compile_dag(registry, [my_cap])
+
+
+def test_compile_dag_allows_an_invocation_scoped_provider_to_use_a_singleton():
+    class Connection:
+        pass
+
+    class Session:
+        pass
+
+    @provider(scope=Scope.SINGLETON)
+    def provide_connection() -> Connection:
+        return Connection()
+
+    @provider(scope=Scope.INVOCATION)
+    def provide_session(connection: Connection) -> Session:
+        return Session()
+
+    registry = DIRegistry()
+    registry.bind(Connection, provide_connection)
+    registry.bind(Session, provide_session)
+
+    def my_cap(session: Session) -> None:
+        pass
+
+    assert compile_dag(registry, [my_cap])[my_cap] == [Session]

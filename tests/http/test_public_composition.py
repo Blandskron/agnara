@@ -584,6 +584,46 @@ def test_an_invalid_path_template_is_refused(dependencies: DIRegistry) -> None:
         http.compile(application.compile())
 
 
+def test_a_failed_compile_leaves_the_builder_open_for_correction(
+    dependencies: DIRegistry,
+) -> None:
+    """A compile that refused a declaration compiled nothing, so the builder
+    must not behave as if it had: the mistake can be fixed and compiled."""
+    application = Agnara("tiny")
+
+    @application.capability
+    def ping() -> str:
+        return "pong"
+
+    http = Http()
+    http.get("no-leading-slash", ping)
+    with pytest.raises(HttpDefinitionError):
+        http.compile(application.compile())
+
+    assert not http.is_compiled
+    http.get("/ping", ping)
+
+
+def test_an_unservable_openapi_document_fails_at_compile_even_when_not_served(
+    dependencies: DIRegistry,
+) -> None:
+    application = Agnara("tiny")
+
+    @application.capability
+    def whoami(token: str) -> str:
+        return token
+
+    http = Http()
+    http.get(
+        "/whoami",
+        whoami,
+        Binding("token", BindingSource.HEADER, wire_name="Authorization"),
+        openapi=OpenApiOperation(summary="Who am I"),
+    )
+    with pytest.raises(HttpDefinitionError, match="authorization"):
+        http.compile(application.compile(), openapi=OpenApiInfo("tiny", "1.0.0"))
+
+
 def test_declaring_a_route_after_compilation_is_refused(dependencies: DIRegistry) -> None:
     application = Agnara("tiny")
 

@@ -134,11 +134,13 @@ def _build_server(
                 data=cursor,
             )
         visible_names = None if authorization is None else authorization.discoverable_tool_names()
+        # The snapshot was detached from the caller's tools once at startup
+        # (`_snapshot_tools`) and the SDK only serializes what is returned, so
+        # a copy per request would protect nothing and cost a deep walk of
+        # every input schema on every ``tools/list``.
         return ListToolsResult(
             tools=[
-                tool.model_copy(deep=True)
-                for tool in snapshot
-                if visible_names is None or tool.name in visible_names
+                tool for tool in snapshot if visible_names is None or tool.name in visible_names
             ],
             ttl_ms=0,
             cache_scope="private",

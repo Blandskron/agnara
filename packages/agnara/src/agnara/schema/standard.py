@@ -41,6 +41,7 @@ the port has explicit reference and directional input/output semantics.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import MISSING, InitVar, is_dataclass
 from dataclasses import fields as dataclass_fields
 from enum import Enum
@@ -66,7 +67,15 @@ __all__ = [
     "TupleSchema",
     "UnionSchema",
     "materialize_json",
+    "serialize_json",
 ]
+
+#: Deepest value `serialize_json` will walk. A handler that returns something
+#: nested further has almost certainly returned a structure by mistake, and a
+#: bound keeps a JSON transport from recursing without limit on its behalf. It
+#: is no smaller than the deepest input a JSON transport admits, so a
+#: capability that echoes an accepted value can always answer.
+_MAX_OUTPUT_DEPTH: Final = 128
 
 #: Python primitive -> its JSON Schema type keyword.
 #:
@@ -580,6 +589,12 @@ def materialize_json(schema: TypeSchema, value: object) -> Any:
         except TypeError, ValueError:
             return value
 
+    if isinstance(schema, PrimitiveSchema) and schema.python_type is float and type(value) is int:
+        # JSON has one number type. A wire value ``3`` satisfies the published
+        # ``{"type": "number"}`` schema, so a JSON transport owes the handler
+        # the float it declared; ``bool`` is excluded by the exact type check.
+        return float(value)
+
     if isinstance(schema, UnionSchema):
         for choice in schema.choices:
             try:
@@ -590,3 +605,65 @@ def materialize_json(schema: TypeSchema, value: object) -> Any:
             return candidate
 
     return value
+
+
+def serialize_json(value: object) -> Any:
+    """Project a handler's return value onto plain JSON data.
+
+    The output counterpart of `materialize_json`, and the one definition every
+    JSON transport shares so a capability cannot succeed over one protocol and
+    fail over another for returning the same value. Enum members become their
+    values, dataclass instances become objects, any mapping becomes an object
+    with string keys and any list or tuple becomes an array. Finite floats,
+    ``bool``, ``int``, ``str`` and ``None`` pass through.
+
+    Raises `ValidationError`, located at the offending value, for a cycle, a
+    non-finite float, a non-string object key, an unsupported type or a
+    structure deeper than 128 levels. What a transport does with that failure
+    is its own decision; none of them should describe the value to a caller.
+    """
+    return _serialize_json(value, set(), 0)
+
+
+def _serialize_json(value: object, active: set[int], depth: int) -> Any:
+    if value is None or isinstance(value, str | bool | int):
+        return value
+    if isinstance(value, float):
+        if not isfinite(value):
+            raise ValidationError("non-finite float is not JSON")
+        return value
+    if isinstance(value, Enum):
+        return _serialize_json(value.value, active, depth)
+    if depth >= _MAX_OUTPUT_DEPTH:
+        raise ValidationError(f"output nests deeper than {_MAX_OUTPUT_DEPTH} levels")
+
+    is_object = is_dataclass(value) and not isinstance(value, type)
+    if not (is_object or isinstance(value, Mapping | list | tuple)):
+        raise ValidationError(f"unsupported output type {type(value).__name__}")
+    identity = id(value)
+    if identity in active:
+        raise ValidationError("cyclic output value")
+    active.add(identity)
+    try:
+        if isinstance(value, Mapping):
+            plain: dict[str, Any] = {}
+            for key, item in value.items():
+                if not isinstance(key, str):
+                    raise ValidationError("JSON object keys must be strings")
+                plain[key] = _located(item, active, depth, key)
+            return plain
+        if isinstance(value, list | tuple):
+            return [_located(item, active, depth, index) for index, item in enumerate(value)]
+        return {
+            field.name: _located(getattr(value, field.name), active, depth, field.name)
+            for field in dataclass_fields(value)
+        }
+    finally:
+        active.remove(identity)
+
+
+def _located(value: object, active: set[int], depth: int, segment: str | int) -> Any:
+    try:
+        return _serialize_json(value, active, depth + 1)
+    except ValidationError as error:
+        raise error.at(segment) from None
