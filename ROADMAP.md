@@ -22,19 +22,35 @@ Horizons are the ordering; a release is the thing that closes. The mapping is
 fixed by ADR 0068 so that work lands where its question belongs rather than in
 whichever release happens to be open.
 
-### NOW — 0.1.0a4, Application Boundaries
+### DONE — 0.1.0a4, Application Boundaries
 
-Current baseline target. Its one question: can Agnara be consumed as a
-framework from outside this repository?
+Closed. Its question — can Agnara be consumed as a framework from outside this
+repository? — was answered by the unified exposure model (ADR 0070), the public
+HTTP composition surface (ADR 0071) and the HTTP request surface, all validated
+against a clean-room external consumer.
 
-- **Unified exposure model.** One neutral availability registry that both
-  shipped adapters compile into. ADR 0070.
-- **Public HTTP composition surface.** ADR 0071.
-- **HTTP request surface** — cookies, forms, multipart, uploads.
+Its *publication* did not close. One of fourteen artifacts reached PyPI; the
+rest were rejected before upload. `0.1.0a4` is superseded by `0.1.0a5` and
+should not be installed. ADR 0078.
 
-### NEXT — 0.1.0a5, Execution Semantics
+### NOW — 0.1.0a5, Publication Recovery
 
-Its one question: does execution have streaming, identity and a measured cost?
+Current baseline target, and deliberately small. Its one question: can Agnara
+publish the set it builds, completely, and prove that it did?
+
+It carries the `0.1.0a4` implementation unchanged. No runtime source file
+differs; every change is to the release system.
+
+- **Publish readiness as a separate claim from code readiness.** ADR 0079.
+- **Kernel published last**, so a partial publication fails closed.
+- **Post-publication completeness verification**, gating the GitHub Release.
+- **One source of truth for the seven distributions**, and a SHA-pinned
+  publication path.
+
+### NEXT — 0.1.0a6, Execution Semantics
+
+Unchanged in content; moved one release later by ADR 0078. Its one question:
+does execution have streaming, identity and a measured cost?
 
 - **Streaming model** — `I2`, which still blocks the most other work.
 - **Execution identity and idempotency behaviour.**
