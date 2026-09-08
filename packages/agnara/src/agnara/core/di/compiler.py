@@ -24,8 +24,20 @@ class DependencyResolutionError(DefinitionError):
 
 
 def _get_dependencies(func: Callable[..., Any]) -> dict[str, type]:
-    """Get the type hints of a function, ignoring return type."""
-    hints = get_type_hints(func)
+    """Get the type hints of a function, ignoring return type.
+
+    Resolving hints evaluates annotations, so a forward reference to a name the
+    module never defines, or an annotation that is not a type at all, fails
+    here. That is a declaration mistake found at startup, and it is reported
+    as one rather than as a bare `NameError` from inside the graph compiler.
+    """
+    try:
+        hints = get_type_hints(func)
+    except Exception as error:
+        name = getattr(func, "__qualname__", None) or repr(func)
+        raise DependencyResolutionError(
+            f"cannot resolve the type annotations of {name}: {type(error).__name__}: {error}"
+        ) from error
     if "return" in hints:
         del hints["return"]
     return hints

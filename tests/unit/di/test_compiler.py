@@ -171,3 +171,19 @@ def test_compile_dag_allows_an_invocation_scoped_provider_to_use_a_singleton():
         pass
 
     assert compile_dag(registry, [my_cap])[my_cap] == [Session]
+
+
+def test_an_unresolvable_annotation_is_a_definition_error_naming_the_handler():
+    """A forward reference to a name that never gets defined fails when the
+    graph is compiled, as a `DefinitionError` naming the handler rather than a
+    bare `NameError` from inside the compiler."""
+
+    def my_cap(repo) -> None:
+        pass
+
+    # The forward reference a module would write as ``repo: "NeverDefined"``,
+    # attached at runtime so static analysis does not flag the deliberate error.
+    my_cap.__annotations__ = {"repo": "NeverDefined", "return": None}
+
+    with pytest.raises(DependencyResolutionError, match="my_cap.*NameError.*NeverDefined"):
+        compile_dag(DIRegistry(), [my_cap])

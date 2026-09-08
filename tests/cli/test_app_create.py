@@ -338,7 +338,25 @@ def test_an_invalid_manifest_is_refused_before_anything_is_written(
     assert "project.name: is required" in capsys.readouterr().err
 
 
-@pytest.mark.parametrize("name", ["not-a-name", "1billing", "with space", "", "Billing"])
+@pytest.mark.parametrize(
+    "name",
+    [
+        "not-a-name",
+        "1billing",
+        "with space",
+        "",
+        "Billing",
+        # Keywords pass `str.isidentifier` and fail the interpreter.
+        "import",
+        "class",
+        # Names the generated module.py already binds; the app would shadow
+        # itself and fail when the project imports it.
+        "app",
+        "register",
+        "dependencies",
+        "get_record",
+    ],
+)
 def test_an_unusable_app_name_is_refused(
     project: Path,
     name: str,
@@ -385,3 +403,18 @@ def test_json_output_is_deterministic(
 
     create_app("billing", "--project", str(project), "--dry-run", "--json")
     assert capsys.readouterr().out == first
+
+
+def test_a_manifest_keeps_its_line_endings_when_an_app_is_declared(
+    project: Path,
+) -> None:
+    """Appending must not rewrite what the operator wrote: a CRLF manifest
+    comes back CRLF throughout, including the appended table."""
+    manifest = project / MANIFEST_FILENAME
+    manifest.write_bytes(manifest.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n"))
+
+    assert create_app("billing", "--project", str(project)) == EXIT_OK
+
+    updated = manifest.read_bytes()
+    assert b"[apps.billing]\r\n" in updated
+    assert b"\n" not in updated.replace(b"\r\n", b"")

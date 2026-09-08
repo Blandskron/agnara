@@ -30,12 +30,12 @@ from agnara_cli._manifest import (
     ARCHITECTURES,
     EXPOSURES,
     MANIFEST_FILENAME,
-    ManifestError,
     ProjectManifest,
     find_manifest,
     load_manifest,
 )
 from agnara_cli._minimal_template import minimal_app_files
+from agnara_cli._names import validated_identifier
 
 __all__ = ["add_app_alias_parsers", "add_app_parser", "run_app_create"]
 
@@ -189,18 +189,32 @@ def add_app_alias_parsers(subparsers: argparse._SubParsersAction[argparse.Argume
         _add_create_arguments(parser, profile=profile)
 
 
+#: Identifiers the generated ``module.py`` already binds at module scope. The
+#: app's own name becomes ``<name> = App("<name>")`` in that module, so an app
+#: called ``app`` or ``register`` would generate code that shadows itself and
+#: fails the moment the project imports it.
+_RESERVED = frozenset(
+    {
+        "annotations",
+        "app",
+        "dependencies",
+        "get_record",
+        "list_records",
+        "module",
+        "provide_records",
+        "provider",
+        "register",
+    }
+)
+
+
 def _validated_name(name: str) -> str:
-    if not name.isidentifier():
-        raise GenerationError(
-            f"invalid app name {name!r}: it becomes a package and a manifest "
-            "key, so it must be a single Python identifier"
-        )
-    if name != name.lower():
-        raise GenerationError(
-            f"invalid app name {name!r}: use lower_case, so the package name "
-            "matches the import path on case-insensitive filesystems"
-        )
-    return name
+    return validated_identifier(
+        name,
+        subject="app name",
+        reserved=_RESERVED,
+        reserved_because="the generated module already binds that name",
+    )
 
 
 def _manifest(arguments: argparse.Namespace) -> tuple[ProjectManifest, Path]:
@@ -241,10 +255,16 @@ def _updated_manifest(
     comments and an ordering its author chose, and a generator that rewrote it
     from a parsed model would delete both without saying so.
     """
-    existing = source.read_text(encoding="utf-8")
+    # Read without newline translation so the file keeps the line endings it
+    # already has: rewriting a CRLF manifest as LF would change every line an
+    # operator wrote, which is exactly what appending is meant to avoid.
+    with source.open(encoding="utf-8", newline="") as handle:
+        existing = handle.read()
+    newline = "\r\n" if "\r\n" in existing else "\n"
     if not existing.endswith("\n"):
-        existing += "\n"
-    return existing + _declaration(name, manifest.name, architecture, exposures)
+        existing += newline
+    declaration = _declaration(name, manifest.name, architecture, exposures)
+    return existing + declaration.replace("\n", newline)
 
 
 def _resolved_architecture(requested: str | None, manifest: ProjectManifest, source: Path) -> str:
@@ -330,9 +350,7 @@ def _resolved_exposures(
     return tuple(seen)
 
 
-def _plan(
-    arguments: argparse.Namespace,
-) -> tuple[GenerationPlan, ProjectManifest, str, str, tuple[str, ...]]:
+def _plan(arguments: argparse.Namespace) -> tuple[GenerationPlan, ProjectManifest, str]:
     name = _validated_name(arguments.name)
     manifest, source = _manifest(arguments)
     if any(app.name == name for app in manifest.apps):
@@ -353,7 +371,7 @@ def _plan(
     files = TEMPLATES[architecture](manifest.name, name, exposures)
     files[MANIFEST_FILENAME] = _updated_manifest(manifest, source, name, architecture, exposures)
     plan = build_plan(root, files, updates=(MANIFEST_FILENAME,))
-    return plan, manifest, name, architecture, exposures
+    return plan, manifest, name
 
 
 def _next_steps(project: str, name: str) -> str:
@@ -367,16 +385,13 @@ def _next_steps(project: str, name: str) -> str:
 
 def run_app_create(arguments: argparse.Namespace) -> str:
     """Plan the app, then write it unless this is a dry run."""
-    plan, manifest, name, _architecture, _exposures = _plan(arguments)
+    plan, manifest, name = _plan(arguments)
     if arguments.dry_run:
         if arguments.json:
             return json.dumps(plan_json(plan), indent=2, sort_keys=True)
         return render_plan(plan)
 
-    try:
-        apply_plan(plan, overwrite=arguments.overwrite)
-    except ManifestError as error:  # pragma: no cover - defensive
-        raise GenerationError(str(error)) from error
+    apply_plan(plan, overwrite=arguments.overwrite)
     if arguments.json:
         return json.dumps(plan_json(plan), indent=2, sort_keys=True)
     written = "\n".join(f"{action.verb} {action.path}" for action in plan.actions)

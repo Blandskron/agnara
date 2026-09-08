@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import inspect
+import logging
 import time
 from collections.abc import Callable
 from typing import Any
@@ -25,6 +26,11 @@ from agnara.policy import PolicyFailure, PolicyInteractionRequired, PolicySucces
 from agnara.schema import TypeSchema
 
 __all__ = ["invoke", "invoke_result"]
+
+#: Where a redacted handler failure is reported. The canonical outcome a
+#: caller receives says only that the invocation failed; the exception itself
+#: is for the operator, and the log is the one channel that reaches them.
+_LOGGER = logging.getLogger("agnara.execution")
 
 
 async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
@@ -155,6 +161,9 @@ async def invoke_result[T](
             },
         )
     except Exception:
+        # Redaction is for the wire, not the operator: without this record a
+        # 500 produced by a handler would be undiagnosable anywhere.
+        _LOGGER.exception("capability %s failed", plan.definition.id)
         return Failure(FailureCode.INTERNAL_FAILURE, "capability invocation failed")
 
     if isinstance(value, Success | Failure):

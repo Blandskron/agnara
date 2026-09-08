@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import logging
 from collections.abc import Callable
 from typing import Any
 
@@ -470,16 +471,25 @@ def test_a_raised_exception_becomes_a_redacted_500() -> None:
     assert "postgres" not in json.dumps(body)
 
 
-def test_an_unserializable_success_falls_back_to_the_internal_problem() -> None:
+def test_an_unserializable_success_falls_back_to_the_internal_problem(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     def show() -> object:
-        return object()
+        return {"secret": object()}
 
     served = dispatcher(_HTTPExposure("GET", "/v1/thing", plan(show)))
-    events = request(served, "GET", "/v1/thing")
+    with caplog.at_level(logging.ERROR, logger="agnara_http"):
+        events = request(served, "GET", "/v1/thing")
 
     assert len(events) == 2
     assert events[0]["status"] == 500
     assert document(events)["code"] == "internal_failure"
+    # The operator learns where and why; the value itself is never rendered.
+    [record] = caplog.records
+    message = record.getMessage()
+    assert "GET /v1/thing" in message
+    assert "$.secret: unsupported output type object" in message
+    assert "<object object" not in message
 
 
 def test_validation_of_a_bound_value_is_still_the_core_rule() -> None:

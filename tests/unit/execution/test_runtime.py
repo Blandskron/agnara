@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from collections.abc import AsyncIterator, Callable
 from typing import Any
 
@@ -563,7 +564,12 @@ def test_canonical_invocation_maps_validation_with_immutable_path() -> None:
     asyncio.run(run_test())
 
 
-def test_canonical_invocation_redacts_unexpected_handler_failure() -> None:
+def test_canonical_invocation_redacts_unexpected_handler_failure(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """The caller learns only that the invocation failed; the operator, who has
+    to fix it, gets the capability id and the traceback in the log."""
+
     async def run_test() -> None:
         registry = DIRegistry()
 
@@ -571,7 +577,8 @@ def test_canonical_invocation_redacts_unexpected_handler_failure() -> None:
             raise RuntimeError("database password is secret")
 
         plan = ExecutionPlan.compile(definition(refund), registry)
-        outcome = await invoke_result(plan, context_for(plan, registry))
+        with caplog.at_level(logging.ERROR, logger="agnara.execution"):
+            outcome = await invoke_result(plan, context_for(plan, registry))
 
         assert outcome == Failure(
             FailureCode.INTERNAL_FAILURE,
@@ -579,6 +586,13 @@ def test_canonical_invocation_redacts_unexpected_handler_failure() -> None:
         )
         assert isinstance(outcome, Failure)
         assert "secret" not in outcome.message
+
+        [record] = caplog.records
+        assert record.name == "agnara.execution"
+        assert record.levelno == logging.ERROR
+        assert record.getMessage() == "capability payments.refund failed"
+        assert record.exc_info is not None
+        assert record.exc_info[0] is RuntimeError
 
     asyncio.run(run_test())
 

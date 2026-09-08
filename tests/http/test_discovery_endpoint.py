@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import json
+import logging
 from typing import Any
 
 import pytest
@@ -288,19 +289,27 @@ def test_anonymous_discovery_is_available_only_by_explicit_opt_in() -> None:
     ] == ["billing.health"]
 
 
-def test_a_resolver_that_raises_fails_closed_without_a_traceback() -> None:
+def test_a_resolver_that_raises_fails_closed_without_a_traceback(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     def explode(scope: dict[str, Any]) -> Principal | None:
         raise RuntimeError("token store unreachable")
 
     served, _ = dispatcher(route(principals=explode))
 
-    status, _, body = request(served)
+    with caplog.at_level(logging.ERROR, logger="agnara_http"):
+        status, _, body = request(served)
     payload = document(body)
 
     assert status == 500
     assert "token store unreachable" not in body.decode("utf-8")
     assert "Traceback" not in body.decode("utf-8")
     assert "apps" not in payload
+    # The client learns nothing; the operator gets the traceback.
+    [record] = caplog.records
+    assert "principal resolver" in record.getMessage()
+    assert record.exc_info is not None
+    assert record.exc_info[0] is RuntimeError
 
 
 def test_a_resolver_returning_something_else_is_not_read_as_anonymous() -> None:

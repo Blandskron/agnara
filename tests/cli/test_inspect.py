@@ -72,14 +72,31 @@ none_registry = None
 
 EXPLODING = "raise RuntimeError('module import failed on purpose')\n"
 
+SILENT = "raise RuntimeError()\n"
+
+EXITING = "import sys\nsys.exit(3)\n"
+
+RAISING_PROPERTY = """
+class Holder:
+    @property
+    def app(self):
+        raise KeyError("boom")
+
+
+holder = Holder()
+"""
+
 
 @pytest.fixture
 def project(tmp_path: Path) -> Iterator[Path]:
     """A directory holding importable target modules, isolated per test."""
     (tmp_path / "billing.py").write_text(APPLICATION, encoding="utf-8")
     (tmp_path / "exploding.py").write_text(EXPLODING, encoding="utf-8")
+    (tmp_path / "silent.py").write_text(SILENT, encoding="utf-8")
+    (tmp_path / "exiting.py").write_text(EXITING, encoding="utf-8")
+    (tmp_path / "raising_property.py").write_text(RAISING_PROPERTY, encoding="utf-8")
     yield tmp_path
-    for name in ("billing", "exploding"):
+    for name in ("billing", "exploding", "silent", "exiting", "raising_property"):
         sys.modules.pop(name, None)
 
 
@@ -283,7 +300,38 @@ def test_a_target_module_that_raises_reports_the_reason(
 
     assert code == EXIT_FAILED
     assert "importing 'exploding' failed" in err
-    assert "module import failed on purpose" in err
+    assert "RuntimeError: module import failed on purpose" in err
+    assert "Traceback" not in err
+
+
+def test_a_target_module_that_raises_without_a_message_still_names_the_error(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``raise RuntimeError()`` has an empty ``str``; the diagnostic must not
+    end in "failed:" with nothing after it."""
+    code, _, err = run(project, capsys=capsys, target="silent:app")
+
+    assert code == EXIT_FAILED
+    assert "importing 'silent' failed: RuntimeError" in err
+    assert "Traceback" not in err
+
+
+def test_a_target_module_that_exits_does_not_decide_the_exit_code(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    code, _, err = run(project, capsys=capsys, target="exiting:app")
+
+    assert code == EXIT_FAILED
+    assert "importing 'exiting' failed: the module exited with 3" in err
+
+
+def test_an_attribute_that_raises_when_read_is_a_diagnostic_not_a_traceback(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    code, _, err = run(project, capsys=capsys, target="raising_property:holder.app")
+
+    assert code == EXIT_FAILED
+    assert "reading attribute 'holder.app' failed at 'app': KeyError: 'boom'" in err
     assert "Traceback" not in err
 
 
