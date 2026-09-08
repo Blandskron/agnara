@@ -5,8 +5,8 @@ Previous published release: **0.1.0a3**, published 2026-09-06 and verified on
 PyPI.
 
 Assessed 2026-09-07 from candidate
-`2ffd893822165c0ecb2734fcdda9760abb2ef718`. The starting engineering candidate
-was `7bd2525d4c68be63fd9f347c7dd3c6de1c847f30`; the later commit changes only
+`45d09979c042124932ec67cc45b90bc194e09994`. The starting engineering candidate
+was `7bd2525d4c68be63fd9f347c7dd3c6de1c847f30`; the merged candidate adds only
 release/public documentation and re-runs the affected documentation and public
 import checks.
 
