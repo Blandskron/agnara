@@ -207,7 +207,8 @@ tool results, so a caller and its model can see and correct them.
 
 A caller-supplied argument naming a dependency or `ExecutionContext` parameter
 is answered with the same `invalid_input` message an undeclared input receives,
-so runtime-owned parameter names stay unpublished. The optional `timeout`
+with the supplied-key path, after policies have run. No list of runtime-owned
+parameters is published. The optional `timeout`
 becomes the invocation deadline and yields a canonical `timeout` result.
 Cancellation is never converted into a result: an abandoned request propagates
 so the SDK drops it and core unwinds dependency cleanup. See ADR 0044.
@@ -226,22 +227,26 @@ result = project_mcp_result(Success({"total": 42}))
 ```
 
 Use `project_mcp_result(await invoke_result(plan, context))` in composition
-code. Success accepts explicit JSON built-ins; tuples become arrays. Data is
+code. Success uses the shared JSON serializer: dataclass instances and mappings
+become objects, enum members become their values, and lists and tuples become
+arrays. Data is
 copied, object keys are sorted in the equivalent JSON text, and a `result`
 envelope preserves successful null. No outputSchema is claimed. Unsupported
-objects, subclasses, non-string keys, non-finite numbers, cycles and nesting
-beyond 64 levels raise `McpResultProjectionError` with a redacted message.
+objects, non-string keys, non-finite numbers, cycles and nesting
+beyond 128 levels raise `McpResultProjectionError` with a redacted message.
 The caller owns the source value and must not mutate it during projection.
 
-Ordinary canonical failures produce `isError: true` and JSON text with only
-`code` and the caller-safe `message`; failure details are omitted. Application
-code owns the safety of explicitly supplied canonical messages. Unexpected
+Ordinary canonical failures produce `isError: true` and JSON text with
+`code`, the caller-safe `message` and any canonical `details`, including the
+invalid input path. Internal failures carry only their code and a fixed safe
+message. Application code owns the safety of explicitly supplied canonical
+messages and details. Unexpected
 exceptions are redacted by `invoke_result` before reaching this projection.
 Interaction requirements delegate to the existing mapper described below.
 
-This function serializes no arbitrary model fields and implements no
-resumption. Dataclasses and custom models require explicit
-conversion to public JSON data. See ADR 0043.
+This function implements no resumption. Dataclass fields are serialized, so
+return only fields intended for the caller; custom models require explicit
+conversion to public JSON data.
 
 ## Interaction-required projection
 

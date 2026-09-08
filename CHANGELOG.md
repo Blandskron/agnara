@@ -67,6 +67,15 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Fixed
 
+- HTTP lifespan now closes its owned singleton dependency resources before
+  application shutdown, including when no custom lifecycle callback is supplied.
+
+- Release publication now rejects lightweight tags, a checkout different from
+  the tag, and tagged commits outside reviewed `main` history, both before
+  building and before uploading. Correct MCP serialization/error guidance and
+  the documented CLI module invocation for A4 (#332).
+
+
 - The `agnara-mcp` README passed `plans` to `project_mcp_tools()` and
   `build_mcp_server()` in three examples without ever showing how to build it,
   so the one document a consumer of that distribution reads could not be

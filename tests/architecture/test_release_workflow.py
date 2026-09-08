@@ -50,6 +50,18 @@ def test_post_release_verification_names_every_distribution() -> None:
         assert f'"{distribution}==$TAG_VERSION"' in workflow
 
 
+def test_build_and_publish_check_reviewed_tag_ancestry() -> None:
+    workflow = _text()
+    for job, end in (("build", "test-artifact"), ("publish", None)):
+        body = workflow.split(f"  {job}:\n", 1)[1]
+        if end:
+            body = body.split(f"  {end}:\n", 1)[0]
+        assert "fetch-depth: 0" in body
+        guard = body.index("scripts/check_release_tag.py")
+        action = "uv build" if job == "build" else "pypa/gh-action-pypi-publish@"
+        assert guard < body.index(action)
+
+
 def test_release_actions_are_pinned_to_exact_versions() -> None:
     actions = [
         line.split("uses:", 1)[1].strip()

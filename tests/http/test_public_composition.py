@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -789,8 +789,90 @@ def cycle(asgi: HttpApplication) -> list[str]:
     return sent
 
 
-def test_without_a_lifecycle_the_application_declares_no_lifespan() -> None:
-    """Raising is how an ASGI application says it has no lifespan protocol."""
+@pytest.mark.parametrize("with_lifecycle", [True, False])
+@pytest.mark.parametrize("async_provider", [True, False])
+def test_http_shutdown_closes_singleton_provider_before_application_lifecycle(
+    with_lifecycle: bool, async_provider: bool
+) -> None:
+    events: list[str] = []
+
+    @provider(scope=Scope.SINGLETON)
+    def resource() -> Iterator[Ledger]:
+        events.append("resource opened")
+        try:
+            yield Ledger()
+        finally:
+            events.append("resource closed")
+
+    @provider(scope=Scope.SINGLETON)
+    async def async_resource() -> AsyncIterator[Ledger]:
+        events.append("resource opened")
+        try:
+            yield Ledger()
+        finally:
+            events.append("resource closed")
+
+    dependencies = DIRegistry()
+    dependencies.bind(Ledger, async_resource if async_provider else resource)
+    application = Agnara("cleanup")
+
+    @application.capability
+    def ping(ledger: Ledger) -> str:
+        return ledger.record("ping")
+
+    @asynccontextmanager
+    async def lifecycle() -> AsyncIterator[None]:
+        try:
+            yield
+        finally:
+            events.append("application closed")
+
+    http = Http()
+    http.get("/ping", ping)
+    asgi = http.compile(
+        application.compile(),
+        dependencies=dependencies,
+        lifecycle=lifecycle if with_lifecycle else None,
+    )
+
+    async def run() -> None:
+        pending = [{"type": "lifespan.startup"}, {"type": "lifespan.shutdown"}]
+        sent: list[str] = []
+
+        async def receive() -> dict[str, Any]:
+            return pending.pop(0)
+
+        async def send(message: dict[str, Any]) -> None:
+            sent.append(message["type"])
+            if message["type"] == "lifespan.startup.complete":
+                responses: list[dict[str, Any]] = []
+
+                async def body() -> dict[str, Any]:
+                    return {"type": "http.request", "body": b"", "more_body": False}
+
+                async def response(value: dict[str, Any]) -> None:
+                    responses.append(value)
+
+                await asgi(
+                    {"type": "http", "method": "GET", "path": "/ping", "headers": []},
+                    body,
+                    response,
+                )
+                assert responses[0]["status"] == 200
+                assert events == ["resource opened"]
+
+        await asgi({"type": "lifespan"}, receive, send)
+        assert sent == ["lifespan.startup.complete", "lifespan.shutdown.complete"]
+        expected = ["resource opened", "resource closed"]
+        if with_lifecycle:
+            expected.append("application closed")
+        # Assert before asyncio.run can finalize an abandoned async generator.
+        assert events == expected
+
+    asyncio.run(run())
+
+
+def test_without_a_lifecycle_the_application_still_owns_dependency_lifespan() -> None:
     application = Agnara("tiny")
 
     @application.capability
@@ -801,8 +883,7 @@ def test_without_a_lifecycle_the_application_declares_no_lifespan() -> None:
     http.get("/ping", ping)
     asgi = http.compile(application.compile())
 
-    with pytest.raises(RuntimeError):
-        cycle(asgi)
+    assert cycle(asgi) == ["lifespan.startup.complete", "lifespan.shutdown.complete"]
 
 
 def test_two_surfaces_in_one_process_are_independent(dependencies: DIRegistry) -> None:

@@ -146,9 +146,11 @@ Startup enters the context manager, shutdown exits it. It cannot hand a value
 back on purpose: application state belongs in dependency providers, which every
 transport can reach, rather than in something only HTTP knows about.
 
-Without a `lifecycle`, a `lifespan` scope raises. That is how an ASGI
-application states it has no lifespan protocol, and a server running
-`lifespan="auto"` handles it.
+The HTTP surface owns its DI container. ASGI lifespan shutdown closes singleton
+provider resources before exiting the application lifecycle. Lifespan also runs
+without a callback, so dependency cleanup does not require a custom hook. Keep
+lifespan enabled on the ASGI server; requests must be drained before shutdown.
+Each compiled surface belongs to one worker event loop.
 
 ## Bindings are explicit
 
