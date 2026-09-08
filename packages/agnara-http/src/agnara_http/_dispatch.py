@@ -18,6 +18,7 @@ from typing import Any
 
 from agnara.core.di.resolver import DIContainer
 from agnara.execution import ExecutionContext, ExecutionPlan, Invocation, invoke_result
+from agnara.schema import materialize_json
 from agnara_http._binding import (
     _DEFAULT_MAX_PARTS,
     _bind_request,
@@ -219,6 +220,7 @@ class _HTTPDispatcher:
                 ),
                 self._container,
             ),
+            input_materializer=materialize_json,
         )
 
         try:

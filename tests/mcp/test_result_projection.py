@@ -72,6 +72,9 @@ def test_results_are_deterministic_and_detached_from_all_other_projections() -> 
 )
 def test_canonical_failure_exposes_only_its_safe_message_and_code(code: FailureCode) -> None:
     document = wire(project_mcp_result(Failure(code, "Safe message", {"token": "private-secret"})))
+    message = (
+        "capability invocation failed" if code is FailureCode.INTERNAL_FAILURE else "Safe message"
+    )
     assert document == {
         "resultType": "complete",
         "isError": True,
@@ -79,7 +82,7 @@ def test_canonical_failure_exposes_only_its_safe_message_and_code(code: FailureC
             {
                 "type": "text",
                 "text": json.dumps(
-                    {"code": code.value, "message": "Safe message"},
+                    {"code": code.value, "message": message},
                     sort_keys=True,
                     separators=(",", ":"),
                 ),

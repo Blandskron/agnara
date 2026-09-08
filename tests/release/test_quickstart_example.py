@@ -43,7 +43,12 @@ def test_the_example_imports_only_public_agnara_api() -> None:
     imported = re.findall(r"^from ([\w.]+) import|^import ([\w.]+)", source, re.M)
     modules = {first or second for first, second in imported}
     agnara_modules = {name for name in modules if name.split(".")[0] == "agnara"}
-    assert agnara_modules == {"agnara", "agnara.core.di", "agnara.execution"}
+    assert agnara_modules == {
+        "agnara",
+        "agnara.core.di",
+        "agnara.execution",
+        "agnara.policy",
+    }
     assert not [name for name in agnara_modules if "._" in name]
 
 

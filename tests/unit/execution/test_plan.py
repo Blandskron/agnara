@@ -321,3 +321,15 @@ def test_policy_confirmation_without_explicit_policy_fails_at_compilation() -> N
 
     with pytest.raises(DefinitionError, match="has no explicit policies"):
         ExecutionPlan.compile(capability, DIRegistry())
+
+
+def test_declared_scopes_do_not_satisfy_policy_confirmation() -> None:
+    capability = CapabilityDefinition(
+        id=CapabilityId("payments", "refund"),
+        handler=lambda: None,
+        scopes=frozenset({"payments:write"}),
+        confirmation=Confirmation.POLICY,
+    )
+
+    with pytest.raises(DefinitionError, match="has no explicit policies"):
+        ExecutionPlan.compile(capability, DIRegistry())

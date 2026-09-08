@@ -229,7 +229,7 @@ a policy bypass.
 **Blocks:** 1.0
 
 Every public name in every shipped distribution is an explicit commitment. The
-manifest classifies 280 exports across 47 non-private modules with a literal
+manifest classifies 282 exports across 47 non-private modules with a literal
 `__all__`, in all seven distributions, and the release gate checks in both
 directions: a module whose exports drift from the manifest fails, and so does a
 new public package or leaf module nobody classified. The two reserved

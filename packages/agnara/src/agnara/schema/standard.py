@@ -65,6 +65,7 @@ __all__ = [
     "StandardSchemaAdapter",
     "TupleSchema",
     "UnionSchema",
+    "materialize_json",
 ]
 
 #: Python primitive -> its JSON Schema type keyword.
@@ -504,3 +505,88 @@ class StandardSchemaAdapter:
     def _render(annotation: Any) -> str:
         name = getattr(annotation, "__name__", None)
         return str(name) if name else repr(annotation)
+
+
+def materialize_json(schema: TypeSchema, value: object) -> Any:
+    """Materialize standard-library Python values from decoded JSON data.
+
+    This is an explicit wire-boundary operation. The standard validator stays
+    strict for direct Python invocation, while JSON transports can request the
+    conversions JSON cannot represent: dataclass instances, tuples and enum
+    members. Unknown schema implementations receive the value unchanged.
+    """
+    if isinstance(schema, DataclassSchema) and type(value) is dict:
+        object_value = cast(dict[str, Any], value)
+        fields = {field.name: field for field in schema.fields}
+        unexpected = sorted(set(object_value).difference(fields))
+        if unexpected:
+            raise ValidationError("unexpected field", path=(unexpected[0],))
+        missing = sorted(
+            field.name
+            for field in schema.fields
+            if field.required and field.name not in object_value
+        )
+        if missing:
+            raise ValidationError("field is missing", path=(missing[0],))
+        arguments: dict[str, Any] = {}
+        for name, item in object_value.items():
+            try:
+                arguments[name] = materialize_json(fields[name].schema, item)
+            except ValidationError as error:
+                raise error.at(name) from error
+        try:
+            return schema.dataclass_type(**arguments)
+        except (TypeError, ValueError) as error:
+            raise ValidationError("could not construct the declared dataclass") from error
+
+    if isinstance(schema, ListSchema) and type(value) is list:
+        materialized: list[Any] = []
+        for index, item in enumerate(cast(list[Any], value)):
+            try:
+                materialized.append(materialize_json(schema.item_schema, item))
+            except ValidationError as error:
+                raise error.at(index) from error
+        return materialized
+
+    if isinstance(schema, DictionarySchema) and type(value) is dict:
+        materialized_mapping: dict[str, Any] = {}
+        for name, item in cast(dict[str, Any], value).items():
+            try:
+                materialized_mapping[name] = materialize_json(schema.value_schema, item)
+            except ValidationError as error:
+                raise error.at(name) from error
+        return materialized_mapping
+
+    if isinstance(schema, TupleSchema) and type(value) is list:
+        sequence = cast(list[Any], value)
+        if not schema.variadic and len(sequence) != len(schema.item_schemas):
+            return tuple(sequence)
+        item_schemas = (
+            (schema.item_schemas[0] for _ in sequence)
+            if schema.variadic
+            else iter(schema.item_schemas)
+        )
+        materialized_tuple: list[Any] = []
+        for index, (item, item_schema) in enumerate(zip(sequence, item_schemas, strict=True)):
+            try:
+                materialized_tuple.append(materialize_json(item_schema, item))
+            except ValidationError as error:
+                raise error.at(index) from error
+        return tuple(materialized_tuple)
+
+    if isinstance(schema, EnumSchema):
+        try:
+            return schema.enum_type(value)
+        except TypeError, ValueError:
+            return value
+
+    if isinstance(schema, UnionSchema):
+        for choice in schema.choices:
+            try:
+                candidate = materialize_json(choice, value)
+                choice.validate(candidate)
+            except ValidationError:
+                continue
+            return candidate
+
+    return value

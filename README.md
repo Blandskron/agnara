@@ -54,6 +54,7 @@ from agnara.execution import (
     Invocation,
     invoke_result,
 )
+from agnara.policy import Principal
 
 app = Agnara("billing")
 
@@ -82,6 +83,7 @@ async def main() -> None:
                 metadata={},
             ),
             DIContainer(dependencies),
+            principal=Principal("quickstart", scopes={"billing:write"}),
         ),
     )
     print(outcome)

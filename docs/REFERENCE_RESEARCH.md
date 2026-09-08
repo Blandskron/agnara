@@ -544,10 +544,9 @@ this does not implement tools/call or extend the transport support claim.
 
 Reviewed 2026-09-05 for E7.8b and E7.9. E7.8b implements `tools/call` and
 answers the open question above: discovery filtering cannot authorize
-invocation, and a compiled plan carries no scope policy because declared
-scopes are metadata (ADR 0008). The dispatcher therefore evaluates core's
-`ScopePolicy` for the capability's declared scopes before any effect, in
-addition to whatever policies the plan already carries. `requestState` and
+invocation. ADR 0077 later moved the restrictive `ScopePolicy` for declared
+scopes into every common compiled plan, before application policies and every
+effect; the dispatcher no longer reproduces that decision. `requestState` and
 `inputResponses` are refused with `INVALID_PARAMS` rather than ignored, so no
 unverified resumption state is accepted while ADR 0042's boundary remains
 unimplemented. Recorded as ADR 0044.

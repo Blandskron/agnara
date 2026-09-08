@@ -408,7 +408,7 @@ def test_an_unrepresentable_value_degrades_to_a_tool_error() -> None:
     assert result.is_error is True
     assert payload(result) == {
         "code": "internal_failure",
-        "message": "capability result cannot be represented",
+        "message": "capability invocation failed",
     }
     assert journal.calls == ["unrepresentable"]
 

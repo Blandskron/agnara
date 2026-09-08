@@ -15,6 +15,13 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Added
 
+- Added a table-driven `0.1.0a4` conformance matrix for direct runtime,
+  HTTP/OpenAPI and MCP schemas, policies and structured failures. The public
+  `materialize_json` schema helper gives JSON transports one recursive
+  dataclass/enum/tuple conversion while direct Python invocation stays strict;
+  all intentional protocol transformations and redaction limits are recorded
+  in ADR 0077 and `docs/CROSS_SURFACE_CONFORMANCE.md` ([#307]).
+
 - One exposure model governs every protocol adapter. `agnara.exposure` owns
   neutral identity — adapter kind, project-local surface name, adapter-local
   name — per-surface adapter compilation and a single frozen availability
@@ -37,8 +44,17 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Changed
 
+- Declared capability scopes now compile into the common execution plan before
+  application policies, JSON materialization, validation, dependencies and
+  handler effects. MCP no longer owns a transport-specific scope guard, HTTP
+  scoped capabilities fail closed as its a4 dispatcher is anonymous, and both
+  JSON transports materialize only after policy. MCP also redacts the message
+  and details of explicit `internal_failure` results just as HTTP already did.
+  Nested HTTP dataclass construction failures now report canonical
+  `details.path` instead of pre-runtime `details.location` (ADR 0077, [#307]).
+
 - Public API governance now covers every shipped distribution, not the kernel
-  alone. `docs/public-api.json` moves to `schema_version` 3 and classifies 280
+  alone. `docs/public-api.json` moves to `schema_version` 3 and classifies 282
   provisional exports across 47 public modules in all seven distributions;
   `agnara-mcp`, `agnara-telemetry` and `agnara-cli` were governed by nothing but
   a count in `docs/MATURITY.md`, and `agnara-http` by a hand-written tuple in one
@@ -847,3 +863,4 @@ under `0.1.0a2` instead.
 [#289]: https://github.com/Blandskron/agnara/issues/289
 [#296]: https://github.com/Blandskron/agnara/issues/296
 [#291]: https://github.com/Blandskron/agnara/issues/291
+[#307]: https://github.com/Blandskron/agnara/issues/307

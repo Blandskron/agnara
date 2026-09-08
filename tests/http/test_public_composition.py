@@ -1121,14 +1121,14 @@ def test_a_dataclass_body_materializes_nested_json_only_types() -> None:
 
 
 @pytest.mark.parametrize(
-    ("body", "detail", "location"),
+    ("body", "detail", "path"),
     [
-        (b"{}", "field is missing", "body.sku"),
-        (b'{"sku":"X","admin":true}', "unexpected field", "body.admin"),
+        (b"{}", "field is missing", ["order", "sku"]),
+        (b'{"sku":"X","admin":true}', "unexpected field", ["order", "admin"]),
     ],
 )
 def test_a_dataclass_body_rejects_missing_and_surplus_fields(
-    body: bytes, detail: str, location: str
+    body: bytes, detail: str, path: list[str]
 ) -> None:
     application = Agnara("closed")
 
@@ -1151,7 +1151,7 @@ def test_a_dataclass_body_rejects_missing_and_surplus_fields(
     problem = json.loads(payload)
     assert status == 400
     assert problem["detail"] == detail
-    assert problem["details"]["location"] == location
+    assert problem["details"]["path"] == path
 
 
 # ---------------------------------------------------------------------------
