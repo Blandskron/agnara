@@ -31,6 +31,11 @@ _DISPOSITION_PARAMETER = re.compile(r';\s*([!#$%&\'*+\-.^_`|~0-9A-Za-z]+)\s*=\s*
 #: dictionary entry and a header parse. Bounded independently of total size.
 _DEFAULT_MAX_PARTS = 64
 
+#: Deeply nested JSON consumes interpreter stack in both decoding and later
+#: schema/result traversal. Reject it before the platform-specific recursion
+#: ceiling decides whether the request reaches a capability.
+_MAX_JSON_NESTING = 128
+
 #: Most zero-length `http.request` events one body may arrive in. A chunk that
 #: carries no bytes moves `max_body_bytes` no closer to its limit, so a client
 #: sending them with `more_body` set keeps the request open for as long as it
@@ -386,6 +391,11 @@ def _bind_json(payload: dict[str, Any], plan: _HTTPBindingPlan, raw_body: bytes)
         return
     try:
         text = raw_body.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise _RequestBindingError("invalid UTF-8 JSON body", location="body") from error
+
+    _check_json_nesting(text)
+    try:
         decoded = json.loads(
             text,
             parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)),
@@ -397,9 +407,38 @@ def _bind_json(payload: dict[str, Any], plan: _HTTPBindingPlan, raw_body: bytes)
         # would leave the dispatcher without a response and hand the server an
         # exception, which is the one outcome this boundary must never produce.
         raise _RequestBindingError("JSON body is nested too deeply", location="body") from error
-    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
+    except (json.JSONDecodeError, ValueError) as error:
         raise _RequestBindingError("invalid UTF-8 JSON body", location="body") from error
     payload[binding.input_name] = decoded
+
+
+def _check_json_nesting(text: str) -> None:
+    """Reject nesting independently of the interpreter's recursion ceiling.
+
+    This is a lexical preflight, not a second JSON parser. It ignores brackets
+    and braces inside strings, including escaped quotes; ``json.loads`` remains
+    responsible for syntax and balanced delimiters.
+    """
+    depth = 0
+    in_string = False
+    escaped = False
+    for character in text:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+            continue
+        if character == '"':
+            in_string = True
+        elif character in "[{":
+            depth += 1
+            if depth > _MAX_JSON_NESTING:
+                raise _RequestBindingError("JSON body is nested too deeply", location="body")
+        elif character in "]}":
+            depth -= 1
 
 
 def _content_type(header_values: Mapping[str, list[str]]) -> tuple[str, str]:

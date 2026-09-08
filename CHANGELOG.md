@@ -23,9 +23,9 @@ without being published. See the `0.1.0a2` scope note below.
   properties across both transports, and a repository-wide credential scan that
   covers the fixtures, docs and workflows a distribution gate never sees. It is
   scoped to a4 and is not the beta security program; the document ends with
-  what the audit did not do. One finding is open and recorded rather than
-  fixed: `scopes=` is enforced over MCP and ignored over HTTP, which is an
-  architectural decision rather than an adapter patch ([#308], [#309]).
+  what the audit did not do. The audit's cross-transport scope finding was
+  resolved by the common execution-plan policy implemented for A4-09
+  ([#307], [#308], [#309]).
 
 - One exposure model governs every protocol adapter. `agnara.exposure` owns
   neutral identity — adapter kind, project-local surface name, adapter-local
@@ -54,7 +54,9 @@ without being published. See the `0.1.0a2` scope note below.
   limit -- from an unauthenticated client, before any capability ran: the
   dispatcher sent nothing and the ASGI server decided what the client and the
   operator's log received, bypassing the reviewed problem mapping and its
-  redaction. It is now a `400` naming the reason without echoing the body. A
+  redaction. A platform-independent nesting ceiling now rejects it with a `400`
+  before decoding or capability execution, naming the reason without echoing
+  the body. A
   value nested deeper than the interpreter can walk reached the same escape at
   the response boundary and now ends at the existing redacted `500`.
 - `_read_body` bounded a request body's total bytes but not the number of ASGI

@@ -113,46 +113,30 @@ because there is no decompression.
 
 | ID | Severity | Status |
 | --- | --- | --- |
-| H-1 | P1 | Fixed. A JSON body nested beyond the decoder's stack raised `RecursionError` out of the dispatcher. 80 KB — well inside the 1 MiB default — was enough, from an unauthenticated client, before any capability ran. The dispatcher sent nothing and the ASGI server decided what the client and the operator's log received, bypassing the reviewed problem mapping and its redaction. Now a 400 naming the reason without echoing the body. |
+| H-1 | P1 | Fixed. A JSON body nested beyond the decoder's stack raised `RecursionError` out of the dispatcher. 80 KB — well inside the 1 MiB default — was enough, from an unauthenticated client, before any capability ran. The dispatcher sent nothing and the ASGI server decided what the client and the operator's log received, bypassing the reviewed problem mapping and its redaction. A platform-independent ceiling now rejects nesting beyond 128 levels with a 400 before decoding or capability execution, naming the reason without echoing the body. |
 | H-2 | P1 | Fixed. The same class at the other end: a value nested deeper than the interpreter can walk raised `RecursionError` out of response serialization, reachable by a capability that echoes an accepted-but-deep body. Now the existing last-resort redacted 500. |
-| H-3 | P1 | **Open — recorded, not fixed.** `scopes=` on a capability is enforced over MCP and ignored over HTTP. Tracked as [#309](https://github.com/Blandskron/agnara/issues/309). See below. |
+| H-3 | P1 | Fixed by [#312](https://github.com/Blandskron/agnara/pull/312). Declared scopes compile into the common execution plan, so HTTP and MCP enforce the same policy before materialization, validation or effects. Anonymous HTTP calls to scoped capabilities now fail closed. |
 | H-4 | P2 | Fixed. `_read_body` bounded total bytes but not the number of events. An empty chunk moves `max_body_bytes` no closer to its limit, so a client sending them with `more_body` set held a worker open indefinitely and grew a list without bound. Empty events are now capped. |
 | H-5 | P3 | Fixed. `request_timeout` was documented as a per-request deadline. It starts after binding, so it bounds execution and not how long a client may take to send a body. The documentation now says which. |
 
-### H-3 — declared scopes are enforced on one transport only
+### H-3 — declared scopes are enforced transport-neutrally
 
-`@app.capability(scopes={"records:read"})` compiles to metadata. `agnara-mcp`
-turns that metadata into a core `ScopePolicy` and evaluates it before any
-effect. `agnara-http` does not: the same capability, declared once, is
-authorization-checked when reached as an MCP tool and runs unchecked when
-reached over HTTP.
+[#312](https://github.com/Blandskron/agnara/pull/312) resolved the asymmetry.
+`@app.capability(scopes={"records:read"})` now compiles a core `ScopePolicy`
+into the common `ExecutionPlan`. Every transport invokes that plan, and the
+policy runs before transport materialization, validation, dependencies and
+handler effects. Neither HTTP nor MCP adds its own interpretation.
 
-Both halves are recorded by `tests/security/test_trust_boundaries.py`, which
-asserts the current behaviour on both transports so that a fix must change the
-test deliberately rather than pass in silence.
+`tests/security/test_trust_boundaries.py` proves an anonymous HTTP call is
+forbidden without executing the handler and that MCP refuses the same scoped
+capability. The broader cross-surface ordering is fixed by
+`tests/conformance/test_a4_schema_policy_failure_consistency.py`.
 
-This is not a bug in either adapter taken alone. ADR 0008 says metadata is
-never authorization by itself, which is exactly why HTTP ignores it; the MCP
-dispatcher documents the opposite reading for its own surface. The security
-problem is the asymmetry: an author who declares a scope, sees it enforced
-through an agent, and then publishes the same capability over HTTP loses the
-check without any diagnostic.
-
-For the release thesis — can Agnara be consumed as a framework from outside
-this repository — this is the more serious half. HTTP is the surface an
-application is most likely to expose publicly.
-
-Resolving it is an architectural decision rather than an adapter patch, and it
-has no safe default. Making core attach a `ScopePolicy` from declared scopes
-would enforce the declaration everywhere, but the a4 HTTP surface authenticates
-nobody, so every scoped capability would become permanently unreachable over
-HTTP — a breaking change for any application relying on today's behaviour.
-Making MCP stop enforcing it would remove a real check. Either direction needs
-an ADR and the authentication design that `0.1.0a4` deliberately does not have.
-
-Until then the honest statement for an application author is: **treat
-`scopes=` as metadata, and attach an explicit policy for anything that must be
-enforced over HTTP.**
+The a4 HTTP surface still has no authentication or principal-mapping contract.
+Consequently, a declared scope fails closed there rather than being silently
+ignored. Applications needing authenticated scoped HTTP calls must wait for or
+provide the future authentication integration; the framework does not infer
+authority from headers, cookies, query parameters or capability arguments.
 
 ## 6. Delegated assumptions
 
@@ -186,7 +170,7 @@ status:
 
 | Threat | a4 status |
 | --- | --- |
-| Confused deputy, over-broad delegated authority | Partially addressed. MCP maps a verified token to a principal through an application mapper and never trusts caller-supplied identity. H-3 is the gap. |
+| Confused deputy, over-broad delegated authority | Declared scopes are enforced transport-neutrally before effects. MCP maps a verified token to a principal through an application mapper; HTTP remains anonymous and fails closed for scoped capabilities. Broader authentication and delegation design remains beta work. |
 | Tool name and schema spoofing | Addressed. Names and schemas come from one frozen startup snapshot; discovery and invocation cannot disagree. |
 | Approval bypass | Addressed for confirmation: no evidence channel exists on either transport, resumed calls are refused, and a missing verifier fails at startup. |
 | Prompt and tool injection across trust boundaries | Not addressed. Agnara does not inspect argument content. |

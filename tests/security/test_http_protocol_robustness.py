@@ -18,6 +18,7 @@ from typing import Any
 
 from agnara_http._binding import (
     _MAX_EMPTY_BODY_EVENTS,
+    _MAX_JSON_NESTING,
     _BindingSource,
     _InputBinding,
 )
@@ -113,20 +114,49 @@ def test_a_deeply_nested_json_body_is_a_problem_not_an_escaped_exception() -> No
     assert "nested too deeply" in document["detail"]
 
 
-def test_a_result_too_deep_to_serialize_is_a_redacted_500() -> None:
-    """Output the interpreter cannot walk ends at the same last resort.
-
-    A body nested under the decoder's own limit still passes, so an echoing
-    capability can hand the response boundary a value deeper than Python will
-    recurse. That is a server-side condition, and it says so without
-    describing the value.
-    """
-    depth = 2_000
-    nested = (b"[" * depth) + (b"]" * depth)
+def test_json_at_the_nesting_limit_is_still_accepted() -> None:
+    """The defensive ceiling has an exact, platform-independent boundary."""
+    nested = (b"[" * _MAX_JSON_NESTING) + b"0" + (b"]" * _MAX_JSON_NESTING)
 
     sent = drive(
         dispatcher(body_route()),
         [{"type": "http.request", "body": nested, "more_body": False}],
+    )
+
+    assert sent[0]["status"] == 200
+
+
+def test_json_nesting_ignores_structural_characters_inside_strings() -> None:
+    """An attacker cannot trigger the ceiling with inert string content."""
+    value = '[\\"{' * (_MAX_JSON_NESTING + 1)
+    body = json.dumps(value).encode()
+
+    sent = drive(
+        dispatcher(body_route()),
+        [{"type": "http.request", "body": body, "more_body": False}],
+    )
+
+    assert sent[0]["status"] == 200
+    assert json.loads(sent[1]["body"]) == value
+
+
+def test_a_result_too_deep_to_serialize_is_a_redacted_500() -> None:
+    """A handler's deeply nested output ends at the redacted last resort."""
+
+    def deeply_nested_result() -> Any:
+        value: Any = 0
+        for _ in range(2_000):
+            value = [value]
+        return value
+
+    route = _HTTPExposure("GET", "/deep", plan(deeply_nested_result))
+
+    sent = drive(
+        dispatcher(route),
+        [{"type": "http.request", "body": b"", "more_body": False}],
+        headers=(),
+        method="GET",
+        path="/deep",
     )
 
     assert sent[0]["status"] == 500

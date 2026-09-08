@@ -118,24 +118,19 @@ def principal_reporting_surface() -> Any:
     return http.compile(app.compile()), []
 
 
-def test_declared_scopes_are_not_enforced_over_http() -> None:
-    """KNOWN GAP: ``scopes=`` reaches no policy on the HTTP surface.
+def test_declared_scopes_are_enforced_over_http() -> None:
+    """A declared scope fails closed before an HTTP capability can run.
 
-    ``scopes`` is capability metadata, and ADR 0008 says metadata authorizes
-    nothing by itself. ``agnara-mcp`` nevertheless compiles a core
-    ``ScopePolicy`` from the same declaration, so one capability is enforced
-    on MCP and unenforced over HTTP, and nothing in the declaration says so.
-    See ``docs/THREAT_MODEL.md`` finding H-3, tracked as issue #309.
-
-    This records what the surface does today. Making HTTP enforce the
-    declaration must fail this test rather than pass silently.
+    The common execution plan owns this policy, so HTTP and MCP cannot assign
+    different authorization meaning to the same capability declaration.
+    HTTP has no principal mapper in a4 and therefore invokes anonymously.
     """
     asgi, calls = scoped_surface()
 
     status, _ = call(asgi, "GET", "/restricted")
 
-    assert status == 200
-    assert calls == ["restricted"]
+    assert status == 403
+    assert calls == []
 
 
 def test_http_cannot_be_told_which_principal_to_use() -> None:
