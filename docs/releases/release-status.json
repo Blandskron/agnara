@@ -217,6 +217,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "SATISFIED",
+      "detail": "Whether the documentation 0.1.0a4 actually ships matches the implementation is a maintainer judgment, not a test result. The owner accepted it on the corrected MCP, CLI and lifecycle guidance, whose examples tests/docs executes. Alpha APIs may still change without a deprecation cycle.",
       "evidence": {
         "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Owner approval via prompt.",
@@ -230,6 +231,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "SATISFIED",
+      "detail": "Whether the experimental-alpha security posture satisfies QUALITY_GATES.md is the owner's decision. The basis: 29 locked runtime dependencies audited with pip-audit 2.10.1 and zero known vulnerabilities, 38 security tests, native secret scanning and push protection enabled, and required Python and Actions CodeQL completed. The three pre-existing develop findings are dispositioned in v0.1.0a4.md rather than reported as a zero-alert result. Non-provider patterns and validity checks remain disabled, and the pypi environment protection policy remains an owner choice.",
       "evidence": {
         "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Owner approval via prompt.",
@@ -294,6 +296,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "SATISFIED",
+      "detail": "Whether the governed public surface is sufficient to build the reference applications is a maintainer judgment. The external consumer used governed names for every implemented adapter across 282 exports in 47 public modules. A2A and events intentionally expose no runtime in a4.",
       "evidence": {
         "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Owner approval via prompt.",
@@ -307,6 +310,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "SATISFIED",
+      "detail": "Whether dependency injection works naturally from outside the framework is a maintainer judgment. The external application resolved and cleaned up singletons without a workaround, and HTTP now closes the resources it owns on lifespan shutdown for both sync and async providers. A container belongs to one event loop.",
       "evidence": {
         "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Owner approval via prompt.",
@@ -320,6 +324,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "SATISFIED",
+      "detail": "Whether capability declaration is clean enough to ship is a maintainer judgment. The external application declared and compiled capabilities with ordinary decorators and explicit compilation, with no monkey patch and no private import.",
       "evidence": {
         "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Owner approval via prompt.",
@@ -425,6 +430,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "SATISFIED",
+      "detail": "Whether the CLI and introspection materially help a developer is a maintainer judgment. The installed console script answered inspect, graph, context and schema openapi, plus help, version and dry-run scaffolding, from outside the checkout. Importing a target executes trusted application code.",
       "evidence": {
         "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Owner approval via prompt.",
@@ -438,6 +444,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "SATISFIED",
+      "detail": "Whether the public documentation alone is enough to reproduce the applications is an explicit maintainer judgment. The clean-room consumer was built from public consumer guides without source inspection, and the migration guide describes the new shutdown behaviour.",
       "evidence": {
         "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Owner approval via prompt.",
