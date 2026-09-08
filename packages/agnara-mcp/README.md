@@ -73,6 +73,45 @@ and `ExecutionContext` parameters. Schema fragments are copied into detached
 JSON data so mutating an SDK model cannot alter the core plan or a later
 projection.
 
+### Execution plans
+
+`plans` is the application's own compiled plans. Each exposure carries the
+`CapabilityDefinition` it was declared from, so the frozen snapshot already
+names everything a plan is needed for:
+
+```python
+from agnara import Agnara
+from agnara.core.di import DIRegistry
+from agnara.execution import ExecutionPlan
+from agnara_mcp import Mcp, project_mcp_tools
+
+app = Agnara("users")
+
+
+@app.capability
+def get_user(user_id: str) -> str:
+    return user_id
+
+
+mcp = Mcp(app)
+mcp.tool(get_user)
+tools = mcp.compile()
+
+registry = DIRegistry()
+plans = [ExecutionPlan.compile(exposure.definition, registry) for exposure in tools.exposures]
+
+projected = project_mcp_tools(tools, plans)
+assert [tool.name for tool in projected] == ["users.get_user"]
+```
+
+Order is irrelevant: plans are matched to exposures by capability identity.
+Unlike `agnara_http.Http.compile()`, which compiles plans itself and publishes
+them as `HttpApplication.plans`, this adapter compiles none, so an application
+serving one capability over two transports passes the plans it already holds
+instead of acquiring a second set. `project_mcp_tools` and `build_mcp_server`
+both require a plan for every compiled exposure and raise
+`McpToolDefinitionError` naming the tool when one is missing.
+
 `outputSchema` is intentionally absent for now. Agnara will publish it only
 after the core runtime compiles and validates output annotations; declaring an
 unenforced response contract would make client validation unreliable.
