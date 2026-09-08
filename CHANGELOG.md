@@ -68,8 +68,17 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Changed
 
+- Declared capability scopes now compile into the common execution plan before
+  application policies, JSON materialization, validation, dependencies and
+  handler effects. MCP no longer owns a transport-specific scope guard, HTTP
+  scoped capabilities fail closed as its a4 dispatcher is anonymous, and both
+  JSON transports materialize only after policy. MCP also redacts the message
+  and details of explicit `internal_failure` results just as HTTP already did.
+  Nested HTTP dataclass construction failures now report canonical
+  `details.path` instead of pre-runtime `details.location` (ADR 0077, [#307]).
+
 - Public API governance now covers every shipped distribution, not the kernel
-  alone. `docs/public-api.json` moves to `schema_version` 3 and classifies 280
+  alone. `docs/public-api.json` moves to `schema_version` 3 and classifies 282
   provisional exports across 47 public modules in all seven distributions;
   `agnara-mcp`, `agnara-telemetry` and `agnara-cli` were governed by nothing but
   a count in `docs/MATURITY.md`, and `agnara-http` by a hand-written tuple in one
@@ -880,3 +889,4 @@ under `0.1.0a2` instead.
 [#289]: https://github.com/Blandskron/agnara/issues/289
 [#296]: https://github.com/Blandskron/agnara/issues/296
 [#291]: https://github.com/Blandskron/agnara/issues/291
+[#307]: https://github.com/Blandskron/agnara/issues/307

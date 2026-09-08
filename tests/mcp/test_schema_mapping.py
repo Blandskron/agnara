@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 from mcp_types import Tool
 
-from agnara import Agnara, CapabilityDefinition, SchemaAdapter, TypeSchema
+from agnara import Agnara, CapabilityDefinition, CapabilityId, SchemaAdapter, TypeSchema
 from agnara.core.di import DIRegistry, provider
 from agnara.execution import ExecutionContext, ExecutionPlan
 from agnara_mcp import Mcp, McpToolDefinitionError, project_mcp_tools
@@ -65,6 +65,25 @@ def test_zero_input_tool_is_an_explicit_closed_object() -> None:
         "additionalProperties": False,
     }
     assert "required" not in tool.input_schema
+
+
+@pytest.mark.parametrize("annotation", [bytes, list[bytes], dict[str, bytes]])
+def test_bytes_shapes_are_rejected_instead_of_publishing_an_impossible_tool(
+    annotation: Any,
+) -> None:
+    app = Agnara("binary")
+
+    def upload(value: Any) -> int:
+        return len(value)
+
+    upload.__annotations__ = {"value": annotation, "return": int}
+    definition = CapabilityDefinition.declare(id=CapabilityId("binary", "upload"), handler=upload)
+    app.capabilities.register(definition)
+    mcp = Mcp(app)
+    mcp.tool(definition)
+
+    with pytest.raises(McpToolDefinitionError, match="contains bytes"):
+        project_mcp_tools(mcp.compile(), [plan(definition)])
 
 
 def test_dependency_and_context_parameters_are_not_wire_inputs() -> None:

@@ -1,9 +1,9 @@
 """Serve one MCP ``tools/call`` from a compiled Agnara capability plan.
 
 Everything reflective happens at construction: exposures are paired with their
-compiled plans, declared scopes become one core ``ScopePolicy`` per tool, and
-the resulting route table is immutable. Dispatch does a mapping lookup, one
-authorization evaluation, one core invocation and one result projection.
+compiled plans and the resulting route table is immutable. Declared scopes are
+already a policy on every core plan, so dispatch does one mapping lookup, one
+core invocation and one result projection.
 
 The dispatcher owns no protocol semantics of its own. It never validates
 inputs, never formats a value and never decides a failure category: core
@@ -32,7 +32,8 @@ from agnara.execution import (
     Invocation,
     invoke_result,
 )
-from agnara.policy import AnonymousPrincipal, PolicyFailure, Principal, ScopePolicy
+from agnara.policy import AnonymousPrincipal, Principal
+from agnara.schema import materialize_json
 from mcp import MCPError
 
 from .authorization import McpAuthorization
@@ -62,7 +63,6 @@ class _InvocationRoute:
     """One tool name resolved to everything dispatch needs, compiled once."""
 
     plan: ExecutionPlan
-    scopes: ScopePolicy
 
 
 def _timeout_seconds(value: object) -> float | None:
@@ -100,11 +100,10 @@ def _project(outcome: CanonicalResult[object]) -> CallToolResult | InputRequired
 class McpToolInvoker:
     """Dispatch ``tools/call`` to compiled plans behind one immutable table.
 
-    Declared capability scopes are enforced here with the same core policy the
-    runtime applies, because ``scopes`` metadata authorizes nothing on its own
-    (ADR 0008) and discovery filtering is visibility rather than authorization.
-    A capability that also attaches its own policies keeps them: this guard
-    runs first and never replaces core policy evaluation.
+    Declared capability scopes are enforced by the shared compiled plan;
+    discovery filtering remains visibility rather than authorization. A
+    capability that also attaches application policies keeps them after the
+    scope policy in the common runtime order.
 
     The invoker holds no per-request state. One instance serves every
     concurrent request on a connection, and each request builds its own
@@ -132,7 +131,7 @@ class McpToolInvoker:
                 f"{type(authorization).__name__}"
             )
         routes = {
-            exposure.name: _InvocationRoute(plan, ScopePolicy(exposure.definition.scopes))
+            exposure.name: _InvocationRoute(plan)
             for exposure, plan in _resolve_plans(exposures, plans)
         }
         if authorization is not None and tuple(routes) != authorization.tool_names:
@@ -174,12 +173,11 @@ class McpToolInvoker:
             tracking_id=_tracking_id(ctx.request_id),
             principal=self._principal(),
         )
-        denial = await self._denied(route, context)
-        if denial is not None:
-            return _project(denial)
         if route.plan.protected_parameters.intersection(context.invocation.payload):
             return _project(Failure(FailureCode.INVALID_INPUT, _UNEXPECTED_INPUT))
-        return _project(await invoke_result(route.plan, context))
+        return _project(
+            await invoke_result(route.plan, context, input_materializer=materialize_json)
+        )
 
     def _route(self, params: CallToolRequestParams) -> _InvocationRoute:
         """Resolve the requested tool, rejecting surfaces this server does not serve."""
@@ -206,13 +204,6 @@ class McpToolInvoker:
         if self._authorization is None:
             return AnonymousPrincipal(metadata={"transport": "mcp"})
         return self._authorization.principal()
-
-    async def _denied(self, route: _InvocationRoute, context: ExecutionContext) -> Failure | None:
-        """Evaluate declared scopes before any dependency or handler effect."""
-        result = await route.scopes.evaluate(context)
-        if isinstance(result, PolicyFailure):
-            return Failure(FailureCode.FORBIDDEN, result.reason)
-        return None
 
     def _deadline(self) -> float | None:
         if self._timeout is None:

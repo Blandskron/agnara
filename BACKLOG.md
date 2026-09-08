@@ -879,6 +879,13 @@ Tracking: GitHub Issue #282.
 
 ## Carried technical debt (post-0.1.0a3 audit)
 
+- [x] D10 Verify schema, policy and structured-failure consistency across the
+  direct runtime, HTTP/OpenAPI and MCP a4 surfaces. JSON materialization is now
+  shared and runs after policy; declared scopes compile into the common plan;
+  MCP redacts explicit internal failures; and a table-driven matrix records
+  every intentional protocol transformation. ADR 0077. Tracking: GitHub Issue
+  #307.
+
 - [x] D9 Audit reference-application internal imports and provide supported
   outcomes. `agnara.policy.confirmation` is now an explicitly governed public
   module, and `ConfirmationPolicy` is also re-exported from `agnara.policy`.

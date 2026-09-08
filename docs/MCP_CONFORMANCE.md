@@ -1,8 +1,9 @@
 # MCP conformance evidence
 
-Suite revision: 3. Tracking: [#181](https://github.com/Blandskron/agnara/issues/181),
+Suite revision: 4. Tracking: [#181](https://github.com/Blandskron/agnara/issues/181),
 [#183](https://github.com/Blandskron/agnara/issues/183) and
-[#185](https://github.com/Blandskron/agnara/issues/185).
+[#185](https://github.com/Blandskron/agnara/issues/185), plus
+[#307](https://github.com/Blandskron/agnara/issues/307).
 
 This is Agnara-owned compatibility evidence against the official `mcp==2.1.1`
 and `mcp-types==2.1.1` packages for MCP `2026-07-28`. It is not an official
@@ -41,7 +42,7 @@ server dispatch instead of being rejected by a typed client constructor.
 | Surface | Executable evidence | Limit |
 | --- | --- | --- |
 | Discovery | `test_sdk_conformance.py`, `test_discovery.py`: pinned revision, tools-only advertisement, server identity, private zero-TTL results | No legacy compatibility claim |
-| Tool definitions | `test_schema_mapping.py`, `test_tool_projection.py`, `test_sdk_conformance.py`: compiled inputs, closed schemas, stable names and no output/task claims | Output validation is absent |
+| Tool definitions | `test_schema_mapping.py`, `test_tool_projection.py`, `test_sdk_conformance.py`, cross-surface conformance: compiled inputs, closed schemas, stable names, invocable dataclass/enum/tuple JSON shapes, and startup rejection of unrepresentable `bytes` graphs | Output validation is absent; no binary input extension |
 | Pagination errors | `test_sdk_conformance.py`: empty/unissued cursors and malformed numeric/list cursors return `INVALID_PARAMS`; discovery still works afterward | Complete startup snapshot, no pagination implementation |
 | Authorization isolation | `test_sdk_conformance.py`: concurrent anonymous, unscoped and scoped tasks share one client; private lists change with each request identity and remain detached | SDK verified identity context is supplied by the test; OAuth verification is not tested |
 | Authorization failures | `test_authorization.py`: immutable credential-free mapper input, fail-closed mapper errors and scope filtering | Discovery visibility does not authorize invocation |
@@ -51,7 +52,7 @@ server dispatch instead of being rejected by a typed client constructor.
 | Unsupported calls | `test_sdk_conformance.py`: on the discovery-only server, tool calls, resource/prompt lists and task methods return `METHOD_NOT_FOUND`; on the invocable server, unknown names and task-augmented calls return `INVALID_PARAMS`, with no handler effects and recovery afterward | No resources, prompts or Tasks implementation |
 | Forged resumption | `test_sdk_conformance.py`: echoed state and an accepted confirmation form are refused by both servers | Does not validate an MRTR security boundary; no resumption path exists |
 | Canonical interaction | `test_interaction_mapping.py`: real pre-effect core failure projects to official input-required models, with deterministic serialization and rejection of malformed details | One-way projection only; no verifier-backed round trip |
-| Canonical results | `test_result_projection.py`: SDK-validated success and every failure category; detached JSON/text, malformed/cyclic/deep value rejection, runtime exception redaction and cancellation propagation | Projection only; no outputSchema validation |
+| Canonical results | `test_result_projection.py` and cross-surface conformance: SDK-validated success and every failure category; detached JSON/text, malformed/cyclic/deep value rejection, explicit and exception-derived internal redaction, and cancellation propagation | Projection only; no outputSchema validation |
 | Tasks/MRTR boundary | `test_task_boundary.py`: pinned SDK method inventory, carrier set, no task advertisement or exported resumption API | No state sealing, verification, replay store or Tasks extension |
 
 The concurrency test uses owned `TaskGroup` tasks and a barrier, with a bounded

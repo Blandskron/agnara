@@ -16,9 +16,10 @@ wire-format conversion to the transport that understands that format.
 
 ## Decision
 
-An HTTP `BODY` binding materializes JSON-only representations into the types
-described by the compiled standard schemas before invoking the shared core
-validation path:
+An HTTP `BODY` binding decodes JSON, then calls the shared runtime with ADR
+0077's explicit JSON materializer. The runtime materializes representations
+into the types described by the compiled standard schemas after policy and
+before the shared validation path:
 
 - JSON objects become declared dataclass instances recursively;
 - JSON arrays become declared tuples recursively;
@@ -29,7 +30,8 @@ Unknown custom `TypeSchema` implementations receive decoded JSON unchanged and
 retain control of validation/coercion. The standard core adapter is unchanged:
 direct invocation still requires exact Python types.
 
-Unknown dataclass fields and missing required fields fail at the HTTP boundary.
+Unknown dataclass fields and missing required fields fail on the canonical
+validation path.
 Omitted default/default-factory fields are left to the dataclass constructor.
 
 ## Consequences
@@ -37,10 +39,11 @@ Omitted default/default-factory fields are left to the dataclass constructor.
 - The accepted request now agrees with the generated OpenAPI schema.
 - HTTP capabilities can use ordinary standard-library dataclasses without a
   dictionary workaround.
-- MCP and direct invocation semantics do not change.
+- MCP uses the same explicit materializer; direct invocation remains strict.
 - Dataclass construction may run `__post_init__`; expected `TypeError` or
-  `ValueError` failures become a redacted binding failure, while unexpected
-  exceptions remain internal failures rather than being disguised as input.
+  `ValueError` failures become canonical invalid input, while unexpected
+  exceptions remain redacted internal failures rather than being disguised as
+  input. Construction runs only after policy (ADR 0077).
 
 ## Threat analysis
 
