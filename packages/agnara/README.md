@@ -15,17 +15,27 @@ depends on nothing but the standard library.
 
 ## Status: alpha
 
-`0.1.0a3` is the currently published integration alpha. The repository carries
-the `0.1.0a4` application-alpha candidate, which adds public application and
-exposure boundaries and makes the synchronized adapter set publication-ready.
-It is **not production-ready**, the public API may change without a deprecation
-cycle, and it makes no claim of protocol conformance, benchmark leadership or
-security guarantees.
+This is the `0.1.0a4` application alpha, which adds public application and
+exposure boundaries and builds the synchronized adapter set alongside the
+kernel. It is **not production-ready**, the public API may change without a
+deprecation cycle, and it makes no claim of protocol conformance, benchmark
+leadership or security guarantees.
+
+Which versions are on PyPI is answered by the project page rather than by this
+file. `CHANGELOG.md` records what each version contains.
 
 ## Install
 
 ```bash
-pip install agnara==0.1.0a3
+pip install agnara
+```
+
+Every published version so far is a pre-release, so this resolves to the newest
+alpha without a version pin or `--pre`. Pin explicitly when a build must not
+move:
+
+```bash
+pip install "agnara==0.1.0a4"
 ```
 
 Requires CPython 3.14 or newer.
@@ -37,6 +47,7 @@ import asyncio
 
 from agnara import Agnara, Risk, StandardEffect
 from agnara.core.di import DIContainer, DIRegistry
+from agnara.policy import Principal
 from agnara.execution import (
     ExecutionContext,
     ExecutionPlan,
@@ -71,6 +82,7 @@ async def main() -> None:
                 metadata={},
             ),
             DIContainer(dependencies),
+            principal=Principal("quickstart", scopes={"billing:write"}),
         ),
     )
     print(outcome)
@@ -101,10 +113,11 @@ transformation of the function.
 ## What it does not include
 
 The HTTP/ASGI, OpenAPI, MCP, CLI and OpenTelemetry functionality lives in
-separate distributions; it is not bundled into this standard-library-only
-kernel. Those distributions are publication-ready for `0.1.0a4` but remain
-unpublished until the authorized release. Events and A2A remain zero-API
-reserved namespaces.
+separate distributions -- `agnara-http`, `agnara-mcp`, `agnara-cli` and
+`agnara-telemetry` -- and is not bundled into this standard-library-only
+kernel. Each is versioned in step with this one; check its PyPI project page
+for the versions available to install. Events and A2A remain zero-API reserved
+namespaces.
 
 ## Frozen value semantics
 
@@ -139,7 +152,7 @@ handler inputs, returned payloads or exception objects.
 
 Both plan construction paths copy the hook collection to a tuple. Missing or
 non-callable callbacks, coroutine functions and generator functions fail at
-startup with `DefinitionError`. This validation is included in `0.1.0a3`. Valid callbacks accept one event, return `None` synchronously
+startup with `DefinitionError`. Valid callbacks accept one event, return `None` synchronously
 and must not block. Their ordinary exceptions are ignored during execution.
 
 Observers own synchronization of their mutable state and must keep their
@@ -147,13 +160,14 @@ callbacks stable after compilation. Tracking IDs are caller-provided and may
 repeat; they are not unique span identifiers and should contain no secrets.
 Exporter startup, flushing and shutdown belong to adapters, not the core
 runtime. The separate `agnara-telemetry` package provides metrics and tracing
-hooks over an application-supplied meter and tracer. It is not published to PyPI.
+hooks over an application-supplied meter and tracer.
 
-**Migration from 0.1.0a2:** code constructing `InvocationStartEvent` or
-`InvocationTerminalEvent` must supply the new required `invocation_id`. Use the
-same identity for matching start/terminal events; `tracking_id` is not unique.
-Hooks that only read events are unaffected. Plans without hooks skip event
-construction entirely.
+**Migration:** `docs/MIGRATION_a3_to_a4.md` covers every user-visible change
+from `0.1.0a3`. For the hook types specifically, code constructing
+`InvocationStartEvent` or `InvocationTerminalEvent` has had to supply
+`invocation_id` since `0.1.0a3`. Use the same identity for matching
+start/terminal events; `tracking_id` is not unique. Hooks that only read events
+are unaffected, and plans without hooks skip event construction entirely.
 
 ## Links
 
