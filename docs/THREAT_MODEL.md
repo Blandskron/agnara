@@ -95,7 +95,7 @@ this audit; the other paths existed already.
 | Task-augmented and resumed MCP calls are refused before dispatch | `tests/mcp/test_tool_invocation.py` |
 | Telemetry carries no payload, principal, value or exception text | `tests/security/test_trust_boundaries.py`, `packages/agnara-telemetry` |
 | An over-long or unusable MCP request id never reaches telemetry | `tests/mcp/test_tool_invocation.py` |
-| No credential lives in the repository or in a built distribution | `tests/security/test_repository_secrets.py`, `scripts/check_distributions.py` |
+| Reviewed files and built distributions are checked for recognized credential signatures; this does not prove absence of every secret format | `tests/security/test_repository_secrets.py`, `scripts/check_distributions.py` |
 
 Two structural properties are worth stating separately, because they remove
 whole classes rather than one case.
@@ -179,11 +179,62 @@ status:
 | Unbounded tool recursion | Not addressed. Nothing bounds a capability invoking another. |
 | SSRF through generic HTTP capabilities | Application's own concern; Agnara makes no outbound call. |
 
-## 8. What this audit did not do
+## 8. CLI and reserved distribution boundaries
+
+All seven distributions, including `agnara-cli`, `agnara-a2a` and
+`agnara-events`, belong to the reviewed a4 publication set (ADR 0073).
+The latter two expose empty `__all__` lists and implement no protocol runtime;
+their current security evidence is package-boundary, archive and installed
+metadata validation, not A2A or event-protocol conformance.
+
+The CLI is a local developer tool with the caller's filesystem and Python
+execution authority. Introspection imports the selected application module;
+module initialization and dotted attribute access can execute application
+code. A valid target is not a sandbox. Only run CLI targets and search paths
+from projects you trust, and treat generated introspection output as local
+data until an application applies its publication policy.
+
+The bounded safeguards reviewed here are:
+
+| Property | Evidence |
+| --- | --- |
+| Malformed targets are rejected before import; import errors become diagnostics | `tests/cli/test_inspect.py` |
+| Manifest paths that lexically escape the project are rejected | `tests/cli/test_manifest.py` |
+| Project dry-run writes nothing; existing output is refused without explicit overwrite | `tests/cli/test_project_create.py` |
+| Schema/context output requires explicit overwrite of an existing file | `tests/cli/test_schema.py`, `tests/cli/test_context.py` |
+
+These checks do not establish safety against a malicious local process racing
+filesystem changes or replacing directories with symlinks. `--overwrite` is
+an explicit grant to replace output, not a merge or preservation guarantee.
+The no-filesystem/no-subprocess statement in section 4 applies only to the
+transport request path, not to this developer tool or application handlers.
+
+## 9. Repository security controls
+
+The Cycle 3 follow-up in Issue #326 enables GitHub secret scanning, push
+protection and Dependabot alerts/security updates. Settings must be read back
+from GitHub; a successful update request alone is not evidence of activation.
+Non-provider-pattern scanning remained disabled after the enable request;
+secret validity checks were not enabled. These limitations remain visible in
+the release closure record.
+
+Required CI includes CodeQL for Python and GitHub Actions, with immutable
+action references and security-result upload permission limited to that job.
+The analysis runs without building or executing the application. A completed
+scan is not a claim that no vulnerability exists: maintainers must triage
+reported alerts before release. See `SECURITY.md` for the operating procedure.
+
+The locked runtime dependency audit recorded in the release closure is
+separate evidence; it does not cover development tools or future advisory
+database updates.
+
+## 10. What this audit did not do
 
 No fuzzing, no penetration test, no load or denial-of-service testing under
-real concurrency, no dependency vulnerability scan (the repository configures
-no such tool; the lockfile currency check is not one), no review of the
+real concurrency, no review of the
 vendored documentation bundles' own code, no analysis of git history for
-previously committed credentials, and no review of the A2A, events or CLI
-packages, which `0.1.0a4` does not publish as part of this surface.
+previously committed credentials. The CLI review is bounded to section 8;
+there is no hostile-local-filesystem or plugin-execution audit. Reserved A2A
+and events distributions have no implemented protocol behavior to review.
+Native secret scanning and static analysis supplement these limits; they do
+not replace a full historical credential, cryptographic or supply-chain audit.

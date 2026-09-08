@@ -79,8 +79,10 @@ The release owner must explicitly decide and record:
    `QUALITY_GATES.md`. The a4 threat model and its named boundary tests exist;
    a locked audit of 29 runtime dependencies found zero known vulnerabilities
    on 2026-09-08; repository security tests pass; and private reporting is
-   enabled. GitHub secret scanning/push protection and Dependabot remain
-   disabled, and dedicated CodeQL/equivalent analysis is absent;
+   enabled. Cycle 3 enabled GitHub secret scanning/push protection and
+   Dependabot alerts/security updates. Required Python/Actions CodeQL analysis
+   is being validated in Issue #326. Non-provider patterns and validity checks
+   remain disabled; the manual security decision remains pending;
 3. the public API is sufficient for the demonstrated applications;
 4. dependency injection works naturally;
 5. capabilities can be declared cleanly;

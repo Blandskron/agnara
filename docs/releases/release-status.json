@@ -171,7 +171,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "Whether 0.1.0a4 remains inside the experimental-alpha exemption is a maintainer decision. Repository security tests pass, docs/THREAT_MODEL.md covers the a4 surface, private vulnerability reporting is enabled, and a 2026-09-08 pip-audit 2.10.1 run found zero known vulnerabilities across 29 locked runtime dependencies. GitHub secret scanning, push protection, Dependabot alerts/updates and dedicated CodeQL/equivalent analysis remain disabled or absent; the owner must accept or close those gaps.",
+      "detail": "Whether 0.1.0a4 remains inside the experimental-alpha exemption is a maintainer decision. Repository security tests pass, docs/THREAT_MODEL.md covers the a4 surface, private vulnerability reporting is enabled, and a 2026-09-08 pip-audit 2.10.1 run found zero known vulnerabilities across 29 locked runtime dependencies. Cycle 3 enabled GitHub secret scanning, push protection and Dependabot alerts/security updates on 2026-09-08. Required Python/Actions CodeQL analysis is being validated in Issue #326. Non-provider patterns and validity checks remain disabled. These controls and the bounded CLI/reserved-package threat analysis inform but do not accept the owner-only security gate.",
       "evidence": {
         "commit": "c160fbd34ae69a34d1159698a0cb2a3b1be5bc1c",
         "command": "uv export --locked --all-packages --no-dev --no-emit-workspace --no-hashes --format requirements.txt; uvx --from pip-audit==2.10.1 pip-audit -r runtime-requirements.txt --format json",

@@ -22,8 +22,10 @@ env:
 jobs:
   validate:
     name: Validate Quality Gates
+    permissions:
+      contents: read
+      security-events: write
     uses: ./.github/workflows/ci.yml
-    secrets: inherit
 
   build:
     name: Build distributions

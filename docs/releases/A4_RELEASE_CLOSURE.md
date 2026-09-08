@@ -97,16 +97,30 @@ documentation manual gates remains a separate owner decision.
 
 ## Cycle 3 — Repository-native security controls
 
-**Owner: security/repository maintainer. State: pending.**
+**Owner: security/repository maintainer. State: implementation and validation
+in Issue #326; manual security acceptance remains pending.**
 
-Current GitHub state:
+GitHub settings read back on 2026-09-08:
 
 - private vulnerability reporting: enabled;
-- secret scanning: disabled;
-- push protection: disabled;
+- secret scanning: enabled;
+- push protection: enabled;
 - non-provider pattern and validity checks: disabled;
-- Dependabot alerts and security updates: disabled;
-- CodeQL or equivalent dedicated static analysis: absent.
+- Dependabot alerts and security updates: enabled;
+- CodeQL Python/Actions analysis: added to required CI; first-run validation
+  is tracked in Issue #326.
+
+The non-provider-pattern enable request returned successfully but readback
+still reported `disabled`; it is not recorded as enabled. Validity checks were
+not enabled. Initial private API queries returned zero open secret-scanning
+and Dependabot alerts; this snapshot does not prove that background scanning
+has completed or that every candidate dependency is covered. No credential
+values are copied into this record.
+
+The threat model now includes the local CLI trust boundary and the two
+reserved distributions in the seven-package publication set. It names the
+existing dry-run, overwrite, target-validation and manifest tests without
+claiming hostile-filesystem or protocol security for unimplemented adapters.
 
 Exit criteria:
 
