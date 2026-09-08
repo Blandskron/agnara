@@ -141,17 +141,22 @@ internally. The emphasis moves from feature creation to dogfooding.
 workaround because of Agnara, it is recorded as a framework defect with an
 Issue. It is never hidden inside the application.
 
-**Current ecosystem note.** When this plan was written no repository under the
-owner's account consumed Agnara. Reference applications are now being built in
-`agnara-project`, outside this workspace. They are not finished and have not
-been audited, so no gate above draws evidence from them yet.
+**Current ecosystem note.** The nine numbered repositories in
+`agnara-project` remain frozen historical references for `0.1.0a2` and
+`0.1.0a3`; they are not silently rewritten to demonstrate a4 compatibility.
+The a4 clean-room audit instead built a compact external consumer from the
+published documentation and installed candidate artifacts. Its exact-SHA
+evidence is recorded in `release-status.json`. Maintainer-only sufficiency and
+developer-experience judgments remain manual.
 
 Only `agnara` is published to PyPI today, so an adapter is not yet an ordinary
-public-index dependency. The repository-side blocker is resolved: ADR 0073
-defines the seven-package publication set and the tag workflow builds,
-validates, installs and is ready to publish it without package-specific
-surgery. The six new names still need their external Pending Trusted Publisher
-configuration and the authorized release tag. The second blocker —
+public-index dependency. The clean-room consumer nevertheless proved normal
+wheel installation without an editable checkout or workspace resolution. The
+repository-side blocker is resolved: ADR 0073 defines the seven-package
+publication set and the tag workflow builds, validates, installs and is ready
+to publish it without package-specific surgery. The six new names still need
+their external Pending Trusted Publisher configuration and the authorized
+release tag. The second blocker —
 `agnara-http` declaring no public composition surface — was resolved by ADR
 0071. `docs/releases/STATUS.md` tracks the operational state.
 

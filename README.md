@@ -25,21 +25,24 @@ pip install --pre agnara
 Requires CPython 3.14 or newer. The core distribution has no third-party
 dependencies.
 
-`0.1.0a3` publishes the `agnara` core kernel only. The HTTP, OpenAPI, MCP and
-CLI adapters live in sibling packages in this repository and were not uploaded
-to PyPI in this release, so they are not installable with `pip` yet.
+`0.1.0a3` publishes the `agnara` core kernel only. The current `develop`
+candidate is `0.1.0a4.dev0`: it builds seven synchronized distributions and
+validates them together, but the six new PyPI names are not public until an
+authorized `0.1.0a4` release completes Trusted Publishing.
 
-## What changes in 0.1.0a3
+## What the 0.1.0a4 candidate adds
 
-The core adds protocol-neutral introspection and explicit discovery filtering,
-plus invocation identity and stricter telemetry-hook validation. The repository
-also adds MCP tool dispatch, authorized HTTP discovery, the read-only Explorer,
-CLI inspection and generators, and OpenTelemetry metrics and tracing bridges.
-These adapters are versioned and tested here; only the core is published.
+The application alpha proves that an external consumer can install the built
+artifacts as ordinary dependencies and compose direct, HTTP and MCP surfaces
+without private imports or monkey patches. It adds the public HTTP composition
+API, governed public surfaces for every distribution, consistent JSON schema
+materialization across transports, and strengthened policy, failure and
+observability conformance.
 
-See [the release notes](docs/releases/v0.1.0a3.md) for migration guidance and
-bounded conformance evidence. The install pin above becomes available when the
-release is published; `0.1.0a2` remains the previous published version.
+See the [draft release notes](docs/releases/v0.1.0a4.md), the
+[a3-to-a4 migration guide](docs/MIGRATION_a3_to_a4.md), and the
+[release status](docs/releases/STATUS.md). The install command above remains
+the published version until the owner authorizes and completes the a4 release.
 
 ## Quick start
 
@@ -306,12 +309,14 @@ The architecture must be safe under conventional CPython and designed consciousl
 ```text
 Status:         Alpha (experimental)
 Latest release: v0.1.0a3 (PyPI, core distribution only)
+Next candidate: v0.1.0a4 (seven synchronized distributions)
 ```
 
 `v0.1.0a3` is the current release, following `v0.1.0a2`, which was the first
 version to reach PyPI. It is not production-ready, the public API may change
 without a deprecation cycle, and only the `agnara` core distribution is
-published; the adapters are versioned and buildable from this repository.
+published. The `v0.1.0a4` candidate makes the six adapter distributions part
+of the explicit publication set; none is published before owner authorization.
 
 The repository should not claim production readiness, benchmark leadership, security guarantees, or protocol conformance until those claims are backed by automated evidence.
 
@@ -356,8 +361,9 @@ names cover the whole surface, and `docs/HTTP_COMPOSITION.md` is the guide —
 including what `0.1.0a4` does not expose yet. `examples/http_service.py` is a
 runnable version.
 
-`agnara-http` is not published to PyPI in this release; only the `agnara` core
-distribution is.
+`agnara-http` is not published on PyPI yet. It is part of the seven-package
+`0.1.0a4` candidate and becomes installable from the public index only after
+the authorized release publishes it.
 
 ## HTTP documentation and capability discovery
 
