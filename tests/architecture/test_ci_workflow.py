@@ -10,6 +10,8 @@ they fail loudly if a gate is renamed or removed.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from tests.architecture.boundaries import WORKSPACE_ROOT
@@ -84,8 +86,30 @@ def test_ci_grants_only_read_permissions_by_default(workflow_text: str) -> None:
 
 
 def test_ci_exposes_a_single_aggregate_status_check(workflow_text: str) -> None:
-    """Branch protection needs one stable required check (E0B.4)."""
-    assert "needs: [lint, types, test, browser, lockfile]" in workflow_text
+    """Branch protection needs one stable required check (E0B.4).
+
+    Asserting the exact spelling of the `needs:` list only proved that nobody
+    had edited that line. The invariant worth protecting is that the aggregate
+    waits for *every* other job, so a job that runs but can never block a
+    merge -- added without being made required -- fails here.
+    """
+    # Only the `jobs:` block: `on:` triggers sit at the same indentation.
+    sections = re.split(r"^jobs:\s*$", workflow_text, maxsplit=1, flags=re.MULTILINE)
+    assert len(sections) == 2, "the workflow declares no `jobs:` block"
+    jobs_block = sections[1]
+    jobs = re.findall(r"^  ([a-z][a-z0-9_-]*):$", jobs_block, re.MULTILINE)
+    assert "ci" in jobs, f"no aggregate `ci` job among {jobs}"
+
+    declared = re.search(r"^    needs: \[([^\]]*)\]$", jobs_block, re.MULTILINE)
+    assert declared is not None, "the aggregate job declares no `needs:` list"
+    required = {name.strip() for name in declared.group(1).split(",") if name.strip()}
+
+    expected = set(jobs) - {"ci"}
+    assert required == expected, (
+        "the aggregate CI status must depend on every other job; "
+        f"not required: {sorted(expected - required)}; "
+        f"not a job: {sorted(required - expected)}"
+    )
 
 
 def test_documentation_browser_conformance_is_an_explicit_required_job(
@@ -97,3 +121,19 @@ def test_documentation_browser_conformance_is_an_explicit_required_job(
     assert 'AGNARA_RUN_BROWSER_TESTS: "1"' in workflow_text
     assert "pytest tests/http/test_documentation_browser.py -m browser" in workflow_text
     assert "pytest tests/http/test_explorer_browser.py -m browser" in workflow_text
+
+
+def test_security_analysis_is_bounded_and_cannot_skip_the_required_gate(workflow_text: str) -> None:
+    """A4-R3: scanning runs without application execution or broad write access."""
+    security = workflow_text.split("  security:\n", 1)[1].split("  lint:\n", 1)[0]
+    assert "language: [python, actions]" in security
+    assert "build-mode: none" in security
+    assert "persist-credentials: false" in security
+    assert "      contents: read\n      security-events: write" in security
+    assert "id-token:" not in security
+    assert "secrets:" not in security
+    assert "continue-on-error" not in security
+    assert "pull_request_target" not in workflow_text
+    assert "contains(needs.*.result, 'skipped')" in workflow_text
+    for action in ("init", "analyze"):
+        assert re.search(rf"github/codeql-action/{action}@[0-9a-f]{{40}}", security)

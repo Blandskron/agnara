@@ -1,14 +1,27 @@
 [project]
 name = "agnara-cli"
-version = "0.1.0a3"
+version = "0.1.0a4"
 description = "Project introspection and scaffolding CLI for Agnara."
 readme = "README.md"
 requires-python = ">=3.14"
+authors = [{name = "Agnara Maintainers", email = "maintainers@agnara.dev"}]
 license = {text = "Apache-2.0"}
-dependencies = ["agnara"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+dependencies = ["agnara==0.1.0a4"]
 
 [project.scripts]
 agnara = "agnara_cli._main:main"
+
+[project.urls]
+Homepage = "https://github.com/Blandskron/agnara"
+Repository = "https://github.com/Blandskron/agnara"
 
 [build-system]
 requires = ["hatchling"]

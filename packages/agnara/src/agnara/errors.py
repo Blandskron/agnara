@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 __all__ = [
     "AgnaraError",
     "DefinitionError",
+    "DuplicateAppError",
     "DuplicateCapabilityError",
     "InteractionRequiredError",
     "InvocationError",
@@ -47,9 +48,12 @@ class DefinitionError(AgnaraError):
 class InvocationError(AgnaraError):
     """A direct invocation is inconsistent with its compiled plan.
 
-    This reports caller/runtime composition mistakes such as invoking a plan
-    under another capability id or supplying a parameter owned by dependency
-    injection. Canonical handler failures remain a separate E4.7 concern.
+    This reports a caller/runtime composition mistake: invoking a plan under
+    another capability id. A payload that names a runtime-owned parameter is
+    not a composition mistake but an ordinary unexpected input, reported as a
+    `ValidationError` after policies have run so that an unauthorized caller
+    learns nothing about the handler's signature. Canonical handler failures
+    remain a separate E4.7 concern.
     """
 
 
@@ -67,6 +71,21 @@ class InteractionRequiredError(AgnaraError):
 
 class RegistryError(AgnaraError):
     """The capability registry was used in a way its contract forbids."""
+
+
+class DuplicateAppError(RegistryError):
+    """Two apps claimed the same identity on one project.
+
+    An app name is a bounded context and becomes the namespace of every
+    capability it declares (ADR 0065), so two apps sharing one is not a
+    naming inconvenience: the project would present a single context that is
+    really two, and introspection would describe something that does not
+    exist.
+
+    Raised in preference to `DuplicateCapabilityError` when the cause is the
+    app rather than one of its capabilities, because a caller pointed at a
+    capability clash would investigate a capability that is fine.
+    """
 
 
 class DuplicateCapabilityError(RegistryError):

@@ -22,7 +22,8 @@ from typing import Protocol, runtime_checkable
 
 from agnara._frozen import frozen_slots_dataclass
 from agnara.introspection.descriptors import (
-    AppDescriptor,
+    ApplicationDescriptor,
+    BoundedContextDescriptor,
     CapabilityDescriptor,
     DependencyDescriptor,
     ExposureDescriptor,
@@ -68,6 +69,8 @@ class DiscoveryField(StrEnum):
     DEPENDENCIES = "dependencies"
     #: The application's provider graph.
     PROVIDERS = "providers"
+    #: The bounded contexts an application mounts, and their descriptions.
+    APPS = "apps"
     #: The names of the policy types a capability's plan evaluates.
     POLICIES = "policies"
     #: Exposures, and therefore the derived transport availability: in this
@@ -292,8 +295,23 @@ def _capability(
     )
 
 
+def _mounted_apps(
+    app: ApplicationDescriptor,
+    visibility: DiscoveryVisibility,
+) -> tuple[BoundedContextDescriptor, ...]:
+    """The bounded contexts, when this viewer may see them.
+
+    Filtered as a whole rather than per context: which contexts exist is one
+    publication decision, and a partial list would misdescribe the application
+    more badly than an empty one.
+    """
+    if not visibility.publishes(DiscoveryField.APPS):
+        return ()
+    return app.apps
+
+
 def _providers(
-    app: AppDescriptor,
+    app: ApplicationDescriptor,
     visibility: DiscoveryVisibility,
 ) -> tuple[ProviderDescriptor, ...]:
     if not visibility.publishes(DiscoveryField.PROVIDERS):
@@ -338,7 +356,7 @@ def filter_snapshot(
             f"filter_snapshot requires a Principal, got {type(principal).__name__}"
         )
 
-    apps: list[AppDescriptor] = []
+    apps: list[ApplicationDescriptor] = []
     for app in snapshot.apps:
         visible = tuple(
             _capability(capability, visibility)
@@ -348,10 +366,11 @@ def filter_snapshot(
         if not visible:
             continue
         apps.append(
-            AppDescriptor(
+            ApplicationDescriptor(
                 name=app.name,
                 capabilities=visible,
                 providers=_providers(app, visibility),
+                apps=_mounted_apps(app, visibility),
             )
         )
     return IntrospectionSnapshot(

@@ -11,6 +11,7 @@ import asyncio
 import json
 from collections.abc import AsyncIterator, Awaitable
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, cast
 
 import pytest
@@ -26,7 +27,13 @@ from mcp_types import (
 
 from agnara import Agnara, CapabilityId, Confirmation
 from agnara.core.di import DIContainer, DIRegistry, Scope, provider
-from agnara.execution import ExecutionContext, ExecutionPlan, Invocation
+from agnara.execution import (
+    ExecutionContext,
+    ExecutionPlan,
+    Failure,
+    FailureCode,
+    Invocation,
+)
 from agnara.policy import (
     ConfirmationEvidence,
     ConfirmationVerdict,
@@ -88,6 +95,16 @@ class Ledger:
     """A resource whose open/close order proves the invocation scope ran."""
 
     name = "ledger"
+
+
+class State(Enum):
+    READY = "ready"
+
+
+@dataclass(frozen=True, slots=True)
+class Receipt:
+    identifier: str
+    state: State
 
 
 class Journal:
@@ -167,6 +184,26 @@ def surface(
             "metadata": dict(ctx.invocation.metadata),
         }
 
+    @app.capability(scopes={"records:read"})
+    def restricted_with_dependency(label: str, ledger: Ledger) -> str:
+        journal.calls.append("restricted_with_dependency")
+        return f"{label}:{ledger.name}"
+
+    @app.capability
+    def scale(factor: float) -> float:
+        journal.calls.append("scale")
+        return factor * 2
+
+    @app.capability
+    def receipt() -> Receipt:
+        journal.calls.append("receipt")
+        return Receipt("r-1", State.READY)
+
+    @app.capability
+    def confirm_manually() -> Any:
+        journal.calls.append("confirm_manually")
+        return Failure(FailureCode.INTERACTION_REQUIRED, "please confirm")
+
     @app.capability
     def explodes() -> int:
         journal.calls.append("explodes")
@@ -192,6 +229,10 @@ def surface(
         restricted,
         with_dependency,
         with_context,
+        restricted_with_dependency,
+        scale,
+        receipt,
+        confirm_manually,
         explodes,
         unrepresentable,
         slow,
@@ -252,7 +293,11 @@ def test_invalid_input_is_a_tool_error_rather_than_a_protocol_error() -> None:
 
     assert result.is_error is True
     assert result.structured_content is None
-    assert payload(result) == {"code": "invalid_input", "message": "expected int, got str"}
+    assert payload(result) == {
+        "code": "invalid_input",
+        "message": "expected int, got str",
+        "details": {"path": ["left"]},
+    }
     assert journal.calls == []
 
 
@@ -316,11 +361,68 @@ def test_runtime_owned_parameters_cannot_be_supplied_by_a_caller() -> None:
     dependency = call(invoker, "dispatch.with_dependency", {"label": "x", "ledger": "forged"})
     execution_context = call(invoker, "dispatch.with_context", {"ctx": "forged"})
 
-    for result in (dependency, execution_context):
+    for result, name in ((dependency, "ledger"), (execution_context, "ctx")):
         assert result.is_error is True
-        assert payload(result) == {"code": "invalid_input", "message": "unexpected input"}
+        assert payload(result) == {
+            "code": "invalid_input",
+            "message": "unexpected input",
+            "details": {"path": [name]},
+        }
     assert journal.calls == []
     assert journal.closed == []
+
+
+def test_an_unauthorized_caller_cannot_probe_for_runtime_owned_parameter_names() -> None:
+    """Policies run before the payload shape is examined, so a caller without
+    the declared scopes receives ``forbidden`` whether or not the payload
+    names a dependency or context parameter. A different answer would be an
+    oracle for the handler's private signature."""
+    invoker, journal = surface()
+
+    unknown = call(invoker, "dispatch.restricted_with_dependency", {"label": "x", "zzz": 1})
+    dependency = call(invoker, "dispatch.restricted_with_dependency", {"label": "x", "ledger": 1})
+
+    for result in (unknown, dependency):
+        assert result.is_error is True
+        assert payload(result)["code"] == "forbidden"
+    assert journal.calls == []
+    assert journal.closed == []
+
+
+def test_a_json_integer_satisfies_a_float_input() -> None:
+    """The advertised schema says ``number``; JSON does not distinguish ``3``
+    from ``3.0``, so a client emitting the integer form must not be refused."""
+    invoker, _ = surface()
+
+    result = call(invoker, "dispatch.scale", {"factor": 3})
+
+    assert result.is_error is False
+    assert result.structured_content == {"result": 6.0}
+
+
+def test_dataclass_and_enum_results_project_like_they_do_over_http() -> None:
+    invoker, _ = surface()
+
+    result = call(invoker, "dispatch.receipt", {})
+
+    assert result.is_error is False
+    assert result.structured_content == {"result": {"identifier": "r-1", "state": "ready"}}
+
+
+def test_a_hand_built_interaction_failure_degrades_to_a_tool_error() -> None:
+    """A handler returning ``Failure(INTERACTION_REQUIRED, ...)`` without the
+    canonical detail shape is a server defect. It must become a redacted tool
+    error, not an exception the SDK turns into a connection-level failure."""
+    invoker, _ = surface()
+
+    result = call(invoker, "dispatch.confirm_manually", {})
+
+    assert isinstance(result, CallToolResult)
+    assert result.is_error is True
+    assert payload(result) == {
+        "code": "internal_failure",
+        "message": "capability invocation failed",
+    }
 
 
 def test_dependencies_resolve_and_close_around_one_invocation() -> None:
@@ -408,7 +510,7 @@ def test_an_unrepresentable_value_degrades_to_a_tool_error() -> None:
     assert result.is_error is True
     assert payload(result) == {
         "code": "internal_failure",
-        "message": "capability result cannot be represented",
+        "message": "capability invocation failed",
     }
     assert journal.calls == ["unrepresentable"]
 
@@ -561,5 +663,5 @@ def test_the_invoker_reports_its_frozen_route_table() -> None:
     invoker, _ = surface()
 
     assert invoker.tool_names[0] == "dispatch.add"
-    assert len(invoker.tool_names) == 7
-    assert repr(invoker) == "McpToolInvoker(7 tools)"
+    assert len(invoker.tool_names) == 11
+    assert repr(invoker) == "McpToolInvoker(11 tools)"

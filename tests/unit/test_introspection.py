@@ -9,14 +9,26 @@ from typing import Any
 
 import pytest
 
-from agnara import Agnara, CapabilityId, Confirmation, Risk, StandardEffect
+from agnara import (
+    Agnara,
+    AnonymousPrincipal,
+    App,
+    CapabilityId,
+    Confirmation,
+    Risk,
+    StandardEffect,
+)
 from agnara.core.di import DIRegistry, Scope, provider
 from agnara.execution import ExecutionContext, ExecutionPlan, Invocation
 from agnara.introspection import (
     INTROSPECTION_FORMAT,
     INTROSPECTION_VERSION,
-    AppDescriptor,
+    AllCapabilitiesVisible,
+    ApplicationDescriptor,
+    BoundedContextDescriptor,
     CapabilityDescriptor,
+    DiscoveryField,
+    DiscoveryVisibility,
     ExposureDescriptor,
     InputDescriptor,
     IntrospectionError,
@@ -24,6 +36,7 @@ from agnara.introspection import (
     PolicyDescriptor,
     TypeReference,
     describe_app,
+    filter_snapshot,
     snapshot,
 )
 from agnara.policy import ConfirmationEvidence, ConfirmationVerdict, Principal
@@ -94,7 +107,7 @@ def surface() -> tuple[Agnara, list[ExecutionPlan], DIRegistry]:
     return app, plans, registry
 
 
-def described() -> AppDescriptor:
+def described() -> ApplicationDescriptor:
     app, plans, registry = surface()
     return describe_app(
         app,
@@ -109,7 +122,7 @@ def described() -> AppDescriptor:
     )
 
 
-def capability(app: AppDescriptor, identifier: str) -> CapabilityDescriptor:
+def capability(app: ApplicationDescriptor, identifier: str) -> CapabilityDescriptor:
     for descriptor in app.capabilities:
         if descriptor.id == identifier:
             return descriptor
@@ -125,7 +138,10 @@ def test_a_capability_is_described_by_its_declared_metadata() -> None:
     assert refund.risk == "high"
     assert refund.confirmation == "required"
     assert refund.idempotency == "no"
-    assert refund.policies == (PolicyDescriptor("ConfirmationPolicy"),)
+    assert refund.policies == (
+        PolicyDescriptor("ScopePolicy"),
+        PolicyDescriptor("ConfirmationPolicy"),
+    )
 
 
 def test_inputs_keep_signature_order_and_report_their_compiled_schema() -> None:
@@ -245,7 +261,10 @@ def test_json_data_reproduces_every_descriptor_field() -> None:
     assert refund["dependencies"] == [
         {"parameter": "ledger", "type": {"name": "Ledger", "module": __name__}}
     ]
-    assert refund["policies"] == [{"kind": "ConfirmationPolicy"}]
+    assert refund["policies"] == [
+        {"kind": "ScopePolicy"},
+        {"kind": "ConfirmationPolicy"},
+    ]
 
 
 def test_describing_an_uncompiled_capability_is_refused() -> None:
@@ -337,12 +356,12 @@ def test_a_snapshot_rejects_repeated_apps_and_an_app_rejects_repeated_capabiliti
     with pytest.raises(IntrospectionError, match="repeats an app name"):
         IntrospectionSnapshot(apps=(app, app))
     with pytest.raises(IntrospectionError, match="repeats a capability id"):
-        AppDescriptor("payments", (app.capabilities[0], app.capabilities[0]))
+        ApplicationDescriptor("payments", (app.capabilities[0], app.capabilities[0]))
 
 
 def test_descriptors_reject_values_of_the_wrong_type() -> None:
     with pytest.raises(IntrospectionError):
-        AppDescriptor("payments", ("not a descriptor",))  # type: ignore
+        ApplicationDescriptor("payments", ("not a descriptor",))  # type: ignore
     with pytest.raises(IntrospectionError):
         IntrospectionSnapshot(apps=("not a descriptor",))  # type: ignore
     with pytest.raises(IntrospectionError):
@@ -351,3 +370,136 @@ def test_descriptors_reject_values_of_the_wrong_type() -> None:
         describe_app("payments", [])  # type: ignore
     with pytest.raises(IntrospectionError):
         snapshot(["not a descriptor"])  # type: ignore
+
+
+# ---------------------------------------------------------------------------
+# E1A.4 — the bounded contexts an application mounts
+# ---------------------------------------------------------------------------
+
+
+class TestMountedApps:
+    """`ARCHITECTURE.md` section 10 promises "Apps"; until E1A.4 the concept
+    was mapped to `IntrospectionSnapshot.apps`, which holds whole compiled
+    applications. These pin the real home.
+    """
+
+    def build(self) -> ApplicationDescriptor:
+        payments = App("payments", description="Money movement.", module="shop.apps.payments")
+        catalog = App("catalog", description="What is for sale.")
+
+        @payments.capability(description="Refund.", idempotent=False)
+        def refund(payment_id: str) -> str:
+            return "refunded"
+
+        @catalog.capability(description="List items.", idempotent=True)
+        def list_items() -> str:
+            return "items"
+
+        project = Agnara("shop")
+        project.include(payments)
+        project.include(catalog)
+        capabilities = project.compile()
+        dependencies = DIRegistry()
+        plans = [ExecutionPlan.compile(capabilities[cid], dependencies) for cid in capabilities]
+        return describe_app(project, plans)
+
+    def test_it_names_every_mounted_context(self) -> None:
+        described = self.build()
+
+        assert [(app.name, app.description) for app in described.apps] == [
+            ("payments", "Money movement."),
+            ("catalog", "What is for sale."),
+        ]
+
+    def test_the_order_is_the_order_they_were_mounted(self) -> None:
+        assert [app.name for app in self.build().apps] == ["payments", "catalog"]
+
+    def test_the_module_is_not_projected(self) -> None:
+        """Source layout is not what a viewer asked for."""
+        assert "shop.apps.payments" not in json.dumps(self.build().json_data())
+
+    def test_an_application_with_no_apps_reports_none(self) -> None:
+        project = Agnara("shop")
+
+        @project.capability(description="Health probe.", idempotent=True)
+        def ping() -> str:
+            return "pong"
+
+        capabilities = project.compile()
+        dependencies = DIRegistry()
+        plans = [ExecutionPlan.compile(capabilities[cid], dependencies) for cid in capabilities]
+
+        assert describe_app(project, plans).apps == ()
+
+    def test_the_json_form_carries_the_contexts(self) -> None:
+        data = self.build().json_data()
+
+        assert data["apps"] == [
+            {"name": "payments", "description": "Money movement."},
+            {"name": "catalog", "description": "What is for sale."},
+        ]
+
+    def test_a_repeated_context_is_refused(self) -> None:
+        with pytest.raises(IntrospectionError, match="repeats a bounded context"):
+            ApplicationDescriptor(
+                name="shop",
+                apps=(
+                    BoundedContextDescriptor(name="payments"),
+                    BoundedContextDescriptor(name="payments"),
+                ),
+            )
+
+    def test_apps_must_be_bounded_context_descriptors(self) -> None:
+        with pytest.raises(IntrospectionError, match="BoundedContextDescriptor"):
+            ApplicationDescriptor(name="shop", apps=("payments",))  # ty: ignore[invalid-argument-type]
+
+    def test_a_context_needs_a_name(self) -> None:
+        with pytest.raises(IntrospectionError, match="bounded context name"):
+            BoundedContextDescriptor(name="")
+
+    def test_a_context_description_is_optional(self) -> None:
+        assert BoundedContextDescriptor(name="payments").description is None
+
+
+class TestMountedAppVisibility:
+    """Publishing the contexts is its own decision, as RFC 0003 requires."""
+
+    def snapshot_of(self) -> IntrospectionSnapshot:
+        payments = App("payments", description="Money movement.")
+
+        @payments.capability(description="Refund.", idempotent=False)
+        def refund(payment_id: str) -> str:
+            return "refunded"
+
+        project = Agnara("shop")
+        project.include(payments)
+        capabilities = project.compile()
+        dependencies = DIRegistry()
+        plans = [ExecutionPlan.compile(capabilities[cid], dependencies) for cid in capabilities]
+        return snapshot([describe_app(project, plans)], project="shop")
+
+    def test_the_contexts_are_published_when_the_field_is(self) -> None:
+        visibility = DiscoveryVisibility(
+            AllCapabilitiesVisible(), [DiscoveryField.APPS, DiscoveryField.DESCRIPTION]
+        )
+
+        filtered = filter_snapshot(self.snapshot_of(), visibility, AnonymousPrincipal())
+
+        assert [app.name for app in filtered.apps[0].apps] == ["payments"]
+
+    def test_the_contexts_are_withheld_when_the_field_is_not(self) -> None:
+        visibility = DiscoveryVisibility(AllCapabilitiesVisible(), [DiscoveryField.DESCRIPTION])
+
+        filtered = filter_snapshot(self.snapshot_of(), visibility, AnonymousPrincipal())
+
+        assert filtered.apps[0].apps == ()
+
+    def test_withholding_the_contexts_leaves_the_capabilities(self) -> None:
+        """One decision, not several: hiding contexts must not hide behaviour."""
+        visibility = DiscoveryVisibility(AllCapabilitiesVisible(), [DiscoveryField.DESCRIPTION])
+
+        filtered = filter_snapshot(self.snapshot_of(), visibility, AnonymousPrincipal())
+
+        assert [capability.id for capability in filtered.apps[0].capabilities] == [
+            "payments.refund"
+        ]

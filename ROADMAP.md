@@ -1,174 +1,89 @@
 # Roadmap
 
-## Phase 0 — Constitution and experiments
+Where Agnara is going, in horizons.
 
-Goal: make bad architectural shortcuts expensive before production code exists.
+This file owns *where Agnara is going*. `BACKLOG.md` owns what is ready to
+implement, `docs/INITIATIVES.md` owns what to build in dependency order, and
+`docs/MATURITY.md` owns what already exists. `docs/DOCUMENTATION_MAP.md`
+records why each owns what it owns.
 
-Deliverables:
+## No dates
 
-- vision;
-- principles;
-- RFC 0001;
-- golden API examples;
-- dependency rules;
-- benchmark harness design;
-- proof-of-concept experiments for schema and ASGI choices.
+A date without evidence is a fabrication. Agnara has no evidence about when
+any of this will be done, so it commits to order rather than to time.
 
-Exit gate: maintainers agree on the capability model and package boundaries.
+Work far beyond the current horizon is still recorded, because implementing
+today's architecture wrongly would make some of it impossible later. That is
+the reason to write it down — not to promise it.
 
-## Phase 1 — Core capability kernel
+## Horizons
 
-Deliver:
+Horizons are the ordering; a release is the thing that closes. The mapping is
+fixed by ADR 0068 so that work lands where its question belongs rather than in
+whichever release happens to be open.
 
-- registry;
-- capability definitions;
-- direct invocation;
-- execution context;
-- immutable metadata.
+### NOW — 0.1.0a4, Application Boundaries
 
-No HTTP yet unless required for a throwaway experiment.
+Current baseline target. Its one question: can Agnara be consumed as a
+framework from outside this repository?
 
-## Phase 2 — Schema and dependency engine
+- **Unified exposure model.** One neutral availability registry that both
+  shipped adapters compile into. ADR 0070.
+- **Public HTTP composition surface.** ADR 0071.
+- **HTTP request surface** — cookies, forms, multipart, uploads.
 
-Deliver:
+### NEXT — 0.1.0a5, Execution Semantics
 
-- schema ports;
-- standard Python adapter;
-- DI graph;
-- scopes;
-- startup graph validation;
-- lifecycle cleanup.
+Its one question: does execution have streaming, identity and a measured cost?
 
-Exit gate: capability can execute with typed inputs and dependencies without transport involvement.
+- **Streaming model** — `I2`, which still blocks the most other work.
+- **Execution identity and idempotency behaviour.**
+- **Performance budgets** — `I14`.
 
-## Phase 3 — Compiled execution plans
+### BETA — 0.1.0b1, Interoperability
 
-Deliver:
+Its one question: can the Python ecosystem use Agnara, and Agnara use it?
 
-- plan compiler;
-- policy stage;
-- deadlines;
-- cancellation;
-- canonical failures;
-- telemetry hooks.
+- **Framework and ecosystem interoperability** — `I20`. Agnara standalone, as
+  a host, embedded inside an existing framework, and side by side. RFC 0008
+  states the questions and decides none of them.
+- **Security program** — `I10`. Threat model, invariants with tests, supply
+  chain.
+- **A2A, events, audit, composition and testing utilities** — `I4`, `I5`,
+  `I8`, `I12`, `I17`.
+- **Durable execution** — `I6`, the abstraction rather than the workers.
 
-Exit gate: reflection is absent from common hot-path execution where avoidable.
+### RC — 0.1.0rc1
 
-## Phase 4 — HTTP
+No new subsystems. Regressions, documentation, compatibility, security,
+packaging and release validation only.
 
-Deliver:
+### 1.0
 
-- ASGI adapter;
-- routing;
-- request binding;
-- serialization;
-- RFC 9457 mapping;
-- OpenAPI 3.2 target;
-- deterministic OpenAPI export and conformance fixtures;
-- replaceable documentation-provider contract;
-- configurable schema/UI routes and documentation disabling;
-- Swagger UI, ReDoc and modern-UI integration spikes without a core
-  dependency;
-- HTTP test client strategy.
+- Stable execution, DI, policy, failure and introspection models.
+- Stable HTTP composition API and MCP projection.
+- Public API governance and deprecation policy in force.
+  `docs/PUBLIC_API.md` owns the governed surface.
+- **Free-threaded Python** verification — `I15`.
 
-Exit gate: a production-shaped CRUD example works without coupling domain functions to HTTP types.
+### POST-1.0
 
-## Phase 5 — MCP
+Distributed workers, a plugin and extension model (`I13`), workflow
+orchestration (`I11`), multi-tenancy and federation (`I16`), and further
+protocol adapters.
 
-Deliver:
+## What Agnara is not becoming
 
-- MCP tool projection;
-- discovery;
-- schemas;
-- authorization bridge;
-- interaction/task mapping research;
-- conformance suite.
+An ORM, a broker, a scheduler, a worker runtime, a frontend framework, an
+admin UI, or an LLM framework. `docs/TARGET_ARCHITECTURE.md` section 7 records
+why for each.
 
-Exit gate: the exact same capability can be invoked by direct Python, HTTP and MCP.
+Agnara does not replace the ecosystem, so it has to be able to work with it
+— alone, embedded, alongside, integrated.
 
-## v0.1 — Architectural proof
+## The governing trade
 
-The first public alpha should demonstrate the thesis, not feature completeness.
-
-## Phase 6 — Agent-oriented policy and observability
-
-Deliver:
-
-- richer delegation model;
-- structured side effects;
-- confirmation;
-- OpenTelemetry adapter;
-- versioned machine-readable introspection;
-- discovery visibility, redaction and authorization controls;
-- CLI inspection/export over the shared introspection snapshot;
-- Agnara Explorer read-only MVP, including non-HTTP exposures.
-
-## Phase 7 — A2A
-
-Deliver:
-
-- Agent Card projection;
-- skills;
-- tasks;
-- streaming;
-- version negotiation.
-
-## Phase 8 — Events and AsyncAPI
-
-Deliver:
-
-- event capability model;
-- producer/consumer exposures;
-- AsyncAPI projection;
-- broker adapters outside core.
-
-## Phase 9 — Distributed task adapters
-
-Deliver task abstraction backed by external systems rather than embedding a broker in core.
-
-## Phase 10 — Native acceleration
-
-Only after measured bottlenecks.
-
-Candidate experiments:
-
-- Rust router;
-- compiled serializers;
-- dispatch table;
-- protocol parsing.
-
-Every native component must retain Python fallback/reference behavior where practical.
-
-## Long-term
-
-Agnara should become:
-
-```text
-small stable core
-+
-rapidly evolving adapters
-+
-protocol conformance suites
-+
-agent-readable capability graph
-+
-reproducible performance engineering
-```
-
-## Phase 0.5 — Modular project developer experience
-
-Before HTTP becomes the center of examples, establish the project/app model and scaffolding contract.
-
-Deliver:
-
-- `agnara project create`;
-- `agnara app create`;
-- modular-hexagonal default template;
-- profiles and `--with` exposures;
-- explicit project manifest prototype;
-- dry-run and non-destructive generation;
-- machine-readable CLI output.
-
-Exit gate:
-
-A developer can create one project containing at least three apps with different exposure combinations while domain/application code remains transport-neutral.
+When features and architecture conflict, architecture wins. When a proprietary
+mechanism and an open standard both work, the standard wins. When convenient
+coupling and a clean boundary conflict, the boundary wins. When a large core
+and a small kernel with strong adapters both work, the kernel stays small.

@@ -123,3 +123,100 @@ def test_di_container_singleton_concurrency():
         await container.aclose()
 
     asyncio.run(run_test())
+
+
+def test_di_container_resolves_bound_parameters_once_per_callable(monkeypatch):
+    """Resolving type hints costs microseconds per callable per call; the
+    container resolves each callable's bindings once and reuses them, and the
+    reuse must not change which parameters receive which dependency."""
+    import typing
+
+    class Left:
+        pass
+
+    class Right:
+        pass
+
+    @provider()
+    def provide_left() -> Left:
+        return Left()
+
+    @provider()
+    def provide_right() -> Right:
+        return Right()
+
+    async def run_test():
+        registry = DIRegistry()
+        registry.bind(Left, provide_left)
+        registry.bind(Right, provide_right)
+
+        def my_handler(payload: str, right: Right, left: Left) -> None:
+            pass
+
+        dag = compile_dag(registry, [my_handler])
+        container = DIContainer(registry)
+
+        calls = 0
+        original = typing.get_type_hints
+
+        def counting(obj, *args, **kwargs):
+            nonlocal calls
+            calls += 1
+            return original(obj, *args, **kwargs)
+
+        import agnara.core.di.compiler as compiler
+
+        monkeypatch.setattr(compiler, "get_type_hints", counting)
+        for _ in range(5):
+            async with container.resolve_dependencies(my_handler, dag) as kwargs:
+                assert set(kwargs) == {"right", "left"}
+                assert type(kwargs["right"]) is Right
+                assert type(kwargs["left"]) is Left
+        # One resolution for the handler and one per provider, not one per call.
+        assert calls == 3
+        await container.aclose()
+
+    asyncio.run(run_test())
+
+
+def test_di_container_invocation_cache_is_shared_within_one_resolution():
+    """Two parameters bound to the same invocation-scoped type receive one
+    instance, and a provider depending on that type receives the same one."""
+
+    class Unit:
+        pass
+
+    class Wrapper:
+        def __init__(self, unit: Unit):
+            self.unit = unit
+
+    built = 0
+
+    @provider()
+    def provide_unit() -> Unit:
+        nonlocal built
+        built += 1
+        return Unit()
+
+    @provider()
+    def provide_wrapper(unit: Unit) -> Wrapper:
+        return Wrapper(unit)
+
+    async def run_test():
+        registry = DIRegistry()
+        registry.bind(Unit, provide_unit)
+        registry.bind(Wrapper, provide_wrapper)
+
+        def my_handler(unit: Unit, wrapper: Wrapper) -> None:
+            pass
+
+        dag = compile_dag(registry, [my_handler])
+        container = DIContainer(registry)
+        async with container.resolve_dependencies(my_handler, dag) as kwargs:
+            assert kwargs["wrapper"].unit is kwargs["unit"]
+        assert built == 1
+        async with container.resolve_dependencies(my_handler, dag) as kwargs:
+            pass
+        assert built == 2
+
+    asyncio.run(run_test())

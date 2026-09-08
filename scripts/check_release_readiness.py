@@ -20,6 +20,7 @@ Uses the standard library only, like the rest of the repository's own tooling.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import re
 import subprocess
@@ -35,6 +36,28 @@ STATUS_PATH = ROOT / "docs" / "releases" / "release-status.json"
 PLAN_PATH = ROOT / "docs" / "releases" / "RELEASE_PLAN.md"
 CHANGELOG_PATH = ROOT / "CHANGELOG.md"
 PACKAGES_DIR = ROOT / "packages"
+PUBLIC_API_PATH = ROOT / "docs" / "public-api.json"
+
+#: Distribution name -> top-level import package, per ADR 0017.
+#:
+#: Spelled out rather than discovered so that a package that stops shipping,
+#: or a new one that nobody classified, is a diff in this file rather than a
+#: silent change in what the public API gate covers.
+DISTRIBUTIONS = {
+    "agnara": "agnara",
+    "agnara-a2a": "agnara_a2a",
+    "agnara-cli": "agnara_cli",
+    "agnara-events": "agnara_events",
+    "agnara-http": "agnara_http",
+    "agnara-mcp": "agnara_mcp",
+    "agnara-telemetry": "agnara_telemetry",
+}
+
+#: Import package -> the source root the manifest may address.
+SOURCE_ROOTS = {
+    import_name: PACKAGES_DIR / distribution / "src" / import_name
+    for distribution, import_name in DISTRIBUTIONS.items()
+}
 
 SCHEMA_VERSION = 1
 
@@ -52,8 +75,6 @@ AUTOMATED = "automated"
 EVIDENCE = "evidence"
 MANUAL = "manual"
 
-#: Version references that are release-preparation work rather than defects.
-#: `docs/MAINTAINERS_RELEASE.md` sets them on the release branch, not here.
 UNRELEASED_HEADING = "## [Unreleased]"
 
 
@@ -120,6 +141,51 @@ def package_versions() -> dict[str, str]:
     return versions
 
 
+def package_core_requirements(core: str = "agnara") -> dict[str, list[str]]:
+    """Core requirements declared by every adapter, keyed by distribution."""
+    requirements: dict[str, list[str]] = {}
+    normalized_core = core.lower().replace("_", "-")
+    for path in sorted(PACKAGES_DIR.glob("*/pyproject.toml")):
+        project = tomllib.loads(path.read_text(encoding="utf-8"))["project"]
+        name = project["name"]
+        if name == core:
+            continue
+        selected = []
+        for requirement in project.get("dependencies", []):
+            match = re.match(r"^\s*([A-Za-z0-9][A-Za-z0-9._-]*)(.*)$", requirement)
+            if match and match[1].lower().replace("_", "-") == normalized_core:
+                selected.append(requirement)
+        requirements[name] = selected
+    return requirements
+
+
+def normalized_core_constraints(requirements: list[str]) -> list[tuple[str | None, str]]:
+    """Normalize the extras and specifier portion of source core requirements."""
+    normalized = []
+    for requirement in requirements:
+        match = re.match(
+            r"^\s*[A-Za-z0-9][A-Za-z0-9._-]*(\[[^\]]+\])?\s*(.*)$",
+            requirement,
+        )
+        if match:
+            normalized.append((match[1], re.sub(r"\s+", "", match[2])))
+    return normalized
+
+
+def unreleased_entry_count() -> int | None:
+    """Count active changelog entries, or return None for a malformed section."""
+    try:
+        text = CHANGELOG_PATH.read_text(encoding="utf-8")
+    except OSError, UnicodeError:
+        return None
+    if text.count(UNRELEASED_HEADING) != 1:
+        return None
+    unreleased = text.split(UNRELEASED_HEADING, 1)[1]
+    next_release = re.search(r"^## \[", unreleased, re.MULTILINE)
+    body = unreleased[: next_release.start()] if next_release else unreleased
+    return len(re.findall(r"^- ", body, re.MULTILINE))
+
+
 def declared_python_baseline() -> set[str]:
     baselines: set[str] = set()
     for path in sorted(PACKAGES_DIR.glob("*/pyproject.toml")):
@@ -144,7 +210,33 @@ def check_version_consistency() -> tuple[str, str]:
     version = distinct[0]
     if version == "0.0.0":
         return UNSATISFIED, "the 0.0.0 development sentinel must never be released"
-    return SATISFIED, f"all {len(versions)} first-party packages declare {version}"
+    try:
+        target = load_status()["current_target"]
+    except StatusError, KeyError:
+        return UNSATISFIED, "the current release target could not be determined"
+    entries = unreleased_entry_count()
+    if entries is None:
+        return UNSATISFIED, "the [Unreleased] changelog section could not be interpreted"
+    expected = f"{target}.dev0" if entries else target
+    phase = "development" if entries else "release"
+    if version != expected:
+        return (
+            UNSATISFIED,
+            f"{phase} workspace must declare {expected}, found synchronized {version}",
+        )
+
+    problems = []
+    for adapter, requirements in sorted(package_core_requirements().items()):
+        exact = f"=={version}"
+        if normalized_core_constraints(requirements) != [(None, exact)]:
+            problems.append(f"{adapter}={requirements!r}")
+    if problems:
+        return UNSATISFIED, "adapter core requirements are not exact: " + ", ".join(problems)
+    return (
+        SATISFIED,
+        f"all {len(versions)} first-party packages declare {version}; "
+        f"all {len(versions) - 1} adapters pin agnara=={version}",
+    )
 
 
 def check_python_baseline() -> tuple[str, str]:
@@ -236,30 +328,235 @@ def check_license_metadata() -> tuple[str, str]:
     return SATISFIED, "LICENSE present and every package declares Apache-2.0"
 
 
+def _literal_all(path: Path) -> list[str] | None:
+    """Read a module's literal ``__all__`` without importing the package."""
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    except OSError, SyntaxError, UnicodeError:
+        return None
+    for node in tree.body:
+        if not (
+            (
+                isinstance(node, ast.Assign)
+                and any(
+                    isinstance(target, ast.Name) and target.id == "__all__"
+                    for target in node.targets
+                )
+            )
+            or (
+                isinstance(node, ast.AnnAssign)
+                and isinstance(node.target, ast.Name)
+                and node.target.id == "__all__"
+            )
+        ):
+            continue
+        value = node.value
+        if value is None:
+            return None
+        try:
+            exported = ast.literal_eval(value)
+        except ValueError, TypeError:
+            return None
+        if isinstance(exported, list) and all(isinstance(name, str) for name in exported):
+            return exported
+        return None
+    return None
+
+
+def _module_path(module: str) -> Path | None:
+    """The source file that owns a module's ``__all__``, or None if unusable.
+
+    Only modules inside a workspace distribution are addressable, and the
+    distribution is chosen by the module's own import root. A manifest entry
+    naming anything else is refused rather than resolved, so the manifest can
+    never be pointed at a path outside the packages it claims to describe.
+    """
+    parts = module.split(".")
+    if any(not part.isidentifier() or part.startswith("_") for part in parts):
+        return None
+    source_root = SOURCE_ROOTS.get(parts[0])
+    if source_root is None:
+        return None
+    if len(parts) == 1:
+        return source_root / "__init__.py"
+    relative = Path(*parts[1:])
+    package = source_root / relative / "__init__.py"
+    leaf = (source_root / relative).with_suffix(".py")
+    candidates = [path for path in (package, leaf) if path.is_file()]
+    return candidates[0] if len(candidates) == 1 else None
+
+
+def _public_modules(import_name: str) -> set[str]:
+    """Every non-private module of a distribution that deliberately exports names.
+
+    The boundary is the source declaration, not a second subjective allowlist:
+    a module is public when no part of its path is underscore-prefixed and it
+    declares a non-empty literal ``__all__``. A module that exports nothing is
+    not forced into the manifest, but it may still be listed there -- that is
+    how the reserved `agnara-a2a` and `agnara-events` namespaces are held to an
+    empty surface rather than merely left undescribed.
+    """
+    source_root = SOURCE_ROOTS[import_name]
+    public: set[str] = set()
+    for path in source_root.rglob("*.py"):
+        relative = path.relative_to(source_root)
+        directories = relative.parts[:-1]
+        if any(part.startswith("_") for part in directories):
+            continue
+        if path.name.startswith("_") and path.name != "__init__.py":
+            continue
+        if not _literal_all(path):
+            continue
+        if path.name == "__init__.py":
+            suffix = ".".join(directories)
+        else:
+            suffix = ".".join((*directories, path.stem))
+        public.add(import_name + (f".{suffix}" if suffix else ""))
+    return public
+
+
+def _classified_public_names() -> tuple[dict[str, dict[str, list[str]]] | None, str | None]:
+    """Validate the manifest and return each distribution's classified surface.
+
+    The result maps distribution name -> module -> exact ordered export list.
+    """
+    try:
+        document = json.loads(PUBLIC_API_PATH.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        return None, f"public API manifest cannot be read: {exc}"
+    if not isinstance(document, dict) or document.get("schema_version") != 3:
+        return None, "public API manifest must use schema_version 3"
+    distributions = document.get("distributions")
+    if not isinstance(distributions, list) or not distributions:
+        return None, "public API manifest distributions must be a non-empty list"
+
+    allowed = {"stable", "provisional", "experimental", "internal"}
+    classified: dict[str, dict[str, list[str]]] = {}
+    for entry in distributions:
+        if not isinstance(entry, dict) or set(entry) != {"distribution", "import_name", "modules"}:
+            return None, (
+                "each manifest distribution must contain only distribution, import_name and modules"
+            )
+        distribution, import_name = entry["distribution"], entry["import_name"]
+        if SOURCE_ROOTS.get(import_name) is None or DISTRIBUTIONS.get(distribution) != import_name:
+            return None, f"manifest distribution {distribution!r} is not a workspace distribution"
+        if distribution in classified:
+            return None, f"public API manifest repeats distribution {distribution!r}"
+        modules = entry["modules"]
+        if not isinstance(modules, list) or not modules:
+            return None, f"{distribution}: manifest modules must be a non-empty list"
+
+        surface: dict[str, list[str]] = {}
+        for module_entry in modules:
+            if not isinstance(module_entry, dict) or set(module_entry) != {"module", "exports"}:
+                return None, f"{distribution}: each manifest module has only module and exports"
+            module = module_entry["module"]
+            if not isinstance(module, str) or _module_path(module) is None:
+                return None, f"manifest module {module!r} is not a module of a workspace package"
+            if module.split(".")[0] != import_name:
+                return None, f"{distribution}: manifest module {module!r} is another package's"
+            if module in surface:
+                return None, f"{distribution}: manifest repeats module {module!r}"
+            exports = module_entry["exports"]
+            if not isinstance(exports, list):
+                return None, f"{module}: manifest exports must be a list"
+
+            names: list[str] = []
+            for index, item in enumerate(exports):
+                if not isinstance(item, dict) or set(item) != {"name", "stability"}:
+                    return None, f"{module}: export {index} must contain only name and stability"
+                name, stability = item["name"], item["stability"]
+                if not isinstance(name, str) or not name:
+                    return None, f"{module}: export {index} has an invalid name"
+                if stability not in allowed:
+                    return None, f"{module}: export {name!r} has unknown stability {stability!r}"
+                if stability == "internal":
+                    return None, f"{module}: internal name {name!r} must not appear in the manifest"
+                names.append(name)
+            duplicates = sorted(name for name in set(names) if names.count(name) > 1)
+            if duplicates:
+                return None, f"{module}: manifest repeats: " + ", ".join(duplicates)
+            surface[module] = names
+
+        if import_name not in surface:
+            return None, f"{distribution}: manifest must classify the {import_name} entry point"
+        classified[distribution] = surface
+
+    missing = sorted(set(DISTRIBUTIONS) - set(classified))
+    if missing:
+        return None, "distributions absent from the public API manifest: " + ", ".join(missing)
+    return classified, None
+
+
 def check_public_api_declared() -> tuple[str, str]:
-    """Every distributable package states its public surface with __all__."""
+    """Every shipped distribution's public surface is classified exactly.
+
+    This is the whole workspace, not the kernel. An application consuming
+    Agnara from outside the repository imports `agnara_http` and `agnara_mcp`
+    as readily as `agnara`, so a governed core beside an ungoverned adapter is
+    not a governed framework (ADR 0076).
+    """
     missing = []
     for init in sorted(PACKAGES_DIR.glob("*/src/*/__init__.py")):
-        if "__all__" not in init.read_text(encoding="utf-8"):
+        if _literal_all(init) is None:
             missing.append(init.parent.name)
     if missing:
-        return UNSATISFIED, "packages without a declared __all__: " + ", ".join(missing)
-    return SATISFIED, "every first-party package declares __all__"
+        return UNSATISFIED, "packages without a literal __all__: " + ", ".join(missing)
+
+    classified, error = _classified_public_names()
+    if error is not None:
+        return UNSATISFIED, error
+    assert classified is not None
+
+    problems: list[str] = []
+    for distribution, surface in sorted(classified.items()):
+        ungoverned = sorted(_public_modules(DISTRIBUTIONS[distribution]).difference(surface))
+        if ungoverned:
+            problems.append("unclassified public modules: " + ", ".join(ungoverned))
+        for module, expected in surface.items():
+            source = _module_path(module)
+            assert source is not None  # validated while parsing the manifest
+            implemented = _literal_all(source)
+            if implemented is None:
+                problems.append(f"{module}: no literal __all__ to compare against")
+                continue
+            if implemented == expected:
+                continue
+            unclassified = [name for name in implemented if name not in expected]
+            absent = [name for name in expected if name not in implemented]
+            if unclassified:
+                problems.append(f"{module}: unclassified: " + ", ".join(unclassified))
+            if absent:
+                problems.append(f"{module}: not exported: " + ", ".join(absent))
+            if not unclassified and not absent:
+                problems.append(f"{module}: export order differs from the manifest")
+    if problems:
+        return UNSATISFIED, "; ".join(problems)
+
+    modules = sum(len(surface) for surface in classified.values())
+    total = sum(len(names) for surface in classified.values() for names in surface.values())
+    return SATISFIED, (
+        f"{total} exports across {modules} modules "
+        f"of {len(classified)} distributions are classified exactly"
+    )
 
 
 #: Automated gate id -> the function that decides it. A gate whose id is listed
 #: here is never read from the status file.
+#:
+#: An entry here only makes a check *available*. A check runs when the status
+#: file declares a gate with the same id, so an entry no status file
+#: references is dead weight that looks like coverage. The test suite asserts
+#: that every entry is reached -- see `tests/release/test_release_readiness.py`.
 AUTOMATED_CHECKS = {
     "version-consistency": check_version_consistency,
     "python-baseline": check_python_baseline,
     "changelog-accurate": check_changelog,
-    "changelog-complete": check_changelog,
     "repository-clean": check_repository_clean,
     "release-commit-identified": check_release_commit_identified,
     "license-metadata": check_license_metadata,
     "public-api-distinguished": check_public_api_declared,
 }
-
 
 # ---------------------------------------------------------------------------
 # Evidence gates

@@ -22,32 +22,53 @@ env:
 jobs:
   validate:
     name: Validate Quality Gates
+    permissions:
+      contents: read
+      security-events: write
     uses: ./.github/workflows/ci.yml
-    secrets: inherit
 
   build:
     name: Build distributions
     needs: validate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
       
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: true
 
       - name: Set up Python 3.14
         run: uv python install 3.14
+
+      - name: Verify annotated release tag belongs to main
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: uv run --no-project python scripts/check_release_tag.py "${GITHUB_REF#refs/tags/}"
           
-      - name: Build sdist and wheel for agnara
-        run: uv build --package agnara
+      - name: Build every reviewed distribution
+        run: uv build --all-packages --out-dir dist/
+
+      - name: Validate artifact set, metadata, contents and tag version
+        run: |
+          set -euo pipefail
+          expected=()
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            expected=(--expected-version "${GITHUB_REF#refs/tags/v}")
+          fi
+          uv run --no-project python scripts/check_distributions.py \
+            --workspace "$GITHUB_WORKSPACE" --dist dist/ "${expected[@]}"
         
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
-          name: agnara-dist
-          path: dist/
+          name: agnara-distributions
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+          if-no-files-found: error
           retention-days: 1
 
   test-artifact:
@@ -55,31 +76,19 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
       
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.0.1
 
       - name: Set up Python 3.14
         run: uv python install 3.14
         
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8.0.1
         with:
-          name: agnara-dist
+          name: agnara-distributions
           path: dist/
-          
-      - name: Check version consistency
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            TAG_VERSION="${GITHUB_REF#refs/tags/v}"
-            WHEEL_FILE=(dist/*.whl)
-            WHEEL_NAME=$(basename $WHEEL_FILE)
-            if [[ "$WHEEL_NAME" != *"-$TAG_VERSION-"* ]]; then
-              echo "Error: Wheel version in $WHEEL_NAME does not match tag v$TAG_VERSION"
-              exit 1
-            fi
-          fi
           
       - name: Install and smoke test outside workspace
         env:
@@ -88,17 +97,11 @@ jobs:
           set -euo pipefail
           shopt -s nullglob
 
-          # Resolve the wheel before leaving the workspace, and insist on
-          # exactly one: a stale extra wheel in dist/ would otherwise make the
-          # glob expand to two arguments and validate an artifact we are not
-          # about to publish.
-          wheels=("$GITHUB_WORKSPACE"/dist/agnara-*.whl)
-          if [[ "${#wheels[@]}" -ne 1 ]]; then
-            echo "::error::expected exactly one agnara wheel in dist/, found ${#wheels[@]}: ${wheels[*]-}"
+          wheels=("$GITHUB_WORKSPACE"/dist/*.whl)
+          if [[ "${#wheels[@]}" -ne 7 ]]; then
+            echo "::error::expected exactly seven reviewed wheels in dist/, found ${#wheels[@]}: ${wheels[*]-}"
             exit 1
           fi
-          WHEEL="${wheels[0]}"
-          echo "Wheel under test: $(basename "$WHEEL")"
 
           rm -rf /tmp/smoke-test
           mkdir -p /tmp/smoke-test
@@ -111,90 +114,62 @@ jobs:
           uv venv --python "$EXPECTED_PYTHON" .venv
           SMOKE_PYTHON=/tmp/smoke-test/.venv/bin/python
 
-          uv pip install --python "$SMOKE_PYTHON" "$WHEEL"
+          # Resolve only adapter-owned third-party dependencies from the
+          # index. The complete first-party candidate is then installed with
+          # index access disabled, so an adapter cannot substitute PyPI core.
+          uv pip install --python "$SMOKE_PYTHON" \
+            "mcp==2.1.1" "opentelemetry-api>=1.44,<2"
+          uv pip install --python "$SMOKE_PYTHON" \
+            --no-index --find-links "$GITHUB_WORKSPACE/dist" "${wheels[@]}"
 
-          "$SMOKE_PYTHON" -c "import agnara; print(agnara.__version__)"
-          "$SMOKE_PYTHON" -c "from agnara import CapabilityDefinition, Agnara"
-
-          cat > assert_install.py <<'PYCODE'
-          """Assert the wheel, not the checkout, is what just got imported."""
-          import os
-          import sys
-          from importlib.metadata import version
-
-          import agnara
-          from agnara import Agnara, CapabilityDefinition  # noqa: F401
-
-          failures: list[str] = []
-
-          want_python = tuple(int(part) for part in os.environ["EXPECTED_PYTHON"].split("."))
-          if sys.version_info[: len(want_python)] != want_python:
-              failures.append(
-                  f"interpreter is {sys.version.split()[0]}, expected {os.environ['EXPECTED_PYTHON']}"
-              )
-
-          expected_version = os.environ.get("EXPECTED_VERSION")
-          if expected_version and agnara.__version__ != expected_version:
-              failures.append(
-                  f"agnara.__version__ is {agnara.__version__!r}, expected {expected_version!r}"
-              )
-          if agnara.__version__ != version("agnara"):
-              failures.append(
-                  f"agnara.__version__ ({agnara.__version__}) disagrees with installed "
-                  f"distribution metadata ({version('agnara')})"
-              )
-
-          # A wheel that failed to install can still import when the checkout is
-          # on sys.path, which is the failure this gate exists to catch.
-          origin = os.path.realpath(agnara.__file__)
-          if "site-packages" not in origin.split(os.sep):
-              failures.append(f"agnara imported from {origin}, which is not an installed location")
-          workspace = os.path.realpath(os.environ["GITHUB_WORKSPACE"])
-          if os.path.commonpath([origin, workspace]) == workspace:
-              failures.append(f"agnara imported from the checkout at {origin}")
-
-          if failures:
-              for failure in failures:
-                  print(f"::error::{failure}")
-              sys.exit(1)
-
-          print(f"agnara {agnara.__version__} imported from {origin} on Python {sys.version.split()[0]}")
-          PYCODE
-
+          expected=()
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            export EXPECTED_VERSION="${GITHUB_REF#refs/tags/v}"
+            expected=(--expected-version "${GITHUB_REF#refs/tags/v}")
           fi
-          "$SMOKE_PYTHON" assert_install.py
+          "$SMOKE_PYTHON" -I "$GITHUB_WORKSPACE/scripts/check_distributions.py" \
+            --workspace "$GITHUB_WORKSPACE" --require-installed "${expected[@]}"
+          "$SMOKE_PYTHON" -I -c \
+            "import agnara, agnara_a2a, agnara_cli, agnara_events, agnara_http, agnara_mcp, agnara_telemetry"
+          .venv/bin/agnara --version
 
   publish:
     name: Publish to PyPI
     needs: test-artifact
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/agnara
+      url: https://pypi.org/manage/projects/
     permissions:
       id-token: write  # Mandatory for PyPI Trusted Publishing (OIDC)
       contents: write  # Needed to create GitHub Release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
       
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.0.1
 
       - name: Set up Python 3.14
         run: uv python install 3.14
 
+      - name: Recheck release tag before publication
+        run: uv run --no-project python scripts/check_release_tag.py "${GITHUB_REF#refs/tags/}"
+
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8.0.1
         with:
-          name: agnara-dist
+          name: agnara-distributions
           path: dist/
           
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@v1.14.2
         with:
           packages-dir: dist/
+          verify-metadata: true
+          attestations: true
+          print-hash: true
           
       - name: Post-release verification
         run: |
@@ -213,19 +188,23 @@ jobs:
           uv venv --python 3.14 .venv
           RELEASE_PYTHON=/tmp/post-release/.venv/bin/python
 
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            TAG_VERSION="${GITHUB_REF#refs/tags/v}"
-            uv pip install --python "$RELEASE_PYTHON" "agnara==$TAG_VERSION"
-          else
-            uv pip install --python "$RELEASE_PYTHON" agnara
-          fi
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          uv pip install --python "$RELEASE_PYTHON" \
+            "agnara==$TAG_VERSION" \
+            "agnara-a2a==$TAG_VERSION" \
+            "agnara-cli==$TAG_VERSION" \
+            "agnara-events==$TAG_VERSION" \
+            "agnara-http==$TAG_VERSION" \
+            "agnara-mcp==$TAG_VERSION" \
+            "agnara-telemetry==$TAG_VERSION"
 
-          "$RELEASE_PYTHON" -c "import agnara; print(agnara.__version__)"
-          "$RELEASE_PYTHON" -c "from agnara import CapabilityDefinition, Agnara"
+          "$RELEASE_PYTHON" -I -c \
+            "import agnara, agnara_a2a, agnara_cli, agnara_events, agnara_http, agnara_mcp, agnara_telemetry; print(agnara.__version__)"
+          .venv/bin/agnara --version
           
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3.0.3
         with:
           # Curated notes per ADR 0021 step 7; the generated PR list is
           # appended below them. A tag without a notes file falls back to the

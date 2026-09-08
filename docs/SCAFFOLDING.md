@@ -31,6 +31,7 @@ src/commerce/apps/payments/
 ├── application/
 │   ├── __init__.py
 │   ├── capabilities.py
+│   ├── contracts.py
 │   └── ports.py
 ├── adapters/
 │   ├── __init__.py
@@ -92,6 +93,12 @@ Allowed:
 
 The application layer may use small Agnara core authoring types when required, but should not know transports.
 
+`application/contracts.py` is the one module another app may import. It holds
+the transport-neutral types and Protocols this app offers. Capabilities and
+other application modules remain implementation; `ports.py` describes what
+this app requires and is not a public cross-app surface. The generated example
+uses its contract rather than creating an empty marker file.
+
 ### `adapters/inbound/`
 
 Protocol projections into application capabilities.
@@ -139,6 +146,9 @@ It should remain small.
 App-local tests may be colocated for portability.
 
 Project-wide conformance and integration tests remain under root `tests/`.
+The generated root `tests/test_architecture.py` statically rejects imports of
+another app's internals while allowing its exact `application.contracts`
+module. It resolves relative imports too and imports no application code.
 
 ## Minimal architecture
 
@@ -273,5 +283,16 @@ imports a transport, no domain or application module imports an adapter, the
 domain imports nothing from the application, and `module.py` is the only
 non-test module that knows both the application and its adapters.
 
+The public `application/contracts.py` defines the `RecordView` returned by the
+example capabilities. It is the only supported cross-app Python import target;
+the generated project architecture test enforces that boundary. See ADR 0066.
+
 `adapters/inbound/` is created as a documented, empty package. Only requested
-inbound adapters are added, and `--with` is E0A.6.
+inbound adapters are added, selected with `--with` (E0A.6).
+
+A generated inbound adapter imports only this app's application layer: it names
+the capabilities it projects in `EXPOSED` and documents the wiring, rather than
+importing an Agnara adapter distribution. None of them is published to PyPI,
+and a generated project depends on `agnara` alone, so an import would produce a
+project that cannot be installed. This is what makes "no MCP import appears
+outside the MCP adapter file" true by construction. See ADR 0063.

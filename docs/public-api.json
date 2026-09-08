@@ -1,0 +1,1416 @@
+{
+  "schema_version": 3,
+  "distributions": [
+    {
+      "distribution": "agnara",
+      "import_name": "agnara",
+      "modules": [
+        {
+          "module": "agnara",
+          "exports": [
+            {
+              "name": "Agnara",
+              "stability": "provisional"
+            },
+            {
+              "name": "AgnaraError",
+              "stability": "provisional"
+            },
+            {
+              "name": "AnonymousPrincipal",
+              "stability": "provisional"
+            },
+            {
+              "name": "App",
+              "stability": "provisional"
+            },
+            {
+              "name": "AppDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "CapabilityDefinition",
+              "stability": "provisional"
+            },
+            {
+              "name": "CapabilityId",
+              "stability": "provisional"
+            },
+            {
+              "name": "CapabilityRegistry",
+              "stability": "provisional"
+            },
+            {
+              "name": "Confirmation",
+              "stability": "provisional"
+            },
+            {
+              "name": "ConfirmationEvidence",
+              "stability": "provisional"
+            },
+            {
+              "name": "ConfirmationVerdict",
+              "stability": "provisional"
+            },
+            {
+              "name": "ConfirmationVerifier",
+              "stability": "provisional"
+            },
+            {
+              "name": "DefinitionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "DuplicateAppError",
+              "stability": "provisional"
+            },
+            {
+              "name": "DuplicateCapabilityError",
+              "stability": "provisional"
+            },
+            {
+              "name": "FrozenCapabilityRegistry",
+              "stability": "provisional"
+            },
+            {
+              "name": "Idempotency",
+              "stability": "provisional"
+            },
+            {
+              "name": "InteractionKind",
+              "stability": "provisional"
+            },
+            {
+              "name": "InteractionRequest",
+              "stability": "provisional"
+            },
+            {
+              "name": "InteractionRequiredError",
+              "stability": "provisional"
+            },
+            {
+              "name": "InvocationError",
+              "stability": "provisional"
+            },
+            {
+              "name": "JsonSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "Policy",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicyDeniedError",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicyFailure",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicyInteractionRequired",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicyResult",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicySuccess",
+              "stability": "provisional"
+            },
+            {
+              "name": "Principal",
+              "stability": "provisional"
+            },
+            {
+              "name": "RegistryError",
+              "stability": "provisional"
+            },
+            {
+              "name": "RegistryFrozenError",
+              "stability": "provisional"
+            },
+            {
+              "name": "Risk",
+              "stability": "provisional"
+            },
+            {
+              "name": "SchemaAdapter",
+              "stability": "provisional"
+            },
+            {
+              "name": "SchemaError",
+              "stability": "provisional"
+            },
+            {
+              "name": "ScopePolicy",
+              "stability": "provisional"
+            },
+            {
+              "name": "StandardEffect",
+              "stability": "provisional"
+            },
+            {
+              "name": "StandardSchemaAdapter",
+              "stability": "provisional"
+            },
+            {
+              "name": "TypeSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "UnknownCapabilityError",
+              "stability": "provisional"
+            },
+            {
+              "name": "ValidationError",
+              "stability": "provisional"
+            },
+            {
+              "name": "__version__",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.app",
+          "exports": [
+            {
+              "name": "App",
+              "stability": "provisional"
+            },
+            {
+              "name": "AppDescriptor",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.application",
+          "exports": [
+            {
+              "name": "Agnara",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.capability",
+          "exports": [
+            {
+              "name": "CapabilityDefinition",
+              "stability": "provisional"
+            },
+            {
+              "name": "CapabilityId",
+              "stability": "provisional"
+            },
+            {
+              "name": "CapabilityRegistry",
+              "stability": "provisional"
+            },
+            {
+              "name": "Confirmation",
+              "stability": "provisional"
+            },
+            {
+              "name": "FrozenCapabilityRegistry",
+              "stability": "provisional"
+            },
+            {
+              "name": "Idempotency",
+              "stability": "provisional"
+            },
+            {
+              "name": "Risk",
+              "stability": "provisional"
+            },
+            {
+              "name": "StandardEffect",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.capability.definition",
+          "exports": [
+            {
+              "name": "CapabilityDefinition",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.capability.identity",
+          "exports": [
+            {
+              "name": "CapabilityId",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.capability.metadata",
+          "exports": [
+            {
+              "name": "Confirmation",
+              "stability": "provisional"
+            },
+            {
+              "name": "Idempotency",
+              "stability": "provisional"
+            },
+            {
+              "name": "Risk",
+              "stability": "provisional"
+            },
+            {
+              "name": "StandardEffect",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.capability.registry",
+          "exports": [
+            {
+              "name": "CapabilityRegistry",
+              "stability": "provisional"
+            },
+            {
+              "name": "FrozenCapabilityRegistry",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.core.di",
+          "exports": [
+            {
+              "name": "DIContainer",
+              "stability": "provisional"
+            },
+            {
+              "name": "DIRegistry",
+              "stability": "provisional"
+            },
+            {
+              "name": "DependencyCycleError",
+              "stability": "provisional"
+            },
+            {
+              "name": "DependencyResolutionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "ProviderDefinition",
+              "stability": "provisional"
+            },
+            {
+              "name": "ProviderType",
+              "stability": "provisional"
+            },
+            {
+              "name": "Scope",
+              "stability": "provisional"
+            },
+            {
+              "name": "compile_dag",
+              "stability": "provisional"
+            },
+            {
+              "name": "provider",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.errors",
+          "exports": [
+            {
+              "name": "AgnaraError",
+              "stability": "provisional"
+            },
+            {
+              "name": "DefinitionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "DuplicateAppError",
+              "stability": "provisional"
+            },
+            {
+              "name": "DuplicateCapabilityError",
+              "stability": "provisional"
+            },
+            {
+              "name": "InteractionRequiredError",
+              "stability": "provisional"
+            },
+            {
+              "name": "InvocationError",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicyDeniedError",
+              "stability": "provisional"
+            },
+            {
+              "name": "RegistryError",
+              "stability": "provisional"
+            },
+            {
+              "name": "RegistryFrozenError",
+              "stability": "provisional"
+            },
+            {
+              "name": "SchemaError",
+              "stability": "provisional"
+            },
+            {
+              "name": "UnknownCapabilityError",
+              "stability": "provisional"
+            },
+            {
+              "name": "ValidationError",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.execution",
+          "exports": [
+            {
+              "name": "CanonicalResult",
+              "stability": "provisional"
+            },
+            {
+              "name": "ExecutionContext",
+              "stability": "provisional"
+            },
+            {
+              "name": "ExecutionPlan",
+              "stability": "provisional"
+            },
+            {
+              "name": "Failure",
+              "stability": "provisional"
+            },
+            {
+              "name": "FailureCode",
+              "stability": "provisional"
+            },
+            {
+              "name": "InteractionRequiredError",
+              "stability": "provisional"
+            },
+            {
+              "name": "Invocation",
+              "stability": "provisional"
+            },
+            {
+              "name": "InvocationStartEvent",
+              "stability": "provisional"
+            },
+            {
+              "name": "InvocationTerminalEvent",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicyDeniedError",
+              "stability": "provisional"
+            },
+            {
+              "name": "Success",
+              "stability": "provisional"
+            },
+            {
+              "name": "TelemetryHook",
+              "stability": "provisional"
+            },
+            {
+              "name": "invoke",
+              "stability": "provisional"
+            },
+            {
+              "name": "invoke_result",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.execution.context",
+          "exports": [
+            {
+              "name": "ExecutionContext",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.execution.invocation",
+          "exports": [
+            {
+              "name": "Invocation",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.execution.plan",
+          "exports": [
+            {
+              "name": "ExecutionPlan",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.execution.result",
+          "exports": [
+            {
+              "name": "CanonicalResult",
+              "stability": "provisional"
+            },
+            {
+              "name": "Failure",
+              "stability": "provisional"
+            },
+            {
+              "name": "FailureCode",
+              "stability": "provisional"
+            },
+            {
+              "name": "Success",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.execution.runtime",
+          "exports": [
+            {
+              "name": "invoke",
+              "stability": "provisional"
+            },
+            {
+              "name": "invoke_result",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.execution.telemetry",
+          "exports": [
+            {
+              "name": "InvocationStartEvent",
+              "stability": "provisional"
+            },
+            {
+              "name": "InvocationTerminalEvent",
+              "stability": "provisional"
+            },
+            {
+              "name": "TelemetryHook",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.exposure",
+          "exports": [
+            {
+              "name": "CompiledExposure",
+              "stability": "provisional"
+            },
+            {
+              "name": "ExposureError",
+              "stability": "provisional"
+            },
+            {
+              "name": "ExposureId",
+              "stability": "provisional"
+            },
+            {
+              "name": "FrozenExposureRegistry",
+              "stability": "provisional"
+            },
+            {
+              "name": "SurfaceCompilation",
+              "stability": "provisional"
+            },
+            {
+              "name": "SurfaceId",
+              "stability": "provisional"
+            },
+            {
+              "name": "compile_exposures",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.introspection",
+          "exports": [
+            {
+              "name": "INTROSPECTION_FORMAT",
+              "stability": "provisional"
+            },
+            {
+              "name": "INTROSPECTION_VERSION",
+              "stability": "provisional"
+            },
+            {
+              "name": "AllCapabilitiesVisible",
+              "stability": "provisional"
+            },
+            {
+              "name": "ApplicationDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "BoundedContextDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "CapabilityDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "DependencyDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "DiscoveryField",
+              "stability": "provisional"
+            },
+            {
+              "name": "DiscoveryVisibility",
+              "stability": "provisional"
+            },
+            {
+              "name": "ExposureDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "Hiding",
+              "stability": "provisional"
+            },
+            {
+              "name": "InputDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "IntrospectionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "IntrospectionSnapshot",
+              "stability": "provisional"
+            },
+            {
+              "name": "NoCapabilityVisible",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicyDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "ProviderDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "ScopeVisible",
+              "stability": "provisional"
+            },
+            {
+              "name": "TypeReference",
+              "stability": "provisional"
+            },
+            {
+              "name": "VisibilityRule",
+              "stability": "provisional"
+            },
+            {
+              "name": "describe_app",
+              "stability": "provisional"
+            },
+            {
+              "name": "filter_snapshot",
+              "stability": "provisional"
+            },
+            {
+              "name": "snapshot",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.introspection.builder",
+          "exports": [
+            {
+              "name": "describe_app",
+              "stability": "provisional"
+            },
+            {
+              "name": "snapshot",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.introspection.descriptors",
+          "exports": [
+            {
+              "name": "INTROSPECTION_FORMAT",
+              "stability": "provisional"
+            },
+            {
+              "name": "INTROSPECTION_VERSION",
+              "stability": "provisional"
+            },
+            {
+              "name": "ApplicationDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "BoundedContextDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "CapabilityDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "DependencyDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "ExposureDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "InputDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "IntrospectionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "IntrospectionSnapshot",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicyDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "ProviderDescriptor",
+              "stability": "provisional"
+            },
+            {
+              "name": "TypeReference",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.introspection.visibility",
+          "exports": [
+            {
+              "name": "AllCapabilitiesVisible",
+              "stability": "provisional"
+            },
+            {
+              "name": "DiscoveryField",
+              "stability": "provisional"
+            },
+            {
+              "name": "DiscoveryVisibility",
+              "stability": "provisional"
+            },
+            {
+              "name": "Hiding",
+              "stability": "provisional"
+            },
+            {
+              "name": "NoCapabilityVisible",
+              "stability": "provisional"
+            },
+            {
+              "name": "ScopeVisible",
+              "stability": "provisional"
+            },
+            {
+              "name": "VisibilityRule",
+              "stability": "provisional"
+            },
+            {
+              "name": "filter_snapshot",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.policy",
+          "exports": [
+            {
+              "name": "AnonymousPrincipal",
+              "stability": "provisional"
+            },
+            {
+              "name": "ConfirmationEvidence",
+              "stability": "provisional"
+            },
+            {
+              "name": "ConfirmationPolicy",
+              "stability": "provisional"
+            },
+            {
+              "name": "ConfirmationVerdict",
+              "stability": "provisional"
+            },
+            {
+              "name": "ConfirmationVerifier",
+              "stability": "provisional"
+            },
+            {
+              "name": "InteractionKind",
+              "stability": "provisional"
+            },
+            {
+              "name": "InteractionRequest",
+              "stability": "provisional"
+            },
+            {
+              "name": "Policy",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicyFailure",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicyInteractionRequired",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicyResult",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicySuccess",
+              "stability": "provisional"
+            },
+            {
+              "name": "Principal",
+              "stability": "provisional"
+            },
+            {
+              "name": "ScopePolicy",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.policy.base",
+          "exports": [
+            {
+              "name": "InteractionKind",
+              "stability": "provisional"
+            },
+            {
+              "name": "InteractionRequest",
+              "stability": "provisional"
+            },
+            {
+              "name": "Policy",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicyFailure",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicyInteractionRequired",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicyResult",
+              "stability": "provisional"
+            },
+            {
+              "name": "PolicySuccess",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.policy.confirmation",
+          "exports": [
+            {
+              "name": "ConfirmationEvidence",
+              "stability": "provisional"
+            },
+            {
+              "name": "ConfirmationPolicy",
+              "stability": "provisional"
+            },
+            {
+              "name": "ConfirmationVerdict",
+              "stability": "provisional"
+            },
+            {
+              "name": "ConfirmationVerifier",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.policy.principal",
+          "exports": [
+            {
+              "name": "AnonymousPrincipal",
+              "stability": "provisional"
+            },
+            {
+              "name": "Principal",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.policy.scopes",
+          "exports": [
+            {
+              "name": "ScopePolicy",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.schema",
+          "exports": [
+            {
+              "name": "AnySchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "DataclassFieldSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "DataclassSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "DictionarySchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "EnumSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "JsonSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "ListSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "LiteralSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "NoneSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "PrimitiveSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "SchemaAdapter",
+              "stability": "provisional"
+            },
+            {
+              "name": "StandardSchemaAdapter",
+              "stability": "provisional"
+            },
+            {
+              "name": "TupleSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "TypeSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "UnionSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "materialize_json",
+              "stability": "provisional"
+            },
+            {
+              "name": "serialize_json",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.schema.port",
+          "exports": [
+            {
+              "name": "JsonSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "SchemaAdapter",
+              "stability": "provisional"
+            },
+            {
+              "name": "TypeSchema",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.schema.standard",
+          "exports": [
+            {
+              "name": "AnySchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "DataclassFieldSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "DataclassSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "DictionarySchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "EnumSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "ListSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "LiteralSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "NoneSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "PrimitiveSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "StandardSchemaAdapter",
+              "stability": "provisional"
+            },
+            {
+              "name": "TupleSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "UnionSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "materialize_json",
+              "stability": "provisional"
+            },
+            {
+              "name": "serialize_json",
+              "stability": "provisional"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "distribution": "agnara-a2a",
+      "import_name": "agnara_a2a",
+      "modules": [
+        {
+          "module": "agnara_a2a",
+          "exports": []
+        }
+      ]
+    },
+    {
+      "distribution": "agnara-cli",
+      "import_name": "agnara_cli",
+      "modules": [
+        {
+          "module": "agnara_cli",
+          "exports": [
+            {
+              "name": "EXIT_FAILED",
+              "stability": "provisional"
+            },
+            {
+              "name": "EXIT_OK",
+              "stability": "provisional"
+            },
+            {
+              "name": "EXIT_USAGE",
+              "stability": "provisional"
+            },
+            {
+              "name": "main",
+              "stability": "provisional"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "distribution": "agnara-events",
+      "import_name": "agnara_events",
+      "modules": [
+        {
+          "module": "agnara_events",
+          "exports": []
+        }
+      ]
+    },
+    {
+      "distribution": "agnara-http",
+      "import_name": "agnara_http",
+      "modules": [
+        {
+          "module": "agnara_http",
+          "exports": [
+            {
+              "name": "Binding",
+              "stability": "provisional"
+            },
+            {
+              "name": "BindingSource",
+              "stability": "provisional"
+            },
+            {
+              "name": "Http",
+              "stability": "provisional"
+            },
+            {
+              "name": "HttpApplication",
+              "stability": "provisional"
+            },
+            {
+              "name": "HttpDefinitionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "OpenApiInfo",
+              "stability": "provisional"
+            },
+            {
+              "name": "OpenApiOperation",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara_http.composition",
+          "exports": [
+            {
+              "name": "Binding",
+              "stability": "provisional"
+            },
+            {
+              "name": "BindingSource",
+              "stability": "provisional"
+            },
+            {
+              "name": "Http",
+              "stability": "provisional"
+            },
+            {
+              "name": "HttpApplication",
+              "stability": "provisional"
+            },
+            {
+              "name": "HttpDefinitionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "OpenApiInfo",
+              "stability": "provisional"
+            },
+            {
+              "name": "OpenApiOperation",
+              "stability": "provisional"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "distribution": "agnara-mcp",
+      "import_name": "agnara_mcp",
+      "modules": [
+        {
+          "module": "agnara_mcp",
+          "exports": [
+            {
+              "name": "MCP_PROTOCOL_VERSION",
+              "stability": "provisional"
+            },
+            {
+              "name": "MCP_PYTHON_SDK_VERSION",
+              "stability": "provisional"
+            },
+            {
+              "name": "SUPPORTED_MCP_PROTOCOL_VERSIONS",
+              "stability": "provisional"
+            },
+            {
+              "name": "FrozenMcpTools",
+              "stability": "provisional"
+            },
+            {
+              "name": "Mcp",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpAuthenticatedIdentity",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpAuthorization",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpAuthorizationDefinitionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpInteractionProjectionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpInvocationDefinitionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpPrincipalMapper",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpResultProjectionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpToolDefinitionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpToolExposure",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpToolInvoker",
+              "stability": "provisional"
+            },
+            {
+              "name": "build_mcp_discovery_server",
+              "stability": "provisional"
+            },
+            {
+              "name": "build_mcp_server",
+              "stability": "provisional"
+            },
+            {
+              "name": "project_mcp_interaction_required",
+              "stability": "provisional"
+            },
+            {
+              "name": "project_mcp_result",
+              "stability": "provisional"
+            },
+            {
+              "name": "project_mcp_tools",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara_mcp.authorization",
+          "exports": [
+            {
+              "name": "McpAuthenticatedIdentity",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpAuthorization",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpAuthorizationDefinitionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpPrincipalMapper",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara_mcp.discovery",
+          "exports": [
+            {
+              "name": "build_mcp_discovery_server",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara_mcp.dispatch",
+          "exports": [
+            {
+              "name": "McpInvocationDefinitionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpToolInvoker",
+              "stability": "provisional"
+            },
+            {
+              "name": "build_mcp_server",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara_mcp.interaction",
+          "exports": [
+            {
+              "name": "McpInteractionProjectionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "project_mcp_interaction_required",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara_mcp.protocol",
+          "exports": [
+            {
+              "name": "MCP_PROTOCOL_VERSION",
+              "stability": "provisional"
+            },
+            {
+              "name": "MCP_PYTHON_SDK_VERSION",
+              "stability": "provisional"
+            },
+            {
+              "name": "SUPPORTED_MCP_PROTOCOL_VERSIONS",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara_mcp.result",
+          "exports": [
+            {
+              "name": "McpResultProjectionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "project_mcp_result",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara_mcp.schema",
+          "exports": [
+            {
+              "name": "project_mcp_tools",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara_mcp.tools",
+          "exports": [
+            {
+              "name": "FrozenMcpTools",
+              "stability": "provisional"
+            },
+            {
+              "name": "Mcp",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpToolDefinitionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "McpToolExposure",
+              "stability": "provisional"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "distribution": "agnara-telemetry",
+      "import_name": "agnara_telemetry",
+      "modules": [
+        {
+          "module": "agnara_telemetry",
+          "exports": [
+            {
+              "name": "OpenTelemetryMetricsHook",
+              "stability": "provisional"
+            },
+            {
+              "name": "OpenTelemetryTracingHook",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara_telemetry.metrics",
+          "exports": [
+            {
+              "name": "OpenTelemetryMetricsHook",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara_telemetry.tracing",
+          "exports": [
+            {
+              "name": "OpenTelemetryTracingHook",
+              "stability": "provisional"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -36,6 +36,7 @@ EXPECTED_FILES = {
     "src/commerce/bootstrap.py",
     "src/commerce/settings.py",
     "tests/__init__.py",
+    "tests/test_architecture.py",
     "tests/test_bootstrap.py",
 }
 
@@ -328,7 +329,25 @@ def test_overwrite_replaces_the_files_it_was_authorized_to_replace(
     assert edited.read_text(encoding="utf-8").startswith("# commerce")
 
 
-@pytest.mark.parametrize("name", ["not-a-name", "1commerce", "with space", "", "Commerce"])
+@pytest.mark.parametrize(
+    "name",
+    [
+        "not-a-name",
+        "1commerce",
+        "with space",
+        "",
+        "Commerce",
+        # A keyword is an identifier to `str.isidentifier` and a SyntaxError to
+        # the interpreter: `from class.settings import Settings`.
+        "class",
+        # `src/<name>` leads the generated project's import path, so these
+        # would shadow the framework, a stdlib module, or the tests package
+        # inside the project's own test suite.
+        "agnara",
+        "tests",
+        "json",
+    ],
+)
 def test_an_unusable_project_name_is_refused_before_anything_is_created(
     name: str,
     tmp_path: Path,

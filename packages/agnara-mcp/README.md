@@ -2,8 +2,13 @@
 
 Model Context Protocol exposure adapter. Owns MCP server projection, tool discovery, invocation dispatch, schema mapping and MCP authorization integration.
 
+This distribution is built and versioned with the synchronized workspace
+set. Which versions exist on an index is answered by its PyPI project page,
+not by this file: a README ships inside the artifact and cannot describe
+the state of a publication that happens after it is built.
+
 - Import package: `agnara_mcp`
-- Depends on: `agnara-core`
+- Depends on: the exact synchronized `agnara` version, plus `mcp==2.1.1`
 - Must not import: sibling adapter packages
 
 See `ARCHITECTURE.md` sections 3 and 4 for the package boundaries and the
@@ -67,6 +72,45 @@ are closed JSON Schema objects, preserve handler parameter order, and omit DI
 and `ExecutionContext` parameters. Schema fragments are copied into detached
 JSON data so mutating an SDK model cannot alter the core plan or a later
 projection.
+
+### Execution plans
+
+`plans` is the application's own compiled plans. Each exposure carries the
+`CapabilityDefinition` it was declared from, so the frozen snapshot already
+names everything a plan is needed for:
+
+```python
+from agnara import Agnara
+from agnara.core.di import DIRegistry
+from agnara.execution import ExecutionPlan
+from agnara_mcp import Mcp, project_mcp_tools
+
+app = Agnara("users")
+
+
+@app.capability
+def get_user(user_id: str) -> str:
+    return user_id
+
+
+mcp = Mcp(app)
+mcp.tool(get_user)
+tools = mcp.compile()
+
+registry = DIRegistry()
+plans = [ExecutionPlan.compile(exposure.definition, registry) for exposure in tools.exposures]
+
+projected = project_mcp_tools(tools, plans)
+assert [tool.name for tool in projected] == ["users.get_user"]
+```
+
+Order is irrelevant: plans are matched to exposures by capability identity.
+Unlike `agnara_http.Http.compile()`, which compiles plans itself and publishes
+them as `HttpApplication.plans`, this adapter compiles none, so an application
+serving one capability over two transports passes the plans it already holds
+instead of acquiring a second set. `project_mcp_tools` and `build_mcp_server`
+both require a plan for every compiled exposure and raise
+`McpToolDefinitionError` naming the tool when one is missing.
 
 `outputSchema` is intentionally absent for now. Agnara will publish it only
 after the core runtime compiles and validates output annotations; declaring an
@@ -163,7 +207,8 @@ tool results, so a caller and its model can see and correct them.
 
 A caller-supplied argument naming a dependency or `ExecutionContext` parameter
 is answered with the same `invalid_input` message an undeclared input receives,
-so runtime-owned parameter names stay unpublished. The optional `timeout`
+with the supplied-key path, after policies have run. No list of runtime-owned
+parameters is published. The optional `timeout`
 becomes the invocation deadline and yields a canonical `timeout` result.
 Cancellation is never converted into a result: an abandoned request propagates
 so the SDK drops it and core unwinds dependency cleanup. See ADR 0044.
@@ -182,22 +227,26 @@ result = project_mcp_result(Success({"total": 42}))
 ```
 
 Use `project_mcp_result(await invoke_result(plan, context))` in composition
-code. Success accepts explicit JSON built-ins; tuples become arrays. Data is
+code. Success uses the shared JSON serializer: dataclass instances and mappings
+become objects, enum members become their values, and lists and tuples become
+arrays. Data is
 copied, object keys are sorted in the equivalent JSON text, and a `result`
 envelope preserves successful null. No outputSchema is claimed. Unsupported
-objects, subclasses, non-string keys, non-finite numbers, cycles and nesting
-beyond 64 levels raise `McpResultProjectionError` with a redacted message.
+objects, non-string keys, non-finite numbers, cycles and nesting
+beyond 128 levels raise `McpResultProjectionError` with a redacted message.
 The caller owns the source value and must not mutate it during projection.
 
-Ordinary canonical failures produce `isError: true` and JSON text with only
-`code` and the caller-safe `message`; failure details are omitted. Application
-code owns the safety of explicitly supplied canonical messages. Unexpected
+Ordinary canonical failures produce `isError: true` and JSON text with
+`code`, the caller-safe `message` and any canonical `details`, including the
+invalid input path. Internal failures carry only their code and a fixed safe
+message. Application code owns the safety of explicitly supplied canonical
+messages and details. Unexpected
 exceptions are redacted by `invoke_result` before reaching this projection.
 Interaction requirements delegate to the existing mapper described below.
 
-This function serializes no arbitrary model fields and implements no
-resumption. Dataclasses and custom models require explicit
-conversion to public JSON data. See ADR 0043.
+This function implements no resumption. Dataclass fields are serialized, so
+return only fields intended for the caller; custom models require explicit
+conversion to public JSON data.
 
 ## Interaction-required projection
 

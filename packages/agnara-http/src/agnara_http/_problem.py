@@ -171,7 +171,7 @@ def _serialize_transport_failure(
         "detail": detail,
     }
     if details:
-        document["details"] = _to_json_value(dict(details), set(), path="$.details")
+        document["details"] = _to_json_value(dict(details), path="$.details")
     if instance is not None:
         document["instance"] = _checked_instance(instance)
 
@@ -245,7 +245,7 @@ def _serialize_failure(
     else:
         document["detail"] = result.message
         if result.details:
-            details = _to_json_value(dict(result.details), set(), path="$.details")
+            details = _to_json_value(dict(result.details), path="$.details")
             document["details"] = details
     if instance is not None:
         document["instance"] = _checked_instance(instance)

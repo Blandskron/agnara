@@ -16,6 +16,7 @@ snapshot in ``agnara.introspection``. Transport adapters remain ahead in
 
 from importlib.metadata import version
 
+from agnara.app import App, AppDescriptor
 from agnara.application import Agnara
 from agnara.capability import (
     CapabilityDefinition,
@@ -30,6 +31,7 @@ from agnara.capability import (
 from agnara.errors import (
     AgnaraError,
     DefinitionError,
+    DuplicateAppError,
     DuplicateCapabilityError,
     InteractionRequiredError,
     InvocationError,
@@ -68,6 +70,8 @@ __all__ = [
     "Agnara",
     "AgnaraError",
     "AnonymousPrincipal",
+    "App",
+    "AppDescriptor",
     "CapabilityDefinition",
     "CapabilityId",
     "CapabilityRegistry",
@@ -76,6 +80,7 @@ __all__ = [
     "ConfirmationVerdict",
     "ConfirmationVerifier",
     "DefinitionError",
+    "DuplicateAppError",
     "DuplicateCapabilityError",
     "FrozenCapabilityRegistry",
     "Idempotency",

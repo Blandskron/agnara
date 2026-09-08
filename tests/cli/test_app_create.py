@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import asyncio
 import importlib
-import importlib.util
 import json
 import subprocess
 import sys
@@ -46,6 +45,7 @@ EXPECTED_FILES = {
     f"{APP_ROOT}/domain/errors.py",
     f"{APP_ROOT}/application/__init__.py",
     f"{APP_ROOT}/application/capabilities.py",
+    f"{APP_ROOT}/application/contracts.py",
     f"{APP_ROOT}/application/ports.py",
     f"{APP_ROOT}/adapters/__init__.py",
     f"{APP_ROOT}/adapters/inbound/__init__.py",
@@ -54,8 +54,6 @@ EXPECTED_FILES = {
     f"{APP_ROOT}/tests/__init__.py",
     f"{APP_ROOT}/tests/test_capabilities.py",
 }
-
-TRANSPORT_PACKAGES = ("agnara_http", "agnara_mcp", "agnara_a2a", "agnara_events", "fastapi")
 
 
 def create_app(*argv: str) -> int:
@@ -152,11 +150,11 @@ def test_the_generated_app_registers_compiles_and_invokes(importable: Path) -> N
     capabilities = app.compile()
 
     assert {str(identifier) for identifier in capabilities} == {
-        "ledger.get_record",
-        "ledger.list_records",
+        "billing.get_record",
+        "billing.list_records",
     }
 
-    plan = ExecutionPlan.compile(capabilities["ledger.get_record"], dependencies)
+    plan = ExecutionPlan.compile(capabilities["billing.get_record"], dependencies)
     # The port is runtime-owned: a caller supplies a reference, never a repository.
     assert set(plan.input_schemas) == {"reference"}
     assert "records" in plan.protected_parameters
@@ -180,12 +178,7 @@ def test_the_generated_app_registers_compiles_and_invokes(importable: Path) -> N
 
 
 def test_the_generated_app_tests_pass_when_executed(importable: Path) -> None:
-    location = importable / APP_ROOT / "tests" / "test_capabilities.py"
-    spec = importlib.util.spec_from_file_location("generated_app_tests", location)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module = importlib.import_module("ledger.apps.billing.tests.test_capabilities")
 
     cases = [name for name in dir(module) if name.startswith("test_")]
     assert len(cases) >= 4
@@ -212,61 +205,12 @@ def test_the_generated_app_passes_ruff(generated: Path, command: tuple[str, ...]
     assert completed.returncode == 0, completed.stdout + completed.stderr
 
 
-# ---------------------------------------------------------------------------
-# The layering is real, not decorative
-# ---------------------------------------------------------------------------
-
-
-def test_no_generated_module_imports_a_transport(generated: Path) -> None:
-    offenders = [
-        f"{relative}: {package}"
-        for relative in EXPECTED_FILES
-        for package in TRANSPORT_PACKAGES
-        if f"import {package}" in source_of(generated, relative)
-    ]
-    assert not offenders, offenders
-
-
-@pytest.mark.parametrize(
-    "relative",
-    [
-        f"{APP_ROOT}/domain/models.py",
-        f"{APP_ROOT}/domain/value_objects.py",
-        f"{APP_ROOT}/domain/errors.py",
-        f"{APP_ROOT}/application/capabilities.py",
-        f"{APP_ROOT}/application/ports.py",
-    ],
-)
-def test_the_inner_layers_never_import_an_adapter(generated: Path, relative: str) -> None:
-    """Dependencies point inward; the application knows its port, not its adapter."""
-    assert ".adapters." not in source_of(generated, relative)
-
-
-def test_the_domain_imports_nothing_from_the_application(generated: Path) -> None:
-    for relative in EXPECTED_FILES:
-        if "/domain/" not in relative:
-            continue
-        assert ".application." not in source_of(generated, relative), relative
-
-
-def test_only_the_module_knows_both_the_application_and_its_adapters(
-    generated: Path,
-) -> None:
-    """`module.py` is the app's composition boundary, and the only one.
-
-    The app's own tests are excluded: wiring an adapter to the code under test
-    is what testing the composition means, and forbidding it would only push
-    the same import somewhere less honest.
-    """
-    knows_both = [
-        relative
-        for relative in sorted(EXPECTED_FILES)
-        if "/tests/" not in relative
-        and ".adapters." in source_of(generated, relative)
-        and ".application." in source_of(generated, relative)
-    ]
-    assert knows_both == [f"{APP_ROOT}/module.py"]
-
+# The four dependency-direction tests that lived here are now in
+# `test_generated_output.py` (E0A.14). They were bound to `EXPECTED_FILES`,
+# so they only ever saw the default template with no exposures and a file
+# the generator started writing went unchecked. The replacements derive the
+# file set from the generated tree and run across both architectures and an
+# app with inbound adapters.
 
 # ---------------------------------------------------------------------------
 # The manifest update
@@ -394,7 +338,25 @@ def test_an_invalid_manifest_is_refused_before_anything_is_written(
     assert "project.name: is required" in capsys.readouterr().err
 
 
-@pytest.mark.parametrize("name", ["not-a-name", "1billing", "with space", "", "Billing"])
+@pytest.mark.parametrize(
+    "name",
+    [
+        "not-a-name",
+        "1billing",
+        "with space",
+        "",
+        "Billing",
+        # Keywords pass `str.isidentifier` and fail the interpreter.
+        "import",
+        "class",
+        # Names the generated module.py already binds; the app would shadow
+        # itself and fail when the project imports it.
+        "app",
+        "register",
+        "dependencies",
+        "get_record",
+    ],
+)
 def test_an_unusable_app_name_is_refused(
     project: Path,
     name: str,
@@ -441,3 +403,18 @@ def test_json_output_is_deterministic(
 
     create_app("billing", "--project", str(project), "--dry-run", "--json")
     assert capsys.readouterr().out == first
+
+
+def test_a_manifest_keeps_its_line_endings_when_an_app_is_declared(
+    project: Path,
+) -> None:
+    """Appending must not rewrite what the operator wrote: a CRLF manifest
+    comes back CRLF throughout, including the appended table."""
+    manifest = project / MANIFEST_FILENAME
+    manifest.write_bytes(manifest.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n"))
+
+    assert create_app("billing", "--project", str(project)) == EXIT_OK
+
+    updated = manifest.read_bytes()
+    assert b"[apps.billing]\r\n" in updated
+    assert b"\n" not in updated.replace(b"\r\n", b"")

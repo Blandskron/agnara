@@ -43,7 +43,6 @@ readiness = _load_checker()
 
 STATUS_PATH = WORKSPACE_ROOT / "docs" / "releases" / "release-status.json"
 PLAN_PATH = WORKSPACE_ROOT / "docs" / "releases" / "RELEASE_PLAN.md"
-STATUS_MD_PATH = WORKSPACE_ROOT / "docs" / "releases" / "STATUS.md"
 
 KINDS = {readiness.AUTOMATED, readiness.EVIDENCE, readiness.MANUAL}
 STATES = {
@@ -106,18 +105,267 @@ def test_release_cut_requires_evidence_for_the_exact_target(
     assert readiness.check_changelog()[0] == expected
 
 
+@pytest.mark.parametrize(
+    ("entries", "version", "requirement", "expected"),
+    [
+        (1, "0.1.0a4.dev0", "agnara==0.1.0a4.dev0", readiness.SATISFIED),
+        (1, "0.1.0a4", "agnara==0.1.0a4", readiness.UNSATISFIED),
+        (0, "0.1.0a4", "agnara==0.1.0a4", readiness.SATISFIED),
+        (0, "0.1.0a4.dev0", "agnara==0.1.0a4.dev0", readiness.UNSATISFIED),
+        (1, "0.1.0a4.dev0", "agnara", readiness.UNSATISFIED),
+        (1, "0.1.0a4.dev0", "agnara>=0.1.0a4.dev0", readiness.UNSATISFIED),
+        (1, "0.1.0a4.dev0", "Agnara == 0.1.0a4.dev0", readiness.SATISFIED),
+    ],
+)
+def test_version_gate_distinguishes_development_release_and_exact_pins(
+    monkeypatch: pytest.MonkeyPatch,
+    entries: int,
+    version: str,
+    requirement: str,
+    expected: str,
+) -> None:
+    monkeypatch.setattr(
+        readiness,
+        "package_versions",
+        lambda: {"agnara": version, "agnara-http": version},
+    )
+    monkeypatch.setattr(
+        readiness,
+        "package_core_requirements",
+        lambda: {"agnara-http": [requirement]},
+    )
+    monkeypatch.setattr(readiness, "unreleased_entry_count", lambda: entries)
+    monkeypatch.setattr(readiness, "load_status", lambda: {"current_target": "0.1.0a4"})
+
+    assert readiness.check_version_consistency()[0] == expected
+
+
 # ---------------------------------------------------------------------------
 # The status file's own integrity
 # ---------------------------------------------------------------------------
 
 
 def test_the_release_documents_all_exist() -> None:
-    for path in (STATUS_PATH, PLAN_PATH, STATUS_MD_PATH):
+    for path in (STATUS_PATH, PLAN_PATH):
         assert path.is_file(), path
 
 
 def test_the_status_file_declares_a_supported_schema() -> None:
     assert document()["schema_version"] == readiness.SCHEMA_VERSION
+
+
+#: Every module the manifest governs, as (distribution, module) pairs. Drift
+#: is checked on each of them, across every distribution rather than the
+#: kernel alone: an application consuming Agnara from outside the repository
+#: imports `agnara_http` and `agnara_mcp` as readily as `agnara`, so a rename
+#: in an adapter breaks exactly as much as a rename in the core (ADR 0076).
+GOVERNED_MODULES = [
+    (entry["distribution"], module["module"])
+    for entry in json.loads(readiness.PUBLIC_API_PATH.read_text(encoding="utf-8"))["distributions"]
+    for module in entry["modules"]
+    if module["exports"]
+]
+
+#: Distributions that hold a reserved namespace: classified, and empty.
+RESERVED_DISTRIBUTIONS = ["agnara-a2a", "agnara-events"]
+
+
+def manifest() -> dict[str, Any]:
+    return json.loads(readiness.PUBLIC_API_PATH.read_text(encoding="utf-8"))
+
+
+def manifest_modules(document: dict[str, Any], distribution: str) -> list[dict[str, Any]]:
+    entry = next(item for item in document["distributions"] if item["distribution"] == distribution)
+    return entry["modules"]
+
+
+def use_manifest(document: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    path = tmp_path / "public-api.json"
+    path.write_text(json.dumps(document), encoding="utf-8")
+    monkeypatch.setattr(readiness, "PUBLIC_API_PATH", path)
+
+
+@pytest.mark.parametrize(("distribution", "module"), GOVERNED_MODULES)
+@pytest.mark.parametrize(
+    ("mutation", "expected_fragment"),
+    [
+        ("renamed", "unclassified"),
+        ("removed", "unclassified"),
+        ("extra", "not exported"),
+        ("reordered", "order differs"),
+        ("duplicate", "repeats"),
+        ("unknown-stability", "unknown stability"),
+        ("internal", "must not appear"),
+    ],
+)
+def test_public_api_gate_rejects_manifest_drift(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    distribution: str,
+    module: str,
+    mutation: str,
+    expected_fragment: str,
+) -> None:
+    document = manifest()
+    entry = next(
+        item for item in manifest_modules(document, distribution) if item["module"] == module
+    )
+    exports = entry["exports"]
+    if mutation == "renamed":
+        exports[0]["name"] = "Renamed"
+    elif mutation == "removed":
+        exports.pop(0)
+    elif mutation == "extra":
+        exports.append({"name": "FutureAPI", "stability": "provisional"})
+    elif mutation == "reordered":
+        if len(exports) < 2:
+            pytest.skip("one-name modules have no meaningful order mutation")
+        exports[0], exports[1] = exports[1], exports[0]
+    elif mutation == "duplicate":
+        if len(exports) < 2:
+            pytest.skip("one-name modules cannot contain an in-place duplicate")
+        exports[1]["name"] = exports[0]["name"]
+    elif mutation == "unknown-stability":
+        exports[0]["stability"] = "mysterious"
+    else:
+        exports[0]["stability"] = "internal"
+    use_manifest(document, tmp_path, monkeypatch)
+
+    status, detail = readiness.check_public_api_declared()
+
+    assert status == readiness.UNSATISFIED
+    assert expected_fragment in detail
+    assert module in detail
+
+
+@pytest.mark.parametrize("distribution", RESERVED_DISTRIBUTIONS)
+def test_a_reserved_namespace_cannot_quietly_gain_an_export(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, distribution: str
+) -> None:
+    """`agnara-a2a` and `agnara-events` declare an empty surface on purpose.
+
+    An empty ``__all__`` is skipped by the reverse walk, so without a manifest
+    entry a reserved namespace would be the one place a first export could
+    appear ungoverned. Classifying the empty list is what closes that.
+    """
+    document = manifest()
+    modules = manifest_modules(document, distribution)
+    modules[0]["exports"].append({"name": "Sneaked", "stability": "provisional"})
+    use_manifest(document, tmp_path, monkeypatch)
+
+    status, detail = readiness.check_public_api_declared()
+
+    assert status == readiness.UNSATISFIED
+    assert "not exported: Sneaked" in detail
+
+
+@pytest.mark.parametrize("distribution", sorted(readiness.DISTRIBUTIONS))
+def test_the_manifest_governs_every_public_module_of_every_distribution(
+    distribution: str,
+) -> None:
+    """Both packages and leaf modules with exports must be classified."""
+    import_name = readiness.DISTRIBUTIONS[distribution]
+    classified = {module for name, module in GOVERNED_MODULES if name == distribution}
+
+    assert readiness._public_modules(import_name) == classified
+
+
+def test_no_distribution_may_be_left_out_of_the_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Governing six of seven packages is how the adapters stayed unmanaged."""
+    document = manifest()
+    document["distributions"] = [
+        entry for entry in document["distributions"] if entry["distribution"] != "agnara-mcp"
+    ]
+    use_manifest(document, tmp_path, monkeypatch)
+
+    status, detail = readiness.check_public_api_declared()
+
+    assert status == readiness.UNSATISFIED
+    assert "distributions absent from the public API manifest: agnara-mcp" in detail
+
+
+def test_a_distribution_may_not_classify_another_packages_module(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Ownership is per distribution, so a manifest entry cannot reach sideways."""
+    document = manifest()
+    manifest_modules(document, "agnara-mcp").append(
+        {
+            "module": "agnara.errors",
+            "exports": [{"name": "AgnaraError", "stability": "provisional"}],
+        }
+    )
+    use_manifest(document, tmp_path, monkeypatch)
+
+    status, detail = readiness.check_public_api_declared()
+
+    assert status == readiness.UNSATISFIED
+    assert "another package" in detail
+
+
+def test_the_manifest_must_declare_the_current_schema(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The `schema_version` 2 manifest described one distribution and cannot be read."""
+    stale = {"schema_version": 2, "distribution": "agnara", "modules": []}
+    use_manifest(stale, tmp_path, monkeypatch)
+
+    status, detail = readiness.check_public_api_declared()
+
+    assert status == readiness.UNSATISFIED
+    assert "schema_version 3" in detail
+
+
+@pytest.mark.parametrize(
+    "module",
+    [
+        "agnara.._secrets",
+        "os",
+        "pathlib",
+        "agnara.core.di.evil-name",
+        "agnara_http._dispatch",
+        "agnara_cli._manifest",
+    ],
+)
+def test_the_manifest_cannot_name_a_module_outside_a_workspace_package(module: str) -> None:
+    """The manifest resolves names to paths, so it must not resolve anywhere."""
+    assert readiness._module_path(module) is None
+
+
+def test_public_api_gate_rejects_an_unclassified_leaf_module(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    packages = tmp_path / "packages"
+    source = packages / "agnara" / "src" / "agnara"
+    source.mkdir(parents=True)
+    (source / "__init__.py").write_text('__all__ = ["Root"]\n', encoding="utf-8")
+    (source / "leaf.py").write_text('__all__ = ["Leaf"]\n', encoding="utf-8")
+    document = {
+        "schema_version": 3,
+        "distributions": [
+            {
+                "distribution": "agnara",
+                "import_name": "agnara",
+                "modules": [
+                    {
+                        "module": "agnara",
+                        "exports": [{"name": "Root", "stability": "provisional"}],
+                    }
+                ],
+            }
+        ],
+    }
+    monkeypatch.setattr(readiness, "PACKAGES_DIR", packages)
+    monkeypatch.setattr(readiness, "DISTRIBUTIONS", {"agnara": "agnara"})
+    monkeypatch.setattr(readiness, "SOURCE_ROOTS", {"agnara": source})
+    use_manifest(document, tmp_path, monkeypatch)
+
+    status, detail = readiness.check_public_api_declared()
+
+    assert status == readiness.UNSATISFIED
+    assert "unclassified public modules: agnara.leaf" in detail
 
 
 def test_the_current_target_appears_in_the_release_plan() -> None:
@@ -379,3 +627,30 @@ def test_a_missing_status_file_is_reported_rather_than_raised(
 
     assert readiness.main([]) == 2
     assert "inconsistent" in capsys.readouterr().err
+
+
+def test_no_automated_check_is_silently_dead() -> None:
+    """An implemented check that no gate declares never runs.
+
+    `test_every_automated_gate_has_a_real_check` covers the opposite
+    direction. Without this one, a check can be written, imported and tested
+    while contributing nothing to a release decision -- which reads as
+    coverage without being coverage.
+    """
+    declared = {gate["id"] for gate in gates() if gate["kind"] == readiness.AUTOMATED}
+    unused = set(readiness.AUTOMATED_CHECKS) - declared
+    assert not unused, (
+        f"automated checks that no gate runs: {sorted(unused)}; declare them in "
+        "docs/releases/release-status.json or remove the implementation"
+    )
+
+
+@pytest.mark.parametrize("gate_id", sorted(readiness.AUTOMATED_CHECKS))
+def test_every_automated_check_returns_a_known_status(gate_id: str) -> None:
+    status, detail = readiness.AUTOMATED_CHECKS[gate_id]()
+    assert status in {
+        readiness.SATISFIED,
+        readiness.PARTIAL,
+        readiness.UNSATISFIED,
+    }, status
+    assert detail

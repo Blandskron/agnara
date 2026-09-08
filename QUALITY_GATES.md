@@ -23,6 +23,7 @@ Target commands:
 
 ```bash
 uv sync
+python scripts/set_workspace_version.py development <current-target> --check
 uv run ruff check .
 uv run ruff format --check .
 uv run ty check
@@ -30,6 +31,54 @@ uv run pytest
 ```
 
 Exact command names may evolve, but equivalent gates must remain.
+
+Public API consumption is verified mechanically rather than by review. The
+manifest classifies every export of every shipped distribution, and the same
+rule can be pointed at a tree outside this workspace:
+
+```bash
+python scripts/check_public_imports.py examples README.md docs/HTTP_COMPOSITION.md
+python scripts/check_public_imports.py <path-to-an-application-built-on-agnara>
+```
+
+It reports every import naming an unclassified module or pulling an
+unclassified name out of a classified one, in Python files and in the Python
+shown in Markdown fences. `docs/PUBLIC_API.md` owns which trees the repository
+enforces this on and which are exempt; `pytest tests/architecture` runs it, so
+CI fails on an example, guide or generated project that reaches into an
+internal.
+
+Packaging is verified against installed artifacts rather than the checkout,
+because building a distribution and being able to use it are different claims:
+
+```bash
+uv build --all-packages --out-dir dist/
+python scripts/check_distributions.py --workspace "$PWD" --dist dist/ \
+    --expected-version <candidate-version>
+uv venv --python 3.14 <external>/.venv
+uv pip install --python <external>/.venv/bin/python \
+    "mcp==2.1.1" "opentelemetry-api>=1.44,<2"
+uv pip install --python <external>/.venv/bin/python \
+    --no-index --find-links dist/ dist/*.whl
+<external>/.venv/bin/python -I scripts/check_distributions.py \
+    --workspace "$PWD" --require-installed \
+    --expected-version <candidate-version>
+```
+
+Every wheel is installed into one environment. Adapter-owned third-party
+dependencies are resolved first; the complete first-party wheel set is then
+installed with index access and dependency fetching disabled. The metadata
+gate separately proves that each adapter wheel retained its exact core pin,
+so no public-index core can substitute for the locally built one. Without
+`--require-installed` the same command runs against the development
+environment, where importing from `packages/*/src` is correct.
+
+The pre-install gate also fixes the reviewed seven-name publication set and
+checks each wheel/sdist's metadata, license, README, Python floor,
+dependencies, console scripts, package data, archive paths, local build-path
+leaks and recognized credential signatures. Vendored documentation assets use
+their separate hash/license gate because minified bundles contain example
+credential syntax that is not a secret.
 
 Documentation browser conformance is a separate required CI lane because the
 ordinary cross-platform gate must not depend on a preinstalled browser. Its
@@ -228,6 +277,13 @@ Record:
 
 ## Security gates
 
+Required CI runs SHA-pinned CodeQL analysis for Python and GitHub Actions.
+The aggregate waits for both analyses and rejects failed, cancelled or skipped
+required jobs. SARIF upload permission is scoped to the analysis job and
+explicitly passed by the reusable release-validation caller. Check completion
+is not an alert disposition: release review must also inspect open code-scanning,
+Dependabot and secret-scanning alerts for the candidate (see `SECURITY.md`).
+
 Before any release beyond experimental alpha:
 
 - threat model;
@@ -283,8 +339,9 @@ Every PR records one of these outcomes:
 
 Before creating a release tag:
 
-- every first-party `pyproject.toml` contains the exact selected PEP 440
-  version;
+- `python scripts/set_workspace_version.py release <version> --check` proves
+  every first-party `pyproject.toml` contains the exact selected PEP 440
+  version and every adapter pins that exact core version;
 - the selected version is not `0.0.0`;
 - `uv.lock` is refreshed and current;
 - `CHANGELOG.md` has a dated section for that exact version and a new

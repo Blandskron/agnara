@@ -22,7 +22,7 @@ import sys
 from collections.abc import Sequence
 from importlib.metadata import PackageNotFoundError, version
 
-from agnara_cli._app import add_app_parser
+from agnara_cli._app import add_app_alias_parsers, add_app_parser
 from agnara_cli._apps import add_apps_parser
 from agnara_cli._context import add_context_parser
 from agnara_cli._generate import GenerationError
@@ -55,6 +55,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"agnara {_version()}")
     subparsers = parser.add_subparsers(dest="command", required=True, metavar="COMMAND")
     add_app_parser(subparsers)
+    add_app_alias_parsers(subparsers)
     add_apps_parser(subparsers)
     add_inspect_parser(subparsers)
     add_graph_parser(subparsers)
@@ -87,15 +88,24 @@ def main(argv: Sequence[str] | None = None) -> int:
 def _emit(output: str | bytes | None) -> None:
     """Write a command's answer, or nothing when it produced none.
 
-    Bytes go to the buffer unchanged. A document another surface already
-    serialized must reach a pipe exactly as that surface would send it, and
-    encoding it through the text layer would let the platform's newline
-    translation rewrite it.
+    Everything goes to the binary buffer. Bytes are a document another surface
+    already serialized and must reach a pipe exactly as that surface would send
+    it. Text is encoded as UTF-8 with ``\\n`` line endings here rather than by
+    the text layer, whose encoding is the console's -- ``cp1252`` on a Windows
+    pipe -- and would turn a capability description containing an arrow into a
+    traceback, and whose newline translation would make "deterministic JSON"
+    differ by platform.
     """
     if output is None:
         return
-    if isinstance(output, bytes):
-        sys.stdout.buffer.write(output)
-        sys.stdout.buffer.flush()
+    data = output if isinstance(output, bytes) else output.encode("utf-8") + b"\n"
+    stream = sys.stdout
+    buffer = getattr(stream, "buffer", None)
+    if buffer is None:
+        # A replaced stdout without a binary layer, as some embedders install.
+        stream.write(data.decode("utf-8", errors="replace"))
+        stream.flush()
         return
-    print(output)
+    stream.flush()
+    buffer.write(data)
+    buffer.flush()

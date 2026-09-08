@@ -2,6 +2,19 @@
 
 HTTP/ASGI exposure adapter. Owns routing, request decoding, response encoding, RFC 9457 mapping, OpenAPI generation and the authorized discovery endpoint.
 
+## Status
+
+`0.1.0a4` exposes the seven-name public composition API described in
+`docs/HTTP_COMPOSITION.md`, including path, query, header, JSON, cookie, form
+and upload bindings. Documentation providers, Explorer and the discovery
+endpoint are implemented internally but are not yet reachable from that public
+composition surface.
+
+This distribution is built and versioned with the synchronized workspace set.
+Which versions exist on an index is answered by its PyPI project page, not by
+this file: a README ships inside the artifact and cannot describe the state of
+a publication that happens after it is built.
+
 OpenAPI 3.2 is projected from compiled HTTP exposures and shared capability
 schemas. Optional browser documentation providers consume that generated
 contract; Swagger UI, ReDoc, Scalar or any other UI must remain replaceable
@@ -11,28 +24,33 @@ Agnara Explorer is not an OpenAPI renderer. If it is initially served through
 this adapter, it consumes the filtered protocol-neutral introspection snapshot
 defined by the core/application composition boundary.
 
-The package now contains the dependency-free internal ASGI 3 single-callable
-boundary delivered by E6.1. It accepts HTTP scopes and delegates their raw
-`scope`, `receive` and `send` objects to the adapter's dispatcher. Unsupported
-protocols are rejected explicitly instead of being mistaken for supported
-lifespan or WebSocket behavior.
+## How a request is served
 
-E6.2 adds the internal two-phase route registry used by that future
-dispatcher. Startup registration validates methods and segment parameters,
-detects duplicate or structurally ambiguous templates, and freezes into an
-immutable per-method trie. Runtime matching prefers static segments, captures
-raw decoded path segments, preserves significant trailing slashes, and exposes
-allowed methods in deterministic registration order.
+Everything reflective happens once, at `Http.compile()`. Route templates are
+parsed and checked for collisions, capabilities are resolved, execution plans
+are compiled and every binding is validated against its plan's inputs. The
+result is frozen, so it needs no lock and can be shared across the workers of
+one process.
 
-E6.3 adds an internal compiled request-binding boundary. Every capability
-input is assigned explicitly to a path segment, query parameter, header, or a
-single JSON body during startup. Runtime binding performs strict query
-percent/UTF-8 decoding, case-insensitive header lookup, documented scalar wire
-conversion, bounded chunked JSON reads, and deterministic duplicate/error
-handling. It produces an invocation payload for the shared core validation
-path and never substitutes for capability schema validation. Multipart, forms,
-files, cookies, public exposure syntax, and HTTP response mapping remain out of
-scope.
+A request then costs a trie lookup, a binding pass over already-classified
+sources, one core invocation and one serialization:
+
+- an ASGI 3 single-callable boundary that accepts `http` scopes, accepts
+  `lifespan` only when a lifecycle is configured, and refuses any other
+  protocol rather than mistaking it for a supported one;
+- a per-method route trie that prefers static segments, preserves significant
+  trailing slashes and reports allowed methods in registration order, so a
+  mismatch is a `405` carrying `Allow` rather than a `404`;
+- compiled request binding with strict percent and UTF-8 decoding,
+  case-insensitive header lookup, documented scalar conversion and bounded
+  body reads. It produces an invocation payload for the shared core validation
+  path and never substitutes for capability schema validation;
+- RFC 9457 `application/problem+json` for every failure, from one reviewed
+  status table.
+
+The media type is settled from the headers before a single body byte is read,
+and a route declares one body reading — JSON, form fields or uploads — because
+one request has one body.
 
 E6.4 adds deterministic internal success-response serialization. Successful
 values are projected recursively to compact UTF-8 JSON and emitted as one ASGI
@@ -181,12 +199,11 @@ The design baseline is ASGI 3.0 and the HTTP/WebSocket sub-specification 2.5:
 - https://asgi.readthedocs.io/en/latest/specs/main.html
 - https://asgi.readthedocs.io/en/latest/specs/www.html
 
-This is not yet a public HTTP composition API or a complete ASGI/HTTP,
-OpenAPI or WCAG conformance claim. Explorer remains separate roadmap work; see
-RFC 0003, ADR 0018, EPIC 6 and EPIC 8.
+This is not a complete ASGI/HTTP, OpenAPI or WCAG conformance claim. The public
+composition API is experimental; see RFC 0003, ADR 0018, ADR 0071 and ADR 0072.
 
 - Import package: `agnara_http`
-- Depends on: `agnara-core`
+- Depends on: the exact synchronized `agnara` version
 - Must not import: sibling adapter packages
 
 See `ARCHITECTURE.md` sections 3 and 4 for the package boundaries and the
@@ -226,5 +243,5 @@ nested structure rather than as escaped JSON. A capability hidden from the viewe
 exist produce the same `404`, because telling them apart would publish the
 existence of something withheld.
 
-Styling, accessibility and browser tests are separate backlog items. See
-ADR 0052.
+The shell has browser accessibility and navigation smoke coverage, but remains
+unreachable from public composition. See ADR 0052 and `docs/MATURITY.md`.

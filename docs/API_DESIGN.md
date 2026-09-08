@@ -31,20 +31,57 @@ async def get_user(user_id: str) -> User:
 ## 4. HTTP exposure
 
 ```python
-http.get("/users/{user_id}", get_user)
+http = Http("public")
+http.get("/users/{user_id}", get_user, Binding("user_id", BindingSource.PATH))
+asgi = http.compile(app.compile(), openapi=OpenApiInfo("Users", "1.0"))
 ```
+
+`http` is a typed adapter surface selected by project composition, not a
+capability property. The exposure lifecycle is settled by ADR 0070 and this
+public composition syntax is implemented by ADR 0071. Its seven exports are
+`provisional` during the alpha line; implemented does not mean stable.
 
 ## 5. MCP exposure
 
 ```python
+mcp = Mcp(app, surface="agents")
 mcp.tool(get_user)
 ```
+
+This one is real. MCP owns its tool-name grammar and SDK validation, and
+`surface` names the deployment so two MCP servers of one project do not
+collide. See ADR 0070.
+
+## 5a. Project composition
+
+```python
+capabilities = project.compile()
+exposures = compile_exposures(capabilities, [http_surface, mcp.compile_surface()])
+```
+
+`compile_exposures` is the aggregation step: it takes one
+`SurfaceCompilation` per selected adapter surface, validates the cross-adapter
+rules and returns the frozen registry that introspection reads. It is a
+function rather than a method on `Agnara`, because `Agnara.compile()` returns
+a governed type and the composition root should not become a god object
+(`ARCHITECTURE.md` section 5).
+
+The exposure model and both implemented adapter builders are public today.
+`Mcp.compile_surface()` produces an MCP `SurfaceCompilation`; `Http.compile()`
+composes the HTTP surface with a compiled capability registry and returns the
+ASGI application, while `Http.compile_surface()` exposes the shared
+cross-adapter compilation boundary. ADR 0071 records the HTTP decision and
+`docs/HTTP_COMPOSITION.md` is the supported application guide.
 
 ## 6. A2A exposure
 
 ```python
 a2a.skill(get_user)
 ```
+
+The unified model does not make a tool, route and skill interchangeable. It
+standardizes identity, ownership and compilation while each adapter retains
+its protocol semantics.
 
 ## 7. Same capability, multiple surfaces
 
@@ -172,6 +209,20 @@ match await invoke_result(plan, context):
         ...
 ```
 
+JSON transports pass the explicit schema-boundary conversion without changing
+direct Python semantics:
+
+```python
+from agnara.schema import materialize_json
+
+result = await invoke_result(plan, context, input_materializer=materialize_json)
+```
+
+The runtime performs that conversion after policies and before strict schema
+validation. Declared scopes compile into the common plan's first policy, so a
+transport cannot omit their enforcement. See ADR 0077 and
+`docs/CROSS_SURFACE_CONFORMANCE.md`.
+
 `FailureCode` is protocol-neutral. An HTTP, MCP or A2A adapter maps it to its
 own representation; core never stores a transport status code.
 
@@ -185,6 +236,7 @@ mcp_result = project_mcp_result(await invoke_result(plan, context))
 
 Success JSON values are copied into `structuredContent.result` with equivalent
 JSON text. Canonical failures expose only code/message as tool error content;
+`internal_failure` always uses fixed redacted text;
 interaction requirements use the strict E7.6 projection. This function does not
 validate an outputSchema. See ADR 0043.
 
@@ -220,7 +272,10 @@ print(definition.effects)
 print(definition.exposures)
 ```
 
-The final registry API may differ but this must be easy.
+The final registry API may differ but this must be easy. RFC 0006 places
+compiled exposure availability in a project-wide frozen registry rather than
+mutating `CapabilityDefinition`; this line remains an ergonomic sketch, not a
+decision that a capability owns deployment configuration.
 
 For tooling rather than authoring, one protocol-neutral snapshot describes a
 compiled application:
@@ -239,6 +294,11 @@ document = snapshot(
     ]
 ).json_data()
 ```
+
+The explicit mapping remains a supported transitional API. ADR 0070 implements
+the RFC 0006 model: `describe_app(exposures=...)` also accepts the
+`FrozenExposureRegistry` aggregated from compiled HTTP and MCP surfaces, so
+introspection can describe the same availability as dispatch.
 
 The CLI, an authorized discovery endpoint and Agnara Explorer read this rather
 than deriving answers from OpenAPI or from one another. Descriptors are frozen

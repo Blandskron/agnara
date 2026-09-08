@@ -186,7 +186,7 @@ Negative:
 6. Map the canonical outcome independently in each transport adapter.
 
 The protocol-neutral stages 1–5 were implemented and verified by GitHub Issue
-#96. RFC 0004 requires confirmation evidence for a delegated invocation to
+#96. RFC 0005 requires confirmation evidence for a delegated invocation to
 bind the actor, subject, effective-delegation fingerprint, capability and
 normalized input. Transport adapters still map the canonical outcome
 independently as they are implemented; they do not redefine confirmation or
@@ -194,7 +194,7 @@ delegation semantics.
 
 ## Revisit when
 
-- the delegation runtime implements and tests RFC 0004's additional evidence
+- the delegation runtime implements and tests RFC 0005's additional evidence
   binding;
 - long-running task/checkpoint semantics can support resumable interaction;
 - a concrete protocol exposes a requirement that cannot be represented by the

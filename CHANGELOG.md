@@ -13,6 +13,384 @@ without being published. See the `0.1.0a2` scope note below.
 
 ## [Unreleased]
 
+## [0.1.0a4] - 2026-09-08
+
+### Added
+
+- Required CI now analyzes Python and GitHub Actions with SHA-pinned CodeQL
+  actions and job-scoped security-result upload permissions, including during
+  release validation. A skipped required job fails the aggregate CI check.
+  Repository secret scanning, push protection and Dependabot alerts/security
+  updates are enabled; automated updates still require normal PR review.
+
+- A CLI target's attribute may be a dotted path. `agnara inspect`,
+  `agnara graph`, `agnara context` and `agnara schema openapi` accept
+  `billing.bootstrap:container.app`, and `--dependencies` accepts
+  `container.registry`, so an application assembled inside a container or
+  returned by a factory no longer has to be re-exported at module level to be
+  usable from the command line. Each segment is validated as an identifier
+  before anything is imported, and a missing segment is named in the error
+  rather than leaving the operator to guess which half of the path was wrong.
+  A compile failure with no registry named now also suggests `--dependencies`,
+  because core cannot distinguish an unbound dependency from an unsupported
+  annotation ([#313]).
+
+- A threat model for the surface `0.1.0a4` publishes. `docs/THREAT_MODEL.md`
+  records assets, trust boundaries, attacker-controlled inputs and abuse cases,
+  and separates protections that name the test proving them from assumptions
+  delegated to ASGI servers, proxies and applications. `tests/security/`
+  regresses it: adversarial HTTP and ASGI events, authorization and disclosure
+  properties across both transports, and a repository-wide credential scan that
+  covers the fixtures, docs and workflows a distribution gate never sees. It is
+  scoped to a4 and is not the beta security program; the document ends with
+  what the audit did not do. The audit's cross-transport scope finding was
+  resolved by the common execution-plan policy implemented for A4-09
+  ([#307], [#308], [#309]).
+
+- One exposure model governs every protocol adapter. `agnara.exposure` owns
+  neutral identity — adapter kind, project-local surface name, adapter-local
+  name — per-surface adapter compilation and a single frozen availability
+  registry, and both shipped adapters now compile into it. Before this,
+  `agnara-http` compiled a private route registry, `agnara-mcp` froze an
+  independent tool table, and `describe_app(..., exposures=...)` accepted a
+  third answer written by hand. The third one was not merely redundant, it was
+  empty: nothing outside tests ever filled it, so every real application served
+  HTTP and MCP traffic while its introspection snapshot reported no exposures
+  at all. Snapshots now derive exposures from compiled availability and can
+  neither omit nor invent one. An adapter returns its dispatch artifact and its
+  records in one value and derives the records from the artifact, so the two
+  cannot drift; two named surfaces of one protocol became expressible;
+  duplicate identities, unknown capabilities and post-freeze registration fail
+  at startup. `Mcp` gains a keyword-only `surface` and `compile_surface()`
+  beside the existing `compile()`. Seven new `provisional` exports, no
+  third-party dependency, and no kernel change needed for a third adapter.
+  ADR 0070 answers RFC 0006 and records the five spike decisions, the threat
+  analysis and the rejected alternatives ([#293]).
+
+### Fixed
+
+- HTTP lifespan now closes its owned singleton dependency resources before
+  application shutdown, including when no custom lifecycle callback is supplied.
+
+- Release publication now rejects lightweight tags, a checkout different from
+  the tag, and tagged commits outside reviewed `main` history, both before
+  building and before uploading. Correct MCP serialization/error guidance and
+  the documented CLI module invocation for A4 (#332).
+
+
+- The `agnara-mcp` README passed `plans` to `project_mcp_tools()` and
+  `build_mcp_server()` in three examples without ever showing how to build it,
+  so the one document a consumer of that distribution reads could not be
+  followed to a working MCP surface. Unlike `agnara-http`, this adapter
+  compiles no plans of its own, which made the omission the difference between
+  composing a server and not. An "Execution plans" section now derives them
+  from `FrozenMcpTools.exposures`, states that matching is by capability
+  identity rather than order, and names the `McpToolDefinitionError` raised
+  when an exposure has no plan. The block is registered in
+  `tests/docs/test_documented_examples.py`, so it runs as written on every
+  test run rather than being trusted.
+
+- The a3-to-a4 migration guide now distinguishes the development candidate
+  from the final release and pins installation commands to the matching core
+  and adapter versions. Architecture and API-design documentation now agree
+  with the implemented public HTTP and introspection composition surfaces.
+
+- A JSON request body nested beyond the decoder's stack raised `RecursionError`
+  out of the HTTP dispatcher. 80 KB was enough -- far inside the 1 MiB default
+  limit -- from an unauthenticated client, before any capability ran: the
+  dispatcher sent nothing and the ASGI server decided what the client and the
+  operator's log received, bypassing the reviewed problem mapping and its
+  redaction. A platform-independent nesting ceiling now rejects it with a `400`
+  before decoding or capability execution, naming the reason without echoing
+  the body. A
+  value nested deeper than the interpreter can walk reached the same escape at
+  the response boundary and now ends at the existing redacted `500`.
+- `_read_body` bounded a request body's total bytes but not the number of ASGI
+  events carrying it. An empty chunk moves `max_body_bytes` no closer to its
+  limit, so a client sending them with `more_body` set held a worker open
+  indefinitely while growing a list without bound. Empty events are now capped.
+- `request_timeout` was documented as a per-request deadline. It starts once
+  the request is bound, so it bounds capability execution and not how long a
+  client may take to send its body; that belongs to the ASGI server or the
+  proxy. The documentation now says which ([#308]).
+
+### Changed
+
+- Declared capability scopes now compile into the common execution plan before
+  application policies, JSON materialization, validation, dependencies and
+  handler effects. MCP no longer owns a transport-specific scope guard, HTTP
+  scoped capabilities fail closed as its a4 dispatcher is anonymous, and both
+  JSON transports materialize only after policy. MCP also redacts the message
+  and details of explicit `internal_failure` results just as HTTP already did.
+  Nested HTTP dataclass construction failures now report canonical
+  `details.path` instead of pre-runtime `details.location` (ADR 0077, [#307]).
+
+- Public API governance now covers every shipped distribution, not the kernel
+  alone. `docs/public-api.json` moves to `schema_version` 3 and classifies 282
+  provisional exports across 47 public modules in all seven distributions;
+  `agnara-mcp`, `agnara-telemetry` and `agnara-cli` were governed by nothing but
+  a count in `docs/MATURITY.md`, and `agnara-http` by a hand-written tuple in one
+  test. The readiness gate now resolves each module against the source root of
+  the distribution that claims it, refuses a manifest entry that reaches into a
+  sibling package, fails when any distribution is missing, and scans every
+  package's source in reverse so a new public module fails immediately. The
+  reserved `agnara-a2a` and `agnara-events` namespaces classify their empty
+  surface, because an empty `__all__` is skipped by the reverse walk and would
+  otherwise be the one place a first export could appear ungoverned. Nothing is
+  promoted: the alpha line still makes no compatibility promise (ADR 0076).
+- `docs/INITIATIVES.md` recorded I9 as `PLANNED` while its own body described
+  shipped, enforced machinery. I9 is `IMPLEMENTED` for classification and stays
+  open for stability promotion, which the beta and release-candidate gates own.
+- RFC 0001's proposed-API sketch is marked as what it is. It shows
+  `from agnara import Agnara, Context`, an API that was never built, and the
+  import audit found it presented as though it were current. The proposal text
+  is unchanged; the reasoning that led away from it is the useful part of the
+  record.
+- Public API governance now covers every non-private core module that declares
+  exports: 218 provisional names across 30 package and leaf modules. The
+  readiness gate resolves both `__init__.py` and leaf `.py` modules and scans
+  source in reverse, so an unclassified public module fails immediately.
+  `ConfirmationPolicy` is also available from `agnara.policy`; genuinely
+  private `_frozen` and `_tracking_id` helpers remain private with documented
+  public alternatives (ADRs 0074, [#288], [#289]).
+- The `0.1.0a4` publication boundary now covers the explicit seven-package
+  workspace set instead of building, installing and publishing only `agnara`.
+  The release gate inspects all fourteen wheel/sdist artifacts for synchronized
+  versions, Python floor, license and README metadata/files, dependencies,
+  project metadata, console scripts, package data, safe paths and accidental
+  development or credential files. It then resolves only MCP/OpenTelemetry
+  dependencies from the index and installs all first-party wheels with
+  `--no-index`, proving isolated imports originate in `site-packages` and the
+  `agnara` entry point works. The publish job promotes those same files, is
+  unreachable from manual dispatch, keeps OIDC confined to a pushed tag and
+  explicitly enables metadata verification and Trusted Publishing
+  attestations. All six adapter names remain unpublished until the authorized
+  release; A2A and events are honest zero-API reserved namespaces, not support
+  claims (ADR 0073, [#291]).
+
+- Workspace version transitions are now atomic and repository-owned. The new
+  `scripts/set_workspace_version.py` command moves all seven distributions and
+  six exact adapter-to-core pins together between `<target>.dev0` development
+  state and the public release target, refreshes `uv.lock`, supports a
+  no-write check, and rolls back source metadata if lock generation fails.
+  Release-readiness and installed-wheel gates now fail on an unbounded,
+  ranged, mismatched or marked core requirement. The isolated packaging lane
+  closes index access while installing all locally built first-party wheels,
+  preventing substitution by a public core ([#286]).
+- ADR 0069 answers both questions in RFC 0007 together. During alpha, every
+  adapter will require the exact synchronized core version, and `develop` will
+  carry the selected current target as `<target>.dev0`; choosing only one
+  leaves a demonstrated incompatible-core substitution possible. The decision
+  requires one atomic, repository-tooled migration of all project versions,
+  six core requirements, `uv.lock`, release checks and installed-artifact
+  gates. No package metadata or version changes in this decision-only step
+  ([#280]).
+- The packaging gate now installs every distribution instead of one. It
+  built all seven and installed only `agnara`, so the adapters' third-party
+  pins were never resolved by an installer, and the documentation UIs
+  `agnara-http` serves from its own package were checked for presence in
+  the archive but never for reachability once installed.
+  `scripts/check_distributions.py` discovers the expected
+  distributions from the workspace layout, then asserts each imports from
+  an installed location, that every data file in a source package resolves
+  inside the installed one, that versions stay synchronized and that every
+  adapter still declares its dependency on the core. The wheel and sdist
+  count is derived the same way, so adding a distribution extends the gate
+  rather than escaping it ([#278]).
+- The public API manifest now governs every public module of the core
+  distribution rather than only the top-level one: 123 exports across
+  `agnara`, `agnara.capability`, `agnara.core.di`, `agnara.execution`,
+  `agnara.introspection`, `agnara.policy` and `agnara.schema`, all
+  `provisional`. Two thirds of the documented entry path were ungoverned —
+  the README and the quickstart both open by importing `agnara.core.di`
+  and `agnara.execution` — so a rename there passed every release gate. A
+  test now asserts every exported name actually exists, which neither the
+  manifest nor `__all__` can detect on its own. ADR 0074 subsequently extended
+  that governance to every exported leaf module and added the missing reverse
+  completeness check.
+  `docs/public-api.json` moves to `schema_version` 2; no API is renamed,
+  re-exported or promoted ([#275]).
+- Compiling an `Agnara` project now freezes every mounted `App` registry as
+  well as the project's aggregate registry. A mounted app can no longer accept
+  declarations that the compiled project could never observe; unmounted apps
+  remain open, and shared apps can still be compiled by multiple projects
+  because freezing is idempotent. Declarations added after mounting but before
+  compilation are included in the compiled project ([#268]).
+- **Breaking.** `agnara.introspection.AppDescriptor` is renamed to
+  `ApplicationDescriptor`. It describes one compiled application -- a whole
+  project -- and after ADR 0011 and ADR 0065 fixed "app" as a bounded context
+  it was named for something it is not, and collided with the `AppDescriptor`
+  added in #254. Only the Python symbol changed: the field names, the builder
+  functions, `INTROSPECTION_VERSION` and the serialized document are all
+  unchanged, verified byte-for-byte ([#259]).
+
+### Removed
+
+- `agnara-cli` no longer publishes thirteen implementation helpers. `FileAction`,
+  `GenerationError`, `GenerationPlan`, `ManifestApp`, `ManifestError`,
+  `ProjectManifest`, `ResolvedTarget`, `TargetError`, `find_manifest`,
+  `load_manifest`, `parse_manifest`, `resolve_attribute` and `resolve_target`
+  were re-exported from underscore-prefixed modules through `0.1.0a3` without
+  ever being documented, used anywhere in the workspace, or designed as an API.
+  The distribution is consumed as the `agnara` command; `EXIT_OK`,
+  `EXIT_FAILED`, `EXIT_USAGE` and `main` remain, and are what a caller needs to
+  run that command in-process. **Migration:** code that needs one of the removed
+  names is reading the CLI's implementation and should import the private module
+  that defines it — `agnara_cli._generate` for the generation-plan names,
+  `agnara_cli._manifest` for the `agnara.toml` names, `agnara_cli._target` for
+  the target-resolution names — accepting that a private module carries no
+  compatibility promise (ADR 0076).
+
+### Fixed
+
+- HTTP JSON bodies matching a standard-library dataclass schema now
+  materialize the declared dataclass recursively before strict core
+  validation. Nested dataclasses, containers, tuples, unions and JSON-valued
+  enums follow the same compiled schema graph; unknown and missing fields fail
+  without exposing constructor errors. Direct core invocation remains strict
+  as ADR 0025 requires (ADR 0075, [#296]).
+
+### Added
+
+- Ecosystem interoperability has a contract and a release. Agnara could be
+  run and could not be embedded: nothing stated what an external host must do
+  to invoke a capability, or who owns lifecycle, routing, dependency
+  containers, context, principal, errors and telemetry when two runtimes share
+  a process. `docs/INTEROPERABILITY.md` now owns the interoperability contract
+  and the integration matrix -- four deployment modes, two directions per
+  technology with the meaningless ones discarded rather than left blank,
+  fifteen kernel invariants, the anti-coupling test, the ten-step framework
+  embedding contract, per-category infrastructure adapter contracts, one
+  conformance scenario for every framework, and the historical reference
+  strategy. RFC 0008 states fifteen open design questions and deliberately
+  answers none, because several depend on I1, I2, I3, I8 and I10. Initiative
+  I20 owns the work ([#282]).
+- ADR 0068 gives that work a release rather than letting it land in whichever
+  one is open. `0.1.0a5` is inserted between `0.1.0a4` and `0.1.0b1`, so
+  streaming, execution identity and performance budgets stop being homeless;
+  `0.1.0b1` becomes the interoperability and composition beta and gains
+  twenty-one mandatory gates covering web, persistence, schema, presentation,
+  background execution, observability, protocol composition, embedding,
+  side-by-side composition and progressive adoption. Both alphas gain an
+  explicit guardrail: neither may declare stable support for an external
+  framework, because an integration that hides an insufficient public API
+  behind a framework-specific convenience turns the `0.1.0a4` "public APIs are
+  sufficient" gate green and deletes the finding it exists to surface
+  ([#282]).
+- The guardrail is a test rather than a promise. A framework integration
+  arrives as a declared dependency before anything imports it, so
+  `ECOSYSTEM_INTEGRATIONS` denies web frameworks, ORMs, drivers, migrations,
+  caches, brokers, task runtimes, durable execution engines, template engines,
+  error reporters and GraphQL/gRPC libraries to every distribution rather than
+  only the kernel -- while leaving the protocol SDKs an adapter legitimately
+  projects into. The import-level `FORBIDDEN_IN_CORE` denylist gains the same
+  technologies ([#282]).
+- RFC 0007 states the open question behind D2: what version of the core an
+  adapter may accept, and what version `develop` carries between releases.
+  Installing one locally built adapter wheel today resolves `agnara` from
+  PyPI, whose published `0.1.0a3` satisfies the unbounded requirement while
+  lacking a rename `develop` made under that same version, so `agnara
+  --version` raises `ImportError`. An exact pin was measured and does not
+  fix it. The RFC records the options and their costs and decides nothing
+  ([#280]).
+- RFC 0006 proposes one compiled exposure lifecycle for HTTP, MCP and future
+  adapters. Project composition owns typed declarations; adapters retain their
+  protocol-specific runtime artifacts while emitting neutral immutable records
+  into a project-wide availability registry. Discovery, publication and
+  authorization remain independent decisions ([#271]).
+- The 41 top-level `agnara` exports now have an explicit provisional
+  classification and an exact machine-readable snapshot. Release readiness
+  detects additions, removals, renames, reordered exports, duplicate entries
+  and unknown stability labels instead of treating the presence of `__all__`
+  as sufficient. The accompanying policy defines pre-1.0 change and future
+  stable deprecation expectations ([#270]).
+- Generated modular apps expose transport-neutral types and Protocols through
+  the explicit `application.contracts` module, and generated projects include
+  a static architecture test that allows only that target across apps. Direct
+  handler imports remain forbidden because they bypass runtime policy and
+  internal capability invocation is still an I8 research decision ([#266]).
+- `agnara app-api`, `agnara app-mcp`, `agnara app-agent` and `agnara
+  app-worker` are shorthands for `agnara app create --profile <name>`. They
+  are the same command with the profile fixed, not a second implementation:
+  they accept every other option unchanged, share every refusal, and produce
+  byte-identical projects. An alias does not accept `--profile`, since it is
+  one ([#250]).
+- `agnara app create --profile api` starts an app from a named set of
+  exposures: `core`, `api`, `mcp`, `agentic`, `worker` and `full`, mapped as
+  `docs/CLI_SPEC.md` specifies, defaulting to `core`. A profile is scaffolding
+  only — it resolves to exposures and is never recorded, so `--profile
+  agentic` and `--with mcp,a2a` produce identical projects. `--with` adds to a
+  profile rather than replacing it ([#248]).
+- `agnara app create --with http,mcp` selects which inbound adapters are
+  scaffolded, adding one `adapters/inbound/<exposure>.py` each and nothing
+  else. The exposure vocabulary is validated, repeats are dropped and the
+  order given is preserved. A generated adapter imports only its own app's
+  application layer and lists the capabilities it projects in `EXPOSED`: no
+  Agnara adapter distribution is published to PyPI and a generated project
+  depends on `agnara` alone, so importing one would produce a project that
+  cannot be installed. The `minimal` architecture refuses an exposure, because
+  it has no adapters package ([#246]).
+- `agnara app create --architecture` selects the layout to generate, falling
+  back to the project's `[defaults] architecture` in `agnara.toml`. The
+  `minimal` architecture is implemented: a package, `module.py`,
+  `capabilities.py` and a test, with none of the domain, application or
+  adapters packages. It declares the same capabilities as the default template
+  and holds their data in the module rather than behind a port, so the choice
+  between the two templates is one difference rather than two unrelated
+  examples. An architecture that is reserved but has no generator, such as
+  `vertical`, is refused with the available alternatives instead of silently
+  producing a different layout ([#244]).
+
+### Added
+
+- The introspection snapshot names the bounded contexts an application
+  mounts. `ApplicationDescriptor.apps` carries a `BoundedContextDescriptor`
+  per app, and `DiscoveryField.APPS` decides whether they are published. An
+  app's module is deliberately not projected, because it is source layout
+  ([#261]).
+- `Agnara.include` refuses a second app claiming a name already mounted,
+  raising the new `DuplicateAppError` rather than reporting a capability
+  clash. Two apps sharing a name but declaring different capabilities were
+  previously accepted silently. `Agnara.apps` exposes the mounted apps as a
+  read-only view ([#257]).
+- `App` and `AppDescriptor` give a bounded context a runtime identity, and
+  `Agnara.include(app)` mounts one on a project. A capability declared on an
+  app is namespaced by the app, so it is `payments.get_record` rather than
+  `<project>.get_record`, and two apps generated by the scaffolder now compose
+  in one project instead of colliding. Declaration is separate from mounting,
+  so an app can be imported and tested without a project. `Agnara.capability`
+  is unchanged ([#254]).
+
+### Changed
+
+- `agnara app create` generates a `module.py` that declares an `App` and
+  mounts it with `app.include(...)`, so generated capability ids are
+  `<app>.<name>` rather than `<project>.<name>` ([#254]).
+- The generators are now pinned by a golden record of what they produce, and
+  the dependency-direction rules for a generated app derive their file set
+  from the generated tree instead of a hardcoded list, so they cover both
+  architectures and an app with inbound adapters. Generated projects are also
+  asserted to use `
+` line endings and POSIX paths on every platform. Four
+  superseded direction tests are removed rather than duplicated ([#252]).
+
+### Fixed
+
+- Generated apps now use package-relative imports and wrap docstring openings,
+  comments and composition examples whose width depends on project or app
+  names, so long identifiers pass both Ruff lint and format checks under the
+  generated project's configuration ([#255]).
+- `agnara app create` wrote `exposures = []` into every `[apps.<name>]` table
+  regardless of what was requested, so `agnara apps` reported no exposures for
+  an app that had inbound adapters. The resolved exposures are now recorded
+  ([#246]).
+- `agnara app create` recorded the project's default architecture in the new
+  `[apps.<name>]` table while always generating the modular-hexagonal tree. A
+  project whose `[defaults] architecture` was `minimal` therefore produced a
+  manifest entry its own directory contradicted, and `agnara apps` reported the
+  declared value. The declaration and the generated layout now come from one
+  resolved decision ([#244]).
+
 ## [0.1.0a3] - 2026-09-06
 
 Integration alpha. Only `agnara` is published to PyPI; all seven workspace
@@ -76,7 +454,7 @@ the repository. This remains experimental and is not production-ready.
 
 - Added an evidence-based release readiness program:
   `docs/releases/RELEASE_PLAN.md` defines the path from `0.1.0a2` to `0.1.0`,
-  `docs/releases/release-status.json` and `docs/releases/STATUS.md` record the
+  `docs/releases/release-status.json` records the
   current state, and `uv run python scripts/check_release_readiness.py`
   evaluates it. Automated gates are recomputed from the repository, evidence
   expires when its commit is no longer `HEAD`, and gates needing human
@@ -451,7 +829,17 @@ under `0.1.0a2` instead.
   `FrozenInstanceError` instead of CPython 3.14's confusing internal
   `TypeError` ([#3]).
 
-[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...develop
+[#244]: https://github.com/Blandskron/agnara/issues/244
+[#246]: https://github.com/Blandskron/agnara/issues/246
+[#248]: https://github.com/Blandskron/agnara/issues/248
+[#250]: https://github.com/Blandskron/agnara/issues/250
+[#252]: https://github.com/Blandskron/agnara/issues/252
+[#254]: https://github.com/Blandskron/agnara/issues/254
+[#257]: https://github.com/Blandskron/agnara/issues/257
+[#259]: https://github.com/Blandskron/agnara/issues/259
+[#261]: https://github.com/Blandskron/agnara/issues/261
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a4...develop
+[0.1.0a4]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...v0.1.0a4
 [0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3
 [0.1.0a2]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...v0.1.0a2
 [0.1.0a1]: https://github.com/Blandskron/agnara/releases/tag/v0.1.0a1
@@ -533,3 +921,22 @@ under `0.1.0a2` instead.
 [#235]: https://github.com/Blandskron/agnara/issues/235
 
 [#237]: https://github.com/Blandskron/agnara/issues/237
+[#255]: https://github.com/Blandskron/agnara/issues/255
+[#266]: https://github.com/Blandskron/agnara/issues/266
+[#268]: https://github.com/Blandskron/agnara/issues/268
+[#270]: https://github.com/Blandskron/agnara/issues/270
+[#271]: https://github.com/Blandskron/agnara/issues/271
+[#275]: https://github.com/Blandskron/agnara/issues/275
+[#278]: https://github.com/Blandskron/agnara/issues/278
+[#280]: https://github.com/Blandskron/agnara/issues/280
+[#282]: https://github.com/Blandskron/agnara/issues/282
+[#286]: https://github.com/Blandskron/agnara/issues/286
+[#309]: https://github.com/Blandskron/agnara/issues/309
+[#308]: https://github.com/Blandskron/agnara/issues/308
+[#293]: https://github.com/Blandskron/agnara/issues/293
+[#288]: https://github.com/Blandskron/agnara/issues/288
+[#289]: https://github.com/Blandskron/agnara/issues/289
+[#296]: https://github.com/Blandskron/agnara/issues/296
+[#291]: https://github.com/Blandskron/agnara/issues/291
+[#313]: https://github.com/Blandskron/agnara/issues/313
+[#307]: https://github.com/Blandskron/agnara/issues/307

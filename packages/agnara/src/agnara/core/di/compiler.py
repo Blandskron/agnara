@@ -1,24 +1,43 @@
 from collections.abc import Callable
 from typing import Any, get_type_hints
 
+from agnara.errors import DefinitionError
+
+from .provider import Scope
 from .registry import DIRegistry
 
 
-class DependencyCycleError(Exception):
-    """Raised when a dependency cycle is detected."""
+class DependencyCycleError(DefinitionError):
+    """Raised when a dependency cycle is detected.
 
-    pass
+    A `DefinitionError`: the graph is compiled at startup, so a cycle is a
+    declaration mistake reported before the first invocation (ADR 0005).
+    """
 
 
-class DependencyResolutionError(Exception):
-    """Raised when a dependency cannot be resolved."""
+class DependencyResolutionError(DefinitionError):
+    """Raised when a dependency cannot be resolved.
 
-    pass
+    A `DefinitionError` for the same reason as `DependencyCycleError`: an
+    unbound or captive dependency is a startup failure, never a runtime one.
+    """
 
 
 def _get_dependencies(func: Callable[..., Any]) -> dict[str, type]:
-    """Get the type hints of a function, ignoring return type."""
-    hints = get_type_hints(func)
+    """Get the type hints of a function, ignoring return type.
+
+    Resolving hints evaluates annotations, so a forward reference to a name the
+    module never defines, or an annotation that is not a type at all, fails
+    here. That is a declaration mistake found at startup, and it is reported
+    as one rather than as a bare `NameError` from inside the graph compiler.
+    """
+    try:
+        hints = get_type_hints(func)
+    except Exception as error:
+        name = getattr(func, "__qualname__", None) or repr(func)
+        raise DependencyResolutionError(
+            f"cannot resolve the type annotations of {name}: {type(error).__name__}: {error}"
+        ) from error
     if "return" in hints:
         del hints["return"]
     return hints
@@ -76,6 +95,21 @@ def compile_dag(
                 di_deps.append(typ)
                 if typ not in explored:
                     types_to_explore.add(typ)
+                dependency = registry.get_provider(typ)
+                if (
+                    provider.scope is Scope.SINGLETON
+                    and dependency is not None
+                    and dependency.scope is Scope.INVOCATION
+                ):
+                    # A singleton is built once and kept; an invocation-scoped
+                    # value is torn down when the invocation that built it
+                    # ends. Letting the singleton capture one would leave it
+                    # holding a released resource for every later invocation.
+                    raise DependencyResolutionError(
+                        f"Singleton provider for {current_type.__name__} depends on "
+                        f"invocation-scoped provider for {typ.__name__} through parameter "
+                        f"'{name}'. A singleton may only depend on other singletons."
+                    )
             else:
                 # For providers, ALL parameters MUST be bound in the registry.
                 # A provider cannot take a request payload directly.

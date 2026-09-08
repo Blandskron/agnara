@@ -41,6 +41,7 @@ the port has explicit reference and directional input/output semantics.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import MISSING, InitVar, is_dataclass
 from dataclasses import fields as dataclass_fields
 from enum import Enum
@@ -65,7 +66,16 @@ __all__ = [
     "StandardSchemaAdapter",
     "TupleSchema",
     "UnionSchema",
+    "materialize_json",
+    "serialize_json",
 ]
+
+#: Deepest value `serialize_json` will walk. A handler that returns something
+#: nested further has almost certainly returned a structure by mistake, and a
+#: bound keeps a JSON transport from recursing without limit on its behalf. It
+#: is no smaller than the deepest input a JSON transport admits, so a
+#: capability that echoes an accepted value can always answer.
+_MAX_OUTPUT_DEPTH: Final = 128
 
 #: Python primitive -> its JSON Schema type keyword.
 #:
@@ -504,3 +514,159 @@ class StandardSchemaAdapter:
     def _render(annotation: Any) -> str:
         name = getattr(annotation, "__name__", None)
         return str(name) if name else repr(annotation)
+
+
+def materialize_json(schema: TypeSchema, value: object) -> Any:
+    """Materialize standard-library Python values from decoded JSON data.
+
+    This is an explicit wire-boundary operation. The standard validator stays
+    strict for direct Python invocation, while JSON transports can request the
+    conversions JSON cannot represent: dataclass instances, tuples and enum
+    members. Unknown schema implementations receive the value unchanged.
+    """
+    if isinstance(schema, DataclassSchema) and type(value) is dict:
+        object_value = cast(dict[str, Any], value)
+        fields = {field.name: field for field in schema.fields}
+        unexpected = sorted(set(object_value).difference(fields))
+        if unexpected:
+            raise ValidationError("unexpected field", path=(unexpected[0],))
+        missing = sorted(
+            field.name
+            for field in schema.fields
+            if field.required and field.name not in object_value
+        )
+        if missing:
+            raise ValidationError("field is missing", path=(missing[0],))
+        arguments: dict[str, Any] = {}
+        for name, item in object_value.items():
+            try:
+                arguments[name] = materialize_json(fields[name].schema, item)
+            except ValidationError as error:
+                raise error.at(name) from error
+        try:
+            return schema.dataclass_type(**arguments)
+        except (TypeError, ValueError) as error:
+            raise ValidationError("could not construct the declared dataclass") from error
+
+    if isinstance(schema, ListSchema) and type(value) is list:
+        materialized: list[Any] = []
+        for index, item in enumerate(cast(list[Any], value)):
+            try:
+                materialized.append(materialize_json(schema.item_schema, item))
+            except ValidationError as error:
+                raise error.at(index) from error
+        return materialized
+
+    if isinstance(schema, DictionarySchema) and type(value) is dict:
+        materialized_mapping: dict[str, Any] = {}
+        for name, item in cast(dict[str, Any], value).items():
+            try:
+                materialized_mapping[name] = materialize_json(schema.value_schema, item)
+            except ValidationError as error:
+                raise error.at(name) from error
+        return materialized_mapping
+
+    if isinstance(schema, TupleSchema) and type(value) is list:
+        sequence = cast(list[Any], value)
+        if not schema.variadic and len(sequence) != len(schema.item_schemas):
+            return tuple(sequence)
+        item_schemas = (
+            (schema.item_schemas[0] for _ in sequence)
+            if schema.variadic
+            else iter(schema.item_schemas)
+        )
+        materialized_tuple: list[Any] = []
+        for index, (item, item_schema) in enumerate(zip(sequence, item_schemas, strict=True)):
+            try:
+                materialized_tuple.append(materialize_json(item_schema, item))
+            except ValidationError as error:
+                raise error.at(index) from error
+        return tuple(materialized_tuple)
+
+    if isinstance(schema, EnumSchema):
+        try:
+            return schema.enum_type(value)
+        except TypeError, ValueError:
+            return value
+
+    if isinstance(schema, PrimitiveSchema) and schema.python_type is float and type(value) is int:
+        # JSON has one number type. A wire value ``3`` satisfies the published
+        # ``{"type": "number"}`` schema, so a JSON transport owes the handler
+        # the float it declared; ``bool`` is excluded by the exact type check.
+        return float(value)
+
+    if isinstance(schema, UnionSchema):
+        for choice in schema.choices:
+            try:
+                candidate = materialize_json(choice, value)
+                choice.validate(candidate)
+            except ValidationError:
+                continue
+            return candidate
+
+    return value
+
+
+def serialize_json(value: object) -> Any:
+    """Project a handler's return value onto plain JSON data.
+
+    The output counterpart of `materialize_json`, and the one definition every
+    JSON transport shares so a capability cannot succeed over one protocol and
+    fail over another for returning the same value. Enum members become their
+    values, dataclass instances become objects, any mapping becomes an object
+    with string keys and any list or tuple becomes an array. Finite floats,
+    ``bool``, ``int``, ``str`` and ``None`` pass through.
+
+    Raises `ValidationError`, located at the offending value, for a cycle, a
+    non-finite float, a non-string object key, an unsupported type or a
+    structure deeper than 128 levels. What a transport does with that failure
+    is its own decision; none of them should describe the value to a caller.
+    """
+    return _serialize_json(value, set(), 0)
+
+
+def _serialize_json(value: object, active: set[int], depth: int) -> Any:
+    if isinstance(value, Enum):
+        # Before the scalar checks: a StrEnum or IntEnum member is also a str
+        # or int, and the transport should receive the plain value, not the
+        # member.
+        return _serialize_json(value.value, active, depth)
+    if value is None or isinstance(value, str | bool | int):
+        return value
+    if isinstance(value, float):
+        if not isfinite(value):
+            raise ValidationError("non-finite float is not JSON")
+        return value
+    if depth >= _MAX_OUTPUT_DEPTH:
+        raise ValidationError(f"output nests deeper than {_MAX_OUTPUT_DEPTH} levels")
+
+    is_object = is_dataclass(value) and not isinstance(value, type)
+    if not (is_object or isinstance(value, Mapping | list | tuple)):
+        raise ValidationError(f"unsupported output type {type(value).__name__}")
+    identity = id(value)
+    if identity in active:
+        raise ValidationError("cyclic output value")
+    active.add(identity)
+    try:
+        if isinstance(value, Mapping):
+            plain: dict[str, Any] = {}
+            for key, item in value.items():
+                if not isinstance(key, str):
+                    raise ValidationError("JSON object keys must be strings")
+                plain[key] = _located(item, active, depth, key)
+            return plain
+        if isinstance(value, list | tuple):
+            return [_located(item, active, depth, index) for index, item in enumerate(value)]
+        return {
+            field.name: _located(getattr(value, field.name), active, depth, field.name)
+            for field in dataclass_fields(value)
+        }
+    finally:
+        active.remove(identity)
+
+
+def _located(value: object, active: set[int], depth: int, segment: str | int) -> Any:
+    try:
+        return _serialize_json(value, active, depth + 1)
+    except ValidationError as error:
+        raise error.at(segment) from None

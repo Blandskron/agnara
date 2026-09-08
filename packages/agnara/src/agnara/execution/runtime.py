@@ -5,7 +5,9 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import inspect
+import logging
 import time
+from collections.abc import Callable
 from typing import Any
 from uuid import uuid4
 
@@ -21,8 +23,14 @@ from agnara.execution.plan import ExecutionPlan
 from agnara.execution.result import CanonicalResult, Failure, FailureCode, Success
 from agnara.execution.telemetry import InvocationStartEvent, InvocationTerminalEvent
 from agnara.policy import PolicyFailure, PolicyInteractionRequired, PolicySuccess
+from agnara.schema import TypeSchema
 
 __all__ = ["invoke", "invoke_result"]
+
+#: Where a redacted handler failure is reported. The canonical outcome a
+#: caller receives says only that the invocation failed; the exception itself
+#: is for the operator, and the log is the one channel that reaches them.
+_LOGGER = logging.getLogger("agnara.execution")
 
 
 async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
@@ -35,6 +43,15 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
     when the handler raises, awaiting its result fails, or the owning task is
     cancelled. Cancellation is never caught or translated here.
     """
+    return await _invoke(plan, context, input_materializer=None)
+
+
+async def _invoke(
+    plan: ExecutionPlan,
+    context: ExecutionContext,
+    *,
+    input_materializer: Callable[[TypeSchema, object], object] | None,
+) -> Any:
     if not isinstance(plan, ExecutionPlan):
         raise TypeError(f"plan must be an ExecutionPlan, got {type(plan).__name__}")
     if not isinstance(context, ExecutionContext):
@@ -46,11 +63,6 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
             f"invocation targets {invocation.capability_id}, but the compiled plan is for "
             f"{plan.definition.id}"
         )
-
-    supplied_protected = plan.protected_parameters.intersection(invocation.payload)
-    if supplied_protected:
-        rendered = ", ".join(sorted(supplied_protected))
-        raise InvocationError(f"invocation payload supplies runtime-owned parameter(s): {rendered}")
 
     # Building a lifecycle event pair costs roughly two microseconds, and an
     # application that registered no hook can observe none of it. The work is
@@ -76,9 +88,9 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
     outcome = "success"
     try:
         if context.deadline is None:
-            return await _execute(plan, context)
+            return await _execute(plan, context, input_materializer)
         async with asyncio.timeout_at(context.deadline):
-            return await _execute(plan, context)
+            return await _execute(plan, context, input_materializer)
     except asyncio.CancelledError:
         outcome = "cancellation"
         raise
@@ -105,6 +117,8 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
 async def invoke_result[T](
     plan: ExecutionPlan,
     context: ExecutionContext,
+    *,
+    input_materializer: Callable[[TypeSchema, object], object] | None = None,
 ) -> CanonicalResult[T]:
     """Execute a plan and return its protocol-neutral canonical outcome.
 
@@ -114,10 +128,12 @@ async def invoke_result[T](
     cancellation is deliberately not converted into a capability failure.
 
     Use :func:`invoke` for ergonomic in-process calls that should retain
-    ordinary Python value/exception semantics.
+    ordinary Python value/exception semantics. A JSON transport may pass the
+    explicit ``materialize_json`` schema helper as ``input_materializer``;
+    conversion then runs after policy and before strict schema validation.
     """
     try:
-        value = await invoke(plan, context)
+        value = await _invoke(plan, context, input_materializer=input_materializer)
     except asyncio.CancelledError:
         raise
     except ValidationError as error:
@@ -145,6 +161,9 @@ async def invoke_result[T](
             },
         )
     except Exception:
+        # Redaction is for the wire, not the operator: without this record a
+        # 500 produced by a handler would be undiagnosable anywhere.
+        _LOGGER.exception("capability %s failed", plan.definition.id)
         return Failure(FailureCode.INTERNAL_FAILURE, "capability invocation failed")
 
     if isinstance(value, Success | Failure):
@@ -172,7 +191,11 @@ def _tracking_id(context: ExecutionContext) -> str | None:
     return supplied if isinstance(supplied, str) else None
 
 
-async def _execute(plan: ExecutionPlan, context: ExecutionContext) -> Any:
+async def _execute(
+    plan: ExecutionPlan,
+    context: ExecutionContext,
+    input_materializer: Callable[[TypeSchema, object], object] | None,
+) -> Any:
     """Enforce policies, validate inputs, resolve dependencies, and call the handler."""
     for policy in plan.policies:
         result = await policy.evaluate(context)
@@ -184,7 +207,10 @@ async def _execute(plan: ExecutionPlan, context: ExecutionContext) -> Any:
             raise InteractionRequiredError(result.request)
         raise TypeError(f"policy returned an invalid result: {type(result).__name__}")
 
-    arguments = _validate_inputs(plan, context.invocation.payload)
+    payload = context.invocation.payload
+    if input_materializer is not None:
+        payload = _materialize_inputs(plan, payload, input_materializer)
+    arguments = _validate_inputs(plan, payload)
     async with context.di_container.resolve_dependencies(
         plan.definition.handler,
         plan.target_deps,
@@ -199,7 +225,15 @@ async def _execute(plan: ExecutionPlan, context: ExecutionContext) -> Any:
 
 
 def _validate_inputs(plan: ExecutionPlan, payload: dict[str, Any]) -> dict[str, Any]:
-    """Validate a payload against precompiled schemas without mutating it."""
+    """Validate a payload against precompiled schemas without mutating it.
+
+    A runtime-owned parameter -- one bound to a dependency or to the execution
+    context -- is not an input, so a payload naming one is "unexpected input"
+    like any other undeclared key. It is deliberately not told apart: the
+    check runs after policies, and answering differently would let a caller
+    who is not even authorized to invoke the capability enumerate the names of
+    its dependency and context parameters.
+    """
     unexpected = sorted(set(payload).difference(plan.input_schemas))
     if unexpected:
         raise ValidationError("unexpected input", path=(unexpected[0],))
@@ -217,3 +251,22 @@ def _validate_inputs(plan: ExecutionPlan, payload: dict[str, Any]) -> dict[str, 
         except ValidationError as error:
             raise error.at(name) from error
     return arguments
+
+
+def _materialize_inputs(
+    plan: ExecutionPlan,
+    payload: dict[str, Any],
+    materializer: Callable[[TypeSchema, object], object],
+) -> dict[str, Any]:
+    """Apply one explicit wire conversion after policy and before validation."""
+    materialized: dict[str, Any] = {}
+    for name, value in payload.items():
+        schema = plan.input_schemas.get(name)
+        if schema is None:
+            materialized[name] = value
+            continue
+        try:
+            materialized[name] = materializer(schema, value)
+        except ValidationError as error:
+            raise error.at(name) from error
+    return materialized

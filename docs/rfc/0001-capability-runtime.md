@@ -16,7 +16,13 @@ An operation such as `create_customer` may be called from HTTP, MCP, A2A, a task
 
 ## Proposed API
 
-First-pass design target:
+First-pass design target. **This sketch is not the shipped API**: the
+capability decorator, the `Context` parameter and the keyword spellings below
+were all revised before implementation. `docs/PUBLIC_API.md` and
+`docs/public-api.json` own the names that exist; the execution context is
+`ExecutionContext` from `agnara.execution`. The proposal is kept as written
+because the reasoning that led away from it is the useful part of the record.
+
 
 ```python
 from agnara import Agnara, Context
@@ -239,7 +245,7 @@ Agnara executes capabilities. Agent reasoning engines are consumers/composers, n
 3. How partial streaming failures are represented.
 4. Canonical authorization principal model.
 5. Public delegation runtime types and verifier API; the security model is
-   defined by RFC 0004.
+   defined by RFC 0005.
 6. Unified interaction-required state.
 7. Capability versioning.
 8. Sync handler execution strategy.

@@ -14,7 +14,7 @@ from typing import Any
 import pytest
 
 from agnara.introspection import (
-    AppDescriptor,
+    ApplicationDescriptor,
     CapabilityDescriptor,
     DiscoveryField,
     DiscoveryVisibility,
@@ -85,7 +85,7 @@ def described(*, hostile: bool = False, providers: bool = True) -> Introspection
         else ()
     )
     return snapshot(
-        [AppDescriptor("billing", (refund, health), bound)],
+        [ApplicationDescriptor("billing", (refund, health), bound)],
         project="billing",
     )
 
@@ -233,7 +233,7 @@ def test_a_deep_schema_is_summarized_rather_than_unrolled_without_bound() -> Non
         id="billing.deep",
         inputs=(InputDescriptor.of("nested", required=True, schema=deep),),
     )
-    document = snapshot([AppDescriptor("billing", (descriptor,))])
+    document = snapshot([ApplicationDescriptor("billing", (descriptor,))])
 
     async def fallback(scope: Any, receive: Any, send: Any) -> None:  # pragma: no cover
         raise AssertionError("unreachable")

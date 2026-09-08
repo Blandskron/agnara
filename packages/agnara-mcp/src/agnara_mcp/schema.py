@@ -10,6 +10,15 @@ from mcp_types import Tool
 
 from agnara import CapabilityId
 from agnara.execution import ExecutionPlan
+from agnara.schema import (
+    DataclassSchema,
+    DictionarySchema,
+    ListSchema,
+    PrimitiveSchema,
+    TupleSchema,
+    TypeSchema,
+    UnionSchema,
+)
 
 from .tools import FrozenMcpTools, McpToolDefinitionError, McpToolExposure
 
@@ -43,6 +52,11 @@ def _json_value(value: object, *, path: str) -> Any:
 def _input_schema(exposure: McpToolExposure, plan: ExecutionPlan) -> dict[str, Any]:
     properties: dict[str, Any] = {}
     for name, schema in plan.input_schemas.items():
+        if _contains_bytes(schema):
+            raise McpToolDefinitionError(
+                f"MCP tool {exposure.name!r} input {name!r} contains bytes, which has no "
+                "reversible JSON representation in the supported MCP tool contract"
+            )
         fragment = schema.json_schema()
         if not isinstance(fragment, Mapping):
             raise McpToolDefinitionError(
@@ -59,6 +73,23 @@ def _input_schema(exposure: McpToolExposure, plan: ExecutionPlan) -> dict[str, A
     if required:
         document["required"] = required
     return document
+
+
+def _contains_bytes(schema: TypeSchema) -> bool:
+    """Whether a standard schema graph requires a Python bytes value."""
+    if isinstance(schema, PrimitiveSchema):
+        return schema.python_type is bytes
+    if isinstance(schema, DataclassSchema):
+        return any(_contains_bytes(field.schema) for field in schema.fields)
+    if isinstance(schema, ListSchema):
+        return _contains_bytes(schema.item_schema)
+    if isinstance(schema, DictionarySchema):
+        return _contains_bytes(schema.value_schema)
+    if isinstance(schema, TupleSchema):
+        return any(_contains_bytes(item) for item in schema.item_schemas)
+    if isinstance(schema, UnionSchema):
+        return any(_contains_bytes(choice) for choice in schema.choices)
+    return False
 
 
 def _resolve_plans(

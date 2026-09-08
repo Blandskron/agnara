@@ -23,6 +23,16 @@ test-results/
 
 # uv
 uv.lock.bak
+.uv-cache/
+
+# Locally generated release and validation artifacts. These directories
+# hold built wheels and sdists; several are created by tooling that drops
+# its own `*` .gitignore inside them, which only protects the repository
+# for as long as that file survives. Name them here as well, so a
+# hand-recreated directory cannot commit distributions.
+.artifacts/
+.dist-test/
+.release-validation/
 
 # Editors / OS
 .idea/

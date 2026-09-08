@@ -35,6 +35,11 @@ def build():
 
 def explode():
     raise RuntimeError("projection failed on purpose")
+
+
+class Document:
+    def __init__(self):
+        raise AssertionError("a class target must not be instantiated")
 """
 
 
@@ -200,7 +205,7 @@ def test_an_absent_attribute_is_refused(project: Path, capsys: pytest.CaptureFix
     code, _, err = run(project, "absent", capsys=capsys)
 
     assert code == EXIT_FAILED
-    assert "defines no attribute 'absent'" in err
+    assert "has no attribute 'absent'" in err
 
 
 def test_a_format_must_be_named() -> None:
@@ -237,3 +242,15 @@ def test_the_export_path_imports_no_adapter() -> None:
         and name.split(".")[0] not in {"agnara", "agnara_cli"}
     }
     assert not foreign, sorted(foreign)
+
+
+def test_a_class_target_is_refused_without_being_instantiated(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A class is callable, but calling it would construct an object as a side
+    effect of an export. It is not a document and is refused as one."""
+    code, out, err = run(project, "Document", capsys=capsys)
+
+    assert code == EXIT_FAILED
+    assert out == b""
+    assert "must be bytes, a mapping, or a callable returning one, got type" in err

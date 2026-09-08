@@ -17,7 +17,7 @@ agnara <command>
 Equivalent module invocation:
 
 ```bash
-python -m agnara <command>
+python -m agnara_cli <command>
 ```
 
 `python agnara ...` is not the canonical form because `agnara` is a package/console command, not a local script.
@@ -350,10 +350,24 @@ agnara inspect billing.bootstrap:app --path src --hide billing.reconcile
 Importing a target executes the module that defines it; a malformed target is
 rejected before any import happens.
 
-`--dependencies` names a `DIRegistry` in the same module. Without it the
-application compiles against an empty registry, so a capability that declares
-a dependency fails with the reason rather than being described as if it had
-none.
+The attribute after `:` may be a dotted path, so an application that lives
+inside a container, a settings object or a factory result is nameable without
+rearranging the module to suit the CLI:
+
+```bash
+agnara inspect billing.bootstrap:container.app --dependencies container.registry
+```
+
+Each segment must be an identifier, and the whole path is validated before
+anything is imported. When a segment is missing the error names which one, so
+a wrong half of a dotted path does not read as a wrong whole.
+
+`--dependencies` names a `DIRegistry` in the same module, and accepts the same
+dotted paths. Without it the application compiles against an empty registry, so
+a capability that declares a dependency fails with the reason rather than being
+described as if it had none; because core cannot tell an unbound dependency
+from an unsupported annotation, that failure also suggests `--dependencies`
+when no registry was named.
 
 `--visibility` chooses which fields are published: `full` (the default, for
 local inspection of source the operator can already read), `agent` (what a

@@ -14,6 +14,8 @@ from agnara.schema.standard import (
     StandardSchemaAdapter,
     TupleSchema,
     UnionSchema,
+    materialize_json,
+    serialize_json,
 )
 
 __all__ = [
@@ -32,4 +34,6 @@ __all__ = [
     "TupleSchema",
     "TypeSchema",
     "UnionSchema",
+    "materialize_json",
+    "serialize_json",
 ]

@@ -219,6 +219,15 @@ Responsibilities:
 
 `agnara-http` may depend on an ASGI utility library only after an ADR demonstrates why direct ASGI is insufficient.
 
+The adapter's public surface is the composition API in
+`agnara_http.composition`: seven names that declare exposures, compile an
+immutable ASGI 3 application and project OpenAPI (ADR 0071). Every other
+module is underscore-prefixed. The documentation UI providers, the Explorer
+and the authorized discovery endpoint are implemented but not reachable from
+that surface, because no product path renders a provider into a served route;
+`docs/MATURITY.md` records their real status and
+`docs/HTTP_COMPOSITION.md` states the limitation.
+
 OpenAPI and browser documentation follow this one-way projection:
 
 ```text
@@ -290,6 +299,31 @@ Responsibilities:
 - schema generation;
 - diagnostics.
 
+### When a package has a public surface
+
+A distribution's `__init__.py` re-exports names and declares `__all__` only
+once its composition API has an explicit governed contract. Alpha exports
+remain provisional; public does not mean stable. Until then the
+package ships its implementation in underscore-prefixed modules and declares
+`__all__ = []`, which says "no public API yet" rather than leaving a reader to
+guess from an empty file.
+
+The current split:
+
+| Package | Surface | Why |
+| --- | --- | --- |
+| `agnara` | public | the released kernel |
+| `agnara-mcp` | public | MCP's tool and authorization shapes follow the protocol, not our design |
+| `agnara-telemetry` | public | two hook classes over an OpenTelemetry contract |
+| `agnara-cli` | public | supports the `agnara` console script |
+| `agnara-http` | public, provisional | seven composition exports implemented under ADR 0071; see `docs/HTTP_COMPOSITION.md` |
+| `agnara-a2a`, `agnara-events` | none yet | reserved namespaces holding a package boundary; adapters are Post-v0.1 |
+
+HTTP application examples and consumer tests use the public composition API.
+Internal adapter tests may still exercise private modules; that does not make
+those modules supported application imports. `agnara-a2a` and `agnara-events`
+retain empty public surfaces and do not claim implemented protocol support.
+
 ## 4. Allowed dependency graph
 
 ```text
@@ -323,7 +357,49 @@ Application
   triggers Compile
 ```
 
-Protocol packages register exposures against the application through extension interfaces.
+### The unified exposure model
+
+Protocol packages do **not** register exposures against the application
+object, and adding a second registry to it is how it would become the god
+object above. The direction is inverted: each adapter compiles its own surface
+and the project aggregates the results.
+
+```text
+Agnara.compile()                    →  FrozenCapabilityRegistry
+adapter compiles one named surface  →  SurfaceCompilation(surface, runtime, records)
+compile_exposures(capabilities, …)  →  FrozenExposureRegistry
+```
+
+`agnara.exposure` owns the neutral half. An exposure is identified by adapter
+kind, project-local surface name and adapter-local name — `http:public
+POST /refunds`, `mcp:agents billing.refund` — and the kernel treats the local
+name as opaque text. It validates identity, uniqueness, capability membership
+and order; it parses no path and applies no tool grammar.
+
+Two layers, and the split is the point:
+
+| Layer | Owns | Where |
+| --- | --- | --- |
+| Adapter | typed declaration, protocol validation, the dispatch artifact | `agnara-http`, `agnara-mcp` |
+| Kernel | neutral identity, aggregation, one frozen availability registry | `agnara.exposure` |
+
+An adapter returns both in one value, so a route table cannot be obtained
+without the records derived from it. Each adapter derives its records from its
+own compiled artifact rather than from the declarations that produced it, so
+neither can describe something the other does not hold.
+
+There is no open exposure registry. Aggregation takes the complete set of
+surface compilations and returns the frozen result, so late registration is
+structurally impossible rather than guarded by a flag.
+
+The registry is availability truth and nothing more. Availability, discovery,
+publication and authorization stay four separate facts: presence permits no
+invocation, and hiding an exposure from one viewer disables it for nobody. See
+ADR 0070 and RFC 0006.
+
+A third adapter joins by returning the same envelope. The kernel needs no
+change, which is the architectural test the model has to pass — not a reason
+to build one.
 
 ## 6. Startup compilation
 
@@ -485,8 +561,16 @@ Conceptual machine-readable shape:
 whose fields are names, declared metadata and canonical JSON text, built from
 a compiled application by `describe_app` and assembled by `snapshot`. The
 format is `agnara-introspection` and the version is `"0"`, which states that
-the contract is not yet stable. Exposures are contributed by whoever owns the
-adapters, and transport availability is derived from them. See ADR 0045.
+the contract is not yet stable. See ADR 0045.
+
+Exposures are derived from the frozen exposure registry rather than described
+a second time: `describe_app(..., exposures=<registry>)` reads the compiled
+availability that section 5 aggregates, and transport availability follows
+from it. Surface identity travels as canonical exposure detail during version
+0, which means `filter_snapshot` redacts deployment topology together with
+the rest of the detail. A handwritten mapping of capability id to descriptors
+is still accepted and is the legacy shape; it asserts what a caller remembers
+composing, which is exactly the drift ADR 0070 removed.
 
 The concept list above is executable. `tests/architecture` reads it out of
 this document and checks the model against it, and asserts that no descriptor
@@ -579,7 +663,7 @@ An app is a bounded context and registration boundary.
 
 The app itself is transport-neutral.
 
-Protocol adapters attach exposures to capabilities.
+Protocol adapters compile exposures for the capabilities a project selects, and the project aggregates them (section 5, ADR 0070).
 
 Default generated app structure is documented in `docs/SCAFFOLDING.md`.
 
@@ -602,18 +686,30 @@ Framework-specific transport code lives at adapter edges.
 Across apps:
 
 ```text
-payments ──► public application contract of users
+payments ──► users.application.contracts
 ```
 
 is allowed.
 
 ```text
 payments ──► users.adapters.http
+payments ──► users.application.capabilities
+payments ──► users.domain.models
 ```
 
-is forbidden.
+is forbidden. Another app's `application/contracts.py` is the only public
+cross-app Python import target. It contains transport-neutral types and
+Protocols the app offers; `application/ports.py` instead describes services
+the app requires and remains internal.
 
-Architecture tests should eventually detect common cross-app boundary violations.
+Importing a contract is not invoking a capability. Directly calling another
+app's handler bypasses its compiled policy, dependency, deadline, telemetry
+and failure boundaries. Internal capability invocation remains a separate
+research decision under initiative I8.
+
+Generated projects enforce these directions with a static architecture test
+that resolves both absolute and relative imports without importing application
+code. ADR 0066 records the complete rule and its alternatives.
 
 ## 15. CLI and scaffolding boundary
 

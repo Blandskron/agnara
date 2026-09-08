@@ -25,21 +25,24 @@ pip install --pre agnara
 Requires CPython 3.14 or newer. The core distribution has no third-party
 dependencies.
 
-`0.1.0a3` publishes the `agnara` core kernel only. The HTTP, OpenAPI, MCP and
-CLI adapters live in sibling packages in this repository and were not uploaded
-to PyPI in this release, so they are not installable with `pip` yet.
+`0.1.0a3` publishes the `agnara` core kernel only. The current `develop`
+candidate is `0.1.0a4.dev0`: it builds seven synchronized distributions and
+validates them together, but the six new PyPI names are not public until an
+authorized `0.1.0a4` release completes Trusted Publishing.
 
-## What changes in 0.1.0a3
+## What the 0.1.0a4 candidate adds
 
-The core adds protocol-neutral introspection and explicit discovery filtering,
-plus invocation identity and stricter telemetry-hook validation. The repository
-also adds MCP tool dispatch, authorized HTTP discovery, the read-only Explorer,
-CLI inspection and generators, and OpenTelemetry metrics and tracing bridges.
-These adapters are versioned and tested here; only the core is published.
+The application alpha proves that an external consumer can install the built
+artifacts as ordinary dependencies and compose direct, HTTP and MCP surfaces
+without private imports or monkey patches. It adds the public HTTP composition
+API, governed public surfaces for every distribution, consistent JSON schema
+materialization across transports, and strengthened policy, failure and
+observability conformance.
 
-See [the release notes](docs/releases/v0.1.0a3.md) for migration guidance and
-bounded conformance evidence. The install pin above becomes available when the
-release is published; `0.1.0a2` remains the previous published version.
+See the [draft release notes](docs/releases/v0.1.0a4.md), the
+[a3-to-a4 migration guide](docs/releases/v0.1.0a4.md#migration-guide), and the
+release status. The install command above remains
+the published version until the owner authorizes and completes the a4 release.
 
 ## Quick start
 
@@ -54,6 +57,7 @@ from agnara.execution import (
     Invocation,
     invoke_result,
 )
+from agnara.policy import Principal
 
 app = Agnara("billing")
 
@@ -82,6 +86,7 @@ async def main() -> None:
                 metadata={},
             ),
             DIContainer(dependencies),
+            principal=Principal("quickstart", scopes={"billing:write"}),
         ),
     )
     print(outcome)
@@ -303,30 +308,61 @@ The architecture must be safe under conventional CPython and designed consciousl
 
 ```text
 Status:         Alpha (experimental)
-Release target: v0.1.0a3 (publication pending)
+Latest release: v0.1.0a3 (PyPI, core distribution only)
+Next candidate: v0.1.0a4 (seven synchronized distributions)
 ```
 
-`v0.1.0a2` is the first published release: an architectural proof that Agnara
-installs and runs as a real Python distribution. It is not production-ready,
-the public API may change without a deprecation cycle, and only the `agnara`
-core distribution is on PyPI.
+`v0.1.0a3` is the current release, following `v0.1.0a2`, which was the first
+version to reach PyPI. It is not production-ready, the public API may change
+without a deprecation cycle, and only the `agnara` core distribution is
+published. The `v0.1.0a4` candidate makes the six adapter distributions part
+of the explicit publication set; none is published before owner authorization.
 
 The repository should not claim production readiness, benchmark leadership, security guarantees, or protocol conformance until those claims are backed by automated evidence.
 
-See `CHANGELOG.md` for the released record and the exact published scope.
+See `CHANGELOG.md` for the released record and the exact published scope, and
+`docs/MATURITY.md` for what each subsystem actually supports today. Several
+sections below describe intended design rather than shipped behaviour and say
+so; the maturity table is the authoritative answer when they are unclear.
 
 ## Documentation order for contributors and agents
 
 Read in this order:
 
-1. `VISION.md`
-2. `PRINCIPLES.md`
-3. `ARCHITECTURE.md`
-4. `docs/rfc/0001-capability-runtime.md`
+1. `VISION.md` — why Agnara exists
+2. `PRINCIPLES.md` — the rules a decision must not break
+3. `ARCHITECTURE.md` — how the system is structured today
+4. `docs/MATURITY.md` — **what actually exists**, per subsystem
 5. `docs/API_DESIGN.md`
-6. `BACKLOG.md`
-7. `QUALITY_GATES.md`
-8. `AGENTS.md`
+6. `docs/TARGET_ARCHITECTURE.md` — where the structure is going, and the gaps
+7. `docs/INITIATIVES.md` — what to build, in dependency order
+8. `BACKLOG.md` — decomposed items ready to implement
+9. `QUALITY_GATES.md`
+10. `AGENTS.md`
+
+`docs/DOCUMENTATION_MAP.md` records which document owns which kind of truth.
+Before trusting a status you read anywhere else, check `docs/MATURITY.md`:
+several subsystems in this README are described as designs rather than
+shipped behaviour, and that file is the one that says which is which.
+
+## Serving capabilities over HTTP
+
+```python
+from agnara_http import Binding, BindingSource, Http, OpenApiInfo
+
+http = Http("public")
+http.get("/orders/{order_id}", show_order, Binding("order_id", BindingSource.PATH))
+asgi = http.compile(app.compile(), openapi=OpenApiInfo("Shop API", "1.0.0"))
+```
+
+`asgi` is an ASGI 3 application; hand it to any ASGI server. Seven public
+names cover the whole surface, and `docs/HTTP_COMPOSITION.md` is the guide —
+including what `0.1.0a4` does not expose yet. `examples/http_service.py` is a
+runnable version.
+
+`agnara-http` is not published on PyPI yet. It is part of the seven-package
+`0.1.0a4` candidate and becomes installable from the public index only after
+the authorized release publishes it.
 
 ## HTTP documentation and capability discovery
 
@@ -348,7 +384,6 @@ remains available without parsing or enabling any HTML UI.
 
 The design and security boundaries are specified in:
 
-- `docs/rfc/0003-http-documentation-and-capability-explorer.md`
 - `docs/adr/0018-replaceable-documentation-providers.md`
 - `docs/REFERENCE_RESEARCH.md`
 
@@ -412,7 +447,6 @@ Read:
 - `docs/CLI_SPEC.md`
 - `docs/SCAFFOLDING.md`
 - `docs/PROJECT_MANIFEST.md`
-- `docs/rfc/0002-project-app-scaffolding.md`
 
 ## Agentic development lifecycle
 
@@ -438,7 +472,7 @@ Read:
 
 - `GIT_WORKFLOW.md`
 - `AGENT_OPERATING_MODEL.md`
-- `FIRST_AGENT_PROMPT.md`
+- `AGENTS.md`
 
 Agents are expected to leave a normal, auditable GitHub trail that remains understandable to human maintainers.
 

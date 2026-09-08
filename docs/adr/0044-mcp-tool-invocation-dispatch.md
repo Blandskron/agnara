@@ -13,28 +13,22 @@ tested, but no code connects them: `tools/call` still answers
 the conformance matrix cannot claim a tool surface that cannot be called.
 
 Two facts constrain the design. Declared `scopes` are metadata and authorize
-nothing on their own (ADR 0008), so a compiled plan carries no scope policy
-unless an application attached one. Discovery already filters the tool list by
-those declared scopes, which is visibility rather than authorization
-(`AGENTS.md`). Connecting invocation without closing that gap would let a
-caller execute a capability that its own `tools/list` response hides.
+nothing on their own (ADR 0008), while discovery filtering is visibility
+rather than authorization. ADR 0077 later closed the cross-surface gap by
+compiling their restrictive `ScopePolicy` into every common execution plan.
 
 ## Decision
 
 The adapter exports `McpToolInvoker`, `build_mcp_server` and
 `McpInvocationDefinitionError`. `McpToolInvoker` compiles one immutable route
-table at construction — exposure name to compiled plan plus one core
-`ScopePolicy` built from that capability's declared scopes — and dispatch does
-a mapping lookup, one authorization evaluation, one `invoke_result` call and
-one `project_mcp_result` call. It holds no per-request state, so one instance
-serves every concurrent request on a connection.
+table from exposure name to compiled plan. Dispatch does a mapping lookup, one
+`invoke_result` call and one `project_mcp_result` call. It holds no per-request
+state, so one instance serves every concurrent request on a connection.
 
-The invoker enforces declared scopes with core's own `ScopePolicy` before any
-dependency is resolved or handler runs. That guard runs first and never
-replaces plan policies: a capability that also attached policies keeps them,
-and core evaluates them inside `invoke_result` as usual. The adapter therefore
-adds no policy semantics of its own; it applies an existing core policy to a
-declaration the transport already treats as meaningful.
+The common plan enforces declared scopes with core's own `ScopePolicy` before
+any application policy, materialization, dependency or handler effect. The
+adapter therefore owns no policy ordering and cannot diverge from HTTP or
+direct runtime semantics.
 
 Protocol errors and capability failures stay separate. An unknown tool name,
 task-augmented execution and any attempt to resume a call raise `MCPError`
@@ -63,8 +57,9 @@ advertised capabilities follow the handlers actually registered.
 
 ## Alternatives
 
-- Trust core policies alone: rejected because declared scopes attach no
-  policy, so a capability hidden from `tools/list` would still execute.
+- Trust only application-attached policies: rejected because a capability
+  hidden from `tools/list` would still execute. ADR 0077 instead makes the
+  declared-scope restriction part of the common plan.
 - Filter invocation by the discovery visibility set: rejected because that
   makes hiding into authorization and reports a denial as a missing tool.
 - Map denials and invalid input to JSON-RPC errors: rejected for the reason

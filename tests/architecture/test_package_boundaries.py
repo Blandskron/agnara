@@ -24,9 +24,11 @@ from tests.architecture.boundaries import (
     CORE_DISTRIBUTION,
     CORE_IMPORT_NAME,
     DISTRIBUTIONS,
+    ECOSYSTEM_INTEGRATIONS,
     FORBIDDEN_IN_CORE,
     WORKSPACE_ROOT,
     _file_imports,
+    _normalized_requirement,
     _requirement_name,
     declared_dependencies,
     declared_workspace_dependencies,
@@ -66,6 +68,32 @@ def test_core_does_not_import_forbidden_dependencies() -> None:
     assert not offenders, (
         "agnara imports a dependency forbidden by AGENTS.md and ADR 0003:\n"
         + "\n".join(f"  {imp.where()} imports {imp.module!r}" for imp in offenders)
+    )
+
+
+@pytest.mark.parametrize("distribution", sorted(DISTRIBUTIONS))
+def test_no_distribution_declares_an_ecosystem_integration(distribution: str) -> None:
+    """ADR 0068: ecosystem interoperability belongs to `0.1.0b1`.
+
+    A framework integration does not arrive as an import. It arrives as a line
+    in a ``pyproject.toml``, and by the time anything imports it the decision
+    has already been made. This is the rule that makes the ``0.1.0a4`` and
+    ``0.1.0a5`` guardrails in ``docs/releases/RELEASE_PLAN.md`` fail loudly
+    rather than being remembered.
+
+    ``docs/INTEROPERABILITY.md`` invariant 3 is the general form: every
+    external framework is optional. A declared dependency is not optional.
+    """
+    offenders = sorted(
+        dep
+        for dep in declared_dependencies(distribution)
+        if _normalized_requirement(dep) in ECOSYSTEM_INTEGRATIONS
+    )
+    assert not offenders, (
+        f"{distribution} declares an ecosystem integration as a dependency: {offenders}. "
+        "ADR 0068 gives these to 0.1.0b1, behind a port and an optional "
+        "dependency group. Removing an entry from ECOSYSTEM_INTEGRATIONS is a "
+        "release decision recorded in an ADR, not a test fix."
     )
 
 
@@ -214,7 +242,8 @@ def test_adapter_does_not_import_a_sibling_adapter(dist_name: str) -> None:
 def test_adapter_declares_only_core_as_a_workspace_dependency(dist_name: str) -> None:
     """Packaging metadata must agree with the import rule."""
     declared = declared_workspace_dependencies(dist_name)
-    assert declared == [CORE_DISTRIBUTION], (
+    normalized = [_requirement_name(requirement) for requirement in declared]
+    assert normalized == [CORE_DISTRIBUTION], (
         f"{dist_name} must declare exactly one workspace dependency "
         f"({CORE_DISTRIBUTION}); found {declared}"
     )
@@ -294,7 +323,8 @@ def test_adapter_may_import_the_core(dist_name: str) -> None:
     """
     siblings = {DISTRIBUTIONS[other] for other in ADAPTER_DISTRIBUTIONS if other != dist_name}
     assert CORE_IMPORT_NAME not in siblings
-    assert CORE_DISTRIBUTION in declared_dependencies(dist_name)
+    declared = {_requirement_name(requirement) for requirement in declared_dependencies(dist_name)}
+    assert CORE_DISTRIBUTION in declared
 
 
 #: Browser documentation renderers and their runtimes. ADR 0018 keeps every

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from agnara_cli._generate import (
@@ -20,6 +21,7 @@ from agnara_cli._generate import (
     plan_json,
     render_plan,
 )
+from agnara_cli._names import validated_identifier
 from agnara_cli._templates import project_files
 
 __all__ = ["add_project_parser", "run_project_create"]
@@ -67,6 +69,13 @@ def add_project_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentP
     create.set_defaults(handler=run_project_create)
 
 
+#: Names a generated project cannot be called. ``src/<name>`` is first on the
+#: generated project's import path, so a project named after the framework or
+#: a standard-library module would shadow it inside its own tests; ``tests``
+#: and ``src`` are directories the layout already uses.
+_RESERVED = frozenset({"agnara", "tests", "src"}) | frozenset(sys.stdlib_module_names)
+
+
 def _validated_name(name: str) -> str:
     """Refuse a name that could not become a package, an app or a manifest.
 
@@ -75,17 +84,15 @@ def _validated_name(name: str) -> str:
     ``[project] name``. Checking it here means a bad name fails before any
     directory is created rather than producing a project that will not load.
     """
-    if not name.isidentifier():
-        raise GenerationError(
-            f"invalid project name {name!r}: it becomes a package and an import "
-            "path, so it must be a single Python identifier"
-        )
-    if name != name.lower():
-        raise GenerationError(
-            f"invalid project name {name!r}: use lower_case, so the package name "
-            "matches the import path on case-insensitive filesystems"
-        )
-    return name
+    return validated_identifier(
+        name,
+        subject="project name",
+        reserved=_RESERVED,
+        reserved_because=(
+            "the generated package would shadow the framework, a standard-library "
+            "module or a directory the layout already uses"
+        ),
+    )
 
 
 def _plan(arguments: argparse.Namespace) -> GenerationPlan:

@@ -56,9 +56,35 @@ def refund(payment_id: str, ledger: Ledger, amount_cents: int = 0) -> str:
 def health() -> str:
     """Report service health."""
     return "ok"
+
+
+class Container:
+    """An application assembled inside a container, reached by a dotted path."""
+
+
+container = Container()
+container.app = app
+container.registry = registry
+container.depth = Container()
+container.depth.app = app
+none_registry = None
 '''
 
 EXPLODING = "raise RuntimeError('module import failed on purpose')\n"
+
+SILENT = "raise RuntimeError()\n"
+
+EXITING = "import sys\nsys.exit(3)\n"
+
+RAISING_PROPERTY = """
+class Holder:
+    @property
+    def app(self):
+        raise KeyError("boom")
+
+
+holder = Holder()
+"""
 
 
 @pytest.fixture
@@ -66,8 +92,11 @@ def project(tmp_path: Path) -> Iterator[Path]:
     """A directory holding importable target modules, isolated per test."""
     (tmp_path / "billing.py").write_text(APPLICATION, encoding="utf-8")
     (tmp_path / "exploding.py").write_text(EXPLODING, encoding="utf-8")
+    (tmp_path / "silent.py").write_text(SILENT, encoding="utf-8")
+    (tmp_path / "exiting.py").write_text(EXITING, encoding="utf-8")
+    (tmp_path / "raising_property.py").write_text(RAISING_PROPERTY, encoding="utf-8")
     yield tmp_path
-    for name in ("billing", "exploding"):
+    for name in ("billing", "exploding", "silent", "exiting", "raising_property"):
         sys.modules.pop(name, None)
 
 
@@ -238,7 +267,7 @@ def test_an_empty_result_is_still_a_valid_json_document(
         (":app", "expected 'module:attribute'"),
         ("billing:", "expected 'module:attribute'"),
         ("bill ing:app", "is not a module path"),
-        ("billing:not an attribute", "is not an attribute name"),
+        ("billing:not an attribute", "is not an attribute path"),
     ],
 )
 def test_a_malformed_target_is_rejected_before_anything_is_imported(
@@ -271,16 +300,47 @@ def test_a_target_module_that_raises_reports_the_reason(
 
     assert code == EXIT_FAILED
     assert "importing 'exploding' failed" in err
-    assert "module import failed on purpose" in err
+    assert "RuntimeError: module import failed on purpose" in err
+    assert "Traceback" not in err
+
+
+def test_a_target_module_that_raises_without_a_message_still_names_the_error(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``raise RuntimeError()`` has an empty ``str``; the diagnostic must not
+    end in "failed:" with nothing after it."""
+    code, _, err = run(project, capsys=capsys, target="silent:app")
+
+    assert code == EXIT_FAILED
+    assert "importing 'silent' failed: RuntimeError" in err
+    assert "Traceback" not in err
+
+
+def test_a_target_module_that_exits_does_not_decide_the_exit_code(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    code, _, err = run(project, capsys=capsys, target="exiting:app")
+
+    assert code == EXIT_FAILED
+    assert "importing 'exiting' failed: the module exited with 3" in err
+
+
+def test_an_attribute_that_raises_when_read_is_a_diagnostic_not_a_traceback(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    code, _, err = run(project, capsys=capsys, target="raising_property:holder.app")
+
+    assert code == EXIT_FAILED
+    assert "reading attribute 'holder.app' failed at 'app': KeyError: 'boom'" in err
     assert "Traceback" not in err
 
 
 @pytest.mark.parametrize(
     ("target", "arguments", "expected"),
     [
-        ("billing:absent", (), "defines no attribute 'absent'"),
-        ("billing:not_an_app", (), "is a object, not an Agnara application"),
-        ("billing:app", ("--dependencies", "absent"), "defines no attribute 'absent'"),
+        ("billing:absent", (), "has no attribute 'absent'"),
+        ("billing:registry", (), "is a DIRegistry, not an Agnara application"),
+        ("billing:app", ("--dependencies", "absent"), "has no attribute 'absent'"),
         ("billing:app", ("--dependencies", "not_a_registry"), "not a DIRegistry"),
     ],
 )
@@ -308,6 +368,83 @@ def test_a_capability_that_cannot_compile_reports_why(
 
     assert code == EXIT_FAILED
     assert "compiling 'billing' failed" in err
+
+
+def test_a_dotted_target_resolves_an_application_inside_a_container(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """An app assembled inside a container is a target, not a refactor."""
+    code, out, _ = run(
+        project, "--dependencies", "registry", capsys=capsys, target="billing:container.app"
+    )
+
+    assert code == EXIT_OK
+    assert "billing.refund" in out
+
+
+def test_a_dotted_path_may_be_more_than_two_segments(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    code, out, _ = run(
+        project,
+        "--dependencies",
+        "registry",
+        capsys=capsys,
+        target="billing:container.depth.app",
+    )
+
+    assert code == EXIT_OK
+    assert "billing.refund" in out
+
+
+def test_a_dotted_registry_is_resolved_the_same_way(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    code, out, _ = run(project, "--dependencies", "container.registry", capsys=capsys)
+
+    assert code == EXIT_OK
+    assert "billing.refund" in out
+
+
+def test_a_dotted_path_names_the_segment_that_failed(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Half a path being wrong is the whole reason to report which half."""
+    code, _, err = run(project, capsys=capsys, target="billing:container.missing")
+
+    assert code == EXIT_FAILED
+    assert "container.missing" in err
+    assert "'missing'" in err
+
+
+def test_a_registry_attribute_that_is_none_reports_its_type(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """`None` is a value the module defines, not an attribute it lacks.
+
+    The resolver distinguishes the two through `_MISSING`, so an attribute
+    holding `None` must be refused for being the wrong type rather than
+    reported as absent.
+    """
+    code, _, err = run(project, "--dependencies", "none_registry", capsys=capsys)
+
+    assert code == EXIT_FAILED
+    assert "not a DIRegistry" in err
+    assert "has no attribute" not in err
+
+
+def test_a_compile_failure_without_a_registry_suggests_dependencies(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The likeliest cause is named, without repeating core's wording.
+
+    Core cannot tell an unbound dependency from an unsupported annotation, so
+    the CLI adds the hint it can: a registry was never named.
+    """
+    code, _, err = run(project, capsys=capsys)
+
+    assert code == EXIT_FAILED
+    assert "--dependencies" in err
 
 
 def test_an_unknown_command_line_is_a_usage_error() -> None:

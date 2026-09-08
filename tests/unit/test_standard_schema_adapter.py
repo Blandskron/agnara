@@ -17,6 +17,8 @@ from agnara.schema import (
     LiteralSchema,
     TupleSchema,
     UnionSchema,
+    materialize_json,
+    serialize_json,
 )
 
 
@@ -328,3 +330,95 @@ class TestSupportsAndImmutability:
         schema = adapter.compile(annotation)
         with pytest.raises(FrozenInstanceError):
             schema.changed = True  # ty: ignore[unresolved-attribute]
+
+
+class TestSerializeJson:
+    """`serialize_json` is the one output rule every JSON transport shares."""
+
+    def test_projects_dataclasses_enums_mappings_and_sequences(self) -> None:
+        from collections import OrderedDict
+        from dataclasses import dataclass
+
+        @dataclass(frozen=True, slots=True)
+        class Receipt:
+            identifier: str
+            amounts: tuple[int, ...]
+            colour: Colour
+
+        value = OrderedDict(
+            receipt=Receipt("r-1", (3, 2), Colour.RED), flags=[True, None, 1.5], name="Ñ"
+        )
+        assert serialize_json(value) == {
+            "receipt": {"identifier": "r-1", "amounts": [3, 2], "colour": "red"},
+            "flags": [True, None, 1.5],
+            "name": "Ñ",
+        }
+
+    def test_string_and_integer_enum_members_become_plain_values(self) -> None:
+        projected = serialize_json([Colour.RED, Priority.HIGH])
+        assert projected == ["red", Priority.HIGH.value]
+        assert type(projected[0]) is str
+        assert type(projected[1]) is int
+
+    def test_returns_detached_plain_data(self) -> None:
+        source = {"items": [1, 2]}
+        projected = serialize_json(source)
+        assert projected == source
+        assert projected is not source
+        assert projected["items"] is not source["items"]
+
+    @pytest.mark.parametrize(
+        ("value", "message", "path"),
+        [
+            (float("nan"), "non-finite float is not JSON", ()),
+            ({"n": float("inf")}, "non-finite float is not JSON", ("n",)),
+            ({1: "value"}, "JSON object keys must be strings", ()),
+            ({"value": object()}, "unsupported output type object", ("value",)),
+            ([b"binary"], "unsupported output type bytes", (0,)),
+            ({"set"}, "unsupported output type set", ()),
+        ],
+    )
+    def test_rejects_values_outside_json_with_their_location(
+        self, value: object, message: str, path: tuple[str | int, ...]
+    ) -> None:
+        with pytest.raises(ValidationError) as caught:
+            serialize_json(value)
+        assert caught.value.message == message
+        assert caught.value.path == path
+
+    def test_rejects_cycles_but_accepts_shared_values(self) -> None:
+        shared = [1]
+        assert serialize_json({"a": shared, "b": shared}) == {"a": [1], "b": [1]}
+        cyclic: list[Any] = []
+        cyclic.append({"nested": cyclic})
+        with pytest.raises(ValidationError) as caught:
+            serialize_json(cyclic)
+        assert caught.value.message == "cyclic output value"
+        assert caught.value.path == (0, "nested")
+
+    def test_bounds_output_depth(self) -> None:
+        deep: object = None
+        for _ in range(128):
+            deep = [deep]
+        assert serialize_json(deep) is not None
+        with pytest.raises(ValidationError, match="deeper than 128 levels"):
+            serialize_json([deep])
+
+
+class TestMaterializeNumbers:
+    def test_a_json_integer_materializes_as_the_declared_float(self) -> None:
+        schema = StandardSchemaAdapter().compile(float)
+        assert materialize_json(schema, 3) == 3.0
+        assert type(materialize_json(schema, 3)) is float
+        assert schema.validate(materialize_json(schema, 3)) == 3.0
+
+    def test_a_boolean_never_widens_to_a_float(self) -> None:
+        schema = StandardSchemaAdapter().compile(float)
+        assert materialize_json(schema, True) is True
+        with pytest.raises(ValidationError, match="expected float, got bool"):
+            schema.validate(materialize_json(schema, True))
+
+    def test_an_integer_input_still_refuses_a_float(self) -> None:
+        schema = StandardSchemaAdapter().compile(int)
+        with pytest.raises(ValidationError, match="expected int, got float"):
+            schema.validate(materialize_json(schema, 3.0))

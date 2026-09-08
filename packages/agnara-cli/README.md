@@ -2,8 +2,15 @@
 
 Project introspection and scaffolding CLI. Owns project/app generators, templates and diagnostics.
 
+This distribution is built and versioned with the synchronized workspace
+set. Which versions exist on an index is answered by its PyPI project page,
+not by this file: a README ships inside the artifact and cannot describe
+the state of a publication that happens after it is built.
+
+It installs the `agnara` console script.
+
 - Import package: `agnara_cli`
-- Depends on: `agnara-core`
+- Depends on: the exact synchronized `agnara` version
 - Must not import: sibling adapter packages
 
 See `ARCHITECTURE.md` sections 3 and 4 for the package boundaries and the
@@ -11,9 +18,13 @@ allowed dependency graph.
 
 ## Status
 
-`agnara inspect`, `agnara graph`, `agnara schema openapi` and
-`agnara context` are implemented. Project and app scaffolding and
-`agnara doctor` remain ahead in the backlog.
+`agnara project create`, `agnara app create` with its `app-api`, `app-mcp`,
+`app-agent` and `app-worker` profile shorthands, `agnara apps`,
+`agnara inspect`, `agnara graph`, `agnara schema openapi` and `agnara context`
+are implemented. `agnara doctor` remains ahead in the backlog.
+
+`agnara --help` lists the commands the installed version actually has, which is
+the answer to trust over any list written down elsewhere.
 
 ## `agnara inspect`
 
@@ -29,6 +40,13 @@ from OpenAPI.
 
 Importing the target executes the module that defines it. A malformed target
 is rejected before any import happens.
+
+The attribute may be a dotted path, so an application held inside a container
+or a factory result needs no rearranging to be inspectable:
+
+```bash
+agnara inspect billing.bootstrap:container.app --dependencies container.registry
+```
 
 `--visibility` selects `full` (default), `agent` or `identity`; `--as-scope`
 simulates a viewer's scopes; `--hide` removes named capabilities. Offline

@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import json
-import math
-from collections.abc import Awaitable, Callable, Mapping
-from dataclasses import dataclass, fields, is_dataclass
-from enum import Enum
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from typing import Any
 
+from agnara.errors import ValidationError
 from agnara.execution import Failure, Success
+from agnara.schema import serialize_json
 
 type _Message = dict[str, Any]
 type _Send = Callable[[_Message], Awaitable[None]]
@@ -53,7 +53,7 @@ def _serialize_success(result: Success[Any]) -> _SerializedResponse:
     if result.value is None:
         return _SerializedResponse(status=204, headers=(), body=b"")
 
-    plain = _to_json_value(result.value, set(), path="$")
+    plain = _to_json_value(result.value, path="$")
     try:
         body = json.dumps(
             plain,
@@ -103,45 +103,23 @@ async def _send_response(
     )
 
 
-def _to_json_value(value: object, active: set[int], *, path: str) -> Any:
-    if value is None or isinstance(value, str | bool | int):
-        return value
-    if isinstance(value, float):
-        if not math.isfinite(value):
-            raise _ResponseSerializationError(f"{path}: non-finite float is not JSON")
-        return value
-    if isinstance(value, Enum):
-        return _to_json_value(value.value, active, path=path)
+def _to_json_value(value: object, *, path: str) -> Any:
+    """Project one output value through the core rule shared with every transport.
 
-    track = isinstance(value, Mapping | list | tuple) or (
-        is_dataclass(value) and not isinstance(value, type)
-    )
-    identity = id(value)
-    if track:
-        if identity in active:
-            raise _ResponseSerializationError(f"{path}: cyclic output value")
-        active.add(identity)
+    ``path`` names the value in the diagnostic (``$`` for a response body,
+    ``$.details`` for problem details); the location core reports is appended
+    to it, so a defect in a nested field is still named for the operator.
+    """
     try:
-        if isinstance(value, Mapping):
-            plain: dict[str, Any] = {}
-            for key, item in value.items():
-                if not isinstance(key, str):
-                    raise _ResponseSerializationError(f"{path}: JSON object keys must be strings")
-                plain[key] = _to_json_value(item, active, path=f"{path}.{key}")
-            return plain
-        if isinstance(value, list | tuple):
-            return [
-                _to_json_value(item, active, path=f"{path}[{index}]")
-                for index, item in enumerate(value)
-            ]
-        if is_dataclass(value) and not isinstance(value, type):
-            return {
-                field.name: _to_json_value(
-                    getattr(value, field.name), active, path=f"{path}.{field.name}"
-                )
-                for field in fields(value)
-            }
-    finally:
-        if track:
-            active.remove(identity)
-    raise _ResponseSerializationError(f"{path}: unsupported output type {type(value).__name__}")
+        return serialize_json(value)
+    except ValidationError as error:
+        raise _ResponseSerializationError(
+            f"{_json_path(path, error.path)}: {error.message}"
+        ) from None
+
+
+def _json_path(root: str, segments: tuple[str | int, ...]) -> str:
+    rendered = root
+    for segment in segments:
+        rendered += f"[{segment}]" if isinstance(segment, int) else f".{segment}"
+    return rendered
