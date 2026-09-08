@@ -25,7 +25,7 @@ without being published. See the `0.1.0a2` scope note below.
   scoped to a4 and is not the beta security program; the document ends with
   what the audit did not do. One finding is open and recorded rather than
   fixed: `scopes=` is enforced over MCP and ignored over HTTP, which is an
-  architectural decision rather than an adapter patch ([#308]).
+  architectural decision rather than an adapter patch ([#308], [#309]).
 
 - One exposure model governs every protocol adapter. `agnara.exposure` owns
   neutral identity — adapter kind, project-local surface name, adapter-local
@@ -873,6 +873,7 @@ under `0.1.0a2` instead.
 [#280]: https://github.com/Blandskron/agnara/issues/280
 [#282]: https://github.com/Blandskron/agnara/issues/282
 [#286]: https://github.com/Blandskron/agnara/issues/286
+[#309]: https://github.com/Blandskron/agnara/issues/309
 [#308]: https://github.com/Blandskron/agnara/issues/308
 [#293]: https://github.com/Blandskron/agnara/issues/293
 [#288]: https://github.com/Blandskron/agnara/issues/288

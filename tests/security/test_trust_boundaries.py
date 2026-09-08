@@ -125,7 +125,7 @@ def test_declared_scopes_are_not_enforced_over_http() -> None:
     nothing by itself. ``agnara-mcp`` nevertheless compiles a core
     ``ScopePolicy`` from the same declaration, so one capability is enforced
     on MCP and unenforced over HTTP, and nothing in the declaration says so.
-    See ``docs/THREAT_MODEL.md`` (H-3) and the tracking issue.
+    See ``docs/THREAT_MODEL.md`` finding H-3, tracked as issue #309.
 
     This records what the surface does today. Making HTTP enforce the
     declaration must fail this test rather than pass silently.

@@ -115,7 +115,7 @@ because there is no decompression.
 | --- | --- | --- |
 | H-1 | P1 | Fixed. A JSON body nested beyond the decoder's stack raised `RecursionError` out of the dispatcher. 80 KB — well inside the 1 MiB default — was enough, from an unauthenticated client, before any capability ran. The dispatcher sent nothing and the ASGI server decided what the client and the operator's log received, bypassing the reviewed problem mapping and its redaction. Now a 400 naming the reason without echoing the body. |
 | H-2 | P1 | Fixed. The same class at the other end: a value nested deeper than the interpreter can walk raised `RecursionError` out of response serialization, reachable by a capability that echoes an accepted-but-deep body. Now the existing last-resort redacted 500. |
-| H-3 | P1 | **Open — recorded, not fixed.** `scopes=` on a capability is enforced over MCP and ignored over HTTP. See below. |
+| H-3 | P1 | **Open — recorded, not fixed.** `scopes=` on a capability is enforced over MCP and ignored over HTTP. Tracked as [#309](https://github.com/Blandskron/agnara/issues/309). See below. |
 | H-4 | P2 | Fixed. `_read_body` bounded total bytes but not the number of events. An empty chunk moves `max_body_bytes` no closer to its limit, so a client sending them with `more_body` set held a worker open indefinitely and grew a list without bound. Empty events are now capped. |
 | H-5 | P3 | Fixed. `request_timeout` was documented as a per-request deadline. It starts after binding, so it bounds execution and not how long a client may take to send a body. The documentation now says which. |
 
