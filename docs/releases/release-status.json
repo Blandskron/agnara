@@ -5,16 +5,14 @@
   "previous_release": "0.1.0a3",
   "status": "IN_PROGRESS",
   "assessed_on": "2026-09-08",
-  "assessed_commit": "575d944a481f38598a290df8ba8c6cf0c72cbc2d",
+  "assessed_commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
   "blocked_reason": null,
   "notes": [
-    "Status is recomputed by scripts/check_release_readiness.py. Automated gates are re-derived from the repository and are never read from this file.",
-    "Evidence expires when a file it declares under 'covers' changes between its recorded commit and HEAD. Evidence with no 'covers' expires on any commit change.",
-    "RELEASE_PLAN.md states the first 0.1.0a4 gate as one automated gate, \"Every 0.1.0a3 gate still satisfied\". It is decomposed here into the individual 0.1.0a3 gates, because the checker requires every automated gate to have a real implementation and an aggregate over sibling gates would be circular.",
-    "A4-13 re-established the engineering, packaging and supported-platform gates on candidate 7bd2525d4c68be63fd9f347c7dd3c6de1c847f30. A4-14 then validated a compact external consumer in a clean environment. Commit 45d09979c042124932ec67cc45b90bc194e09994 adds only release documentation and re-runs the affected documentation/public-import checks; the evidence records declare the paths whose changes invalidate them.",
-    "ADR 0068 inserts 0.1.0a5 between 0.1.0a4 and 0.1.0b1 and fixes what each release owns. Only the current target carries gates in this file; the 0.1.0a5 and 0.1.0b1 gates live in RELEASE_PLAN.md until their target becomes current.",
-    "ADR 0071 gives agnara-http a public composition API. A4-14 exercised HTTP and MCP from an external installed application without internal imports or monkey patches. The six adapter names remain unpublished and require Pending Trusted Publisher verification before owner-authorized release.",
-    "An independent full audit on 2026-09-08 re-derived every automated gate, re-ran the complete engineering baseline, rebuilt the seven wheels and seven sdists, and re-validated external consumption from a wheel-only environment outside the checkout. It found one consumer-facing documentation deficiency -- MCP composition documented 'plans' without showing how to build it -- and fixed it rather than working around it, which invalidated the twelve evidence records covering packages/. Those records are re-anchored to that commit with the re-validation evidence. The locked runtime audit was reproduced with pip-audit 2.10.1 over 29 dependencies with zero known vulnerabilities. The six Pending Trusted Publishers and the pypi environment protection posture cannot be verified from this repository and remain owner actions."
+    "Status is recomputed by scripts/check_release_readiness.py; automated outcomes are not trusted from this file. Seven owner decisions remain pending.",
+    "Evidence expires when its covered paths change. Final A4 closure validated develop 75af82b93453f99fce2136c4bdb3436bb1c2bf16; the evidence-only follow-up changes no implementation, dependency, test or workflow.",
+    "Initial candidate 1773f3b0d2b34b69dc15a4b35f64a130a1ca87d8 had sixteen stale evidence gates. PR #333 fixed HTTP singleton teardown and release-tag ancestry, corrected MCP and CLI documentation, and passed full revalidation. See v0.1.0a4.md.",
+    "All seven distributions remain 0.1.0a4.dev0 on develop. A separate external version-cut rehearsal built and installed exactly 0.1.0a4 for all seven; it was not a release or upload.",
+    "A2A and events are reserved namespaces with no public runtime in A4. No publication/consumption runtime is claimed for them. PyPI publisher verification remains owner issue #328."
   ],
   "gates": [
     {
@@ -73,9 +71,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "575d944a481f38598a290df8ba8c6cf0c72cbc2d",
-        "command": "uv run pytest; required CI including Python/Actions CodeQL",
-        "result": "A4-R3: local CPython 3.14.6 full suite 3469 passed, 53 expected skips; documentation/architecture/release selection 1125 passed, 22 expected skips. Linux/macOS/Windows and browser CI jobs passed for the source tree. Evidence: https://github.com/Blandskron/agnara/actions/runs/34231370311 Re-validated independently on 2026-09-08, CPython 3.14.6 on Windows, at this commit: uv sync --locked, ruff check, ruff format --check and ty check all clean; full suite 3470 passed with 53 expected skips. Required cross-platform CI has not run on this commit yet. The delta from the previously CI-verified candidate is one package README, one entry in tests/docs/test_documented_examples.py and one CHANGELOG entry, so CI must re-confirm on the pull request before the owner accepts this candidate.",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. Skips: 31 browser tests run separately in CI, 22 inapplicable export-mutation cases.",
         "covers": [
           "packages",
           "tests",
@@ -96,9 +94,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "575d944a481f38598a290df8ba8c6cf0c72cbc2d",
-        "command": "CI uv build --all-packages and external installed-distribution gate",
-        "result": "A4-R3 CI Build and install passed for all seven candidate distributions, preserving exact core pins and installing outside the checkout. Evidence: https://github.com/Blandskron/agnara/actions/runs/34231370311 Rebuilt at this commit: uv build --all-packages produced exactly seven wheels and seven sdists, and scripts/check_distributions.py --dist accepted the artifact set, metadata, archive contents and entry points. Every wheel carries py.typed, its LICENSE under .dist-info/licenses/, the exact first-party pin and no development dependency. Required cross-platform CI has not run on this commit yet. The delta from the previously CI-verified candidate is one package README, one entry in tests/docs/test_documented_examples.py and one CHANGELOG entry, so CI must re-confirm on the pull request before the owner accepts this candidate.",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "Seven wheels and seven sdists built from this source; check_distributions accepted metadata, dependencies, Python >=3.14, licenses, README, package contents and public imports. An external version-cut rehearsal also built all fourteen artifacts at exactly 0.1.0a4. https://github.com/Blandskron/agnara/actions/runs/34266732824",
         "covers": [
           "packages",
           "scripts",
@@ -115,9 +113,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "575d944a481f38598a290df8ba8c6cf0c72cbc2d",
-        "command": "external CPython 3.14 wheel install and installed-artifact smoke",
-        "result": "A4-13 and A4-14 installed all seven wheels outside the checkout with no editable or workspace resolution; installed CLI and public core/application smokes passed. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053 A fresh external CPython 3.14 environment installed the seven rebuilt wheels with --no-index, no editable install, no workspace resolution and no checkout on sys.path; a 21-check clean-room consumer and a 13-probe adversarial security suite both passed under python -I. scripts/check_distributions.py --require-installed accepted all seven installed distributions and confirmed nothing resolved from the workspace source tree; the agnara console script reported 0.1.0a4.dev0.",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "External Python 3.14 venvs installed all seven development and exact-release rehearsal wheels with --no-index; third-party requirements resolved separately. check_distributions --require-installed passed for both. No editable install or workspace import.",
         "covers": [
           "packages",
           "scripts",
@@ -134,9 +132,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
-        "command": "uv run python -m pytest tests/http tests/conformance tests/integration",
-        "result": "A4-13 HTTP/cross-surface selections and exact-SHA CI passed; A4-14 external ASGI scenarios proved success, structured invalid input and scoped denial. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. HTTP selection: 841 passed; 31 browser tests separately covered. Public singleton cleanup now tested for sync/async resources with/without a lifecycle callback.",
         "covers": [
           "packages/agnara",
           "packages/agnara-http",
@@ -154,9 +152,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "575d944a481f38598a290df8ba8c6cf0c72cbc2d",
-        "command": "uv run python -m pytest tests/mcp tests/conformance",
-        "result": "A4-13 MCP/conformance selections and exact-SHA CI passed; A4-14 external application projected two SDK tool schemas and built an invocable server. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053 Re-run at this commit: tests/mcp 160 passed and tests/conformance 14 passed. The clean-room consumer projected MCP tool schemas from installed artifacts and confirmed the input schema omits dependency and ExecutionContext parameters. This commit is the MCP composition documentation fix itself, whose new example is executed by tests/docs.",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. 165 MCP tests passed; bounded protocol scope unchanged.",
         "covers": [
           "packages/agnara",
           "packages/agnara-mcp",
@@ -174,9 +172,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
-        "command": "installed agnara --version; installed agnara --help; release CLI tests",
-        "result": "A4-13 installed CLI reported 0.1.0a4.dev0 and passed help; the full CLI suite passed. Evidence: https://github.com/Blandskron/agnara/issues/317#issuecomment-5577945027",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "382 CLI tests passed. Installed console commands version/help/inspect/graph/context/schema openapi/project create --dry-run --json and python -I -m agnara_cli --version passed outside checkout.",
         "covers": [
           "packages/agnara-cli",
           "packages/agnara",
@@ -194,9 +192,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "575d944a481f38598a290df8ba8c6cf0c72cbc2d",
-        "command": "full tests, CodeQL results and open-Issue audit",
-        "result": "A4-R3 full suite and cross-platform CI jobs passed; Python and Actions CodeQL reported zero results/errors/warnings. No new framework regression was found. Release-owner decisions and external publication prerequisites remain pending. Evidence: https://github.com/Blandskron/agnara/actions/runs/34231370311 Re-validated independently on 2026-09-08, CPython 3.14.6 on Windows, at this commit: uv sync --locked, ruff check, ruff format --check and ty check all clean; full suite 3470 passed with 53 expected skips. No behavioural change was made: this commit alters documentation, one docs-test registration and the changelog only. tests/security 32, tests/architecture 615, tests/release 506 and tests/http 834 all passed. Required cross-platform CI has not run on this commit yet. The delta from the previously CI-verified candidate is one package README, one entry in tests/docs/test_documented_examples.py and one CHANGELOG entry, so CI must re-confirm on the pull request before the owner accepts this candidate.",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. The two release findings were fixed by #333. Security findings are explicitly triaged in v0.1.0a4.md; no uncorrected runtime blocker found.",
         "covers": [
           "packages",
           "tests",
@@ -227,13 +225,14 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "Whether 0.1.0a4 remains inside the experimental-alpha exemption is a maintainer decision. Repository security tests pass, docs/THREAT_MODEL.md covers the a4 surface, private vulnerability reporting is enabled, and a 2026-09-08 pip-audit 2.10.1 run found zero known vulnerabilities across 29 locked runtime dependencies. Cycle 3 enabled GitHub secret scanning, push protection and Dependabot alerts/security updates on 2026-09-08. Required Python/Actions CodeQL analysis passed with zero results in Issue #326. Non-provider patterns and validity checks remain disabled. These controls and the bounded CLI/reserved-package threat analysis inform but do not accept the owner-only security gate.",
+      "detail": "Owner decision remains pending. Dependency audit: 29 locked runtime dependencies, zero known vulnerabilities. 38 security tests passed. Native scanning and push protection enabled. CodeQL completed; three existing develop findings have explicit dispositions in v0.1.0a4.md, not a false zero-alert claim.",
       "evidence": {
-        "commit": "ec44a8b6e2a8e9099778202136a19e5050024db8",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
         "command": "uv export --locked --all-packages --no-dev --no-emit-workspace --no-hashes --format requirements.txt; uvx --from pip-audit==2.10.1 pip-audit -r runtime-requirements.txt --format json; CodeQL CI",
-        "result": "A4-R3 on 2026-09-08: 29 locked runtime dependencies, zero known vulnerabilities; 3469 local tests passed; Python/Actions CodeQL zero results/errors/warnings. Native secret scanning/push protection and Dependabot settings read back enabled. Non-provider patterns and validity checks remain disabled. This informs but does not satisfy the owner gate. Evidence: https://github.com/Blandskron/agnara/actions/runs/34231370311",
+        "result": "Owner decision remains pending. Dependency audit: 29 locked runtime dependencies, zero known vulnerabilities. 38 security tests passed. Native scanning and push protection enabled. CodeQL completed; three existing develop findings have explicit dispositions in v0.1.0a4.md, not a false zero-alert claim. https://github.com/Blandskron/agnara/actions/runs/34266732824",
         "paths": [
-          "docs/THREAT_MODEL.md"],
+          "docs/THREAT_MODEL.md"
+        ],
         "covers": [
           "packages",
           "pyproject.toml",
@@ -250,9 +249,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "575d944a481f38598a290df8ba8c6cf0c72cbc2d",
-        "command": "external CPython 3.14 clean-room wheel installation",
-        "result": "A4-14 installed all seven candidate wheels as ordinary dependencies in a fresh external venv, with no editable install, workspace resolution or checkout on sys.path. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053 A fresh external CPython 3.14 environment installed the seven rebuilt wheels with --no-index, no editable install, no workspace resolution and no checkout on sys.path; a 21-check clean-room consumer and a 13-probe adversarial security suite both passed under python -I.",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "Standalone external consumer passed from installed wheels in separate development and exact-0.1.0a4 rehearsal environments. Local reproducible source retained in .release-validation/consumer.py; copy it outside the checkout and execute with the external python -I.",
         "covers": [
           "packages",
           "scripts",
@@ -268,9 +267,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "575d944a481f38598a290df8ba8c6cf0c72cbc2d",
-        "command": "check_public_imports.py against the external clean-room consumer",
-        "result": "A4-14 reported zero private or unclassified Agnara imports; the application imported all distributions from external site-packages. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053 scripts/check_public_imports.py reported 'every Agnara import is a governed public name' for the clean-room consumer, its CLI bootstrap module and the adversarial probe, and for the ten governed exemplary documents.",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "check_public_imports.py accepted the external consumer. All Agnara imports are governed public names; installed-distribution checker confirmed site-packages origins.",
         "covers": [
           "packages",
           "scripts/check_public_imports.py",
@@ -285,9 +284,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "575d944a481f38598a290df8ba8c6cf0c72cbc2d",
-        "command": "static monkey-patch scan and clean-room execution",
-        "result": "A4-14 reported zero monkey-patch findings and no candidate wheel modification. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053 The clean-room consumer and probe patch nothing: they import only governed public names from external site-packages and drive the compiled ASGI 3 callable, which is the documented boundary. No candidate wheel was modified.",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "External consumer uses public core, HTTP, MCP, telemetry and CLI composition. No patched classes, private imports, test helpers or candidate wheel modifications.",
         "covers": [
           "packages",
           "scripts"
@@ -325,9 +324,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
-        "command": "external clean-room ASGI application scenarios",
-        "result": "A4-14 compiled the public HTTP surface and observed 200 success, structured invalid_input 400 and anonymous scoped forbidden 403. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "External public ASGI consumer: dataclass output 200, malformed input 400, anonymous scope denial 403, redacted internal failure 500, served OpenAPI and singleton cleanup at lifespan shutdown passed.",
         "covers": [
           "packages/agnara",
           "packages/agnara-http",
@@ -343,9 +342,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "575d944a481f38598a290df8ba8c6cf0c72cbc2d",
-        "command": "external clean-room MCP composition scenarios",
-        "result": "A4-14 compiled MCP exposure, projected two pinned-SDK tool schemas and constructed an invocable server from installed artifacts. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053 Re-validated from the rebuilt wheels: the external application declared MCP tool exposures, compiled plans from FrozenMcpTools.exposures, projected them to pinned-SDK definitions and built an invocable server. project_mcp_tools and build_mcp_server were both confirmed to raise McpToolDefinitionError naming the tool when a compiled exposure has no plan.",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "External Mcp exposures, ExecutionPlan compilation, project_mcp_tools, build_mcp_server and McpToolInvoker passed using installed packages and official SDK types.",
         "covers": [
           "packages/agnara",
           "packages/agnara-mcp",
@@ -362,9 +361,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "575d944a481f38598a290df8ba8c6cf0c72cbc2d",
-        "command": "external direct/HTTP/MCP schema scenarios",
-        "result": "A4-14 exercised a standard-library dataclass contract through direct, HTTP and MCP projections, including RFC 9457 path detail. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053 Re-validated from the rebuilt wheels: one capability's input schema agreed across the core schema port, the served OpenAPI 3.2.0 parameters and the MCP tool input schema. The CLI's exported OpenAPI document was byte-identical to what the ASGI application serves at /openapi.json.",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "External dataclass/float consumer accepted JSON integer 3 and serialized amount 3.0 over HTTP and MCP. MCP schema excludes dependency parameters; HTTP served OpenAPI equals the public application export. Core direct input remains strictly typed.",
         "covers": [
           "packages/agnara",
           "packages/agnara-http",
@@ -380,9 +379,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "575d944a481f38598a290df8ba8c6cf0c72cbc2d",
-        "command": "external declared-scope denial and authorized invocation scenarios",
-        "result": "A4-14 observed common declared-scope policy denial and authorized success through the installed application. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053 Re-validated from the rebuilt wheels: a declared scope denied an unscoped principal and allowed a granted one on the direct path; the same capability failed closed with RFC 9457 code 'forbidden' over anonymous HTTP and as an MCP error result. Forged principal and scope headers, query parameters and invocation metadata all failed to grant authority.",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "External direct invocation denied anonymous principal and accepted an explicit scoped principal. HTTP and MCP denied the same scoped capability anonymously; forged runtime-owned input did not precede policy denial.",
         "covers": [
           "packages/agnara",
           "packages/agnara-http",
@@ -399,9 +398,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "575d944a481f38598a290df8ba8c6cf0c72cbc2d",
-        "command": "external canonical/HTTP/MCP failure projection scenarios",
-        "result": "A4-14 observed structured invalid_input and forbidden failures with the documented field path and transport projections. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053 Re-validated from the rebuilt wheels: invalid_input and forbidden carried stable codes on the direct path, application/problem+json with a 'code' member over HTTP, and MCP error results carrying only code and a caller-safe message. A handler exception was redacted to internal_failure with no exception type, message or secret reaching the client, and a problem body never copied the query string.",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "External HTTP/MCP invalid_input, forbidden and internal_failure scenarios passed. Exception sentinel and query sentinel did not reach caller documents; operator exception logs are intentionally separate.",
         "covers": [
           "packages/agnara",
           "packages/agnara-http",
@@ -433,9 +432,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "575d944a481f38598a290df8ba8c6cf0c72cbc2d",
-        "command": "A4-14 deficiency classification and forbidden-workaround scans",
-        "result": "A4-14 found no framework, documentation, packaging or environment deficiency, used no workaround and therefore required no new framework Issue. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053 This cycle's clean-room audit did find one deficiency, which corrects the earlier 'none found' record: packages/agnara-mcp/README.md passed 'plans' to project_mcp_tools() and build_mcp_server() in three examples without showing how to build it, so the consumer-facing document for that distribution could not be followed to a working MCP surface. It was fixed in this commit rather than worked around in the consumer, and the new example is executed by tests/docs/test_documented_examples.py. No framework, packaging or environment deficiency was found.",
+        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
+        "result": "Issue #332 and merged PR #333 track and fix missing singleton cleanup, unchecked publication ancestry, stale MCP serialization/failure guidance and incorrect CLI module spelling. No A5 feature was implemented.",
         "covers": [
           "packages",
           "scripts",
