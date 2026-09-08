@@ -67,6 +67,18 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Fixed
 
+- The `agnara-mcp` README passed `plans` to `project_mcp_tools()` and
+  `build_mcp_server()` in three examples without ever showing how to build it,
+  so the one document a consumer of that distribution reads could not be
+  followed to a working MCP surface. Unlike `agnara-http`, this adapter
+  compiles no plans of its own, which made the omission the difference between
+  composing a server and not. An "Execution plans" section now derives them
+  from `FrozenMcpTools.exposures`, states that matching is by capability
+  identity rather than order, and names the `McpToolDefinitionError` raised
+  when an exposure has no plan. The block is registered in
+  `tests/docs/test_documented_examples.py`, so it runs as written on every
+  test run rather than being trusted.
+
 - The a3-to-a4 migration guide now distinguishes the development candidate
   from the final release and pins installation commands to the matching core
   and adapter versions. Architecture and API-design documentation now agree

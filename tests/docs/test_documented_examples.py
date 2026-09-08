@@ -24,6 +24,7 @@ REPOSITORY = Path(__file__).resolve().parents[2]
 #: (document, heading) pairs whose Python block must run unchanged.
 EXECUTABLE: tuple[tuple[str, str], ...] = (
     ("packages/agnara/README.md", "Quick start"),
+    ("packages/agnara-mcp/README.md", "Execution plans"),
     ("docs/MIGRATION_a3_to_a4.md", "4. Apps and bounded contexts"),
     ("docs/MIGRATION_a3_to_a4.md", "6. Serving over HTTP"),
 )

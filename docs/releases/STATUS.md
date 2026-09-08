@@ -5,10 +5,11 @@ Previous published release: **0.1.0a3**, published 2026-09-06 and verified on
 PyPI.
 
 Assessed 2026-09-08 from source candidate
-`ec44a8b6e2a8e9099778202136a19e5050024db8` in PR #327. A4-R2 corrected public
+`575d944a481f38598a290df8ba8c6cf0c72cbc2d`. A4-R2 corrected public
 documentation; A4-R3 added required CodeQL and refreshed the affected quality,
-packaging and security evidence. Earlier external-consumer evidence remains
-valid only for its unchanged covered paths.
+packaging and security evidence. A4-R4 then re-audited the whole candidate
+independently and corrected the MCP composition documentation. Earlier
+external-consumer evidence remains valid only for its unchanged covered paths.
 
 The readiness program reports **IN_PROGRESS**. The automated and recorded
 engineering/application evidence is green, but seven mandatory manual gates
@@ -52,6 +53,43 @@ were not modified to manufacture compatibility. Three deliberately retain old
 private or renamed a2/a3 imports, which is why current a4 compatibility evidence
 comes from the clean-room consumer and the migration guide instead.
 
+### A4-R4 independent closure audit
+
+A full re-audit on 2026-09-08 treated the recorded evidence as a claim to test
+rather than a result to inherit. It re-derived every automated gate, re-ran the
+engineering baseline (`uv sync --locked`, Ruff lint and format, `ty`, and the
+full suite at 3,470 passed with 53 expected skips), rebuilt seven wheels and
+seven sdists, and reproduced the locked dependency audit with `pip-audit`
+2.10.1 over 29 runtime dependencies with zero known vulnerabilities.
+
+External consumption was revalidated against the rebuilt artifacts, not the
+checkout: a wheel-only CPython 3.14 environment with the index closed, no
+editable install, no workspace resolution and nothing from the repository on
+`sys.path`. A 21-check clean-room consumer covered application creation,
+capability declaration, dependency injection, compilation, direct invocation,
+introspection with scope filtering, HTTP exposure, MCP exposure, schema
+projection, policy, structured failures and cross-surface exposure coherence.
+A 13-probe adversarial suite covered traversal, header injection, nesting
+limits, redaction, anonymous fail-closed behavior, forged identity, media-type
+confusion, the ASGI protocol boundary and runtime-owned parameter names. The
+installed CLI answered `inspect`, `graph`, `context` and `schema openapi`, and
+its exported OpenAPI document was byte-identical to what the ASGI application
+serves.
+
+Two defects were found and fixed. The `agnara-mcp` README documented `plans`
+without showing how to build it, which left the consumer-facing document for
+that distribution unusable on its own; the fix adds an executable
+"Execution plans" section and registers it in `tests/docs`. The optional
+benchmark gate cited a pre-squash commit absent from history, so it reported
+stale rather than green; it is re-anchored to the commit that last changed what
+it covers, without re-measuring baselines on incomparable hardware. Fixing the
+README changed `packages/`, which correctly expired the twelve evidence records
+covering it; each was re-established at the new candidate and is re-anchored
+there. Required cross-platform CI has not yet run on that commit.
+
+No framework, packaging or public-API deficiency was found, and the clean-room
+application needed no workaround, no internal import and no monkey patch.
+
 ## Derived gate state
 
 Run the checker for authoritative per-gate detail:
@@ -65,7 +103,7 @@ uv run python scripts/check_release_readiness.py --verbose
 | Automated gates | 7 satisfied; re-derived on every run |
 | Evidence gates | 16 satisfied with commit and coverage records |
 | Manual gates | 7 need owner review |
-| Optional benchmark gate | stale: the recorded commit range is unavailable; non-blocking |
+| Optional benchmark gate | satisfied; re-anchored from a dangling pre-squash SHA |
 
 The expected derived status remains `IN_PROGRESS`, not `RELEASE_READY`. Manual
 gates are never inferred from passing tests or from agent judgment.
