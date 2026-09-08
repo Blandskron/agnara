@@ -61,6 +61,11 @@ without being published. See the `0.1.0a2` scope note below.
 
 ### Fixed
 
+- The a3-to-a4 migration guide now distinguishes the development candidate
+  from the final release and pins installation commands to the matching core
+  and adapter versions. Architecture and API-design documentation now agree
+  with the implemented public HTTP and introspection composition surfaces.
+
 - A JSON request body nested beyond the decoder's stack raised `RecursionError`
   out of the HTTP dispatcher. 80 KB was enough -- far inside the 1 MiB default
   limit -- from an unauthenticated client, before any capability ran: the
