@@ -43,7 +43,6 @@ readiness = _load_checker()
 
 STATUS_PATH = WORKSPACE_ROOT / "docs" / "releases" / "release-status.json"
 PLAN_PATH = WORKSPACE_ROOT / "docs" / "releases" / "RELEASE_PLAN.md"
-STATUS_MD_PATH = WORKSPACE_ROOT / "docs" / "releases" / "STATUS.md"
 
 KINDS = {readiness.AUTOMATED, readiness.EVIDENCE, readiness.MANUAL}
 STATES = {
@@ -147,7 +146,7 @@ def test_version_gate_distinguishes_development_release_and_exact_pins(
 
 
 def test_the_release_documents_all_exist() -> None:
-    for path in (STATUS_PATH, PLAN_PATH, STATUS_MD_PATH):
+    for path in (STATUS_PATH, PLAN_PATH):
         assert path.is_file(), path
 
 

@@ -55,12 +55,17 @@ wins:
 | `docs/adr/0021-*.md` | Synchronized pre-one versions and changelog structure |
 | This plan | *When* the current state is mature enough to enter that procedure |
 
-Two file conventions coexist deliberately:
+One file convention, and one place the evidence lives:
 
-- `docs/releases/v<version>.md` — the **user-facing release note**, the
-  existing convention, written for whoever installs the package.
-- `docs/releases/history/<version>.md` — the **maturity snapshot**, written for
-  whoever asks later what a release actually proved and on what evidence.
+- `docs/releases/v<version>.md` — the **user-facing release note**, written
+  for whoever installs the package. The working tree keeps the release being
+  prepared and, while it still helps an upgrader, the one before it.
+- `docs/releases/release-status.json` — the **evidence record** for the
+  current target: which gate was satisfied, by what command, at which commit.
+
+What a published release proved is answered by its tag, its GitHub Release
+and the `release-status.json` at that tag, so no separate in-tree maturity
+snapshot is maintained. `docs/DOCUMENTATION_MAP.md` states the rule.
 
 ## Gate kinds
 
@@ -158,7 +163,7 @@ to publish it without package-specific surgery. The six new names still need
 their external Pending Trusted Publisher configuration and the authorized
 release tag. The second blocker —
 `agnara-http` declaring no public composition surface — was resolved by ADR
-0071. `docs/releases/STATUS.md` tracks the operational state.
+0071. `docs/releases/release-status.json` tracks the operational state.
 
 **Guardrail (ADR 0068).** `0.1.0a4` is not the FastAPI release, the Django
 release, the SQLAlchemy release or the interoperability release. It may run
@@ -357,8 +362,8 @@ and external usability to establish a first stable public contract.
 ## Operating rules
 
 **Feature freeze.** When only release validation remains for the current
-target, `STATUS.md` records `FEATURE FREEZE RECOMMENDED`. During that stage the
-priorities are regressions, documentation, tests, compatibility, security,
+target, `docs/releases/release-status.json` records
+`FEATURE FREEZE RECOMMENDED`. During that stage the priorities are regressions, documentation, tests, compatibility, security,
 packaging, release notes, cleanup and dogfooding.
 
 **Transition.** When a target becomes `RELEASE_READY`, the current target does

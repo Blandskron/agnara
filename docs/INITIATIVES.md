@@ -27,6 +27,25 @@ evidence about when any of this will be done.
 | `POST-1.0` | Deliberately after 1.0. |
 | `RESEARCH` | Needs an RFC before it can be scheduled at all. |
 
+## Delivered
+
+These initiatives have shipped, so they are no longer carried as open work
+above. They keep one row each because the dependency graph below,
+`BACKLOG.md`, `docs/releases/RELEASE_PLAN.md` and several ADRs still cite them
+by id. For what any of them actually produced, read `docs/MATURITY.md` and the
+record that settled it -- not an implementation history.
+
+| Id | Subject | Settled by | Still open |
+| --- | --- | --- | --- |
+| `I1` | Unified exposure model | ADR 0070, and ADR 0071 for phase 3 | nothing |
+| `I3` | Execution identity and idempotency behaviour | ADR 0074 | nothing; `0.1.0a5` still gates the behaviour |
+| `I7` | HTTP request surface | ADR 0072 | scope beyond what `0.1.0a4` owns, classified in ADR 0072 |
+| `I9` | Public API governance | ADR 0067, ADR 0074, ADR 0076 | stability promotion, and a generated reference for the public names |
+| `I18` | Documentation and DX program | first increment only | progressive examples, error-message quality, startup diagnostics |
+
+The open remainder of `I9` and `I18` is tracked as backlog items rather than
+as initiatives, because it is already decomposed.
+
 ## Dependency order
 
 The arrows are hard. An initiative cannot responsibly start before what it
@@ -59,39 +78,10 @@ I8 ──┤         bridge — see RFC 0008 section 6)
 I10 ─┘
 ```
 
-`I1` and `I2` are the two initiatives most other work waits on. Neither is
-large. Both are design-first.
+`I1` is delivered, which leaves `I2` as the initiative most other work waits
+on. It is not large, and it is design-first.
 
 ## The initiatives
-
-### I1 — Unified exposure model
-
-**Horizon:** `NEXT ALPHA`
-**Status:** `IMPLEMENTED` — RFC 0006 answered by ADR 0070
-**Blocks:** I4, I5, I7, a stable public composition API, 1.0
-
-**Decided and built.** `agnara.exposure` owns neutral identity, per-surface
-adapter compilation and one frozen availability registry. Declaration belongs
-to the composition root; each adapter derives its records from its own
-compiled dispatch artifact; introspection reads the registry instead of being
-told about exposures a second time. Both shipped adapters go through it, and a
-third would need no kernel change. ADR 0070 records the five spike decisions
-and the rejected alternatives.
-
-**Phase 3 is done too.** `agnara-http` now declares a public composition API
-(ADR 0071): an application composes exposures, compiles an ASGI 3 application
-and projects OpenAPI without a private import.
-`docs/HTTP_COMPOSITION.md` is the guide.
-
-**What remains behind it.** The documentation UI providers, the Explorer and
-the authorized discovery endpoint are implemented but unreachable from public
-API, because no product path renders a provider into a served route. I7 owns
-the request-surface gaps. Issue #291 and ADR 0073 make the adapter set
-publication-ready; the authorized `0.1.0a4` release still owns the actual PyPI
-upload.
-
-**Non-goals, honoured:** no third adapter was built to prove the model, and
-no ecosystem integration was added.
 
 ### I2 — Streaming model
 
@@ -111,24 +101,6 @@ partial output means, in a model where failures are canonical values;
 completion semantics; how telemetry spans a stream rather than a call.
 
 **Requires an RFC** before any adapter work.
-
-### I3 — Execution identity and idempotency behaviour
-
-**Horizon:** `LATER ALPHA`
-**Status:** `IMPLEMENTED` — ADR 0074
-**Blocks:** I6, resilience, event delivery semantics
-
-Idempotency is declared and published; the runtime does nothing with it. Safe
-retry, deduplication and replay all need an identity that outlives one
-invocation.
-
-**Scope:** execution identity, idempotency keys, deduplication window,
-result reuse, pluggable storage contract, and the transport mappings that
-follow.
-
-**Explicit constraint:** never retry a non-idempotent capability
-automatically. The declared metadata exists precisely so the runtime does not
-have to guess.
 
 ### I4 — A2A adapter
 
@@ -177,30 +149,6 @@ human approval, compensation, observability.
 
 **Requires an RFC per boundary**, not one RFC for all of it.
 
-### I7 — HTTP request surface
-
-**Horizon:** `NEXT ALPHA`
-**Status:** `IMPLEMENTED` for what `0.1.0a4` owns — ADR 0072
-**Depends on:** I1
-
-**Done.** Cookies, form fields and file uploads are binding sources, exactly
-as predicted: new sources, not new architecture. A login form, a session
-cookie and an upload are expressible through public API, their OpenAPI is
-truthful, and every failure is a structured RFC 9457 problem.
-
-**Deferred, each with a recorded reason** (ADR 0072): multiple files and
-repeated form fields, which need the collection binding ADR 0026 deferred; the
-client filename and per-part content type, which need a core-visible upload
-value type; streaming request bodies, which need I2; and CORS, compression,
-static files, proxy headers and trusted hosts, which belong at the ASGI layer
-or the reverse proxy.
-
-**Still deliberately absent:** an extension point for cross-cutting concerns.
-"Middleware" in most frameworks is where transport types leak into application
-code, and Agnara must not reproduce that. An `HttpApplication` is an ASGI 3
-callable, so ordinary ASGI middleware already wraps it from outside, which is
-where transport concerns belong.
-
 ### I8 — Capability composition
 
 **Horizon:** `BETA`
@@ -221,28 +169,6 @@ Agnara. I20 is composition with the rest of the ecosystem. They meet at one
 question — a capability re-entered through an external host — and RFC 0008 Q12
 requires the same answer for both, because two answers would make the host path
 a policy bypass.
-
-### I9 — Public API governance
-
-**Horizon:** `NOW`
-**Status:** `IMPLEMENTED` for classification — ADR 0067, ADR 0074, ADR 0076
-**Blocks:** 1.0
-
-Every public name in every shipped distribution is an explicit commitment. The
-manifest classifies 282 exports across 47 non-private modules with a literal
-`__all__`, in all seven distributions, and the release gate checks in both
-directions: a module whose exports drift from the manifest fails, and so does a
-new public package or leaf module nobody classified. The two reserved
-namespaces classify an empty surface so that a first export cannot appear
-ungoverned. `scripts/check_public_imports.py` decides the same question for a
-tree outside this workspace, which is what makes an application built on
-Agnara auditable rather than merely reviewable.
-
-**Still open, and why this blocks 1.0.** Every export is `provisional`. Nothing
-is `stable`, and promotion is owned by the beta and release-candidate gates,
-not by this machinery: classifying a name records intent, it does not create a
-compatibility promise. The deprecation window a `stable` classification implies
-is undecided, and no symbol may be promoted before it is.
 
 ### I10 — Security program
 
@@ -355,15 +281,6 @@ principal, policy decision, effects, confirmation, result classification — and
 no system that records them.
 
 **Constraint:** never log secrets or raw sensitive payloads by default.
-
-### I18 — Documentation and DX program
-
-**Horizon:** `NOW`, continuous
-**Status:** `IMPLEMENTED` (this initiative's first increment)
-
-The canonical document set and its ownership map, plus automated consistency
-checks. Then: progressive examples, reference applications, error message
-quality, and startup diagnostics.
 
 ### I19 — Decision record status reconciliation
 

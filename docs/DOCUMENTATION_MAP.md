@@ -47,12 +47,10 @@ Each level may cite the level above it. None should restate it.
 | What to build and in what order | `docs/INITIATIVES.md` | cite by initiative id |
 | Decomposed, ready work | `BACKLOG.md` | cite by item id |
 | Release gates and evidence | `docs/releases/RELEASE_PLAN.md` + `release-status.json` | cite |
-| Current a4 closure sequencing | `docs/releases/A4_RELEASE_CLOSURE.md` | cite; it schedules work but does not satisfy a gate |
 | What a release actually contained | `docs/releases/v*.md`, `CHANGELOG.md` | never edit retroactively |
 | Quality gate definitions | `QUALITY_GATES.md` | cite |
 | Performance method and results | `PERFORMANCE.md`, `docs/benchmarks/` | cite |
 | Security posture and gaps | `SECURITY.md` | cite |
-| What a `0.1.0a3` user must change | `docs/MIGRATION_a3_to_a4.md` | cite; never document an internal change as user migration work |
 | CLI surface | `docs/CLI_SPEC.md` | cite |
 | Generated project layout | `docs/SCAFFOLDING.md` | cite |
 | Manifest format | `docs/PROJECT_MANIFEST.md` | cite |
@@ -80,9 +78,19 @@ rather than repeating it.
 belong in an RFC until they are answered, and an RFC that has been answered
 says so and names the ADR.
 
-**Release history is immutable.** `docs/releases/v0.1.0a1.md` describes what
-`0.1.0a1` was, including what was wrong with it. It is never corrected to
-match a later reality.
+**Release history is immutable, and it is not stored here.** A published
+release is preserved by its Git tag, its GitHub Release and its PyPI
+distribution. The working tree keeps only the release being prepared and, while
+it is still useful to an upgrader, the one before it. A release document is
+never corrected to match a later reality; it is removed once its only remaining
+value is historical.
+
+**Completed planning leaves the planning documents.** `ROADMAP.md`,
+`docs/INITIATIVES.md` and `BACKLOG.md` describe work that is still open. When
+an item ships, it does not become a `[x]` entry that accumulates -- it leaves,
+and whatever durable requirement it carried moves to the document that owns
+that kind of truth. `docs/MATURITY.md` is where shipped work becomes visible
+again.
 
 **Prefer a citation to a copy.** A reader who follows a link to one accurate
 paragraph is better served than one who reads four paragraphs that used to
@@ -100,6 +108,11 @@ this that a machine can check:
 - every canonical document this map names exists;
 - every ADR and RFC referenced by the planning documents exists;
 - no planning document references a file that has been deleted.
+
+`tests/architecture/test_repository_encoding.py` additionally rejects the
+text-corruption modes that a lossy Windows write has twice introduced into
+this repository's documentation: replaced characters, cp1252 mojibake, a
+byte-order mark and a stray control byte.
 
 Everything else is a human judgement, and this file is where the judgement is
 recorded so the next reader does not have to reconstruct it.

@@ -40,8 +40,8 @@ to OpenTelemetry. What is missing is a stated contract for lifecycle and
 ownership per infrastructure category, so every application invents its own.
 
 **Agnara embedded** has no contract at all. An external host would have to
-import private modules — the same problem `docs/releases/STATUS.md` records as
-a `0.1.0a4` blocker, one level further out.
+import private modules — the same problem `docs/releases/release-status.json`
+records as a `0.1.0a4` blocker, one level further out.
 
 **Side-by-side** has no contract, and is where the design errors hide: two
 lifecycles, two containers, two telemetry pipelines, one process.
