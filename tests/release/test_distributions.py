@@ -403,14 +403,22 @@ def test_the_artifact_mode_never_imports_anything(
 
 
 def test_the_release_set_is_explicit_and_matches_the_architecture() -> None:
-    assert checker.SHIPPED_DISTRIBUTIONS == DISTRIBUTIONS
+    """The checker's own reader of the manifest must agree with everything else.
+
+    `check_distributions.py` parses `docs/distributions.json` itself rather
+    than importing `scripts/distributions.py`, because its installed-artifact
+    mode runs under `python -I`, which implies `-P` and removes the script's
+    own directory from `sys.path`. Two readers of one file is acceptable; two
+    readers that disagree is not.
+    """
+    assert checker.shipped_distributions(WORKSPACE_ROOT) == DISTRIBUTIONS
 
 
 def test_an_accidental_workspace_distribution_is_not_publishable() -> None:
     found, _ = checker.discover(WORKSPACE_ROOT)
     found.append(checker.Distribution("agnara-accidental", "agnara_accidental"))
 
-    problems = checker.check_release_set(found)
+    problems = checker.check_release_set(found, DISTRIBUTIONS)
 
     assert any("unexpected=['agnara-accidental']" in problem for problem in problems)
 

@@ -1,0 +1,29 @@
+# Every third-party action on the publication path is pinned to a full commit
+# SHA (ADR 0079). A pin nobody can move is a pin that rots, so Dependabot owns
+# moving them: it rewrites the SHA and the trailing human version together, and
+# the change arrives as an ordinary reviewed pull request.
+#
+# Only GitHub Actions is enabled. Python dependencies are resolved through
+# `uv.lock`, which `uv lock --check` gates in CI; Dependabot has no uv
+# ecosystem and would fight that lockfile rather than maintain it.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(actions)"
+    labels:
+      - dependencies
+      - supply-chain
+    groups:
+      # One pull request for the routine bumps. A change to the publisher
+      # action is reviewed on its own, because that is the action that holds
+      # the OIDC token.
+      actions:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "pypa/gh-action-pypi-publish"

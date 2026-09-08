@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "target": "0.1.0a5",
+  "registry": "https://pypi.org",
+  "publisher": {
+    "provider": "github",
+    "owner": "Blandskron",
+    "repository": "agnara",
+    "workflow": "release.yml",
+    "environment": "pypi"
+  },
+  "status": "UNVERIFIED",
+  "confirmed_by": null,
+  "confirmed_on": null,
+  "notes": [
+    "This file is the PUBLISH READY record. scripts/check_publication_readiness.py refuses publication while any project here is not VERIFIED for the target above, and .github/workflows/release.yml runs that check before the first upload. It exists because 0.1.0a4 was CODE READY and not PUBLISH READY, and nothing in the repository was responsible for telling the difference.",
+    "Only the repository owner can fill this in. Verification means opening https://pypi.org/manage/account/publishing/ (and, for a project that already exists, that project's own Publishing settings) and reading back the four fields of the publisher tuple for that exact project name. A 404 on the project page is not evidence that a pending publisher exists.",
+    "To confirm a project: set trusted_publisher to VERIFIED, verified_for_target to this file's target, verified_by to the confirming account and verified_on to the date, then set status/confirmed_by/confirmed_on at the top. Record no credentials here.",
+    "0.1.0a4 incident: uploading agnara-a2a returned HTTP 400 'Non-user identities cannot create new projects', which is what PyPI answers when no pending publisher matches the uploaded project name for the authenticated OIDC identity. The pypi_state values below are a readback of https://pypi.org/pypi/<name>/json on 2026-09-08, after that failed run."
+  ],
+  "projects": [
+    {
+      "name": "agnara",
+      "pypi_state": "existing",
+      "latest_published": "0.1.0a4",
+      "trusted_publisher": "UNVERIFIED",
+      "verified_for_target": null,
+      "verified_by": null,
+      "verified_on": null,
+      "note": "Uploaded 0.1.0a4-py3-none-any.whl successfully, so an active Trusted Publisher exists on this project. Its 0.1.0a4 sdist was never uploaded: the run aborted on the next file. Re-read the tuple anyway; a working publisher is not a verified one."
+    },
+    {
+      "name": "agnara-a2a",
+      "pypi_state": "absent",
+      "latest_published": null,
+      "trusted_publisher": "UNVERIFIED",
+      "verified_for_target": null,
+      "verified_by": null,
+      "verified_on": null,
+      "note": "The 0.1.0a4 upload was rejected with HTTP 400 for this exact name. A pending publisher for the canonical name agnara-a2a is required before any tag is pushed."
+    },
+    {
+      "name": "agnara-cli",
+      "pypi_state": "absent",
+      "latest_published": null,
+      "trusted_publisher": "UNVERIFIED",
+      "verified_for_target": null,
+      "verified_by": null,
+      "verified_on": null,
+      "note": "Never reached; the run aborted on agnara-a2a. Requires a pending publisher for the canonical name agnara-cli."
+    },
+    {
+      "name": "agnara-events",
+      "pypi_state": "absent",
+      "latest_published": null,
+      "trusted_publisher": "UNVERIFIED",
+      "verified_for_target": null,
+      "verified_by": null,
+      "verified_on": null,
+      "note": "Never reached. Requires a pending publisher for the canonical name agnara-events."
+    },
+    {
+      "name": "agnara-http",
+      "pypi_state": "absent",
+      "latest_published": null,
+      "trusted_publisher": "UNVERIFIED",
+      "verified_for_target": null,
+      "verified_by": null,
+      "verified_on": null,
+      "note": "Never reached. Requires a pending publisher for the canonical name agnara-http."
+    },
+    {
+      "name": "agnara-mcp",
+      "pypi_state": "absent",
+      "latest_published": null,
+      "trusted_publisher": "UNVERIFIED",
+      "verified_for_target": null,
+      "verified_by": null,
+      "verified_on": null,
+      "note": "Never reached. Requires a pending publisher for the canonical name agnara-mcp."
+    },
+    {
+      "name": "agnara-telemetry",
+      "pypi_state": "absent",
+      "latest_published": null,
+      "trusted_publisher": "UNVERIFIED",
+      "verified_for_target": null,
+      "verified_by": null,
+      "verified_on": null,
+      "note": "Never reached. Requires a pending publisher for the canonical name agnara-telemetry."
+    }
+  ]
+}

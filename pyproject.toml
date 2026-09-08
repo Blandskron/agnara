@@ -39,6 +39,10 @@ dev = [
     # E9.2 integration evidence only; applications own SDK configuration.
     "opentelemetry-sdk==1.44.0",
     "pydantic>=2.9,<3",
+    # tests/release/test_publication_set.py parses the workflows to hold
+    # them to docs/distributions.json, so this is a direct test dependency
+    # rather than something inherited from a fixture package.
+    "pyyaml>=6,<7",
     "pytest>=8.4",
     "ruff>=0.14",
     "ty>=0.0.1a1",
@@ -51,7 +55,10 @@ dev = [
 [tool.ruff]
 target-version = "py314"
 line-length = 100
-src = ["packages/*/src", "experiments", "tests"]
+# `scripts` is repository release tooling rather than a distributable
+# package, but it is first-party source: without it here, isort files
+# `import distributions` under third-party.
+src = ["packages/*/src", "experiments", "tests", "scripts"]
 
 [tool.ruff.lint]
 select = [
@@ -98,6 +105,10 @@ root = [
     # `tests` is itself a package, so the workspace root is what has to be
     # importable for `tests.architecture...` to resolve -- not `tests/`.
     ".",
+    # The reviewed publication set is read from `scripts/distributions.py` by
+    # the release tooling and by the architecture tests, so the import has to
+    # resolve. `[tool.ty.src] include` still decides what is checked.
+    "scripts",
 ]
 
 [tool.ty.src]
@@ -110,6 +121,11 @@ include = ["packages", "examples", "experiments", "tests"]
 [tool.pytest.ini_options]
 minversion = "8.4"
 testpaths = ["tests", "packages"]
+# `scripts/` holds the release tooling and is deliberately not an importable
+# package, so there is no module path for the tests to reach it by. Putting it
+# on the test path lets one module own the reviewed publication set instead of
+# every consumer retyping the seven names.
+pythonpath = ["scripts"]
 addopts = [
     "--strict-markers",
     "--strict-config",
