@@ -46,8 +46,8 @@ this package declared no public surface for three releases.
 from __future__ import annotations
 
 import json
-from collections.abc import Callable, Sequence
-from contextlib import AbstractAsyncContextManager
+from collections.abc import AsyncIterator, Callable, Sequence
+from contextlib import AbstractAsyncContextManager, AsyncExitStack, asynccontextmanager
 from enum import StrEnum
 from typing import Any, Self
 
@@ -111,6 +111,21 @@ _TRANSLATED: tuple[type[Exception], ...] = (
 
 #: One lifespan cycle, supplied by the application. Called once per cycle.
 type Lifecycle = Callable[[], AbstractAsyncContextManager[None]]
+
+
+@asynccontextmanager
+async def _owned_lifecycle(
+    container: DIContainer, lifecycle: Lifecycle | None
+) -> AsyncIterator[None]:
+    """Close HTTP-owned providers before releasing application-owned resources."""
+    async with AsyncExitStack() as stack:
+        if lifecycle is not None:
+            entered = await stack.enter_async_context(lifecycle())
+            if entered is not None:
+                raise TypeError("lifecycle context must yield None")
+        stack.push_async_callback(container.aclose)
+        yield
+
 
 #: What a route method accepts for the capability it exposes.
 type CapabilityRef = CapabilityDefinition | Callable[..., Any]
@@ -398,8 +413,8 @@ class HttpApplication:
     nothing here promises support for a specific framework; that is
     `0.1.0b1` (ADR 0068).
 
-    The object holds no mutable state after compilation, so it is safe to
-    share across the workers of one process without locking.
+    Compiled routes and plans are immutable. The owned DI container and
+    lifespan belong to one application's event loop, not multiple worker loops.
     """
 
     __slots__ = ("_boundary", "_exposures", "_info", "_plans", "_routes", "_surface")
@@ -428,9 +443,8 @@ class HttpApplication:
     ) -> None:
         """Serve one ASGI connection: an ``http`` scope, or ``lifespan``.
 
-        A ``lifespan`` scope raises when no lifecycle was configured. That is
-        how an ASGI application states it has no lifespan, and a server running
-        ``lifespan="auto"`` handles it.
+        Lifespan shutdown closes the surface's singleton dependency resources,
+        even when no application lifecycle callback was configured.
         """
         await self._boundary(scope, receive, send)
 
@@ -728,6 +742,8 @@ class Http:
                 so there is no default path.
             lifecycle: an async context manager factory run once per ASGI
                 lifespan cycle. Startup enters it, shutdown exits it.
+                HTTP-owned singleton providers close before it exits. Without
+                a callback, lifespan still owns dependency cleanup.
                 Application state belongs in dependency providers, which is
                 why the lifecycle cannot hand a value back.
             request_timeout: a deadline in seconds for the capability
@@ -812,14 +828,15 @@ class Http:
                 problem_types=_compile_problem_types(problem_base_uri),
                 timeout=request_timeout,
             )
-            dispatch = _HTTPDispatcher(routes, DIContainer(dependencies), options)
+            container = DIContainer(dependencies)
+            dispatch = _HTTPDispatcher(routes, container, options)
             boundary = _ASGIBoundary(
                 _SurfaceDispatcher(
                     _compile_surfaces(self._static_surfaces(openapi, openapi_path, routes), routes),
                     dispatch,
                     problem_types=options.problem_types,
                 ),
-                None if lifecycle is None else _LifespanDispatcher(lifecycle),
+                _LifespanDispatcher(lambda: _owned_lifecycle(container, lifecycle)),
             )
             if openapi is not None and openapi_path is None:
                 # Not served, but still promised: `HttpApplication.openapi()`

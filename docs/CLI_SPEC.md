@@ -17,7 +17,7 @@ agnara <command>
 Equivalent module invocation:
 
 ```bash
-python -m agnara <command>
+python -m agnara_cli <command>
 ```
 
 `python agnara ...` is not the canonical form because `agnara` is a package/console command, not a local script.
