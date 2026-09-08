@@ -5,14 +5,14 @@
   "previous_release": "0.1.0a3",
   "status": "IN_PROGRESS",
   "assessed_on": "2026-09-07",
-  "assessed_commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+  "assessed_commit": "45d09979c042124932ec67cc45b90bc194e09994",
   "blocked_reason": null,
   "notes": [
     "Status is recomputed by scripts/check_release_readiness.py. Automated gates are re-derived from the repository and are never read from this file.",
     "Evidence expires when a file it declares under 'covers' changes between its recorded commit and HEAD. Evidence with no 'covers' expires on any commit change.",
     "0.1.0a3 was published on 2026-09-06 and verified on PyPI. Its gate evidence is preserved in docs/releases/history/0.1.0a3.md and is deliberately not carried here as satisfied: 0.1.0a4 must re-establish it against its own candidate commit.",
     "RELEASE_PLAN.md states the first 0.1.0a4 gate as one automated gate, \"Every 0.1.0a3 gate still satisfied\". It is decomposed here into the individual 0.1.0a3 gates, because the checker requires every automated gate to have a real implementation and an aggregate over sibling gates would be circular.",
-    "A4-13 re-established the engineering, packaging and supported-platform gates on candidate 7bd2525d4c68be63fd9f347c7dd3c6de1c847f30. A4-14 then validated a compact external consumer in a clean environment. Commit 2ffd893822165c0ecb2734fcdda9760abb2ef718 changes only release documentation and re-runs the affected documentation/public-import checks; the evidence records declare the paths whose changes invalidate them.",
+    "A4-13 re-established the engineering, packaging and supported-platform gates on candidate 7bd2525d4c68be63fd9f347c7dd3c6de1c847f30. A4-14 then validated a compact external consumer in a clean environment. Commit 45d09979c042124932ec67cc45b90bc194e09994 adds only release documentation and re-runs the affected documentation/public-import checks; the evidence records declare the paths whose changes invalidate them.",
     "ADR 0068 inserts 0.1.0a5 between 0.1.0a4 and 0.1.0b1 and fixes what each release owns. Only the current target carries gates in this file; the 0.1.0a5 and 0.1.0b1 gates live in RELEASE_PLAN.md until their target becomes current.",
     "ADR 0071 gives agnara-http a public composition API. A4-14 exercised HTTP and MCP from an external installed application without internal imports or monkey patches. The six adapter names remain unpublished and require Pending Trusted Publisher verification before owner-authorized release."
   ],
@@ -73,7 +73,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "uv run python -m pytest",
         "result": "A4-13: 3467 passed, 53 browser-job skips; 613 architecture tests passed; exact-SHA CI passed on Ubuntu, macOS and Windows. Documentation/release selection after the documentation-only follow-up: 510 passed, 22 expected parameterization skips. Evidence: https://github.com/Blandskron/agnara/issues/317#issuecomment-5577945027",
         "covers": ["packages", "tests", "scripts", "examples", "README.md", "CHANGELOG.md", "pyproject.toml", "uv.lock", ".github"]
@@ -86,7 +86,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "uv build --all-packages; check_release_artifacts.py",
         "result": "A4-13 built and validated exactly seven wheels and seven sdists at 0.1.0a4.dev0, including metadata, license, package data and exact first-party pins. Evidence: https://github.com/Blandskron/agnara/issues/317#issuecomment-5577945027",
         "covers": ["packages", "scripts", "pyproject.toml", "uv.lock", ".github/workflows"]
@@ -99,7 +99,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "external CPython 3.14 wheel install and installed-artifact smoke",
         "result": "A4-13 and A4-14 installed all seven wheels outside the checkout with no editable or workspace resolution; installed CLI and public core/application smokes passed. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053",
         "covers": ["packages", "scripts", "examples", "pyproject.toml", "uv.lock"]
@@ -112,7 +112,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "uv run python -m pytest tests/http tests/conformance tests/integration",
         "result": "A4-13 HTTP/cross-surface selections and exact-SHA CI passed; A4-14 external ASGI scenarios proved success, structured invalid input and scoped denial. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053",
         "covers": ["packages/agnara", "packages/agnara-http", "tests/http", "tests/conformance", "tests/integration", "scripts"]
@@ -125,7 +125,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "uv run python -m pytest tests/mcp tests/conformance",
         "result": "A4-13 MCP/conformance selections and exact-SHA CI passed; A4-14 external application projected two SDK tool schemas and built an invocable server. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053",
         "covers": ["packages/agnara", "packages/agnara-mcp", "tests/mcp", "tests/conformance", "scripts", "uv.lock"]
@@ -138,7 +138,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "installed agnara --version; installed agnara --help; release CLI tests",
         "result": "A4-13 installed CLI reported 0.1.0a4.dev0 and passed help; the full CLI suite passed. Evidence: https://github.com/Blandskron/agnara/issues/317#issuecomment-5577945027",
         "covers": ["packages/agnara-cli", "packages/agnara", "tests/cli", "scripts", "pyproject.toml", "uv.lock"]
@@ -151,7 +151,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "full quality gate, exact-SHA CI, open P0/P1 Issue and blocking RFC audit",
         "result": "No release-blocking regression was found; exact-SHA required CI passed and the final audit found no open framework P0/P1 issue or unresolved a4 decision. Evidence: https://github.com/Blandskron/agnara/issues/317#issuecomment-5577945027",
         "covers": ["packages", "tests", "scripts", "examples", "README.md", "CHANGELOG.md", "pyproject.toml", "uv.lock", ".github", "ARCHITECTURE.md", "PRINCIPLES.md", "QUALITY_GATES.md"]
@@ -180,7 +180,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "external CPython 3.14 clean-room wheel installation",
         "result": "A4-14 installed all seven candidate wheels as ordinary dependencies in a fresh external venv, with no editable install, workspace resolution or checkout on sys.path. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053",
         "covers": ["packages", "scripts", "pyproject.toml", "uv.lock"]
@@ -193,7 +193,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "check_public_imports.py against the external clean-room consumer",
         "result": "A4-14 reported zero private or unclassified Agnara imports; the application imported all distributions from external site-packages. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053",
         "covers": ["packages", "scripts/check_public_imports.py", "docs/public-api.json"]
@@ -206,7 +206,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "static monkey-patch scan and clean-room execution",
         "result": "A4-14 reported zero monkey-patch findings and no candidate wheel modification. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053",
         "covers": ["packages", "scripts"]
@@ -243,7 +243,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "external clean-room ASGI application scenarios",
         "result": "A4-14 compiled the public HTTP surface and observed 200 success, structured invalid_input 400 and anonymous scoped forbidden 403. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053",
         "covers": ["packages/agnara", "packages/agnara-http", "scripts", "docs/public-api.json"]
@@ -256,7 +256,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "external clean-room MCP composition scenarios",
         "result": "A4-14 compiled MCP exposure, projected two pinned-SDK tool schemas and constructed an invocable server from installed artifacts. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053",
         "covers": ["packages/agnara", "packages/agnara-mcp", "scripts", "docs/public-api.json", "uv.lock"]
@@ -269,7 +269,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "external direct/HTTP/MCP schema scenarios",
         "result": "A4-14 exercised a standard-library dataclass contract through direct, HTTP and MCP projections, including RFC 9457 path detail. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053",
         "covers": ["packages/agnara", "packages/agnara-http", "packages/agnara-mcp", "tests/conformance"]
@@ -282,7 +282,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "external declared-scope denial and authorized invocation scenarios",
         "result": "A4-14 observed common declared-scope policy denial and authorized success through the installed application. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053",
         "covers": ["packages/agnara", "packages/agnara-http", "packages/agnara-mcp", "tests/conformance", "tests/security"]
@@ -295,7 +295,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "external canonical/HTTP/MCP failure projection scenarios",
         "result": "A4-14 observed structured invalid_input and forbidden failures with the documented field path and transport projections. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053",
         "covers": ["packages/agnara", "packages/agnara-http", "packages/agnara-mcp", "tests/conformance"]
@@ -324,7 +324,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "2ffd893822165c0ecb2734fcdda9760abb2ef718",
+        "commit": "45d09979c042124932ec67cc45b90bc194e09994",
         "command": "A4-14 deficiency classification and forbidden-workaround scans",
         "result": "A4-14 found no framework, documentation, packaging or environment deficiency, used no workaround and therefore required no new framework Issue. Evidence: https://github.com/Blandskron/agnara/issues/318#issuecomment-5578069053",
         "covers": ["packages", "scripts", "examples", "docs/public-api.json"]
