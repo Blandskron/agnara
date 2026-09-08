@@ -13,6 +13,8 @@ without being published. See the `0.1.0a2` scope note below.
 
 ## [Unreleased]
 
+## [0.1.0a4] - 2026-09-08
+
 ### Added
 
 - Required CI now analyzes Python and GitHub Actions with SHA-pinned CodeQL
@@ -836,7 +838,8 @@ under `0.1.0a2` instead.
 [#257]: https://github.com/Blandskron/agnara/issues/257
 [#259]: https://github.com/Blandskron/agnara/issues/259
 [#261]: https://github.com/Blandskron/agnara/issues/261
-[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...develop
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a4...develop
+[0.1.0a4]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...v0.1.0a4
 [0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3
 [0.1.0a2]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...v0.1.0a2
 [0.1.0a1]: https://github.com/Blandskron/agnara/releases/tag/v0.1.0a1

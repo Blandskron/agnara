@@ -174,10 +174,32 @@ def test_lock_failure_restores_every_file(tmp_path: Path, monkeypatch: pytest.Mo
     assert {path: path.read_bytes() for path in before} == before
 
 
-def test_repository_is_in_the_selected_development_state(
+def test_repository_is_in_a_synchronized_state_for_the_current_target(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    plan = tool.plan_transition(WORKSPACE_ROOT, "development", "0.1.0a4")
+    """The workspace must sit in one of the two states the tool can produce.
+
+    Which one is a property of the branch, not of correctness: ``develop`` carries
+    the development version and a release branch carries the cut one. Asserting only
+    the development state would fail every release branch and every release pull
+    request, which is when a desynchronized workspace matters most. The target is
+    read from ``release-status.json`` so that this check follows the release the
+    repository is actually working towards.
+    """
+    status = WORKSPACE_ROOT / "docs" / "releases" / "release-status.json"
+    target = json.loads(status.read_text(encoding="utf-8"))["current_target"]
     monkeypatch.setattr(tool, "_run_uv", lambda *args, **kwargs: _successful_uv())
 
-    assert tool.execute(plan, WORKSPACE_ROOT, check=True)
+    refused: dict[str, str] = {}
+    for mode in ("development", "release"):
+        plan = tool.plan_transition(WORKSPACE_ROOT, mode, target)
+        try:
+            tool.execute(plan, WORKSPACE_ROOT, check=True)
+        except tool.TransitionError as error:
+            refused[mode] = str(error)
+
+    # The two states differ in every version string, so at most one can match.
+    assert len(refused) < 2, (
+        f"the workspace matches neither synchronized state for {target}:\n"
+        + "\n".join(f"  {mode}: {reason}" for mode, reason in refused.items())
+    )

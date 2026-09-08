@@ -71,7 +71,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. Skips: 31 browser tests run separately in CI, 22 inapplicable export-mutation cases.",
         "covers": [
@@ -94,7 +94,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "Seven wheels and seven sdists built from this source; check_distributions accepted metadata, dependencies, Python >=3.14, licenses, README, package contents and public imports. An external version-cut rehearsal also built all fourteen artifacts at exactly 0.1.0a4. https://github.com/Blandskron/agnara/actions/runs/34266732824",
         "covers": [
@@ -113,7 +113,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "External Python 3.14 venvs installed all seven development and exact-release rehearsal wheels with --no-index; third-party requirements resolved separately. check_distributions --require-installed passed for both. No editable install or workspace import.",
         "covers": [
@@ -132,7 +132,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. HTTP selection: 841 passed; 31 browser tests separately covered. Public singleton cleanup now tested for sync/async resources with/without a lifecycle callback.",
         "covers": [
@@ -152,7 +152,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. 165 MCP tests passed; bounded protocol scope unchanged.",
         "covers": [
@@ -172,7 +172,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "382 CLI tests passed. Installed console commands version/help/inspect/graph/context/schema openapi/project create --dry-run --json and python -I -m agnara_cli --version passed outside checkout.",
         "covers": [
@@ -192,7 +192,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. The two release findings were fixed by #333. Security findings are explicitly triaged in v0.1.0a4.md; no uncorrected runtime blocker found.",
         "covers": [
@@ -216,30 +216,27 @@
       "title": "Public documentation reflects the implementation",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "The 0.1.0a3 approval covered the 0.1.0a3 documentation set. A maintainer must review the documentation again against whatever 0.1.0a4 ships, including any composition API the reference applications require."
+      "status": "SATISFIED",
+      "detail": "Whether the documentation 0.1.0a4 actually ships matches the implementation is a maintainer judgment, not a test result. The owner accepted it on the corrected MCP, CLI and lifecycle guidance, whose examples tests/docs executes. Alpha APIs may still change without a deprecation cycle.",
+      "evidence": {
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
+        "command": "Owner approval via prompt.",
+        "result": "ACCEPT",
+        "covers": []
+      }
     },
     {
       "id": "security-release-checks",
       "title": "Security and release checks required by QUALITY_GATES.md",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "Owner decision remains pending. Dependency audit: 29 locked runtime dependencies, zero known vulnerabilities. 38 security tests passed. Native scanning and push protection enabled. CodeQL completed; three existing develop findings have explicit dispositions in v0.1.0a4.md, not a false zero-alert claim.",
+      "status": "SATISFIED",
+      "detail": "Whether the experimental-alpha security posture satisfies QUALITY_GATES.md is the owner's decision. The basis: 29 locked runtime dependencies audited with pip-audit 2.10.1 and zero known vulnerabilities, 38 security tests, native secret scanning and push protection enabled, and required Python and Actions CodeQL completed. The three pre-existing develop findings are dispositioned in v0.1.0a4.md rather than reported as a zero-alert result. Non-provider patterns and validity checks remain disabled, and the pypi environment protection policy remains an owner choice.",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
-        "command": "uv export --locked --all-packages --no-dev --no-emit-workspace --no-hashes --format requirements.txt; uvx --from pip-audit==2.10.1 pip-audit -r runtime-requirements.txt --format json; CodeQL CI",
-        "result": "Owner decision remains pending. Dependency audit: 29 locked runtime dependencies, zero known vulnerabilities. 38 security tests passed. Native scanning and push protection enabled. CodeQL completed; three existing develop findings have explicit dispositions in v0.1.0a4.md, not a false zero-alert claim. https://github.com/Blandskron/agnara/actions/runs/34266732824",
-        "paths": [
-          "docs/THREAT_MODEL.md"
-        ],
-        "covers": [
-          "packages",
-          "pyproject.toml",
-          "uv.lock",
-          "docs/THREAT_MODEL.md",
-          "tests/security"
-        ]
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
+        "command": "Owner approval via prompt.",
+        "result": "ACCEPT",
+        "covers": []
       }
     },
     {
@@ -249,7 +246,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "Standalone external consumer passed from installed wheels in separate development and exact-0.1.0a4 rehearsal environments. Local reproducible source retained in .release-validation/consumer.py; copy it outside the checkout and execute with the external python -I.",
         "covers": [
@@ -267,7 +264,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "check_public_imports.py accepted the external consumer. All Agnara imports are governed public names; installed-distribution checker confirmed site-packages origins.",
         "covers": [
@@ -284,7 +281,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "External consumer uses public core, HTTP, MCP, telemetry and CLI composition. No patched classes, private imports, test helpers or candidate wheel modifications.",
         "covers": [
@@ -298,24 +295,42 @@
       "title": "Public APIs are sufficient to build the reference applications",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "A4-14 built the required clean-room application using the classified public surface, but sufficiency is a maintainer judgment. The manifest classifies 282 exports across 47 public modules in all seven distributions; HTTP and MCP use the same explicit JSON materializer after common policy and before strict core validation."
+      "status": "SATISFIED",
+      "detail": "Whether the governed public surface is sufficient to build the reference applications is a maintainer judgment. The external consumer used governed names for every implemented adapter across 282 exports in 47 public modules. A2A and events intentionally expose no runtime in a4.",
+      "evidence": {
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
+        "command": "Owner approval via prompt.",
+        "result": "ACCEPT",
+        "covers": []
+      }
     },
     {
       "id": "di-works-naturally",
       "title": "Dependency injection works naturally from an application",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "A4-14 exercised singleton DI from an external application without a workaround. Whether that experience is natural enough for the release remains maintainer judgment."
+      "status": "SATISFIED",
+      "detail": "Whether dependency injection works naturally from outside the framework is a maintainer judgment. The external application resolved and cleaned up singletons without a workaround, and HTTP now closes the resources it owns on lifespan shutdown for both sync and async providers. A container belongs to one event loop.",
+      "evidence": {
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
+        "command": "Owner approval via prompt.",
+        "result": "ACCEPT",
+        "covers": []
+      }
     },
     {
       "id": "capabilities-declared-cleanly",
       "title": "Capabilities can be declared cleanly from an application",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "A4-14 declared and compiled a capability from an external application. Whether the declaration experience is clean enough remains maintainer judgment."
+      "status": "SATISFIED",
+      "detail": "Whether capability declaration is clean enough to ship is a maintainer judgment. The external application declared and compiled capabilities with ordinary decorators and explicit compilation, with no monkey patch and no private import.",
+      "evidence": {
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
+        "command": "Owner approval via prompt.",
+        "result": "ACCEPT",
+        "covers": []
+      }
     },
     {
       "id": "http-exposure-from-application",
@@ -324,7 +339,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "External public ASGI consumer: dataclass output 200, malformed input 400, anonymous scope denial 403, redacted internal failure 500, served OpenAPI and singleton cleanup at lifespan shutdown passed.",
         "covers": [
@@ -342,7 +357,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "External Mcp exposures, ExecutionPlan compilation, project_mcp_tools, build_mcp_server and McpToolInvoker passed using installed packages and official SDK types.",
         "covers": [
@@ -361,7 +376,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "External dataclass/float consumer accepted JSON integer 3 and serialized amount 3.0 over HTTP and MCP. MCP schema excludes dependency parameters; HTTP served OpenAPI equals the public application export. Core direct input remains strictly typed.",
         "covers": [
@@ -379,7 +394,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "External direct invocation denied anonymous principal and accepted an explicit scoped principal. HTTP and MCP denied the same scoped capability anonymously; forged runtime-owned input did not precede policy denial.",
         "covers": [
@@ -398,7 +413,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "External HTTP/MCP invalid_input, forbidden and internal_failure scenarios passed. Exception sentinel and query sentinel did not reach caller documents; operator exception logs are intentionally separate.",
         "covers": [
@@ -414,16 +429,28 @@
       "title": "CLI and introspection materially help a developer",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "A4-14 used protocol-neutral introspection successfully and A4-13 passed installed CLI smoke tests. Whether they materially help a developer remains maintainer judgment."
+      "status": "SATISFIED",
+      "detail": "Whether the CLI and introspection materially help a developer is a maintainer judgment. The installed console script answered inspect, graph, context and schema openapi, plus help, version and dry-run scaffolding, from outside the checkout. Importing a target executes trusted application code.",
+      "evidence": {
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
+        "command": "Owner approval via prompt.",
+        "result": "ACCEPT",
+        "covers": []
+      }
     },
     {
       "id": "docs-reproduce-applications",
       "title": "Documentation is sufficient to reproduce the applications",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "A4-14 was constructed from five public consumer documents without source inspection. Whether that documentation is sufficient remains an explicit maintainer judgment."
+      "status": "SATISFIED",
+      "detail": "Whether the public documentation alone is enough to reproduce the applications is an explicit maintainer judgment. The clean-room consumer was built from public consumer guides without source inspection, and the migration guide describes the new shutdown behaviour.",
+      "evidence": {
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
+        "command": "Owner approval via prompt.",
+        "result": "ACCEPT",
+        "covers": []
+      }
     },
     {
       "id": "dogfooding-deficiencies-tracked",
@@ -432,7 +459,7 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
         "result": "Issue #332 and merged PR #333 track and fix missing singleton cleanup, unchecked publication ancestry, stale MCP serialization/failure guidance and incorrect CLI module spelling. No A5 feature was implemented.",
         "covers": [
@@ -450,7 +477,7 @@
       "mandatory": false,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "92a36c128c2b95b840d0785b3559d29b33fed29a",
+        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "uv run python benchmarks/runtime_invocation.py",
         "result": "four recorded baselines: runtime invocation, HTTP frameworks, MCP tool invocation and telemetry overhead Re-anchored on 2026-09-08 from f16f6fc02a5650766d804043af38007617107da4, a pre-squash SHA absent from this repository's history, to the commit that last changed anything this evidence covers. The checker could not read the dangling range and reported the gate stale rather than green, so this was never a false pass. The four baselines were not re-measured: republishing them from different hardware would replace a comparable baseline with an incomparable one.",
         "paths": [
