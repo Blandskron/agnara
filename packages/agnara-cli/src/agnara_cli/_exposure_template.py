@@ -30,7 +30,7 @@ See ADR 0063.
 
 from __future__ import annotations
 
-__all__ = ["EXPOSURE_SUMMARY", "inbound_adapter"]
+__all__ = ["inbound_adapter"]
 
 #: Exposure -> (what this protocol projects a capability *as*, the wiring note).
 #: Taken from the `adapters/inbound/` examples in `docs/SCAFFOLDING.md`.

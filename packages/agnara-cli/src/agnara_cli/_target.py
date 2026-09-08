@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import importlib
 import sys
+import traceback
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -45,10 +46,26 @@ def _attribute(module: object, path: str) -> object:
     """
     value = module
     for part in path.split("."):
-        value = getattr(value, part, _MISSING)
+        try:
+            value = getattr(value, part, _MISSING)
+        except Exception as error:
+            # A property or a descriptor ran user code and it failed. That is
+            # the same situation as a module that raises on import.
+            raise TargetError(
+                f"reading attribute {path!r} failed at {part!r}: {_reason(error)}"
+            ) from error
         if value is _MISSING:
             raise TargetError(f"module has no attribute {path!r} (failed at {part!r})")
     return value
+
+
+def _reason(error: BaseException) -> str:
+    """One line naming the exception, whether or not it carried a message.
+
+    ``str(error)`` alone is empty for ``raise RuntimeError()`` and for a failed
+    ``assert``, which would leave the operator with "failed:" and nothing else.
+    """
+    return traceback.format_exception_only(error)[-1].strip()
 
 
 class TargetError(Exception):
@@ -97,10 +114,16 @@ def _import(module_name: str, search_path: Sequence[str]) -> object:
         return importlib.import_module(module_name)
     except ImportError as error:
         raise TargetError(f"cannot import {module_name!r}: {error}") from error
+    except SystemExit as error:
+        # A module that calls ``sys.exit()`` at import time -- a script without
+        # a ``__main__`` guard -- must not decide this command's exit code.
+        raise TargetError(
+            f"importing {module_name!r} failed: the module exited with {error.code!r}"
+        ) from error
     except Exception as error:
         # A module that raises while executing is the user's code failing, not
         # a CLI failure, and the operator needs the reason rather than a stack.
-        raise TargetError(f"importing {module_name!r} failed: {error}") from error
+        raise TargetError(f"importing {module_name!r} failed: {_reason(error)}") from error
     finally:
         sys.path[:] = original
 

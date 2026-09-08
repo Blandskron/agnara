@@ -48,9 +48,12 @@ class DefinitionError(AgnaraError):
 class InvocationError(AgnaraError):
     """A direct invocation is inconsistent with its compiled plan.
 
-    This reports caller/runtime composition mistakes such as invoking a plan
-    under another capability id or supplying a parameter owned by dependency
-    injection. Canonical handler failures remain a separate E4.7 concern.
+    This reports a caller/runtime composition mistake: invoking a plan under
+    another capability id. A payload that names a runtime-owned parameter is
+    not a composition mistake but an ordinary unexpected input, reported as a
+    `ValidationError` after policies have run so that an unauthorized caller
+    learns nothing about the handler's signature. Canonical handler failures
+    remain a separate E4.7 concern.
     """
 
 

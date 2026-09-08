@@ -82,6 +82,21 @@ def _path_segments(path: str) -> tuple[str, ...]:
     return tuple(path[1:].split("/"))
 
 
+def _request_segments(path: str) -> tuple[str, ...] | None:
+    """Split a request target, or answer ``None`` for one no route can match.
+
+    A route template must start with ``/``, and `_path_segments` refuses one
+    that does not as a definition error. A *request* path is attacker
+    controlled and may legitimately be ``*`` (``OPTIONS *``) or an
+    absolute-form target, which an ASGI server passes through unchanged. Those
+    are not definition mistakes; they are targets nothing is exposed at, and
+    they must be answered like any other unmatched path rather than raised.
+    """
+    if not isinstance(path, str) or not path.startswith("/"):
+        return None
+    return _path_segments(path)
+
+
 def _parse_template(path_template: str) -> tuple[tuple[str | None, ...], tuple[str, ...]]:
     segments: list[str | None] = []
     parameter_names: list[str] = []
@@ -177,7 +192,9 @@ class _FrozenRouteRegistry[T]:
 
     def match(self, method: str, path: str) -> _RouteMatch[T] | None:
         normalized_method = _normalize_method(method)
-        segments = _path_segments(path)
+        segments = _request_segments(path)
+        if segments is None:
+            return None
         root = self._roots.get(normalized_method)
         if root is None:
             return None
@@ -191,7 +208,9 @@ class _FrozenRouteRegistry[T]:
         )
 
     def allowed_methods(self, path: str) -> tuple[str, ...]:
-        segments = _path_segments(path)
+        segments = _request_segments(path)
+        if segments is None:
+            return ()
         return tuple(
             method
             for method in self._method_order

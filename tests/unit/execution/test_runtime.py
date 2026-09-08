@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from collections.abc import AsyncIterator, Callable
 from typing import Any
 
@@ -126,18 +127,49 @@ def test_rejects_invocation_for_another_capability() -> None:
 
 @pytest.mark.parametrize("reserved_name", ["database", "context"])
 def test_rejects_payload_values_for_runtime_owned_parameters(reserved_name: str) -> None:
+    """A runtime-owned parameter is not an input, so naming one is unexpected input."""
+
     async def run_test() -> None:
         registry = DIRegistry()
         registry.bind(Database, provide_database)
 
         def refund(database: Database, context: ExecutionContext) -> None:
-            pass
+            raise AssertionError("handler must not run")
 
         plan = ExecutionPlan.compile(definition(refund), registry)
         direct_context = context_for(plan, registry, {reserved_name: object()})
 
-        with pytest.raises(InvocationError, match=reserved_name):
+        with pytest.raises(ValidationError) as caught:
             await invoke(plan, direct_context)
+        assert caught.value.message == "unexpected input"
+        assert caught.value.path == (reserved_name,)
+
+    asyncio.run(run_test())
+
+
+def test_policies_run_before_a_runtime_owned_parameter_is_noticed() -> None:
+    """An unauthorized caller must not learn dependency or context parameter
+    names from the difference between "forbidden" and "unexpected input"."""
+
+    async def run_test() -> None:
+        registry = DIRegistry()
+        registry.bind(Database, provide_database)
+
+        def refund(database: Database) -> None:
+            raise AssertionError("handler must not run")
+
+        plan = ExecutionPlan.compile(
+            CapabilityDefinition.declare(
+                id=CapabilityId("payments", "refund"),
+                handler=refund,
+                scopes={"payments:write"},
+            ),
+            registry,
+        )
+        probing = context_for(plan, registry, {"database": "forged"})
+
+        with pytest.raises(PolicyDeniedError):
+            await invoke(plan, probing)
 
     asyncio.run(run_test())
 
@@ -532,7 +564,12 @@ def test_canonical_invocation_maps_validation_with_immutable_path() -> None:
     asyncio.run(run_test())
 
 
-def test_canonical_invocation_redacts_unexpected_handler_failure() -> None:
+def test_canonical_invocation_redacts_unexpected_handler_failure(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """The caller learns only that the invocation failed; the operator, who has
+    to fix it, gets the capability id and the traceback in the log."""
+
     async def run_test() -> None:
         registry = DIRegistry()
 
@@ -540,7 +577,8 @@ def test_canonical_invocation_redacts_unexpected_handler_failure() -> None:
             raise RuntimeError("database password is secret")
 
         plan = ExecutionPlan.compile(definition(refund), registry)
-        outcome = await invoke_result(plan, context_for(plan, registry))
+        with caplog.at_level(logging.ERROR, logger="agnara.execution"):
+            outcome = await invoke_result(plan, context_for(plan, registry))
 
         assert outcome == Failure(
             FailureCode.INTERNAL_FAILURE,
@@ -548,6 +586,13 @@ def test_canonical_invocation_redacts_unexpected_handler_failure() -> None:
         )
         assert isinstance(outcome, Failure)
         assert "secret" not in outcome.message
+
+        [record] = caplog.records
+        assert record.name == "agnara.execution"
+        assert record.levelno == logging.ERROR
+        assert record.getMessage() == "capability payments.refund failed"
+        assert record.exc_info is not None
+        assert record.exc_info[0] is RuntimeError
 
     asyncio.run(run_test())
 

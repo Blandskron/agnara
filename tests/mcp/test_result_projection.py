@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
 import pytest
@@ -71,10 +73,14 @@ def test_results_are_deterministic_and_detached_from_all_other_projections() -> 
     "code", [code for code in FailureCode if code is not FailureCode.INTERACTION_REQUIRED]
 )
 def test_canonical_failure_exposes_only_its_safe_message_and_code(code: FailureCode) -> None:
-    document = wire(project_mcp_result(Failure(code, "Safe message", {"token": "private-secret"})))
-    message = (
-        "capability invocation failed" if code is FailureCode.INTERNAL_FAILURE else "Safe message"
-    )
+    """A failure is the handler's answer to the caller, and it reaches an MCP
+    client with the same code, message and details the HTTP problem document
+    carries; only an internal failure is redacted to its code."""
+    document = wire(project_mcp_result(Failure(code, "Safe message", {"path": ("field", 0)})))
+    envelope: dict[str, Any] = {"code": code.value, "message": "Safe message"}
+    envelope["details"] = {"path": ["field", 0]}
+    if code is FailureCode.INTERNAL_FAILURE:
+        envelope = {"code": code.value, "message": "capability invocation failed"}
     assert document == {
         "resultType": "complete",
         "isError": True,
@@ -82,7 +88,7 @@ def test_canonical_failure_exposes_only_its_safe_message_and_code(code: FailureC
             {
                 "type": "text",
                 "text": json.dumps(
-                    {"code": code.value, "message": message},
+                    envelope,
                     sort_keys=True,
                     separators=(",", ":"),
                 ),
@@ -114,11 +120,50 @@ class CustomDict(dict):
     pass
 
 
+class Colour(Enum):
+    RED = "red"
+
+
+@dataclass(frozen=True, slots=True)
+class Point:
+    x: int
+    colour: Colour
+
+
+def test_success_values_follow_the_projection_shared_with_http() -> None:
+    """One output rule for every JSON transport: a dataclass, an enum member
+    or a mapping subclass a capability returns is representable over MCP
+    exactly as it is over HTTP, rather than an internal failure on one of
+    them."""
+    result = project_mcp_result(Success([Point(1, Colour.RED), CustomDict(a=1)]))
+    assert isinstance(result, CallToolResult)
+    assert result.structured_content == {"result": [{"x": 1, "colour": "red"}, {"a": 1}]}
+
+
+def test_failure_details_reach_the_caller_except_for_internal_failures() -> None:
+    invalid = project_mcp_result(
+        Failure(FailureCode.INVALID_INPUT, "expected int, got str", {"path": ("left", 0)})
+    )
+    assert isinstance(invalid, CallToolResult)
+    assert json.loads(invalid.content[0].text) == {  # ty: ignore[unresolved-attribute]
+        "code": "invalid_input",
+        "message": "expected int, got str",
+        "details": {"path": ["left", 0]},
+    }
+    internal = project_mcp_result(
+        Failure(FailureCode.INTERNAL_FAILURE, "database password is hunter2", {"secret": "x"})
+    )
+    assert isinstance(internal, CallToolResult)
+    assert json.loads(internal.content[0].text) == {  # ty: ignore[unresolved-attribute]
+        "code": "internal_failure",
+        "message": "capability invocation failed",
+    }
+
+
 @pytest.mark.parametrize(
     "value",
     [
         PrivateObject(),
-        CustomDict(secret="hidden"),
         b"secret",
         {1: "secret"},
         {"set"},
@@ -132,7 +177,7 @@ def test_non_json_success_fails_without_serializing_values(value: object) -> Non
     with pytest.raises(McpResultProjectionError) as captured:
         project_mcp_result(Success(value))
     assert str(captured.value) == (
-        "MCP success value must be finite, acyclic JSON data within 64 nesting levels"
+        "MCP success value must be finite, acyclic JSON data within 128 nesting levels"
     )
 
 
@@ -146,7 +191,7 @@ def test_cycles_and_excessive_depth_are_rejected_but_shared_values_are_valid() -
     with pytest.raises(McpResultProjectionError):
         project_mcp_result(Success(mapping))
     deep: object = None
-    for _ in range(64):
+    for _ in range(128):
         deep = [deep]
     assert isinstance(project_mcp_result(Success(deep)), CallToolResult)
     with pytest.raises(McpResultProjectionError):

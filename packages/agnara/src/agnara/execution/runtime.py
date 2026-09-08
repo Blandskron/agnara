@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import inspect
+import logging
 import time
 from collections.abc import Callable
 from typing import Any
@@ -25,6 +26,11 @@ from agnara.policy import PolicyFailure, PolicyInteractionRequired, PolicySucces
 from agnara.schema import TypeSchema
 
 __all__ = ["invoke", "invoke_result"]
+
+#: Where a redacted handler failure is reported. The canonical outcome a
+#: caller receives says only that the invocation failed; the exception itself
+#: is for the operator, and the log is the one channel that reaches them.
+_LOGGER = logging.getLogger("agnara.execution")
 
 
 async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
@@ -57,11 +63,6 @@ async def _invoke(
             f"invocation targets {invocation.capability_id}, but the compiled plan is for "
             f"{plan.definition.id}"
         )
-
-    supplied_protected = plan.protected_parameters.intersection(invocation.payload)
-    if supplied_protected:
-        rendered = ", ".join(sorted(supplied_protected))
-        raise InvocationError(f"invocation payload supplies runtime-owned parameter(s): {rendered}")
 
     # Building a lifecycle event pair costs roughly two microseconds, and an
     # application that registered no hook can observe none of it. The work is
@@ -160,6 +161,9 @@ async def invoke_result[T](
             },
         )
     except Exception:
+        # Redaction is for the wire, not the operator: without this record a
+        # 500 produced by a handler would be undiagnosable anywhere.
+        _LOGGER.exception("capability %s failed", plan.definition.id)
         return Failure(FailureCode.INTERNAL_FAILURE, "capability invocation failed")
 
     if isinstance(value, Success | Failure):
@@ -221,7 +225,15 @@ async def _execute(
 
 
 def _validate_inputs(plan: ExecutionPlan, payload: dict[str, Any]) -> dict[str, Any]:
-    """Validate a payload against precompiled schemas without mutating it."""
+    """Validate a payload against precompiled schemas without mutating it.
+
+    A runtime-owned parameter -- one bound to a dependency or to the execution
+    context -- is not an input, so a payload naming one is "unexpected input"
+    like any other undeclared key. It is deliberately not told apart: the
+    check runs after policies, and answering differently would let a caller
+    who is not even authorized to invoke the capability enumerate the names of
+    its dependency and context parameters.
+    """
     unexpected = sorted(set(payload).difference(plan.input_schemas))
     if unexpected:
         raise ValidationError("unexpected input", path=(unexpected[0],))

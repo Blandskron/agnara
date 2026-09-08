@@ -99,10 +99,12 @@ def _document(value: object) -> tuple[dict[str, Any], bytes | None]:
     export emits, so the CLI never re-serializes something a server already
     serialized.
     """
-    if callable(value):
+    if callable(value) and not isinstance(value, type):
         # Documented as zero-argument. A producer with a different signature
         # raises TypeError here and is reported like any other failure, rather
-        # than being probed for an arity this contract does not define.
+        # than being probed for an arity this contract does not define. A class
+        # is callable too, but calling one constructs an instance as a side
+        # effect of an export, so it is refused below as not being a document.
         producer = cast("Callable[[], object]", value)
         try:
             value = producer()

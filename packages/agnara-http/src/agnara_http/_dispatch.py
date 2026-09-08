@@ -12,9 +12,11 @@ serialization, against an immutable registry that needs no lock.
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import quote
 
 from agnara.core.di.resolver import DIContainer
 from agnara.execution import ExecutionContext, ExecutionPlan, Invocation, invoke_result
@@ -51,6 +53,8 @@ type _Scope = dict[str, Any]
 type _Message = dict[str, Any]
 type _Receive = Callable[[], Awaitable[_Message]]
 type _Send = Callable[[_Message], Awaitable[None]]
+
+_LOGGER = logging.getLogger("agnara_http")
 
 #: A binding failure that can still be answered, and the status it earns.
 #: ``DISCONNECTED`` is absent because there is nobody left to answer.
@@ -229,11 +233,19 @@ class _HTTPDispatcher:
                 problem_types=self._options.problem_types,
                 instance=instance,
             )
-        except _ResponseSerializationError, RecursionError:
+        except (_ResponseSerializationError, RecursionError) as error:
             # Nothing has been sent yet, so the last resort is still available.
             # A value nested deeper than this interpreter can walk reaches the
             # same conclusion as one of an unsupported type: the server cannot
-            # represent it, and says so without describing it.
+            # represent it, and says so without describing it. The operator
+            # gets the location and the reason, never the value.
+            _LOGGER.error(
+                "%s %s: the capability %s returned a value this response cannot carry: %s",
+                method,
+                path,
+                exposure.plan.definition.id,
+                error,
+            )
             response = _INTERNAL_PROBLEM
         await _send_response(response, send, head=head)
 
@@ -305,18 +317,22 @@ def _routed_path(scope: _Scope) -> str:
     return remainder if remainder.startswith("/") else f"/{remainder}"
 
 
+#: Characters a URI path may carry unencoded (RFC 3986 ``pchar`` and ``/``).
+_INSTANCE_SAFE = "/:@!$&'()*+,;=-._~"
+
+
 def _problem_instance(path: str) -> str | None:
-    """Return the path as a URI reference, or nothing when it cannot be one.
+    """Return the routed path as a URI reference.
+
+    The ASGI path is percent-*decoded*, so it is re-encoded here: a request
+    for ``/x%3Fq=1`` must not become the instance ``/x?q=1``, which reads as
+    a different path with a query. Encoding also keeps non-ASCII and control
+    characters out of the document without dropping the instance.
 
     The query string is deliberately excluded. A secret passed in a query
     would otherwise be copied into the problem body and into every log that
-    keeps it. A target that is not usable as a URI reference yields ``None``
-    rather than making a ``404`` fail to serialize.
+    keeps it.
     """
-    if not path or not path.isascii():
+    if not path:
         return None
-    if any(
-        character.isspace() or ord(character) < 0x20 or ord(character) == 0x7F for character in path
-    ):
-        return None
-    return path
+    return quote(path, safe=_INSTANCE_SAFE)

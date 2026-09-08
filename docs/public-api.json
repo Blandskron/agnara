@@ -958,6 +958,10 @@
             {
               "name": "materialize_json",
               "stability": "provisional"
+            },
+            {
+              "name": "serialize_json",
+              "stability": "provisional"
             }
           ]
         },
@@ -1031,6 +1035,10 @@
             },
             {
               "name": "materialize_json",
+              "stability": "provisional"
+            },
+            {
+              "name": "serialize_json",
               "stability": "provisional"
             }
           ]

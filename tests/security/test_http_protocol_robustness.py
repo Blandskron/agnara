@@ -293,3 +293,72 @@ def test_the_request_target_never_carries_a_query_into_a_problem() -> None:
     assert document["status"] == 404
     assert document["instance"] == "/missing"
     assert "super-secret" not in json.dumps(document)
+
+
+def test_a_request_target_that_is_not_origin_form_is_an_ordinary_404() -> None:
+    """``OPTIONS *`` and absolute-form targets reach the adapter as paths that
+    do not start with ``/``. They are targets nothing is exposed at, not route
+    definition mistakes, and must not escape as an exception the server turns
+    into a bare 500."""
+    for method, path in (("OPTIONS", "*"), ("GET", "http://example.com/p")):
+        sent = drive(dispatcher(body_route()), method=method, path=path, headers=())
+        assert sent[0]["status"] == 404
+        assert problem(sent)["code"] == "not_found"
+
+
+def test_a_json_number_that_overflows_to_infinity_is_refused() -> None:
+    """``1e400`` is valid JSON text but not a finite value; the query path
+    already refuses it and the body path must agree."""
+    for body in (b"1e400", b'{"n": -1e999}', b"[1e400]"):
+        sent = drive(
+            dispatcher(body_route()),
+            [{"type": "http.request", "body": body, "more_body": False}],
+        )
+        assert sent[0]["status"] == 400
+        assert problem(sent)["details"] == {"location": "body"}
+
+
+def test_a_lone_surrogate_escape_is_a_client_error_not_a_server_error() -> None:
+    sent = drive(
+        dispatcher(body_route()),
+        [{"type": "http.request", "body": b'"\\ud800"', "more_body": False}],
+    )
+    assert sent[0]["status"] == 400
+    assert problem(sent)["details"] == {"location": "body"}
+
+
+def test_a_surrogate_pair_escape_is_still_valid_text() -> None:
+    sent = drive(
+        dispatcher(body_route()),
+        [{"type": "http.request", "body": b'"\\ud83d\\ude00"', "more_body": False}],
+    )
+    assert sent[0]["status"] == 200
+    assert json.loads(sent[1]["body"]) == "\U0001f600"
+
+
+def test_a_declared_oversized_body_is_refused_before_it_is_read() -> None:
+    reads = 0
+
+    async def receive() -> dict[str, Any]:
+        nonlocal reads
+        reads += 1
+        return {"type": "http.request", "body": b"x" * 512, "more_body": True}
+
+    sent = drive(
+        dispatcher(body_route()),
+        receive=receive,
+        headers=(*JSON, (b"content-length", b"2000000")),
+    )
+    assert sent[0]["status"] == 413
+    assert reads == 0
+
+
+def test_json_bodies_with_brackets_only_inside_strings_are_accepted_quickly() -> None:
+    """The delimiter count exceeds the limit, so the exact walk runs and must
+    still ignore structural characters inside strings."""
+    body = json.dumps({"text": "[" * (_MAX_JSON_NESTING + 5)}).encode()
+    sent = drive(
+        dispatcher(body_route()),
+        [{"type": "http.request", "body": body, "more_body": False}],
+    )
+    assert sent[0]["status"] == 200

@@ -62,6 +62,32 @@ def _missing(key: CapabilityKey) -> UnknownCapabilityError:
     return UnknownCapabilityError(f"no capability registered as {str(key)!r}")
 
 
+def _lookup(
+    definitions: Mapping[CapabilityId, CapabilityDefinition], key: CapabilityKey
+) -> CapabilityDefinition:
+    """Look one key up, reporting every miss as the mapping contract requires.
+
+    A string that is not even a well-formed id is as absent as a well-formed
+    one nobody registered. Reporting it as a `DefinitionError` instead would
+    escape ``Mapping.get`` and every other caller that only expects `KeyError`,
+    and would disagree with ``__contains__``, which already answers ``False``.
+    """
+    try:
+        return definitions[_as_id(key)]
+    except KeyError, DefinitionError:
+        raise _missing(key) from None
+
+
+def _holds(definitions: Mapping[CapabilityId, CapabilityDefinition], key: object) -> bool:
+    if not isinstance(key, CapabilityId | str):
+        return False
+    try:
+        return _as_id(key) in definitions
+    except DefinitionError:
+        # An unparseable string simply is not a registered id.
+        return False
+
+
 class FrozenCapabilityRegistry(Mapping[CapabilityId, CapabilityDefinition]):
     """An immutable view of registered capabilities.
 
@@ -80,19 +106,10 @@ class FrozenCapabilityRegistry(Mapping[CapabilityId, CapabilityDefinition]):
         )
 
     def __getitem__(self, key: CapabilityKey) -> CapabilityDefinition:
-        try:
-            return self._definitions[_as_id(key)]
-        except KeyError:
-            raise _missing(key) from None
+        return _lookup(self._definitions, key)
 
     def __contains__(self, key: object) -> bool:
-        if not isinstance(key, CapabilityId | str):
-            return False
-        try:
-            return _as_id(key) in self._definitions
-        except DefinitionError:
-            # An unparseable string simply is not a registered id.
-            return False
+        return _holds(self._definitions, key)
 
     def __iter__(self) -> Iterator[CapabilityId]:
         return iter(self._definitions)
@@ -190,18 +207,10 @@ class CapabilityRegistry:
             return FrozenCapabilityRegistry(self._definitions)
 
     def __getitem__(self, key: CapabilityKey) -> CapabilityDefinition:
-        try:
-            return self._definitions[_as_id(key)]
-        except KeyError:
-            raise _missing(key) from None
+        return _lookup(self._definitions, key)
 
     def __contains__(self, key: object) -> bool:
-        if not isinstance(key, CapabilityId | str):
-            return False
-        try:
-            return _as_id(key) in self._definitions
-        except DefinitionError:
-            return False
+        return _holds(self._definitions, key)
 
     def __iter__(self) -> Iterator[CapabilityId]:
         return iter(tuple(self._definitions))

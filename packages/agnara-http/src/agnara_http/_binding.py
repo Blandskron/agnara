@@ -306,6 +306,7 @@ async def _bind_request(
         # to answer 415 is work an unauthenticated client should not be able
         # to ask for.
         decoding = _decoding(plan, body_kinds, header_values)
+        _check_declared_length(header_values, plan.max_body_bytes)
         raw_body = await _read_body(receive, plan.max_body_bytes)
         _bind_body(payload, plan, decoding, raw_body)
     return payload
@@ -394,11 +395,16 @@ def _bind_json(payload: dict[str, Any], plan: _HTTPBindingPlan, raw_body: bytes)
     except UnicodeDecodeError as error:
         raise _RequestBindingError("invalid UTF-8 JSON body", location="body") from error
 
-    _check_json_nesting(text)
+    # Counting the opening delimiters runs at C speed and bounds the nesting
+    # from above, so the character walk only runs for a body that could
+    # actually exceed the limit rather than for every request.
+    if text.count("[") + text.count("{") > _MAX_JSON_NESTING:
+        _check_json_nesting(text)
     try:
         decoded = json.loads(
             text,
             parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)),
+            parse_float=_finite_float,
             object_pairs_hook=_object_without_duplicates,
         )
     except RecursionError as error:
@@ -409,7 +415,64 @@ def _bind_json(payload: dict[str, Any], plan: _HTTPBindingPlan, raw_body: bytes)
         raise _RequestBindingError("JSON body is nested too deeply", location="body") from error
     except (json.JSONDecodeError, ValueError) as error:
         raise _RequestBindingError("invalid UTF-8 JSON body", location="body") from error
+    if _SURROGATE_ESCAPE.search(text) and not _encodable(decoded):
+        # ``\ud800`` decodes to a lone surrogate: a `str` no UTF-8 response
+        # can carry. It is refused here, where it is the client's mistake,
+        # rather than becoming a 500 when the capability echoes it.
+        raise _RequestBindingError("invalid UTF-8 JSON body", location="body")
     payload[binding.input_name] = decoded
+
+
+def _finite_float(text: str) -> float:
+    """Decode a JSON number as a float, refusing one that overflowed.
+
+    ``1e400`` is syntactically valid JSON that Python turns into ``inf``. The
+    query-string path already rejects it; the body path has to as well, or a
+    ``float`` input receives a value the schema cannot describe and the
+    capability cannot return.
+    """
+    number = float(text)
+    if not math.isfinite(number):
+        raise ValueError(text)
+    return number
+
+
+#: A JSON escape naming a UTF-16 surrogate. Only bodies containing one can
+#: decode to a string that is not valid Unicode, so only they pay for the walk.
+_SURROGATE_ESCAPE = re.compile(r"\\u[dD][89a-fA-F]")
+
+
+def _encodable(value: object) -> bool:
+    """Whether every string in decoded JSON data can be encoded as UTF-8."""
+    if isinstance(value, str):
+        try:
+            value.encode("utf-8")
+        except UnicodeEncodeError:
+            return False
+        return True
+    if isinstance(value, dict):
+        return all(_encodable(key) and _encodable(item) for key, item in value.items())
+    if isinstance(value, list):
+        return all(_encodable(item) for item in value)
+    return True
+
+
+def _check_declared_length(header_values: Mapping[str, list[str]], limit: int) -> None:
+    """Refuse a body the client has already declared oversized, before reading it.
+
+    The streaming limit in `_read_body` still applies, so a client that lies
+    about the length gains nothing; this only saves buffering up to the limit
+    for a client that told the truth.
+    """
+    declared = header_values.get("content-length")
+    if declared is None or len(declared) != 1 or not _INTEGER.fullmatch(declared[0]):
+        return
+    if int(declared[0]) > limit:
+        raise _RequestBindingError(
+            "request body exceeds configured limit",
+            location="body",
+            failure=_BindingFailure.CONTENT_TOO_LARGE,
+        )
 
 
 def _check_json_nesting(text: str) -> None:

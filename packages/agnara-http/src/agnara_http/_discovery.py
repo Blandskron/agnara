@@ -25,6 +25,7 @@ policy pipeline, and this endpoint neither consults nor bypasses it.
 from __future__ import annotations
 
 import json
+import logging
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -319,6 +320,8 @@ class _ResolverFailed:
 
 _RESOLVER_FAILED = _ResolverFailed()
 
+_LOGGER = logging.getLogger("agnara_http")
+
 
 def _principal_or_failure(
     route: _CompiledDiscovery,
@@ -339,12 +342,19 @@ def _principal_or_failure(
         resolved = route.principals(scope)
     except Exception:
         # The resolver is application code touching credentials. Whatever it
-        # raised must not reach the client, and must not be read as anonymous.
+        # raised must not reach the client, and must not be read as anonymous;
+        # the operator, who has to fix it, gets the traceback.
+        _LOGGER.exception("the principal resolver for %s failed", route.path)
         return _RESOLVER_FAILED
     if resolved is None:
         if route.allow_anonymous:
             return AnonymousPrincipal(metadata={"transport": "http"})
         return None
     if not isinstance(resolved, Principal):
+        _LOGGER.error(
+            "the principal resolver for %s returned %s, not a Principal or None",
+            route.path,
+            type(resolved).__name__,
+        )
         return _RESOLVER_FAILED
     return resolved

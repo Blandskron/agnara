@@ -783,7 +783,6 @@ class Http:
                 f"lifecycle must be callable or None, got {type(lifecycle).__name__}"
             )
 
-        self._frozen = True
         # Resolve every declaration once. Doing it per use would let one
         # declaration report a different capability in the route table than in
         # the exposure records, which is exactly the drift ADR 0070 removed.
@@ -822,6 +821,11 @@ class Http:
                 ),
                 None if lifecycle is None else _LifespanDispatcher(lifecycle),
             )
+            if openapi is not None and openapi_path is None:
+                # Not served, but still promised: `HttpApplication.openapi()`
+                # projects on demand, and a surface it cannot describe is a
+                # startup failure, not one the first caller of that method finds.
+                _project_openapi(routes, openapi._internal())
         except _TRANSLATED as error:
             raise HttpDefinitionError(str(error)) from error
         except ValueError as error:
@@ -829,6 +833,9 @@ class Http:
             # application as an anonymous ValueError from a private module.
             raise HttpDefinitionError(str(error)) from error
 
+        # Closed only now: a compile that failed left nothing compiled, and the
+        # declaration it refused can be corrected and compiled again.
+        self._frozen = True
         return HttpApplication(
             self._surface,
             boundary,

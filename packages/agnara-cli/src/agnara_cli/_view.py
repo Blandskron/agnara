@@ -28,7 +28,7 @@ from agnara.introspection import (
     snapshot,
 )
 from agnara.policy import AnonymousPrincipal, Principal
-from agnara_cli._target import ResolvedTarget, resolve_target
+from agnara_cli._target import resolve_target
 
 __all__ = ["View", "add_view_arguments", "resolve_view"]
 
@@ -52,7 +52,6 @@ class View:
 
     snapshot: IntrospectionSnapshot
     visibility: DiscoveryVisibility
-    target: ResolvedTarget
 
 
 def add_view_arguments(parser: argparse.ArgumentParser) -> None:
@@ -147,5 +146,4 @@ def resolve_view(arguments: argparse.Namespace) -> View:
     return View(
         snapshot=filter_snapshot(described, visibility, _principal(arguments.as_scope)),
         visibility=visibility,
-        target=resolved,
     )
