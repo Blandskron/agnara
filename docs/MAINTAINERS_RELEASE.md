@@ -86,7 +86,8 @@ Agnara uses **PyPI Trusted Publishing via OpenID Connect (OIDC)**. No passwords,
 tokens or `.pypirc` files are ever stored in the repository or in personal
 environments.
 
-Every one of the seven projects needs the identical publisher tuple:
+For A8 bootstrap, the seven projects share these fields; environments differ
+per distribution (ADR 0083):
 
 | Field | Value |
 | --- | --- |
@@ -94,7 +95,21 @@ Every one of the seven projects needs the identical publisher tuple:
 | Owner | `Blandskron` |
 | Repository | `agnara` |
 | Workflow filename | `release.yml` |
-| Environment | `pypi` |
+| Environment | `publisher_environment` per project; see the table below |
+
+| Project | Bootstrap environment |
+| --- | --- |
+| `agnara` | `pypi-core` |
+| `agnara-a2a` | `pypi-a2a` |
+| `agnara-cli` | `pypi-cli` |
+| `agnara-events` | `pypi-events` |
+| `agnara-http` | `pypi-http` |
+| `agnara-mcp` | `pypi-mcp` |
+| `agnara-telemetry` | `pypi-telemetry` |
+
+`pypi` is the human approval gate, not an upload identity during bootstrap.
+See [ADR 0083](adr/0083-a8-bootstrap-publisher-identities.md) for setup,
+failure behavior and the deferred migration back to a common identity.
 
 A project that does not exist yet needs a **pending** publisher, added at
 <https://pypi.org/manage/account/publishing/>; it creates the project on first
@@ -112,7 +127,7 @@ the Project name field character by character: `agnara-a2a`, never
 `agnara_a2a`, which is only the wheel and sdist filename normalization.
 
 Record each readback in
-[`docs/releases/publication.json`](releases/publication.json) (schema 2):
+[`docs/releases/publication.json`](releases/publication.json) (schema 3):
 `trusted_publisher: VERIFIED`, `publisher_kind` (`pending` or `active`),
 `verified_by` (a human account — automation identities are refused) and
 `verified_on` (an ISO date on or after `last_registry_failure.on`). Then set
@@ -221,12 +236,13 @@ preconditions ──┘                                   │
 5. **publish-preflight** — preconditions again, then the public index: refuses
    if this version already has files anywhere in the set, or if a recorded
    publisher kind disagrees with whether its project exists.
-6. **publish** — waits in the `pypi` environment for a reviewer. `id-token:
-   write` and `contents: read`. Re-checks every precondition after approval,
-   re-validates the downloaded bundle, stages each distribution separately,
-   then uploads **siblings first and `agnara` last**, one reviewed step each,
-   with metadata verification, attestations and hash printing. `skip-existing`
-   is off. No tag exists at this point.
+6. **publish** — waits in `pypi` for a reviewer, with only `contents: read`.
+   Re-checks preconditions after approval. Seven sequential jobs then enter
+   their bootstrap environments with `id-token: write` and `contents: read`,
+   recheck preconditions, validate the bundle and their distribution identity,
+   and upload only their own wheel and sdist. **Siblings first, `agnara` last**.
+   Metadata verification, attestations and hash printing remain enabled;
+   `skip-existing` is absent. No tag exists at this point (ADR 0083).
 7. **verify-published** — asserts every distribution is *complete* on the index
    (wheel and sdist), then installs the published set into a clean environment
    and exercises it.

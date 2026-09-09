@@ -1,12 +1,11 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "registry": "https://pypi.org",
   "publisher": {
     "provider": "github",
     "owner": "Blandskron",
     "repository": "agnara",
-    "workflow": "release.yml",
-    "environment": "pypi"
+    "workflow": "release.yml"
   },
   "release_authorization": {
     "mechanism": "github-environment",
@@ -22,6 +21,7 @@
     "reason": "PyPI rejected the first upload, agnara-a2a, with HTTP 400 'Non-user identities cannot create new projects': no Pending Trusted Publisher matched the canonical project name agnara-a2a for the workflow's OIDC identity. Every per-project readback dated before this failure is not evidence."
   },
   "notes": [
+    "A8 bootstrap uses a distinct publisher_environment per distribution (ADR 0083). The common pypi identity read back for agnara and agnara-a2a is not evidence for these new identities. All bootstrap identities remain UNVERIFIED pending real PyPI readback.",
     "This file is the PUBLISH READY record of the external registry configuration. scripts/check_publication_readiness.py refuses publication while any project here is not VERIFIED, while any readback predates last_registry_failure, while the recorded publisher tuple is not the identity .github/workflows/release.yml presents, or while the recorded publisher kind disagrees with whether the project exists on the index. .github/workflows/release.yml runs that check before anything is built, before the human approval gate and again before the first upload; no tag exists until all of it has passed (ADR 0082).",
     "Only the repository owner can fill this in. Verification means opening https://pypi.org/manage/account/publishing/ (for a project that does not exist yet) or the project's own Publishing settings (for one that does) and reading back the exact Project name and the four fields of the publisher tuple. A 404 on the project page is not evidence that a pending publisher exists, and the 0.1.0a6 failure proved that a readback which does not check the Project name field character by character is not evidence either.",
     "To confirm a project: set trusted_publisher to VERIFIED, verified_by to the confirming human account and verified_on to the date of the readback, and set publisher_kind to pending (project absent from PyPI) or active (project exists). Then set status/confirmed_by/confirmed_on at the top. Record no credentials here. An automation identity in verified_by or confirmed_by is refused.",
@@ -38,7 +38,8 @@
       "trusted_publisher": "UNVERIFIED",
       "verified_by": null,
       "verified_on": null,
-      "note": "Uploaded 0.1.0a4-py3-none-any.whl successfully, so an active Trusted Publisher exists on this project. Read its tuple back in the project's Publishing settings; a working publisher is not a verified one."
+      "note": "Read back the exact canonical project name, Blandskron/agnara, release.yml and pypi-core before recording VERIFIED.",
+      "publisher_environment": "pypi-core"
     },
     {
       "name": "agnara-a2a",
@@ -49,7 +50,8 @@
       "trusted_publisher": "UNVERIFIED",
       "verified_by": null,
       "verified_on": null,
-      "note": "The 0.1.0a6 upload was rejected with HTTP 400 for this exact metadata name. Delete any pending entry whose Project name is not exactly agnara-a2a (agnara_a2a is the wheel filename normalization, never the project name) and recreate it with Project name agnara-a2a."
+      "note": "Read back the exact canonical project name, Blandskron/agnara, release.yml and pypi-a2a before recording VERIFIED.",
+      "publisher_environment": "pypi-a2a"
     },
     {
       "name": "agnara-cli",
@@ -60,7 +62,8 @@
       "trusted_publisher": "UNVERIFIED",
       "verified_by": null,
       "verified_on": null,
-      "note": "Never reached by any upload. Requires a pending publisher whose Project name is exactly agnara-cli."
+      "note": "Read back the exact canonical project name, Blandskron/agnara, release.yml and pypi-cli before recording VERIFIED.",
+      "publisher_environment": "pypi-cli"
     },
     {
       "name": "agnara-events",
@@ -71,7 +74,8 @@
       "trusted_publisher": "UNVERIFIED",
       "verified_by": null,
       "verified_on": null,
-      "note": "Never reached by any upload. Requires a pending publisher whose Project name is exactly agnara-events."
+      "note": "Read back the exact canonical project name, Blandskron/agnara, release.yml and pypi-events before recording VERIFIED.",
+      "publisher_environment": "pypi-events"
     },
     {
       "name": "agnara-http",
@@ -82,7 +86,8 @@
       "trusted_publisher": "UNVERIFIED",
       "verified_by": null,
       "verified_on": null,
-      "note": "Never reached by any upload. Requires a pending publisher whose Project name is exactly agnara-http."
+      "note": "Read back the exact canonical project name, Blandskron/agnara, release.yml and pypi-http before recording VERIFIED.",
+      "publisher_environment": "pypi-http"
     },
     {
       "name": "agnara-mcp",
@@ -93,7 +98,8 @@
       "trusted_publisher": "UNVERIFIED",
       "verified_by": null,
       "verified_on": null,
-      "note": "Never reached by any upload. Requires a pending publisher whose Project name is exactly agnara-mcp."
+      "note": "Read back the exact canonical project name, Blandskron/agnara, release.yml and pypi-mcp before recording VERIFIED.",
+      "publisher_environment": "pypi-mcp"
     },
     {
       "name": "agnara-telemetry",
@@ -104,7 +110,8 @@
       "trusted_publisher": "UNVERIFIED",
       "verified_by": null,
       "verified_on": null,
-      "note": "Never reached by any upload. Requires a pending publisher whose Project name is exactly agnara-telemetry."
+      "note": "Read back the exact canonical project name, Blandskron/agnara, release.yml and pypi-telemetry before recording VERIFIED.",
+      "publisher_environment": "pypi-telemetry"
     }
   ]
 }

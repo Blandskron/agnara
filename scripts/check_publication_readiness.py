@@ -19,8 +19,8 @@ So the two claims are now separate and separately checked:
 
 The registry part is the one that matters most and is the easiest to fake, so
 it is not prose. `docs/releases/publication.json` records the expected Trusted
-Publisher configuration -- the shared tuple and, per project, the exact PyPI
-Project name and whether its publisher is pending or active -- and who read
+Publisher configuration -- the common owner/repository/workflow and, per project,
+the bootstrap environment, exact PyPI name and pending/active kind -- and who read
 each of them back from PyPI, and when. An unconfirmed record is a hard failure;
 so is a readback older than the last recorded registry failure, a publisher
 kind that disagrees with whether the project exists on the index, a tuple that
@@ -83,11 +83,11 @@ RELEASE_NOTES_DIR = Path("docs") / "releases"
 CHANGELOG_RELATIVE = Path("CHANGELOG.md")
 WORKFLOWS_RELATIVE = Path(".github") / "workflows"
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 VERIFIED = "VERIFIED"
 
 #: How a release is authorized by a human: by approving the protected GitHub
-#: environment the publishing jobs run in, never by editing a file.
+#: approval environment, separate from the bootstrap upload environments.
 AUTHORIZATION_MECHANISM = "github-environment"
 
 #: A project that does not exist yet is created by a *pending* publisher; one
@@ -103,7 +103,7 @@ AUTOMATION_IDENTITY = re.compile(
     r"\bbot\b|\bagent\b|automation|workflow|pipeline)"
 )
 
-#: The Trusted Publisher tuple every Agnara project must carry. A publisher
+#: The common Trusted Publisher fields every Agnara project must carry. A publisher
 #: that differs in any field is a different identity to PyPI, and the upload
 #: fails the way `0.1.0a4` failed.
 REQUIRED_PUBLISHER = {
@@ -111,7 +111,18 @@ REQUIRED_PUBLISHER = {
     "owner": "Blandskron",
     "repository": "agnara",
     "workflow": "release.yml",
-    "environment": "pypi",
+}
+
+AUTHORIZATION_ENVIRONMENT = "pypi"
+# Bootstrap only. Pending publishers cannot share an external identity (ADR 0083).
+BOOTSTRAP_ENVIRONMENTS = {
+    "agnara": "pypi-core",
+    "agnara-a2a": "pypi-a2a",
+    "agnara-cli": "pypi-cli",
+    "agnara-events": "pypi-events",
+    "agnara-http": "pypi-http",
+    "agnara-mcp": "pypi-mcp",
+    "agnara-telemetry": "pypi-telemetry",
 }
 
 DEFAULT_INDEX = "https://pypi.org"
@@ -418,11 +429,11 @@ def check_publisher_record(workspace: Path, manifest: distributions.Manifest) ->
     authorization = document.get("release_authorization")
     if not isinstance(authorization, dict) or (
         authorization.get("mechanism") != AUTHORIZATION_MECHANISM
-        or authorization.get("environment") != REQUIRED_PUBLISHER["environment"]
+        or authorization.get("environment") != AUTHORIZATION_ENVIRONMENT
     ):
         problems.append(
             f"{where}: release_authorization must be the {AUTHORIZATION_MECHANISM} "
-            f"{REQUIRED_PUBLISHER['environment']!r}; a release is authorized by approving that "
+            f"{AUTHORIZATION_ENVIRONMENT!r}; a release is authorized by approving that "
             "environment, not by editing this file"
         )
 
@@ -449,6 +460,8 @@ def check_publisher_record(workspace: Path, manifest: distributions.Manifest) ->
 
     for name in sorted(set(manifest.names) & set(recorded)):
         entry = recorded[name]
+        if entry.get("publisher_environment") != BOOTSTRAP_ENVIRONMENTS.get(name):
+            problems.append(f"{name}: publisher_environment does not match the bootstrap identity")
         if entry.get("publisher_project") != name:
             problems.append(
                 f"{name}: Trusted Publisher project name must be recorded exactly "
@@ -513,7 +526,7 @@ def check_workflow_identity(workspace: Path) -> list[str]:
     or an environment no publishing job enters, is a record of nothing.
     """
     workflow = REQUIRED_PUBLISHER["workflow"]
-    environment = REQUIRED_PUBLISHER["environment"]
+    environment = AUTHORIZATION_ENVIRONMENT
     path = workspace / WORKFLOWS_RELATIVE / workflow
     if not path.is_file():
         return [f"{WORKFLOWS_RELATIVE.as_posix()}/{workflow} does not exist"]
@@ -521,10 +534,22 @@ def check_workflow_identity(workspace: Path) -> list[str]:
     pattern = rf"^\s*environment:\s*\n\s*name:\s*{re.escape(environment)}\s*$"
     if not re.search(pattern, text, re.M):
         return [f"{workflow} has no job that runs in the {environment!r} environment"]
-    return []
+    problems: list[str] = []
+    for project, expected in BOOTSTRAP_ENVIRONMENTS.items():
+        job = "publish-" + expected.removeprefix("pypi-")
+        body = re.search(rf"^  {re.escape(job)}:\n(.*?)(?=^  [\w-]+:|\Z)", text, re.M | re.S)
+        if body is None or not re.search(
+            rf"^    environment:\n      name: {re.escape(expected)}\s*$",
+            body.group(1),
+            re.M,
+        ):
+            problems.append(f"{project}: {workflow} must run {job} in {expected}")
+    return problems
 
 
-def check_oidc_identity(environ: Mapping[str, str]) -> list[str]:
+def check_oidc_identity(
+    environ: Mapping[str, str], *, project: str | None = None, environment: str | None = None
+) -> list[str]:
     """Inside GitHub Actions: this run *is* the recorded Trusted Publisher.
 
     `GITHUB_REPOSITORY` and `GITHUB_WORKFLOW_REF` are what the OIDC token will
@@ -548,11 +573,24 @@ def check_oidc_identity(environ: Mapping[str, str]) -> list[str]:
             f"this run belongs to {actual_repository}, the recorded publisher is "
             f"{expected_repository}"
         )
-    if not actual_workflow.startswith(expected_prefix):
+    if actual_workflow != expected_prefix + "refs/heads/main":
         problems.append(
             f"this run's workflow is {actual_workflow.split('@', 1)[0]}, the recorded publisher "
             f"is {expected_prefix.rstrip('@')}"
         )
+    if project is not None or environment is not None:
+        expected_environment = BOOTSTRAP_ENVIRONMENTS.get(project or "")
+        if expected_environment is None or environment != expected_environment:
+            problems.append("distribution/environment does not match the bootstrap identity")
+        else:
+            expected_job = "publish-" + expected_environment.removeprefix("pypi-")
+            if environ.get("GITHUB_JOB") != expected_job:
+                problems.append("this job is not the distribution's bootstrap publishing job")
+    elif (
+        environ.get("GITHUB_JOB", "").startswith("publish-")
+        and environ.get("GITHUB_JOB") != "publish-preflight"
+    ):
+        problems.append("a bootstrap upload must specify its project and environment")
     return problems
 
 
@@ -655,6 +693,8 @@ def run(
     index: str,
     oidc_identity: bool = False,
     environ: Mapping[str, str] | None = None,
+    project: str | None = None,
+    environment: str | None = None,
 ) -> tuple[int, list[str], list[str]]:
     if VERSION_PATTERN.fullmatch(version) is None:
         return 1, [f"{version!r} is not a publishable v0.x release version"], []
@@ -676,9 +716,15 @@ def run(
     problems.extend(check_tag(workspace, version, tag))
 
     if oidc_identity:
-        problems.extend(check_oidc_identity(os.environ if environ is None else environ))
+        problems.extend(
+            check_oidc_identity(
+                os.environ if environ is None else environ, project=project, environment=environment
+            )
+        )
         if not problems:
             notes.append("this run presents the recorded Trusted Publisher identity")
+    elif project is not None or environment is not None:
+        problems.append("project/environment requires --oidc-identity")
 
     if dist_dir is not None:
         problems.extend(check_artifact_set(manifest, dist_dir, version))
@@ -701,6 +747,8 @@ def run(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", required=True, help="the release version being published")
+    parser.add_argument("--project", help="canonical distribution being uploaded by this job")
+    parser.add_argument("--environment", help="this upload job's bootstrap OIDC environment")
     parser.add_argument("--workspace", type=Path, default=ROOT, help=argparse.SUPPRESS)
     parser.add_argument("--dist", type=Path, default=None, help="also check this artifact set")
     parser.add_argument("--tag", default=None, help="also check this annotated tag")
@@ -730,6 +778,8 @@ def main(argv: list[str] | None = None) -> int:
             require_published=arguments.require_published,
             index=arguments.index,
             oidc_identity=arguments.oidc_identity,
+            project=arguments.project,
+            environment=arguments.environment,
         )
     except (Refusal, distributions.ManifestError) as exc:
         _emit_error(f"publication readiness could not be evaluated: {exc}")
