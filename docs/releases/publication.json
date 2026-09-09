@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "target": "0.1.0a5",
+  "target": "0.1.0a6",
   "registry": "https://pypi.org",
   "publisher": {
     "provider": "github",
@@ -16,7 +16,8 @@
     "This file is the PUBLISH READY record. scripts/check_publication_readiness.py refuses publication while any project here is not VERIFIED for the target above, and .github/workflows/release.yml runs that check before the first upload. It exists because 0.1.0a4 was CODE READY and not PUBLISH READY, and nothing in the repository was responsible for telling the difference.",
     "Only the repository owner can fill this in. Verification means opening https://pypi.org/manage/account/publishing/ (and, for a project that already exists, that project's own Publishing settings) and reading back the four fields of the publisher tuple for that exact project name. A 404 on the project page is not evidence that a pending publisher exists.",
     "To confirm a project: set trusted_publisher to VERIFIED, verified_for_target to this file's target, verified_by to the confirming account and verified_on to the date, then set status/confirmed_by/confirmed_on at the top. Record no credentials here.",
-    "0.1.0a4 incident: uploading agnara-a2a returned HTTP 400 'Non-user identities cannot create new projects', which is what PyPI answers when no pending publisher matches the uploaded project name for the authenticated OIDC identity. The pypi_state values below are a readback of https://pypi.org/pypi/<name>/json on 2026-09-08, after that failed run."
+    "0.1.0a4 incident: uploading agnara-a2a returned HTTP 400 'Non-user identities cannot create new projects', which is what PyPI answers when no pending publisher matches the uploaded project name for the authenticated OIDC identity. The pypi_state values below are a readback of https://pypi.org/pypi/<name>/json on 2026-09-08, after that failed run.",
+    "v0.1.0a5 was aborted by publication readiness before the first upload because this record remained UNVERIFIED. No 0.1.0a5 artifact was published. Verification must be repeated and recorded for target 0.1.0a6."
   ],
   "projects": [
     {

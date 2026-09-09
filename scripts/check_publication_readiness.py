@@ -26,16 +26,16 @@ release branch, which is what a paragraph in a release note was not.
 Modes, which compose::
 
     # offline: the repository's own publish-readiness
-    python scripts/check_publication_readiness.py --version 0.1.0a5
+    python scripts/check_publication_readiness.py --version 0.1.0a6
 
     # plus the built artifact set
-    python scripts/check_publication_readiness.py --version 0.1.0a5 --dist dist/
+    python scripts/check_publication_readiness.py --version 0.1.0a6 --dist dist/
 
     # plus the registry, before publishing: nothing of this version exists yet
-    python scripts/check_publication_readiness.py --version 0.1.0a5 --online
+    python scripts/check_publication_readiness.py --version 0.1.0a6 --online
 
     # after publishing: all seven are complete, wheel and sdist
-    python scripts/check_publication_readiness.py --version 0.1.0a5 \\
+    python scripts/check_publication_readiness.py --version 0.1.0a6 \\
         --online --require-published
 
 Standard library only.

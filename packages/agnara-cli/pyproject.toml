@@ -1,6 +1,6 @@
 [project]
 name = "agnara-cli"
-version = "0.1.0a5"
+version = "0.1.0a6"
 description = "Project introspection and scaffolding CLI for Agnara."
 readme = "README.md"
 requires-python = ">=3.14"
@@ -14,7 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-dependencies = ["agnara==0.1.0a5"]
+dependencies = ["agnara==0.1.0a6"]
 
 [project.scripts]
 agnara = "agnara_cli._main:main"

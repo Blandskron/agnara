@@ -1,6 +1,6 @@
 [project]
 name = "agnara-mcp"
-version = "0.1.0a5"
+version = "0.1.0a6"
 description = "Model Context Protocol exposure adapter for Agnara capabilities."
 readme = "README.md"
 requires-python = ">=3.14"
@@ -14,7 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-dependencies = ["agnara==0.1.0a5", "mcp==2.1.1"]
+dependencies = ["agnara==0.1.0a6", "mcp==2.1.1"]
 
 [project.urls]
 Homepage = "https://github.com/Blandskron/agnara"
