@@ -208,9 +208,10 @@ def test_the_github_release_cannot_exist_without_verified_publication() -> None:
     """
     jobs = _workflow(RELEASE_WORKFLOW)["jobs"]
 
-    assert "publish-preflight" in jobs["approve-and-tag"]["needs"]
-    assert "approve-and-tag" in jobs["publish"]["needs"]
+    assert "publish-preflight" in jobs["publish"]["needs"]
     assert "publish" in jobs["verify-published"]["needs"]
+    assert "verify-published" in jobs["tag"]["needs"]
+    assert "tag" in jobs["github-release"]["needs"]
     assert "verify-published" in jobs["github-release"]["needs"]
 
 
@@ -233,9 +234,10 @@ def test_only_the_publishing_job_holds_an_oidc_token_and_it_cannot_write_content
         if isinstance(job.get("permissions"), dict)
         and job["permissions"].get("contents") == "write"
     ]
-    # The approved job creates the tag; the last job creates the GitHub Release.
-    assert writers == ["approve-and-tag", "github-release"]
-    assert jobs["approve-and-tag"]["environment"]["name"] == "pypi"
+    # The tag job runs only after verified publication; the last job creates
+    # the GitHub Release. Neither holds the OIDC token.
+    assert writers == ["tag", "github-release"]
+    assert "verify-published" in jobs["tag"]["needs"]
 
 
 def test_publication_requires_a_dispatch_from_main_and_the_protected_environment() -> None:
@@ -246,9 +248,10 @@ def test_publication_requires_a_dispatch_from_main_and_the_protected_environment
     triggers = next(value for key, value in document.items() if key in ("on", True))
 
     assert set(triggers) == {"workflow_dispatch"}
-    assert all("if" not in jobs[name] for name in ("approve-and-tag", "publish"))
-    for name in ("approve-and-tag", "publish"):
-        assert jobs[name]["environment"]["name"] == "pypi"
+    assert all("if" not in jobs[name] for name in ("publish", "verify-published", "tag"))
+    assert jobs["publish"]["environment"]["name"] == "pypi"
+    gated = [name for name, job in jobs.items() if isinstance(job.get("environment"), dict)]
+    assert gated == ["publish"], "the human gate is the upload, and only the upload"
     preconditions = "\n".join(
         step.get("run", "") for step in jobs["preconditions"]["steps"] if isinstance(step, dict)
     )

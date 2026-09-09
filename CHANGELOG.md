@@ -33,9 +33,10 @@ synchronized `0.1.0a8` package metadata, and it changes how a release happens.
   head of `main` for a version with no tag anywhere, builds and validates the
   seven wheels and sdists, installs them in a clean room, checks the public
   index, and only then stops for human approval in the protected `pypi`
-  environment. The annotated tag is created by the approved run on the
-  dispatched commit, publication follows, and the GitHub Release is created
-  only after post-publication verification. ADR 0082.
+  environment. The approved run publishes the seven distributions, verifies
+  wheel and sdist of each on PyPI, and only then creates the annotated tag on
+  the dispatched commit and the GitHub Release. If an upload or the
+  verification fails, no tag exists. ADR 0082.
 - `docs/releases/publication.json` moves to schema 2. It records the expected
   registry configuration — the shared Trusted Publisher tuple and, per
   project, the exact PyPI project name and whether its publisher is pending or

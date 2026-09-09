@@ -7,7 +7,8 @@ is reviewable in the repository rather than only visible in GitHub settings.
 `protect-release-tags.json` makes every `v*` tag immutable: it blocks update,
 force-update and deletion. It deliberately does **not** restrict creation. The
 release workflow creates the tag with the run's own `GITHUB_TOKEN` after every
-gate has passed and a reviewer has approved the run (ADR 0082); a creation
+gate has passed, a reviewer has approved the run and PyPI has confirmed the
+publication complete (ADR 0082); a creation
 rule would block that token without a bypass it cannot hold, and nothing else
 in the repository creates release tags any more.
 

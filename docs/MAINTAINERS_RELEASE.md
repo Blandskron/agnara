@@ -171,22 +171,24 @@ changed only through the workspace transition tool.
 2. Select branch **`main`** and enter the version, e.g. `0.1.0a8`. It must
    equal the synchronized workspace version on `main`.
 3. Press **Run workflow**.
-4. When the run reaches `approve-and-tag`, GitHub asks the required reviewers
-   of the `pypi` environment to approve. Review the run's logs — every gate
-   above it is green by construction — and approve. The run creates the
-   annotated tag on the dispatched commit.
-5. When the run reaches `publish`, approve once more. The run uploads the
-   seven projects, verifies the index and creates the GitHub Release.
+4. When the run reaches `publish`, GitHub asks the required reviewers of the
+   `pypi` environment to approve. Review the run's logs — every gate above it
+   is green by construction — and approve. The run uploads the seven projects,
+   verifies wheel and sdist of each on the index, and only then creates the
+   annotated tag on the dispatched commit and the GitHub Release.
 
-Two approvals are deliberate: the first authorizes the one irreversible act on
-the repository, the second the irreversible act on the index, and each job
-keeps only the permission it needs.
+One approval, and it authorizes the only irreversible act a human can still
+prevent: the upload. The tag is not approved separately because it is not a
+decision any more — it is the record that a verified publication happened, and
+it cannot exist without one.
 
 If the run refuses before the approval, read the `::error::` lines: `main`
 moved since you dispatched (dispatch again from its head), the tag already
 exists (that version is spent — choose the next), the environment is not
 protected (section 5), or the publication record is not verified (section 2).
-Nothing irreversible has happened at that point.
+Nothing irreversible has happened at that point. If an upload or the
+post-release verification fails after approval, no tag exists either; follow
+"If a publication is still partial" below.
 
 ### The `release.yml` pipeline
 
@@ -197,9 +199,7 @@ after it:
 validate ───────┐
                 ├─> build -> test-artifact -> publish-preflight
 preconditions ──┘                                   │
-                                       [approval]  approve-and-tag
-                                                    │
-                                       [approval]  publish -> verify-published -> github-release
+                                       [approval]  publish -> verify-published -> tag -> github-release
 ```
 
 1. **validate** — re-runs the entire `ci.yml` matrix, CodeQL included.
@@ -221,22 +221,23 @@ preconditions ──┘                                   │
 5. **publish-preflight** — preconditions again, then the public index: refuses
    if this version already has files anywhere in the set, or if a recorded
    publisher kind disagrees with whether its project exists.
-6. **approve-and-tag** — waits in the `pypi` environment for a reviewer.
-   Re-checks every precondition, creates the annotated `v<version>` tag on
-   the dispatched commit as `github-actions[bot]`, pushes it and verifies it
-   with `check_release_tag.py`. The only job that creates a tag; holds
-   `contents: write` and nothing else.
-7. **publish** — waits in the `pypi` environment again. `id-token: write` and
-   `contents: read`. Checks out the tag, asserts it names the dispatched commit
-   and reviewed `main` history, re-validates the downloaded bundle, stages each
-   distribution separately, then uploads **siblings first and `agnara` last**,
-   one reviewed step each, with metadata verification, attestations and hash
-   printing. `skip-existing` is off.
-8. **verify-published** — asserts every distribution is *complete* on the index
+6. **publish** — waits in the `pypi` environment for a reviewer. `id-token:
+   write` and `contents: read`. Re-checks every precondition after approval,
+   re-validates the downloaded bundle, stages each distribution separately,
+   then uploads **siblings first and `agnara` last**, one reviewed step each,
+   with metadata verification, attestations and hash printing. `skip-existing`
+   is off. No tag exists at this point.
+7. **verify-published** — asserts every distribution is *complete* on the index
    (wheel and sdist), then installs the published set into a clean environment
    and exercises it.
+8. **tag** — depends on step 7. Re-checks that the checkout is the dispatched
+   commit and that `v<version>` still does not exist, then creates the
+   annotated tag on that commit as `github-actions[bot]`, pushes it and
+   verifies it with `check_release_tag.py`. The only job that creates a tag;
+   holds `contents: write` and nothing else. If step 6 or 7 failed, this job
+   never runs and no tag exists.
 9. **github-release** — depends on step 8. Creates the GitHub Release for the
-   tag from step 6, from `docs/releases/v<version>.md`.
+   tag from step 8, from `docs/releases/v<version>.md`.
 
 ### Why the kernel goes last
 
@@ -286,9 +287,9 @@ N" input, which hides which distribution the run is actually publishing. ADR
   `.github/dependabot.yml` keeps them moving; the publisher action is excluded
   from the grouped update so it is reviewed alone.
 - **Least privilege per job.** Only `publish` holds `id-token: write`, and it
-  cannot write contents. Only `approve-and-tag` and `github-release` hold
-  `contents: write`, and neither holds the OIDC token. No job edits
-  `publication.json`.
+  cannot write contents. Only `tag` and `github-release` hold
+  `contents: write`, neither holds the OIDC token, and both depend on
+  `verify-published` having succeeded. No job edits `publication.json`.
 - **Artifact immutability.** PyPI files cannot be replaced. A defect after
   publication is fixed by the next version, never by deleting or overwriting.
 - **Retention.** The artifact bundle is kept for thirty days and its digests for
@@ -300,4 +301,4 @@ TestPyPI is an entirely separate registry. Publishing there needs its own
 pending Trusted Publishers, configured by the owner in the TestPyPI web
 interface. Once they exist, an intermediate `publish-testpypi` job targeting a
 `testpypi` environment can be added between `publish-preflight` and
-`approve-and-tag`.
+`publish`.
