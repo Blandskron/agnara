@@ -398,3 +398,77 @@ def test_the_api_fetcher_sends_the_token_only_as_a_bearer_header(
     assert fetch("https://api.invalid/repos/x/y/environments/pypi") == {"name": "pypi"}
     assert seen["headers"]["Authorization"] == "Bearer ghs_test_token_never_printed"
     assert "ghs_test_token_never_printed" not in seen["url"]
+
+
+# ---------------------------------------------------------------------------
+# After publication: the verified release is about to be tagged
+# ---------------------------------------------------------------------------
+
+
+def _run_after_publication(checkout: Path, context: Any) -> tuple[int, list[str], list[str]]:
+    return tool.run(
+        VERSION,
+        context=context,
+        git=tool.make_git(checkout),
+        fetch=lambda url: None,
+        protected_environment=None,
+        after_publication=True,
+    )
+
+
+def test_a_verified_release_is_tagged_even_if_main_moved_meanwhile(checkout: Path) -> None:
+    """PyPI already holds what the dispatched commit built; that commit gets the tag."""
+    context = _context(checkout)
+    _git(checkout, "commit", "--allow-empty", "-m", "landed during publication")
+    _git(checkout, "push", "origin", "main")
+    _git(checkout, "reset", "--hard", context.sha)
+
+    assert _run_after_publication(checkout, context) == (0, [], [])
+
+
+def test_after_publication_still_refuses_a_checkout_that_is_not_the_dispatched_commit(
+    checkout: Path,
+) -> None:
+    dispatched = _git(checkout, "rev-parse", "HEAD")
+    _git(checkout, "commit", "--allow-empty", "-m", "local only")
+
+    code, problems, _ = _run_after_publication(checkout, _context(checkout, sha=dispatched))
+
+    assert code == 1
+    assert any("the checkout is at" in problem for problem in problems)
+
+
+def test_after_publication_still_refuses_an_existing_tag(checkout: Path) -> None:
+    _git(checkout, "tag", "-a", f"v{VERSION}", "-m", "earlier attempt")
+    _git(checkout, "push", "origin", f"v{VERSION}")
+
+    code, problems, _ = _run_after_publication(checkout, _context(checkout))
+
+    assert code == 1
+    assert any("already exists on origin" in problem for problem in problems)
+
+
+def test_after_publication_still_refuses_a_run_that_is_not_a_dispatch_from_main(
+    checkout: Path,
+) -> None:
+    code, problems, _ = _run_after_publication(checkout, _context(checkout, event_name="push"))
+
+    assert code == 1
+    assert any("must be started by workflow_dispatch" in problem for problem in problems)
+
+
+def test_the_command_accepts_the_after_publication_flag(
+    checkout: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    context = _context(checkout)
+    _git(checkout, "commit", "--allow-empty", "-m", "landed during publication")
+    _git(checkout, "push", "origin", "main")
+    _git(checkout, "reset", "--hard", context.sha)
+
+    code = tool.main(
+        ["--version", VERSION, "--after-publication", "--workspace", str(checkout)],
+        environ=_environ(checkout),
+    )
+
+    assert code == 0
+    assert f"RELEASE PRECONDITIONS MET for {VERSION}" in capsys.readouterr().out

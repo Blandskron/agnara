@@ -609,13 +609,14 @@ merge:
 1. confirm the accepted `main` commit contains the reviewed version and
    changelog;
 2. dispatch the `Release to PyPI` workflow from `main` with that version. Do
-   **not** create or push a tag by hand: the approved run creates the one
-   annotated `v<version>` tag on that exact commit after every gate has passed
-   and a reviewer has approved it in the `pypi` environment, and that tag is
-   never moved or reused (ADR 0082);
-3. the same run publishes the packages through Trusted Publishing, verifies
-   the index, and creates the GitHub Release from `docs/releases/v<version>.md`
-   only after verification;
+   **not** create or push a tag by hand: after every gate has passed and a
+   reviewer has approved the run in the `pypi` environment, the run publishes
+   the packages through Trusted Publishing and verifies the index, and only
+   then creates the one annotated `v<version>` tag on that exact commit; that
+   tag is never moved or reused, and it never exists for a failed publication
+   (ADR 0082);
+3. the same run creates the GitHub Release from `docs/releases/v<version>.md`
+   for that tag;
 4. propagate any release-only commits back into `develop` through a PR;
 5. delete the release branch.
 

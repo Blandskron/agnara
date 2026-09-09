@@ -1,12 +1,12 @@
-"""The release workflow cannot create a tag before every gate and a human said yes.
+"""The release workflow cannot create a tag before publication has been verified.
 
 `0.1.0a4` through `0.1.0a7` each burned a version because the tag was the
 trigger: it existed before the first gate ran. These tests hold the shape that
 makes that impossible now -- a dispatch from `main`, every gate, a protected
-environment, and only then the tag, the uploads, the verification and the
-GitHub Release -- and they hold the parts of the old pipeline that were right:
-the complete reviewed set, the clean-room install, the kernel-last upload order
-and post-publication completeness.
+environment, the uploads, the index confirming all fourteen files, and only
+then the tag and the GitHub Release -- and they hold the parts of the old
+pipeline that were right: the complete reviewed set, the clean-room install,
+the kernel-last upload order and post-publication completeness.
 """
 
 from __future__ import annotations
@@ -22,8 +22,15 @@ from tests.architecture.boundaries import DISTRIBUTIONS, WORKSPACE_ROOT
 WORKFLOW = WORKSPACE_ROOT / ".github" / "workflows" / "release.yml"
 STATUS = WORKSPACE_ROOT / "docs" / "releases" / "release-status.json"
 
-TAG_JOB = "approve-and-tag"
-GATES_BEFORE_THE_TAG = {"validate", "preconditions", "build", "test-artifact", "publish-preflight"}
+TAG_JOB = "tag"
+GATES_BEFORE_PUBLICATION = {
+    "validate",
+    "preconditions",
+    "build",
+    "test-artifact",
+    "publish-preflight",
+}
+GATES_BEFORE_THE_TAG = GATES_BEFORE_PUBLICATION | {"publish", "verify-published"}
 
 
 def _text() -> str:
@@ -47,6 +54,12 @@ def _job(name: str, until: str | None = None) -> str:
     """One job's YAML body, so a text assertion cannot pass on a different job."""
     body = _text().split(f"  {name}:\n", 1)[1]
     return body.split(f"  {until}:\n", 1)[0] if until else body
+
+
+def _following(name: str) -> str | None:
+    names = list(_jobs())
+    index = names.index(name)
+    return names[index + 1] if index + 1 < len(names) else None
 
 
 def _needs(job: dict[str, Any]) -> set[str]:
@@ -73,6 +86,16 @@ def _run_steps(job: dict[str, Any]) -> list[str]:
 
 def _jobs_running(command: str) -> list[str]:
     return [name for name, job in _jobs().items() if any(command in run for run in _run_steps(job))]
+
+
+def _jobs_that_would_run_if(failed: str) -> set[str]:
+    """Simulate GitHub's default: a job runs only if every job it needs succeeded.
+
+    That default holds only while no job carries an `if:` that could override
+    it (`always()`, `failure()`, ...), which another test asserts.
+    """
+    jobs = _jobs()
+    return {name for name in jobs if name != failed and failed not in _transitive_needs(name)}
 
 
 # ---------------------------------------------------------------------------
@@ -129,42 +152,83 @@ def test_preconditions_are_rechecked_before_the_human_gate_and_after_it() -> Non
     """Time passes while the gates run; `main` may move and a tag may appear."""
     rechecked = _jobs_running("scripts/check_release_preconditions.py")
 
-    assert rechecked == ["preconditions", "publish-preflight", TAG_JOB]
-    for name in rechecked:
+    assert rechecked == ["preconditions", "publish-preflight", "publish", TAG_JOB]
+    for name in ("preconditions", "publish-preflight", "publish"):
         assert "--require-protected-environment pypi" in _job(name, _following(name)), name
-
-
-def _following(name: str) -> str | None:
-    names = list(_jobs())
-    index = names.index(name)
-    return names[index + 1] if index + 1 < len(names) else None
+    # After publication the index already holds the release, so the tag job
+    # requires the dispatched commit and an absent tag, but not a still `main`.
+    assert "--after-publication" in _job(TAG_JOB, "github-release")
 
 
 # ---------------------------------------------------------------------------
-# The tag
+# The order: publish, verify, then tag, then announce
 # ---------------------------------------------------------------------------
 
 
-def test_only_the_approved_job_creates_the_tag() -> None:
-    """One job tags, it runs in the protected environment, and nothing else pushes."""
+def test_the_human_gate_is_the_upload_and_only_the_upload() -> None:
+    jobs = _jobs()
+    gated = [name for name, job in jobs.items() if isinstance(job.get("environment"), dict)]
+
+    assert gated == ["publish"]
+    assert jobs["publish"]["environment"]["name"] == "pypi"
+    assert _transitive_needs("publish") >= GATES_BEFORE_PUBLICATION
+
+
+def test_publication_happens_before_the_tag() -> None:
+    """No tag exists while the uploads run: the publish job cannot create one
+    and the tag job cannot start until publication has finished."""
     jobs = _jobs()
 
-    assert _jobs_running("git tag ") == [TAG_JOB]
-    assert _jobs_running("git push") == [TAG_JOB]
-    assert jobs[TAG_JOB]["environment"]["name"] == "pypi"
-    assert jobs[TAG_JOB]["permissions"] == {"contents": "write"}
+    assert "publish" in _transitive_needs(TAG_JOB)
+    assert TAG_JOB not in _transitive_needs("publish")
+    assert not any("git tag" in run for run in _run_steps(jobs["publish"]))
+    assert "--tag" not in _job("publish", "verify-published")
+    assert jobs["publish"]["permissions"] == {"id-token": "write", "contents": "read"}
 
 
-def test_the_tag_cannot_exist_before_every_gate_has_passed() -> None:
-    """Every gate is an ancestor of the tagging job, and none can be skipped."""
+def test_verification_happens_before_the_tag() -> None:
+    """Completeness on the index -- wheel and sdist for all seven -- is what the tag records."""
+    jobs = _jobs()
+
+    assert "verify-published" in _needs(jobs[TAG_JOB])
+    assert "publish" in _needs(jobs["verify-published"])
+    assert "--online --require-published" in _job("verify-published", TAG_JOB)
+    assert TAG_JOB not in _transitive_needs("verify-published")
+
+
+def test_the_tag_depends_on_verification_success() -> None:
+    """Every gate, the uploads and the verification are unconditional ancestors."""
     jobs = _jobs()
 
     assert _transitive_needs(TAG_JOB) >= GATES_BEFORE_THE_TAG
-    for name in GATES_BEFORE_THE_TAG | {TAG_JOB}:
+    for name in GATES_BEFORE_THE_TAG | {TAG_JOB, "github-release"}:
         assert "if" not in jobs[name], f"{name} must not be conditional"
         assert "continue-on-error" not in jobs[name], name
         for step in jobs[name].get("steps", []):
             assert "continue-on-error" not in step, name
+    for expression in ("always()", "failure()", "cancelled()", "success() ||"):
+        assert expression not in _text(), expression
+
+
+def test_a_failed_upload_or_verification_leaves_no_tag() -> None:
+    """The critical rule, read off the dependency graph: if `publish` or
+    `verify-published` fails, neither `tag` nor `github-release` runs."""
+    for failed in ("publish", "verify-published"):
+        running = _jobs_that_would_run_if(failed)
+        assert TAG_JOB not in running, failed
+        assert "github-release" not in running, failed
+        assert not any("git tag" in run for name in running for run in _run_steps(_jobs()[name]))
+
+
+def test_only_the_tag_job_creates_the_tag() -> None:
+    """One job tags, it holds nothing but `contents: write`, and nothing else pushes."""
+    jobs = _jobs()
+
+    assert _jobs_running("git tag ") == [TAG_JOB]
+    assert _jobs_running("git push") == [TAG_JOB]
+    assert jobs[TAG_JOB]["permissions"] == {"contents": "write"}
+    assert "environment" not in jobs[TAG_JOB], "the tag is a consequence, not a decision"
+    assert "id-token" not in jobs[TAG_JOB]["permissions"]
 
 
 def test_the_tag_is_created_after_the_recheck_and_verified_after_creation() -> None:
@@ -179,11 +243,26 @@ def test_the_tag_is_created_after_the_recheck_and_verified_after_creation() -> N
 
 
 def test_the_tag_is_annotated_and_names_the_dispatched_commit() -> None:
-    body = _job(TAG_JOB, "publish")
+    body = _job(TAG_JOB, "github-release")
 
     assert "git tag -a" in body
     assert '"$GITHUB_SHA"' in body
     assert "github-actions[bot]" in body
+    assert "fetch-depth: 0" in body
+
+
+def test_the_github_release_depends_on_the_tag() -> None:
+    jobs = _jobs()
+    needs = _needs(jobs["github-release"])
+
+    assert {TAG_JOB, "verify-published", "publish"} <= needs
+    assert "if" not in jobs["github-release"]
+    checkout = jobs["github-release"]["steps"][0]
+    assert checkout["with"]["ref"] == f"${{{{ needs.{TAG_JOB}.outputs.tag }}}}"
+    release_step = jobs["github-release"]["steps"][-1]
+    assert release_step["with"]["tag_name"] == f"${{{{ needs.{TAG_JOB}.outputs.tag }}}}"
+    assert release_step["with"]["body_path"].startswith("docs/releases/")
+    assert "contents: write" in _job("github-release")
 
 
 def test_the_current_target_is_not_tagged_ahead_of_the_workflow() -> None:
@@ -203,7 +282,7 @@ def test_the_current_target_is_not_tagged_ahead_of_the_workflow() -> None:
         # and the record moved on; then the status file must say so.
         assert document["previous_release"] == target, (
             f"v{target} exists but release-status.json still prepares {target}; a tag must be "
-            "created only by the approved release run, never ahead of it"
+            "created only by the release run after verified publication, never ahead of it"
         )
 
 
@@ -212,28 +291,15 @@ def test_the_current_target_is_not_tagged_ahead_of_the_workflow() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_publication_requires_the_approved_tag_and_the_pypi_environment() -> None:
-    jobs = _jobs()
-    publish = jobs["publish"]
-
-    assert TAG_JOB in _needs(publish)
-    assert publish["environment"]["name"] == "pypi"
-    checkout = publish["steps"][0]
-    assert checkout["uses"].startswith("actions/checkout@")
-    assert checkout["with"]["ref"] == f"${{{{ needs.{TAG_JOB}.outputs.tag }}}}"
-    assert checkout["with"]["fetch-depth"] == 0
-
-
-def test_publication_verifies_the_tag_before_the_first_upload() -> None:
+def test_publication_revalidates_the_bundle_before_the_first_upload() -> None:
     body = _job("publish", "verify-published")
 
-    guard = body.index("scripts/check_release_tag.py")
-    identity = body.index('"$(git rev-parse HEAD)" != "$GITHUB_SHA"')
-    bundle = body.index("--dist dist/ --tag")
+    recheck = body.index("scripts/check_release_preconditions.py")
+    download = body.index("actions/download-artifact@")
+    bundle = body.index("--dist dist/ --oidc-identity")
     upload = body.index("pypa/gh-action-pypi-publish@")
 
-    assert identity < guard < bundle < upload
-    assert "--oidc-identity" in body
+    assert recheck < download < bundle < upload
 
 
 def test_publish_readiness_is_checked_at_every_state_of_the_release() -> None:
@@ -242,9 +308,9 @@ def test_publish_readiness_is_checked_at_every_state_of_the_release() -> None:
     for job, until, expected in (
         ("preconditions", "build", "--oidc-identity"),
         ("build", "test-artifact", "--dist dist/"),
-        ("publish-preflight", TAG_JOB, "--online --oidc-identity"),
-        ("publish", "verify-published", "--dist dist/ --tag"),
-        ("verify-published", "github-release", "--online --require-published"),
+        ("publish-preflight", "publish", "--online --oidc-identity"),
+        ("publish", "verify-published", "--dist dist/ --oidc-identity"),
+        ("verify-published", TAG_JOB, "--online --require-published"),
     ):
         body = _job(job, until)
         assert "scripts/check_publication_readiness.py" in body, job
@@ -270,23 +336,6 @@ def test_the_workflow_never_edits_the_publication_record() -> None:
             assert "publication.json" not in run, name
 
 
-# ---------------------------------------------------------------------------
-# After publication
-# ---------------------------------------------------------------------------
-
-
-def test_the_github_release_requires_verified_publication_and_the_tag() -> None:
-    jobs = _jobs()
-    needs = _needs(jobs["github-release"])
-
-    assert {"verify-published", "publish", TAG_JOB} <= needs
-    assert "publish" in _needs(jobs["verify-published"])
-    assert "if" not in jobs["github-release"]
-    release_step = jobs["github-release"]["steps"][-1]
-    assert release_step["with"]["tag_name"] == f"${{{{ needs.{TAG_JOB}.outputs.tag }}}}"
-    assert release_step["with"]["body_path"].startswith("docs/releases/")
-
-
 def test_post_release_verification_covers_every_distribution() -> None:
     """Completeness on the index, then a real install of the published set.
 
@@ -294,7 +343,7 @@ def test_post_release_verification_covers_every_distribution() -> None:
     succeeded, so verification asserts what is on the index as well as what can
     be installed from it.
     """
-    verification = _job("verify-published", "github-release")
+    verification = _job("verify-published", TAG_JOB)
 
     assert "--online --require-published" in verification
     assert 'manifest --pinned "$version"' in verification
@@ -345,6 +394,8 @@ def test_publication_is_attested_and_metadata_verified() -> None:
     assert "attestations: true" in workflow
     assert "verify-metadata: true" in workflow
     assert "print-hash: true" in workflow
+    for step in _jobs()["publish"]["steps"]:
+        assert "skip-existing" not in (step.get("with") or {})
 
 
 def test_release_actions_are_pinned_to_exact_versions() -> None:

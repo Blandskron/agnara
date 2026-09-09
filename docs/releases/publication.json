@@ -11,7 +11,7 @@
   "release_authorization": {
     "mechanism": "github-environment",
     "environment": "pypi",
-    "note": "The per-release human authorization is the approval of the `approve-and-tag` and `publish` jobs in the protected `pypi` GitHub environment, not an edit to this file. scripts/check_release_preconditions.py refuses to proceed while that environment has no required reviewers or accepts deployments from every branch. This file records only the expected registry configuration and who read it back from PyPI."
+    "note": "The per-release human authorization is the approval of the `publish` job in the protected `pypi` GitHub environment, not an edit to this file; the tag and the GitHub Release follow only after PyPI has confirmed all seven distributions complete. scripts/check_release_preconditions.py refuses to proceed while that environment has no required reviewers or accepts deployments from every branch. This file records only the expected registry configuration and who read it back from PyPI."
   },
   "status": "UNVERIFIED",
   "confirmed_by": null,

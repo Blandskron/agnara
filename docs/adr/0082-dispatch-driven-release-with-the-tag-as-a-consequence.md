@@ -67,26 +67,29 @@ The run is a chain of jobs joined by real `needs`, in this order:
    publication readiness `--online --oidc-identity`: no file of this version
    exists anywhere, and the recorded publisher kind of each project agrees
    with whether the project exists.
-6. `approve-and-tag` -- runs in the protected `pypi` environment, so it waits
-   for a required reviewer. After approval it re-checks every precondition,
-   creates the annotated tag `v<version>` on the dispatched commit as
-   `github-actions[bot]`, pushes it, and verifies it with
-   `check_release_tag.py`. It is the only job that may create a tag and the
-   only job besides `github-release` that holds `contents: write`.
-7. `publish` -- also in the `pypi` environment, with `id-token: write` and
-   `contents: read`. Checks out the tag, asserts it names the dispatched
-   commit and reviewed `main` history, re-validates the downloaded bundle, and
+6. `publish` -- runs in the protected `pypi` environment, so it waits for a
+   required reviewer. `id-token: write` and `contents: read`. After approval
+   it re-checks every precondition, re-validates the downloaded bundle, and
    uploads one project per step, siblings first and `agnara` last (ADR 0079).
-8. `verify-published` -- every project carries both a wheel and an sdist at
+   No tag exists at this point.
+7. `verify-published` -- every project carries both a wheel and an sdist at
    the version, then a clean install of the published set.
+8. `tag` -- depends on step 7. Re-checks that the checkout is the dispatched
+   commit and that `v<version>` still exists nowhere, creates the annotated
+   tag on that commit as `github-actions[bot]`, pushes it, and verifies it
+   with `check_release_tag.py`. It is the only job that may create a tag, and
+   it holds `contents: write` and nothing else. If step 6 or 7 fails, it never
+   runs, and no tag exists.
 9. `github-release` -- created only after step 8, from
-   `docs/releases/v<version>.md`, for the tag created in step 6.
+   `docs/releases/v<version>.md`, for the tag created in step 8.
 
-The `pypi` environment is entered twice, so a reviewer approves twice: once
-to create the tag, once to publish. That is deliberate. Folding both into one
-job would put `contents: write` next to the OIDC token, which ADR 0079 removed
-on purpose; two approvals a minute apart cost nothing and keep least privilege
-per job.
+The `pypi` environment is entered once, at `publish`. The tag needs no
+separate approval because it is no longer a decision: it records that a
+publication was verified, and it cannot exist without one. The dispatched
+commit is tagged whether or not `main` has moved during the run, because PyPI
+already holds exactly what that commit built; refusing the tag at that point
+would leave a published version with no tag, which is worse than a tag behind
+the head of `main`.
 
 ### The human gate must be real, and the pipeline checks that it is
 
@@ -139,14 +142,16 @@ scope. `0.1.0b1` and later are unchanged.
 
 ## Rejected alternatives
 
-**Tag after publication instead of before.** A tag created only after
-`verify-published` would leave no tag behind when PyPI rejects an upload. It
-also leaves PyPI holding whatever *was* uploaded, which is immutable, so the
-version is burned on the index anyway, and the GitHub Release would announce a
-tag that did not exist while the upload ran. The owner's stated order --
-approve, tag, publish, verify, announce -- is kept, and the residual risk is
-named honestly: a PyPI-side rejection after the tag still costs the version.
-What this ADR removes is every *repository-side* way of burning one.
+**Tag before publication, right after approval.** This record's first
+version did that, with two approvals. It still left one way to burn a version:
+a PyPI-side rejection after the tag -- exactly the A4 and A6 failure -- would
+have produced an immutable tag with an incomplete or empty publication. Tagging
+only after `verify-published` closes it: if any upload fails, or the index does
+not confirm all fourteen files, no tag exists and the version can be retried
+once the external cause is fixed. PyPI may still hold whatever *was* uploaded,
+which is immutable, so a partial upload still costs the version on the index
+-- but the repository no longer records a release that did not happen, and
+the kernel-last order (ADR 0079) keeps that partial state uninstallable.
 
 **A resumable or partial rerun.** Unchanged from ADR 0079: it needs either
 `skip-existing` or a "start from project N" input, both of which hide the
@@ -160,14 +165,16 @@ workflow, which is the only creator the documentation names.
 
 ## Consequences
 
-- A tag cannot exist without every gate having passed and a human having
-  approved, so the `tag created -> UNVERIFIED -> version burned` sequence that
-  produced A5 and A7 is structurally impossible.
+- A tag cannot exist without every gate having passed, a human having
+  approved, all seven distributions being on PyPI and the index confirming
+  them complete, so the `tag created -> UNVERIFIED -> version burned` sequence
+  that produced A5 and A7, and the `tag created -> upload rejected` sequence
+  that produced A4 and A6, are both structurally impossible.
 - A run dispatched from a branch other than `main`, or from a stale head of
   `main`, refuses before building anything.
 - The owner's remaining release actions are: read back the seven publishers
   on PyPI and record them; protect the `pypi` environment; press *Run
-  workflow*; approve twice. None of them is `git tag`.
+  workflow*; approve once. None of them is `git tag`.
 - ADR 0073 decision 6 ("manual dispatch may validate and never publish") is
   superseded: dispatch is now the only way to publish, and publication still
   requires the protected environment.

@@ -477,7 +477,7 @@
     },
     {
       "id": "tag-after-approval",
-      "title": "No job but the approved one can create a tag, and every gate precedes it",
+      "title": "No tag exists until PyPI holds and verifies all seven distributions, and every gate precedes publication",
       "kind": "evidence",
       "mandatory": true,
       "status": "SATISFIED",

@@ -6,11 +6,13 @@ release workflow, so it existed before any gate had run, and a gate that
 failed afterwards left an immutable tag naming a release that never happened.
 
 ADR 0082 turns that round. A release is a ``workflow_dispatch`` run from
-``main``; the tag is created by that run only after every gate has passed and
-a human has approved it in the protected ``pypi`` environment. This script is
-the part of that contract the workflow cannot express in YAML. It is run at
-the start, again before the approval gate, and again after approval, because
-each of those moments is a different state of the repository:
+``main``; the tag is created by that run only after every gate has passed, a
+human has approved it in the protected ``pypi`` environment, all seven
+distributions are on PyPI and the index has confirmed them complete. This
+script is the part of that contract the workflow cannot express in YAML. It is
+run at the start, again before the approval gate, again after approval, and
+once more (``--after-publication``) just before the verified release is
+tagged, because each of those moments is a different state of the repository:
 
 * the run was dispatched, not pushed, and from ``refs/heads/main``;
 * the checked-out commit is the current HEAD of ``main`` on the remote -- a
@@ -163,22 +165,27 @@ def check_version(version: str) -> list[str]:
     return []
 
 
-def check_head_is_current_main(context: Context, git: GitRunner) -> list[str]:
-    """The commit under release is the one on the remote, right now.
-
-    ``GITHUB_SHA`` is fixed when the run is dispatched. If ``main`` gains a
-    commit while the gates run, the tag would name a commit that is no longer
-    the head of the reviewed history; the release is refused rather than
-    tagging the past.
-    """
-    problems: list[str] = []
+def check_checkout_is_dispatched_commit(context: Context, git: GitRunner) -> list[str]:
+    """The job is looking at the commit the run was dispatched for."""
     if not context.sha:
         return ["the commit under release is unknown (GITHUB_SHA is not set)"]
     head = git("rev-parse", "HEAD")
     if head != context.sha:
-        problems.append(
-            f"the checkout is at {head[:12]}, the run was dispatched for {context.sha[:12]}"
-        )
+        return [f"the checkout is at {head[:12]}, the run was dispatched for {context.sha[:12]}"]
+    return []
+
+
+def check_head_is_current_main(context: Context, git: GitRunner) -> list[str]:
+    """The commit under release is the one on the remote, right now.
+
+    ``GITHUB_SHA`` is fixed when the run is dispatched. If ``main`` gains a
+    commit while the gates run, the release would publish a commit that is no
+    longer the head of the reviewed history; before publication the release is
+    refused rather than shipping the past.
+    """
+    problems = check_checkout_is_dispatched_commit(context, git)
+    if not context.sha:
+        return problems
     listing = git("ls-remote", "origin", RELEASE_BRANCH_REF)
     remote = listing.split()[0] if listing else ""
     if not remote:
@@ -264,11 +271,23 @@ def run(
     git: GitRunner,
     fetch: JsonFetcher,
     protected_environment: str | None,
+    after_publication: bool = False,
 ) -> tuple[int, list[str], list[str]]:
+    """Evaluate the preconditions for one moment of the release.
+
+    Before publication every check applies. After publication -- when the
+    verified release is about to be tagged -- the index already holds exactly
+    what the dispatched commit built, so the tag must name that commit whether
+    or not ``main`` has moved since; only the checkout identity and the
+    absence of the tag are re-checked.
+    """
     problems = [*check_dispatch(context), *check_version(version)]
     notes: list[str] = []
     if not check_version(version):
-        problems.extend(check_head_is_current_main(context, git))
+        if after_publication:
+            problems.extend(check_checkout_is_dispatched_commit(context, git))
+        else:
+            problems.extend(check_head_is_current_main(context, git))
         problems.extend(check_tag_absent(version, git))
     if protected_environment is not None:
         environment_problems, environment_notes = check_environment_protection(
@@ -288,6 +307,12 @@ def main(argv: list[str] | None = None, environ: Mapping[str, str] | None = None
         default=None,
         help="also require this GitHub environment to hold required reviewers",
     )
+    parser.add_argument(
+        "--after-publication",
+        action="store_true",
+        help="the verified release is about to be tagged: require the dispatched commit and "
+        "an absent tag, but not that main stayed still",
+    )
     parser.add_argument("--workspace", type=Path, default=ROOT, help=argparse.SUPPRESS)
     arguments = parser.parse_args(argv)
 
@@ -299,6 +324,7 @@ def main(argv: list[str] | None = None, environ: Mapping[str, str] | None = None
             git=make_git(arguments.workspace.resolve()),
             fetch=make_fetcher(context),
             protected_environment=arguments.require_protected_environment,
+            after_publication=arguments.after_publication,
         )
     except Refusal as exc:
         print(f"::error::release preconditions could not be evaluated: {exc}")

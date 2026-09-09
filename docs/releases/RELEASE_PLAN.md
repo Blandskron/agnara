@@ -285,10 +285,11 @@ save the version. That is the finding `0.1.0a8` closes.
 ## 0.1.0a8 — Release Pipeline Recovery
 
 **Proves:** that a release can no longer consume a version before every gate
-has passed and a human has approved it. The tag is created by the approved
-`workflow_dispatch` run from `main`, after validation, build, clean-room
-install, index preflight and the `pypi` environment approval — never by hand,
-never first (ADR 0082).
+has passed, a human has approved it, and PyPI holds and confirms all seven
+distributions. The tag is created by the `workflow_dispatch` run from `main`
+after validation, build, clean-room install, index preflight, the `pypi`
+environment approval, publication and post-release verification — never by
+hand, never first, never without a verified publication (ADR 0082).
 
 **Does not prove:** anything new about framework behavior. It carries the A7
 runtime unchanged.
@@ -301,7 +302,7 @@ environment approval, and the regression tests that hold the order.
 | Gate | Kind | Mandatory |
 | --- | --- | --- |
 | Every `0.1.0a7` code and release-system gate still satisfied | automated | yes |
-| No job but the approved one can create a tag, and every gate precedes it | automated | yes |
+| No tag exists until PyPI holds and verifies all seven distributions, and every gate precedes publication | automated | yes |
 | Publication requires the `pypi` environment and the approved tag | automated | yes |
 | The GitHub Release requires verified publication | automated | yes |
 | Every PyPI Trusted Publisher readback is confirmed by a human after the A6 failure | manual | yes |

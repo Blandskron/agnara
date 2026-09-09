@@ -355,7 +355,8 @@ creates it by hand):
 - publishing authorization is the approval of that environment, and license
   and Trusted Publishing readback are recorded before any registry upload;
 - the annotated `v<version>` tag is then created by the approved run on the
-  exact reviewed `main` commit.
+  exact reviewed `main` commit, only after all seven distributions are on
+  PyPI and verified complete.
 
 Documentation of this checklist is not evidence that release or hotfix
 automation has run. Record actual commands, artifacts, hashes and GitHub links
