@@ -22,7 +22,7 @@
   },
   "notes": [
     "PyPI allows at most three Pending Trusted Publishers at a time, so A8 is published in three dispatched phases of release.yml: bootstrap-1 uploads agnara-a2a, agnara-cli and agnara-events; bootstrap-2 uploads agnara-http, agnara-mcp and agnara-telemetry once their pending publishers exist; final uploads agnara, verifies all seven and only then creates the tag and the GitHub Release. scripts/check_publication_readiness.py --phase requires the readback only for the projects that phase uploads, requires the projects of earlier phases to be complete on the index, and refuses any file of this version for the projects of later phases.",
-    "Readback of 2026-09-09 by the owner (Blandskron): the pending publishers agnara-a2a / pypi-a2a, agnara-cli / pypi-cli and agnara-events / pypi-events exist with owner Blandskron, repository agnara, workflow release.yml. They are the three bootstrap-1 identities and are recorded VERIFIED below. The bootstrap-2 and final identities do not exist yet and stay UNVERIFIED; they are created and read back after bootstrap-1 has consumed its three pending slots.",
+    "Readback of 2026-09-09 by the owner (Blandskron): the pending publishers agnara-a2a / pypi-a2a, agnara-cli / pypi-cli and agnara-events / pypi-events (bootstrap-1) and agnara-http / pypi-http, agnara-mcp / pypi-mcp and agnara-telemetry / pypi-telemetry (bootstrap-2) exist with owner Blandskron, repository agnara, workflow release.yml, and are recorded VERIFIED below. The final identity, agnara / pypi-core, is not read back yet and stays UNVERIFIED.",
     "A8 bootstrap uses a distinct publisher_environment per distribution (ADR 0083). The common pypi identity read back for agnara and agnara-a2a is not evidence for these new identities.",
     "This file is the PUBLISH READY record of the external registry configuration. scripts/check_publication_readiness.py refuses publication while any project here is not VERIFIED, while any readback predates last_registry_failure, while the recorded publisher tuple is not the identity .github/workflows/release.yml presents, or while the recorded publisher kind disagrees with whether the project exists on the index. .github/workflows/release.yml runs that check before anything is built, before the human approval gate and again before the first upload; no tag exists until all of it has passed (ADR 0082).",
     "Only the repository owner can fill this in. Verification means opening https://pypi.org/manage/account/publishing/ (for a project that does not exist yet) or the project's own Publishing settings (for one that does) and reading back the exact Project name and the four fields of the publisher tuple. A 404 on the project page is not evidence that a pending publisher exists, and the 0.1.0a6 failure proved that a readback which does not check the Project name field character by character is not evidence either.",
@@ -85,10 +85,10 @@
       "publisher_kind": "pending",
       "pypi_state": "absent",
       "latest_published": null,
-      "trusted_publisher": "UNVERIFIED",
-      "verified_by": null,
-      "verified_on": null,
-      "note": "bootstrap-2. Create this pending publisher only after bootstrap-1 has consumed its three pending slots, then read back Project name agnara-http, Blandskron/agnara, release.yml and pypi-http before recording VERIFIED.",
+      "trusted_publisher": "VERIFIED",
+      "verified_by": "Blandskron",
+      "verified_on": "2026-09-09",
+      "note": "bootstrap-2. Pending publisher read back by the owner on 2026-09-09: Project name agnara-http, Blandskron/agnara, release.yml, environment pypi-http.",
       "publisher_environment": "pypi-http"
     },
     {
@@ -97,10 +97,10 @@
       "publisher_kind": "pending",
       "pypi_state": "absent",
       "latest_published": null,
-      "trusted_publisher": "UNVERIFIED",
-      "verified_by": null,
-      "verified_on": null,
-      "note": "bootstrap-2. Create this pending publisher only after bootstrap-1 has consumed its three pending slots, then read back Project name agnara-mcp, Blandskron/agnara, release.yml and pypi-mcp before recording VERIFIED.",
+      "trusted_publisher": "VERIFIED",
+      "verified_by": "Blandskron",
+      "verified_on": "2026-09-09",
+      "note": "bootstrap-2. Pending publisher read back by the owner on 2026-09-09: Project name agnara-mcp, Blandskron/agnara, release.yml, environment pypi-mcp.",
       "publisher_environment": "pypi-mcp"
     },
     {
@@ -109,10 +109,10 @@
       "publisher_kind": "pending",
       "pypi_state": "absent",
       "latest_published": null,
-      "trusted_publisher": "UNVERIFIED",
-      "verified_by": null,
-      "verified_on": null,
-      "note": "bootstrap-2. Create this pending publisher only after bootstrap-1 has consumed its three pending slots, then read back Project name agnara-telemetry, Blandskron/agnara, release.yml and pypi-telemetry before recording VERIFIED.",
+      "trusted_publisher": "VERIFIED",
+      "verified_by": "Blandskron",
+      "verified_on": "2026-09-09",
+      "note": "bootstrap-2. Pending publisher read back by the owner on 2026-09-09: Project name agnara-telemetry, Blandskron/agnara, release.yml, environment pypi-telemetry.",
       "publisher_environment": "pypi-telemetry"
     }
   ]

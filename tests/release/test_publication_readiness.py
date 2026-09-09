@@ -1257,9 +1257,28 @@ def test_the_committed_record_is_ready_for_bootstrap_1_offline() -> None:
     )
 
 
-def test_the_committed_record_does_not_yet_admit_the_later_phases() -> None:
-    """Their publishers cannot exist until bootstrap-1 has consumed its slots."""
-    for phase, expected in (("bootstrap-2", BOOTSTRAP_2), ("final", (MANIFEST.core,))):
+def test_the_committed_record_is_ready_for_bootstrap_2_offline() -> None:
+    """The owner read back the three bootstrap-2 publishers on 2026-09-09."""
+    code, problems, notes = tool.run(
+        WORKSPACE_ROOT,
+        _repository_version(),
+        dist_dir=None,
+        tag=None,
+        online=False,
+        require_published=False,
+        index=tool.DEFAULT_INDEX,
+        phase="bootstrap-2",
+    )
+
+    assert (code, problems) == (0, [])
+    assert any(
+        "phase bootstrap-2: uploads agnara-http, agnara-mcp, agnara-telemetry" in n for n in notes
+    )
+
+
+def test_the_committed_record_does_not_yet_admit_the_final_phase() -> None:
+    """The kernel's active publisher has not been read back for pypi-core yet."""
+    for phase, expected in (("final", (MANIFEST.core,)),):
         code, problems, _ = tool.run(
             WORKSPACE_ROOT,
             _repository_version(),
