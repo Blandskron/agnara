@@ -11,7 +11,10 @@ This file owns **decomposed work that is ready to implement**. It does not own t
 
 ## A8
 
-Release pipeline recovery only (ADR 0082). Everything below `## A8` stays out.
+Bootstrap identity correction (#332): distinct OIDC environments per distribution;
+GitHub setup and workflow validation do not certify the pending PyPI readbacks.
+
+Release pipeline recovery only (ADRs 0082 and 0083). Everything below `## A8` stays out.
 
 - [~] E0B.12 Document release and hotfix automation evidence. The release half
   gains real evidence here: `0.1.0a4` exercised the tag pipeline through to a
@@ -26,7 +29,7 @@ Release pipeline recovery only (ADR 0082). Everything below `## A8` stays out.
   exactly `agnara-a2a` and recreate it; read back the Project name and the
   shared tuple (GitHub Actions, `Blandskron`, `agnara`, `release.yml`, `pypi`)
   for all seven entries; record each readback in
-  `docs/releases/publication.json` (schema 2) dated on or after `2026-09-08`,
+  `docs/releases/publication.json` (schema 3) dated on or after `2026-09-08`,
   signed by a human account, with `status: VERIFIED`.
 
 - [!] Owner action: protect the `pypi` GitHub Environment with at least one

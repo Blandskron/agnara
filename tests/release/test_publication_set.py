@@ -47,6 +47,10 @@ ROOT_PYPROJECT = WORKSPACE_ROOT / "pyproject.toml"
 RELEASE_WORKFLOW = WORKSPACE_ROOT / ".github" / "workflows" / "release.yml"
 CI_WORKFLOW = WORKSPACE_ROOT / ".github" / "workflows" / "ci.yml"
 
+UPLOAD_JOBS = [
+    "publish-" + suffix for suffix in ("a2a", "cli", "events", "http", "mcp", "telemetry", "core")
+]
+
 MANIFEST = distributions.load(WORKSPACE_ROOT)
 
 
@@ -176,7 +180,12 @@ def test_every_distribution_is_published_by_its_own_step_in_publication_order() 
     `twine`'s filename sort rather than a decision, and the kernel went first.
     That published a version of `agnara` whose adapters did not exist.
     """
-    steps = _workflow(RELEASE_WORKFLOW)["jobs"]["publish"]["steps"]
+    steps = [
+        step
+        for name, job in _workflow(RELEASE_WORKFLOW)["jobs"].items()
+        if name in UPLOAD_JOBS
+        for step in job["steps"]
+    ]
     published = [
         step["with"]["packages-dir"].removeprefix("staged/")
         for step in steps
@@ -189,7 +198,12 @@ def test_every_distribution_is_published_by_its_own_step_in_publication_order() 
 
 def test_no_publish_step_suppresses_an_existing_file() -> None:
     """`skip-existing` would make a rerun over a partial publication look green."""
-    steps = _workflow(RELEASE_WORKFLOW)["jobs"]["publish"]["steps"]
+    steps = [
+        step
+        for name, job in _workflow(RELEASE_WORKFLOW)["jobs"].items()
+        if name in UPLOAD_JOBS
+        for step in job["steps"]
+    ]
 
     for step in steps:
         if str(step.get("uses", "")).startswith("pypa/gh-action-pypi-publish"):
@@ -209,7 +223,7 @@ def test_the_github_release_cannot_exist_without_verified_publication() -> None:
     jobs = _workflow(RELEASE_WORKFLOW)["jobs"]
 
     assert "publish-preflight" in jobs["publish"]["needs"]
-    assert "publish" in jobs["verify-published"]["needs"]
+    assert "publish-core" in jobs["verify-published"]["needs"]
     assert "verify-published" in jobs["tag"]["needs"]
     assert "tag" in jobs["github-release"]["needs"]
     assert "verify-published" in jobs["github-release"]["needs"]
@@ -225,7 +239,10 @@ def test_only_the_publishing_job_holds_an_oidc_token_and_it_cannot_write_content
         and job["permissions"].get("id-token") == "write"
     ]
 
-    assert holders == ["publish"]
+    assert holders == UPLOAD_JOBS
+    for name in holders:
+        assert jobs[name]["permissions"] == {"contents": "read", "id-token": "write"}
+    assert jobs["publish"]["permissions"] == {"contents": "read"}
     assert jobs["publish"]["permissions"]["contents"] == "read"
     assert jobs["publish"]["environment"]["name"] == "pypi"
     writers = [
@@ -251,7 +268,7 @@ def test_publication_requires_a_dispatch_from_main_and_the_protected_environment
     assert all("if" not in jobs[name] for name in ("publish", "verify-published", "tag"))
     assert jobs["publish"]["environment"]["name"] == "pypi"
     gated = [name for name, job in jobs.items() if isinstance(job.get("environment"), dict)]
-    assert gated == ["publish"], "the human gate is the upload, and only the upload"
+    assert gated == ["publish", *UPLOAD_JOBS]
     preconditions = "\n".join(
         step.get("run", "") for step in jobs["preconditions"]["steps"] if isinstance(step, dict)
     )

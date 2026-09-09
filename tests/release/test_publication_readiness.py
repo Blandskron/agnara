@@ -91,6 +91,9 @@ def _write_workflow(root: Path, *, environment: str | None = "pypi") -> None:
     if environment is not None:
         body += f"    environment:\n      name: {environment}\n"
     body += "    steps: []\n"
+    for expected in tool.BOOTSTRAP_ENVIRONMENTS.values():
+        job = "publish-" + expected.removeprefix("pypi-")
+        body += f"  {job}:\n    environment:\n      name: {expected}\n    steps: []\n"
     (workflows / "release.yml").write_text(body, encoding="utf-8")
 
 
@@ -126,6 +129,7 @@ def _project(name: str, **overrides: Any) -> dict[str, Any]:
     entry: dict[str, Any] = {
         "name": name,
         "publisher_project": name,
+        "publisher_environment": tool.BOOTSTRAP_ENVIRONMENTS[name],
         "publisher_kind": "active" if name == MANIFEST.core else "pending",
         "pypi_state": "existing" if name == MANIFEST.core else "absent",
         "trusted_publisher": "VERIFIED",
@@ -146,7 +150,7 @@ def _write_publication(root: Path, overrides: dict[str, Any]) -> None:
         "publisher": dict(tool.REQUIRED_PUBLISHER),
         "release_authorization": {
             "mechanism": tool.AUTHORIZATION_MECHANISM,
-            "environment": tool.REQUIRED_PUBLISHER["environment"],
+            "environment": tool.AUTHORIZATION_ENVIRONMENT,
         },
         "status": "VERIFIED",
         "confirmed_by": OWNER,
@@ -497,6 +501,48 @@ def test_a_run_that_is_not_the_recorded_publisher_is_refused(
 
 def test_the_oidc_identity_is_not_required_outside_the_workflow(workspace: Path) -> None:
     assert _run(workspace, oidc_identity=False, environ={}) == (0, [])
+
+
+@pytest.mark.parametrize("project,environment", tool.BOOTSTRAP_ENVIRONMENTS.items())
+def test_bootstrap_upload_refuses_every_other_distribution_identity(
+    project: str,
+    environment: str,
+) -> None:
+    job = "publish-" + environment.removeprefix("pypi-")
+    context = ACTIONS_ENVIRON | {"GITHUB_JOB": job}
+    assert tool.check_oidc_identity(context, project=project, environment=environment) == []
+    assert tool.check_oidc_identity(context)  # an upload cannot omit its identity
+    for other in {*tool.BOOTSTRAP_ENVIRONMENTS.values(), "pypi"} - {environment}:
+        assert tool.check_oidc_identity(context, project=project, environment=other)
+    assert tool.check_oidc_identity(
+        context | {"GITHUB_JOB": "publish"}, project=project, environment=environment
+    )
+    assert tool.check_oidc_identity(
+        context
+        | {
+            "GITHUB_WORKFLOW_REF": ACTIONS_ENVIRON["GITHUB_WORKFLOW_REF"].replace(
+                "/main", "/develop"
+            )
+        },
+        project=project,
+        environment=environment,
+    )
+
+
+def test_old_common_publisher_readback_cannot_certify_bootstrap(workspace: Path) -> None:
+    _write_publication(workspace, {"projects": _projects(publisher_environment="pypi")})
+    code, problems = _run(workspace)
+    assert code == 1
+    assert sum("publisher_environment" in problem for problem in problems) == 7
+
+
+def test_wrong_bootstrap_environment_in_workflow_fails_offline(workspace: Path) -> None:
+    path = workspace / ".github/workflows/release.yml"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace("name: pypi-cli", "name: pypi-a2a"),
+        encoding="utf-8",
+    )
+    assert any("agnara-cli" in problem for problem in tool.check_workflow_identity(workspace))
 
 
 # ---------------------------------------------------------------------------

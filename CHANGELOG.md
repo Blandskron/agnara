@@ -17,6 +17,12 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 
 ## [Unreleased]
 
+### Fixed
+
+- A8 bootstrap uses distinct OIDC publishing environments per distribution to
+  avoid PyPI pending-publisher identity collisions, while retaining one human
+  approval and tagging only after verified publication of all seven (#332).
+
 ## [0.1.0a8] - 2026-09-09
 
 Release pipeline recovery after the immutable `v0.1.0a7` tag was created while

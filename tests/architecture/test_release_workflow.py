@@ -22,6 +22,9 @@ from tests.architecture.boundaries import DISTRIBUTIONS, WORKSPACE_ROOT
 WORKFLOW = WORKSPACE_ROOT / ".github" / "workflows" / "release.yml"
 STATUS = WORKSPACE_ROOT / "docs" / "releases" / "release-status.json"
 
+UPLOAD_JOBS = [
+    "publish-" + suffix for suffix in ("a2a", "cli", "events", "http", "mcp", "telemetry", "core")
+]
 TAG_JOB = "tag"
 GATES_BEFORE_PUBLICATION = {
     "validate",
@@ -30,7 +33,7 @@ GATES_BEFORE_PUBLICATION = {
     "test-artifact",
     "publish-preflight",
 }
-GATES_BEFORE_THE_TAG = GATES_BEFORE_PUBLICATION | {"publish", "verify-published"}
+GATES_BEFORE_THE_TAG = GATES_BEFORE_PUBLICATION | {"publish", "verify-published", *UPLOAD_JOBS}
 
 
 def _text() -> str:
@@ -152,7 +155,7 @@ def test_preconditions_are_rechecked_before_the_human_gate_and_after_it() -> Non
     """Time passes while the gates run; `main` may move and a tag may appear."""
     rechecked = _jobs_running("scripts/check_release_preconditions.py")
 
-    assert rechecked == ["preconditions", "publish-preflight", "publish", TAG_JOB]
+    assert rechecked == ["preconditions", "publish-preflight", "publish", *UPLOAD_JOBS, TAG_JOB]
     for name in ("preconditions", "publish-preflight", "publish"):
         assert "--require-protected-environment pypi" in _job(name, _following(name)), name
     # After publication the index already holds the release, so the tag job
@@ -169,7 +172,7 @@ def test_the_human_gate_is_the_upload_and_only_the_upload() -> None:
     jobs = _jobs()
     gated = [name for name, job in jobs.items() if isinstance(job.get("environment"), dict)]
 
-    assert gated == ["publish"]
+    assert gated == ["publish", *UPLOAD_JOBS]
     assert jobs["publish"]["environment"]["name"] == "pypi"
     assert _transitive_needs("publish") >= GATES_BEFORE_PUBLICATION
 
@@ -183,7 +186,9 @@ def test_publication_happens_before_the_tag() -> None:
     assert TAG_JOB not in _transitive_needs("publish")
     assert not any("git tag" in run for run in _run_steps(jobs["publish"]))
     assert "--tag" not in _job("publish", "verify-published")
-    assert jobs["publish"]["permissions"] == {"id-token": "write", "contents": "read"}
+    assert jobs["publish"]["permissions"] == {"contents": "read"}
+    for name in UPLOAD_JOBS:
+        assert jobs[name]["permissions"] == {"id-token": "write", "contents": "read"}
 
 
 def test_verification_happens_before_the_tag() -> None:
@@ -191,7 +196,7 @@ def test_verification_happens_before_the_tag() -> None:
     jobs = _jobs()
 
     assert "verify-published" in _needs(jobs[TAG_JOB])
-    assert "publish" in _needs(jobs["verify-published"])
+    assert "publish-core" in _needs(jobs["verify-published"])
     assert "--online --require-published" in _job("verify-published", TAG_JOB)
     assert TAG_JOB not in _transitive_needs("verify-published")
 
@@ -213,7 +218,7 @@ def test_the_tag_depends_on_verification_success() -> None:
 def test_a_failed_upload_or_verification_leaves_no_tag() -> None:
     """The critical rule, read off the dependency graph: if `publish` or
     `verify-published` fails, neither `tag` nor `github-release` runs."""
-    for failed in ("publish", "verify-published"):
+    for failed in ("publish", *UPLOAD_JOBS, "verify-published"):
         running = _jobs_that_would_run_if(failed)
         assert TAG_JOB not in running, failed
         assert "github-release" not in running, failed
@@ -255,7 +260,7 @@ def test_the_github_release_depends_on_the_tag() -> None:
     jobs = _jobs()
     needs = _needs(jobs["github-release"])
 
-    assert {TAG_JOB, "verify-published", "publish"} <= needs
+    assert {TAG_JOB, "verify-published", "publish-core"} <= needs
     assert "if" not in jobs["github-release"]
     checkout = jobs["github-release"]["steps"][0]
     assert checkout["with"]["ref"] == f"${{{{ needs.{TAG_JOB}.outputs.tag }}}}"
@@ -309,7 +314,7 @@ def test_publish_readiness_is_checked_at_every_state_of_the_release() -> None:
         ("preconditions", "build", "--oidc-identity"),
         ("build", "test-artifact", "--dist dist/"),
         ("publish-preflight", "publish", "--online --oidc-identity"),
-        ("publish", "verify-published", "--dist dist/ --oidc-identity"),
+        ("publish-a2a", "publish-cli", "--dist dist/ --oidc-identity"),
         ("verify-published", TAG_JOB, "--online --require-published"),
     ):
         body = _job(job, until)
@@ -321,7 +326,8 @@ def test_publication_steps_name_canonical_projects_never_normalized_filenames() 
     """`staged/agnara-a2a`, never `staged/agnara_a2a`: the directory is the project."""
     published = [
         step["with"]["packages-dir"].removeprefix("staged/")
-        for step in _jobs()["publish"]["steps"]
+        for name in UPLOAD_JOBS
+        for step in _jobs()[name]["steps"]
         if str(step.get("uses", "")).startswith("pypa/gh-action-pypi-publish")
     ]
 
@@ -394,8 +400,35 @@ def test_publication_is_attested_and_metadata_verified() -> None:
     assert "attestations: true" in workflow
     assert "verify-metadata: true" in workflow
     assert "print-hash: true" in workflow
-    for step in _jobs()["publish"]["steps"]:
-        assert "skip-existing" not in (step.get("with") or {})
+    for name in UPLOAD_JOBS:
+        for step in _jobs()[name]["steps"]:
+            assert "skip-existing" not in (step.get("with") or {})
+
+
+def test_bootstrap_jobs_are_serial_bound_to_their_identity_and_approval() -> None:
+    jobs = _jobs()
+    previous = "publish"
+    for name in UPLOAD_JOBS:
+        job = jobs[name]
+        suffix = name.removeprefix("publish-")
+        project = "agnara" if suffix == "core" else "agnara-" + suffix
+        environment = "pypi-" + suffix
+        assert _needs(job) == {"preconditions", previous}
+        assert name not in _transitive_needs(name), "release graph must be acyclic"
+        assert _transitive_needs(name) >= GATES_BEFORE_PUBLICATION | {"publish"}
+        assert "uses" not in job, "Trusted Publishing must stay in release.yml"
+        assert job["environment"]["name"] == environment
+        assert job["env"] == {"PUBLISH_PROJECT": project, "PUBLISH_ENVIRONMENT": environment}
+        uploads = [step for step in job["steps"] if str(step.get("uses", "")).startswith("pypa/")]
+        assert len(uploads) == 1
+        assert uploads[0]["with"]["packages-dir"] == "staged/" + project
+        runs = "\n".join(_run_steps(job))
+        assert '--project "$PUBLISH_PROJECT" --environment "$PUBLISH_ENVIRONMENT"' in runs
+        assert "--dist dist/ --oidc-identity" in runs
+        assert 'cp "dist/${stem}-${RELEASE_VERSION}-py3-none-any.whl"' in runs
+        assert 'cp "dist/${stem}-${RELEASE_VERSION}.tar.gz"' in runs
+        assert "--online" not in runs, "earlier uploads must not fail global version absence"
+        previous = name
 
 
 def test_release_actions_are_pinned_to_exact_versions() -> None:

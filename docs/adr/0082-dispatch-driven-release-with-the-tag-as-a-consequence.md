@@ -7,6 +7,11 @@
 - Supersedes: ADR 0073 decision 6, ADR 0079 "one more required action before
   tagging"
 
+> Amended for A8 by [ADR 0083](0083-a8-bootstrap-publisher-identities.md):
+> `publish` is now approval only; seven sequential upload jobs use distinct
+> environments. Schema 3 replaces the shared environment with per-project
+> `publisher_environment`. The tag-after-verification decision is unchanged.
+
 ## Context
 
 Four consecutive release attempts each consumed a version without publishing
