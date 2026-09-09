@@ -29,6 +29,7 @@ dev = [
     { name = "playwright", specifier = "==1.62.0" },
     { name = "pydantic", specifier = ">=2.9,<3" },
     { name = "pytest", specifier = ">=8.4" },
+    { name = "pyyaml", specifier = ">=6,<7" },
     { name = "ruff", specifier = ">=0.14" },
     { name = "starlette", specifier = "==1.6.0" },
     { name = "ty", specifier = ">=0.0.1a1" },
@@ -36,12 +37,12 @@ dev = [
 
 [[package]]
 name = "agnara"
-version = "0.1.0a4"
+version = "0.1.0a5"
 source = { editable = "packages/agnara" }
 
 [[package]]
 name = "agnara-a2a"
-version = "0.1.0a4"
+version = "0.1.0a5"
 source = { editable = "packages/agnara-a2a" }
 dependencies = [
     { name = "agnara" },
@@ -52,7 +53,7 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-cli"
-version = "0.1.0a4"
+version = "0.1.0a5"
 source = { editable = "packages/agnara-cli" }
 dependencies = [
     { name = "agnara" },
@@ -63,7 +64,7 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-events"
-version = "0.1.0a4"
+version = "0.1.0a5"
 source = { editable = "packages/agnara-events" }
 dependencies = [
     { name = "agnara" },
@@ -74,7 +75,7 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-http"
-version = "0.1.0a4"
+version = "0.1.0a5"
 source = { editable = "packages/agnara-http" }
 dependencies = [
     { name = "agnara" },
@@ -85,7 +86,7 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-mcp"
-version = "0.1.0a4"
+version = "0.1.0a5"
 source = { editable = "packages/agnara-mcp" }
 dependencies = [
     { name = "agnara" },
@@ -100,7 +101,7 @@ requires-dist = [
 
 [[package]]
 name = "agnara-telemetry"
-version = "0.1.0a4"
+version = "0.1.0a5"
 source = { editable = "packages/agnara-telemetry" }
 dependencies = [
     { name = "agnara" },

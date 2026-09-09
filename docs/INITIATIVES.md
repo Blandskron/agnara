@@ -38,7 +38,7 @@ record that settled it -- not an implementation history.
 | Id | Subject | Settled by | Still open |
 | --- | --- | --- | --- |
 | `I1` | Unified exposure model | ADR 0070, and ADR 0071 for phase 3 | nothing |
-| `I3` | Execution identity and idempotency behaviour | ADR 0074 | nothing; `0.1.0a5` still gates the behaviour |
+| `I3` | Execution identity and idempotency behaviour | ADR 0074 | nothing; `0.1.0a6` still gates the behaviour |
 | `I7` | HTTP request surface | ADR 0072 | scope beyond what `0.1.0a4` owns, classified in ADR 0072 |
 | `I9` | Public API governance | ADR 0067, ADR 0074, ADR 0076 | stability promotion, and a generated reference for the public names |
 | `I18` | Documentation and DX program | first increment only | progressive examples, error-message quality, startup diagnostics |
@@ -344,7 +344,7 @@ scenario rather than per-framework demos.
 **Non-goals:** becoming an ORM, broker, scheduler, worker runtime, template
 engine, frontend framework, workflow runtime or admin interface; favouring one
 framework; a universal adapter over unlike infrastructure; a plugin discovery
-model (I13); shipping any integration in `0.1.0a4` or `0.1.0a5`.
+model (I13); shipping any integration in any `0.1.0a*` release.
 
 **Risks.** The first framework shapes the boundary and the second cannot
 implement it. An embedding contract designed before RFC 0006 settles names

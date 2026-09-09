@@ -1,6 +1,6 @@
 [project]
 name = "agnara-events"
-version = "0.1.0a4"
+version = "0.1.0a5"
 description = "Event exposure abstractions for Agnara capabilities."
 readme = "README.md"
 requires-python = ">=3.14"
@@ -14,7 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-dependencies = ["agnara==0.1.0a4"]
+dependencies = ["agnara==0.1.0a5"]
 
 [project.urls]
 Homepage = "https://github.com/Blandskron/agnara"

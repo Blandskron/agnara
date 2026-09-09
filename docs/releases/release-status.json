@@ -1,18 +1,17 @@
 {
   "schema_version": 1,
-  "current_target": "0.1.0a4",
-  "next_target": "0.1.0a5",
-  "previous_release": "0.1.0a3",
+  "current_target": "0.1.0a5",
+  "next_target": "0.1.0a6",
+  "previous_release": "0.1.0a4",
   "status": "IN_PROGRESS",
   "assessed_on": "2026-09-08",
-  "assessed_commit": "75af82b93453f99fce2136c4bdb3436bb1c2bf16",
+  "assessed_commit": "c82be7be9c1fa675c042ef336afcfc32b31ca421",
   "blocked_reason": null,
   "notes": [
-    "Status is recomputed by scripts/check_release_readiness.py; automated outcomes are not trusted from this file. Seven owner decisions remain pending.",
-    "Evidence expires when its covered paths change. Final A4 closure validated develop 75af82b93453f99fce2136c4bdb3436bb1c2bf16; the evidence-only follow-up changes no implementation, dependency, test or workflow.",
-    "Initial candidate 1773f3b0d2b34b69dc15a4b35f64a130a1ca87d8 had sixteen stale evidence gates. PR #333 fixed HTTP singleton teardown and release-tag ancestry, corrected MCP and CLI documentation, and passed full revalidation. See v0.1.0a4.md.",
-    "All seven distributions remain 0.1.0a4.dev0 on develop. A separate external version-cut rehearsal built and installed exactly 0.1.0a4 for all seven; it was not a release or upload.",
-    "A2A and events are reserved namespaces with no public runtime in A4. No publication/consumption runtime is claimed for them. PyPI publisher verification remains owner issue #328."
+    "0.1.0a5 is a publication-recovery release. It carries the 0.1.0a4 implementation unchanged and fixes the release system that published one of fourteen artifacts. ADR 0078 records why the alpha line gained it and why Execution Semantics moved to 0.1.0a6.",
+    "0.1.0a4 was partially published on 2026-09-08. Workflow run 34285830444 uploaded agnara-0.1.0a4-py3-none-any.whl (HTTP 200) and was rejected on agnara_a2a-0.1.0a4-py3-none-any.whl with HTTP 400 'Non-user identities cannot create new projects'. Twine uploads wheels before sdists and stops on the first failure, so the agnara 0.1.0a4 sdist and all twelve sibling artifacts were never uploaded, post-release verification never ran, and no GitHub Release was created. v0.1.0a4 remains historical and unmodified.",
+    "The gate that was missing is now explicit. publication-prerequisites re-derives PUBLISH READY from the repository on every run, and pypi-trusted-publishers is a manual gate the tooling can never satisfy. docs/releases/publication.json is the reviewed record of the external registry configuration; it is UNVERIFIED until the owner reads the tuples back from PyPI.",
+    "Status is recomputed by scripts/check_release_readiness.py; automated outcomes are never trusted from this file."
   ],
   "gates": [
     {
@@ -24,7 +23,7 @@
     },
     {
       "id": "changelog-accurate",
-      "title": "Changelog accurately describes changes since 0.1.0a3",
+      "title": "Changelog accurately describes changes since 0.1.0a4",
       "kind": "automated",
       "mandatory": true,
       "status": "SATISFIED"
@@ -65,15 +64,22 @@
       "status": "SATISFIED"
     },
     {
+      "id": "publication-prerequisites",
+      "title": "The reviewed publication set is publishable, not merely buildable",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "UNSATISFIED"
+    },
+    {
       "id": "test-suite",
       "title": "Full supported test suite passes",
       "kind": "evidence",
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "99b9e81bc6c5e55d21dd6e359ec50146d0a243e3",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. Skips: 31 browser tests run separately in CI, 22 inapplicable export-mutation cases. Re-anchored to 99b9e81bc6 after the release-branch CI fix, whose only covered change is tests/release/test_workspace_version.py. Re-run at that commit on Windows CPython 3.14.6: 3535 passed and 53 justified skips, with Ruff lint, Ruff format and the 618-test architecture suite clean. With uv present the whole suite passes at that commit: 3536 passed, 53 justified skips, no failures. Required cross-platform CI has since passed on the pull request. The release rehearsal was then reproduced end to end on the merge candidate at exactly 0.1.0a4: uv build --all-packages produced the fourteen artifacts, check_distributions.py accepted them with --expected-version, a clean external CPython 3.14 environment installed the seven wheels with --no-index, --require-installed accepted the installed set, all seven packages imported under python -I, and the installed console script reported agnara 0.1.0a4.",
+        "commit": "c82be7be9c1fa675c042ef336afcfc32b31ca421",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "3599 passed, 53 justified skips on Windows CPython 3.14.4. Ruff lint, Ruff format, ty and uv lock --check clean; the 618-test architecture suite and 38 security tests passed. The 53 skips are 31 browser cases that run in the dedicated CI job and 22 inapplicable single-export ordering and duplicate mutations; no new skip or xfail was introduced. 62 tests are new: tests/release/test_publication_set.py and tests/release/test_publication_readiness.py. Local Windows CPython 3.14.4 at 2651edd4d8. Required Linux/macOS/Windows CI, the documentation-browser job and both CodeQL languages run on the pull request and have not run on this commit; that is the one part of the 0.1.0a4 evidence this record does not yet reproduce. Re-anchored to e1414cb191, which guarded the offline publish-readiness step to tag pushes and added the workflow assertions for it. Everything above was re-run at that tree: the full suite is 3600 passed and 53 justified skips, the fourteen artifacts rebuilt to byte-identical SHA-256 digests, and the clean-room install, imports and console script passed again. Re-anchored to c82be7be9c, a README-only change; the full suite was re-run at that tree.",
         "covers": [
           "packages",
           "tests",
@@ -94,9 +100,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "Seven wheels and seven sdists built from this source; check_distributions accepted metadata, dependencies, Python >=3.14, licenses, README, package contents and public imports. An external version-cut rehearsal also built all fourteen artifacts at exactly 0.1.0a4. https://github.com/Blandskron/agnara/actions/runs/34266732824",
+        "commit": "e1414cb19140b5a7de3729eaf00e805fdcfa7678",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "uv build --all-packages produced exactly 7 wheels and 7 sdists at 0.1.0a5. check_distributions.py --dist --expected-version 0.1.0a5 accepted names, versions, the >=3.14 floor, licenses, README metadata and files, project URLs, classifiers, dependencies, console scripts, package data and safe archive paths. check_publication_readiness.py --dist accepted the artifact set: one wheel and one sdist per reviewed distribution and nothing else. SHA-256 of all fourteen recorded in the audit log; agnara-0.1.0a5-py3-none-any.whl is 56e71e2858354c79ac158595275e440be5a828bca5624024b032bfb1a2f0495e and agnara-0.1.0a5.tar.gz is 27277fdfb2b25354347b6366148285829c1ceafb778df706e1de5bcb01674126. Local Windows CPython 3.14.4 at 2651edd4d8. Required Linux/macOS/Windows CI, the documentation-browser job and both CodeQL languages run on the pull request and have not run on this commit; that is the one part of the 0.1.0a4 evidence this record does not yet reproduce. Re-anchored to e1414cb191, which guarded the offline publish-readiness step to tag pushes and added the workflow assertions for it. Everything above was re-run at that tree: the full suite is 3600 passed and 53 justified skips, the fourteen artifacts rebuilt to byte-identical SHA-256 digests, and the clean-room install, imports and console script passed again.",
         "covers": [
           "packages",
           "scripts",
@@ -113,9 +119,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "External Python 3.14 venvs installed all seven development and exact-release rehearsal wheels with --no-index; third-party requirements resolved separately. check_distributions --require-installed passed for both. No editable install or workspace import.",
+        "commit": "e1414cb19140b5a7de3729eaf00e805fdcfa7678",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "An external CPython 3.14.4 environment outside the checkout resolved only the two adapter-owned third-party requirements from the index, then installed all seven wheels with --no-index --find-links. check_distributions.py --require-installed --expected-version 0.1.0a5 passed under python -I, confirming site-packages origins and exact core pins with nothing resolving from the workspace. All seven packages imported; the installed console script reported agnara 0.1.0a5, as did python -I -m agnara_cli --version. The sdist path was checked separately, which 0.1.0a4 never published: a second clean environment built and installed agnara-0.1.0a5.tar.gz from source and imported it. Local Windows CPython 3.14.4 at 2651edd4d8. Required Linux/macOS/Windows CI, the documentation-browser job and both CodeQL languages run on the pull request and have not run on this commit; that is the one part of the 0.1.0a4 evidence this record does not yet reproduce. Re-anchored to e1414cb191, which guarded the offline publish-readiness step to tag pushes and added the workflow assertions for it. Everything above was re-run at that tree: the full suite is 3600 passed and 53 justified skips, the fourteen artifacts rebuilt to byte-identical SHA-256 digests, and the clean-room install, imports and console script passed again.",
         "covers": [
           "packages",
           "scripts",
@@ -132,9 +138,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. HTTP selection: 841 passed; 31 browser tests separately covered. Public singleton cleanup now tested for sync/async resources with/without a lifecycle callback.",
+        "commit": "e1414cb19140b5a7de3729eaf00e805fdcfa7678",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "841 passed, 31 browser skips. 0.1.0a5 changes no runtime source: `git diff v0.1.0a4 HEAD -- packages/*/src` is empty, and the only change anywhere under packages/ is the synchronized version and the six adapter core pins (13 lines across 7 pyproject.toml files). This record is therefore the 0.1.0a4 finding re-anchored to the release commit rather than a new measurement. What was re-run here: the full suite, the fourteen-artifact build with --expected-version, and a fresh clean-room install, import and console-script check of all seven wheels. What was not re-run: the 0.1.0a4 external clean-room consumer application, whose source lived in the untracked .release-validation/ and is not in this checkout. Re-anchored to e1414cb191, which guarded the offline publish-readiness step to tag pushes and added the workflow assertions for it. Everything above was re-run at that tree: the full suite is 3600 passed and 53 justified skips, the fourteen artifacts rebuilt to byte-identical SHA-256 digests, and the clean-room install, imports and console script passed again.",
         "covers": [
           "packages/agnara",
           "packages/agnara-http",
@@ -152,9 +158,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. 165 MCP tests passed; bounded protocol scope unchanged.",
+        "commit": "e1414cb19140b5a7de3729eaf00e805fdcfa7678",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "165 passed; bounded protocol scope unchanged. 0.1.0a5 changes no runtime source: `git diff v0.1.0a4 HEAD -- packages/*/src` is empty, and the only change anywhere under packages/ is the synchronized version and the six adapter core pins (13 lines across 7 pyproject.toml files). This record is therefore the 0.1.0a4 finding re-anchored to the release commit rather than a new measurement. What was re-run here: the full suite, the fourteen-artifact build with --expected-version, and a fresh clean-room install, import and console-script check of all seven wheels. What was not re-run: the 0.1.0a4 external clean-room consumer application, whose source lived in the untracked .release-validation/ and is not in this checkout. Re-anchored to e1414cb191, which guarded the offline publish-readiness step to tag pushes and added the workflow assertions for it. Everything above was re-run at that tree: the full suite is 3600 passed and 53 justified skips, the fourteen artifacts rebuilt to byte-identical SHA-256 digests, and the clean-room install, imports and console script passed again.",
         "covers": [
           "packages/agnara",
           "packages/agnara-mcp",
@@ -172,9 +178,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "382 CLI tests passed. Installed console commands version/help/inspect/graph/context/schema openapi/project create --dry-run --json and python -I -m agnara_cli --version passed outside checkout.",
+        "commit": "e1414cb19140b5a7de3729eaf00e805fdcfa7678",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "382 passed. The installed console script answered --version and --help from outside the checkout, and python -I -m agnara_cli --version reported agnara 0.1.0a5. 0.1.0a5 changes no runtime source: `git diff v0.1.0a4 HEAD -- packages/*/src` is empty, and the only change anywhere under packages/ is the synchronized version and the six adapter core pins (13 lines across 7 pyproject.toml files). This record is therefore the 0.1.0a4 finding re-anchored to the release commit rather than a new measurement. What was re-run here: the full suite, the fourteen-artifact build with --expected-version, and a fresh clean-room install, import and console-script check of all seven wheels. What was not re-run: the 0.1.0a4 external clean-room consumer application, whose source lived in the untracked .release-validation/ and is not in this checkout. Re-anchored to e1414cb191, which guarded the offline publish-readiness step to tag pushes and added the workflow assertions for it. Everything above was re-run at that tree: the full suite is 3600 passed and 53 justified skips, the fourteen artifacts rebuilt to byte-identical SHA-256 digests, and the clean-room install, imports and console script passed again.",
         "covers": [
           "packages/agnara-cli",
           "packages/agnara",
@@ -192,9 +198,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "99b9e81bc6c5e55d21dd6e359ec50146d0a243e3",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "Final A4 closure at 75af82b93453f99fce2136c4bdb3436bb1c2bf16. Windows CPython 3.14.6: 3536 passed, 53 justified skips; Ruff, format, ty and architecture passed. Exact merge-SHA CI passed Linux, macOS, Windows, browser, packaging and Python/Actions CodeQL: https://github.com/Blandskron/agnara/actions/runs/34266732824. The two release findings were fixed by #333. Security findings are explicitly triaged in v0.1.0a4.md; no uncorrected runtime blocker found. Re-anchored to 99b9e81bc6 after the release-branch CI fix, whose only covered change is tests/release/test_workspace_version.py. Re-run at that commit on Windows CPython 3.14.6: 3535 passed and 53 justified skips, with Ruff lint, Ruff format and the 618-test architecture suite clean. With uv present the whole suite passes at that commit: 3536 passed, 53 justified skips, no failures. Required cross-platform CI has since passed on the pull request. The release rehearsal was then reproduced end to end on the merge candidate at exactly 0.1.0a4: uv build --all-packages produced the fourteen artifacts, check_distributions.py accepted them with --expected-version, a clean external CPython 3.14 environment installed the seven wheels with --no-index, --require-installed accepted the installed set, all seven packages imported under python -I, and the installed console script reported agnara 0.1.0a4.",
+        "commit": "c82be7be9c1fa675c042ef336afcfc32b31ca421",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "No runtime defect was found or fixed in this release, because no runtime code changed. The release-blocking defect this release exists for is the 0.1.0a4 partial publication, and it is addressed by the pipeline rather than by the framework; ADR 0078 and ADR 0079 record it, and release-pipeline-hardened carries the evidence. agnara 0.1.0a4 remaining resolvable on PyPI is a known open condition, tracked in BACKLOG.md as an owner yank after 0.1.0a5 is verified complete. Local Windows CPython 3.14.4 at 2651edd4d8. Required Linux/macOS/Windows CI, the documentation-browser job and both CodeQL languages run on the pull request and have not run on this commit; that is the one part of the 0.1.0a4 evidence this record does not yet reproduce. Re-anchored to e1414cb191, which guarded the offline publish-readiness step to tag pushes and added the workflow assertions for it. Everything above was re-run at that tree: the full suite is 3600 passed and 53 justified skips, the fourteen artifacts rebuilt to byte-identical SHA-256 digests, and the clean-room install, imports and console script passed again. Re-anchored to c82be7be9c, a README-only change; the full suite was re-run at that tree.",
         "covers": [
           "packages",
           "tests",
@@ -216,28 +222,16 @@
       "title": "Public documentation reflects the implementation",
       "kind": "manual",
       "mandatory": true,
-      "status": "SATISFIED",
-      "detail": "Whether the documentation 0.1.0a4 actually ships matches the implementation is a maintainer judgment, not a test result. The owner accepted it on the corrected MCP, CLI and lifecycle guidance, whose examples tests/docs executes. Alpha APIs may still change without a deprecation cycle.",
-      "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Owner approval via prompt.",
-        "result": "ACCEPT",
-        "covers": []
-      }
+      "status": "NEEDS_REVIEW",
+      "detail": "Whether the published documentation matches the implementation is a maintainer judgment. 0.1.0a5 changes no runtime source, so the 0.1.0a4 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. What changed here is release documentation: ADR 0078, ADR 0079, a rewritten docs/MAINTAINERS_RELEASE.md, the 0.1.0a4 incident banner and the renumbered roadmap. The documented examples still execute in tests/docs. Recommendation: ACCEPT."
     },
     {
       "id": "security-release-checks",
       "title": "Security and release checks required by QUALITY_GATES.md",
       "kind": "manual",
       "mandatory": true,
-      "status": "SATISFIED",
-      "detail": "Whether the experimental-alpha security posture satisfies QUALITY_GATES.md is the owner's decision. The basis: 29 locked runtime dependencies audited with pip-audit 2.10.1 and zero known vulnerabilities, 38 security tests, native secret scanning and push protection enabled, and required Python and Actions CodeQL completed. The three pre-existing develop findings are dispositioned in v0.1.0a4.md rather than reported as a zero-alert result. Non-provider patterns and validity checks remain disabled, and the pypi environment protection policy remains an owner choice.",
-      "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Owner approval via prompt.",
-        "result": "ACCEPT",
-        "covers": []
-      }
+      "status": "NEEDS_REVIEW",
+      "detail": "Whether the experimental-alpha security posture satisfies QUALITY_GATES.md is the owner's decision. Basis re-measured at this commit: pip-audit 2.10.1 reported no known vulnerabilities across the 30 locked third-party runtime dependencies, and 38 security tests passed. New in this release and relevant to the decision: every third-party action on the publication path is SHA-pinned with Dependabot maintaining the pins, contents: write is removed from the publishing job, and publication is gated on a recorded Trusted Publisher confirmation. Not re-run here: CodeQL for either language, which runs on the pull request. Still open and explicitly an owner choice: the pypi GitHub Environment has no protection rule or deployment policy and allows administrator bypass; a required reviewer is recommended. Recommendation: ACCEPT for this bounded alpha, after choosing the environment policy."
     },
     {
       "id": "reference-apps-exist",
@@ -246,9 +240,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "Standalone external consumer passed from installed wheels in separate development and exact-0.1.0a4 rehearsal environments. Local reproducible source retained in .release-validation/consumer.py; copy it outside the checkout and execute with the external python -I.",
+        "commit": "2651edd4d8ed84b90fe9a5e4287d3c369bd61c2f",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "0.1.0a5 changes no runtime source: `git diff v0.1.0a4 HEAD -- packages/*/src` is empty, and the only change anywhere under packages/ is the synchronized version and the six adapter core pins (13 lines across 7 pyproject.toml files). This record is therefore the 0.1.0a4 finding re-anchored to the release commit rather than a new measurement. What was re-run here: the full suite, the fourteen-artifact build with --expected-version, and a fresh clean-room install, import and console-script check of all seven wheels. What was not re-run: the 0.1.0a4 external clean-room consumer application, whose source lived in the untracked .release-validation/ and is not in this checkout.",
         "covers": [
           "packages",
           "scripts",
@@ -264,9 +258,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "check_public_imports.py accepted the external consumer. All Agnara imports are governed public names; installed-distribution checker confirmed site-packages origins.",
+        "commit": "2651edd4d8ed84b90fe9a5e4287d3c369bd61c2f",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "0.1.0a5 changes no runtime source: `git diff v0.1.0a4 HEAD -- packages/*/src` is empty, and the only change anywhere under packages/ is the synchronized version and the six adapter core pins (13 lines across 7 pyproject.toml files). This record is therefore the 0.1.0a4 finding re-anchored to the release commit rather than a new measurement. What was re-run here: the full suite, the fourteen-artifact build with --expected-version, and a fresh clean-room install, import and console-script check of all seven wheels. What was not re-run: the 0.1.0a4 external clean-room consumer application, whose source lived in the untracked .release-validation/ and is not in this checkout.",
         "covers": [
           "packages",
           "scripts/check_public_imports.py",
@@ -281,9 +275,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "External consumer uses public core, HTTP, MCP, telemetry and CLI composition. No patched classes, private imports, test helpers or candidate wheel modifications.",
+        "commit": "2651edd4d8ed84b90fe9a5e4287d3c369bd61c2f",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "0.1.0a5 changes no runtime source: `git diff v0.1.0a4 HEAD -- packages/*/src` is empty, and the only change anywhere under packages/ is the synchronized version and the six adapter core pins (13 lines across 7 pyproject.toml files). This record is therefore the 0.1.0a4 finding re-anchored to the release commit rather than a new measurement. What was re-run here: the full suite, the fourteen-artifact build with --expected-version, and a fresh clean-room install, import and console-script check of all seven wheels. What was not re-run: the 0.1.0a4 external clean-room consumer application, whose source lived in the untracked .release-validation/ and is not in this checkout.",
         "covers": [
           "packages",
           "scripts"
@@ -295,42 +289,24 @@
       "title": "Public APIs are sufficient to build the reference applications",
       "kind": "manual",
       "mandatory": true,
-      "status": "SATISFIED",
-      "detail": "Whether the governed public surface is sufficient to build the reference applications is a maintainer judgment. The external consumer used governed names for every implemented adapter across 282 exports in 47 public modules. A2A and events intentionally expose no runtime in a4.",
-      "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Owner approval via prompt.",
-        "result": "ACCEPT",
-        "covers": []
-      }
+      "status": "NEEDS_REVIEW",
+      "detail": "Whether the governed public surface is sufficient to build the reference applications is a maintainer judgment. 0.1.0a5 changes no runtime source, so the 0.1.0a4 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. Recommendation: ACCEPT."
     },
     {
       "id": "di-works-naturally",
       "title": "Dependency injection works naturally from an application",
       "kind": "manual",
       "mandatory": true,
-      "status": "SATISFIED",
-      "detail": "Whether dependency injection works naturally from outside the framework is a maintainer judgment. The external application resolved and cleaned up singletons without a workaround, and HTTP now closes the resources it owns on lifespan shutdown for both sync and async providers. A container belongs to one event loop.",
-      "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Owner approval via prompt.",
-        "result": "ACCEPT",
-        "covers": []
-      }
+      "status": "NEEDS_REVIEW",
+      "detail": "Whether dependency injection works naturally from outside the framework is a maintainer judgment. 0.1.0a5 changes no runtime source, so the 0.1.0a4 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. Recommendation: ACCEPT."
     },
     {
       "id": "capabilities-declared-cleanly",
       "title": "Capabilities can be declared cleanly from an application",
       "kind": "manual",
       "mandatory": true,
-      "status": "SATISFIED",
-      "detail": "Whether capability declaration is clean enough to ship is a maintainer judgment. The external application declared and compiled capabilities with ordinary decorators and explicit compilation, with no monkey patch and no private import.",
-      "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Owner approval via prompt.",
-        "result": "ACCEPT",
-        "covers": []
-      }
+      "status": "NEEDS_REVIEW",
+      "detail": "Whether capability declaration is clean enough to ship is a maintainer judgment. 0.1.0a5 changes no runtime source, so the 0.1.0a4 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. Recommendation: ACCEPT."
     },
     {
       "id": "http-exposure-from-application",
@@ -339,9 +315,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "External public ASGI consumer: dataclass output 200, malformed input 400, anonymous scope denial 403, redacted internal failure 500, served OpenAPI and singleton cleanup at lifespan shutdown passed.",
+        "commit": "2651edd4d8ed84b90fe9a5e4287d3c369bd61c2f",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "0.1.0a5 changes no runtime source: `git diff v0.1.0a4 HEAD -- packages/*/src` is empty, and the only change anywhere under packages/ is the synchronized version and the six adapter core pins (13 lines across 7 pyproject.toml files). This record is therefore the 0.1.0a4 finding re-anchored to the release commit rather than a new measurement. What was re-run here: the full suite, the fourteen-artifact build with --expected-version, and a fresh clean-room install, import and console-script check of all seven wheels. What was not re-run: the 0.1.0a4 external clean-room consumer application, whose source lived in the untracked .release-validation/ and is not in this checkout.",
         "covers": [
           "packages/agnara",
           "packages/agnara-http",
@@ -357,9 +333,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "External Mcp exposures, ExecutionPlan compilation, project_mcp_tools, build_mcp_server and McpToolInvoker passed using installed packages and official SDK types.",
+        "commit": "2651edd4d8ed84b90fe9a5e4287d3c369bd61c2f",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "0.1.0a5 changes no runtime source: `git diff v0.1.0a4 HEAD -- packages/*/src` is empty, and the only change anywhere under packages/ is the synchronized version and the six adapter core pins (13 lines across 7 pyproject.toml files). This record is therefore the 0.1.0a4 finding re-anchored to the release commit rather than a new measurement. What was re-run here: the full suite, the fourteen-artifact build with --expected-version, and a fresh clean-room install, import and console-script check of all seven wheels. What was not re-run: the 0.1.0a4 external clean-room consumer application, whose source lived in the untracked .release-validation/ and is not in this checkout.",
         "covers": [
           "packages/agnara",
           "packages/agnara-mcp",
@@ -376,9 +352,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "External dataclass/float consumer accepted JSON integer 3 and serialized amount 3.0 over HTTP and MCP. MCP schema excludes dependency parameters; HTTP served OpenAPI equals the public application export. Core direct input remains strictly typed.",
+        "commit": "2651edd4d8ed84b90fe9a5e4287d3c369bd61c2f",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "14 cross-surface conformance tests passed. 0.1.0a5 changes no runtime source: `git diff v0.1.0a4 HEAD -- packages/*/src` is empty, and the only change anywhere under packages/ is the synchronized version and the six adapter core pins (13 lines across 7 pyproject.toml files). This record is therefore the 0.1.0a4 finding re-anchored to the release commit rather than a new measurement. What was re-run here: the full suite, the fourteen-artifact build with --expected-version, and a fresh clean-room install, import and console-script check of all seven wheels. What was not re-run: the 0.1.0a4 external clean-room consumer application, whose source lived in the untracked .release-validation/ and is not in this checkout.",
         "covers": [
           "packages/agnara",
           "packages/agnara-http",
@@ -394,9 +370,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "External direct invocation denied anonymous principal and accepted an explicit scoped principal. HTTP and MCP denied the same scoped capability anonymously; forged runtime-owned input did not precede policy denial.",
+        "commit": "2651edd4d8ed84b90fe9a5e4287d3c369bd61c2f",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "14 conformance and 38 security tests passed. 0.1.0a5 changes no runtime source: `git diff v0.1.0a4 HEAD -- packages/*/src` is empty, and the only change anywhere under packages/ is the synchronized version and the six adapter core pins (13 lines across 7 pyproject.toml files). This record is therefore the 0.1.0a4 finding re-anchored to the release commit rather than a new measurement. What was re-run here: the full suite, the fourteen-artifact build with --expected-version, and a fresh clean-room install, import and console-script check of all seven wheels. What was not re-run: the 0.1.0a4 external clean-room consumer application, whose source lived in the untracked .release-validation/ and is not in this checkout.",
         "covers": [
           "packages/agnara",
           "packages/agnara-http",
@@ -413,9 +389,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "External HTTP/MCP invalid_input, forbidden and internal_failure scenarios passed. Exception sentinel and query sentinel did not reach caller documents; operator exception logs are intentionally separate.",
+        "commit": "2651edd4d8ed84b90fe9a5e4287d3c369bd61c2f",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "0.1.0a5 changes no runtime source: `git diff v0.1.0a4 HEAD -- packages/*/src` is empty, and the only change anywhere under packages/ is the synchronized version and the six adapter core pins (13 lines across 7 pyproject.toml files). This record is therefore the 0.1.0a4 finding re-anchored to the release commit rather than a new measurement. What was re-run here: the full suite, the fourteen-artifact build with --expected-version, and a fresh clean-room install, import and console-script check of all seven wheels. What was not re-run: the 0.1.0a4 external clean-room consumer application, whose source lived in the untracked .release-validation/ and is not in this checkout.",
         "covers": [
           "packages/agnara",
           "packages/agnara-http",
@@ -429,28 +405,16 @@
       "title": "CLI and introspection materially help a developer",
       "kind": "manual",
       "mandatory": true,
-      "status": "SATISFIED",
-      "detail": "Whether the CLI and introspection materially help a developer is a maintainer judgment. The installed console script answered inspect, graph, context and schema openapi, plus help, version and dry-run scaffolding, from outside the checkout. Importing a target executes trusted application code.",
-      "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Owner approval via prompt.",
-        "result": "ACCEPT",
-        "covers": []
-      }
+      "status": "NEEDS_REVIEW",
+      "detail": "Whether the CLI and introspection materially help a developer is a maintainer judgment. 0.1.0a5 changes no runtime source, so the 0.1.0a4 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. The installed console script was re-exercised from outside the checkout at 0.1.0a5. Recommendation: ACCEPT."
     },
     {
       "id": "docs-reproduce-applications",
       "title": "Documentation is sufficient to reproduce the applications",
       "kind": "manual",
       "mandatory": true,
-      "status": "SATISFIED",
-      "detail": "Whether the public documentation alone is enough to reproduce the applications is an explicit maintainer judgment. The clean-room consumer was built from public consumer guides without source inspection, and the migration guide describes the new shutdown behaviour.",
-      "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Owner approval via prompt.",
-        "result": "ACCEPT",
-        "covers": []
-      }
+      "status": "NEEDS_REVIEW",
+      "detail": "Whether the public documentation alone is enough to reproduce the applications is a maintainer judgment. 0.1.0a5 changes no runtime source, so the 0.1.0a4 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. Recommendation: ACCEPT."
     },
     {
       "id": "dogfooding-deficiencies-tracked",
@@ -459,9 +423,9 @@
       "mandatory": true,
       "status": "SATISFIED",
       "evidence": {
-        "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
-        "command": "Final closure: uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv run pytest; artifact checks and external consumer; exact-SHA CI. See v0.1.0a4.md.",
-        "result": "Issue #332 and merged PR #333 track and fix missing singleton cleanup, unchecked publication ancestry, stale MCP serialization/failure guidance and incorrect CLI module spelling. No A5 feature was implemented.",
+        "commit": "2651edd4d8ed84b90fe9a5e4287d3c369bd61c2f",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "The deficiency this release found was in the release system, not the framework, and it is tracked rather than absorbed: issue #328 owns the PyPI publication prerequisites, ADR 0078 and ADR 0079 record the decisions, and BACKLOG.md carries the three owner actions that remain outside this repository -- the Trusted Publisher confirmations, the 0.1.0a4 yank and the pypi environment protection policy. No A6 feature was implemented. Local Windows CPython 3.14.4 at 2651edd4d8. Required Linux/macOS/Windows CI, the documentation-browser job and both CodeQL languages run on the pull request and have not run on this commit; that is the one part of the 0.1.0a4 evidence this record does not yet reproduce.",
         "covers": [
           "packages",
           "scripts",
@@ -479,7 +443,7 @@
       "evidence": {
         "commit": "8712eabde5314b991f8f89a5a38ec697b40149fa",
         "command": "uv run python benchmarks/runtime_invocation.py",
-        "result": "four recorded baselines: runtime invocation, HTTP frameworks, MCP tool invocation and telemetry overhead Re-anchored on 2026-09-08 from f16f6fc02a5650766d804043af38007617107da4, a pre-squash SHA absent from this repository's history, to the commit that last changed anything this evidence covers. The checker could not read the dangling range and reported the gate stale rather than green, so this was never a false pass. The four baselines were not re-measured: republishing them from different hardware would replace a comparable baseline with an incomparable one.",
+        "result": "Four recorded baselines: runtime invocation, HTTP frameworks, MCP tool invocation and telemetry overhead. Unchanged and not re-measured for 0.1.0a5: no runtime code changed, and republishing the numbers from different hardware would replace a comparable baseline with an incomparable one.",
         "paths": [
           "docs/benchmarks",
           "benchmarks"
@@ -489,6 +453,53 @@
           "docs/benchmarks"
         ]
       }
+    },
+    {
+      "id": "release-pipeline-hardened",
+      "title": "The release pipeline cannot report success on a partial publication",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "e1414cb19140b5a7de3729eaf00e805fdcfa7678",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "The structure is asserted by tests rather than demonstrated by a publication, which cannot be run without publishing. tests/release/test_publication_set.py holds that the seven upload steps are exactly the manifest's publication order with the kernel last, that no step sets skip-existing and every one sets verify-metadata and attestations, that github-release needs verify-published which needs publish which needs publish-preflight, that publish is the only job with id-token: write and holds contents: read, that github-release is the only job with contents: write, that both publish jobs require a pushed tag, and that every third-party action in both workflows is pinned to a 40-character SHA with its human version in a trailing comment. tests/release/test_publication_readiness.py holds 23 refusals, including the exact 0.1.0a4 conditions: an UNVERIFIED Trusted Publisher, a confirmation recorded for another version, a wheel published without its sdist, and a version that already has files on the index. Run against the live index, check_publication_readiness.py --version 0.1.0a5 --online independently confirmed the registry state: agnara exists without 0.1.0a5, and the six sibling projects do not exist. What cannot be validated here: the publish, verify-published and github-release jobs end to end, because running them publishes. Local Windows CPython 3.14.4 at 2651edd4d8. Required Linux/macOS/Windows CI, the documentation-browser job and both CodeQL languages run on the pull request and have not run on this commit; that is the one part of the 0.1.0a4 evidence this record does not yet reproduce. Re-anchored to e1414cb191, which guarded the offline publish-readiness step to tag pushes and added the workflow assertions for it. Everything above was re-run at that tree: the full suite is 3600 passed and 53 justified skips, the fourteen artifacts rebuilt to byte-identical SHA-256 digests, and the clean-room install, imports and console script passed again.",
+        "covers": [
+          ".github/workflows",
+          ".github/dependabot.yml",
+          "scripts",
+          "docs/distributions.json",
+          "tests/release",
+          "tests/architecture/test_release_workflow.py"
+        ]
+      }
+    },
+    {
+      "id": "a4-incident-recorded",
+      "title": "The 0.1.0a4 partial publication is recorded truthfully and not rewritten",
+      "kind": "evidence",
+      "mandatory": true,
+      "status": "SATISFIED",
+      "evidence": {
+        "commit": "63aaade1fab44038f3ac0b56dc1b3c215cedc971",
+        "command": "uv sync --locked; uv run ruff check .; uv run ruff format --check .; uv run ty check; uv lock --check; uv run python scripts/set_workspace_version.py release 0.1.0a5 --check; uv run python -m pytest; uv build --all-packages --out-dir dist/; uv run python scripts/check_distributions.py --workspace . --dist dist/ --expected-version 0.1.0a5; clean-room install of the seven wheels with --no-index; python -I check_distributions.py --require-installed --expected-version 0.1.0a5; imports; console script. See docs/releases/v0.1.0a5.md.",
+        "result": "v0.1.0a4 is unmodified: the tag still resolves to 11a3e84492afdead943c1ac02362721870bba26f, no published file was touched, and no history was rewritten. The incident is recorded in four places that a reader arrives at differently: the CHANGELOG [0.1.0a4] section states what was actually published and that the release is superseded; docs/releases/v0.1.0a4.md carries a banner and keeps its original text, including the Trusted Publishers section that shows the gap was known; ADR 0078 records the incident and the numbering decision with the rejected alternatives; ADR 0079 records the pipeline change. docs/releases/publication.json records the registry readback of 2026-09-08 that the six sibling projects return 404 and agnara carries 0.1.0a4 as a wheel with no sdist. Re-anchored to the commit that added the owner-gate table to docs/releases/v0.1.0a5.md; that file is one of the covered paths, so the earlier record expired exactly as the staleness rule intends. Nothing else in the record changed.",
+        "covers": [
+          "CHANGELOG.md",
+          "docs/releases/v0.1.0a4.md",
+          "docs/releases/v0.1.0a5.md",
+          "docs/adr/0078-publication-recovery-release-and-alpha-renumbering.md",
+          "docs/adr/0079-sequenced-publication-and-publish-readiness.md"
+        ]
+      }
+    },
+    {
+      "id": "pypi-trusted-publishers",
+      "title": "Every PyPI Trusted Publisher is confirmed for this exact target",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "Only the repository owner can read a Trusted Publisher tuple back from PyPI. No check running here can observe it, and 0.1.0a4 shipped on the assumption that it had been done. Confirmation is recorded per project in docs/releases/publication.json and must name the target it was made for; the automated publication-prerequisites gate and release.yml both refuse while any project is UNVERIFIED. Readback of the public index at 2026-09-08 from this commit: agnara exists and does not carry 0.1.0a5; agnara-a2a, agnara-cli, agnara-events, agnara-http, agnara-mcp and agnara-telemetry return 404. A 404 does not prove a pending publisher is absent, and it does not prove one is present. The owner must also check https://pypi.org/manage/projects/ for a project created under a misspelled name and remove it and its publisher rather than renaming anything here. No recommendation is possible: this gate is a fact the owner has to observe."
     }
   ]
 }

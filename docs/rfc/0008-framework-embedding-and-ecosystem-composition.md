@@ -272,7 +272,8 @@ is likely the right shape.
 ## 7. Non-goals
 
 - Choosing a framework to favour.
-- Shipping any integration in `0.1.0a4` or `0.1.0a5` (ADR 0068).
+- Shipping any integration in any `0.1.0a*` release (ADR 0068; the alpha
+  line gained `0.1.0a5` and renumbered execution to `0.1.0a6` in ADR 0078).
 - A universal adapter interface over unlike infrastructure categories.
 - A plugin or entry-point discovery model (I13, post-1.0).
 - Replacing anything the host already does well: routing, ORM, admin, auth,

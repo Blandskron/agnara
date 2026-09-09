@@ -6,14 +6,123 @@ Changelog, and release versions follow the synchronized PEP 440 policy in ADR
 
 `0.1.0a2` is the first published release. `0.1.0a1` was tagged but never
 reached PyPI: its release run failed in artifact validation, so the publish job
-never executed. Every first-party package in the workspace carries the
-synchronized version, but only the `agnara` core distribution is uploaded to
-PyPI; the adapter packages are versioned and buildable from the repository
-without being published. See the `0.1.0a2` scope note below.
+never executed. `0.1.0a4` was tagged and *partially* published: the core wheel
+reached PyPI and the other thirteen artifacts did not. It is superseded by
+`0.1.0a5` and should not be installed; see the `0.1.0a4` and `0.1.0a5` sections
+below. Every first-party package in the workspace carries the synchronized
+version; through `0.1.0a4` only the `agnara` core distribution had ever been
+uploaded, and `0.1.0a5` is the first release intended to publish all seven.
 
 ## [Unreleased]
 
+## [0.1.0a5] - 2026-09-08
+
+Publication recovery. This release carries the `0.1.0a4` implementation
+unchanged — no runtime source file differs — and replaces the release system
+that published one of fourteen artifacts and reported nothing wrong with the
+other thirteen.
+
+### Security
+
+- Publication-readiness diagnostics now redact URL credentials, query data,
+  fragments and recognizable secret formats before writing terminal output or
+  GitHub Actions annotations. Index errors retain the safe origin, HTTP status,
+  project and version context, while control characters and encoded newlines
+  cannot inject additional workflow commands.
+
+### Fixed
+
+- `0.1.0a4` was published partially. The upload accepted
+  `agnara-0.1.0a4-py3-none-any.whl` and was rejected on the next file,
+  `agnara_a2a-0.1.0a4-py3-none-any.whl`, with
+  `400 Non-user identities cannot create new projects` — PyPI's answer when no
+  pending Trusted Publisher matches the uploaded project name for the
+  authenticated OIDC identity. Twine uploads every wheel before any sdist and
+  stops on the first failure, so the `agnara` sdist and all twelve sibling
+  artifacts were never uploaded, post-release verification never ran, and no
+  GitHub Release was created. `v0.1.0a4` and the file already on PyPI are
+  historical and are not modified, moved or replaced. Recommended disposition
+  for `agnara 0.1.0a4` is a yank after `0.1.0a5` is verified complete.
+
+- The kernel is now published **last**, after every sibling distribution.
+  Multi-project uploads are not atomic, so an order exists whether or not
+  anyone chooses one, and `0.1.0a4` chose the harmful one: `agnara` announced a
+  version whose adapters did not exist, and `pip install agnara==0.1.0a4`
+  succeeded into a set that could not be completed. With the kernel last a
+  partial upload fails closed — an adapter pins its kernel exactly, so a
+  sibling published without it resolves for nobody and the published `agnara`
+  version does not move. ADR 0079.
+
+- Each distribution is now uploaded in its own reviewed step rather than by one
+  glob over `dist/`. A failure names the distribution it stopped on and leaves
+  the rest unattempted, instead of failing somewhere inside a fourteen-file
+  batch. `skip-existing` stays off: a file that already exists is a real
+  condition to stop on, not noise to suppress.
+
+### Added
+
+- **PUBLISH READY is now a separate claim from CODE READY.**
+  `scripts/check_publication_readiness.py` owns everything between a correct
+  commit and seven complete distributions on an index: the reviewed set, the
+  workspace layout, synchronized versions, exact first-party pins, the
+  lockfile, the artifact set, release notes, the dated changelog section, the
+  annotated tag, and the external registry configuration. It runs offline in
+  CI, and with `--online` in the release workflow both before the first upload
+  and after the last one.
+
+- `docs/releases/publication.json` records, per project and per target version,
+  that a human read the Trusted Publisher tuple back from PyPI. It is
+  `UNVERIFIED` until the owner fills it in, and the release workflow refuses to
+  upload while it is. This is the control `0.1.0a4` did not have: the same
+  requirement existed then, as a paragraph in a release note.
+
+- A `publication-prerequisites` gate in `scripts/check_release_readiness.py`,
+  and a mandatory manual `pypi-trusted-publishers` gate that no automated check
+  can ever satisfy.
+
+- `docs/distributions.json` is the single source of truth for the seven
+  distributions — names, import packages, console scripts and adapter-owned
+  third-party requirements. `scripts/distributions.py` reads it for the release
+  tooling and the architecture tests, and prints it for the workflows, so the
+  seven names have one definition instead of the six independent copies that
+  previously nothing compared. Canonical project names stay dash-separated;
+  `_` in a wheel or sdist filename is PEP 427/625 normalization and is not a
+  naming defect.
+
+- Post-publication verification is its own job and asserts completeness, not
+  just installability: every one of the seven must carry both a wheel and an
+  sdist on the index at the released version. `0.1.0a4` would have failed this
+  even for the one project it reached.
+
+### Changed
+
+- The GitHub Release is created only after publication *and* post-publication
+  verification succeed, as a job that depends on both. In `0.1.0a4` these were
+  three steps of one job, so the failed upload also silently cancelled
+  verification and the release. A successful GitHub Release can no longer exist
+  while PyPI is incomplete.
+
+- Every third-party action on the publication path is pinned to a full commit
+  SHA with the human version in a trailing comment: `actions/checkout`,
+  `astral-sh/setup-uv`, `actions/upload-artifact`, `actions/download-artifact`,
+  `pypa/gh-action-pypi-publish` and `softprops/action-gh-release`. A moving tag
+  on a job that holds `id-token: write` is a supply-chain decision, not a
+  convenience.
+
+- `0.1.0a5` is a publication-recovery release, so the Execution Semantics
+  horizon — streaming, execution identity and idempotency, performance budgets
+  — moves intact to `0.1.0a6`. No part of it is started here. ADR 0078.
+
 ## [0.1.0a4] - 2026-09-08
+
+> **Publication status: partial, superseded by `0.1.0a5`.** Of the fourteen
+> artifacts this release built, exactly one reached PyPI —
+> `agnara-0.1.0a4-py3-none-any.whl`. The upload was rejected on the next file
+> and stopped, so `agnara 0.1.0a4` has no sdist and none of the six sibling
+> distributions was published. Do not install `0.1.0a4`; install `0.1.0a5`.
+> The tag, the commit and the uploaded file are historical and unmodified. The
+> changes described below are the changes this release contained; they are
+> reproduced in `0.1.0a5`, which is the release that publishes them.
 
 ### Added
 
@@ -838,7 +947,8 @@ under `0.1.0a2` instead.
 [#257]: https://github.com/Blandskron/agnara/issues/257
 [#259]: https://github.com/Blandskron/agnara/issues/259
 [#261]: https://github.com/Blandskron/agnara/issues/261
-[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a4...develop
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a5...develop
+[0.1.0a5]: https://github.com/Blandskron/agnara/compare/v0.1.0a4...v0.1.0a5
 [0.1.0a4]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...v0.1.0a4
 [0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3
 [0.1.0a2]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...v0.1.0a2

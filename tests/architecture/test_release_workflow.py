@@ -11,6 +11,12 @@ def _text() -> str:
     return WORKFLOW.read_text(encoding="utf-8")
 
 
+def _job(name: str, until: str | None = None) -> str:
+    """One job's YAML body, so an assertion cannot pass on a different job."""
+    body = _text().split(f"  {name}:\n", 1)[1]
+    return body.split(f"  {until}:\n", 1)[0] if until else body
+
+
 def test_release_builds_and_validates_the_complete_workspace() -> None:
     workflow = _text()
 
@@ -21,15 +27,44 @@ def test_release_builds_and_validates_the_complete_workspace() -> None:
     assert "uv build --package agnara" not in workflow
 
 
+def test_publish_readiness_is_checked_before_and_between_every_upload() -> None:
+    """Three times, because the release passes through three different states.
+
+    In `build` the artifacts have just been produced; in `publish-preflight`
+    the index is consulted before any credential exists; in `publish` the
+    bundle has crossed a job boundary and is about to be uploaded. `0.1.0a4`
+    checked none of them, and found out at the second file.
+    """
+    for job, until, expected in (
+        ("build", "test-artifact", "--dist dist/ --tag"),
+        ("publish-preflight", "publish", "--online"),
+        ("publish", "verify-published", "--dist dist/ --tag"),
+    ):
+        body = _job(job, until)
+        assert "scripts/check_publication_readiness.py" in body, job
+        assert expected in body, job
+
+    # And once more afterwards, where the claim is completeness rather than
+    # readiness -- the check `agnara 0.1.0a4` would fail today.
+    assert "--online --require-published" in _job("verify-published", "github-release")
+
+
 def test_release_install_cannot_substitute_a_public_first_party_package() -> None:
+    """Third-party first, then the candidate wheels with the index closed.
+
+    Which third-party requirements those are is read from
+    `docs/distributions.json` rather than repeated here, so an adapter that
+    gains a dependency cannot leave a stale copy behind in the workflow.
+    """
     workflow = _text()
 
-    third_party = workflow.index('"mcp==2.1.1" "opentelemetry-api>=1.44,<2"')
+    third_party = workflow.index('uv pip install --python "$SMOKE_PYTHON" "${third_party[@]}"')
     first_party = workflow.index('--no-index --find-links "$GITHUB_WORKSPACE/dist"')
     installed_gate = workflow.index("--require-installed")
 
     assert third_party < first_party < installed_gate
-    assert '"${#wheels[@]}" -ne 7' in workflow
+    assert '"${#wheels[@]}" -ne "$expected_count"' in workflow
+    assert 'expected_count="$(manifest --count)"' in workflow
     assert '"$SMOKE_PYTHON" -I' in workflow
 
 
@@ -43,11 +78,21 @@ def test_only_a_pushed_version_tag_can_publish() -> None:
     assert "print-hash: true" in workflow
 
 
-def test_post_release_verification_names_every_distribution() -> None:
-    workflow = _text()
+def test_post_release_verification_covers_every_distribution() -> None:
+    """Completeness on the index, then a real install of the published set.
 
-    for distribution in DISTRIBUTIONS:
-        assert f'"{distribution}==$TAG_VERSION"' in workflow
+    `0.1.0a4` published a wheel with no sdist. Installing it would have
+    succeeded, so verification asserts what is on the index as well as what can
+    be installed from it.
+    """
+    verification = _job("verify-published", "github-release")
+
+    assert "--online --require-published" in verification
+    assert 'manifest --pinned "$version"' in verification
+    assert 'uv pip install --python "$RELEASE_PYTHON" "${pinned[@]}"' in verification
+    assert "manifest --import-names" in verification
+    # Derived, so a new distribution is covered without editing this file.
+    assert not any(f"{distribution}==" in verification for distribution in DISTRIBUTIONS)
 
 
 def test_build_and_publish_check_reviewed_tag_ancestry() -> None:
