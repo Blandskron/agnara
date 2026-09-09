@@ -498,8 +498,9 @@
       "title": "Every PyPI Trusted Publisher is confirmed for this exact target",
       "kind": "manual",
       "mandatory": true,
-      "status": "NEEDS_REVIEW",
-      "detail": "Only the repository owner can read a Trusted Publisher tuple back from PyPI. No check running here can observe it, and 0.1.0a4 shipped on the assumption that it had been done. Confirmation is recorded per project in docs/releases/publication.json and must name the target it was made for; the automated publication-prerequisites gate and release.yml both refuse while any project is UNVERIFIED. Readback of the public index on 2026-09-08: agnara carries 0.1.0a2, 0.1.0a3 and 0.1.0a4, with no 0.1.0a5 or 0.1.0a6 files; agnara-a2a, agnara-cli, agnara-events, agnara-http, agnara-mcp and agnara-telemetry return 404. A 404 proves neither that a pending publisher is absent nor that one is present. The owner must also check https://pypi.org/manage/projects/ for a project created under a misspelled name and remove it and its publisher rather than renaming anything here. No recommendation is possible: this gate is a fact the owner has to observe."
+      "status": "SATISFIED",
+      "detail": "Owner Blandskron confirmed on 2026-09-08 that all seven active or pending PyPI Trusted Publishers were personally read back for target 0.1.0a6 and match GitHub Actions, owner Blandskron, repository agnara, workflow release.yml and environment pypi.",
+      "evidence": "Explicit owner confirmation in the release-finalization task on 2026-09-08; the non-secret per-project record is docs/releases/publication.json."
     }
   ]
 }
