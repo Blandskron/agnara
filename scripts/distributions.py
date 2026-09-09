@@ -18,7 +18,7 @@ workflows so a shell step never has to retype a name or a count::
     python scripts/distributions.py --count
     python scripts/distributions.py --third-party
     python scripts/distributions.py --publication-order
-    python scripts/distributions.py --pinned 0.1.0a6
+    python scripts/distributions.py --pinned 0.1.0a7
 
 Standard library only, like the rest of the repository's release tooling.
 """
@@ -64,7 +64,7 @@ class Distribution:
         """The filename stem `uv build` writes, per PEP 427 and PEP 625.
 
         A canonical project name is dash-separated; a built artifact
-        normalizes the dash to an underscore. `agnara_a2a-0.1.0a6.tar.gz` is
+        normalizes the dash to an underscore. `agnara_a2a-0.1.0a7.tar.gz` is
         therefore the correct filename for the project `agnara-a2a`, not a
         typo, and nothing in the release should "fix" it.
         """

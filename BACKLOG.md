@@ -9,28 +9,29 @@ Legend:
 
 This file owns **decomposed work that is ready to implement**. It does not own the long-term plan: ROADMAP.md owns where Agnara is going.
 
-## A6
+## A7
 
 Publication recovery only (ADR 0080). Everything below `## A7` stays out.
 
 - [~] E0B.12 Document release and hotfix automation evidence. The release half
   gains real evidence here: `0.1.0a4` exercised the tag pipeline through to a
   rejected upload, and `0.1.0a5` proved the sequenced preflight aborts before
-  upload. `0.1.0a6` is the next publication attempt. The
+  upload, while `0.1.0a6` proved that a mistaken human publisher readback can
+  still reach and fail the first upload. `0.1.0a7` is the next attempt. The
   hotfix half is still unexercised, so the item does not close.
 
-- [!] Owner action: confirm the seven PyPI Trusted Publishers and record them
-  in `docs/releases/publication.json`. Blocks the `0.1.0a6` tag; nothing in
-  this repository can observe or perform it.
+- [!] Owner action: delete and recreate the mismatched `agnara-a2a` Pending
+  Trusted Publisher with Project name `agnara-a2a`, then read back the Project
+  name and shared tuple for all seven entries and record them for `0.1.0a7`.
 
-- [ ] Owner action: yank `agnara 0.1.0a4` once `0.1.0a6` is published and
+- [ ] Owner action: yank `agnara 0.1.0a4` once `0.1.0a7` is published and
   verified complete. Reason: `Partial multi-distribution publication;
-  superseded by 0.1.0a6.`
+  superseded by 0.1.0a7.`
 
 - [ ] Decide the `pypi` GitHub Environment protection policy. It currently has
   no protection rule or deployment policy and allows administrator bypass.
 
-## A7
+## A8
 
 - [?] E2.7 Benchmark adapters before selecting defaults.
 
@@ -71,5 +72,4 @@ Publication recovery only (ADR 0080). Everything below `## A7` stays out.
   part of the serialized document and changing it needs an
   `INTROSPECTION_VERSION` bump. Rename it to `applications` in the next
   snapshot format change rather than separately.
-
 

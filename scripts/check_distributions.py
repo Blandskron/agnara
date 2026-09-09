@@ -105,6 +105,21 @@ class Distribution:
     import_name: str
 
 
+@dataclass(frozen=True, slots=True)
+class Report:
+    """What ``run`` found, split by where each part may safely be written.
+
+    ``summary`` is built only from the reviewed distribution names and is the
+    one thing ``main`` prints. ``problems`` may quote metadata, archive member
+    names or paths controlled by the artifact under inspection; they exist for
+    programmatic callers and never reach a CI log.
+    """
+
+    code: int
+    summary: str
+    problems: tuple[str, ...]
+
+
 def check_release_set(distributions: list[Distribution], shipped: dict[str, str]) -> list[str]:
     """The discovered workspace must equal the reviewed publication set."""
     actual = {distribution.name: distribution.import_name for distribution in distributions}
@@ -636,8 +651,8 @@ def run(
     require_installed: bool = False,
     dist_dir: Path | None = None,
     expected_version: str | None = None,
-) -> tuple[int, list[str]]:
-    """Returns an exit code and the lines to report."""
+) -> Report:
+    """Returns the exit code, a loggable summary and the detailed problems."""
     distributions, problems = discover(workspace)
     try:
         shipped = shipped_distributions(workspace)
@@ -667,9 +682,9 @@ def run(
                 check_artifact_contents(distributions, workspace=workspace, dist_dir=dist_dir)
             )
         if problems:
-            return 1, problems
+            return Report(1, "distribution validation failed", tuple(problems))
         names = ", ".join(distribution.name for distribution in distributions)
-        return 0, [f"built {len(distributions)} distributions: {names}"]
+        return Report(0, f"built {len(distributions)} distributions: {names}", ())
 
     for distribution in distributions:
         failures = check_import(
@@ -685,9 +700,9 @@ def run(
     problems.extend(check_metadata(distributions, expected_version=expected_version))
 
     if problems:
-        return 1, problems
+        return Report(1, "distribution validation failed", tuple(problems))
     names = ", ".join(distribution.name for distribution in distributions)
-    return 0, [f"checked {len(distributions)} installed distributions: {names}"]
+    return Report(0, f"checked {len(distributions)} installed distributions: {names}", ())
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -716,17 +731,22 @@ def main(argv: list[str] | None = None) -> int:
     )
     arguments = parser.parse_args(argv)
 
-    code, lines = run(
+    report = run(
         arguments.workspace,
         require_installed=arguments.require_installed,
         dist_dir=arguments.dist,
         expected_version=arguments.expected_version,
     )
-    for line in lines:
-        # Say what was inspected on success too. A gate that prints nothing
-        # cannot be told apart from one that never ran.
-        print(f"::error::{line}" if code else line)
-    return code
+    if report.code:
+        # Diagnostics may quote metadata, member names or paths controlled by
+        # the artifact under inspection, so nothing derived from the report --
+        # not even a count -- is written to the CI log. Programmatic callers
+        # of ``run`` read ``Report.problems`` instead.
+        print("::error::distribution validation failed")
+    else:
+        # The success summary holds only names from the reviewed manifest.
+        print(report.summary)
+    return report.code
 
 
 if __name__ == "__main__":

@@ -106,9 +106,13 @@ def _write_publication(root: Path, overrides: dict[str, Any]) -> None:
         "schema_version": 1,
         "target": VERSION,
         "publisher": dict(tool.REQUIRED_PUBLISHER),
+        "status": "VERIFIED",
+        "confirmed_by": "owner",
+        "confirmed_on": "2026-09-08",
         "projects": [
             {
                 "name": name,
+                "publisher_project": name,
                 "trusted_publisher": "VERIFIED",
                 "verified_for_target": VERSION,
                 "verified_by": "owner",
@@ -183,7 +187,12 @@ def test_an_unverified_trusted_publisher_refuses_the_release(workspace: Path) ->
         workspace,
         {
             "projects": [
-                {"name": name, "trusted_publisher": "UNVERIFIED"} for name in MANIFEST.names
+                {
+                    "name": name,
+                    "publisher_project": name,
+                    "trusted_publisher": "UNVERIFIED",
+                }
+                for name in MANIFEST.names
             ]
         },
     )
@@ -193,6 +202,58 @@ def test_an_unverified_trusted_publisher_refuses_the_release(workspace: Path) ->
     assert code == 1
     assert len(problems) == len(MANIFEST.names)
     assert all("trusted_publisher is not VERIFIED" in problem for problem in problems)
+
+
+def test_top_level_confirmation_is_required(workspace: Path) -> None:
+    _write_publication(workspace, {"status": "UNVERIFIED"})
+
+    code, problems = _run(workspace)
+
+    assert code == 1
+    assert any("top-level status is not VERIFIED" in problem for problem in problems)
+
+
+def test_pending_publisher_project_name_must_be_exact(workspace: Path) -> None:
+    projects = [
+        {
+            "name": name,
+            "publisher_project": "agnara_a2a" if name == "agnara-a2a" else name,
+            "trusted_publisher": "VERIFIED",
+            "verified_for_target": VERSION,
+            "verified_by": "owner",
+            "verified_on": "2026-09-08",
+        }
+        for name in MANIFEST.names
+    ]
+    _write_publication(workspace, {"projects": projects})
+
+    code, problems = _run(workspace)
+
+    assert code == 1
+    assert any(
+        "project name must be recorded exactly as 'agnara-a2a'" in problem for problem in problems
+    )
+
+
+def test_duplicate_publisher_project_records_are_rejected(workspace: Path) -> None:
+    projects = [
+        {
+            "name": name,
+            "publisher_project": name,
+            "trusted_publisher": "VERIFIED",
+            "verified_for_target": VERSION,
+            "verified_by": "owner",
+            "verified_on": "2026-09-08",
+        }
+        for name in MANIFEST.names
+    ]
+    projects.append(dict(projects[0]))
+    _write_publication(workspace, {"projects": projects})
+
+    code, problems = _run(workspace)
+
+    assert code == 1
+    assert any("duplicate project names" in problem for problem in problems)
 
 
 def test_a_confirmation_recorded_for_another_version_does_not_carry_over(
@@ -205,6 +266,7 @@ def test_a_confirmation_recorded_for_another_version_does_not_carry_over(
             "projects": [
                 {
                     "name": name,
+                    "publisher_project": name,
                     "trusted_publisher": "VERIFIED",
                     "verified_for_target": "0.0.1a1",
                     "verified_by": "owner",
@@ -228,6 +290,7 @@ def test_a_confirmation_must_name_who_made_it(workspace: Path) -> None:
             "projects": [
                 {
                     "name": name,
+                    "publisher_project": name,
                     "trusted_publisher": "VERIFIED",
                     "verified_for_target": VERSION,
                     "verified_by": None,

@@ -38,7 +38,7 @@ record that settled it -- not an implementation history.
 | Id | Subject | Settled by | Still open |
 | --- | --- | --- | --- |
 | `I1` | Unified exposure model | ADR 0070, and ADR 0071 for phase 3 | nothing |
-| `I3` | Execution identity and idempotency behaviour | ADR 0074 | nothing; `0.1.0a7` still gates the behaviour (ADR 0080) |
+| `I3` | Execution identity and idempotency behaviour | ADR 0074 | nothing; `0.1.0a8` still gates the behaviour (ADR 0081) |
 | `I7` | HTTP request surface | ADR 0072 | scope beyond what `0.1.0a4` owns, classified in ADR 0072 |
 | `I9` | Public API governance | ADR 0067, ADR 0074, ADR 0076 | stability promotion, and a generated reference for the public names |
 | `I18` | Documentation and DX program | first increment only | progressive examples, error-message quality, startup diagnostics |

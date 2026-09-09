@@ -200,7 +200,7 @@ do not delete or overwrite a published file.
 2. Record the state in `docs/releases/publication.json` and in the release note.
 3. Fix the external cause.
 4. Select the **next** version and publish the complete set. This is what
-   `0.1.0a6` is.
+   `0.1.0a7` is.
 5. Once the new version is verified complete, yank the orphaned files with a
    reason naming the superseding version.
 
