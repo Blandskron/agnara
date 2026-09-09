@@ -28,18 +28,19 @@ dependencies.
 `0.1.0a3` is the last release that published completely, and it publishes the
 `agnara` core kernel only. `0.1.0a4` was tagged and published *partially* — one
 of its fourteen artifacts reached PyPI — so it is superseded and should not be
-installed. The `v0.1.0a5` attempt stopped before its first upload because
-publication readiness found unverified Trusted Publishers. `0.1.0a6` then
-failed on the first PyPI upload because the `agnara-a2a` Pending Trusted
-Publisher did not match. `0.1.0a7` is the
-next candidate for all seven synchronized distributions; until it is authorized
-and verified, the six adapter names are not on the public index.
+installed. The `v0.1.0a5` and `v0.1.0a7` attempts stopped before their first
+upload because publication readiness found unverified Trusted Publishers;
+`0.1.0a6` failed on the first PyPI upload because the `agnara-a2a` Pending
+Trusted Publisher did not match. All four were tagged before their gates ran.
+`0.1.0a8` is the next candidate for all seven synchronized distributions, and
+the first whose tag can only be created by an approved, fully gated workflow
+run; until it is published and verified, the six adapter names are not on the
+public index.
 
-## What the 0.1.0a7 candidate adds
+## What the 0.1.0a8 candidate adds
 
-`0.1.0a7` carries the `0.1.0a6` runtime unchanged, fixes the release-blocking
-security findings and uses the corrected
-release system, so what it adds to a *user* is the `0.1.0a4`
+`0.1.0a8` carries the `0.1.0a7` runtime unchanged and replaces the release
+flow that burned four versions, so what it adds to a *user* is the `0.1.0a4`
 application alpha, actually published: an external consumer can install the
 built artifacts as ordinary dependencies and compose direct, HTTP and MCP
 surfaces without private imports or monkey patches, over the public HTTP
@@ -47,13 +48,13 @@ composition API, governed public surfaces for every distribution, consistent
 JSON schema materialization across transports, and strengthened policy, failure
 and observability conformance.
 
-See the [`0.1.0a7` release notes](docs/releases/v0.1.0a7.md) for the current
-recovery candidate, the [`0.1.0a5` notes](docs/releases/v0.1.0a5.md) for the
-aborted attempt, and the
+See the [`0.1.0a8` release notes](docs/releases/v0.1.0a8.md) for the current
+recovery candidate, the [`0.1.0a7` notes](docs/releases/v0.1.0a7.md) for the
+last aborted attempt, and the
 [`0.1.0a4` notes](docs/releases/v0.1.0a4.md) for what the implementation does,
 and the [a3-to-a4 migration guide](docs/releases/v0.1.0a4.md#migration-guide),
 which is the one that applies. The install command above resolves `0.1.0a4`
-today; pin `0.1.0a3`, or wait for `0.1.0a7`, until the release completes.
+today; pin `0.1.0a3`, or wait for `0.1.0a8`, until the release completes.
 
 ## Quick start
 
@@ -321,8 +322,8 @@ The architecture must be safe under conventional CPython and designed consciousl
 Status:          Alpha (experimental)
 Last complete:   v0.1.0a3 (PyPI, core distribution only)
 Partial:         v0.1.0a4 (core wheel only; superseded, do not install)
-Aborted:         v0.1.0a5 (publication readiness stopped before upload)
-Next candidate:  v0.1.0a7 (seven synchronized distributions)
+Aborted:         v0.1.0a5, v0.1.0a6, v0.1.0a7 (nothing published)
+Next candidate:  v0.1.0a8 (seven synchronized distributions)
 ```
 
 `v0.1.0a3` is the last release that published completely, following `v0.1.0a2`,
@@ -332,10 +333,11 @@ public API may change without a deprecation cycle.
 `v0.1.0a4` was tagged and its upload stopped after the first file, so PyPI
 holds `agnara 0.1.0a4` as a wheel with no sdist and none of the six adapter
 distributions. The tag and that file are historical and are not being rewritten;
-`v0.1.0a5` and `v0.1.0a6` published nothing and remain immutable;
-`v0.1.0a7` is the candidate
-that publishes the full set. ADR 0078 records A4, ADR 0079 the pipeline change,
-and ADR 0080 the A5 abort and A6 recovery.
+`v0.1.0a5`, `v0.1.0a6` and `v0.1.0a7` published nothing and remain immutable;
+`v0.1.0a8` is the candidate that publishes the full set, through a release
+flow that creates the tag only after every gate and a human approval. ADR 0078
+records A4, ADR 0079 the pipeline change, ADR 0080 and ADR 0081 the A5 to A7
+recoveries, and ADR 0082 the dispatch-driven release.
 
 The repository should not claim production readiness, benchmark leadership, security guarantees, or protocol conformance until those claims are backed by automated evidence.
 
@@ -380,7 +382,7 @@ including what `0.1.0a4` does not expose yet. `examples/http_service.py` is a
 runnable version.
 
 `agnara-http` is not published on PyPI yet. It is part of the seven-package
-`0.1.0a7` candidate and becomes installable from the public index only after
+`0.1.0a8` candidate and becomes installable from the public index only after
 the authorized release publishes it.
 
 ## HTTP documentation and capability discovery

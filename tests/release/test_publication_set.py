@@ -203,15 +203,19 @@ def test_the_github_release_cannot_exist_without_verified_publication() -> None:
     """The `0.1.0a4` shape -- publish, verify and announce as steps of one job --
     let a failed upload cancel the other two silently. They are jobs now, and
     the dependency is what makes the ordering a guarantee rather than a hope.
+    The tag sits in the same chain: it is created by an approved job that every
+    gate precedes, and publication depends on that job (ADR 0082).
     """
     jobs = _workflow(RELEASE_WORKFLOW)["jobs"]
 
-    assert "publish-preflight" in jobs["publish"]["needs"]
+    assert "publish-preflight" in jobs["approve-and-tag"]["needs"]
+    assert "approve-and-tag" in jobs["publish"]["needs"]
     assert "publish" in jobs["verify-published"]["needs"]
     assert "verify-published" in jobs["github-release"]["needs"]
 
 
 def test_only_the_publishing_job_holds_an_oidc_token_and_it_cannot_write_contents() -> None:
+    """Least privilege per job: the OIDC token never sits next to `contents: write`."""
     jobs = _workflow(RELEASE_WORKFLOW)["jobs"]
     holders = [
         name
@@ -229,17 +233,27 @@ def test_only_the_publishing_job_holds_an_oidc_token_and_it_cannot_write_content
         if isinstance(job.get("permissions"), dict)
         and job["permissions"].get("contents") == "write"
     ]
-    assert writers == ["github-release"]
+    # The approved job creates the tag; the last job creates the GitHub Release.
+    assert writers == ["approve-and-tag", "github-release"]
+    assert jobs["approve-and-tag"]["environment"]["name"] == "pypi"
 
 
-def test_publication_requires_a_pushed_tag() -> None:
-    """ADR 0073 decision 6: a manual dispatch may validate and never publish."""
-    jobs = _workflow(RELEASE_WORKFLOW)["jobs"]
+def test_publication_requires_a_dispatch_from_main_and_the_protected_environment() -> None:
+    """ADR 0082: no pushed tag publishes; only an approved dispatch from main does."""
+    document = _workflow(RELEASE_WORKFLOW)
+    jobs = document["jobs"]
+    # YAML 1.1 reads the bare key `on` as the boolean True; accept either spelling.
+    triggers = next(value for key, value in document.items() if key in ("on", True))
 
-    for name in ("publish-preflight", "publish"):
-        condition = jobs[name]["if"]
-        assert "github.event_name == 'push'" in condition
-        assert "refs/tags/v" in condition
+    assert set(triggers) == {"workflow_dispatch"}
+    assert all("if" not in jobs[name] for name in ("approve-and-tag", "publish"))
+    for name in ("approve-and-tag", "publish"):
+        assert jobs[name]["environment"]["name"] == "pypi"
+    preconditions = "\n".join(
+        step.get("run", "") for step in jobs["preconditions"]["steps"] if isinstance(step, dict)
+    )
+    assert "check_release_preconditions.py" in preconditions
+    assert "--require-protected-environment pypi" in preconditions
 
 
 # ---------------------------------------------------------------------------

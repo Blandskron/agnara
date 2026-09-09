@@ -279,7 +279,7 @@ def check_publication_prerequisites() -> tuple[str, str]:
         return UNSATISFIED, "; ".join(problems)
     return SATISFIED, (
         f"the {len(distributions.load(ROOT).distributions)} reviewed distributions are "
-        f"publishable at {target}, and every Trusted Publisher is confirmed for it"
+        f"publishable at {target}, and every Trusted Publisher readback is confirmed"
     )
 
 

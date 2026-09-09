@@ -1,14 +1,15 @@
 {
   "schema_version": 1,
-  "current_target": "0.1.0a7",
-  "next_target": "0.1.0a8",
-  "previous_release": "0.1.0a6",
+  "current_target": "0.1.0a8",
+  "next_target": "0.1.0a9",
+  "previous_release": "0.1.0a7",
   "status": "IN_PROGRESS",
   "assessed_on": "2026-09-08",
   "assessed_commit": "c82be7be9c1fa675c042ef336afcfc32b31ca421",
   "blocked_reason": null,
   "notes": [
-    "0.1.0a7 is a publication and security recovery release. It carries the 0.1.0a6 runtime unchanged after v0.1.0a6 failed on the first upload because PyPI found no Pending Trusted Publisher matching the canonical agnara-a2a project and the workflow identity. ADR 0081 records why recovery moved to 0.1.0a7 and Execution Semantics moved intact to 0.1.0a8.",
+    "0.1.0a8 is a release pipeline recovery release. It carries the 0.1.0a7 runtime unchanged after v0.1.0a7 was tagged while docs/releases/publication.json was still UNVERIFIED and publication readiness stopped the run before its first upload, the fourth consecutive tag created before the gates ran. ADR 0082 records the dispatch-driven release in which the tag is created only by an approved, fully gated workflow run, and moves Execution Semantics intact to 0.1.0a9.",
+    "v0.1.0a7 remains immutable and unpublished. ADR 0081 records why recovery had moved to 0.1.0a7 and the three CodeQL fixes it carried, which remain in place.",
     "0.1.0a4 was partially published on 2026-09-08. Workflow run 34285830444 uploaded agnara-0.1.0a4-py3-none-any.whl (HTTP 200) and was rejected on agnara_a2a-0.1.0a4-py3-none-any.whl with HTTP 400 'Non-user identities cannot create new projects'. Twine uploads wheels before sdists and stops on the first failure, so the agnara 0.1.0a4 sdist and all twelve sibling artifacts were never uploaded, post-release verification never ran, and no GitHub Release was created. v0.1.0a4 remains historical and unmodified.",
     "The gate that was missing is now explicit. publication-prerequisites re-derives PUBLISH READY from the repository on every run, and pypi-trusted-publishers is a manual gate the tooling can never satisfy. docs/releases/publication.json is the reviewed record of the external registry configuration; it is UNVERIFIED until the owner reads the tuples back from PyPI.",
     "Status is recomputed by scripts/check_release_readiness.py; automated outcomes are never trusted from this file."
@@ -499,7 +500,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "The 0.1.0a6 upload proved that the prior readback was not sufficient: PyPI found no Pending Trusted Publisher matching canonical project agnara-a2a and the GitHub OIDC identity. The owner must delete and recreate any mismatched agnara-a2a pending entry, read back the exact Project name plus the shared tuple for all seven projects, and record fresh confirmation for target 0.1.0a7 in docs/releases/publication.json."
+      "detail": "The 0.1.0a6 upload proved that the prior readback was not sufficient: PyPI found no Pending Trusted Publisher matching canonical project agnara-a2a and the GitHub OIDC identity. The owner must delete and recreate any pending entry whose Project name is not exactly agnara-a2a, read back the exact Project name plus the shared tuple (GitHub Actions, Blandskron, agnara, release.yml, pypi) for all seven projects, and record each readback in docs/releases/publication.json (schema 2) dated on or after 2026-09-08 and signed by a human account. The release workflow refuses to build, approve or tag while the record is UNVERIFIED."
     }
   ]
 }

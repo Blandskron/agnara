@@ -1,34 +1,49 @@
 name: Release to PyPI
 
-# Publication is a pipeline of separately failing stages, not a job with a
-# hopeful sequence of steps. `0.1.0a4` failed inside a single `publish` job
-# whose later steps were post-release verification and the GitHub Release, so
-# one rejected upload silently cancelled both, and the only signal that a
-# release had half happened was a red workflow.
+# A release is a run a maintainer dispatches from `main`, not a tag pushed by
+# hand. Four attempts, `0.1.0a4` to `0.1.0a7`, each burned a version the same
+# way: the annotated tag was the *trigger*, so it existed before any gate had
+# run, and a gate that failed afterwards left an immutable tag naming a release
+# that never happened.
 #
-#   validate -> build -> test-artifact -> publish-preflight
-#            -> publish -> verify-published -> github-release
+# The order is now the other way round. Every gate runs first; a human then
+# approves the run in the protected `pypi` environment; only that approved run
+# may create the tag, publish, verify and announce:
 #
-# Each arrow is a real `needs`. A GitHub Release cannot exist while PyPI is
-# incomplete, because the job that creates it depends on the job that proves
-# every distribution is complete.
+#   validate ───────┐
+#                   ├─> build -> test-artifact -> publish-preflight
+#   preconditions ──┘                                   │
+#                                          [approval]  approve-and-tag
+#                                                       │
+#                                          [approval]  publish -> verify-published -> github-release
 #
-# See ADR 0079 for the publication order, the refusal to use `skip-existing`,
-# and why a partial publication is closed by the next version rather than by
-# a resumable rerun.
+# Each arrow is a real `needs`. The tag is a consequence of an approved, fully
+# validated run: nothing publishes without it, and it cannot exist without
+# everything before it. `scripts/check_release_preconditions.py` refuses a run
+# that is not a dispatch from the current head of `main`, a version that is
+# already tagged anywhere, or an environment whose approval would be automatic.
+#
+# See ADR 0082 for this order, and ADR 0079 for the upload order, the refusal
+# to use `skip-existing`, and post-publication verification.
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to validate (e.g. 0.1.0). Dispatch never publishes.'
-        required: false
+        description: >-
+          Release version to publish from the current HEAD of main, e.g. 0.1.0a8.
+          Must equal the synchronized workspace version.
+        required: true
+        type: string
 
 permissions:
   contents: read
+
+# One release at a time, and never cancelled halfway: a second dispatch waits
+# for the first instead of racing it for the same tag.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 env:
   # Fail rather than silently fall back to a different interpreter. Without
@@ -36,6 +51,9 @@ env:
   # became uninstallable in the validation job.
   UV_PYTHON_DOWNLOADS: manual
   BASELINE_PYTHON: "3.14"
+  # The dispatched input, exposed once as an environment variable so no shell
+  # step interpolates an expression into a command line.
+  RELEASE_VERSION: ${{ inputs.version }}
 
 jobs:
   validate:
@@ -45,10 +63,17 @@ jobs:
       security-events: write
     uses: ./.github/workflows/ci.yml
 
-  build:
-    name: Build distributions
-    needs: validate
+  # Everything that must be true of the *run* before anything is built: it was
+  # dispatched from the current head of main, the version has no tag anywhere,
+  # the workspace is synchronized at exactly that version with a current
+  # lockfile, the recorded Trusted Publisher tuple is the identity this
+  # workflow will present, and the environment that holds the human gate
+  # really has one.
+  preconditions:
+    name: Release preconditions
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       version: ${{ steps.resolve.outputs.version }}
     steps:
@@ -64,51 +89,73 @@ jobs:
       - name: Set up Python
         run: uv python install "$BASELINE_PYTHON"
 
+      - name: Dispatched from the current head of main, for a version with no tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_release_preconditions.py \
+            --version "$RELEASE_VERSION" --require-protected-environment pypi
+
+      - name: The workspace is synchronized at exactly this version with a current lockfile
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/set_workspace_version.py release "$RELEASE_VERSION" --check
+          uv lock --check
+
+      - name: Publish readiness (offline) and the recorded Trusted Publisher identity
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_publication_readiness.py \
+            --workspace "$GITHUB_WORKSPACE" --version "$RELEASE_VERSION" --oidc-identity
+
       - name: Resolve the version under release
         id: resolve
         run: |
           set -euo pipefail
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            version="${GITHUB_REF#refs/tags/v}"
-          else
-            version="$(uv run --no-project python -c "import pathlib, tomllib; print(tomllib.loads(pathlib.Path('packages/agnara/pyproject.toml').read_text())['project']['version'])")"
-          fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "releasing $version"
+          echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "releasing $RELEASE_VERSION from $GITHUB_SHA"
 
-      - name: Verify annotated release tag belongs to main
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-        run: uv run --no-project python scripts/check_release_tag.py "${GITHUB_REF#refs/tags/}"
+  build:
+    name: Build distributions
+    needs: [validate, preconditions]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
 
       - name: Build every reviewed distribution
         run: uv build --all-packages --out-dir dist/
 
-      - name: Validate artifact set, metadata, contents and tag version
+      - name: Validate artifact set, metadata, contents and version
         run: |
           set -euo pipefail
           uv run --no-project python scripts/check_distributions.py \
             --workspace "$GITHUB_WORKSPACE" --dist dist/ \
-            --expected-version "${{ steps.resolve.outputs.version }}"
+            --expected-version "${{ needs.preconditions.outputs.version }}"
 
-      # CODE READY is not PUBLISH READY. This is the check `0.1.0a4` did not
-      # have: it fails on an unconfirmed Trusted Publisher, a missing release
-      # note, an unsynchronized lockfile or an incomplete artifact set, before
-      # any credential exists anywhere in the pipeline.
-      #
-      # Tag pushes only. A manual dispatch validates a development workspace,
-      # where the version carries `.dev0`, no dated changelog section exists
-      # and no publisher has been confirmed -- none of which is a defect, and
-      # none of which a dispatch is entitled to act on. The structural half of
-      # this contract is asserted on every branch by
-      # `tests/release/test_publication_set.py` in the CI suite above.
-      - name: Publish readiness (offline)
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+      # CODE READY is not PUBLISH READY. This fails on an unconfirmed Trusted
+      # Publisher, a missing release note, an unsynchronized lockfile or an
+      # incomplete artifact set, before any credential exists anywhere in the
+      # pipeline and before any tag exists anywhere at all.
+      - name: Publish readiness (offline) against the built set
         run: |
           set -euo pipefail
           uv run --no-project python scripts/check_publication_readiness.py \
             --workspace "$GITHUB_WORKSPACE" \
-            --version "${{ steps.resolve.outputs.version }}" \
-            --dist dist/ --tag "${GITHUB_REF#refs/tags/}"
+            --version "${{ needs.preconditions.outputs.version }}" \
+            --dist dist/
 
       - name: Record artifact digests
         run: |
@@ -138,8 +185,10 @@ jobs:
 
   test-artifact:
     name: Validate built artifacts
-    needs: build
+    needs: [preconditions, build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -201,54 +250,24 @@ jobs:
 
           "$SMOKE_PYTHON" -I "$GITHUB_WORKSPACE/scripts/check_distributions.py" \
             --workspace "$GITHUB_WORKSPACE" --require-installed \
-            --expected-version "${{ needs.build.outputs.version }}"
+            --expected-version "${{ needs.preconditions.outputs.version }}"
           "$SMOKE_PYTHON" -I -c "import ${imports}"
           for script in "${scripts[@]-}"; do
             [[ -n "$script" ]] && ".venv/bin/${script}" --version
           done
 
   # Everything about the registry that can be known without a credential,
-  # checked before a credential exists. `--online` reads the public index: it
-  # refuses if any of the seven already carries a file at this version, which
-  # is the condition `skip-existing: true` would have hidden, and it reports
-  # which projects still have to be created by a pending Trusted Publisher.
+  # checked before a credential exists and before any tag exists. `--online`
+  # reads the public index: it refuses if any of the seven already carries a
+  # file at this version, which is the condition `skip-existing: true` would
+  # have hidden, and it refuses if the recorded publisher kind (pending or
+  # active) disagrees with whether the project exists. The preconditions are
+  # re-checked because time has passed: main may have moved.
   publish-preflight:
     name: Publication preflight
-    needs: [build, test-artifact]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [preconditions, build, test-artifact]
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
-
-      - name: Set up Python
-        run: uv python install "$BASELINE_PYTHON"
-
-      - name: Registry state and publisher confirmation
-        run: |
-          set -euo pipefail
-          uv run --no-project python scripts/check_publication_readiness.py \
-            --workspace "$GITHUB_WORKSPACE" \
-            --version "${{ needs.build.outputs.version }}" \
-            --online
-
-  publish:
-    name: Publish to PyPI
-    needs: [build, test-artifact, publish-preflight]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/manage/projects/
-    permissions:
-      # Mandatory for PyPI Trusted Publishing (OIDC) and for attestations.
-      # Nothing else: creating the GitHub Release is a later job, so this one
-      # no longer needs `contents: write`.
-      id-token: write
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -261,8 +280,115 @@ jobs:
       - name: Set up Python
         run: uv python install "$BASELINE_PYTHON"
 
-      - name: Recheck release tag before publication
-        run: uv run --no-project python scripts/check_release_tag.py "${GITHUB_REF#refs/tags/}"
+      - name: Main has not moved and the version is still untagged
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_release_preconditions.py \
+            --version "${{ needs.preconditions.outputs.version }}" \
+            --require-protected-environment pypi
+
+      - name: Registry state, publisher record and workflow identity
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_publication_readiness.py \
+            --workspace "$GITHUB_WORKSPACE" \
+            --version "${{ needs.preconditions.outputs.version }}" \
+            --online --oidc-identity
+
+  # The human gate, and the first irreversible act. Required reviewers on the
+  # `pypi` environment hold this job until a person approves the run;
+  # `preconditions` has already refused to get here if the environment has no
+  # such rule. Only this job creates a tag, and it does so on the dispatched
+  # commit after re-checking that main has not moved and the tag still does
+  # not exist. `contents: write` is the only elevated permission it holds.
+  approve-and-tag:
+    name: Approve and tag the release
+    needs: [preconditions, build, test-artifact, publish-preflight]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: ${{ github.server_url }}/${{ github.repository }}/tags
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
+      - name: Re-check every precondition after approval
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_release_preconditions.py \
+            --version "${{ needs.preconditions.outputs.version }}" \
+            --require-protected-environment pypi
+
+      - name: Create the annotated release tag on the approved commit
+        id: tag
+        env:
+          VERSION: ${{ needs.preconditions.outputs.version }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          DISPATCHED_BY: ${{ github.triggering_actor }}
+        run: |
+          set -euo pipefail
+          tag="v${VERSION}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" "$GITHUB_SHA" \
+            -m "Agnara ${tag}" \
+            -m "Created by the approved release run ${RUN_URL}, dispatched by ${DISPATCHED_BY} from main at ${GITHUB_SHA}."
+          git push origin "refs/tags/${tag}"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+      - name: The tag is annotated, names this commit and reviewed main history
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_release_tag.py "${{ steps.tag.outputs.tag }}"
+
+  publish:
+    name: Publish to PyPI
+    needs: [preconditions, build, approve-and-tag]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/manage/projects/
+    permissions:
+      # Mandatory for PyPI Trusted Publishing (OIDC) and for attestations.
+      # Nothing else: the tag was created by the job before and the GitHub
+      # Release is created by a job after, so this one cannot write contents.
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.approve-and-tag.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
+      - name: The tag names the approved commit and reviewed main history
+        run: |
+          set -euo pipefail
+          if [[ "$(git rev-parse HEAD)" != "$GITHUB_SHA" ]]; then
+            echo "::error::the tag does not name the commit this run was dispatched for"
+            exit 1
+          fi
+          uv run --no-project python scripts/check_release_tag.py "${{ needs.approve-and-tag.outputs.tag }}"
 
       - name: Download artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -277,8 +403,8 @@ jobs:
           set -euo pipefail
           uv run --no-project python scripts/check_publication_readiness.py \
             --workspace "$GITHUB_WORKSPACE" \
-            --version "${{ needs.build.outputs.version }}" \
-            --dist dist/ --tag "${GITHUB_REF#refs/tags/}"
+            --version "${{ needs.preconditions.outputs.version }}" \
+            --dist dist/ --tag "${{ needs.approve-and-tag.outputs.tag }}" --oidc-identity
 
       # One directory per distribution, so each upload below is a single
       # project's wheel and sdist. `0.1.0a4` handed all fourteen files to one
@@ -288,7 +414,7 @@ jobs:
       - name: Stage each distribution separately
         run: |
           set -euo pipefail
-          version="${{ needs.build.outputs.version }}"
+          version="${{ needs.preconditions.outputs.version }}"
           while read -r name; do
             stem="${name//-/_}"
             mkdir -p "staged/$name"
@@ -304,7 +430,9 @@ jobs:
 
       # Siblings first, kernel last. `tests/release/test_publication_set.py`
       # asserts these steps are exactly `--publication-order`; changing the
-      # reviewed set without changing them fails the test suite.
+      # reviewed set without changing them fails the test suite. The directory
+      # names are the canonical PyPI project names: `agnara-a2a`, never
+      # `agnara_a2a`, which is only the filename normalization inside it.
       - name: Publish agnara-a2a
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
@@ -366,7 +494,7 @@ jobs:
 
   verify-published:
     name: Post-release verification
-    needs: [build, publish]
+    needs: [preconditions, publish]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -380,11 +508,11 @@ jobs:
         run: uv python install "$BASELINE_PYTHON"
 
       # Completeness, not installability. `agnara 0.1.0a4` is installable and
-      # has no sdist; this fails on exactly that.
+      # has no sdist; this fails on exactly that, for each of the seven.
       - name: Every distribution is complete on the index
         run: |
           set -euo pipefail
-          version="${{ needs.build.outputs.version }}"
+          version="${{ needs.preconditions.outputs.version }}"
           for attempt in 1 2 3 4 5 6; do
             if uv run --no-project python scripts/check_publication_readiness.py \
                  --workspace "$GITHUB_WORKSPACE" --version "$version" \
@@ -400,7 +528,7 @@ jobs:
       - name: Install the published set and exercise it
         run: |
           set -euo pipefail
-          version="${{ needs.build.outputs.version }}"
+          version="${{ needs.preconditions.outputs.version }}"
           manifest() {
             uv run --no-project python "$GITHUB_WORKSPACE/scripts/distributions.py" "$@"
           }
@@ -424,14 +552,19 @@ jobs:
             [[ -n "$script" ]] && ".venv/bin/${script}" --version
           done
 
+  # Last, and only after PyPI holds every wheel and sdist of the version. The
+  # tag already exists, created by the approved job above; this job announces
+  # it and is the only one that may write repository contents besides that job.
   github-release:
     name: Create GitHub Release
-    needs: [build, publish, verify-published]
+    needs: [preconditions, approve-and-tag, publish, verify-published]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.approve-and-tag.outputs.tag }}
 
       - name: Download artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -442,12 +575,14 @@ jobs:
       - name: Publish the GitHub Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
+          tag_name: ${{ needs.approve-and-tag.outputs.tag }}
+          name: Agnara ${{ needs.approve-and-tag.outputs.tag }}
           # Curated notes per ADR 0021 step 7; the generated PR list is
           # appended below them. `check_publication_readiness.py` already
           # refused the release if this file is missing, so the notes can no
           # longer degrade silently to the generated list.
-          body_path: docs/releases/${{ github.ref_name }}.md
+          body_path: docs/releases/${{ needs.approve-and-tag.outputs.tag }}.md
           generate_release_notes: true
           files: dist/*
           # PEP 440 pre-release segments must never ship as a stable release.
-          prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') }}
+          prerelease: ${{ contains(needs.preconditions.outputs.version, 'a') || contains(needs.preconditions.outputs.version, 'b') || contains(needs.preconditions.outputs.version, 'rc') }}

@@ -9,29 +9,41 @@ Legend:
 
 This file owns **decomposed work that is ready to implement**. It does not own the long-term plan: ROADMAP.md owns where Agnara is going.
 
-## A7
+## A8
 
-Publication recovery only (ADR 0080). Everything below `## A7` stays out.
+Release pipeline recovery only (ADR 0082). Everything below `## A8` stays out.
 
 - [~] E0B.12 Document release and hotfix automation evidence. The release half
   gains real evidence here: `0.1.0a4` exercised the tag pipeline through to a
-  rejected upload, and `0.1.0a5` proved the sequenced preflight aborts before
-  upload, while `0.1.0a6` proved that a mistaken human publisher readback can
-  still reach and fail the first upload. `0.1.0a7` is the next attempt. The
-  hotfix half is still unexercised, so the item does not close.
+  rejected upload, `0.1.0a5` and `0.1.0a7` proved the sequenced preflight
+  aborts before upload, and `0.1.0a6` proved that a mistaken human publisher
+  readback can still reach and fail the first upload. All four were tagged
+  before the gates ran; `0.1.0a8` is the first release whose tag can only be
+  created by an approved, fully gated `workflow_dispatch` run. The hotfix half
+  is still unexercised, so the item does not close.
 
-- [!] Owner action: delete and recreate the mismatched `agnara-a2a` Pending
-  Trusted Publisher with Project name `agnara-a2a`, then read back the Project
-  name and shared tuple for all seven entries and record them for `0.1.0a7`.
+- [!] Owner action: on PyPI, delete any pending entry whose Project name is not
+  exactly `agnara-a2a` and recreate it; read back the Project name and the
+  shared tuple (GitHub Actions, `Blandskron`, `agnara`, `release.yml`, `pypi`)
+  for all seven entries; record each readback in
+  `docs/releases/publication.json` (schema 2) dated on or after `2026-09-08`,
+  signed by a human account, with `status: VERIFIED`.
 
-- [ ] Owner action: yank `agnara 0.1.0a4` once `0.1.0a7` is published and
+- [!] Owner action: protect the `pypi` GitHub Environment with at least one
+  required reviewer and a deployment branch policy limited to `main`.
+  `scripts/check_release_preconditions.py` refuses the release until both
+  exist. Do not enable *prevent self-review* while the dispatching owner is
+  the only reviewer.
+
+- [ ] Owner action: create a tag ruleset for `v*` that blocks update and
+  deletion (immutability). Do not restrict creation: the approved workflow run
+  is the only creator.
+
+- [ ] Owner action: yank `agnara 0.1.0a4` once `0.1.0a8` is published and
   verified complete. Reason: `Partial multi-distribution publication;
-  superseded by 0.1.0a7.`
+  superseded by 0.1.0a8.`
 
-- [ ] Decide the `pypi` GitHub Environment protection policy. It currently has
-  no protection rule or deployment policy and allows administrator bypass.
-
-## A8
+## A9
 
 - [?] E2.7 Benchmark adapters before selecting defaults.
 
