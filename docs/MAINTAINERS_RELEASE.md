@@ -182,20 +182,35 @@ changed only through the workspace transition tool.
 
 ## 4. How to run a release
 
+PyPI allows at most three Pending Trusted Publishers at a time, so the A8
+bootstrap is three dispatches of the same workflow, each with a `phase`:
+
+| Phase | Publishes | Verifies on PyPI | Tag / GitHub Release |
+| --- | --- | --- | --- |
+| `bootstrap-1` | `agnara-a2a`, `agnara-cli`, `agnara-events` | those three | none |
+| `bootstrap-2` | `agnara-http`, `agnara-mcp`, `agnara-telemetry` | the six adapters | none |
+| `final` | `agnara` | all seven, then a clean install | yes, after verification |
+
+Before each phase, read back the pending (or, for `agnara`, active) publishers
+of that phase and record them in `publication.json`; readiness requires only
+the phase's own projects, and refuses to run a phase whose earlier phases are
+not complete on the index or whose later phases already carry a file.
+
 1. Open **Actions → Release to PyPI → Run workflow**.
-2. Select branch **`main`** and enter the version, e.g. `0.1.0a8`. It must
-   equal the synchronized workspace version on `main`.
+2. Select branch **`main`**, enter the version, e.g. `0.1.0a8` (it must equal
+   the synchronized workspace version on `main`), and select the phase.
 3. Press **Run workflow**.
 4. When the run reaches `publish`, GitHub asks the required reviewers of the
    `pypi` environment to approve. Review the run's logs — every gate above it
-   is green by construction — and approve. The run uploads the seven projects,
-   verifies wheel and sdist of each on the index, and only then creates the
-   annotated tag on the dispatched commit and the GitHub Release.
+   is green by construction — and approve. The run uploads this phase's
+   projects and verifies wheel and sdist of everything published so far. In
+   the `final` phase only, it then creates the annotated tag on the dispatched
+   commit and the GitHub Release.
 
-One approval, and it authorizes the only irreversible act a human can still
-prevent: the upload. The tag is not approved separately because it is not a
-decision any more — it is the record that a verified publication happened, and
-it cannot exist without one.
+One approval per phase, and it authorizes the only irreversible act a human
+can still prevent: the upload. The tag is not approved separately because it is
+not a decision any more — it is the record that a verified publication of all
+seven happened, and it cannot exist without one.
 
 If the run refuses before the approval, read the `::error::` lines: `main`
 moved since you dispatched (dispatch again from its head), the tag already
@@ -233,27 +248,33 @@ preconditions ──┘                                   │
    dependencies resolved first, then all seven wheels installed with the index
    closed; isolated origin/metadata/data checks, every import, every console
    script.
-5. **publish-preflight** — preconditions again, then the public index: refuses
-   if this version already has files anywhere in the set, or if a recorded
-   publisher kind disagrees with whether its project exists.
+5. **publish-preflight** — preconditions again, then the public index for the
+   phase: the projects of earlier phases must be complete at this version,
+   the projects of this phase and later ones must carry no file of it, and
+   each recorded publisher kind must agree with whether its project exists.
 6. **publish** — waits in `pypi` for a reviewer, with only `contents: read`.
-   Re-checks preconditions after approval. Seven sequential jobs then enter
-   their bootstrap environments with `id-token: write` and `contents: read`,
-   recheck preconditions, validate the bundle and their distribution identity,
-   and upload only their own wheel and sdist. **Siblings first, `agnara` last**.
-   Metadata verification, attestations and hash printing remain enabled;
-   `skip-existing` is absent. No tag exists at this point (ADR 0083).
-7. **verify-published** — asserts every distribution is *complete* on the index
-   (wheel and sdist), then installs the published set into a clean environment
-   and exercises it.
-8. **tag** — depends on step 7. Re-checks that the checkout is the dispatched
-   commit and that `v<version>` still does not exist, then creates the
-   annotated tag on that commit as `github-actions[bot]`, pushes it and
-   verifies it with `check_release_tag.py`. The only job that creates a tag;
-   holds `contents: write` and nothing else. If step 6 or 7 failed, this job
-   never runs and no tag exists.
-9. **github-release** — depends on step 8. Creates the GitHub Release for the
-   tag from step 8, from `docs/releases/v<version>.md`.
+   Re-checks preconditions after approval. The phase's sequential jobs then
+   enter their bootstrap environments with `id-token: write` and `contents:
+   read`, recheck preconditions, validate the bundle, their distribution
+   identity and their membership of the phase, and upload only their own wheel
+   and sdist. **Siblings first, `agnara` last** across the phases. Metadata
+   verification, attestations and hash printing remain enabled; `skip-existing`
+   is absent. Jobs of other phases are skipped by their `if:`; no other
+   condition exists in the workflow. No tag exists at this point (ADR 0083).
+7. **verify-bootstrap-1 / verify-bootstrap-2 / verify-published** — the
+   phase's verification asserts every distribution published so far is
+   *complete* on the index (wheel and sdist) and nothing of a later phase
+   exists. `verify-published` (final) additionally installs the published set
+   into a clean environment and exercises it; a bootstrap phase cannot, because
+   the adapters pin a kernel that is not on the index yet.
+8. **tag** — final phase only; depends on step 7. Re-checks that the checkout
+   is the dispatched commit and that `v<version>` still does not exist, then
+   creates the annotated tag on that commit as `github-actions[bot]`, pushes it
+   and verifies it with `check_release_tag.py`. The only job that creates a
+   tag; holds `contents: write` and nothing else. If any upload or step 7
+   failed, this job never runs and no tag exists.
+9. **github-release** — final phase only; depends on step 8. Creates the GitHub
+   Release for the tag from step 8, from `docs/releases/v<version>.md`.
 
 ### Why the kernel goes last
 

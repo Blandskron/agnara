@@ -54,6 +54,14 @@ Modes, which compose::
     python scripts/check_publication_readiness.py --version 0.1.0a8 \\
         --online --require-published
 
+    # one bootstrap phase at a time (PyPI allows three pending publishers):
+    # readbacks are required only for the phase's projects, earlier phases
+    # must already be complete on the index, later ones untouched
+    python scripts/check_publication_readiness.py --version 0.1.0a8 \\
+        --phase bootstrap-1 --online
+    python scripts/check_publication_readiness.py --version 0.1.0a8 \\
+        --phase bootstrap-1 --online --require-published
+
 Standard library only.
 """
 
@@ -125,8 +133,45 @@ BOOTSTRAP_ENVIRONMENTS = {
     "agnara-telemetry": "pypi-telemetry",
 }
 
+#: PyPI allows at most three Pending Trusted Publishers at a time per account,
+#: so the six new projects cannot all be pending at once. A8 is therefore
+#: published in phases: each phase uploads only its projects, verifies what
+#: exists so far, and only the last one -- the kernel -- earns the tag. The
+#: order is the publication order of ADR 0079: siblings first, `agnara` last.
+PHASES: dict[str, tuple[str, ...]] = {
+    "bootstrap-1": ("agnara-a2a", "agnara-cli", "agnara-events"),
+    "bootstrap-2": ("agnara-http", "agnara-mcp", "agnara-telemetry"),
+    "final": ("agnara",),
+}
+PHASE_ORDER: tuple[str, ...] = tuple(PHASES)
+FINAL_PHASE = "final"
+
 DEFAULT_INDEX = "https://pypi.org"
 NETWORK_TIMEOUT = 30
+
+
+def phase_projects(phase: str) -> tuple[str, ...]:
+    """The projects a phase uploads."""
+    if phase not in PHASES:
+        raise Refusal(f"unknown release phase {phase!r}; expected one of {list(PHASES)}")
+    return PHASES[phase]
+
+
+def projects_published_before(phase: str) -> tuple[str, ...]:
+    """Everything an earlier phase must already have put on the index."""
+    phase_projects(phase)
+    before: list[str] = []
+    for earlier in PHASE_ORDER:
+        if earlier == phase:
+            break
+        before.extend(PHASES[earlier])
+    return tuple(before)
+
+
+def projects_published_through(phase: str) -> tuple[str, ...]:
+    """Everything that must be complete on the index once a phase has run."""
+    return (*projects_published_before(phase), *phase_projects(phase))
+
 
 #: PEP 440 restricted to what ADR 0021 permits during v0.x.
 VERSION_PATTERN = re.compile(r"^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:(?:a|b|rc)\d+)?$")
@@ -397,7 +442,9 @@ def _confirmation_problems(who: object, when: object, *, subject: str) -> list[s
     return problems
 
 
-def check_publisher_record(workspace: Path, manifest: distributions.Manifest) -> list[str]:
+def check_publisher_record(
+    workspace: Path, manifest: distributions.Manifest, *, phase: str | None = None
+) -> list[str]:
     """A human must have read each Trusted Publisher back from PyPI, recently.
 
     This is the gate `0.1.0a4` did not have. The information is external to
@@ -406,13 +453,23 @@ def check_publisher_record(workspace: Path, manifest: distributions.Manifest) ->
     dated readback -- one made after the last time PyPI proved a readback
     wrong, by a person rather than by the pipeline, and consistent with what
     the record itself says about each project.
+
+    With a ``phase``, the readback is required only for the projects that
+    phase uploads. PyPI caps pending publishers at three, so the publishers of
+    a later phase cannot exist yet and are not demanded; the publishers of an
+    earlier phase have already been consumed by a publication the index is
+    asked to prove instead. Every project is still held to its canonical name
+    and bootstrap environment, and the record as a whole is required to be
+    ``VERIFIED`` only when no phase is given.
     """
     document = load_publication_record(workspace)
     where = PUBLICATION_RELATIVE.as_posix()
     problems: list[str] = []
+    required = set(manifest.names) if phase is None else set(phase_projects(phase))
 
     if document.get("status") != VERIFIED:
-        problems.append(f"{where}: top-level status is not {VERIFIED}")
+        if phase is None:
+            problems.append(f"{where}: top-level status is not {VERIFIED}")
     else:
         problems.extend(
             _confirmation_problems(
@@ -467,6 +524,8 @@ def check_publisher_record(workspace: Path, manifest: distributions.Manifest) ->
                 f"{name}: Trusted Publisher project name must be recorded exactly "
                 f"as {name!r}, found {entry.get('publisher_project')!r}"
             )
+            continue
+        if name not in required:
             continue
         kind = entry.get("publisher_kind")
         if kind not in PUBLISHER_KINDS:
@@ -620,6 +679,7 @@ def check_index(
     index: str,
     require_published: bool,
     recorded_kinds: Mapping[str, str] | None = None,
+    phase: str | None = None,
 ) -> tuple[list[str], list[str]]:
     """Compare the index against what this release intends to put there.
 
@@ -630,16 +690,28 @@ def check_index(
     project that is not there, is a readback of the wrong page. Afterwards,
     every one of the seven must carry both a wheel and an sdist, which is
     precisely what `0.1.0a4` failed to do even for the one project it reached.
+
+    With a ``phase``, "nothing may exist" applies to the projects this phase
+    and later phases upload, while the projects of earlier phases must
+    already be *complete* -- the proof that the earlier phase happened. After
+    the phase, completeness is required for everything published so far, and
+    the projects of later phases must still be untouched.
     """
     problems: list[str] = []
     notes: list[str] = []
     safe_index = _safe_url_for_log(index)
     kinds = recorded_kinds or {}
+    earlier = set(projects_published_before(phase)) if phase is not None else set()
+    complete_after = (
+        set(projects_published_through(phase)) if phase is not None else set(manifest.names)
+    )
     for distribution in manifest.distributions:
         name = distribution.name
         document = _index_json(index, name)
         kind = kinds.get(name)
-        if not require_published and kind is not None:
+        # An earlier phase consumed this project's pending publisher; its
+        # record now describes the past, and the index is the evidence.
+        if not require_published and kind is not None and name not in earlier:
             actual = "absent" if document is None else "existing"
             if PUBLISHER_KINDS[kind] != actual:
                 problems.append(
@@ -647,9 +719,13 @@ def check_index(
                     f"project is {actual} on {safe_index}; re-verify it where PyPI actually "
                     "holds it"
                 )
+        must_be_complete = name in complete_after if require_published else name in earlier
         if document is None:
-            if require_published:
-                problems.append(f"{name}: no project on {safe_index} after publication")
+            if must_be_complete:
+                stage = "after publication" if require_published else "before this phase"
+                problems.append(f"{name}: no project on {safe_index} {stage}")
+            elif require_published:
+                notes.append(f"{name}: not published yet, as this phase intends")
             else:
                 notes.append(
                     f"{name}: no project yet; the first upload must be created by a "
@@ -658,7 +734,7 @@ def check_index(
             continue
 
         files = [file["filename"] for file in document.get("releases", {}).get(version, [])]
-        if require_published:
+        if must_be_complete:
             stem = distribution.artifact_stem
             wanted = {f"{stem}-{version}-py3-none-any.whl", f"{stem}-{version}.tar.gz"}
             absent = sorted(wanted - set(files))
@@ -695,6 +771,7 @@ def run(
     environ: Mapping[str, str] | None = None,
     project: str | None = None,
     environment: str | None = None,
+    phase: str | None = None,
 ) -> tuple[int, list[str], list[str]]:
     if VERSION_PATTERN.fullmatch(version) is None:
         return 1, [f"{version!r} is not a publishable v0.x release version"], []
@@ -706,12 +783,20 @@ def run(
         f"({', '.join(manifest.names)})",
         f"upload order, kernel last: {' -> '.join(manifest.publication_order)}",
     ]
+    if phase is not None:
+        uploads = phase_projects(phase)
+        notes.append(
+            f"phase {phase}: uploads {', '.join(uploads)}; already published before it: "
+            f"{', '.join(projects_published_before(phase)) or 'nothing'}"
+        )
+        if project is not None and project not in uploads:
+            problems.append(f"{project} is not uploaded by phase {phase}")
 
     problems.extend(check_workspace(workspace, manifest, version))
     problems.extend(check_no_stale_versions(workspace, manifest, version))
     problems.extend(check_release_notes(workspace, version))
     problems.extend(check_changelog(workspace, version))
-    problems.extend(check_publisher_record(workspace, manifest))
+    problems.extend(check_publisher_record(workspace, manifest, phase=phase))
     problems.extend(check_workflow_identity(workspace))
     problems.extend(check_tag(workspace, version, tag))
 
@@ -737,6 +822,7 @@ def run(
             index=index,
             require_published=require_published,
             recorded_kinds=publisher_kinds(workspace),
+            phase=phase,
         )
         problems.extend(index_problems)
         notes.extend(index_notes)
@@ -747,6 +833,12 @@ def run(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", required=True, help="the release version being published")
+    parser.add_argument(
+        "--phase",
+        choices=PHASE_ORDER,
+        default=None,
+        help="the bootstrap phase being run; requires readbacks and index state for it only",
+    )
     parser.add_argument("--project", help="canonical distribution being uploaded by this job")
     parser.add_argument("--environment", help="this upload job's bootstrap OIDC environment")
     parser.add_argument("--workspace", type=Path, default=ROOT, help=argparse.SUPPRESS)
@@ -780,6 +872,7 @@ def main(argv: list[str] | None = None) -> int:
             oidc_identity=arguments.oidc_identity,
             project=arguments.project,
             environment=arguments.environment,
+            phase=arguments.phase,
         )
     except (Refusal, distributions.ManifestError) as exc:
         _emit_error(f"publication readiness could not be evaluated: {exc}")

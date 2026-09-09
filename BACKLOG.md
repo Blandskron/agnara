@@ -25,12 +25,15 @@ Release pipeline recovery only (ADRs 0082 and 0083). Everything below `## A8` st
   created by an approved, fully gated `workflow_dispatch` run. The hotfix half
   is still unexercised, so the item does not close.
 
-- [!] Owner action: on PyPI, delete any pending entry whose Project name is not
-  exactly `agnara-a2a` and recreate it; read back the Project name and the
-  shared tuple (GitHub Actions, `Blandskron`, `agnara`, `release.yml`, `pypi`)
-  for all seven entries; record each readback in
-  `docs/releases/publication.json` (schema 3) dated on or after `2026-09-08`,
-  signed by a human account, with `status: VERIFIED`.
+- [~] Owner action, phased because PyPI allows three pending publishers at a
+  time (ADR 0083): `bootstrap-1` publishers `agnara-a2a` / `pypi-a2a`,
+  `agnara-cli` / `pypi-cli` and `agnara-events` / `pypi-events` were read back
+  on `2026-09-09` and are recorded `VERIFIED` in
+  `docs/releases/publication.json`. Still open: after `bootstrap-1` runs,
+  create and read back `agnara-http` / `pypi-http`, `agnara-mcp` / `pypi-mcp`
+  and `agnara-telemetry` / `pypi-telemetry` (phase `bootstrap-2`), then the
+  active `agnara` / `pypi-core` publisher (phase `final`); each readback dated
+  on or after `2026-09-08`, signed by a human account.
 
 - [!] Owner action: protect the `pypi` GitHub Environment with at least one
   required reviewer and a deployment branch policy limited to `main`.

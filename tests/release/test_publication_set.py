@@ -265,7 +265,11 @@ def test_publication_requires_a_dispatch_from_main_and_the_protected_environment
     triggers = next(value for key, value in document.items() if key in ("on", True))
 
     assert set(triggers) == {"workflow_dispatch"}
-    assert all("if" not in jobs[name] for name in ("publish", "verify-published", "tag"))
+    assert "if" not in jobs["publish"], "the human gate runs in every phase"
+    # The tag and the final verification exist only in the final phase, and
+    # that phase selector is the only kind of condition the workflow may carry.
+    for name in ("verify-published", "tag", "github-release"):
+        assert jobs[name]["if"] == "${{ inputs.phase == 'final' }}"
     assert jobs["publish"]["environment"]["name"] == "pypi"
     gated = [name for name, job in jobs.items() if isinstance(job.get("environment"), dict)]
     assert gated == ["publish", *UPLOAD_JOBS]
