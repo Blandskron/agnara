@@ -8,7 +8,7 @@ Changelog, and release versions follow the synchronized PEP 440 policy in ADR
 reached PyPI: its release run failed in artifact validation, so the publish job
 never executed. `0.1.0a4` was tagged and *partially* published: the core wheel
 reached PyPI and the other thirteen artifacts did not. It is superseded by
-`0.1.0a6` and should not be installed; see the recovery sections below. The
+`0.1.0a7` and should not be installed; see the recovery sections below. The
 `v0.1.0a5` workflow was aborted by publication readiness before its first
 upload, so no `0.1.0a5` artifact was published. Every first-party package in
 the workspace carries the synchronized version; through `0.1.0a4` only the
@@ -16,7 +16,41 @@ the workspace carries the synchronized version; through `0.1.0a4` only the
 
 ## [Unreleased]
 
+## [0.1.0a7] - 2026-09-08
+
+Publication and security recovery after the immutable `v0.1.0a6` workflow
+reached PyPI and failed on its first upload. No A6 artifact was published.
+
+### Security
+
+- Replaced the Scalar bundle's hostname substring assertion with extraction
+  and exact comparison of URL hostnames, avoiding incomplete URL checks.
+- Stopped the distribution checker CLI from copying untrusted artifact
+  diagnostics into CI logs; programmatic callers retain the detailed results.
+- Added explicit read-only workflow permissions to agent-coordination CI.
+
+### Changed
+
+- Synchronized the seven distributions and six exact core pins at `0.1.0a7`.
+- Publication evidence now records the exact PyPI Project name for each
+  Trusted Publisher, requires a confirmed top-level record and rejects
+  duplicate project entries.
+- Moved Execution Semantics unchanged to `0.1.0a8`; no functional work from
+  that horizon is included here ([#344]).
+
+### Fixed
+
+- Recorded that PyPI rejected `agnara-a2a` with `400 Non-user identities
+  cannot create new projects`. The distribution metadata and manifest both
+  use the canonical dash-separated name; `agnara_a2a` is only the required
+  wheel/sdist filename normalization. The Pending Trusted Publisher must be
+  recreated for Project name `agnara-a2a` with the documented OIDC tuple.
+
 ## [0.1.0a6] - 2026-09-08
+
+> **Publication status: aborted on the first upload.** PyPI rejected
+> `agnara-a2a` because no Pending Trusted Publisher matched its canonical
+> project name and the workflow identity. No `0.1.0a6` artifact was published.
 
 Publication recovery after the immutable `v0.1.0a5` attempt stopped safely
 before upload. This release changes no runtime behavior: it carries the same
@@ -968,7 +1002,8 @@ under `0.1.0a2` instead.
 [#257]: https://github.com/Blandskron/agnara/issues/257
 [#259]: https://github.com/Blandskron/agnara/issues/259
 [#261]: https://github.com/Blandskron/agnara/issues/261
-[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a6...develop
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a7...develop
+[0.1.0a7]: https://github.com/Blandskron/agnara/compare/v0.1.0a6...v0.1.0a7
 [0.1.0a6]: https://github.com/Blandskron/agnara/compare/v0.1.0a5...v0.1.0a6
 [0.1.0a5]: https://github.com/Blandskron/agnara/compare/v0.1.0a4...v0.1.0a5
 [0.1.0a4]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...v0.1.0a4
@@ -1073,3 +1108,4 @@ under `0.1.0a2` instead.
 [#313]: https://github.com/Blandskron/agnara/issues/313
 [#307]: https://github.com/Blandskron/agnara/issues/307
 [#341]: https://github.com/Blandskron/agnara/issues/341
+[#344]: https://github.com/Blandskron/agnara/issues/344

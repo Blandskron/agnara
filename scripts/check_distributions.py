@@ -722,10 +722,15 @@ def main(argv: list[str] | None = None) -> int:
         dist_dir=arguments.dist,
         expected_version=arguments.expected_version,
     )
-    for line in lines:
-        # Say what was inspected on success too. A gate that prints nothing
-        # cannot be told apart from one that never ran.
-        print(f"::error::{line}" if code else line)
+    if code:
+        # Diagnostics may contain metadata or paths controlled by the artifact
+        # under inspection. Keep them available to programmatic callers of
+        # ``run`` without copying potentially sensitive values into CI logs.
+        print(f"::error::distribution validation failed with {len(lines)} problem(s)")
+    else:
+        # Successful summaries contain only names from the reviewed manifest.
+        for line in lines:
+            print(line)
     return code
 
 

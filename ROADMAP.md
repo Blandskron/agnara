@@ -39,11 +39,18 @@ The immutable `v0.1.0a5` tag exercised the corrected preflight. Publication
 readiness stopped the workflow before the first upload because the seven
 Trusted Publishers were still unverified. No `0.1.0a5` artifact was published.
 
-### NOW — 0.1.0a6, Publication Recovery
+### ABORTED — 0.1.0a6, Publication Recovery
 
-Current baseline target, and deliberately small. It carries the `0.1.0a5`
-runtime unchanged and asks the same question: can Agnara publish the set it
-builds, completely, and prove that it did?
+The immutable `v0.1.0a6` tag reached the publication job, but PyPI rejected
+the first upload, `agnara-a2a`, because no Pending Trusted Publisher matched
+that canonical project name and the workflow's OIDC identity. No A6 artifact
+was published.
+
+### NOW — 0.1.0a7, Publication and Security Recovery
+
+Current baseline target, and deliberately small. It carries the `0.1.0a6`
+runtime unchanged, corrects the three release-blocking CodeQL findings and
+asks the same question: can Agnara publish the set it builds completely?
 
 - **Publish readiness as a separate claim from code readiness.** ADR 0079.
 - **Kernel published last**, so a partial publication fails closed.
@@ -51,9 +58,9 @@ builds, completely, and prove that it did?
 - **One source of truth for the seven distributions**, and a SHA-pinned
   publication path.
 
-### NEXT — 0.1.0a7, Execution Semantics
+### NEXT — 0.1.0a8, Execution Semantics
 
-Unchanged in content; moved one release later by ADR 0080. Its one question:
+Unchanged in content; moved one release later by ADR 0081. Its one question:
 does execution have streaming, identity and a measured cost?
 
 - **Streaming model** — `I2`, which still blocks the most other work.

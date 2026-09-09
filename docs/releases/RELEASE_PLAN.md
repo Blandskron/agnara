@@ -16,9 +16,11 @@ mature enough to close a release.
    ↓                                            published partially)
 0.1.0a5     publication recovery              (aborted before upload)
    ↓
-0.1.0a6     publication recovery              ← current target
+0.1.0a6     publication recovery              (aborted on first upload)
    ↓
-0.1.0a7     execution semantics and cost
+0.1.0a7     publication and security recovery ← current target
+   ↓
+0.1.0a8     execution semantics and cost
    ↓
 0.1.0b1     interoperability and composition
    ↓
@@ -40,8 +42,9 @@ question it answers:
 | --- | --- | --- |
 | `0.1.0a4` | Can Agnara be consumed as a framework from outside this repository? | I1, I7, the public exposure and composition surface |
 | `0.1.0a5` | Did publication readiness stop an unsafe release attempt before upload? | the first enforced preflight; aborted because publisher confirmation was absent |
-| `0.1.0a6` | Can Agnara publish the set it builds, completely, and prove that it did? | publication recovery with the A5 runtime unchanged |
-| `0.1.0a7` | Does execution have streaming, identity and a measured cost? | I2, I3, I14 |
+| `0.1.0a6` | Can Agnara publish the set it builds, completely, and prove that it did? | aborted on the first upload; no artifact published |
+| `0.1.0a7` | Can corrected publisher evidence and release security publish the complete set? | publication/security recovery with the A6 runtime unchanged |
+| `0.1.0a8` | Does execution have streaming, identity and a measured cost? | I2, I3, I14 |
 | `0.1.0b1` | Can the Python ecosystem use Agnara, and Agnara use it? | I20, and the beta contract gates |
 
 No alpha may declare stable support for an external framework;
@@ -223,7 +226,7 @@ version, which is what `docs/releases/publication.json` is.
 `UNVERIFIED`, and `release.yml` runs it before the first upload.
 
 **Guardrail.** `0.1.0a5` is historical and immutable. It is not resumed,
-retagged or published manually. Publication recovery continues in `0.1.0a6`.
+retagged or published manually. Publication recovery continued in `0.1.0a6`.
 
 ---
 
@@ -246,13 +249,32 @@ unchanged and owns only versioned release metadata and refreshed evidence.
 | Full supported test suite and security checks pass | evidence | yes |
 | No known release-blocking regression | evidence | yes |
 
-Publication readiness must remain unsatisfied until the owner records explicit
-confirmation for all seven projects. A6 creates no tag and publishes nothing
-during preparation.
+Publication readiness was satisfied by a recorded owner confirmation, but the
+first upload proved that the private Pending Trusted Publisher configuration
+still did not match `agnara-a2a`. A6 published nothing and remains immutable.
 
 ---
 
-## 0.1.0a7 — Execution Alpha
+## 0.1.0a7 — Publication and Security Recovery
+
+**Proves:** that the corrected Project-name evidence matches the seven PyPI
+Trusted Publishers and that the release path is free of known CodeQL findings.
+
+**Does not prove:** anything new about framework behavior. It carries the A6
+runtime unchanged.
+
+| Gate | Kind | Mandatory |
+| --- | --- | --- |
+| Every `0.1.0a6` code and release-system gate still satisfied | automated | yes |
+| Every exact PyPI Project name and Trusted Publisher tuple is confirmed | manual | yes |
+| No `0.1.0a7` file exists before the first upload | automated | yes |
+| The three release-blocking CodeQL findings are closed by fixes | evidence | yes |
+| Package build and clean-environment installation succeed | evidence | yes |
+| Full supported test suite and security checks pass | evidence | yes |
+
+---
+
+## 0.1.0a8 — Execution Alpha
 
 **Proves:** execution has the semantics the rest of the architecture waits on.
 Streaming exists as one model rather than per adapter; an execution identity
@@ -266,7 +288,7 @@ I14 performance budgets, and the prerequisites already recorded for them.
 
 | Gate | Kind | Mandatory |
 | --- | --- | --- |
-| Every `0.1.0a6` gate still satisfied | automated | yes |
+| Every `0.1.0a7` gate still satisfied | automated | yes |
 | The streaming model is decided in an accepted record | evidence | yes |
 | A streaming capability behaves identically in direct invocation and in at least one adapter | evidence | yes |
 | Cancellation, backpressure and post-partial failure are specified and tested | evidence | yes |
@@ -278,7 +300,7 @@ I14 performance budgets, and the prerequisites already recorded for them.
 | Benchmarks remain engineering measurements, not rankings | manual | yes |
 | No known release-blocking regression | evidence | yes |
 
-**Guardrail (ADR 0068, renumbered by ADR 0078 and ADR 0080).** `0.1.0a7` is not the
+**Guardrail (ADR 0068, renumbered through ADR 0081).** `0.1.0a8` is not the
 ecosystem integration release, the composition beta or a plugin marketplace. It may use an external
 integration as an experimental fixture where that genuinely helps validate
 streaming, idempotency or performance, and must not publish the fixture as a
@@ -310,7 +332,7 @@ enables them is marked done.
 
 | Gate | Kind | Mandatory |
 | --- | --- | --- |
-| Every `0.1.0a7` gate still satisfied | automated | yes |
+| Every `0.1.0a8` gate still satisfied | automated | yes |
 | The supported public API surface is identified | evidence | yes |
 | Public API is distinguished from internals | automated | yes |
 | Accidental exports audited | evidence | yes |

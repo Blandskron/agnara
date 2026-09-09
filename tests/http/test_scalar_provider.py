@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from importlib.resources import files
 from typing import Any
 
@@ -167,8 +168,12 @@ def test_bundle_evidence_matches_declared_network_and_responsive_boundaries() ->
     bundle = root.joinpath("standalone.js").read_bytes()
     page = _ScalarProvider().render(request())
 
-    assert b"fonts.scalar.com" in bundle
-    assert b"fonts.googleapis.com" not in bundle
+    referenced_hosts = {
+        match.group("host").decode("ascii")
+        for match in re.finditer(rb"https://(?P<host>[A-Za-z0-9.-]+)(?=[:/])", bundle)
+    }
+    assert "fonts.scalar.com" in referenced_hosts
+    assert "fonts.googleapis.com" not in referenced_hosts
     assert b"telemetry" in bundle
     assert b"@media" in bundle
     assert b"aria-label" in bundle

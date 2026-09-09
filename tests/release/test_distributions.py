@@ -295,6 +295,20 @@ def test_failures_are_reported_as_workflow_errors(
     assert "::error::" in captured.out
 
 
+def test_failure_output_does_not_log_untrusted_diagnostics(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    secret = "password=hunter2"
+    monkeypatch.setattr(checker, "run", lambda *_args, **_kwargs: (1, [secret]))
+
+    code = checker.main(["--workspace", str(WORKSPACE_ROOT)])
+    captured = capsys.readouterr()
+
+    assert code == 1
+    assert "distribution validation failed with 1 problem(s)" in captured.out
+    assert secret not in captured.out
+
+
 # ---------------------------------------------------------------------------
 # Built artifacts
 # ---------------------------------------------------------------------------

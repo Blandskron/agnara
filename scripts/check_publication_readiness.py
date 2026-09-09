@@ -26,16 +26,16 @@ release branch, which is what a paragraph in a release note was not.
 Modes, which compose::
 
     # offline: the repository's own publish-readiness
-    python scripts/check_publication_readiness.py --version 0.1.0a6
+    python scripts/check_publication_readiness.py --version 0.1.0a7
 
     # plus the built artifact set
-    python scripts/check_publication_readiness.py --version 0.1.0a6 --dist dist/
+    python scripts/check_publication_readiness.py --version 0.1.0a7 --dist dist/
 
     # plus the registry, before publishing: nothing of this version exists yet
-    python scripts/check_publication_readiness.py --version 0.1.0a6 --online
+    python scripts/check_publication_readiness.py --version 0.1.0a7 --online
 
     # after publishing: all seven are complete, wheel and sdist
-    python scripts/check_publication_readiness.py --version 0.1.0a6 \\
+    python scripts/check_publication_readiness.py --version 0.1.0a7 \\
         --online --require-published
 
 Standard library only.
@@ -343,6 +343,13 @@ def check_publisher_record(
             f"{PUBLICATION_RELATIVE.as_posix()} records target "
             f"{document.get('target')!r}, not {version}"
         )
+    if document.get("status") != VERIFIED:
+        problems.append(f"{PUBLICATION_RELATIVE.as_posix()}: top-level status is not {VERIFIED}")
+    elif not document.get("confirmed_on") or not document.get("confirmed_by"):
+        problems.append(
+            f"{PUBLICATION_RELATIVE.as_posix()}: top-level confirmation must name who "
+            "verified it and when"
+        )
     publisher = document.get("publisher")
     if publisher != REQUIRED_PUBLISHER:
         problems.append(
@@ -353,7 +360,10 @@ def check_publisher_record(
     projects = document.get("projects")
     if not isinstance(projects, list):
         raise Refusal(f"{PUBLICATION_RELATIVE.as_posix()}: 'projects' must be a list")
-    recorded = {entry.get("name"): entry for entry in projects if isinstance(entry, dict)}
+    entries = [entry for entry in projects if isinstance(entry, dict)]
+    recorded = {entry.get("name"): entry for entry in entries}
+    if len(recorded) != len(entries):
+        problems.append("publisher confirmations contain duplicate project names")
     missing = sorted(set(manifest.names) - set(recorded))
     extra = sorted(set(recorded) - set(manifest.names))
     if missing:
@@ -363,7 +373,12 @@ def check_publisher_record(
 
     for name in sorted(set(manifest.names) & set(recorded)):
         entry = recorded[name]
-        if entry.get("trusted_publisher") != VERIFIED:
+        if entry.get("publisher_project") != name:
+            problems.append(
+                f"{name}: Pending Trusted Publisher project name must be recorded exactly "
+                f"as {name!r}, found {entry.get('publisher_project')!r}"
+            )
+        elif entry.get("trusted_publisher") != VERIFIED:
             problems.append(
                 f"{name}: trusted_publisher is not {VERIFIED}; the owner must confirm "
                 f"the pending or active publisher and record {VERIFIED}"
