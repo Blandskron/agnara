@@ -1,10 +1,12 @@
 """`scripts/check_publication_readiness.py` is the gate `0.1.0a4` did not have.
 
 Its whole value is that it says no. These tests hold the refusals that matter:
-an unconfirmed Trusted Publisher, a confirmation recorded for a different
-version, a distribution left behind at another version, an adapter whose core
-pin drifted, a missing release note, an incomplete artifact set, and a version
-that already exists on the index.
+an unconfirmed Trusted Publisher, a readback older than the last registry
+failure, a confirmation signed by an automation identity, a publisher kind that
+disagrees with whether the project exists, a recorded tuple this repository's
+workflow cannot present, a distribution left behind at another version, an
+adapter whose core pin drifted, a missing release note, an incomplete artifact
+set, and a version that already exists on the index.
 
 A gate that can only pass is not a gate, so every case below constructs the
 failure and asserts the script reports it.
@@ -28,6 +30,9 @@ import distributions
 from tests.architecture.boundaries import WORKSPACE_ROOT
 
 VERSION = "9.9.9a1"
+READBACK = "2026-09-09"
+FAILURE = "2026-09-08"
+OWNER = "owner"
 
 
 def _load() -> Any:
@@ -42,6 +47,11 @@ def _load() -> Any:
 
 tool = _load()
 MANIFEST = distributions.load(WORKSPACE_ROOT)
+
+ACTIONS_ENVIRON = {
+    "GITHUB_REPOSITORY": "Blandskron/agnara",
+    "GITHUB_WORKFLOW_REF": "Blandskron/agnara/.github/workflows/release.yml@refs/heads/main",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -74,6 +84,16 @@ def _package(root: Path, distribution: distributions.Distribution, version: str)
     (package / "pyproject.toml").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def _write_workflow(root: Path, *, environment: str | None = "pypi") -> None:
+    workflows = root / ".github" / "workflows"
+    workflows.mkdir(parents=True, exist_ok=True)
+    body = "jobs:\n  publish:\n"
+    if environment is not None:
+        body += f"    environment:\n      name: {environment}\n"
+    body += "    steps: []\n"
+    (workflows / "release.yml").write_text(body, encoding="utf-8")
+
+
 @pytest.fixture
 def workspace(tmp_path: Path) -> Path:
     """A minimal checkout the tool accepts, so a test can break one thing."""
@@ -97,29 +117,42 @@ def workspace(tmp_path: Path) -> Path:
         f"[{VERSION}]: https://github.com/Blandskron/agnara/compare/v0.1.0a4...v{VERSION}\n",
         encoding="utf-8",
     )
+    _write_workflow(root)
     _write_publication(root, {})
     return root
 
 
+def _project(name: str, **overrides: Any) -> dict[str, Any]:
+    entry: dict[str, Any] = {
+        "name": name,
+        "publisher_project": name,
+        "publisher_kind": "active" if name == MANIFEST.core else "pending",
+        "pypi_state": "existing" if name == MANIFEST.core else "absent",
+        "trusted_publisher": "VERIFIED",
+        "verified_by": OWNER,
+        "verified_on": READBACK,
+    }
+    entry.update(overrides)
+    return entry
+
+
+def _projects(**overrides: Any) -> list[dict[str, Any]]:
+    return [_project(name, **overrides) for name in MANIFEST.names]
+
+
 def _write_publication(root: Path, overrides: dict[str, Any]) -> None:
     document: dict[str, Any] = {
-        "schema_version": 1,
-        "target": VERSION,
+        "schema_version": tool.SCHEMA_VERSION,
         "publisher": dict(tool.REQUIRED_PUBLISHER),
+        "release_authorization": {
+            "mechanism": tool.AUTHORIZATION_MECHANISM,
+            "environment": tool.REQUIRED_PUBLISHER["environment"],
+        },
         "status": "VERIFIED",
-        "confirmed_by": "owner",
-        "confirmed_on": "2026-09-08",
-        "projects": [
-            {
-                "name": name,
-                "publisher_project": name,
-                "trusted_publisher": "VERIFIED",
-                "verified_for_target": VERSION,
-                "verified_by": "owner",
-                "verified_on": "2026-09-08",
-            }
-            for name in MANIFEST.names
-        ],
+        "confirmed_by": OWNER,
+        "confirmed_on": READBACK,
+        "last_registry_failure": {"version": "0.1.0a6", "on": FAILURE},
+        "projects": _projects(),
     }
     document.update(overrides)
     (root / "docs" / "releases" / "publication.json").write_text(
@@ -136,6 +169,8 @@ def _run(workspace: Path, **kwargs: Any) -> tuple[int, list[str]]:
         online=False,
         require_published=False,
         index=tool.DEFAULT_INDEX,
+        oidc_identity=kwargs.pop("oidc_identity", False),
+        environ=kwargs.pop("environ", {}),
     )
     assert not kwargs
     return code, problems
@@ -177,25 +212,50 @@ def _repository_version() -> str:
 
 
 # ---------------------------------------------------------------------------
+# The committed record itself
+# ---------------------------------------------------------------------------
+
+
+def _committed_record() -> dict[str, Any]:
+    return json.loads(
+        (WORKSPACE_ROOT / "docs" / "releases" / "publication.json").read_text(encoding="utf-8")
+    )
+
+
+def test_the_committed_record_names_every_project_by_its_canonical_name() -> None:
+    """`agnara_a2a` is a filename, not a project. The record never says it."""
+    document = _committed_record()
+    recorded = {entry["name"]: entry["publisher_project"] for entry in document["projects"]}
+
+    assert document["schema_version"] == tool.SCHEMA_VERSION
+    assert sorted(recorded) == sorted(MANIFEST.names)
+    for name, publisher_project in recorded.items():
+        assert publisher_project == name
+        assert "_" not in publisher_project
+
+
+def test_the_committed_record_delegates_authorization_to_the_pypi_environment() -> None:
+    document = _committed_record()
+
+    assert document["publisher"] == tool.REQUIRED_PUBLISHER
+    assert document["release_authorization"]["mechanism"] == tool.AUTHORIZATION_MECHANISM
+    assert document["release_authorization"]["environment"] == "pypi"
+    assert "target" not in document, "authorization is no longer a per-target JSON edit"
+    assert all("verified_for_target" not in entry for entry in document["projects"])
+
+
+def test_the_committed_record_describes_a_workflow_this_repository_has() -> None:
+    assert tool.check_workflow_identity(WORKSPACE_ROOT) == []
+
+
+# ---------------------------------------------------------------------------
 # The registry contract
 # ---------------------------------------------------------------------------
 
 
 def test_an_unverified_trusted_publisher_refuses_the_release(workspace: Path) -> None:
     """This single case is the whole `0.1.0a4` incident."""
-    _write_publication(
-        workspace,
-        {
-            "projects": [
-                {
-                    "name": name,
-                    "publisher_project": name,
-                    "trusted_publisher": "UNVERIFIED",
-                }
-                for name in MANIFEST.names
-            ]
-        },
-    )
+    _write_publication(workspace, {"projects": _projects(trusted_publisher="UNVERIFIED")})
 
     code, problems = _run(workspace)
 
@@ -215,14 +275,7 @@ def test_top_level_confirmation_is_required(workspace: Path) -> None:
 
 def test_pending_publisher_project_name_must_be_exact(workspace: Path) -> None:
     projects = [
-        {
-            "name": name,
-            "publisher_project": "agnara_a2a" if name == "agnara-a2a" else name,
-            "trusted_publisher": "VERIFIED",
-            "verified_for_target": VERSION,
-            "verified_by": "owner",
-            "verified_on": "2026-09-08",
-        }
+        _project(name, publisher_project="agnara_a2a" if name == "agnara-a2a" else name)
         for name in MANIFEST.names
     ]
     _write_publication(workspace, {"projects": projects})
@@ -236,17 +289,7 @@ def test_pending_publisher_project_name_must_be_exact(workspace: Path) -> None:
 
 
 def test_duplicate_publisher_project_records_are_rejected(workspace: Path) -> None:
-    projects = [
-        {
-            "name": name,
-            "publisher_project": name,
-            "trusted_publisher": "VERIFIED",
-            "verified_for_target": VERSION,
-            "verified_by": "owner",
-            "verified_on": "2026-09-08",
-        }
-        for name in MANIFEST.names
-    ]
+    projects = _projects()
     projects.append(dict(projects[0]))
     _write_publication(workspace, {"projects": projects})
 
@@ -256,50 +299,25 @@ def test_duplicate_publisher_project_records_are_rejected(workspace: Path) -> No
     assert any("duplicate project names" in problem for problem in problems)
 
 
-def test_a_confirmation_recorded_for_another_version_does_not_carry_over(
-    workspace: Path,
-) -> None:
-    """Publishers are checked per release, because they change between them."""
-    _write_publication(
-        workspace,
-        {
-            "projects": [
-                {
-                    "name": name,
-                    "publisher_project": name,
-                    "trusted_publisher": "VERIFIED",
-                    "verified_for_target": "0.0.1a1",
-                    "verified_by": "owner",
-                    "verified_on": "2026-01-01",
-                }
-                for name in MANIFEST.names
-            ]
-        },
-    )
+def test_a_readback_older_than_the_last_registry_failure_is_refused(workspace: Path) -> None:
+    """`0.1.0a6` proved a readback wrong. Everything read before it is void."""
+    _write_publication(workspace, {"projects": _projects(verified_on="2026-09-07")})
 
     code, problems = _run(workspace)
 
     assert code == 1
-    assert all("was recorded for '0.0.1a1'" in problem for problem in problems)
+    assert len(problems) == len(MANIFEST.names)
+    assert all("predates the registry failure of 2026-09-08" in problem for problem in problems)
+
+
+def test_a_readback_on_the_day_of_the_failure_or_later_is_accepted(workspace: Path) -> None:
+    _write_publication(workspace, {"projects": _projects(verified_on=FAILURE)})
+
+    assert _run(workspace) == (0, [])
 
 
 def test_a_confirmation_must_name_who_made_it(workspace: Path) -> None:
-    _write_publication(
-        workspace,
-        {
-            "projects": [
-                {
-                    "name": name,
-                    "publisher_project": name,
-                    "trusted_publisher": "VERIFIED",
-                    "verified_for_target": VERSION,
-                    "verified_by": None,
-                    "verified_on": None,
-                }
-                for name in MANIFEST.names
-            ]
-        },
-    )
+    _write_publication(workspace, {"projects": _projects(verified_by=None, verified_on=None)})
 
     code, problems = _run(workspace)
 
@@ -307,16 +325,41 @@ def test_a_confirmation_must_name_who_made_it(workspace: Path) -> None:
     assert all("who verified it and when" in problem for problem in problems)
 
 
+@pytest.mark.parametrize(
+    "identity",
+    ["github-actions[bot]", "release workflow", "codex", "Claude", "dependabot", "an agent"],
+)
+def test_an_automation_identity_cannot_confirm_a_publisher(workspace: Path, identity: str) -> None:
+    """The pipeline must never be able to certify its own registry configuration."""
+    _write_publication(workspace, {"projects": _projects(verified_by=identity)})
+
+    code, problems = _run(workspace)
+
+    assert code == 1
+    assert all("names an automation identity" in problem for problem in problems)
+
+
+def test_an_automation_identity_cannot_confirm_the_record_as_a_whole(workspace: Path) -> None:
+    _write_publication(workspace, {"confirmed_by": "github-actions[bot]"})
+
+    code, problems = _run(workspace)
+
+    assert code == 1
+    assert any("names an automation identity" in problem for problem in problems)
+
+
+def test_a_confirmation_date_must_be_a_real_date(workspace: Path) -> None:
+    _write_publication(workspace, {"projects": _projects(verified_on="yesterday")})
+
+    code, problems = _run(workspace)
+
+    assert code == 1
+    assert all("must be an ISO date" in problem for problem in problems)
+
+
 def test_a_missing_project_confirmation_is_not_silently_skipped(workspace: Path) -> None:
-    document = json.loads(
-        (workspace / "docs" / "releases" / "publication.json").read_text(encoding="utf-8")
-    )
-    document["projects"] = [
-        entry for entry in document["projects"] if entry["name"] != "agnara-mcp"
-    ]
-    (workspace / "docs" / "releases" / "publication.json").write_text(
-        json.dumps(document), encoding="utf-8"
-    )
+    projects = [entry for entry in _projects() if entry["name"] != "agnara-mcp"]
+    _write_publication(workspace, {"projects": projects})
 
     code, problems = _run(workspace)
 
@@ -335,13 +378,125 @@ def test_a_different_publisher_tuple_is_refused(workspace: Path) -> None:
     assert any("publisher tuple does not match" in problem for problem in problems)
 
 
-def test_the_record_must_name_the_version_being_published(workspace: Path) -> None:
-    _write_publication(workspace, {"target": "0.0.1a1"})
+@pytest.mark.parametrize(
+    "authorization",
+    [
+        None,
+        {"mechanism": "publication.json", "environment": "pypi"},
+        {"mechanism": "github-environment", "environment": "release"},
+    ],
+)
+def test_release_authorization_must_be_the_pypi_environment(
+    workspace: Path, authorization: dict[str, str] | None
+) -> None:
+    """A human authorizes a release by approving the environment, never by a JSON edit."""
+    _write_publication(workspace, {"release_authorization": authorization})
 
     code, problems = _run(workspace)
 
     assert code == 1
-    assert any("records target '0.0.1a1'" in problem for problem in problems)
+    assert any("release_authorization must be the github-environment 'pypi'" in p for p in problems)
+
+
+def test_a_publisher_kind_that_disagrees_with_the_recorded_pypi_state_is_refused(
+    workspace: Path,
+) -> None:
+    """Pending publishers live on the account page, active ones on the project."""
+    projects = [
+        _project(name, publisher_kind="pending") if name == MANIFEST.core else _project(name)
+        for name in MANIFEST.names
+    ]
+    _write_publication(workspace, {"projects": projects})
+
+    code, problems = _run(workspace)
+
+    assert code == 1
+    assert any(
+        "agnara: a pending publisher belongs to a project that is absent on PyPI" in p
+        for p in problems
+    )
+
+
+def test_an_unknown_publisher_kind_is_refused(workspace: Path) -> None:
+    _write_publication(workspace, {"projects": _projects(publisher_kind="trusted")})
+
+    code, problems = _run(workspace)
+
+    assert code == 1
+    assert all("publisher_kind must be one of ['active', 'pending']" in p for p in problems)
+
+
+def test_a_malformed_registry_failure_record_is_refused(workspace: Path) -> None:
+    _write_publication(workspace, {"last_registry_failure": {"version": "0.1.0a6"}})
+
+    code, problems = _run(workspace)
+
+    assert code == 1
+    assert any("last_registry_failure must record an ISO date" in p for p in problems)
+
+
+def test_a_record_without_a_registry_failure_is_still_acceptable(workspace: Path) -> None:
+    _write_publication(workspace, {"last_registry_failure": None})
+
+    assert _run(workspace) == (0, [])
+
+
+# ---------------------------------------------------------------------------
+# The recorded tuple must be one this repository can present
+# ---------------------------------------------------------------------------
+
+
+def test_the_recorded_workflow_must_run_a_job_in_the_publisher_environment(
+    workspace: Path,
+) -> None:
+    _write_workflow(workspace, environment="release")
+
+    code, problems = _run(workspace)
+
+    assert code == 1
+    assert any("no job that runs in the 'pypi' environment" in p for p in problems)
+
+
+def test_a_missing_release_workflow_is_refused(workspace: Path) -> None:
+    (workspace / ".github" / "workflows" / "release.yml").unlink()
+
+    code, problems = _run(workspace)
+
+    assert code == 1
+    assert any("release.yml does not exist" in p for p in problems)
+
+
+def test_the_running_workflow_must_be_the_recorded_publisher(workspace: Path) -> None:
+    assert _run(workspace, oidc_identity=True, environ=ACTIONS_ENVIRON) == (0, [])
+
+
+@pytest.mark.parametrize(
+    ("environ", "expected"),
+    [
+        ({}, "can only be checked inside a GitHub Actions run"),
+        (
+            ACTIONS_ENVIRON | {"GITHUB_REPOSITORY": "someone/agnara"},
+            "this run belongs to someone/agnara",
+        ),
+        (
+            ACTIONS_ENVIRON
+            | {"GITHUB_WORKFLOW_REF": "Blandskron/agnara/.github/workflows/ci.yml@refs/heads/main"},
+            "this run's workflow is Blandskron/agnara/.github/workflows/ci.yml",
+        ),
+    ],
+)
+def test_a_run_that_is_not_the_recorded_publisher_is_refused(
+    workspace: Path, environ: dict[str, str], expected: str
+) -> None:
+    """PyPI would refuse the upload; refusing here happens before any tag exists."""
+    code, problems = _run(workspace, oidc_identity=True, environ=environ)
+
+    assert code == 1
+    assert any(expected in problem for problem in problems)
+
+
+def test_the_oidc_identity_is_not_required_outside_the_workflow(workspace: Path) -> None:
+    assert _run(workspace, oidc_identity=False, environ={}) == (0, [])
 
 
 # ---------------------------------------------------------------------------
@@ -515,6 +670,57 @@ def test_a_project_that_does_not_exist_yet_is_reported_not_refused(
     assert len(notes) == len(MANIFEST.names)
 
 
+def test_a_pending_publisher_recorded_for_an_existing_project_is_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The readback looked at the account page for a project that has its own."""
+    _stub_index(monkeypatch, {"agnara": {"releases": {}}})
+
+    problems, _ = tool.check_index(
+        MANIFEST,
+        VERSION,
+        index=tool.DEFAULT_INDEX,
+        require_published=False,
+        recorded_kinds={"agnara": "pending"},
+    )
+
+    assert problems == [
+        "agnara: the record read back a publisher of kind 'pending', but the project is "
+        "existing on https://pypi.org; re-verify it where PyPI actually holds it"
+    ]
+
+
+def test_an_active_publisher_recorded_for_an_absent_project_is_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """No project, no active publisher: it is a pending one or nothing."""
+    _stub_index(monkeypatch, {})
+
+    problems, _ = tool.check_index(
+        MANIFEST,
+        VERSION,
+        index=tool.DEFAULT_INDEX,
+        require_published=False,
+        recorded_kinds={"agnara-a2a": "active"},
+    )
+
+    assert problems == [
+        "agnara-a2a: the record read back a publisher of kind 'active', but the project is "
+        "absent on https://pypi.org; re-verify it where PyPI actually holds it"
+    ]
+
+
+def test_consistent_publisher_kinds_pass_the_index_check(monkeypatch: pytest.MonkeyPatch) -> None:
+    _stub_index(monkeypatch, {"agnara": {"releases": {}}})
+    kinds = {name: ("active" if name == "agnara" else "pending") for name in MANIFEST.names}
+
+    problems, _ = tool.check_index(
+        MANIFEST, VERSION, index=tool.DEFAULT_INDEX, require_published=False, recorded_kinds=kinds
+    )
+
+    assert problems == []
+
+
 def test_post_publication_requires_a_wheel_and_an_sdist_for_every_project(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -632,6 +838,22 @@ def test_annotations_cannot_inject_new_workflow_commands(
     assert captured.out.count("::error::") == 1
     assert "\n::warning::" not in captured.out
     assert "%0A" not in captured.out
+
+
+def test_the_command_can_require_the_oidc_identity(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    seen: dict[str, Any] = {}
+
+    def record(*args: Any, **kwargs: Any) -> tuple[int, list[str], list[str]]:
+        seen.update(kwargs)
+        return 0, [], ["note"]
+
+    monkeypatch.setattr(tool, "run", record)
+
+    assert tool.main(["--version", VERSION, "--oidc-identity"]) == 0
+    assert seen["oidc_identity"] is True
+    assert "PUBLISH READY" in capsys.readouterr().out
 
 
 @pytest.mark.parametrize(

@@ -46,22 +46,37 @@ the first upload, `agnara-a2a`, because no Pending Trusted Publisher matched
 that canonical project name and the workflow's OIDC identity. No A6 artifact
 was published.
 
-### NOW — 0.1.0a7, Publication and Security Recovery
+### ABORTED — 0.1.0a7, Publication and Security Recovery
 
-Current baseline target, and deliberately small. It carries the `0.1.0a6`
-runtime unchanged, corrects the three release-blocking CodeQL findings and
-asks the same question: can Agnara publish the set it builds completely?
+The immutable `v0.1.0a7` tag was created while the publication record was
+still `UNVERIFIED`, and publication readiness stopped the workflow before its
+first upload. It fixed the three release-blocking CodeQL findings, which
+remain fixed. No A7 artifact was published.
 
-- **Publish readiness as a separate claim from code readiness.** ADR 0079.
-- **Kernel published last**, so a partial publication fails closed.
-- **Post-publication completeness verification**, gating the GitHub Release.
-- **One source of truth for the seven distributions**, and a SHA-pinned
-  publication path.
+### NOW — 0.1.0a8, Release Pipeline Recovery
 
-### NEXT — 0.1.0a8, Execution Semantics
+Current baseline target, and deliberately small. It carries the `0.1.0a7`
+runtime unchanged and asks one question: can a release no longer consume a
+version before every gate and a human have said yes? ADR 0082.
 
-Unchanged in content; moved one release later by ADR 0081. Its one question:
-does execution have streaming, identity and a measured cost?
+- **The tag is a consequence of the release, not its trigger.** A release is
+  a `workflow_dispatch` run from `main`; every gate runs first, a reviewer
+  approves in the protected `pypi` environment, and only that run creates the
+  annotated tag, publishes, verifies and announces.
+- **The human gate is verified by the pipeline.** A `pypi` environment without
+  required reviewers refuses the release before anything is built.
+- **`publication.json` records registry facts**, read back by a human after
+  the last registry failure; the per-release authorization is the environment
+  approval.
+- Everything A5 to A7 got right stays: publish readiness as a separate claim
+  (ADR 0079), kernel published last, post-publication verification gating the
+  GitHub Release, one source of truth for the seven distributions, a
+  SHA-pinned publication path.
+
+### NEXT — 0.1.0a9, Execution Semantics
+
+Unchanged in content; moved one release later by ADR 0082 after ADR 0081. Its
+one question: does execution have streaming, identity and a measured cost?
 
 - **Streaming model** — `I2`, which still blocks the most other work.
 - **Execution identity and idempotency behaviour.**

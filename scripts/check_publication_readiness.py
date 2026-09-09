@@ -18,24 +18,40 @@ So the two claims are now separate and separately checked:
   but must refuse to assume.
 
 The registry part is the one that matters most and is the easiest to fake, so
-it is not prose. `docs/releases/publication.json` records, per project, that a
-human confirmed the Trusted Publisher tuple for *this* target version. An
-unconfirmed record is a hard failure. That file is a reviewed diff on the
-release branch, which is what a paragraph in a release note was not.
+it is not prose. `docs/releases/publication.json` records the expected Trusted
+Publisher configuration -- the shared tuple and, per project, the exact PyPI
+Project name and whether its publisher is pending or active -- and who read
+each of them back from PyPI, and when. An unconfirmed record is a hard failure;
+so is a readback older than the last recorded registry failure, a publisher
+kind that disagrees with whether the project exists on the index, a tuple that
+is not the identity `release.yml` presents, or a confirmation signed by an
+automation identity. That file is a reviewed diff, which is what a paragraph
+in a release note was not.
+
+What this file deliberately no longer holds is the per-release human
+authorization. `0.1.0a7` was tagged while the record said `UNVERIFIED`, which
+burned the version without publishing anything: a JSON field cannot stop a
+tag that already exists. The authorization is now the approval of the
+protected `pypi` GitHub environment inside the release run, and the tag is
+created only after it (ADR 0082). This script keeps the registry facts honest;
+`scripts/check_release_preconditions.py` keeps the approval real.
 
 Modes, which compose::
 
     # offline: the repository's own publish-readiness
-    python scripts/check_publication_readiness.py --version 0.1.0a7
+    python scripts/check_publication_readiness.py --version 0.1.0a8
 
     # plus the built artifact set
-    python scripts/check_publication_readiness.py --version 0.1.0a7 --dist dist/
+    python scripts/check_publication_readiness.py --version 0.1.0a8 --dist dist/
 
     # plus the registry, before publishing: nothing of this version exists yet
-    python scripts/check_publication_readiness.py --version 0.1.0a7 --online
+    python scripts/check_publication_readiness.py --version 0.1.0a8 --online
+
+    # inside GitHub Actions: the recorded tuple is this run's OIDC identity
+    python scripts/check_publication_readiness.py --version 0.1.0a8 --oidc-identity
 
     # after publishing: all seven are complete, wheel and sdist
-    python scripts/check_publication_readiness.py --version 0.1.0a7 \\
+    python scripts/check_publication_readiness.py --version 0.1.0a8 \\
         --online --require-published
 
 Standard library only.
@@ -45,6 +61,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -53,6 +70,8 @@ import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Mapping
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -62,9 +81,27 @@ ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION_RELATIVE = Path("docs") / "releases" / "publication.json"
 RELEASE_NOTES_DIR = Path("docs") / "releases"
 CHANGELOG_RELATIVE = Path("CHANGELOG.md")
+WORKFLOWS_RELATIVE = Path(".github") / "workflows"
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 VERIFIED = "VERIFIED"
+
+#: How a release is authorized by a human: by approving the protected GitHub
+#: environment the publishing jobs run in, never by editing a file.
+AUTHORIZATION_MECHANISM = "github-environment"
+
+#: A project that does not exist yet is created by a *pending* publisher; one
+#: that exists carries an *active* publisher in its own settings. The two are
+#: configured in different places on PyPI, so the record says which it read.
+PUBLISHER_KINDS = {"pending": "absent", "active": "existing"}
+
+#: Identities that cannot confirm anything. A confirmation is a human act; a
+#: workflow, a bot or an agent writing its own name here would make the record
+#: certify itself.
+AUTOMATION_IDENTITY = re.compile(
+    r"(?i)(\[bot\]|github-actions|dependabot|copilot|codex|claude|chatgpt|openai|anthropic|"
+    r"\bbot\b|\bagent\b|automation|workflow|pipeline)"
+)
 
 #: The Trusted Publisher tuple every Agnara project must carry. A publisher
 #: that differs in any field is a different identity to PyPI, and the upload
@@ -325,41 +362,80 @@ def load_publication_record(workspace: Path) -> dict[str, Any]:
     return document
 
 
-def check_publisher_record(
-    workspace: Path, manifest: distributions.Manifest, version: str
-) -> list[str]:
-    """A human must have confirmed each Trusted Publisher for this exact version.
+def _iso_date(value: object) -> date | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _confirmation_problems(who: object, when: object, *, subject: str) -> list[str]:
+    """A confirmation is a dated human act, or it is nothing."""
+    if not who or not when:
+        return [f"{subject}: a confirmation must name who verified it and when"]
+    problems: list[str] = []
+    if not isinstance(who, str) or AUTOMATION_IDENTITY.search(who):
+        problems.append(
+            f"{subject}: verified_by names an automation identity; only a human readback "
+            "of PyPI can confirm a Trusted Publisher"
+        )
+    if _iso_date(when) is None:
+        problems.append(f"{subject}: the confirmation date must be an ISO date (YYYY-MM-DD)")
+    return problems
+
+
+def check_publisher_record(workspace: Path, manifest: distributions.Manifest) -> list[str]:
+    """A human must have read each Trusted Publisher back from PyPI, recently.
 
     This is the gate `0.1.0a4` did not have. The information is external to
     the repository and cannot be derived from it, so the repository's job is
-    not to guess it but to refuse to proceed without a recorded, reviewed
-    confirmation that names the version it was made for.
+    not to guess it but to refuse to proceed without a recorded, reviewed,
+    dated readback -- one made after the last time PyPI proved a readback
+    wrong, by a person rather than by the pipeline, and consistent with what
+    the record itself says about each project.
     """
     document = load_publication_record(workspace)
+    where = PUBLICATION_RELATIVE.as_posix()
     problems: list[str] = []
 
-    if document.get("target") != version:
-        problems.append(
-            f"{PUBLICATION_RELATIVE.as_posix()} records target "
-            f"{document.get('target')!r}, not {version}"
-        )
     if document.get("status") != VERIFIED:
-        problems.append(f"{PUBLICATION_RELATIVE.as_posix()}: top-level status is not {VERIFIED}")
-    elif not document.get("confirmed_on") or not document.get("confirmed_by"):
-        problems.append(
-            f"{PUBLICATION_RELATIVE.as_posix()}: top-level confirmation must name who "
-            "verified it and when"
+        problems.append(f"{where}: top-level status is not {VERIFIED}")
+    else:
+        problems.extend(
+            _confirmation_problems(
+                document.get("confirmed_by"), document.get("confirmed_on"), subject=where
+            )
         )
     publisher = document.get("publisher")
     if publisher != REQUIRED_PUBLISHER:
         problems.append(
-            f"{PUBLICATION_RELATIVE.as_posix()}: publisher tuple does not match "
-            "the required GitHub Trusted Publisher identity"
+            f"{where}: publisher tuple does not match the required GitHub Trusted Publisher "
+            "identity"
         )
+
+    authorization = document.get("release_authorization")
+    if not isinstance(authorization, dict) or (
+        authorization.get("mechanism") != AUTHORIZATION_MECHANISM
+        or authorization.get("environment") != REQUIRED_PUBLISHER["environment"]
+    ):
+        problems.append(
+            f"{where}: release_authorization must be the {AUTHORIZATION_MECHANISM} "
+            f"{REQUIRED_PUBLISHER['environment']!r}; a release is authorized by approving that "
+            "environment, not by editing this file"
+        )
+
+    failure = document.get("last_registry_failure")
+    failed_on: date | None = None
+    if failure is not None:
+        failed_on = _iso_date(failure.get("on")) if isinstance(failure, dict) else None
+        if failed_on is None:
+            problems.append(f"{where}: last_registry_failure must record an ISO date under 'on'")
 
     projects = document.get("projects")
     if not isinstance(projects, list):
-        raise Refusal(f"{PUBLICATION_RELATIVE.as_posix()}: 'projects' must be a list")
+        raise Refusal(f"{where}: 'projects' must be a list")
     entries = [entry for entry in projects if isinstance(entry, dict)]
     recorded = {entry.get("name"): entry for entry in entries}
     if len(recorded) != len(entries):
@@ -375,21 +451,108 @@ def check_publisher_record(
         entry = recorded[name]
         if entry.get("publisher_project") != name:
             problems.append(
-                f"{name}: Pending Trusted Publisher project name must be recorded exactly "
+                f"{name}: Trusted Publisher project name must be recorded exactly "
                 f"as {name!r}, found {entry.get('publisher_project')!r}"
             )
-        elif entry.get("trusted_publisher") != VERIFIED:
+            continue
+        kind = entry.get("publisher_kind")
+        if kind not in PUBLISHER_KINDS:
             problems.append(
-                f"{name}: trusted_publisher is not {VERIFIED}; the owner must confirm "
-                f"the pending or active publisher and record {VERIFIED}"
+                f"{name}: publisher_kind must be one of {sorted(PUBLISHER_KINDS)}, found {kind!r}"
             )
-        elif entry.get("verified_for_target") != version:
+        elif entry.get("pypi_state") != PUBLISHER_KINDS[kind]:
             problems.append(
-                f"{name}: publisher confirmation was recorded for "
-                f"{entry.get('verified_for_target')!r}, not {version}"
+                f"{name}: a {kind} publisher belongs to a project that is "
+                f"{PUBLISHER_KINDS[kind]} on PyPI, but pypi_state records "
+                f"{entry.get('pypi_state')!r}"
             )
-        elif not entry.get("verified_on") or not entry.get("verified_by"):
-            problems.append(f"{name}: a confirmation must name who verified it and when")
+        if entry.get("trusted_publisher") != VERIFIED:
+            problems.append(
+                f"{name}: trusted_publisher is not {VERIFIED}; the owner must read back "
+                f"the {kind or 'pending or active'} publisher and record {VERIFIED}"
+            )
+            continue
+        confirmation = _confirmation_problems(
+            entry.get("verified_by"), entry.get("verified_on"), subject=name
+        )
+        problems.extend(confirmation)
+        verified_on = _iso_date(entry.get("verified_on"))
+        if (
+            not confirmation
+            and failed_on is not None
+            and verified_on is not None
+            and verified_on < failed_on
+        ):
+            problems.append(
+                f"{name}: the readback of {verified_on.isoformat()} predates the registry "
+                f"failure of {failed_on.isoformat()}; read the publisher back again"
+            )
+    return problems
+
+
+def publisher_kinds(workspace: Path) -> dict[str, str]:
+    """Project name -> recorded publisher kind, for the online consistency check."""
+    document = load_publication_record(workspace)
+    projects = document.get("projects")
+    if not isinstance(projects, list):
+        return {}
+    return {
+        entry["name"]: entry["publisher_kind"]
+        for entry in projects
+        if isinstance(entry, dict)
+        and isinstance(entry.get("name"), str)
+        and entry.get("publisher_kind") in PUBLISHER_KINDS
+    }
+
+
+def check_workflow_identity(workspace: Path) -> list[str]:
+    """The recorded tuple must be one this repository can actually present.
+
+    PyPI matches the OIDC token against the publisher's workflow filename and
+    environment name. A record that names a workflow file that does not exist,
+    or an environment no publishing job enters, is a record of nothing.
+    """
+    workflow = REQUIRED_PUBLISHER["workflow"]
+    environment = REQUIRED_PUBLISHER["environment"]
+    path = workspace / WORKFLOWS_RELATIVE / workflow
+    if not path.is_file():
+        return [f"{WORKFLOWS_RELATIVE.as_posix()}/{workflow} does not exist"]
+    text = path.read_text(encoding="utf-8")
+    pattern = rf"^\s*environment:\s*\n\s*name:\s*{re.escape(environment)}\s*$"
+    if not re.search(pattern, text, re.M):
+        return [f"{workflow} has no job that runs in the {environment!r} environment"]
+    return []
+
+
+def check_oidc_identity(environ: Mapping[str, str]) -> list[str]:
+    """Inside GitHub Actions: this run *is* the recorded Trusted Publisher.
+
+    `GITHUB_REPOSITORY` and `GITHUB_WORKFLOW_REF` are what the OIDC token will
+    carry as `repository` and `workflow_ref`. If they do not spell the recorded
+    tuple, PyPI will refuse the upload whatever the record says, so refuse
+    here, before any tag exists.
+    """
+    owner = REQUIRED_PUBLISHER["owner"]
+    repository = REQUIRED_PUBLISHER["repository"]
+    workflow = REQUIRED_PUBLISHER["workflow"]
+    expected_repository = f"{owner}/{repository}"
+    expected_prefix = f"{expected_repository}/{WORKFLOWS_RELATIVE.as_posix()}/{workflow}@"
+
+    actual_repository = environ.get("GITHUB_REPOSITORY")
+    actual_workflow = environ.get("GITHUB_WORKFLOW_REF")
+    if not actual_repository or not actual_workflow:
+        return ["the OIDC identity can only be checked inside a GitHub Actions run"]
+    problems: list[str] = []
+    if actual_repository != expected_repository:
+        problems.append(
+            f"this run belongs to {actual_repository}, the recorded publisher is "
+            f"{expected_repository}"
+        )
+    if not actual_workflow.startswith(expected_prefix):
+        problems.append(
+            f"this run's workflow is {actual_workflow.split('@', 1)[0]}, the recorded publisher "
+            f"is {expected_prefix.rstrip('@')}"
+        )
     return problems
 
 
@@ -418,20 +581,34 @@ def check_index(
     *,
     index: str,
     require_published: bool,
+    recorded_kinds: Mapping[str, str] | None = None,
 ) -> tuple[list[str], list[str]]:
     """Compare the index against what this release intends to put there.
 
     Before publishing, nothing of this version may exist -- a rerun over an
-    existing file is what `skip-existing` would hide. Afterwards, every one of
-    the seven must carry both a wheel and an sdist, which is precisely what
-    `0.1.0a4` failed to do even for the one project it reached.
+    existing file is what `skip-existing` would hide -- and the publisher kind
+    the record claims to have read back must agree with whether the project
+    exists: a pending publisher on an existing project, or an active one on a
+    project that is not there, is a readback of the wrong page. Afterwards,
+    every one of the seven must carry both a wheel and an sdist, which is
+    precisely what `0.1.0a4` failed to do even for the one project it reached.
     """
     problems: list[str] = []
     notes: list[str] = []
     safe_index = _safe_url_for_log(index)
+    kinds = recorded_kinds or {}
     for distribution in manifest.distributions:
         name = distribution.name
         document = _index_json(index, name)
+        kind = kinds.get(name)
+        if not require_published and kind is not None:
+            actual = "absent" if document is None else "existing"
+            if PUBLISHER_KINDS[kind] != actual:
+                problems.append(
+                    f"{name}: the record read back a publisher of kind {kind!r}, but the "
+                    f"project is {actual} on {safe_index}; re-verify it where PyPI actually "
+                    "holds it"
+                )
         if document is None:
             if require_published:
                 problems.append(f"{name}: no project on {safe_index} after publication")
@@ -476,6 +653,8 @@ def run(
     online: bool,
     require_published: bool,
     index: str,
+    oidc_identity: bool = False,
+    environ: Mapping[str, str] | None = None,
 ) -> tuple[int, list[str], list[str]]:
     if VERSION_PATTERN.fullmatch(version) is None:
         return 1, [f"{version!r} is not a publishable v0.x release version"], []
@@ -492,8 +671,14 @@ def run(
     problems.extend(check_no_stale_versions(workspace, manifest, version))
     problems.extend(check_release_notes(workspace, version))
     problems.extend(check_changelog(workspace, version))
-    problems.extend(check_publisher_record(workspace, manifest, version))
+    problems.extend(check_publisher_record(workspace, manifest))
+    problems.extend(check_workflow_identity(workspace))
     problems.extend(check_tag(workspace, version, tag))
+
+    if oidc_identity:
+        problems.extend(check_oidc_identity(os.environ if environ is None else environ))
+        if not problems:
+            notes.append("this run presents the recorded Trusted Publisher identity")
 
     if dist_dir is not None:
         problems.extend(check_artifact_set(manifest, dist_dir, version))
@@ -501,7 +686,11 @@ def run(
 
     if online:
         index_problems, index_notes = check_index(
-            manifest, version, index=index, require_published=require_published
+            manifest,
+            version,
+            index=index,
+            require_published=require_published,
+            recorded_kinds=publisher_kinds(workspace),
         )
         problems.extend(index_problems)
         notes.extend(index_notes)
@@ -524,6 +713,11 @@ def main(argv: list[str] | None = None) -> int:
         help="with --online, require every distribution to be complete on the index",
     )
     parser.add_argument("--index", default=DEFAULT_INDEX, help=f"index base URL ({DEFAULT_INDEX})")
+    parser.add_argument(
+        "--oidc-identity",
+        action="store_true",
+        help="inside GitHub Actions, require this run to be the recorded Trusted Publisher",
+    )
     arguments = parser.parse_args(argv)
 
     try:
@@ -535,6 +729,7 @@ def main(argv: list[str] | None = None) -> int:
             online=arguments.online,
             require_published=arguments.require_published,
             index=arguments.index,
+            oidc_identity=arguments.oidc_identity,
         )
     except (Refusal, distributions.ManifestError) as exc:
         _emit_error(f"publication readiness could not be evaluated: {exc}")

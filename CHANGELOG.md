@@ -8,15 +8,78 @@ Changelog, and release versions follow the synchronized PEP 440 policy in ADR
 reached PyPI: its release run failed in artifact validation, so the publish job
 never executed. `0.1.0a4` was tagged and *partially* published: the core wheel
 reached PyPI and the other thirteen artifacts did not. It is superseded by
-`0.1.0a7` and should not be installed; see the recovery sections below. The
-`v0.1.0a5` workflow was aborted by publication readiness before its first
-upload, so no `0.1.0a5` artifact was published. Every first-party package in
-the workspace carries the synchronized version; through `0.1.0a4` only the
+`0.1.0a8` and should not be installed; see the recovery sections below. The
+`v0.1.0a5`, `v0.1.0a6` and `v0.1.0a7` workflows published nothing: A5 and A7
+were stopped by publication readiness after the tag existed, and A6 was
+rejected by PyPI on its first upload. Every first-party package in the
+workspace carries the synchronized version; through `0.1.0a4` only the
 `agnara` core distribution had ever been uploaded.
 
 ## [Unreleased]
 
+## [0.1.0a8] - 2026-09-09
+
+Release pipeline recovery after the immutable `v0.1.0a7` tag was created while
+the publication record was still `UNVERIFIED`, the fourth consecutive attempt
+to consume a version without publishing the reviewed set. This release changes
+no runtime behaviour: it carries the `0.1.0a7` framework unchanged with
+synchronized `0.1.0a8` package metadata, and it changes how a release happens.
+
+### Changed
+
+- **A release is now a `workflow_dispatch` run from `main`, and the tag is its
+  consequence.** `release.yml` no longer triggers on a pushed tag. The run
+  re-runs every quality gate, refuses unless it was dispatched from the current
+  head of `main` for a version with no tag anywhere, builds and validates the
+  seven wheels and sdists, installs them in a clean room, checks the public
+  index, and only then stops for human approval in the protected `pypi`
+  environment. The annotated tag is created by the approved run on the
+  dispatched commit, publication follows, and the GitHub Release is created
+  only after post-publication verification. ADR 0082.
+- `docs/releases/publication.json` moves to schema 2. It records the expected
+  registry configuration — the shared Trusted Publisher tuple and, per
+  project, the exact PyPI project name and whether its publisher is pending or
+  active — plus a dated human readback of each. The per-release authorization
+  is the `pypi` environment approval, not a per-target edit of this file.
+- Synchronized the seven distributions and six exact core pins at `0.1.0a8`.
+- Moved Execution Semantics unchanged from `0.1.0a8` to `0.1.0a9`; no
+  functional work from that horizon is included here.
+
+### Added
+
+- `scripts/check_release_preconditions.py`, run at the start of a release,
+  before the approval gate and again after it: the run must be a dispatch from
+  `refs/heads/main`, the checkout must be the current head of `main` on the
+  remote, the version must be publishable and untagged on the remote and in
+  the checkout, and the `pypi` environment must hold required reviewers and a
+  deployment branch policy, or the release refuses to proceed.
+- Publication readiness now also refuses a publisher readback dated before the
+  last recorded registry failure, a confirmation signed by an automation
+  identity, a publisher kind that disagrees with the recorded or actual index
+  state, and a recorded tuple this repository's workflow cannot present; with
+  `--oidc-identity` it requires the running workflow to be the recorded
+  Trusted Publisher.
+- Regression tests that hold the new order: no job but the approved one may
+  create a tag, every gate precedes it, publication requires the `pypi`
+  environment and the approved tag, the GitHub Release requires verified
+  publication, publish steps name canonical projects rather than normalized
+  filenames, the workflow never edits the publication record, and the current
+  target's tag does not exist ahead of the workflow.
+
+### Fixed
+
+- Recorded that `v0.1.0a7` was tagged and aborted before publication because
+  the publication record was `UNVERIFIED`. The tag is immutable and is not
+  reused. The root cause — an irreversible tag created before the gates — is
+  removed by the dispatch-driven flow above rather than by another attempt at
+  the same order.
+
 ## [0.1.0a7] - 2026-09-08
+
+> **Publication status: aborted before upload.** The immutable `v0.1.0a7` tag
+> was created while `publication.json` was `UNVERIFIED`; publication readiness
+> stopped the workflow before its first upload. No `0.1.0a7` artifact was
+> published.
 
 Publication and security recovery after the immutable `v0.1.0a6` workflow
 reached PyPI and failed on its first upload. No A6 artifact was published.
@@ -1002,7 +1065,8 @@ under `0.1.0a2` instead.
 [#257]: https://github.com/Blandskron/agnara/issues/257
 [#259]: https://github.com/Blandskron/agnara/issues/259
 [#261]: https://github.com/Blandskron/agnara/issues/261
-[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a7...develop
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a8...develop
+[0.1.0a8]: https://github.com/Blandskron/agnara/compare/v0.1.0a7...v0.1.0a8
 [0.1.0a7]: https://github.com/Blandskron/agnara/compare/v0.1.0a6...v0.1.0a7
 [0.1.0a6]: https://github.com/Blandskron/agnara/compare/v0.1.0a5...v0.1.0a6
 [0.1.0a5]: https://github.com/Blandskron/agnara/compare/v0.1.0a4...v0.1.0a5
