@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "current_target": "0.1.0a5",
-  "next_target": "0.1.0a6",
-  "previous_release": "0.1.0a4",
+  "current_target": "0.1.0a6",
+  "next_target": "0.1.0a7",
+  "previous_release": "0.1.0a5",
   "status": "IN_PROGRESS",
   "assessed_on": "2026-09-08",
   "assessed_commit": "c82be7be9c1fa675c042ef336afcfc32b31ca421",
   "blocked_reason": null,
   "notes": [
-    "0.1.0a5 is a publication-recovery release. It carries the 0.1.0a4 implementation unchanged and fixes the release system that published one of fourteen artifacts. ADR 0078 records why the alpha line gained it and why Execution Semantics moved to 0.1.0a6.",
+    "0.1.0a6 is a publication-recovery release. It carries the 0.1.0a5 runtime unchanged after v0.1.0a5 was aborted by publication readiness before the first upload. ADR 0080 records why recovery moved to 0.1.0a6 and Execution Semantics moved intact to 0.1.0a7.",
     "0.1.0a4 was partially published on 2026-09-08. Workflow run 34285830444 uploaded agnara-0.1.0a4-py3-none-any.whl (HTTP 200) and was rejected on agnara_a2a-0.1.0a4-py3-none-any.whl with HTTP 400 'Non-user identities cannot create new projects'. Twine uploads wheels before sdists and stops on the first failure, so the agnara 0.1.0a4 sdist and all twelve sibling artifacts were never uploaded, post-release verification never ran, and no GitHub Release was created. v0.1.0a4 remains historical and unmodified.",
     "The gate that was missing is now explicit. publication-prerequisites re-derives PUBLISH READY from the repository on every run, and pypi-trusted-publishers is a manual gate the tooling can never satisfy. docs/releases/publication.json is the reviewed record of the external registry configuration; it is UNVERIFIED until the owner reads the tuples back from PyPI.",
     "Status is recomputed by scripts/check_release_readiness.py; automated outcomes are never trusted from this file."

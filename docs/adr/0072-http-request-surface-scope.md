@@ -54,7 +54,7 @@ is left implicit.
 | --- | --- |
 | **Multiple files, and repeated form fields** | Both need a collection binding. ADR 0026 rejected repeated scalar values deliberately and said "collection bindings require a later explicit design". That design is not HTTP-local: it decides how a list arrives through *every* transport. |
 | **Client filename and per-part content type** | Both need a public upload value type carrying filename, content type and content. A value type is a core-visible schema shape — MCP and introspection project it too — so its design is not the HTTP adapter's to make alone. And the filename is attacker-controlled: every safe use generates a name anyway, so a4 exposes none. |
-| **Streaming and large uploads** | An upload is bounded `bytes`. Streaming request bodies need the streaming model, which is I2 and belongs to `0.1.0a5` (ADR 0068). |
+| **Streaming and large uploads** | An upload is bounded `bytes`. Streaming request bodies need the streaming model, which is I2 and belongs to `0.1.0a7` (ADR 0068, ADR 0080). |
 | **CORS, compression, static files, proxy headers, trusted hosts** | These are ASGI-layer or reverse-proxy concerns and none of them needs a capability. See "Where these belong instead" below. |
 | **Generic middleware / interceptor hook** | `docs/INITIATIVES.md` states the reason and this decision keeps it: "middleware in most frameworks is where transport types leak into application code, and Agnara must not reproduce that". Adding a hook now, before the extension model (I13) and the embedding contract (RFC 0008), would fix the wrong shape permanently. |
 | **Sessions, authentication** | Not request binding. Authentication is the security program, I10. |
@@ -260,6 +260,6 @@ middleware already wraps it, from outside, where transport concerns belong.
 
 The collection binding RFC lands — repeated form fields and multiple files
 become expressible together, and this record's largest deferral closes. Also
-at `0.1.0a5`, when I2 decides streaming: a streamed request body would replace
+at `0.1.0a7`, when I2 decides streaming: a streamed request body would replace
 the bounded-`bytes` upload contract rather than extend it, and that is a
 breaking change this alpha is allowed to make.

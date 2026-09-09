@@ -9,27 +9,28 @@ Legend:
 
 This file owns **decomposed work that is ready to implement**. It does not own the long-term plan: ROADMAP.md owns where Agnara is going.
 
-## A5
+## A6
 
-Publication recovery only (ADR 0078). Everything below `## A6` stays out.
+Publication recovery only (ADR 0080). Everything below `## A7` stays out.
 
 - [~] E0B.12 Document release and hotfix automation evidence. The release half
   gains real evidence here: `0.1.0a4` exercised the tag pipeline through to a
-  rejected upload, and `0.1.0a5` is the first run of the sequenced one. The
+  rejected upload, and `0.1.0a5` proved the sequenced preflight aborts before
+  upload. `0.1.0a6` is the next publication attempt. The
   hotfix half is still unexercised, so the item does not close.
 
 - [!] Owner action: confirm the seven PyPI Trusted Publishers and record them
-  in `docs/releases/publication.json`. Blocks the `0.1.0a5` tag; nothing in
+  in `docs/releases/publication.json`. Blocks the `0.1.0a6` tag; nothing in
   this repository can observe or perform it.
 
-- [ ] Owner action: yank `agnara 0.1.0a4` once `0.1.0a5` is published and
+- [ ] Owner action: yank `agnara 0.1.0a4` once `0.1.0a6` is published and
   verified complete. Reason: `Partial multi-distribution publication;
-  superseded by 0.1.0a5.`
+  superseded by 0.1.0a6.`
 
 - [ ] Decide the `pypi` GitHub Environment protection policy. It currently has
   no protection rule or deployment policy and allows administrator bypass.
 
-## A6
+## A7
 
 - [?] E2.7 Benchmark adapters before selecting defaults.
 

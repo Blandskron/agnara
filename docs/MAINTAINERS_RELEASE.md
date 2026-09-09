@@ -137,8 +137,8 @@ changed only through the workspace transition tool.
 10. Tag the exact merged commit, annotated:
 
 ```bash
-git tag -a v0.1.0a5 -m "Agnara v0.1.0a5 — Publication Recovery"
-git push origin v0.1.0a5
+git tag -a v<version> -m "Agnara v<version> — <release name>"
+git push origin v<version>
 ```
 
 11. Propagate the release-only commits back to `develop` through a PR. Once the
@@ -200,7 +200,7 @@ do not delete or overwrite a published file.
 2. Record the state in `docs/releases/publication.json` and in the release note.
 3. Fix the external cause.
 4. Select the **next** version and publish the complete set. This is what
-   `0.1.0a5` is.
+   `0.1.0a6` is.
 5. Once the new version is verified complete, yank the orphaned files with a
    reason naming the superseding version.
 

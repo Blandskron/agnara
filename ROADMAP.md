@@ -33,13 +33,17 @@ Its *publication* did not close. One of fourteen artifacts reached PyPI; the
 rest were rejected before upload. `0.1.0a4` is superseded by `0.1.0a5` and
 should not be installed. ADR 0078.
 
-### NOW — 0.1.0a5, Publication Recovery
+### ABORTED — 0.1.0a5, Publication Recovery
 
-Current baseline target, and deliberately small. Its one question: can Agnara
-publish the set it builds, completely, and prove that it did?
+The immutable `v0.1.0a5` tag exercised the corrected preflight. Publication
+readiness stopped the workflow before the first upload because the seven
+Trusted Publishers were still unverified. No `0.1.0a5` artifact was published.
 
-It carries the `0.1.0a4` implementation unchanged. No runtime source file
-differs; every change is to the release system.
+### NOW — 0.1.0a6, Publication Recovery
+
+Current baseline target, and deliberately small. It carries the `0.1.0a5`
+runtime unchanged and asks the same question: can Agnara publish the set it
+builds, completely, and prove that it did?
 
 - **Publish readiness as a separate claim from code readiness.** ADR 0079.
 - **Kernel published last**, so a partial publication fails closed.
@@ -47,9 +51,9 @@ differs; every change is to the release system.
 - **One source of truth for the seven distributions**, and a SHA-pinned
   publication path.
 
-### NEXT — 0.1.0a6, Execution Semantics
+### NEXT — 0.1.0a7, Execution Semantics
 
-Unchanged in content; moved one release later by ADR 0078. Its one question:
+Unchanged in content; moved one release later by ADR 0080. Its one question:
 does execution have streaming, identity and a measured cost?
 
 - **Streaming model** — `I2`, which still blocks the most other work.

@@ -14,9 +14,11 @@ mature enough to close a release.
    ↓
 0.1.0a4     external application validation    (tagged 2026-09-08;
    ↓                                            published partially)
-0.1.0a5     publication recovery              ← current target
+0.1.0a5     publication recovery              (aborted before upload)
    ↓
-0.1.0a6     execution semantics and cost
+0.1.0a6     publication recovery              ← current target
+   ↓
+0.1.0a7     execution semantics and cost
    ↓
 0.1.0b1     interoperability and composition
    ↓
@@ -37,8 +39,9 @@ question it answers:
 | Release | Question | Owns |
 | --- | --- | --- |
 | `0.1.0a4` | Can Agnara be consumed as a framework from outside this repository? | I1, I7, the public exposure and composition surface |
-| `0.1.0a5` | Can Agnara publish the set it builds, completely, and prove that it did? | the release system: publish readiness, publication ordering, post-publication verification, supply-chain pinning |
-| `0.1.0a6` | Does execution have streaming, identity and a measured cost? | I2, I3, I14 |
+| `0.1.0a5` | Did publication readiness stop an unsafe release attempt before upload? | the first enforced preflight; aborted because publisher confirmation was absent |
+| `0.1.0a6` | Can Agnara publish the set it builds, completely, and prove that it did? | publication recovery with the A5 runtime unchanged |
+| `0.1.0a7` | Does execution have streaming, identity and a measured cost? | I2, I3, I14 |
 | `0.1.0b1` | Can the Python ecosystem use Agnara, and Agnara use it? | I20, and the beta contract gates |
 
 No alpha may declare stable support for an external framework;
@@ -182,9 +185,9 @@ surface.
 
 ## 0.1.0a5 — Publication Recovery
 
-**Proves:** that the seven distributions this repository builds can be
-published as one complete, verified set, and that the pipeline cannot report
-success when they are not.
+**Outcome:** aborted before upload. The immutable tag exercised publication
+readiness, which correctly refused to proceed while the publisher record was
+`UNVERIFIED`. No `0.1.0a5` artifact was published.
 
 **Does not prove:** anything new about the runtime. `0.1.0a5` carries the
 `0.1.0a4` implementation unchanged; no runtime source file differs.
@@ -219,15 +222,37 @@ version, which is what `docs/releases/publication.json` is.
 `scripts/check_publication_readiness.py` fails while any project is
 `UNVERIFIED`, and `release.yml` runs it before the first upload.
 
-**Guardrail.** `0.1.0a5` is not a feature release. Streaming, execution
-identity, idempotency behaviour, performance budgets, interoperability and the
-A2A and events runtimes all stay outside it. A change that alters runtime
-behaviour belongs to `0.1.0a6`, and landing one here would mean a publication
-failure and a runtime regression were indistinguishable in the same version.
+**Guardrail.** `0.1.0a5` is historical and immutable. It is not resumed,
+retagged or published manually. Publication recovery continues in `0.1.0a6`.
 
 ---
 
-## 0.1.0a6 — Execution Alpha
+## 0.1.0a6 — Publication Recovery
+
+**Proves:** that the seven distributions this repository builds can be
+published as one complete, verified set, and that the pipeline cannot report
+success when they are not.
+
+**Does not prove:** anything new about the runtime. It carries the A5 runtime
+unchanged and owns only versioned release metadata and refreshed evidence.
+
+| Gate | Kind | Mandatory |
+| --- | --- | --- |
+| Every `0.1.0a5` code and release-system gate still satisfied | automated | yes |
+| The reviewed publication set is publishable, not merely buildable | automated | yes |
+| Every PyPI Trusted Publisher is confirmed for this exact target | manual | yes |
+| No `0.1.0a6` file exists before the first upload | automated | yes |
+| Package build and clean-environment installation succeed | evidence | yes |
+| Full supported test suite and security checks pass | evidence | yes |
+| No known release-blocking regression | evidence | yes |
+
+Publication readiness must remain unsatisfied until the owner records explicit
+confirmation for all seven projects. A6 creates no tag and publishes nothing
+during preparation.
+
+---
+
+## 0.1.0a7 — Execution Alpha
 
 **Proves:** execution has the semantics the rest of the architecture waits on.
 Streaming exists as one model rather than per adapter; an execution identity
@@ -241,7 +266,7 @@ I14 performance budgets, and the prerequisites already recorded for them.
 
 | Gate | Kind | Mandatory |
 | --- | --- | --- |
-| Every `0.1.0a5` gate still satisfied | automated | yes |
+| Every `0.1.0a6` gate still satisfied | automated | yes |
 | The streaming model is decided in an accepted record | evidence | yes |
 | A streaming capability behaves identically in direct invocation and in at least one adapter | evidence | yes |
 | Cancellation, backpressure and post-partial failure are specified and tested | evidence | yes |
@@ -253,7 +278,7 @@ I14 performance budgets, and the prerequisites already recorded for them.
 | Benchmarks remain engineering measurements, not rankings | manual | yes |
 | No known release-blocking regression | evidence | yes |
 
-**Guardrail (ADR 0068, renumbered by ADR 0078).** `0.1.0a6` is not the
+**Guardrail (ADR 0068, renumbered by ADR 0078 and ADR 0080).** `0.1.0a7` is not the
 ecosystem integration release, the composition beta or a plugin marketplace. It may use an external
 integration as an experimental fixture where that genuinely helps validate
 streaming, idempotency or performance, and must not publish the fixture as a
@@ -285,7 +310,7 @@ enables them is marked done.
 
 | Gate | Kind | Mandatory |
 | --- | --- | --- |
-| Every `0.1.0a6` gate still satisfied | automated | yes |
+| Every `0.1.0a7` gate still satisfied | automated | yes |
 | The supported public API surface is identified | evidence | yes |
 | Public API is distinguished from internals | automated | yes |
 | Accidental exports audited | evidence | yes |

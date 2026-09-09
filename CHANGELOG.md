@@ -8,19 +8,40 @@ Changelog, and release versions follow the synchronized PEP 440 policy in ADR
 reached PyPI: its release run failed in artifact validation, so the publish job
 never executed. `0.1.0a4` was tagged and *partially* published: the core wheel
 reached PyPI and the other thirteen artifacts did not. It is superseded by
-`0.1.0a5` and should not be installed; see the `0.1.0a4` and `0.1.0a5` sections
-below. Every first-party package in the workspace carries the synchronized
-version; through `0.1.0a4` only the `agnara` core distribution had ever been
-uploaded, and `0.1.0a5` is the first release intended to publish all seven.
+`0.1.0a6` and should not be installed; see the recovery sections below. The
+`v0.1.0a5` workflow was aborted by publication readiness before its first
+upload, so no `0.1.0a5` artifact was published. Every first-party package in
+the workspace carries the synchronized version; through `0.1.0a4` only the
+`agnara` core distribution had ever been uploaded.
 
 ## [Unreleased]
 
+## [0.1.0a6] - 2026-09-08
+
+Publication recovery after the immutable `v0.1.0a5` attempt stopped safely
+before upload. This release changes no runtime behavior: it carries the same
+framework code with synchronized `0.1.0a6` package metadata and a publication
+record that remains fail-closed pending owner confirmation.
+
+### Changed
+
+- Prepared all seven distributions and exact adapter-to-core pins for
+  `0.1.0a6`; the publication target remains `UNVERIFIED` until the owner reads
+  back every PyPI Trusted Publisher tuple.
+- Moved the unchanged Execution Semantics horizon—streaming, execution
+  identity and idempotency, and performance budgets—to `0.1.0a7` ([#341]).
+
 ## [0.1.0a5] - 2026-09-08
 
-Publication recovery. This release carries the `0.1.0a4` implementation
-unchanged — no runtime source file differs — and replaces the release system
-that published one of fourteen artifacts and reported nothing wrong with the
-other thirteen.
+> **Publication status: aborted before upload.** The immutable `v0.1.0a5` tag
+> ran the corrected workflow, and publication readiness stopped it before the
+> first upload because the Trusted Publisher record remained `UNVERIFIED`.
+> No `0.1.0a5` artifact was published and no GitHub Release is claimed.
+
+Publication-recovery implementation carried by the aborted attempt. It keeps
+the `0.1.0a4` runtime unchanged and replaces the release system that published
+one of fourteen A4 artifacts and reported nothing wrong with the other
+thirteen.
 
 ### Security
 
@@ -947,7 +968,8 @@ under `0.1.0a2` instead.
 [#257]: https://github.com/Blandskron/agnara/issues/257
 [#259]: https://github.com/Blandskron/agnara/issues/259
 [#261]: https://github.com/Blandskron/agnara/issues/261
-[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a5...develop
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a6...develop
+[0.1.0a6]: https://github.com/Blandskron/agnara/compare/v0.1.0a5...v0.1.0a6
 [0.1.0a5]: https://github.com/Blandskron/agnara/compare/v0.1.0a4...v0.1.0a5
 [0.1.0a4]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...v0.1.0a4
 [0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3
@@ -1050,3 +1072,4 @@ under `0.1.0a2` instead.
 [#291]: https://github.com/Blandskron/agnara/issues/291
 [#313]: https://github.com/Blandskron/agnara/issues/313
 [#307]: https://github.com/Blandskron/agnara/issues/307
+[#341]: https://github.com/Blandskron/agnara/issues/341
