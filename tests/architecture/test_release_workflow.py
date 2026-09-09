@@ -96,10 +96,15 @@ def test_a_release_run_cannot_be_cancelled_or_raced_by_another() -> None:
 
 
 def test_the_dispatched_version_reaches_shell_steps_only_through_the_environment() -> None:
-    """`${{ inputs.version }}` interpolated into a `run:` is a script injection."""
+    """An expression interpolated into a `run:` is a script injection waiting for input.
+
+    The dispatched version, and everything derived from it, reaches a shell
+    only as `$RELEASE_VERSION`; no `run:` step interpolates any `${{ }}`.
+    """
     assert _workflow()["env"]["RELEASE_VERSION"] == "${{ inputs.version }}"
     for name, job in _jobs().items():
         for run in _run_steps(job):
+            assert "${{" not in run, name
             assert "inputs.version" not in run, name
 
 

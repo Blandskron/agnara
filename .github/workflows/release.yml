@@ -143,7 +143,7 @@ jobs:
           set -euo pipefail
           uv run --no-project python scripts/check_distributions.py \
             --workspace "$GITHUB_WORKSPACE" --dist dist/ \
-            --expected-version "${{ needs.preconditions.outputs.version }}"
+            --expected-version "$RELEASE_VERSION"
 
       # CODE READY is not PUBLISH READY. This fails on an unconfirmed Trusted
       # Publisher, a missing release note, an unsynchronized lockfile or an
@@ -154,7 +154,7 @@ jobs:
           set -euo pipefail
           uv run --no-project python scripts/check_publication_readiness.py \
             --workspace "$GITHUB_WORKSPACE" \
-            --version "${{ needs.preconditions.outputs.version }}" \
+            --version "$RELEASE_VERSION" \
             --dist dist/
 
       - name: Record artifact digests
@@ -250,7 +250,7 @@ jobs:
 
           "$SMOKE_PYTHON" -I "$GITHUB_WORKSPACE/scripts/check_distributions.py" \
             --workspace "$GITHUB_WORKSPACE" --require-installed \
-            --expected-version "${{ needs.preconditions.outputs.version }}"
+            --expected-version "$RELEASE_VERSION"
           "$SMOKE_PYTHON" -I -c "import ${imports}"
           for script in "${scripts[@]-}"; do
             [[ -n "$script" ]] && ".venv/bin/${script}" --version
@@ -286,7 +286,7 @@ jobs:
         run: |
           set -euo pipefail
           uv run --no-project python scripts/check_release_preconditions.py \
-            --version "${{ needs.preconditions.outputs.version }}" \
+            --version "$RELEASE_VERSION" \
             --require-protected-environment pypi
 
       - name: Registry state, publisher record and workflow identity
@@ -294,7 +294,7 @@ jobs:
           set -euo pipefail
           uv run --no-project python scripts/check_publication_readiness.py \
             --workspace "$GITHUB_WORKSPACE" \
-            --version "${{ needs.preconditions.outputs.version }}" \
+            --version "$RELEASE_VERSION" \
             --online --oidc-identity
 
   # The human gate, and the first irreversible act. Required reviewers on the
@@ -331,7 +331,7 @@ jobs:
         run: |
           set -euo pipefail
           uv run --no-project python scripts/check_release_preconditions.py \
-            --version "${{ needs.preconditions.outputs.version }}" \
+            --version "$RELEASE_VERSION" \
             --require-protected-environment pypi
 
       - name: Create the annotated release tag on the approved commit
@@ -354,7 +354,7 @@ jobs:
       - name: The tag is annotated, names this commit and reviewed main history
         run: |
           set -euo pipefail
-          uv run --no-project python scripts/check_release_tag.py "${{ steps.tag.outputs.tag }}"
+          uv run --no-project python scripts/check_release_tag.py "v${RELEASE_VERSION}"
 
   publish:
     name: Publish to PyPI
@@ -388,7 +388,7 @@ jobs:
             echo "::error::the tag does not name the commit this run was dispatched for"
             exit 1
           fi
-          uv run --no-project python scripts/check_release_tag.py "${{ needs.approve-and-tag.outputs.tag }}"
+          uv run --no-project python scripts/check_release_tag.py "v${RELEASE_VERSION}"
 
       - name: Download artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -403,8 +403,8 @@ jobs:
           set -euo pipefail
           uv run --no-project python scripts/check_publication_readiness.py \
             --workspace "$GITHUB_WORKSPACE" \
-            --version "${{ needs.preconditions.outputs.version }}" \
-            --dist dist/ --tag "${{ needs.approve-and-tag.outputs.tag }}" --oidc-identity
+            --version "$RELEASE_VERSION" \
+            --dist dist/ --tag "v${RELEASE_VERSION}" --oidc-identity
 
       # One directory per distribution, so each upload below is a single
       # project's wheel and sdist. `0.1.0a4` handed all fourteen files to one
@@ -414,7 +414,7 @@ jobs:
       - name: Stage each distribution separately
         run: |
           set -euo pipefail
-          version="${{ needs.preconditions.outputs.version }}"
+          version="$RELEASE_VERSION"
           while read -r name; do
             stem="${name//-/_}"
             mkdir -p "staged/$name"
@@ -512,7 +512,7 @@ jobs:
       - name: Every distribution is complete on the index
         run: |
           set -euo pipefail
-          version="${{ needs.preconditions.outputs.version }}"
+          version="$RELEASE_VERSION"
           for attempt in 1 2 3 4 5 6; do
             if uv run --no-project python scripts/check_publication_readiness.py \
                  --workspace "$GITHUB_WORKSPACE" --version "$version" \
@@ -528,7 +528,7 @@ jobs:
       - name: Install the published set and exercise it
         run: |
           set -euo pipefail
-          version="${{ needs.preconditions.outputs.version }}"
+          version="$RELEASE_VERSION"
           manifest() {
             uv run --no-project python "$GITHUB_WORKSPACE/scripts/distributions.py" "$@"
           }
