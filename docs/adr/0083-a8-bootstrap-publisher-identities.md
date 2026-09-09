@@ -55,6 +55,30 @@ dispatch -> quality/preconditions -> build -> clean-room -> preflight
  -> tag -> GitHub Release
 ```
 
+### Phases (amendment of 2026-09-09)
+
+PyPI also caps an account at **three** Pending Trusted Publishers at a time,
+so the six pending identities above cannot exist simultaneously. The chain is
+therefore run as three dispatches of `release.yml`, selected by a `phase`
+input; the only `if:` conditions in the workflow select the phase, and every
+other dependency stays a real `needs`:
+
+| Phase | Uploads (in order) | Verification | Tag / Release |
+| --- | --- | --- | --- |
+| `bootstrap-1` | `agnara-a2a`, `agnara-cli`, `agnara-events` | those three complete on PyPI | none |
+| `bootstrap-2` | `agnara-http`, `agnara-mcp`, `agnara-telemetry` | the six adapters complete | none |
+| `final` | `agnara` | all seven complete, then a clean install | `v<version>`, then the GitHub Release |
+
+`check_publication_readiness.py --phase` requires the human readback only for
+the projects the phase uploads -- the publishers of a later phase cannot exist
+yet -- and treats the index as the evidence for earlier phases: their projects
+must be complete at the version, while the projects of this and later phases
+must carry no file of it. No phase re-publishes another, and no phase but
+`final` can create the tag or the GitHub Release. A failed upload or a failed
+verification in any phase leaves no tag, because the tag job runs only in
+`final` and depends on `verify-published`. The three pending slots freed by
+`bootstrap-1` are what allow the `bootstrap-2` publishers to be created.
+
 Schema 3 of `publication.json` records the common owner/repository/workflow
 and an exact `publisher_environment` per canonical project. Prior confirmation
 of `pypi` cannot certify a bootstrap identity. All seven remain `UNVERIFIED`

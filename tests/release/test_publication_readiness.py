@@ -175,6 +175,9 @@ def _run(workspace: Path, **kwargs: Any) -> tuple[int, list[str]]:
         index=tool.DEFAULT_INDEX,
         oidc_identity=kwargs.pop("oidc_identity", False),
         environ=kwargs.pop("environ", {}),
+        project=kwargs.pop("project", None),
+        environment=kwargs.pop("environment", None),
+        phase=kwargs.pop("phase", None),
     )
     assert not kwargs
     return code, problems
@@ -918,6 +921,358 @@ def test_recognizable_secret_formats_are_redacted(unsafe: str) -> None:
 # ---------------------------------------------------------------------------
 # Publication order
 # ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# Phases: three pending publishers at a time
+# ---------------------------------------------------------------------------
+
+BOOTSTRAP_1 = ("agnara-a2a", "agnara-cli", "agnara-events")
+BOOTSTRAP_2 = ("agnara-http", "agnara-mcp", "agnara-telemetry")
+
+
+def _complete(distribution: distributions.Distribution) -> dict[str, Any]:
+    stem = distribution.artifact_stem
+    return {
+        "releases": {
+            VERSION: [
+                {"filename": f"{stem}-{VERSION}-py3-none-any.whl"},
+                {"filename": f"{stem}-{VERSION}.tar.gz"},
+            ]
+        }
+    }
+
+
+def _index_after(*published: str) -> dict[str, Any]:
+    """An index where exactly `published` are complete at VERSION; `agnara` always exists."""
+    index: dict[str, Any] = {"agnara": {"releases": {}}}
+    for distribution in MANIFEST.distributions:
+        if distribution.name in published:
+            index[distribution.name] = _complete(distribution)
+    return index
+
+
+def _kinds() -> dict[str, str]:
+    return {name: ("active" if name == MANIFEST.core else "pending") for name in MANIFEST.names}
+
+
+def test_the_phases_partition_the_reviewed_set_in_publication_order() -> None:
+    """Every project is uploaded by exactly one phase, siblings first, kernel last."""
+    phased = [name for phase in tool.PHASE_ORDER for name in tool.PHASES[phase]]
+
+    assert sorted(phased) == sorted(MANIFEST.names)
+    assert len(phased) == len(set(phased))
+    assert tuple(phased) == MANIFEST.publication_order
+    assert tool.PHASES[tool.FINAL_PHASE] == (MANIFEST.core,)
+    assert tool.PHASE_ORDER[-1] == tool.FINAL_PHASE
+    assert tool.projects_published_before("bootstrap-1") == ()
+    assert tool.projects_published_before("bootstrap-2") == BOOTSTRAP_1
+    assert tool.projects_published_before("final") == BOOTSTRAP_1 + BOOTSTRAP_2
+    assert tool.projects_published_through("final") == MANIFEST.publication_order
+
+
+def test_an_unknown_phase_is_refused() -> None:
+    with pytest.raises(tool.Refusal, match="unknown release phase"):
+        tool.phase_projects("bootstrap-3")
+
+
+def _phase_record(verified: tuple[str, ...]) -> dict[str, Any]:
+    """A record in which only `verified` were read back; the rest do not exist yet."""
+    projects = [
+        _project(name)
+        if name in verified
+        else _project(name, trusted_publisher="UNVERIFIED", verified_by=None, verified_on=None)
+        for name in MANIFEST.names
+    ]
+    return {
+        "status": "UNVERIFIED",
+        "confirmed_by": None,
+        "confirmed_on": None,
+        "projects": projects,
+    }
+
+
+def test_bootstrap_1_requires_only_its_three_publishers(workspace: Path) -> None:
+    """Before bootstrap-1 the other publishers cannot exist; readiness must not demand them."""
+    _write_publication(workspace, _phase_record(BOOTSTRAP_1))
+
+    assert _run(workspace, phase="bootstrap-1") == (0, [])
+
+
+def test_bootstrap_1_still_refuses_an_unverified_publisher_of_its_own(workspace: Path) -> None:
+    _write_publication(workspace, _phase_record(("agnara-a2a", "agnara-cli")))
+
+    code, problems = _run(workspace, phase="bootstrap-1")
+
+    assert code == 1
+    assert problems == [
+        "agnara-events: trusted_publisher is not VERIFIED; the owner must read back the pending "
+        "publisher and record VERIFIED"
+    ]
+
+
+def test_bootstrap_2_requires_only_its_three_publishers(workspace: Path) -> None:
+    _write_publication(workspace, _phase_record(BOOTSTRAP_2))
+
+    assert _run(workspace, phase="bootstrap-2") == (0, [])
+
+
+def test_the_final_phase_requires_only_the_kernel_publisher(workspace: Path) -> None:
+    _write_publication(workspace, _phase_record((MANIFEST.core,)))
+
+    assert _run(workspace, phase="final") == (0, [])
+
+
+def test_without_a_phase_every_publisher_and_the_whole_record_are_required(
+    workspace: Path,
+) -> None:
+    _write_publication(workspace, _phase_record(BOOTSTRAP_1))
+
+    code, problems = _run(workspace)
+
+    assert code == 1
+    assert any("top-level status is not VERIFIED" in problem for problem in problems)
+    assert sum("trusted_publisher is not VERIFIED" in problem for problem in problems) == 4
+
+
+def test_a_phase_still_holds_every_project_to_its_canonical_name_and_environment(
+    workspace: Path,
+) -> None:
+    record = _phase_record(BOOTSTRAP_1)
+    for entry in record["projects"]:
+        if entry["name"] == "agnara-http":
+            entry["publisher_project"] = "agnara_http"
+            entry["publisher_environment"] = "pypi"
+    _write_publication(workspace, record)
+
+    code, problems = _run(workspace, phase="bootstrap-1")
+
+    assert code == 1
+    assert any("agnara-http: Trusted Publisher project name" in problem for problem in problems)
+    assert any("agnara-http: publisher_environment" in problem for problem in problems)
+
+
+def test_an_upload_outside_its_phase_is_refused(workspace: Path) -> None:
+    _write_publication(workspace, _phase_record(BOOTSTRAP_1))
+
+    code, problems = _run(
+        workspace,
+        phase="bootstrap-1",
+        oidc_identity=True,
+        environ=ACTIONS_ENVIRON | {"GITHUB_JOB": "publish-http"},
+        project="agnara-http",
+        environment="pypi-http",
+    )
+
+    assert code == 1
+    assert "agnara-http is not uploaded by phase bootstrap-1" in problems
+
+
+def test_before_bootstrap_1_nothing_may_exist(monkeypatch: pytest.MonkeyPatch) -> None:
+    _stub_index(monkeypatch, _index_after())
+
+    problems, notes = tool.check_index(
+        MANIFEST,
+        VERSION,
+        index=tool.DEFAULT_INDEX,
+        require_published=False,
+        recorded_kinds=_kinds(),
+        phase="bootstrap-1",
+    )
+
+    assert problems == []
+    assert len(notes) == len(MANIFEST.names)
+
+
+def test_bootstrap_2_requires_bootstrap_1_to_be_complete_on_the_index(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The previous phase is proven by the index, not by the record."""
+    _stub_index(monkeypatch, _index_after("agnara-a2a", "agnara-cli"))
+
+    problems, _ = tool.check_index(
+        MANIFEST,
+        VERSION,
+        index=tool.DEFAULT_INDEX,
+        require_published=False,
+        recorded_kinds=_kinds(),
+        phase="bootstrap-2",
+    )
+
+    assert problems == ["agnara-events: no project on https://pypi.org before this phase"]
+
+
+def test_bootstrap_2_accepts_a_complete_bootstrap_1_without_re_reading_its_publishers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Their pending publishers were consumed; a record that still says
+    `pending` for an existing project is history, not a stale readback."""
+    _stub_index(monkeypatch, _index_after(*BOOTSTRAP_1))
+
+    problems, notes = tool.check_index(
+        MANIFEST,
+        VERSION,
+        index=tool.DEFAULT_INDEX,
+        require_published=False,
+        recorded_kinds=_kinds(),
+        phase="bootstrap-2",
+    )
+
+    assert problems == []
+    assert sum("wheel and sdist present" in note for note in notes) == 3
+
+
+def test_a_phase_refuses_files_that_already_exist_for_its_own_or_a_later_project(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Re-publishing bootstrap-1 or publishing ahead of the phase is refused."""
+    _stub_index(monkeypatch, _index_after(*BOOTSTRAP_1, "agnara-http", "agnara"))
+
+    problems, _ = tool.check_index(
+        MANIFEST,
+        VERSION,
+        index=tool.DEFAULT_INDEX,
+        require_published=False,
+        recorded_kinds=_kinds(),
+        phase="bootstrap-2",
+    )
+
+    existing = [problem for problem in problems if "already has 2 file(s)" in problem]
+    assert sorted(problem.split(" ", 1)[0] for problem in existing) == ["agnara", "agnara-http"]
+    # And a project of this phase that already exists contradicts its `pending` readback.
+    assert [problem for problem in problems if problem not in existing] == [
+        "agnara-http: the record read back a publisher of kind 'pending', but the project is "
+        "existing on https://pypi.org; re-verify it where PyPI actually holds it"
+    ]
+
+
+def test_verifying_bootstrap_1_requires_its_three_complete_and_nothing_else_published(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _stub_index(monkeypatch, _index_after(*BOOTSTRAP_1))
+
+    problems, notes = tool.check_index(
+        MANIFEST, VERSION, index=tool.DEFAULT_INDEX, require_published=True, phase="bootstrap-1"
+    )
+
+    assert problems == []
+    assert sum("wheel and sdist present" in note for note in notes) == 3
+    assert sum("not published yet, as this phase intends" in note for note in notes) == 3
+    assert any("agnara: project exists" in note for note in notes)
+
+
+def test_verifying_bootstrap_1_fails_on_a_missing_sdist(monkeypatch: pytest.MonkeyPatch) -> None:
+    index = _index_after(*BOOTSTRAP_1)
+    index["agnara-cli"]["releases"][VERSION].pop()  # the sdist
+
+    _stub_index(monkeypatch, index)
+
+    problems, _ = tool.check_index(
+        MANIFEST, VERSION, index=tool.DEFAULT_INDEX, require_published=True, phase="bootstrap-1"
+    )
+
+    assert problems == [
+        f"agnara-cli {VERSION} is incomplete on https://pypi.org; missing "
+        f"['agnara_cli-{VERSION}.tar.gz']"
+    ]
+
+
+def test_verifying_bootstrap_2_requires_all_six_adapters(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _stub_index(monkeypatch, _index_after(*BOOTSTRAP_1, "agnara-http", "agnara-mcp"))
+
+    problems, _ = tool.check_index(
+        MANIFEST, VERSION, index=tool.DEFAULT_INDEX, require_published=True, phase="bootstrap-2"
+    )
+
+    assert problems == ["agnara-telemetry: no project on https://pypi.org after publication"]
+
+
+def test_verifying_a_bootstrap_phase_refuses_a_kernel_published_ahead(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The kernel last, even across phases: a tag would follow a premature kernel."""
+    _stub_index(monkeypatch, _index_after(*BOOTSTRAP_1, *BOOTSTRAP_2, "agnara"))
+
+    problems, _ = tool.check_index(
+        MANIFEST, VERSION, index=tool.DEFAULT_INDEX, require_published=True, phase="bootstrap-2"
+    )
+
+    assert problems == [
+        f"agnara {VERSION} already has 2 file(s) on https://pypi.org: "
+        f"['agnara-{VERSION}-py3-none-any.whl', 'agnara-{VERSION}.tar.gz']. "
+        "PyPI files are immutable; select the next version rather than republishing"
+    ]
+
+
+def test_verifying_the_final_phase_requires_all_seven(monkeypatch: pytest.MonkeyPatch) -> None:
+    _stub_index(monkeypatch, _index_after(*MANIFEST.names))
+
+    problems, notes = tool.check_index(
+        MANIFEST, VERSION, index=tool.DEFAULT_INDEX, require_published=True, phase="final"
+    )
+
+    assert problems == []
+    assert sum("wheel and sdist present" in note for note in notes) == len(MANIFEST.names)
+
+
+def test_the_command_accepts_a_phase(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    seen: dict[str, Any] = {}
+
+    def record(*args: Any, **kwargs: Any) -> tuple[int, list[str], list[str]]:
+        seen.update(kwargs)
+        return 0, [], ["note"]
+
+    monkeypatch.setattr(tool, "run", record)
+
+    assert tool.main(["--version", VERSION, "--phase", "bootstrap-2"]) == 0
+    assert seen["phase"] == "bootstrap-2"
+    assert "PUBLISH READY" in capsys.readouterr().out
+
+
+def test_the_command_rejects_an_unknown_phase() -> None:
+    with pytest.raises(SystemExit):
+        tool.main(["--version", VERSION, "--phase", "bootstrap-3"])
+
+
+def test_the_committed_record_is_ready_for_bootstrap_1_offline() -> None:
+    """The owner read back the three bootstrap-1 publishers on 2026-09-09."""
+    code, problems, notes = tool.run(
+        WORKSPACE_ROOT,
+        _repository_version(),
+        dist_dir=None,
+        tag=None,
+        online=False,
+        require_published=False,
+        index=tool.DEFAULT_INDEX,
+        phase="bootstrap-1",
+    )
+
+    assert (code, problems) == (0, [])
+    assert any(
+        "phase bootstrap-1: uploads agnara-a2a, agnara-cli, agnara-events" in n for n in notes
+    )
+
+
+def test_the_committed_record_does_not_yet_admit_the_later_phases() -> None:
+    """Their publishers cannot exist until bootstrap-1 has consumed its slots."""
+    for phase, expected in (("bootstrap-2", BOOTSTRAP_2), ("final", (MANIFEST.core,))):
+        code, problems, _ = tool.run(
+            WORKSPACE_ROOT,
+            _repository_version(),
+            dist_dir=None,
+            tag=None,
+            online=False,
+            require_published=False,
+            index=tool.DEFAULT_INDEX,
+            phase=phase,
+        )
+        assert code == 1, phase
+        assert sorted(problem.split(":", 1)[0] for problem in problems) == sorted(expected), phase
+        assert all("trusted_publisher is not VERIFIED" in problem for problem in problems), phase
 
 
 def test_the_kernel_is_published_last() -> None:

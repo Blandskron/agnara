@@ -17,12 +17,6 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 
 ## [Unreleased]
 
-### Fixed
-
-- A8 bootstrap uses distinct OIDC publishing environments per distribution to
-  avoid PyPI pending-publisher identity collisions, while retaining one human
-  approval and tagging only after verified publication of all seven (#332).
-
 ## [0.1.0a8] - 2026-09-09
 
 Release pipeline recovery after the immutable `v0.1.0a7` tag was created while
@@ -75,6 +69,18 @@ synchronized `0.1.0a8` package metadata, and it changes how a release happens.
 
 ### Fixed
 
+- A8 bootstrap uses distinct OIDC publishing environments per distribution to
+  avoid PyPI pending-publisher identity collisions, while retaining one human
+  approval and tagging only after verified publication of all seven (#332).
+- PyPI allows at most three Pending Trusted Publishers at a time, so
+  `release.yml` takes a `phase` input: `bootstrap-1` publishes and verifies
+  `agnara-a2a`, `agnara-cli` and `agnara-events`; `bootstrap-2` publishes
+  `agnara-http`, `agnara-mcp` and `agnara-telemetry` and verifies the six
+  adapters; `final` publishes `agnara`, verifies all seven and only then
+  creates `v0.1.0a8` and the GitHub Release. Publication readiness is
+  phase-aware: it requires the publisher readback only for the phase's
+  projects, requires earlier phases to be complete on the index, and refuses
+  any file of the version for later phases. No phase re-publishes another.
 - Recorded that `v0.1.0a7` was tagged and aborted before publication because
   the publication record was `UNVERIFIED`. The tag is immutable and is not
   reused. The root cause — an irreversible tag created before the gates — is
