@@ -223,7 +223,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "Whether the published documentation matches the implementation is a maintainer judgment. 0.1.0a5 changes no runtime source, so the 0.1.0a4 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. What changed here is release documentation: ADR 0078, ADR 0079, a rewritten docs/MAINTAINERS_RELEASE.md, the 0.1.0a4 incident banner and the renumbered roadmap. The documented examples still execute in tests/docs. Recommendation: ACCEPT."
+      "detail": "Whether the published documentation matches the implementation is a maintainer judgment. 0.1.0a6 changes no runtime source, so the 0.1.0a5 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. What changed here is release documentation: ADR 0080, the factual 0.1.0a5 abort record and the renumbered roadmap. The documented examples still execute in tests/docs. Recommendation: ACCEPT."
     },
     {
       "id": "security-release-checks",
@@ -290,7 +290,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "Whether the governed public surface is sufficient to build the reference applications is a maintainer judgment. 0.1.0a5 changes no runtime source, so the 0.1.0a4 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. Recommendation: ACCEPT."
+      "detail": "Whether the governed public surface is sufficient to build the reference applications is a maintainer judgment. 0.1.0a6 changes no runtime source, so the 0.1.0a5 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. Recommendation: ACCEPT."
     },
     {
       "id": "di-works-naturally",
@@ -298,7 +298,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "Whether dependency injection works naturally from outside the framework is a maintainer judgment. 0.1.0a5 changes no runtime source, so the 0.1.0a4 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. Recommendation: ACCEPT."
+      "detail": "Whether dependency injection works naturally from outside the framework is a maintainer judgment. 0.1.0a6 changes no runtime source, so the 0.1.0a5 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. Recommendation: ACCEPT."
     },
     {
       "id": "capabilities-declared-cleanly",
@@ -306,7 +306,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "Whether capability declaration is clean enough to ship is a maintainer judgment. 0.1.0a5 changes no runtime source, so the 0.1.0a4 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. Recommendation: ACCEPT."
+      "detail": "Whether capability declaration is clean enough to ship is a maintainer judgment. 0.1.0a6 changes no runtime source, so the 0.1.0a5 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. Recommendation: ACCEPT."
     },
     {
       "id": "http-exposure-from-application",
@@ -406,7 +406,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "Whether the CLI and introspection materially help a developer is a maintainer judgment. 0.1.0a5 changes no runtime source, so the 0.1.0a4 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. The installed console script was re-exercised from outside the checkout at 0.1.0a5. Recommendation: ACCEPT."
+      "detail": "Whether the CLI and introspection materially help a developer is a maintainer judgment. 0.1.0a6 changes no runtime source, so the 0.1.0a5 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. The installed console script was re-exercised from outside the checkout at 0.1.0a6. Recommendation: ACCEPT."
     },
     {
       "id": "docs-reproduce-applications",
@@ -414,7 +414,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "Whether the public documentation alone is enough to reproduce the applications is a maintainer judgment. 0.1.0a5 changes no runtime source, so the 0.1.0a4 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. Recommendation: ACCEPT."
+      "detail": "Whether the public documentation alone is enough to reproduce the applications is a maintainer judgment. 0.1.0a6 changes no runtime source, so the 0.1.0a5 basis for this judgment is unchanged; the judgment itself is not inherited and is the owner's to make again for this release. Recommendation: ACCEPT."
     },
     {
       "id": "dogfooding-deficiencies-tracked",
@@ -499,7 +499,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "Only the repository owner can read a Trusted Publisher tuple back from PyPI. No check running here can observe it, and 0.1.0a4 shipped on the assumption that it had been done. Confirmation is recorded per project in docs/releases/publication.json and must name the target it was made for; the automated publication-prerequisites gate and release.yml both refuse while any project is UNVERIFIED. Readback of the public index at 2026-09-08 from this commit: agnara exists and does not carry 0.1.0a5; agnara-a2a, agnara-cli, agnara-events, agnara-http, agnara-mcp and agnara-telemetry return 404. A 404 does not prove a pending publisher is absent, and it does not prove one is present. The owner must also check https://pypi.org/manage/projects/ for a project created under a misspelled name and remove it and its publisher rather than renaming anything here. No recommendation is possible: this gate is a fact the owner has to observe."
+      "detail": "Only the repository owner can read a Trusted Publisher tuple back from PyPI. No check running here can observe it, and 0.1.0a4 shipped on the assumption that it had been done. Confirmation is recorded per project in docs/releases/publication.json and must name the target it was made for; the automated publication-prerequisites gate and release.yml both refuse while any project is UNVERIFIED. Readback of the public index on 2026-09-08: agnara carries 0.1.0a2, 0.1.0a3 and 0.1.0a4, with no 0.1.0a5 or 0.1.0a6 files; agnara-a2a, agnara-cli, agnara-events, agnara-http, agnara-mcp and agnara-telemetry return 404. A 404 proves neither that a pending publisher is absent nor that one is present. The owner must also check https://pypi.org/manage/projects/ for a project created under a misspelled name and remove it and its publisher rather than renaming anything here. No recommendation is possible: this gate is a fact the owner has to observe."
     }
   ]
 }
