@@ -337,7 +337,8 @@ Every PR records one of these outcomes:
 - a release-note-worthy change has a concise entry under `[Unreleased]`; or
 - no entry is required and the PR explains why.
 
-Before creating a release tag:
+Before the release workflow may create the release tag (ADR 0082 — nobody
+creates it by hand):
 
 - `python scripts/set_workspace_version.py release <version> --check` proves
   every first-party `pyproject.toml` contains the exact selected PEP 440
@@ -349,9 +350,13 @@ Before creating a release tag:
 - comparison links reference the previous and new tags correctly;
 - package builds and install/import smoke tests pass;
 - the full required CI, review and attribution gates are green;
-- the annotated `v<version>` tag targets the exact reviewed `main` commit;
-- publishing authorization, license and credentials/trusted publishing are
-  present before any registry upload.
+- the run was dispatched from the current head of `main`, no `v<version>` tag
+  exists anywhere, and the `pypi` environment requires reviewers;
+- publishing authorization is the approval of that environment, and license
+  and Trusted Publishing readback are recorded before any registry upload;
+- the annotated `v<version>` tag is then created by the approved run on the
+  exact reviewed `main` commit, only after all seven distributions are on
+  PyPI and verified complete.
 
 Documentation of this checklist is not evidence that release or hotfix
 automation has run. Record actual commands, artifacts, hashes and GitHub links

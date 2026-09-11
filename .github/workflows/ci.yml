@@ -36,16 +36,16 @@ jobs:
       matrix:
         language: [python, actions]
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938
+        uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
         with:
           languages: ${{ matrix.language }}
           build-mode: none
       - name: Analyze and upload security results
-        uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938
+        uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
         with:
           category: /language:${{ matrix.language }}
 
@@ -55,10 +55,10 @@ jobs:
     name: Lint and format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.0.1
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
 
@@ -78,10 +78,10 @@ jobs:
     name: Type check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.0.1
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
 
@@ -103,10 +103,10 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.0.1
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
 
@@ -128,10 +128,10 @@ jobs:
     name: Documentation browsers
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.0.1
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
 
@@ -160,10 +160,10 @@ jobs:
     name: Lockfile is current
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.0.1
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
 
       - name: Set up Python 3.14
         run: uv python install 3.14
@@ -182,10 +182,10 @@ jobs:
     name: Build and install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.0.1
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
 
@@ -205,9 +205,13 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
+          manifest() {
+            uv run --no-project python "$GITHUB_WORKSPACE/scripts/distributions.py" "$@"
+          }
+          expected_count="$(manifest --count)"
           wheels=("$GITHUB_WORKSPACE"/dist/*.whl)
-          if [[ "${#wheels[@]}" -eq 0 ]]; then
-            echo "::error::no wheels to install"
+          if [[ "${#wheels[@]}" -ne "$expected_count" ]]; then
+            echo "::error::expected $expected_count reviewed wheels, found ${#wheels[@]}"
             exit 1
           fi
           mkdir -p /tmp/ci-install && cd /tmp/ci-install
@@ -216,9 +220,15 @@ jobs:
           # Resolve adapter-owned third-party dependencies from the index,
           # then close the index before installing the complete first-party
           # wheel set. The installed-metadata gate below independently checks
-          # that every adapter retained its exact core requirement.
-          uv pip install --python .venv/bin/python \
-            "mcp==2.1.1" "opentelemetry-api>=1.44,<2"
+          # that every adapter retained its exact core requirement. Which
+          # requirements those are comes from docs/distributions.json, the
+          # same single source the release workflow and release scripts read,
+          # so an adapter that gains a dependency cannot leave a stale copy
+          # of this list behind.
+          readarray -t third_party < <(manifest --third-party | grep -v '^$' || true)
+          if [[ "${#third_party[@]}" -gt 0 ]]; then
+            uv pip install --python .venv/bin/python "${third_party[@]}"
+          fi
           uv pip install --python .venv/bin/python \
             --no-index --find-links "$GITHUB_WORKSPACE/dist" "${wheels[@]}"
 

@@ -93,17 +93,17 @@ def test_an_empty_workspace_never_passes_by_checking_nothing(tmp_path: Path) -> 
     """The failure that would make this gate meaningless."""
     (tmp_path / "packages").mkdir()
 
-    code, lines = checker.run(tmp_path, require_installed=False)
+    report = checker.run(tmp_path, require_installed=False)
 
-    assert code == 1
-    assert any("no distributions found" in line for line in lines)
+    assert report.code == 1
+    assert any("no distributions found" in problem for problem in report.problems)
 
 
 def test_a_missing_packages_directory_is_reported(tmp_path: Path) -> None:
-    code, lines = checker.run(tmp_path, require_installed=False)
+    report = checker.run(tmp_path, require_installed=False)
 
-    assert code == 1
-    assert any("no packages directory" in line for line in lines)
+    assert report.code == 1
+    assert any("no packages directory" in problem for problem in report.problems)
 
 
 # ---------------------------------------------------------------------------
@@ -269,10 +269,11 @@ def test_an_installed_version_that_does_not_match_the_tag_fails(
 
 def test_the_workspace_passes_without_the_install_requirement() -> None:
     """The development environment is a valid subject for everything but origin."""
-    code, lines = checker.run(WORKSPACE_ROOT, require_installed=False)
+    report = checker.run(WORKSPACE_ROOT, require_installed=False)
 
-    assert code == 0, lines
-    assert any("checked 7 installed distributions" in line for line in lines)
+    assert report.code == 0, report.problems
+    assert report.problems == ()
+    assert "checked 7 installed distributions" in report.summary
 
 
 def test_success_says_what_it_inspected(capsys: pytest.CaptureFixture[str]) -> None:
@@ -288,11 +289,46 @@ def test_success_says_what_it_inspected(capsys: pytest.CaptureFixture[str]) -> N
 def test_failures_are_reported_as_workflow_errors(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """The log line is a constant: not even the failing path or a count leaks."""
     code = checker.main(["--workspace", str(tmp_path)])
     captured = capsys.readouterr()
 
     assert code == 1
-    assert "::error::" in captured.out
+    assert captured.out == "::error::distribution validation failed\n"
+    assert captured.err == ""
+    assert str(tmp_path) not in captured.out
+
+
+def test_failure_output_does_not_log_untrusted_diagnostics(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Whatever ``run`` reports about the artifact stays out of stdout/stderr.
+
+    The report is deliberately poisoned in every field, including the summary,
+    so the test also holds if ``main`` ever starts trusting the wrong one.
+    """
+    marker = "pypi-" + "A" * 60
+    poisoned = checker.Report(
+        1,
+        f"summary mentions {marker}",
+        (
+            f"agnara: wheel contains a recognized credential signature in ['{marker}']",
+            "agnara: wheel retains the local build path in ['/home/runner/work/agnara']",
+            "agnara: sensitive filename shipped: agnara/.env",
+            "password=hunter2",
+        ),
+    )
+    monkeypatch.setattr(checker, "run", lambda *_args, **_kwargs: poisoned)
+
+    code = checker.main(["--workspace", str(WORKSPACE_ROOT)])
+    captured = capsys.readouterr()
+
+    assert code == 1
+    assert captured.out == "::error::distribution validation failed\n"
+    assert captured.err == ""
+    for fragment in (marker, "hunter2", "/home/runner", ".env", "summary mentions", "4"):
+        assert fragment not in captured.out
+        assert fragment not in captured.err
 
 
 # ---------------------------------------------------------------------------
@@ -396,21 +432,30 @@ def test_the_artifact_mode_never_imports_anything(
     dist = _built(tmp_path, _artifacts_for(found))
     monkeypatch.setattr(checker, "check_artifact_contents", lambda *args, **kwargs: [])
 
-    code, lines = checker.run(WORKSPACE_ROOT, dist_dir=dist)
+    report = checker.run(WORKSPACE_ROOT, dist_dir=dist)
 
-    assert code == 0
-    assert any("built 7 distributions" in line for line in lines)
+    assert report.code == 0
+    assert report.problems == ()
+    assert "built 7 distributions" in report.summary
 
 
 def test_the_release_set_is_explicit_and_matches_the_architecture() -> None:
-    assert checker.SHIPPED_DISTRIBUTIONS == DISTRIBUTIONS
+    """The checker's own reader of the manifest must agree with everything else.
+
+    `check_distributions.py` parses `docs/distributions.json` itself rather
+    than importing `scripts/distributions.py`, because its installed-artifact
+    mode runs under `python -I`, which implies `-P` and removes the script's
+    own directory from `sys.path`. Two readers of one file is acceptable; two
+    readers that disagree is not.
+    """
+    assert checker.shipped_distributions(WORKSPACE_ROOT) == DISTRIBUTIONS
 
 
 def test_an_accidental_workspace_distribution_is_not_publishable() -> None:
     found, _ = checker.discover(WORKSPACE_ROOT)
     found.append(checker.Distribution("agnara-accidental", "agnara_accidental"))
 
-    problems = checker.check_release_set(found)
+    problems = checker.check_release_set(found, DISTRIBUTIONS)
 
     assert any("unexpected=['agnara-accidental']" in problem for problem in problems)
 

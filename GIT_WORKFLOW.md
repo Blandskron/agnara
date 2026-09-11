@@ -608,14 +608,17 @@ merge:
 
 1. confirm the accepted `main` commit contains the reviewed version and
    changelog;
-2. create one annotated `v<version>` tag on that exact commit and never move
-   or reuse it;
-3. publish a GitHub Release from the versioned changelog section when
-   applicable;
-4. publish packages only when license, credentials/trusted publishing and
-   release authorization are separately in place;
-5. propagate any release-only commits back into `develop` through a PR;
-6. delete the release branch.
+2. dispatch the `Release to PyPI` workflow from `main` with that version. Do
+   **not** create or push a tag by hand: after every gate has passed and a
+   reviewer has approved the run in the `pypi` environment, the run publishes
+   the packages through Trusted Publishing and verifies the index, and only
+   then creates the one annotated `v<version>` tag on that exact commit; that
+   tag is never moved or reused, and it never exists for a failed publication
+   (ADR 0082);
+3. the same run creates the GitHub Release from `docs/releases/v<version>.md`
+   for that tag;
+4. propagate any release-only commits back into `develop` through a PR;
+5. delete the release branch.
 
 Do not mark E0B.12 complete merely because this process is documented. That
 item requires evidence from an actually exercised release and hotfix flow.
@@ -684,7 +687,10 @@ After resolution:
 
 `main` and `develop` are protected by active rulesets. The exact definitions
 live in `.github/rulesets/` so the enforced configuration is reviewable here
-and not only in GitHub settings.
+and not only in GitHub settings. `.github/rulesets/protect-release-tags.json`
+additionally makes every `v*` tag immutable (no update, no force-update, no
+deletion) without restricting creation, because the approved release workflow
+run is the only thing that creates one (ADR 0082).
 
 Both branches enforce:
 

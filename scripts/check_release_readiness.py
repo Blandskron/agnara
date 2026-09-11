@@ -31,6 +31,9 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+import check_publication_readiness as publication
+import distributions
+
 ROOT = Path(__file__).resolve().parents[1]
 STATUS_PATH = ROOT / "docs" / "releases" / "release-status.json"
 PLAN_PATH = ROOT / "docs" / "releases" / "RELEASE_PLAN.md"
@@ -40,18 +43,11 @@ PUBLIC_API_PATH = ROOT / "docs" / "public-api.json"
 
 #: Distribution name -> top-level import package, per ADR 0017.
 #:
-#: Spelled out rather than discovered so that a package that stops shipping,
-#: or a new one that nobody classified, is a diff in this file rather than a
-#: silent change in what the public API gate covers.
-DISTRIBUTIONS = {
-    "agnara": "agnara",
-    "agnara-a2a": "agnara_a2a",
-    "agnara-cli": "agnara_cli",
-    "agnara-events": "agnara_events",
-    "agnara-http": "agnara_http",
-    "agnara-mcp": "agnara_mcp",
-    "agnara-telemetry": "agnara_telemetry",
-}
+#: Still declared rather than discovered, so that a package that stops
+#: shipping, or a new one that nobody classified, is a reviewed diff rather
+#: than a silent change in what the public API gate covers -- but declared
+#: once, in `docs/distributions.json`, instead of separately here.
+DISTRIBUTIONS = distributions.load(ROOT).mapping
 
 #: Import package -> the source root the manifest may address.
 SOURCE_ROOTS = {
@@ -236,6 +232,54 @@ def check_version_consistency() -> tuple[str, str]:
         SATISFIED,
         f"all {len(versions)} first-party packages declare {version}; "
         f"all {len(versions) - 1} adapters pin agnara=={version}",
+    )
+
+
+def check_publication_prerequisites() -> tuple[str, str]:
+    """Whether this target could actually be *published*, not merely built.
+
+    `0.1.0a4` satisfied every other automated gate in this file and still left
+    six of seven distributions unpublished, because nothing here knew the
+    difference between code that is ready and a release that is ready. The
+    difference is owned by `scripts/check_publication_readiness.py` and
+    measured here: the reviewed set, synchronized versions, exact core pins,
+    the lockfile, release notes, the dated changelog section, and the recorded
+    confirmation that each PyPI Trusted Publisher exists for this exact target.
+
+    During development the workspace carries `<target>.dev0` and there is no
+    dated changelog section yet, so the full publish contract cannot hold and
+    is reported as not-yet-applicable rather than as a defect. It becomes a
+    hard gate at the version cut, which is when it has to be true.
+    """
+    try:
+        target = load_status()["current_target"]
+    except StatusError, KeyError:
+        return UNSATISFIED, "the current release target could not be determined"
+    entries = unreleased_entry_count()
+    if entries is None:
+        return UNSATISFIED, "the [Unreleased] changelog section could not be interpreted"
+    if entries:
+        return PARTIAL, (
+            f"development phase: the publish contract for {target} is enforced at the version "
+            "cut. Run scripts/check_publication_readiness.py on the release branch."
+        )
+    try:
+        code, problems, _ = publication.run(
+            ROOT,
+            target,
+            dist_dir=None,
+            tag=None,
+            online=False,
+            require_published=False,
+            index=publication.DEFAULT_INDEX,
+        )
+    except (publication.Refusal, distributions.ManifestError) as exc:
+        return UNSATISFIED, f"publication readiness could not be evaluated: {exc}"
+    if code:
+        return UNSATISFIED, "; ".join(problems)
+    return SATISFIED, (
+        f"the {len(distributions.load(ROOT).distributions)} reviewed distributions are "
+        f"publishable at {target}, and every Trusted Publisher readback is confirmed"
     )
 
 
@@ -556,6 +600,7 @@ AUTOMATED_CHECKS = {
     "release-commit-identified": check_release_commit_identified,
     "license-metadata": check_license_metadata,
     "public-api-distinguished": check_public_api_declared,
+    "publication-prerequisites": check_publication_prerequisites,
 }
 
 # ---------------------------------------------------------------------------

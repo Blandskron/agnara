@@ -77,9 +77,9 @@ def test_no_distribution_declares_an_ecosystem_integration(distribution: str) ->
 
     A framework integration does not arrive as an import. It arrives as a line
     in a ``pyproject.toml``, and by the time anything imports it the decision
-    has already been made. This is the rule that makes the ``0.1.0a4`` and
-    ``0.1.0a5`` guardrails in ``docs/releases/RELEASE_PLAN.md`` fail loudly
-    rather than being remembered.
+    has already been made. This is the rule that makes the per-alpha
+    guardrails in ``docs/releases/RELEASE_PLAN.md`` fail loudly rather than
+    being remembered.
 
     ``docs/INTEROPERABILITY.md`` invariant 3 is the general form: every
     external framework is optional. A declared dependency is not optional.
