@@ -19,9 +19,6 @@ This file owns **decomposed work that is ready to implement**. It does not own t
   it. It is not the beta security program: no fuzzing, penetration test or
   dependency vulnerability scan stands behind it. `I10`.
 
-- [ ] API docs present. Partial: `docs/API_DESIGN.md` records intent, and
-  there is no generated reference for the 41 public names. `I9`, then `I18`.
-
 - [ ] E0B.9 Configure independent reviewer identity when available.
 
 - [ ] E0B.12 Document release and hotfix automation evidence.
@@ -47,4 +44,3 @@ This file owns **decomposed work that is ready to implement**. It does not own t
   part of the serialized document and changing it needs an
   `INTROSPECTION_VERSION` bump. Rename it to `applications` in the next
   snapshot format change rather than separately.
-
