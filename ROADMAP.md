@@ -1,89 +1,34 @@
 # Roadmap
 
-Where Agnara is going, in horizons.
+## Publication baseline
 
-This file owns *where Agnara is going*. `BACKLOG.md` owns what is ready to
-implement, `docs/INITIATIVES.md` owns what to build in dependency order, and
-`docs/MATURITY.md` owns what already exists. `docs/DOCUMENTATION_MAP.md`
-records why each owns what it owns.
+`0.1.0a8` is the sole retained publication baseline. It validates the reviewed
+seven-distribution publication workflow. It is not a compatibility promise and
+does not define the future product scope.
 
-## No dates
+## One destination: 1.0.0
 
-A date without evidence is a fabrication. Agnara has no evidence about when
-any of this will be done, so it commits to order rather than to time.
+The next planned release is `1.0.0`. The project will not create another alpha,
+beta or release-candidate publication. Work is selected by the architecture it
+stabilizes, not by a pre-release cadence.
 
-Work far beyond the current horizon is still recorded, because implementing
-today's architecture wrongly would make some of it impossible later. That is
-the reason to write it down — not to promise it.
+`docs/releases/RELEASE_PLAN.md` defines the evidence required to publish 1.0.0;
+`docs/INITIATIVES.md` defines dependency order; `BACKLOG.md` holds ready work.
 
-## Horizons
+## Required product outcomes
 
-Horizons are the ordering; a release is the thing that closes. The mapping is
-fixed by ADR 0068 so that work lands where its question belongs rather than in
-whichever release happens to be open.
+- Execution semantics: streaming, execution identity and operational
+  idempotency are designed, implemented and tested.
+- Performance: compiled paths have budgets and CI detects regressions.
+- Interoperability: Agnara works standalone, as a host, embedded and
+  side-by-side without coupling the kernel to a framework.
+- Security: the threat model, supply-chain controls and security invariants
+  have current evidence.
+- Public API: the supported surface and migration commitments are stable.
+- Documentation: applications can be built from supported documentation alone.
 
-### NOW — 0.1.0a4, Application Boundaries
+## Non-goals
 
-Current baseline target. Its one question: can Agnara be consumed as a
-framework from outside this repository?
-
-- **Unified exposure model.** One neutral availability registry that both
-  shipped adapters compile into. ADR 0070.
-- **Public HTTP composition surface.** ADR 0071.
-- **HTTP request surface** — cookies, forms, multipart, uploads.
-
-### NEXT — 0.1.0a5, Execution Semantics
-
-Its one question: does execution have streaming, identity and a measured cost?
-
-- **Streaming model** — `I2`, which still blocks the most other work.
-- **Execution identity and idempotency behaviour.**
-- **Performance budgets** — `I14`.
-
-### BETA — 0.1.0b1, Interoperability
-
-Its one question: can the Python ecosystem use Agnara, and Agnara use it?
-
-- **Framework and ecosystem interoperability** — `I20`. Agnara standalone, as
-  a host, embedded inside an existing framework, and side by side. RFC 0008
-  states the questions and decides none of them.
-- **Security program** — `I10`. Threat model, invariants with tests, supply
-  chain.
-- **A2A, events, audit, composition and testing utilities** — `I4`, `I5`,
-  `I8`, `I12`, `I17`.
-- **Durable execution** — `I6`, the abstraction rather than the workers.
-
-### RC — 0.1.0rc1
-
-No new subsystems. Regressions, documentation, compatibility, security,
-packaging and release validation only.
-
-### 1.0
-
-- Stable execution, DI, policy, failure and introspection models.
-- Stable HTTP composition API and MCP projection.
-- Public API governance and deprecation policy in force.
-  `docs/PUBLIC_API.md` owns the governed surface.
-- **Free-threaded Python** verification — `I15`.
-
-### POST-1.0
-
-Distributed workers, a plugin and extension model (`I13`), workflow
-orchestration (`I11`), multi-tenancy and federation (`I16`), and further
-protocol adapters.
-
-## What Agnara is not becoming
-
-An ORM, a broker, a scheduler, a worker runtime, a frontend framework, an
-admin UI, or an LLM framework. `docs/TARGET_ARCHITECTURE.md` section 7 records
-why for each.
-
-Agnara does not replace the ecosystem, so it has to be able to work with it
-— alone, embedded, alongside, integrated.
-
-## The governing trade
-
-When features and architecture conflict, architecture wins. When a proprietary
-mechanism and an open standard both work, the standard wins. When convenient
-coupling and a clean boundary conflict, the boundary wins. When a large core
-and a small kernel with strong adapters both work, the kernel stays small.
+Agnara is not becoming an ORM, broker, scheduler, worker runtime, frontend
+framework, admin UI or LLM framework. The kernel remains capability-first,
+transport-neutral and small; adapters evolve around it.

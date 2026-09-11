@@ -1,46 +1,24 @@
 # Backlog
 
-Legend:
+This file owns decomposed work ready to implement on the path to `1.0.0`.
+`ROADMAP.md` owns the destination and `docs/INITIATIVES.md` owns dependency
+order.
 
-- [ ] Not started
-- [~] In progress
-- [!] Blocked
-- [?] Research
+## Ready after design acceptance
 
-This file owns **decomposed work that is ready to implement**. It does not own the long-term plan: ROADMAP.md owns where Agnara is going.
+- [ ] Implement the accepted protocol-neutral streaming model (I2).
+- [ ] Implement execution identity and operational idempotency (I3).
+- [ ] Establish performance budgets and CI regression gates (I14).
+- [ ] Complete interoperability and composition contracts (I20, I8).
+- [ ] Complete the security program evidence (I10).
 
-## A5
+## Deferred decisions
 
-- [?] E2.7 Benchmark adapters before selecting defaults.
+- [ ] D7 Decide whether `agnara.core.di` remains the public dependency
+  injection spelling before API stabilization.
+- [ ] D6 Rename the introspection snapshot field `.apps` to `applications`
+  only with an intentional snapshot-format migration.
+- [ ] Configure an independent reviewer identity when one is available.
 
-- [~] Security threat model present. Partial: `docs/THREAT_MODEL.md` covers the
-  a4 surface -- assets, boundaries, abuse cases, verified protections with
-  their evidence, and delegated assumptions -- and `tests/security/` regresses
-  it. It is not the beta security program: no fuzzing, penetration test or
-  dependency vulnerability scan stands behind it. `I10`.
-
-- [ ] E0B.9 Configure independent reviewer identity when available.
-
-- [ ] E0B.12 Document release and hotfix automation evidence.
-
-- [ ] D7 Decide whether `agnara.core.di` is the right public spelling for
-  dependency injection. It is the second import in the README and in
-  `examples/quickstart.py`, so `core` — a word that reads as an internal
-  namespace — sits on the first screen a new user sees, and an external
-  application cannot avoid it. Found while governing the subpackage surfaces
-  (#275) and deliberately left alone there: a rename is a breaking change with
-  a migration cost, and it does not belong inside a change whose purpose is to
-  make the current surface visible rather than to alter it. Decide with the
-  `0.1.0a4` external evidence, which will show whether the spelling actually
-  confuses anyone, and before any name is considered for `stable`. First
-  evidence: eight of the nine reference applications import `agnara.core.di`,
-  at 35 sites, and none found a way around it — it is the most imported module
-  of the core after the top-level package.
-
-- [ ] D6 `.apps` means two things. On `ApplicationDescriptor` it is the
-  bounded contexts an application mounts (E1A.4); on `IntrospectionSnapshot`
-  it is a tuple of whole applications, which ADR 0011 says are not apps. #260
-  renamed the misleading *type* but not the field, because a field name is
-  part of the serialized document and changing it needs an
-  `INTROSPECTION_VERSION` bump. Rename it to `applications` in the next
-  snapshot format change rather than separately.
+No item in this backlog authorizes a publication before the `1.0.0` release
+gates are satisfied.
