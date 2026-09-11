@@ -84,6 +84,7 @@ this audit; the other paths existed already.
 | A traversal sequence in a path parameter is data, not a path | `tests/security/test_http_protocol_robustness.py` |
 | The problem document never carries the query string | `tests/http/test_dispatch.py`, `tests/security/test_http_protocol_robustness.py` |
 | An unexpected handler exception becomes a fixed, redacted 500 | `tests/security/test_trust_boundaries.py`, `tests/http/test_dispatch.py` |
+| Default runtime logs retain the capability identifier but exclude unexpected exception messages and tracebacks | `tests/unit/execution/test_runtime.py` |
 | An unsupported ASGI scope is refused before dispatch | `tests/http/test_asgi_boundary.py` |
 | The HTTP surface builds an anonymous principal and reads identity from no request field | `tests/security/test_trust_boundaries.py` |
 | A confirmation requirement cannot be satisfied over HTTP, and the handler does not run | `tests/security/test_trust_boundaries.py` |
@@ -118,6 +119,7 @@ because there is no decompression.
 | H-3 | P1 | Fixed by [#312](https://github.com/Blandskron/agnara/pull/312). Declared scopes compile into the common execution plan, so HTTP and MCP enforce the same policy before materialization, validation or effects. Anonymous HTTP calls to scoped capabilities now fail closed. |
 | H-4 | P2 | Fixed. `_read_body` bounded total bytes but not the number of events. An empty chunk moves `max_body_bytes` no closer to its limit, so a client sending them with `more_body` set held a worker open indefinitely and grew a list without bound. Empty events are now capped. |
 | H-5 | P3 | Fixed. `request_timeout` was documented as a per-request deadline. It starts after binding, so it bounds execution and not how long a client may take to send a body. The documentation now says which. |
+| H-6 | P3 | Fixed. Unexpected capability exceptions were redacted on the wire but logged with `exc_info`, so exception-carried credentials, dependency values or payload fragments could reach the application's default log sink. The runtime now logs only the capability identifier; a regression test proves that exception text and traceback are absent. |
 
 ### H-3 — declared scopes are enforced transport-neutrally
 
