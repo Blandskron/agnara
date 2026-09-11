@@ -3,6 +3,8 @@
 This document owns compatibility expectations for Agnara's Python API.
 `docs/API_DESIGN.md` owns the intended shape and examples; the machine-readable
 [`public-api.json`](public-api.json) file owns the exact classified export list.
+The generated [API reference](API_REFERENCE.md) renders that list for readers;
+it does not define stability policy separately.
 
 ## Stability vocabulary
 
