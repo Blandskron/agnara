@@ -7,7 +7,7 @@
 
 ## Context
 
-The `0.1.0a4` HTTP and MCP adapters both projected compiled core schemas, but
+The baseline HTTP and MCP adapters both projected compiled core schemas, but
 they did not consume them equivalently. HTTP materialized decoded JSON into
 dataclasses, tuples and enums before entering the runtime. MCP published the
 same JSON Schema and then passed decoded JSON directly to strict Python
@@ -54,7 +54,7 @@ every surface.
 Scopes restrict authority; they never grant it. Risk and effects remain
 machine-readable metadata with no independent allow/deny semantics.
 
-HTTP `0.1.0a4` capability dispatch has no authentication bridge and therefore
+Baseline HTTP capability dispatch has no authentication bridge and therefore
 runs as anonymous. A scoped HTTP capability fails closed with `forbidden`.
 Adding an HTTP principal resolver is separate authentication work, not part of
 this consistency fix.

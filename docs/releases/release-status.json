@@ -1,21 +1,31 @@
 {
-  "schema_version": 2,
+  "schema_version": 1,
   "publication_baseline": "0.1.0a8",
   "current_target": "1.0.0",
+  "previous_release": "0.1.0a8",
+  "next_target": "1.0.1",
   "status": "IN_PROGRESS",
   "assessed_on": "2026-09-11",
   "notes": [
     "A8 is retained solely as the verified publication baseline.",
-    "No further pre-release publication is planned. The next release is 1.0.0.",
-    "Gate evidence is recorded only when it covers the accepted 1.0.0 candidate."
+    "The next release is 1.0.0; status is recomputed by scripts/check_release_readiness.py.",
+    "No 1.0.0 gate is satisfied without current reproducible evidence or human review."
   ],
   "gates": [
-    {"id": "execution-semantics", "status": "PENDING"},
-    {"id": "performance-budgets", "status": "PENDING"},
-    {"id": "interoperability", "status": "PENDING"},
-    {"id": "security-program", "status": "PENDING"},
-    {"id": "stable-public-api", "status": "PENDING"},
-    {"id": "clean-room-documentation", "status": "PENDING"},
-    {"id": "publication-rehearsal", "status": "PENDING"}
+    {"id": "python-baseline", "title": "Python baseline verified", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
+    {"id": "changelog-accurate", "title": "Changelog supports the selected target", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
+    {"id": "version-consistency", "title": "Workspace version identity is synchronized", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
+    {"id": "repository-clean", "title": "Release commit has a clean working tree", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
+    {"id": "release-commit-identified", "title": "Release commit is identified", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
+    {"id": "license-metadata", "title": "License metadata is complete", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
+    {"id": "public-api-distinguished", "title": "Public API is distinguished", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
+    {"id": "publication-prerequisites", "title": "Reviewed publication set is publishable", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
+    {"id": "execution-semantics", "title": "Execution semantics are complete", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "Streaming, execution identity and idempotency require 1.0.0 evidence."},
+    {"id": "performance-budgets", "title": "Performance budgets are enforced", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "Measured budgets and a regression gate are required."},
+    {"id": "interoperability", "title": "Interoperability conformance is demonstrated", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "Supported integrations need reproducible conformance evidence."},
+    {"id": "security-program", "title": "Security program is reviewed", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The threat model and supply-chain controls require release review."},
+    {"id": "stable-public-api", "title": "Public API is ready for stability", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "A maintainer must approve the 1.0.0 compatibility commitment."},
+    {"id": "clean-room-documentation", "title": "Documentation reproduces supported applications", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "A maintainer must review clean-room documentation evidence."},
+    {"id": "publication-rehearsal", "title": "Publication workflow is rehearsed", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "Publication authorization remains a protected release action."}
   ]
 }

@@ -38,7 +38,7 @@ must not be independently invented by HTTP, MCP, A2A or an event adapter.
 
 I2 therefore precedes HTTP SSE and WebSockets, MCP progress, A2A streaming,
 events and task progress. ADR 0068 assigns the resulting work to the execution
-alpha; this RFC is its design entry point.
+the stable-release plan; this RFC is its design entry point.
 
 ## 3. Scope
 

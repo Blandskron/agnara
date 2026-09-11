@@ -1,6 +1,6 @@
 [project]
 name = "agnara-telemetry"
-version = "0.1.0a8"
+version = "1.0.0.dev0"
 description = "OpenTelemetry bridge for Agnara capability execution."
 readme = "README.md"
 requires-python = ">=3.14"
@@ -14,7 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-dependencies = ["agnara==0.1.0a8", "opentelemetry-api>=1.44,<2"]
+dependencies = ["agnara==1.0.0.dev0", "opentelemetry-api>=1.44,<2"]
 
 [project.urls]
 Homepage = "https://github.com/Blandskron/agnara"

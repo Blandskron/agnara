@@ -8,8 +8,8 @@ does not define the future product scope.
 
 ## One destination: 1.0.0
 
-The next planned release is `1.0.0`. The project will not create another alpha,
-beta or release-candidate publication. Work is selected by the architecture it
+The next planned release is `1.0.0`. The project will not create another interim
+publication. Work is selected by the architecture it
 stabilizes, not by a pre-release cadence.
 
 `docs/releases/RELEASE_PLAN.md` defines the evidence required to publish 1.0.0;

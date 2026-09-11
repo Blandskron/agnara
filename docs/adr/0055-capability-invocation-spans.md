@@ -145,7 +145,7 @@ cardinality, and the span ID already identifies the span.
 
 Adding a required field to two frozen public events is a breaking change for
 code constructing them directly, which is recorded in the changelog under the
-pre-`1.0` alpha policy. The runtime's own emission and every existing hook that
+pre-`1.0.0` provisional policy. The runtime's own emission and every existing hook that
 only reads events are unaffected.
 
 Unreachable code at the end of `invoke` — four statements after a `try` block

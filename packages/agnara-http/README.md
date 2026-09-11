@@ -4,7 +4,7 @@ HTTP/ASGI exposure adapter. Owns routing, request decoding, response encoding, R
 
 ## Status
 
-`0.1.0a4` exposes the seven-name public composition API described in
+The current public surface exposes the seven-name composition API described in
 `docs/HTTP_COMPOSITION.md`, including path, query, header, JSON, cookie, form
 and upload bindings. Documentation providers, Explorer and the discovery
 endpoint are implemented internally but are not yet reachable from that public

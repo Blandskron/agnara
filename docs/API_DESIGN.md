@@ -39,7 +39,7 @@ asgi = http.compile(app.compile(), openapi=OpenApiInfo("Users", "1.0"))
 `http` is a typed adapter surface selected by project composition, not a
 capability property. The exposure lifecycle is settled by ADR 0070 and this
 public composition syntax is implemented by ADR 0071. Its seven exports are
-`provisional` during the alpha line; implemented does not mean stable.
+`provisional` until `1.0.0`; implemented does not mean stable.
 
 ## 5. MCP exposure
 

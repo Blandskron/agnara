@@ -7,7 +7,7 @@ dispatch-driven seven-distribution publication path; it is not the compatibility
 or product contract this project will publish next.
 
 The next and first planned product release is **`1.0.0`**. There will be no
-additional alpha, beta or release-candidate publication cadence. Development
+additional interim publication cadence. Development
 continues on `develop` until the stable gates below have evidence.
 
 ## Release thesis
