@@ -98,7 +98,7 @@ logical CPU count: 8
 Python: CPython 3.14.4
 GIL enabled: true
 timer: QueryPerformanceCounter(), 100 ns reported resolution
-mcp 2.1.1, mcp-types 2.1.1, agnara 0.1.0a2, agnara-mcp 0.1.0a2
+mcp 2.1.1, mcp-types 2.1.1, agnara baseline, agnara-mcp baseline
 network / framing / concurrency: excluded
 ```
 

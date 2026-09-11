@@ -1,6 +1,6 @@
 # Interoperability and Composition
 
-How Agnara relates to the rest of the Python ecosystem, and what `0.1.0b1` has
+How Agnara relates to the rest of the Python ecosystem, and what `1.0.0` has
 to demonstrate before that relationship can be called a contract.
 
 This document owns the **interoperability contract and the integration
@@ -172,7 +172,7 @@ survives contact with the second framework.
 ## 6. Integration matrix
 
 The research and future-conformance inventory. **Priority** is architectural
-importance, not popularity. **b1 blocker** means `0.1.0b1` cannot close without
+importance, not popularity. **release blocker** means `1.0.0` cannot close without
 green evidence — the authoritative list is the gate table in
 `docs/releases/RELEASE_PLAN.md`, and this column points at it rather than being
 a second source.
@@ -193,7 +193,7 @@ reason in the notes; `partial` — coherent for part of the technology only.
 | Litestar | yes | yes | yes | HIGH | conditional | The fourth web gate is satisfied by Flask **or** Litestar. Validates ASGI, DI coexistence, lifecycle, routing, serialization, middleware and embedding. |
 | Falcon | no | yes | research | MEDIUM | no | Kept only while it produces new evidence about WSGI/ASGI independence. |
 | aiohttp | no | yes | research | MEDIUM | no | Low-level async interoperability outside the ASGI ecosystem. |
-| Sanic, Quart | no | research | research | LOW | no | Research. They block `0.1.0b1` only if they reveal an architectural problem the others hid. |
+| Sanic, Quart | no | research | research | LOW | no | Research. They block `1.0.0` only if they reveal an architectural problem the others hid. |
 | Robyn | research | research | research | LOW | no | Research. |
 
 ### Data and persistence
@@ -244,7 +244,7 @@ them.
 | Celery | yes | yes | yes | HIGH | yes, or one equivalent | Capability → task adapter → Celery → broker → worker → Agnara invocation. Must resolve serialization, execution identity, principal propagation, deadlines, retries, idempotency, failures, telemetry and capability lookup. A Celery retry is not an Agnara execution semantic and must never be confused for one. |
 | Taskiq | yes | yes | yes | MEDIUM | no | Modern async alternative; the second implementation that tests the task port. |
 | Dramatiq | yes | yes | yes | MEDIUM | no | |
-| RQ | yes | yes | yes | LOW | no | Does not block the beta. |
+| RQ | yes | yes | yes | LOW | no | Does not block `1.0.0`. |
 
 ### Messaging
 
@@ -266,14 +266,14 @@ them.
 
 | Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
-| OpenTelemetry | yes | yes | yes | CRITICAL | yes | Bridges exist (ADR 0054 through ADR 0058); `0.1.0b1` validates them end to end — traces, spans, metrics, propagation, invocation and execution identity across HTTP, workers, databases and errors. The SDK never enters `agnara`. |
+| OpenTelemetry | yes | yes | yes | CRITICAL | yes | Bridges exist (ADR 0054 through ADR 0058); `1.0.0` validates them end to end — traces, spans, metrics, propagation, invocation and execution identity across HTTP, workers, databases and errors. The SDK never enters `agnara`. |
 | Sentry | yes | yes | yes | MEDIUM | no | Through an adapter or integration layer. Never an official dependency. |
 
 ### Agent and protocol interoperability
 
 | Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
-| MCP | yes | yes | yes | CRITICAL | yes | Already implemented for tools. `0.1.0b1` proves HTTP and MCP project the *same* capability with no duplicated business logic, including from inside an embedded host. |
+| MCP | yes | yes | yes | CRITICAL | yes | Already implemented for tools. `1.0.0` proves HTTP and MCP project the *same* capability with no duplicated business logic, including from inside an embedded host. |
 | A2A | yes | yes | yes | HIGH | no | Enters when I4 is ready. Capabilities participate in agent-to-agent communication without kernel change, or the exposure model is wrong. |
 
 ### Command line
@@ -282,7 +282,7 @@ them.
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | Typer, Click, `argparse` | yes | yes | yes | HIGH | no | Target: one capability reachable over HTTP, MCP and a CLI with no duplicated business logic. `agnara-cli` owns scaffolding and introspection (`ARCHITECTURE.md` section 15); an application's own CLI is an integration, not a CLI framework chosen on the user's behalf. |
 
-### Under research, with no `0.1.0b1` commitment
+### Under research, with no `1.0.0` commitment
 
 | Technology | Priority | Notes |
 | --- | --- | --- |
@@ -396,7 +396,7 @@ separate conformance repository — is an open question in RFC 0008.
 
 ## 10. Side-by-side composition
 
-An explicit `0.1.0b1` objective, and the mode most likely to expose a design
+An explicit `1.0.0` objective, and the mode most likely to expose a design
 error, because it is where two lifecycles meet.
 
 ```text
@@ -458,7 +458,7 @@ of one costs the kernel its size.
 
 ## 13. Validation order
 
-The order implementation follows once `0.1.0b1` opens. It changes only for a
+The order implementation follows while `1.0.0` is built. It changes only for a
 demonstrated technical dependency, and the change is recorded.
 
 ```text
@@ -482,7 +482,7 @@ No historical reference application is created for any of these integrations
 now. A historical reference freezes a public surface, and freezing an
 experimental one converts an experiment into a contract nobody agreed to.
 
-When `0.1.0b1` exists, references are grouped by **architecture, not by
+For `1.0.0`, references are grouped by **architecture, not by
 library**, so that adding a fourth ASGI framework does not mean a fourth
 repository:
 
@@ -508,8 +508,8 @@ agnara-django-interoperability    agnara-schema-interoperability
 - `ARCHITECTURE.md` — the boundaries as they exist today
 - `docs/TARGET_ARCHITECTURE.md` — where the structure is going
 - `docs/INITIATIVES.md` — I20, and the order this work happens in
-- `docs/releases/RELEASE_PLAN.md` — the `0.1.0b1` gates
+- `docs/releases/RELEASE_PLAN.md` — the `1.0.0` gates
 - `docs/rfc/0008-framework-embedding-and-ecosystem-composition.md` — the open
   design questions
 - `docs/adr/0068-interoperability-release-ownership.md` — why this belongs to
-  `0.1.0b1`
+  `1.0.0`

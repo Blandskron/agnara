@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Updated: 2026-09-04
-- Tracking: none; delivered in the `v0.1.0a1` release branch (E7.7)
+- Tracking: none; retained as an accepted architecture decision (E7.7)
 
 ## Decision
 

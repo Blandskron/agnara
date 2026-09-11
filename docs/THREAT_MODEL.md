@@ -1,11 +1,11 @@
-# Threat Model — 0.1.0a4
+# Threat Model — A8 Baseline
 
-What an attacker can reach in the surface `0.1.0a4` publishes, what Agnara
-itself refuses, and what it does not attempt. It covers the a4-owned surface:
+What an attacker can reach in the baseline surface, what Agnara
+itself refuses, and what it does not attempt. It covers the retained baseline surface:
 the ASGI/HTTP adapter, the MCP adapter, the policy pipeline, error mapping,
 observability and the published distributions.
 
-This is not the beta security program. There is no penetration test, no fuzzing
+This is not the complete `1.0.0` security program. There is no penetration test, no fuzzing
 corpus and no cryptographic review behind it. Every "verified" claim below
 names the test that proves it; everything else is written as an assumption or a
 gap on purpose.
@@ -165,17 +165,17 @@ anything Agnara does.
 
 ## 7. Agent-specific threats
 
-`SECURITY.md` lists the agent threats the project intends to model. Their a4
+`SECURITY.md` lists the agent threats the project intends to model. Their baseline
 status:
 
-| Threat | a4 status |
+| Threat | baseline status |
 | --- | --- |
-| Confused deputy, over-broad delegated authority | Declared scopes are enforced transport-neutrally before effects. MCP maps a verified token to a principal through an application mapper; HTTP remains anonymous and fails closed for scoped capabilities. Broader authentication and delegation design remains beta work. |
+| Confused deputy, over-broad delegated authority | Declared scopes are enforced transport-neutrally before effects. MCP maps a verified token to a principal through an application mapper; HTTP remains anonymous and fails closed for scoped capabilities. Broader authentication and delegation design remains `1.0.0` work. |
 | Tool name and schema spoofing | Addressed. Names and schemas come from one frozen startup snapshot; discovery and invocation cannot disagree. |
 | Approval bypass | Addressed for confirmation: no evidence channel exists on either transport, resumed calls are refused, and a missing verifier fails at startup. |
 | Prompt and tool injection across trust boundaries | Not addressed. Agnara does not inspect argument content. |
 | Automated destructive invocation, replay of non-idempotent operations | Not addressed. `risk`, `effects` and `idempotent` are metadata, and idempotency is not enforced. |
-| Cross-tenant context leakage | Not applicable in a4: no tenant concept, and no per-request state is shared between invocations. |
+| Cross-tenant context leakage | Not applicable in the baseline: no tenant concept, and no per-request state is shared between invocations. |
 | Unbounded tool recursion | Not addressed. Nothing bounds a capability invoking another. |
 | SSRF through generic HTTP capabilities | Application's own concern; Agnara makes no outbound call. |
 

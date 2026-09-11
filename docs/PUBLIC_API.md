@@ -15,11 +15,11 @@ it does not define stability policy separately.
 | `experimental` | Public only for evaluation. It may change or disappear in the next pre-1.0 release. |
 | `internal` | Unsupported implementation detail. Internal names are excluded from public manifests and `__all__`. |
 
-No API is classified `stable` during the alpha line. All 282 currently governed
+No API is classified `stable` before the `1.0.0` release. All 282 currently governed
 exports are `provisional`: they are deliberate public entry points, but the
-alpha line explicitly makes no compatibility promise. A stable classification
-requires a later, explicit decision supported by the beta and release-candidate
-gates; descriptive phrases such as "stable identifier" do not silently promote
+pre-stable work explicitly makes no compatibility promise. A stable classification
+requires an explicit `1.0.0` decision supported by release evidence; descriptive phrases
+such as "stable identifier" do not silently promote
 a Python symbol.
 
 Nothing is `experimental` today either. `agnara-http` is an `EXPERIMENTAL`
@@ -139,8 +139,8 @@ but deliberately unreachable through this surface (ADR 0071, ADR 0072).
 `EXIT_USAGE` and `main` are what a caller needs to run that command in-process,
 and nothing else is a contract. Thirteen further names — manifest parsing,
 generation planning and target resolution — were re-exported from
-underscore-prefixed modules through `0.1.0a3` without ever being documented,
-used or designed as an API; `0.1.0a4` removes them (ADR 0076). Code that
+underscore-prefixed modules before the retained baseline without ever being documented,
+used or designed as an API; the baseline removes them (ADR 0076). Code that
 needs them is reading the CLI's implementation and should say so by importing
 the private module directly.
 

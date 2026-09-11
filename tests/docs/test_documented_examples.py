@@ -1,4 +1,4 @@
-"""A4-12: documentation that shows a complete program must run.
+"""Documentation that shows a complete program must run.
 
 Prose goes stale quietly. Code does not, once something executes it. These
 tests take the fenced blocks that documentation presents as complete programs,
@@ -25,8 +25,6 @@ REPOSITORY = Path(__file__).resolve().parents[2]
 EXECUTABLE: tuple[tuple[str, str], ...] = (
     ("packages/agnara/README.md", "Quick start"),
     ("packages/agnara-mcp/README.md", "Execution plans"),
-    ("docs/releases/v0.1.0a4.md", "4. Apps and bounded contexts"),
-    ("docs/releases/v0.1.0a4.md", "6. Serving over HTTP"),
 )
 
 
