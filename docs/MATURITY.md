@@ -52,7 +52,7 @@ PyPI projects still require their Pending Trusted Publishers before the tag.
 Every distribution's public surface is classified in
 `docs/public-api.json` and enforced in both directions by the release gate:
 282 exports across 47 modules, all `provisional`. `agnara-cli` dropped from 17
-public names to 4 in `0.1.0a4`, because the other thirteen were implementation
+public names to 4 in the baseline, because the other thirteen were implementation
 helpers re-exported from underscore-prefixed modules and never documented,
 used or designed as an API (ADR 0076).
 
@@ -89,7 +89,7 @@ settled; the spelling is not.
 | Introspection snapshot | `IMPLEMENTED` | Versioned, frozen, no runtime objects reachable. ADR 0045. Exposures are derived from the frozen exposure registry. |
 | Discovery visibility | `IMPLEMENTED` | Per-field publication decisions. ADR 0046. |
 | Idempotency | `IMPLEMENTED` as metadata, `PLANNED` as behaviour | Declared and published; the runtime performs no deduplication or replay. |
-| Streaming results | `RESEARCH` | Nothing in the kernel returns or transports an async iterator. |
+| Streaming results | `IMPLEMENTED` (kernel only) | ADR 0084, RFC 0009. `open_stream` owns a declared async generator: pull-based demand with no kernel buffer, policy and validation before the first unit, `StreamInterrupted` for failure after output, and an explicit `StreamTerminal`. Units are not schema validated, because no boundary compiles output schemas yet. No transport projects it. |
 | Audit trail | `PLANNED` | The word appears in docstrings; there is no audit system. |
 | Capability-to-capability composition | `RESEARCH` | No nested `ExecutionContext`, no propagation contract. |
 | Multi-tenancy | `RESEARCH` | No tenant concept anywhere in the kernel. |
@@ -154,7 +154,7 @@ settled; the spelling is not.
 | Plugin system | `RESEARCH` | No discovery, loading or trust model. |
 | Persistence, cache, queue and scheduler integrations | `RESEARCH` | No port, no adapter, no dependency. `docs/INTEROPERABILITY.md` records the intent; I20 owns the work. |
 | Framework embedding contract | `RESEARCH` | RFC 0008 states the questions. Nothing exists that an external host could call. |
-| Side-by-side composition with an external framework | `RESEARCH` | HTTP now has a public composition surface (ADR 0071); interoperability with an external framework still requires its own conformance evidence and belongs to beta. |
+| Side-by-side composition with an external framework | `RESEARCH` | HTTP now has a public composition surface (ADR 0071); interoperability with an external framework still requires its own conformance evidence and belongs to `1.0.0`. |
 | Second shipped schema adapter | `RESEARCH` | Pydantic and msgspec remain `experiments/`; neither is packaged or supported. |
 | Typed client generation | `RESEARCH` | |
 | Native acceleration | `DEFERRED` | ADR-level position: only after measured bottlenecks. |

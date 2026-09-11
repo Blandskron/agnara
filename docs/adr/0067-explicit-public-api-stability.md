@@ -13,7 +13,7 @@ text `__all__`. Replacing one export with another leaves both checks green.
 Nothing classifies an individual name, so every export is an implicit and
 ambiguous compatibility commitment.
 
-The repository is also explicit that `0.1.0a3` is experimental alpha and its
+The historical preview surface was experimental, and its
 public API may change without a deprecation cycle. Calling selected Python
 objects stable merely because their semantic identity is described as stable
 would contradict that release scope.
@@ -25,7 +25,7 @@ would contradict that release scope.
 one of `stable`, `provisional`, `experimental` or `internal`.
 
 The 41 current exports are `provisional`. They are intentional public entry
-points, but none receives a stable compatibility promise during alpha.
+points, but none receives a stable compatibility promise before `1.0.0`.
 Internal names do not belong in `__all__` or the manifest; the `internal`
 classification is defined so reviews share one vocabulary, not to legitimize
 an accidental export.
@@ -54,7 +54,7 @@ blocking the first exact contract on a larger audit.
 **Keep checking only the number 41.** Rejected because a rename preserves the
 count while breaking every importing application.
 
-**Treat every alpha export as experimental.** Rejected because these are the
+**Treat every provisional export as experimental.** Rejected because these are the
 deliberate framework entry points, not disposable spikes. `provisional`
 records intent without fabricating a stable guarantee.
 
@@ -83,5 +83,5 @@ particular, whether `agnara.core.di` is the right public spelling for
 dependency injection is a design question, and `core` appearing in the first
 import of the README is a real one — but a rename does not belong inside a
 governance change that exists to make the current surface visible. And nothing
-is promoted to `stable`, which still requires the beta and release-candidate
+is promoted to `stable`, which still requires the `1.0.0`
 gates.

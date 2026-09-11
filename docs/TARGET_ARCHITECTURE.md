@@ -128,7 +128,7 @@ capability means, which is the one thing adapters must never do.
 The systems the thesis requires and Agnara does not have. Ordered by how much
 of the rest depends on them, not by size.
 
-### G1 — Unified exposure model (resolved for `0.1.0a4`)
+### G1 — Unified exposure model (resolved for the baseline)
 
 ADR 0070 now gives HTTP and MCP one neutral compiled availability model, and
 ADR 0071 builds the public HTTP composition API on it. A third adapter can
@@ -216,7 +216,7 @@ it. `docs/INTEROPERABILITY.md` states the contract this gap has to close and
 RFC 0008 states the open questions.
 
 *Blocks:* embedding, side-by-side composition, progressive adoption, and
-`0.1.0b1` (ADR 0068).
+`1.0.0` (ADR 0068).
 
 ## 5. Package roadmap
 

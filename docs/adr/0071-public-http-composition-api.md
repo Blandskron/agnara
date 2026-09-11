@@ -11,7 +11,7 @@
 `agnara_http.__all__` was empty across three published releases. Sixteen
 submodules, every one underscore-prefixed. An application that wanted HTTP had
 to import `agnara_http._dispatch`, `_binding`, `_routing`, `_surfaces` and
-`_asgi` — which is what the `0.1.0a4` gate
+`_asgi` — which is what the baseline gate
 `reference-apps-no-internal-imports` forbids, and which this repository's own
 integration tests do, being the clearest evidence that no supported path
 existed.
@@ -20,7 +20,7 @@ The stated reason was correct: the composition API could not be settled while
 the exposure model beneath it was unsettled. ADR 0070 settled that model in
 #294. This is RFC 0006 phase 3.
 
-Two mandatory `0.1.0a4` gates are blocked on this and nothing else:
+Two mandatory baseline gates are blocked on this and nothing else:
 `reference-apps-no-internal-imports` and `http-exposure-from-application`.
 
 ## Decision
@@ -40,7 +40,7 @@ Two mandatory `0.1.0a4` gates are blocked on this and nothing else:
 | `HttpDefinitionError` | One composition mistake, at startup. |
 
 All `provisional`. Nothing is `stable`; ADR 0067 reserves that for a decision
-the beta and release-candidate gates gate.
+the `1.0.0` release gates.
 
 Not exposed: `_RouteRegistry`, `_HTTPBindingPlan`, `_HTTPDispatcher`,
 `_SurfaceDispatcher`, `_ASGIBoundary`, `_DocumentationProvider`,
@@ -192,7 +192,7 @@ and a rejection now surfaces as `HttpDefinitionError` at startup.
 ### Positive
 
 - An external application can compose and serve Agnara HTTP with no private
-  import and no monkey patch, which is what two `0.1.0a4` gates ask for.
+  import and no monkey patch, which is what two baseline gates ask for.
 - The exposure model gets its first public producer, so HTTP and MCP compose
   into one availability registry from application code.
 - The first genuine dogfooding defect surfaced (#296), from a shape every HTTP
@@ -249,7 +249,7 @@ review this task is not.
 
 I7 lands cookies, forms, multipart and uploads — `BindingSource` gains members
 and this ADR should be checked for whether `Binding` still reads well. Also at
-`0.1.0b1`, when the embedding contract (RFC 0008) needs to say what an external
+`1.0.0`, when the embedding contract (RFC 0008) needs to say what an external
 host calls: `HttpApplication` is the obvious answer and has not been designed
 against that question yet.
 

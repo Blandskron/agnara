@@ -1,93 +1,29 @@
 # Backlog
 
-Legend:
+This file owns decomposed work ready to implement on the path to `1.0.0`.
+`ROADMAP.md` owns the destination and `docs/INITIATIVES.md` owns dependency
+order.
 
-- [ ] Not started
-- [~] In progress
-- [!] Blocked
-- [?] Research
+## Ready after design acceptance
 
-This file owns **decomposed work that is ready to implement**. It does not own the long-term plan: ROADMAP.md owns where Agnara is going.
+- [x] Implement the accepted protocol-neutral streaming *kernel* contract
+  (I2, ADR 0084): declaration, owned one-shot consumption, pull backpressure,
+  cancellation, cleanup and post-output failure.
+- [ ] Project the streaming contract onto each transport (I2): HTTP SSE and
+  WebSockets, MCP progress, A2A task events and the event adapter. Each needs
+  its own ADR answering RFC 0009 Q9 and its own conformance tests.
+- [ ] Implement execution identity and operational idempotency (I3).
+- [ ] Establish performance budgets and CI regression gates (I14).
+- [ ] Complete interoperability and composition contracts (I20, I8).
+- [ ] Complete the security program evidence (I10).
 
-## A8
+## Deferred decisions
 
-Bootstrap identity correction (#332): distinct OIDC environments per distribution;
-GitHub setup and workflow validation do not certify the pending PyPI readbacks.
+- [ ] D7 Decide whether `agnara.core.di` remains the public dependency
+  injection spelling before API stabilization.
+- [ ] D6 Rename the introspection snapshot field `.apps` to `applications`
+  only with an intentional snapshot-format migration.
+- [ ] Configure an independent reviewer identity when one is available.
 
-Release pipeline recovery only (ADRs 0082 and 0083). Everything below `## A8` stays out.
-
-- [~] E0B.12 Document release and hotfix automation evidence. The release half
-  gains real evidence here: `0.1.0a4` exercised the tag pipeline through to a
-  rejected upload, `0.1.0a5` and `0.1.0a7` proved the sequenced preflight
-  aborts before upload, and `0.1.0a6` proved that a mistaken human publisher
-  readback can still reach and fail the first upload. All four were tagged
-  before the gates ran; `0.1.0a8` is the first release whose tag can only be
-  created by an approved, fully gated `workflow_dispatch` run. The hotfix half
-  is still unexercised, so the item does not close.
-
-- [~] Owner action, phased because PyPI allows three pending publishers at a
-  time (ADR 0083): `bootstrap-1` publishers `agnara-a2a` / `pypi-a2a`,
-  `agnara-cli` / `pypi-cli` and `agnara-events` / `pypi-events` were read back
-  on `2026-09-09` and are recorded `VERIFIED` in
-  `docs/releases/publication.json`. Still open: after `bootstrap-1` runs,
-  create and read back `agnara-http` / `pypi-http`, `agnara-mcp` / `pypi-mcp`
-  and `agnara-telemetry` / `pypi-telemetry` (phase `bootstrap-2`), then the
-  active `agnara` / `pypi-core` publisher (phase `final`); each readback dated
-  on or after `2026-09-08`, signed by a human account.
-
-- [!] Owner action: protect the `pypi` GitHub Environment with at least one
-  required reviewer and a deployment branch policy limited to `main`.
-  `scripts/check_release_preconditions.py` refuses the release until both
-  exist. Do not enable *prevent self-review* while the dispatching owner is
-  the only reviewer.
-
-- [ ] Owner action: create a tag ruleset for `v*` that blocks update and
-  deletion (immutability). Do not restrict creation: the approved workflow run
-  is the only creator.
-
-- [ ] Owner action: yank `agnara 0.1.0a4` once `0.1.0a8` is published and
-  verified complete. Reason: `Partial multi-distribution publication;
-  superseded by 0.1.0a8.`
-
-## A9
-
-- [?] E2.7 Benchmark adapters before selecting defaults.
-
-- [~] Security threat model present. Partial: `docs/THREAT_MODEL.md` covers the
-  a4 surface -- assets, boundaries, abuse cases, verified protections with
-  their evidence, and delegated assumptions -- and `tests/security/` regresses
-  it. It is not the beta security program: no fuzzing, penetration test or
-  dependency vulnerability scan stands behind it. `I10`.
-
-- [ ] API docs present. Partial: `docs/API_DESIGN.md` records intent, and
-  there is no generated reference for the 41 public names. `I9`, then `I18`.
-
-- [ ] Migration policy for alpha documented. **Absent.** Needed before any API
-  is called stable. `I9`.
-
-- [ ] E0B.9 Configure independent reviewer identity when available.
-
-- [ ] E0B.12 Document release and hotfix automation evidence.
-
-- [ ] D7 Decide whether `agnara.core.di` is the right public spelling for
-  dependency injection. It is the second import in the README and in
-  `examples/quickstart.py`, so `core` — a word that reads as an internal
-  namespace — sits on the first screen a new user sees, and an external
-  application cannot avoid it. Found while governing the subpackage surfaces
-  (#275) and deliberately left alone there: a rename is a breaking change with
-  a migration cost, and it does not belong inside a change whose purpose is to
-  make the current surface visible rather than to alter it. Decide with the
-  `0.1.0a4` external evidence, which will show whether the spelling actually
-  confuses anyone, and before any name is considered for `stable`. First
-  evidence: eight of the nine reference applications import `agnara.core.di`,
-  at 35 sites, and none found a way around it — it is the most imported module
-  of the core after the top-level package.
-
-- [ ] D6 `.apps` means two things. On `ApplicationDescriptor` it is the
-  bounded contexts an application mounts (E1A.4); on `IntrospectionSnapshot`
-  it is a tuple of whole applications, which ADR 0011 says are not apps. #260
-  renamed the misleading *type* but not the field, because a field name is
-  part of the serialized document and changing it needs an
-  `INTROSPECTION_VERSION` bump. Rename it to `applications` in the next
-  snapshot format change rather than separately.
-
+No item in this backlog authorizes a publication before the `1.0.0` release
+gates are satisfied.

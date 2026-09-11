@@ -25,11 +25,11 @@ Seven names, from `agnara_http`:
 
 Everything else in `agnara_http` is underscore-prefixed and carries no
 compatibility promise. If you find yourself needing one, that is a missing
-public API and worth an issue — it is exactly the finding `0.1.0a4` exists to
+public API and worth an issue — it is exactly the kind of finding the baseline exists to
 surface.
 
 All seven are `provisional`: deliberate entry points, with no compatibility
-promise during the alpha line.
+promise before `1.0.0`.
 
 ## A complete application
 
@@ -99,7 +99,7 @@ uvicorn app:asgi
 
 Being ASGI is a boundary, not an integration. Agnara speaks ASGI 3; supported
 integration with a specific framework — FastAPI, Django, Starlette — belongs to
-`0.1.0b1` and is not promised here (ADR 0068).
+`1.0.0` and is not promised here (ADR 0068).
 
 ## Who owns what
 
@@ -176,7 +176,7 @@ shared strict validation path runs (ADR 0075).
 
 ## Cookies, forms and uploads
 
-ADR 0072 fixes what `0.1.0a4` owns of the request surface. Three sources join
+ADR 0072 fixes what the baseline owns of the request surface. Three sources join
 the four above, and they are the difference between "serves JSON" and "serves
 an ordinary web application".
 
@@ -240,7 +240,7 @@ What you should know before using it:
 
 - **It is buffered in memory**, bounded by `max_body_bytes` (1 MiB by
   default). A route that raises the limit to 100 MB will hold 100 MB per
-  concurrent request. That is your decision; nothing streams in `0.1.0a4`.
+  concurrent request. That is your decision; the baseline has no streaming.
 - **Nothing touches the filesystem.** There is no temporary file, so there is
   nothing to leak and nothing to clean up on cancellation or error. The bytes
   are owned by the invocation and released with it.
@@ -317,7 +317,7 @@ the capability input name rather than transport `details.location`. Direct
 Python invocation remains strict. See ADR 0077 and
 `CROSS_SURFACE_CONFORMANCE.md`.
 
-Capability dispatch in `0.1.0a4` has no HTTP authentication bridge and runs as
+Baseline capability dispatch has no HTTP authentication bridge and runs as
 anonymous. Because declared scopes compile into the common plan, a scoped HTTP
 capability fails closed with `403`; discovery visibility is not authorization.
 
@@ -358,7 +358,7 @@ so you need not compile them again. `describe_app` wants a plan for every
 declared capability, so an application with capabilities HTTP does not expose
 must compile those itself and pass the combined set.
 
-## Limitations of `0.1.0a4`
+## Baseline limitations
 
 Stated plainly, because a guide that omits its limits is how a framework earns
 distrust.
@@ -375,7 +375,7 @@ policy, principal resolution, redaction — and deserves its own review.
 **Not implemented, and where to put it instead.** ADR 0072 classifies every
 deferred request feature rather than leaving it implicit.
 
-| Deferred | Why, and what to do in `0.1.0a4` |
+| Deferred | Why, and what to do in the baseline |
 | --- | --- |
 | Multiple files, repeated form fields | Both need a collection binding, which ADR 0026 deferred deliberately and which decides how a list arrives through *every* transport. Use distinct part names. |
 | Client filename, per-part content type | Both need a public upload value type, and that is a core-visible schema shape MCP and introspection project too. Ask for a filename as a form field if you need one. |
@@ -397,7 +397,7 @@ conversion (ADR 0075, [issue #296](https://github.com/Blandskron/agnara/issues/2
 **No authentication.** Every HTTP invocation runs as the anonymous principal,
 so a capability carrying a `ScopePolicy` always answers `403`. Nothing here can
 produce a `401`. Authentication integration is part of the security program
-(I10, `0.1.0b1`).
+(I10, `1.0.0`).
 
 **Publication-ready, not published.** Only the `agnara` core distribution is
 uploaded today, so `agnara-http` must currently be installed from a locally
@@ -405,6 +405,6 @@ built wheel. ADR 0073 and
 [issue #291](https://github.com/Blandskron/agnara/issues/291) make the tagged
 workflow ready to publish the synchronized set; they do not perform a release.
 
-**No compatibility promise.** Every name here is `provisional`. The alpha line
+**No compatibility promise.** Every name here is `provisional`. The path to `1.0.0`
 may change any of them; `docs/PUBLIC_API.md` records the policy and ADR 0021
 requires a changelog entry and migration guidance for a break.

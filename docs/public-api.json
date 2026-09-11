@@ -387,6 +387,10 @@
               "stability": "provisional"
             },
             {
+              "name": "CapabilityStream",
+              "stability": "provisional"
+            },
+            {
               "name": "ExecutionContext",
               "stability": "provisional"
             },
@@ -423,6 +427,14 @@
               "stability": "provisional"
             },
             {
+              "name": "StreamInterrupted",
+              "stability": "provisional"
+            },
+            {
+              "name": "StreamTerminal",
+              "stability": "provisional"
+            },
+            {
               "name": "Success",
               "stability": "provisional"
             },
@@ -436,6 +448,10 @@
             },
             {
               "name": "invoke_result",
+              "stability": "provisional"
+            },
+            {
+              "name": "open_stream",
               "stability": "provisional"
             }
           ]
@@ -497,6 +513,27 @@
             },
             {
               "name": "invoke_result",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.execution.streaming",
+          "exports": [
+            {
+              "name": "CapabilityStream",
+              "stability": "provisional"
+            },
+            {
+              "name": "StreamInterrupted",
+              "stability": "provisional"
+            },
+            {
+              "name": "StreamTerminal",
+              "stability": "provisional"
+            },
+            {
+              "name": "open_stream",
               "stability": "provisional"
             }
           ]

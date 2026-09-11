@@ -3,6 +3,8 @@
 This document owns compatibility expectations for Agnara's Python API.
 `docs/API_DESIGN.md` owns the intended shape and examples; the machine-readable
 [`public-api.json`](public-api.json) file owns the exact classified export list.
+The generated [API reference](API_REFERENCE.md) renders that list for readers;
+it does not define stability policy separately.
 
 ## Stability vocabulary
 
@@ -13,11 +15,11 @@ This document owns compatibility expectations for Agnara's Python API.
 | `experimental` | Public only for evaluation. It may change or disappear in the next pre-1.0 release. |
 | `internal` | Unsupported implementation detail. Internal names are excluded from public manifests and `__all__`. |
 
-No API is classified `stable` during the alpha line. All 282 currently governed
+No API is classified `stable` before the `1.0.0` release. All 282 currently governed
 exports are `provisional`: they are deliberate public entry points, but the
-alpha line explicitly makes no compatibility promise. A stable classification
-requires a later, explicit decision supported by the beta and release-candidate
-gates; descriptive phrases such as "stable identifier" do not silently promote
+pre-stable work explicitly makes no compatibility promise. A stable classification
+requires an explicit `1.0.0` decision supported by release evidence; descriptive phrases
+such as "stable identifier" do not silently promote
 a Python symbol.
 
 Nothing is `experimental` today either. `agnara-http` is an `EXPERIMENTAL`
@@ -67,12 +69,13 @@ from; that is why a distribution's export total exceeds its entry-point count.
 | `agnara.capability.registry` | 2 |
 | `agnara.core.di` | 9 |
 | `agnara.errors` | 12 |
-| `agnara.execution` | 14 |
+| `agnara.execution` | 18 |
 | `agnara.execution.context` | 1 |
 | `agnara.execution.invocation` | 1 |
 | `agnara.execution.plan` | 1 |
 | `agnara.execution.result` | 4 |
 | `agnara.execution.runtime` | 2 |
+| `agnara.execution.streaming` | 4 |
 | `agnara.execution.telemetry` | 3 |
 | `agnara.exposure` | 7 |
 | `agnara.introspection` | 23 |
@@ -137,8 +140,8 @@ but deliberately unreachable through this surface (ADR 0071, ADR 0072).
 `EXIT_USAGE` and `main` are what a caller needs to run that command in-process,
 and nothing else is a contract. Thirteen further names — manifest parsing,
 generation planning and target resolution — were re-exported from
-underscore-prefixed modules through `0.1.0a3` without ever being documented,
-used or designed as an API; `0.1.0a4` removes them (ADR 0076). Code that
+underscore-prefixed modules before the retained baseline without ever being documented,
+used or designed as an API; the baseline removes them (ADR 0076). Code that
 needs them is reading the CLI's implementation and should say so by importing
 the private module directly.
 
