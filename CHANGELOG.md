@@ -6,14 +6,254 @@ Changelog, and release versions follow the synchronized PEP 440 policy in ADR
 
 `0.1.0a2` is the first published release. `0.1.0a1` was tagged but never
 reached PyPI: its release run failed in artifact validation, so the publish job
-never executed. Every first-party package in the workspace carries the
-synchronized version, but only the `agnara` core distribution is uploaded to
-PyPI; the adapter packages are versioned and buildable from the repository
-without being published. See the `0.1.0a2` scope note below.
+never executed. `0.1.0a4` was tagged and *partially* published: the core wheel
+reached PyPI and the other thirteen artifacts did not. It is superseded by
+`0.1.0a8` and should not be installed; see the recovery sections below. The
+`v0.1.0a5`, `v0.1.0a6` and `v0.1.0a7` workflows published nothing: A5 and A7
+were stopped by publication readiness after the tag existed, and A6 was
+rejected by PyPI on its first upload. Every first-party package in the
+workspace carries the synchronized version; through `0.1.0a4` only the
+`agnara` core distribution had ever been uploaded.
 
 ## [Unreleased]
 
+## [0.1.0a8] - 2026-09-09
+
+Release pipeline recovery after the immutable `v0.1.0a7` tag was created while
+the publication record was still `UNVERIFIED`, the fourth consecutive attempt
+to consume a version without publishing the reviewed set. This release changes
+no runtime behaviour: it carries the `0.1.0a7` framework unchanged with
+synchronized `0.1.0a8` package metadata, and it changes how a release happens.
+
+### Changed
+
+- **A release is now a `workflow_dispatch` run from `main`, and the tag is its
+  consequence.** `release.yml` no longer triggers on a pushed tag. The run
+  re-runs every quality gate, refuses unless it was dispatched from the current
+  head of `main` for a version with no tag anywhere, builds and validates the
+  seven wheels and sdists, installs them in a clean room, checks the public
+  index, and only then stops for human approval in the protected `pypi`
+  environment. The approved run publishes the seven distributions, verifies
+  wheel and sdist of each on PyPI, and only then creates the annotated tag on
+  the dispatched commit and the GitHub Release. If an upload or the
+  verification fails, no tag exists. ADR 0082.
+- `docs/releases/publication.json` moves to schema 2. It records the expected
+  registry configuration — the shared Trusted Publisher tuple and, per
+  project, the exact PyPI project name and whether its publisher is pending or
+  active — plus a dated human readback of each. The per-release authorization
+  is the `pypi` environment approval, not a per-target edit of this file.
+- Synchronized the seven distributions and six exact core pins at `0.1.0a8`.
+- Moved Execution Semantics unchanged from `0.1.0a8` to `0.1.0a9`; no
+  functional work from that horizon is included here.
+
+### Added
+
+- `scripts/check_release_preconditions.py`, run at the start of a release,
+  before the approval gate and again after it: the run must be a dispatch from
+  `refs/heads/main`, the checkout must be the current head of `main` on the
+  remote, the version must be publishable and untagged on the remote and in
+  the checkout, and the `pypi` environment must hold required reviewers and a
+  deployment branch policy, or the release refuses to proceed.
+- Publication readiness now also refuses a publisher readback dated before the
+  last recorded registry failure, a confirmation signed by an automation
+  identity, a publisher kind that disagrees with the recorded or actual index
+  state, and a recorded tuple this repository's workflow cannot present; with
+  `--oidc-identity` it requires the running workflow to be the recorded
+  Trusted Publisher.
+- Regression tests that hold the new order: no job but the approved one may
+  create a tag, every gate precedes it, publication requires the `pypi`
+  environment and the approved tag, the GitHub Release requires verified
+  publication, publish steps name canonical projects rather than normalized
+  filenames, the workflow never edits the publication record, and the current
+  target's tag does not exist ahead of the workflow.
+
+### Fixed
+
+- A8 bootstrap uses distinct OIDC publishing environments per distribution to
+  avoid PyPI pending-publisher identity collisions, while retaining one human
+  approval and tagging only after verified publication of all seven (#332).
+- PyPI allows at most three Pending Trusted Publishers at a time, so
+  `release.yml` takes a `phase` input: `bootstrap-1` publishes and verifies
+  `agnara-a2a`, `agnara-cli` and `agnara-events`; `bootstrap-2` publishes
+  `agnara-http`, `agnara-mcp` and `agnara-telemetry` and verifies the six
+  adapters; `final` publishes `agnara`, verifies all seven and only then
+  creates `v0.1.0a8` and the GitHub Release. Publication readiness is
+  phase-aware: it requires the publisher readback only for the phase's
+  projects, requires earlier phases to be complete on the index, and refuses
+  any file of the version for later phases. No phase re-publishes another.
+- Recorded that `v0.1.0a7` was tagged and aborted before publication because
+  the publication record was `UNVERIFIED`. The tag is immutable and is not
+  reused. The root cause — an irreversible tag created before the gates — is
+  removed by the dispatch-driven flow above rather than by another attempt at
+  the same order.
+
+## [0.1.0a7] - 2026-09-08
+
+> **Publication status: aborted before upload.** The immutable `v0.1.0a7` tag
+> was created while `publication.json` was `UNVERIFIED`; publication readiness
+> stopped the workflow before its first upload. No `0.1.0a7` artifact was
+> published.
+
+Publication and security recovery after the immutable `v0.1.0a6` workflow
+reached PyPI and failed on its first upload. No A6 artifact was published.
+
+### Security
+
+- Replaced the Scalar bundle's hostname substring assertion with extraction
+  and exact comparison of URL hostnames, avoiding incomplete URL checks.
+- Stopped the distribution checker CLI from copying untrusted artifact
+  diagnostics into CI logs; programmatic callers retain the detailed results.
+- Added explicit read-only workflow permissions to agent-coordination CI.
+
+### Changed
+
+- Synchronized the seven distributions and six exact core pins at `0.1.0a7`.
+- Publication evidence now records the exact PyPI Project name for each
+  Trusted Publisher, requires a confirmed top-level record and rejects
+  duplicate project entries.
+- Moved Execution Semantics unchanged to `0.1.0a8`; no functional work from
+  that horizon is included here ([#344]).
+
+### Fixed
+
+- Recorded that PyPI rejected `agnara-a2a` with `400 Non-user identities
+  cannot create new projects`. The distribution metadata and manifest both
+  use the canonical dash-separated name; `agnara_a2a` is only the required
+  wheel/sdist filename normalization. The Pending Trusted Publisher must be
+  recreated for Project name `agnara-a2a` with the documented OIDC tuple.
+
+## [0.1.0a6] - 2026-09-08
+
+> **Publication status: aborted on the first upload.** PyPI rejected
+> `agnara-a2a` because no Pending Trusted Publisher matched its canonical
+> project name and the workflow identity. No `0.1.0a6` artifact was published.
+
+Publication recovery after the immutable `v0.1.0a5` attempt stopped safely
+before upload. This release changes no runtime behavior: it carries the same
+framework code with synchronized `0.1.0a6` package metadata and a publication
+record that remains fail-closed pending owner confirmation.
+
+### Changed
+
+- Prepared all seven distributions and exact adapter-to-core pins for
+  `0.1.0a6`; the publication target remains `UNVERIFIED` until the owner reads
+  back every PyPI Trusted Publisher tuple.
+- Moved the unchanged Execution Semantics horizon—streaming, execution
+  identity and idempotency, and performance budgets—to `0.1.0a7` ([#341]).
+
+## [0.1.0a5] - 2026-09-08
+
+> **Publication status: aborted before upload.** The immutable `v0.1.0a5` tag
+> ran the corrected workflow, and publication readiness stopped it before the
+> first upload because the Trusted Publisher record remained `UNVERIFIED`.
+> No `0.1.0a5` artifact was published and no GitHub Release is claimed.
+
+Publication-recovery implementation carried by the aborted attempt. It keeps
+the `0.1.0a4` runtime unchanged and replaces the release system that published
+one of fourteen A4 artifacts and reported nothing wrong with the other
+thirteen.
+
+### Security
+
+- Publication-readiness diagnostics now redact URL credentials, query data,
+  fragments and recognizable secret formats before writing terminal output or
+  GitHub Actions annotations. Index errors retain the safe origin, HTTP status,
+  project and version context, while control characters and encoded newlines
+  cannot inject additional workflow commands.
+
+### Fixed
+
+- `0.1.0a4` was published partially. The upload accepted
+  `agnara-0.1.0a4-py3-none-any.whl` and was rejected on the next file,
+  `agnara_a2a-0.1.0a4-py3-none-any.whl`, with
+  `400 Non-user identities cannot create new projects` — PyPI's answer when no
+  pending Trusted Publisher matches the uploaded project name for the
+  authenticated OIDC identity. Twine uploads every wheel before any sdist and
+  stops on the first failure, so the `agnara` sdist and all twelve sibling
+  artifacts were never uploaded, post-release verification never ran, and no
+  GitHub Release was created. `v0.1.0a4` and the file already on PyPI are
+  historical and are not modified, moved or replaced. Recommended disposition
+  for `agnara 0.1.0a4` is a yank after `0.1.0a5` is verified complete.
+
+- The kernel is now published **last**, after every sibling distribution.
+  Multi-project uploads are not atomic, so an order exists whether or not
+  anyone chooses one, and `0.1.0a4` chose the harmful one: `agnara` announced a
+  version whose adapters did not exist, and `pip install agnara==0.1.0a4`
+  succeeded into a set that could not be completed. With the kernel last a
+  partial upload fails closed — an adapter pins its kernel exactly, so a
+  sibling published without it resolves for nobody and the published `agnara`
+  version does not move. ADR 0079.
+
+- Each distribution is now uploaded in its own reviewed step rather than by one
+  glob over `dist/`. A failure names the distribution it stopped on and leaves
+  the rest unattempted, instead of failing somewhere inside a fourteen-file
+  batch. `skip-existing` stays off: a file that already exists is a real
+  condition to stop on, not noise to suppress.
+
+### Added
+
+- **PUBLISH READY is now a separate claim from CODE READY.**
+  `scripts/check_publication_readiness.py` owns everything between a correct
+  commit and seven complete distributions on an index: the reviewed set, the
+  workspace layout, synchronized versions, exact first-party pins, the
+  lockfile, the artifact set, release notes, the dated changelog section, the
+  annotated tag, and the external registry configuration. It runs offline in
+  CI, and with `--online` in the release workflow both before the first upload
+  and after the last one.
+
+- `docs/releases/publication.json` records, per project and per target version,
+  that a human read the Trusted Publisher tuple back from PyPI. It is
+  `UNVERIFIED` until the owner fills it in, and the release workflow refuses to
+  upload while it is. This is the control `0.1.0a4` did not have: the same
+  requirement existed then, as a paragraph in a release note.
+
+- A `publication-prerequisites` gate in `scripts/check_release_readiness.py`,
+  and a mandatory manual `pypi-trusted-publishers` gate that no automated check
+  can ever satisfy.
+
+- `docs/distributions.json` is the single source of truth for the seven
+  distributions — names, import packages, console scripts and adapter-owned
+  third-party requirements. `scripts/distributions.py` reads it for the release
+  tooling and the architecture tests, and prints it for the workflows, so the
+  seven names have one definition instead of the six independent copies that
+  previously nothing compared. Canonical project names stay dash-separated;
+  `_` in a wheel or sdist filename is PEP 427/625 normalization and is not a
+  naming defect.
+
+- Post-publication verification is its own job and asserts completeness, not
+  just installability: every one of the seven must carry both a wheel and an
+  sdist on the index at the released version. `0.1.0a4` would have failed this
+  even for the one project it reached.
+
+### Changed
+
+- The GitHub Release is created only after publication *and* post-publication
+  verification succeed, as a job that depends on both. In `0.1.0a4` these were
+  three steps of one job, so the failed upload also silently cancelled
+  verification and the release. A successful GitHub Release can no longer exist
+  while PyPI is incomplete.
+
+- Every third-party action on the publication path is pinned to a full commit
+  SHA with the human version in a trailing comment: `actions/checkout`,
+  `astral-sh/setup-uv`, `actions/upload-artifact`, `actions/download-artifact`,
+  `pypa/gh-action-pypi-publish` and `softprops/action-gh-release`. A moving tag
+  on a job that holds `id-token: write` is a supply-chain decision, not a
+  convenience.
+
+- `0.1.0a5` is a publication-recovery release, so the Execution Semantics
+  horizon — streaming, execution identity and idempotency, performance budgets
+  — moves intact to `0.1.0a6`. No part of it is started here. ADR 0078.
+
 ## [0.1.0a4] - 2026-09-08
+
+> **Publication status: partial, superseded by `0.1.0a5`.** Of the fourteen
+> artifacts this release built, exactly one reached PyPI —
+> `agnara-0.1.0a4-py3-none-any.whl`. The upload was rejected on the next file
+> and stopped, so `agnara 0.1.0a4` has no sdist and none of the six sibling
+> distributions was published. Do not install `0.1.0a4`; install `0.1.0a5`.
+> The tag, the commit and the uploaded file are historical and unmodified. The
+> changes described below are the changes this release contained; they are
+> reproduced in `0.1.0a5`, which is the release that publishes them.
 
 ### Added
 
@@ -838,7 +1078,11 @@ under `0.1.0a2` instead.
 [#257]: https://github.com/Blandskron/agnara/issues/257
 [#259]: https://github.com/Blandskron/agnara/issues/259
 [#261]: https://github.com/Blandskron/agnara/issues/261
-[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a4...develop
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a8...develop
+[0.1.0a8]: https://github.com/Blandskron/agnara/compare/v0.1.0a7...v0.1.0a8
+[0.1.0a7]: https://github.com/Blandskron/agnara/compare/v0.1.0a6...v0.1.0a7
+[0.1.0a6]: https://github.com/Blandskron/agnara/compare/v0.1.0a5...v0.1.0a6
+[0.1.0a5]: https://github.com/Blandskron/agnara/compare/v0.1.0a4...v0.1.0a5
 [0.1.0a4]: https://github.com/Blandskron/agnara/compare/v0.1.0a3...v0.1.0a4
 [0.1.0a3]: https://github.com/Blandskron/agnara/compare/v0.1.0a2...v0.1.0a3
 [0.1.0a2]: https://github.com/Blandskron/agnara/compare/v0.1.0a1...v0.1.0a2
@@ -940,3 +1184,5 @@ under `0.1.0a2` instead.
 [#291]: https://github.com/Blandskron/agnara/issues/291
 [#313]: https://github.com/Blandskron/agnara/issues/313
 [#307]: https://github.com/Blandskron/agnara/issues/307
+[#341]: https://github.com/Blandskron/agnara/issues/341
+[#344]: https://github.com/Blandskron/agnara/issues/344

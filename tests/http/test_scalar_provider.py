@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from importlib.resources import files
 from typing import Any
+from urllib.parse import urlsplit
 
 import pytest
 
@@ -32,6 +34,15 @@ def request(**overrides: Any) -> _DocumentationRequest:
     }
     fields.update(overrides)
     return _DocumentationRequest(**fields)
+
+
+def _hostname(url: str) -> str | None:
+    """The exact host of an absolute URL; ``None`` for JS template fragments."""
+    try:
+        return urlsplit(url).hostname
+    except ValueError:
+        # e.g. ``https://[${n.value}]`` -- a template, not an address.
+        return None
 
 
 def test_local_provider_serves_the_verified_self_contained_bundle() -> None:
@@ -167,8 +178,15 @@ def test_bundle_evidence_matches_declared_network_and_responsive_boundaries() ->
     bundle = root.joinpath("standalone.js").read_bytes()
     page = _ScalarProvider().render(request())
 
-    assert b"fonts.scalar.com" in bundle
-    assert b"fonts.googleapis.com" not in bundle
+    # Every absolute URL the bundle embeds, parsed as a URL so the comparison
+    # is against complete hostnames rather than substrings of the text.
+    urls = {
+        match.group(0).decode("ascii", "replace")
+        for match in re.finditer(rb"""https?://[^\s"'`<>()\\]+""", bundle)
+    }
+    referenced_hosts = {host for host in map(_hostname, urls) if host is not None}
+    assert referenced_hosts.issuperset({"fonts.scalar.com"})
+    assert referenced_hosts.isdisjoint({"fonts.googleapis.com", "fonts.gstatic.com"})
     assert b"telemetry" in bundle
     assert b"@media" in bundle
     assert b"aria-label" in bundle
