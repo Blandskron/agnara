@@ -1,5 +1,6 @@
 # Changelog
 
+<<<<<<< HEAD
 Notable changes to Agnara are recorded here. The format is inspired by Keep a
 Changelog, and release versions follow the synchronized PEP 440 policy in ADR
 0021.
@@ -256,25 +257,24 @@ thirteen.
 > reproduced in `0.1.0a5`, which is the release that publishes them.
 
 ### Added
+=======
+## [Unreleased]
 
-- Required CI now analyzes Python and GitHub Actions with SHA-pinned CodeQL
-  actions and job-scoped security-result upload permissions, including during
-  release validation. A skipped required job fails the aggregate CI check.
-  Repository secret scanning, push protection and Dependabot alerts/security
-  updates are enabled; automated updates still require normal PR review.
+Work in this section contributes to the first stable `1.0.0` release. Entries
+describe user- and contributor-visible changes only.
 
-- A CLI target's attribute may be a dotted path. `agnara inspect`,
-  `agnara graph`, `agnara context` and `agnara schema openapi` accept
-  `billing.bootstrap:container.app`, and `--dependencies` accepts
-  `container.registry`, so an application assembled inside a container or
-  returned by a factory no longer has to be re-exported at module level to be
-  usable from the command line. Each segment is validated as an identifier
-  before anything is imported, and a missing segment is named in the error
-  rather than leaving the operator to guess which half of the path was wrong.
-  A compile failure with no registry named now also suggests `--dependencies`,
-  because core cannot distinguish an unbound dependency from an unsupported
-  annotation ([#313]).
+- Redact unexpected capability exception messages and tracebacks from default
+  runtime logs while retaining the capability identifier for correlation.
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 
+## [0.1.0a8] - 2026-09-09
+
+`0.1.0a8` is retained only as evidence that the repository can build, verify
+and publish its synchronized distribution set through a reviewed,
+dispatch-driven workflow. It is not a supported compatibility baseline and is
+not followed by further pre-release publications.
+
+<<<<<<< HEAD
 - A threat model for the surface `0.1.0a4` publishes. `docs/THREAT_MODEL.md`
   records assets, trust boundaries, attacker-controlled inputs and abuse cases,
   and separates protections that name the test proving them from assumptions
@@ -1186,3 +1186,7 @@ under `0.1.0a2` instead.
 [#307]: https://github.com/Blandskron/agnara/issues/307
 [#341]: https://github.com/Blandskron/agnara/issues/341
 [#344]: https://github.com/Blandskron/agnara/issues/344
+=======
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a8...develop
+[0.1.0a8]: https://github.com/Blandskron/agnara/compare/v0.1.0a8...v0.1.0a8
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa

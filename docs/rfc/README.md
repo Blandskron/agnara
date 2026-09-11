@@ -28,8 +28,8 @@ and ADR 0071 depend on.
 | 0004 | Transport-neutral dependency injection | `ACCEPTED` | `Accepted`; not yet fully implemented. |
 | 0005 | Protocol-neutral delegation | `OPEN` | Genuinely open. Required by `I8` before any delegation work. |
 | 0006 | Unified exposure model | `PARTLY OPEN` | Answered by ADR 0070 and implemented. Phase 3, the public composition API, is ADR 0071. |
-| 0007 | Distribution version identity and dependency constraints | `IMPLEMENTED` | Answered by ADR 0069: exact alpha pins plus `<target>.dev0` on `develop`. |
-| 0008 | Framework embedding and ecosystem composition | `OPEN` | `Proposed`. Fifteen open questions; decides none. Implementation belongs to `0.1.0b1` per ADR 0068. |
+| 0007 | Distribution version identity and dependency constraints | `IMPLEMENTED` | Answered by ADR 0069: exact synchronized pins plus `<target>.dev0` on `develop`. |
+| 0008 | Framework embedding and ecosystem composition | `OPEN` | `Proposed`. Fifteen open questions; decides none. Implementation belongs to `1.0.0` per ADR 0068. |
 | 0009 | Protocol-neutral streaming model | `OPEN` | `Draft`. Frames I2's kernel ownership, backpressure, cancellation and partial-failure decisions; decides none. |
 
 An `IMPLEMENTED` record is not historical noise and is not a candidate for

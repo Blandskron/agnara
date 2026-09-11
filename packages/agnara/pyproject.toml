@@ -1,6 +1,10 @@
 [project]
 name = "agnara"
+<<<<<<< HEAD
 version = "0.1.0a8"
+=======
+version = "1.0.0.dev0"
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 description = "Capability-first, transport-neutral execution kernel for Agnara."
 readme = "README.md"
 requires-python = ">=3.14"

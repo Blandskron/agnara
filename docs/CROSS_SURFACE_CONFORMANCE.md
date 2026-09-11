@@ -1,6 +1,6 @@
 # Schema, Policy and Failure Conformance
 
-This is the `0.1.0a4` semantic matrix for direct runtime, HTTP/OpenAPI and MCP.
+This is the semantic matrix for direct runtime, HTTP/OpenAPI and MCP.
 It records equivalence, not byte identity. Executable evidence lives in
 `tests/conformance/test_a4_schema_policy_failure_consistency.py`; adapter suites
 retain their protocol-specific cases.
@@ -85,5 +85,5 @@ failure.
 ## Deferred
 
 Output schemas/validation, HTTP authentication, MCP MRTR resumption, A2A,
-streaming and additional schema libraries are not `0.1.0a4` behavior. Their
+streaming and additional schema libraries are not baseline behavior. Their
 absence is not papered over by a parallel schema or application workaround.

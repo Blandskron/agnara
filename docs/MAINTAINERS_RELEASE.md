@@ -1,5 +1,6 @@
-# Releasing Agnara to PyPI
+# Maintainer Release Guide
 
+<<<<<<< HEAD
 Agnara follows a highly automated, secure release pipeline designed to prevent
 accidental or malicious publications — and, since `0.1.0a8`, designed so that
 a release can no longer consume a version before every gate has passed and a
@@ -48,9 +49,18 @@ kind disagrees with whether the project exists; after publishing,
 workflow itself, on the dispatched `main` commit, only after every gate has
 passed and a reviewer has approved the run. There is no `git tag` in this
 document, and a tag pushed by hand publishes nothing.
+=======
+## Release posture
 
-## 1. Quality Gates and Release Readiness
+`0.1.0a8` is the retained publication baseline. It is not a recurring preview
+cadence. The next authorized public release is `1.0.0`, after its documented
+quality gates pass.
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 
+Do not create a release merely to produce another version. A release represents
+a tested, reviewable product increment.
+
+<<<<<<< HEAD
 Before a release is drafted, the repository must pass all automated quality
 gates:
 
@@ -61,12 +71,22 @@ uv run ruff format --check .
 uv run ty check
 uv run pytest
 ```
+=======
+## Preparing 1.0.0
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 
-The workspace has no `[dev]` extra: development dependencies live in the root
-`[dependency-groups] dev` table and are installed by `uv sync`. `uv` itself is
-a required release tool — `tests/http/test_documentation_assets.py` asserts it
-is on `PATH`.
+1. Confirm the release issue and `docs/releases/release-status.json` list every
+   required gate as satisfied with reproducible evidence.
+2. Start the release branch from the reviewed `develop` tip. Restrict it to
+   release preparation and final compatibility fixes.
+3. Run `python scripts/set_workspace_version.py release 1.0.0`, then its
+   check-only mode. Do not edit synchronized versions manually.
+4. Move user-visible `[Unreleased]` items into the dated `1.0.0` changelog
+   section and write `docs/releases/v1.0.0.md` from that record.
+5. Run the full quality, package-build and clean-install gates.
+6. Merge the reviewed release PR to `main`.
 
+<<<<<<< HEAD
 When 100% green, the framework is **CODE READY**. That is one third of the
 answer.
 
@@ -339,3 +359,30 @@ pending Trusted Publishers, configured by the owner in the TestPyPI web
 interface. Once they exist, an intermediate `publish-testpypi` job targeting a
 `testpypi` environment can be added between `publish-preflight` and
 `publish`.
+=======
+## Publication
+
+Dispatch the repository publication workflow from the accepted `main` commit.
+The workflow is the only publisher: it validates the selected version, waits
+for the protected registry authorization, publishes the synchronized artifacts,
+verifies index visibility, and only then creates the immutable tag and GitHub
+release. See ADR 0082.
+
+Never create or push a release tag by hand. Never retry by overwriting a
+published version. A failed run is investigated and corrected through an Issue
+and PR before a new authorized attempt.
+
+## After publication
+
+Propagate release-only changes back to `develop` through a PR. Then select the
+next target and transition `develop` to its `.dev0` identity with the version
+tool. Record the release evidence in the issue and close it only after the
+propagation is merged.
+
+## Emergency fixes
+
+An urgent production defect starts from `main` on a documented hotfix branch.
+It still requires an Issue, review, tests, synchronized version selection,
+publication authorization and propagation to `develop`. A hotfix is not a
+shortcut around those controls.
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa

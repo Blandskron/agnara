@@ -37,12 +37,20 @@ dev = [
 
 [[package]]
 name = "agnara"
+<<<<<<< HEAD
 version = "0.1.0a8"
+=======
+version = "1.0.0.dev0"
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 source = { editable = "packages/agnara" }
 
 [[package]]
 name = "agnara-a2a"
+<<<<<<< HEAD
 version = "0.1.0a8"
+=======
+version = "1.0.0.dev0"
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 source = { editable = "packages/agnara-a2a" }
 dependencies = [
     { name = "agnara" },
@@ -53,7 +61,11 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-cli"
+<<<<<<< HEAD
 version = "0.1.0a8"
+=======
+version = "1.0.0.dev0"
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 source = { editable = "packages/agnara-cli" }
 dependencies = [
     { name = "agnara" },
@@ -64,7 +76,11 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-events"
+<<<<<<< HEAD
 version = "0.1.0a8"
+=======
+version = "1.0.0.dev0"
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 source = { editable = "packages/agnara-events" }
 dependencies = [
     { name = "agnara" },
@@ -75,7 +91,11 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-http"
+<<<<<<< HEAD
 version = "0.1.0a8"
+=======
+version = "1.0.0.dev0"
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 source = { editable = "packages/agnara-http" }
 dependencies = [
     { name = "agnara" },
@@ -86,7 +106,11 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-mcp"
+<<<<<<< HEAD
 version = "0.1.0a8"
+=======
+version = "1.0.0.dev0"
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 source = { editable = "packages/agnara-mcp" }
 dependencies = [
     { name = "agnara" },
@@ -101,7 +125,11 @@ requires-dist = [
 
 [[package]]
 name = "agnara-telemetry"
+<<<<<<< HEAD
 version = "0.1.0a8"
+=======
+version = "1.0.0.dev0"
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 source = { editable = "packages/agnara-telemetry" }
 dependencies = [
     { name = "agnara" },

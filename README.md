@@ -1,15 +1,24 @@
 # Agnara
 
-> **Capability-native Python for the agentic era.**
+Agnara is a Python capability runtime. Applications define a capability once
+and expose it through transport adapters without making HTTP, MCP or another
+protocol the semantic source of truth.
 
-Agnara is a Python 3.14-native capability framework for building services that can be consumed by humans, applications, services, and AI agents without making HTTP the center of the architecture.
+## Current direction
 
-Agnara starts from a simple premise:
+`0.1.0a8` is the verified publication baseline. Development now targets the
+first product release, `1.0.0`; no further pre-release publication is planned.
+See [the roadmap](ROADMAP.md) and the
+[release plan](docs/releases/RELEASE_PLAN.md).
 
-> **Business capabilities are the product. Protocols are adapters.**
+## Design
 
-A capability is defined once and may later be exposed through HTTP, MCP, A2A, events, tasks, CLI, internal calls, or future transports without duplicating domain logic.
+- Capabilities are application behaviour; routes and tools are exposures.
+- The kernel is transport-neutral and uses only the Python standard library.
+- Reflection and dependency graphs compile before invocation.
+- Policies, schemas, errors and telemetry use protocol-neutral contracts.
 
+<<<<<<< HEAD
 ## Install
 
 ```bash
@@ -55,6 +64,11 @@ last aborted attempt, and the
 and the [a3-to-a4 migration guide](docs/releases/v0.1.0a4.md#migration-guide),
 which is the one that applies. The install command above resolves `0.1.0a4`
 today; pin `0.1.0a3`, or wait for `0.1.0a8`, until the release completes.
+=======
+Read [VISION.md](VISION.md), [PRINCIPLES.md](PRINCIPLES.md) and
+[ARCHITECTURE.md](ARCHITECTURE.md) for the governing model. The supported
+public surface is listed in [docs/API_REFERENCE.md](docs/API_REFERENCE.md).
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 
 ## Quick start
 
@@ -62,14 +76,20 @@ today; pin `0.1.0a3`, or wait for `0.1.0a8`, until the release completes.
 import asyncio
 
 from agnara import Agnara, Risk, StandardEffect
-from agnara.core.di import DIContainer, DIRegistry
-from agnara.execution import (
-    ExecutionContext,
-    ExecutionPlan,
-    Invocation,
-    invoke_result,
-)
+from agnara.core.di import DIContainer, DIRegistry, provider
+from agnara.execution import ExecutionContext, ExecutionPlan, Invocation, invoke_result
 from agnara.policy import Principal
+
+
+class Ledger:
+    def refund(self, payment_id: str, amount_cents: int) -> str:
+        return f"refunded {amount_cents} cents for {payment_id}"
+
+
+@provider()
+def provide_ledger() -> Ledger:
+    return Ledger()
+
 
 app = Agnara("billing")
 
@@ -80,23 +100,19 @@ app = Agnara("billing")
     effects=(StandardEffect.FINANCIAL_WRITE,),
     risk=Risk.HIGH,
 )
-def refund(payment_id: str, amount_cents: int) -> str:
-    return f"refunded {amount_cents} cents for {payment_id}"
+def refund(payment_id: str, amount_cents: int, ledger: Ledger) -> str:
+    return ledger.refund(payment_id, amount_cents)
 
 
 async def main() -> None:
     capabilities = app.compile()
     dependencies = DIRegistry()
+    dependencies.bind(Ledger, provide_ledger)
     plan = ExecutionPlan.compile(capabilities["billing.refund"], dependencies)
-
     outcome = await invoke_result(
         plan,
         ExecutionContext(
-            Invocation(
-                capability_id=plan.definition.id,
-                payload={"payment_id": "pay_123", "amount_cents": 2500},
-                metadata={},
-            ),
+            Invocation(plan.definition.id, {"payment_id": "pay_123", "amount_cents": 2500}, {}),
             DIContainer(dependencies),
             principal=Principal("quickstart", scopes={"billing:write"}),
         ),
@@ -107,6 +123,7 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
+<<<<<<< HEAD
 The capability is declared once, with its risk and effects, and invoked
 directly — no server, no HTTP, no transport. `examples/quickstart.py` in this
 repository is the longer version, including dependency injection and canonical
@@ -415,89 +432,18 @@ Agnara is licensed under the [Apache License 2.0](LICENSE).
 ## Django-like modular apps, redesigned for 2026
 
 Agnara adopts the productive project/app idea while changing what an app means.
+=======
+## Development
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 
 ```bash
-agnara project create commerce
-
-cd commerce
-
-agnara app create users
-agnara app create payments
-agnara app create recommendations
+uv sync
+uv run ruff check .
+uv run ruff format --check .
+uv run ty check
+uv run pytest
 ```
 
-The project can contain many apps, but each app is a **business module**, not a protocol-specific application.
-
-```text
-commerce
-├── users
-├── catalog
-├── payments
-└── recommendations
-```
-
-Each generated app uses modular hexagonal boundaries by default:
-
-```text
-payments/
-├── domain/
-├── application/
-├── adapters/
-│   ├── inbound/
-│   └── outbound/
-└── tests/
-```
-
-The implemented generator supports the default modular-hexagonal layout,
-`--dry-run` and `--json`. Exposure selection (`--with`), profiles and a
-`minimal` template are not implemented. Add each generated capability registry
-to `bootstrap.py` using the printed instructions.
-
-Convenience commands such as:
-
-```bash
-agnara app-mcp tools
-agnara app-api catalog
-```
-
-are design proposals and are not implemented in this alpha.
-
-Read:
-
-- `docs/APPLICATION_MODEL.md`
-- `docs/CLI_SPEC.md`
-- `docs/SCAFFOLDING.md`
-- `docs/PROJECT_MANIFEST.md`
-
-## Agentic development lifecycle
-
-Agnara is not only agent-compatible at runtime; the repository itself is designed for autonomous software engineering.
-
-Development follows:
-
-```text
-Backlog
-→ GitHub Issue
-→ short-lived branch
-→ implementation
-→ tests / quality gates
-→ commit
-→ attribution verification
-→ Pull Request
-→ review
-→ merge
-→ next Issue
-```
-
-Read:
-
-- `GIT_WORKFLOW.md`
-- `AGENT_OPERATING_MODEL.md`
-- `AGENTS.md`
-
-Agents are expected to leave a normal, auditable GitHub trail that remains understandable to human maintainers.
-
-Agent roles and Git authorship are separate: unverifiable agents are named in
-Issues/PRs, while commit trailers are reserved for authorized,
-GitHub-verifiable identities. See
-`docs/adr/0019-ai-agent-attribution.md` and `GIT_WORKFLOW.md`.
+Publication is a reviewed dispatch from `main`. The workflow verifies the
+complete distribution set before it creates a tag; see
+[docs/MAINTAINERS_RELEASE.md](docs/MAINTAINERS_RELEASE.md).

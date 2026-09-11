@@ -1,27 +1,33 @@
 # Roadmap
 
-Where Agnara is going, in horizons.
+## Publication baseline
 
-This file owns *where Agnara is going*. `BACKLOG.md` owns what is ready to
-implement, `docs/INITIATIVES.md` owns what to build in dependency order, and
-`docs/MATURITY.md` owns what already exists. `docs/DOCUMENTATION_MAP.md`
-records why each owns what it owns.
+`0.1.0a8` is the sole retained publication baseline. It validates the reviewed
+seven-distribution publication workflow. It is not a compatibility promise and
+does not define the future product scope.
 
-## No dates
+## One destination: 1.0.0
 
-A date without evidence is a fabrication. Agnara has no evidence about when
-any of this will be done, so it commits to order rather than to time.
+The next planned release is `1.0.0`. The project will not create another interim
+publication. Work is selected by the architecture it
+stabilizes, not by a pre-release cadence.
 
-Work far beyond the current horizon is still recorded, because implementing
-today's architecture wrongly would make some of it impossible later. That is
-the reason to write it down — not to promise it.
+`docs/releases/RELEASE_PLAN.md` defines the evidence required to publish 1.0.0;
+`docs/INITIATIVES.md` defines dependency order; `BACKLOG.md` holds ready work.
 
-## Horizons
+## Required product outcomes
 
-Horizons are the ordering; a release is the thing that closes. The mapping is
-fixed by ADR 0068 so that work lands where its question belongs rather than in
-whichever release happens to be open.
+- Execution semantics: streaming, execution identity and operational
+  idempotency are designed, implemented and tested.
+- Performance: compiled paths have budgets and CI detects regressions.
+- Interoperability: Agnara works standalone, as a host, embedded and
+  side-by-side without coupling the kernel to a framework.
+- Security: the threat model, supply-chain controls and security invariants
+  have current evidence.
+- Public API: the supported surface and migration commitments are stable.
+- Documentation: applications can be built from supported documentation alone.
 
+<<<<<<< HEAD
 ### DONE — 0.1.0a4, Application Boundaries
 
 Closed. Its question — can Agnara be consumed as a framework from outside this
@@ -129,3 +135,10 @@ When features and architecture conflict, architecture wins. When a proprietary
 mechanism and an open standard both work, the standard wins. When convenient
 coupling and a clean boundary conflict, the boundary wins. When a large core
 and a small kernel with strong adapters both work, the kernel stays small.
+=======
+## Non-goals
+
+Agnara is not becoming an ORM, broker, scheduler, worker runtime, frontend
+framework, admin UI or LLM framework. The kernel remains capability-first,
+transport-neutral and small; adapters evolve around it.
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa

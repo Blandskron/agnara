@@ -1238,8 +1238,13 @@ def test_the_command_rejects_an_unknown_phase() -> None:
         tool.main(["--version", VERSION, "--phase", "bootstrap-3"])
 
 
+<<<<<<< HEAD
 def test_the_committed_record_is_ready_for_bootstrap_1_offline() -> None:
     """The owner read back the three bootstrap-1 publishers on 2026-09-09."""
+=======
+def test_a_development_workspace_is_not_publishable_for_bootstrap_1() -> None:
+    """Development metadata must not be treated as a release candidate."""
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
     code, problems, notes = tool.run(
         WORKSPACE_ROOT,
         _repository_version(),
@@ -1251,6 +1256,7 @@ def test_the_committed_record_is_ready_for_bootstrap_1_offline() -> None:
         phase="bootstrap-1",
     )
 
+<<<<<<< HEAD
     assert (code, problems) == (0, [])
     assert any(
         "phase bootstrap-1: uploads agnara-a2a, agnara-cli, agnara-events" in n for n in notes
@@ -1259,6 +1265,15 @@ def test_the_committed_record_is_ready_for_bootstrap_1_offline() -> None:
 
 def test_the_committed_record_is_ready_for_bootstrap_2_offline() -> None:
     """The owner read back the three bootstrap-2 publishers on 2026-09-09."""
+=======
+    assert code == 1
+    assert any("not a publishable release version" in problem for problem in problems)
+    assert notes
+
+
+def test_a_development_workspace_is_not_publishable_for_bootstrap_2() -> None:
+    """Later phases use the same exact-release requirement."""
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
     code, problems, notes = tool.run(
         WORKSPACE_ROOT,
         _repository_version(),
@@ -1270,6 +1285,7 @@ def test_the_committed_record_is_ready_for_bootstrap_2_offline() -> None:
         phase="bootstrap-2",
     )
 
+<<<<<<< HEAD
     assert (code, problems) == (0, [])
     assert any(
         "phase bootstrap-2: uploads agnara-http, agnara-mcp, agnara-telemetry" in n for n in notes
@@ -1278,6 +1294,15 @@ def test_the_committed_record_is_ready_for_bootstrap_2_offline() -> None:
 
 def test_the_committed_record_is_ready_for_the_final_phase_offline() -> None:
     """The owner read back the kernel's active publisher (pypi-core) on 2026-09-09."""
+=======
+    assert code == 1
+    assert any("not a publishable release version" in problem for problem in problems)
+    assert notes
+
+
+def test_a_development_workspace_is_not_publishable_for_the_final_phase() -> None:
+    """The final phase cannot publish the workspace development identity."""
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
     code, problems, notes = tool.run(
         WORKSPACE_ROOT,
         _repository_version(),
@@ -1289,8 +1314,14 @@ def test_the_committed_record_is_ready_for_the_final_phase_offline() -> None:
         phase="final",
     )
 
+<<<<<<< HEAD
     assert (code, problems) == (0, [])
     assert any("phase final: uploads agnara;" in note for note in notes)
+=======
+    assert code == 1
+    assert any("not a publishable release version" in problem for problem in problems)
+    assert notes
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 
 
 def test_the_kernel_is_published_last() -> None:

@@ -1,6 +1,10 @@
 [project]
 name = "agnara-a2a"
+<<<<<<< HEAD
 version = "0.1.0a8"
+=======
+version = "1.0.0.dev0"
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 description = "Agent-to-Agent exposure adapter for Agnara capabilities."
 readme = "README.md"
 requires-python = ">=3.14"
@@ -14,7 +18,11 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
+<<<<<<< HEAD
 dependencies = ["agnara==0.1.0a8"]
+=======
+dependencies = ["agnara==1.0.0.dev0"]
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 
 [project.urls]
 Homepage = "https://github.com/Blandskron/agnara"

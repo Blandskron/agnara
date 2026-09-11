@@ -173,7 +173,11 @@ def projects_published_through(phase: str) -> tuple[str, ...]:
     return (*projects_published_before(phase), *phase_projects(phase))
 
 
+<<<<<<< HEAD
 #: PEP 440 restricted to what ADR 0021 permits during v0.x.
+=======
+#: PEP 440 public release versions. Development and local versions are excluded.
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 VERSION_PATTERN = re.compile(r"^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:(?:a|b|rc)\d+)?$")
 
 URL_PATTERN = re.compile(r"(?i)\b[a-z][a-z0-9+.-]*://[^\s<>\"']+")
@@ -774,7 +778,15 @@ def run(
     phase: str | None = None,
 ) -> tuple[int, list[str], list[str]]:
     if VERSION_PATTERN.fullmatch(version) is None:
+<<<<<<< HEAD
         return 1, [f"{version!r} is not a publishable v0.x release version"], []
+=======
+        return (
+            1,
+            [f"{version!r} is not a publishable release version"],
+            ["publication readiness requires an exact public release version"],
+        )
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 
     manifest = distributions.load(workspace)
     problems: list[str] = []

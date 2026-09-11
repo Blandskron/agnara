@@ -1,12 +1,12 @@
 # Agnara Release Plan
 
-This document defines the progressive path from the published `0.1.0a3` to the
-first stable `0.1.0`. It is a **measurement mechanism, not a feature backlog**.
-`BACKLOG.md` decides what gets built; this decides when what has been built is
-mature enough to close a release.
+## Baseline and target
 
-## Path
+`0.1.0a8` is the sole retained publication baseline. It proved the reviewed,
+dispatch-driven seven-distribution publication path; it is not the compatibility
+or product contract this project will publish next.
 
+<<<<<<< HEAD
 ```text
 0.1.0a2     (published 2026-09-04)
    ↓
@@ -30,16 +30,19 @@ mature enough to close a release.
    ↓
 0.1.0       first stable contract
 ```
+=======
+The next and first planned product release is **`1.0.0`**. There will be no
+additional interim publication cadence. Development
+continues on `develop` until the stable gates below have evidence.
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 
-**No release carries a calendar date.** A release closes when its exit gates
-are satisfied by evidence, never when a date arrives and never because a
-readiness percentage looks high. The difference between these releases is
-evidence and maturity, not feature count.
+## Release thesis
 
-**Each release has one question.** ADR 0068 fixes which, because work
-otherwise lands in whichever release is open rather than in the one whose
-question it answers:
+`1.0.0` proves that Agnara's capability runtime and its documented public
+surface are stable enough for production adoption. It must not be cut merely
+because a subsystem milestone is complete.
 
+<<<<<<< HEAD
 | Release | Question | Owns |
 | --- | --- | --- |
 | `0.1.0a4` | Can Agnara be consumed as a framework from outside this repository? | I1, I7, the public exposure and composition surface |
@@ -52,21 +55,29 @@ question it answers:
 
 No alpha may declare stable support for an external framework;
 `EXPERIMENTAL` is the strongest status any of them may give an integration.
+=======
+The work leading to it includes streaming semantics, execution identity and
+operational idempotency; performance budgets enforced in CI; interoperability
+and composition evidence; security-program evidence; a stable public API; and
+repeatable publication of all seven distributions.
 
-## How this relates to existing rules
+## Gates
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
 
-This plan **supplements** the repository's existing requirements and never
-relaxes them. Where it appears looser than an existing rule, the existing rule
-wins:
+All existing quality, security, packaging and review requirements remain in
+force. The `1.0.0` release additionally requires evidence for each item below.
 
-| Authority | Owns |
+| Gate | Evidence |
 | --- | --- |
-| `QUALITY_GATES.md` | Definition of done, required checks, security gates, changelog and release consistency gate, merge governance, attribution |
-| `SECURITY.md` | Security boundaries, reporting channel, claims discipline |
-| `docs/MAINTAINERS_RELEASE.md` | The operational release procedure, Trusted Publishing, tagging |
-| `docs/adr/0021-*.md` | Synchronized pre-one versions and changelog structure |
-| This plan | *When* the current state is mature enough to enter that procedure |
+| Execution semantics | Streaming, identity and idempotency have accepted designs, implementations and conformance tests. |
+| Performance | Budgets cover compiled execution paths and regressions fail CI. |
+| Interoperability | Standalone, hosted, embedded and side-by-side scenarios satisfy the approved contract. |
+| Security | Threat model, dependency/supply-chain checks and security invariants have current evidence. |
+| Public API | Every public export is classified stable or deprecated with migration guidance. |
+| Documentation | A clean-room application can be built from supported documentation alone. |
+| Publication | The A8 workflow builds, verifies and publishes all distributions from the accepted `1.0.0` commit. |
 
+<<<<<<< HEAD
 One file convention, and one place the evidence lives:
 
 - `docs/releases/v<version>.md` — the **user-facing release note**, written
@@ -535,3 +546,8 @@ Add `--json` for the machine-readable result, `--verbose` for per-gate
 evidence. The command re-derives every automated gate from the repository, so
 it disagrees with `release-status.json` when the file is wrong — which is the
 point.
+=======
+`docs/releases/release-status.json` records current gate state.
+`QUALITY_GATES.md` and `docs/MAINTAINERS_RELEASE.md` own the operational
+procedure; this plan owns only the product bar.
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa

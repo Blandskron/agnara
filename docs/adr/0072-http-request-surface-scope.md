@@ -1,31 +1,24 @@
-# ADR 0072 — HTTP Request Surface Scope for `0.1.0a4`
+# ADR 0072 — HTTP Request Surface Scope
 
-- Status: Proposed
-- Date: 2026-09-07
-- Initiative: I7 HTTP request surface
-- Tracking: GitHub Issue #298
-- Amends: ADR 0026
-- Related: ADR 0032, ADR 0035, ADR 0068, ADR 0070, ADR 0071
+- Status: Accepted
+- Date: 2026-09-11
+- Tracking: I7
 
 ## Context
 
-ADR 0026 gave the adapter path, query, header and one JSON body binding, and
-recorded that "forms, multipart, files, streaming application inputs, cookies,
-and content negotiation require separate reviewed work". `docs/INITIATIVES.md`
-I7 names the `0.1.0a4` half: cookies, forms, multipart and file uploads, "the
-gaps that stop `agnara-http` being usable for ordinary applications", then
-separately CORS, compression, static files, proxy headers, trusted hosts and a
-cross-cutting extension point.
+The HTTP adapter must provide a clear, bounded request surface while preserving
+the protocol-neutral capability core. The retained baseline supports cookies,
+forms, multipart payloads and bounded file uploads; it must not accidentally
+promise a full web framework.
 
-ADR 0071 made the adapter consumable. An application can declare routes and
-serve them through public API, and cannot read a session cookie, accept an
-HTML form post or receive a file. That gap is what this decision closes, and
-it is also where a web framework starts growing features without end. So the
-first half of this record is a classification, and the second is the smallest
-implementation that satisfies it.
+## Decision
 
-## Decision — the classification
+The HTTP adapter owns request parsing and HTTP-specific validation. Capability
+handlers receive only the transport-neutral inputs selected by the adapter.
+Bounded request bodies and uploaded `bytes` are supported within documented
+limits.
 
+<<<<<<< HEAD
 Every I7 subfeature the planning documents mention, classified. Nothing here
 is left implicit.
 
@@ -263,3 +256,16 @@ become expressible together, and this record's largest deferral closes. Also
 at `0.1.0a9`, when I2 decides streaming: a streamed request body would replace
 the bounded-`bytes` upload contract rather than extend it, and that is a
 breaking change this alpha is allowed to make.
+=======
+Streaming request bodies, resumable uploads, session middleware, template
+rendering and a general ASGI application framework are outside this decision.
+Streaming is a separate `1.0.0` release gate and must be designed and tested as
+a cross-cutting capability rather than added as an HTTP-only shortcut.
+
+## Consequences
+
+Applications needing a deferred concern may compose an outer ASGI layer around
+the generated Agnara application. That composition must not cause core imports
+of ASGI concepts or redefine capability semantics. Future expansion requires a
+separate decision with security, cancellation and resource-limit evidence.
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa

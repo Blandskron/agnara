@@ -1,6 +1,7 @@
 {
   "schema_version": 3,
   "registry": "https://pypi.org",
+<<<<<<< HEAD
   "publisher": {
     "provider": "github",
     "owner": "Blandskron",
@@ -115,5 +116,26 @@
       "note": "bootstrap-2. Pending publisher read back by the owner on 2026-09-09: Project name agnara-telemetry, Blandskron/agnara, release.yml, environment pypi-telemetry.",
       "publisher_environment": "pypi-telemetry"
     }
+=======
+  "publisher": {"provider": "github", "owner": "Blandskron", "repository": "agnara", "workflow": "release.yml"},
+  "release_authorization": {"mechanism": "github-environment", "environment": "pypi"},
+  "status": "VERIFIED",
+  "confirmed_by": "Blandskron",
+  "confirmed_on": "2026-09-09",
+  "last_registry_failure": null,
+  "notes": [
+    "A8 is the retained verified publication baseline.",
+    "Future publication is authorized by the protected pypi environment, not by editing this record.",
+    "No credentials are recorded here."
+  ],
+  "projects": [
+    {"name": "agnara", "publisher_project": "agnara", "publisher_environment": "pypi-core", "publisher_kind": "active", "pypi_state": "existing", "trusted_publisher": "VERIFIED", "verified_by": "Blandskron", "verified_on": "2026-09-09"},
+    {"name": "agnara-a2a", "publisher_project": "agnara-a2a", "publisher_environment": "pypi-a2a", "publisher_kind": "active", "pypi_state": "existing", "trusted_publisher": "VERIFIED", "verified_by": "Blandskron", "verified_on": "2026-09-09"},
+    {"name": "agnara-cli", "publisher_project": "agnara-cli", "publisher_environment": "pypi-cli", "publisher_kind": "active", "pypi_state": "existing", "trusted_publisher": "VERIFIED", "verified_by": "Blandskron", "verified_on": "2026-09-09"},
+    {"name": "agnara-events", "publisher_project": "agnara-events", "publisher_environment": "pypi-events", "publisher_kind": "active", "pypi_state": "existing", "trusted_publisher": "VERIFIED", "verified_by": "Blandskron", "verified_on": "2026-09-09"},
+    {"name": "agnara-http", "publisher_project": "agnara-http", "publisher_environment": "pypi-http", "publisher_kind": "active", "pypi_state": "existing", "trusted_publisher": "VERIFIED", "verified_by": "Blandskron", "verified_on": "2026-09-09"},
+    {"name": "agnara-mcp", "publisher_project": "agnara-mcp", "publisher_environment": "pypi-mcp", "publisher_kind": "active", "pypi_state": "existing", "trusted_publisher": "VERIFIED", "verified_by": "Blandskron", "verified_on": "2026-09-09"},
+    {"name": "agnara-telemetry", "publisher_project": "agnara-telemetry", "publisher_environment": "pypi-telemetry", "publisher_kind": "active", "pypi_state": "existing", "trusted_publisher": "VERIFIED", "verified_by": "Blandskron", "verified_on": "2026-09-09"}
+>>>>>>> 15cdde3ccb0211665dc88e153872be1acdeee5aa
   ]
 }
