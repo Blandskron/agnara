@@ -30,6 +30,7 @@ and ADR 0071 depend on.
 | 0006 | Unified exposure model | `PARTLY OPEN` | Answered by ADR 0070 and implemented. Phase 3, the public composition API, is ADR 0071. |
 | 0007 | Distribution version identity and dependency constraints | `IMPLEMENTED` | Answered by ADR 0069: exact alpha pins plus `<target>.dev0` on `develop`. |
 | 0008 | Framework embedding and ecosystem composition | `OPEN` | `Proposed`. Fifteen open questions; decides none. Implementation belongs to `0.1.0b1` per ADR 0068. |
+| 0009 | Protocol-neutral streaming model | `OPEN` | `Draft`. Frames I2's kernel ownership, backpressure, cancellation and partial-failure decisions; decides none. |
 
 An `IMPLEMENTED` record is not historical noise and is not a candidate for
 deletion while anything still cites it. Before removing one, check
@@ -51,7 +52,7 @@ the files.
 `docs/INITIATIVES.md` lists the initiatives that require an RFC before any
 implementation. The unified exposure model (`I1`) has been answered and built,
 so the one that now blocks the most other work is the streaming model (`I2`),
-which still has no record.
+framed by the open RFC 0009.
 
 RFC 0008 is deliberately the largest open record in the directory and answers
 nothing. Several of its questions depend on I1, I2, I3, I8 and I10; writing an
