@@ -152,6 +152,7 @@ Use `--check` in automation to verify that this projection has not drifted.
 | Name | Stability |
 | --- | --- |
 | `CanonicalResult` | `provisional` |
+| `CapabilityStream` | `provisional` |
 | `ExecutionContext` | `provisional` |
 | `ExecutionPlan` | `provisional` |
 | `Failure` | `provisional` |
@@ -161,10 +162,13 @@ Use `--check` in automation to verify that this projection has not drifted.
 | `InvocationStartEvent` | `provisional` |
 | `InvocationTerminalEvent` | `provisional` |
 | `PolicyDeniedError` | `provisional` |
+| `StreamInterrupted` | `provisional` |
+| `StreamTerminal` | `provisional` |
 | `Success` | `provisional` |
 | `TelemetryHook` | `provisional` |
 | `invoke` | `provisional` |
 | `invoke_result` | `provisional` |
+| `open_stream` | `provisional` |
 
 ### `agnara.execution.context`
 
@@ -199,6 +203,15 @@ Use `--check` in automation to verify that this projection has not drifted.
 | --- | --- |
 | `invoke` | `provisional` |
 | `invoke_result` | `provisional` |
+
+### `agnara.execution.streaming`
+
+| Name | Stability |
+| --- | --- |
+| `CapabilityStream` | `provisional` |
+| `StreamInterrupted` | `provisional` |
+| `StreamTerminal` | `provisional` |
+| `open_stream` | `provisional` |
 
 ### `agnara.execution.telemetry`
 

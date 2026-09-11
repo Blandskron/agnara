@@ -89,7 +89,7 @@ settled; the spelling is not.
 | Introspection snapshot | `IMPLEMENTED` | Versioned, frozen, no runtime objects reachable. ADR 0045. Exposures are derived from the frozen exposure registry. |
 | Discovery visibility | `IMPLEMENTED` | Per-field publication decisions. ADR 0046. |
 | Idempotency | `IMPLEMENTED` as metadata, `PLANNED` as behaviour | Declared and published; the runtime performs no deduplication or replay. |
-| Streaming results | `RESEARCH` | Nothing in the kernel returns or transports an async iterator. |
+| Streaming results | `IMPLEMENTED` (kernel only) | ADR 0084, RFC 0009. `open_stream` owns a declared async generator: pull-based demand with no kernel buffer, policy and validation before the first unit, `StreamInterrupted` for failure after output, and an explicit `StreamTerminal`. Units are not schema validated, because no boundary compiles output schemas yet. No transport projects it. |
 | Audit trail | `PLANNED` | The word appears in docstrings; there is no audit system. |
 | Capability-to-capability composition | `RESEARCH` | No nested `ExecutionContext`, no propagation contract. |
 | Multi-tenancy | `RESEARCH` | No tenant concept anywhere in the kernel. |

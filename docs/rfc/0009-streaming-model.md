@@ -1,11 +1,12 @@
 # RFC 0009 — Protocol-Neutral Streaming Model
 
-- Status: Draft
+- Status: Partly answered
 - Date: 2026-09-11
 - Tracking: GitHub Issue #355
 - Initiative: I2
 - Supersedes: nothing
-- Related: RFC 0001, ADR 0022, ADR 0027, ADR 0031, ADR 0068
+- Answered by: ADR 0084, for the kernel contract only (Q1-Q9)
+- Related: RFC 0001, ADR 0022, ADR 0027, ADR 0031, ADR 0068, ADR 0084
 
 ## 1. Summary
 
@@ -15,9 +16,14 @@ value, no invocation boundary owns its consumption, and no adapter can give it
 consistent cancellation, backpressure, terminal-state or telemetry semantics.
 
 This RFC frames the decisions required before streaming is introduced. It
-decides none of them. Its eventual answers belong in one or more ADRs and must
-be implemented with conformance tests before an adapter exposes streamed
-capabilities.
+decides none of them itself. **ADR 0084 answers Q1 to Q9 for the kernel** and
+the answers are implemented in `agnara.execution.streaming`, with the focused
+tests section 6 demands in `tests/unit/execution/test_streaming.py`.
+
+What remains open here is every transport projection: HTTP SSE and WebSockets,
+MCP progress, A2A task events and the event adapter. Each needs its own ADR
+and its own conformance tests, and no adapter exposes streamed capabilities
+until it has them.
 
 ## 2. Context
 
@@ -94,6 +100,12 @@ Any proposal answering this RFC must preserve these constraints.
    resume tokens and delivery guarantees stay outside this RFC.
 
 ## 5. Open questions
+
+Q1 to Q9 are answered for the kernel by ADR 0084, decision by decision: Q1 by
+D1, Q2 by D2, Q3 by D3, Q4 by D4, Q5 by D5, Q6 by D6, Q7 and Q8 by D7, and Q9
+by D8. They are kept here in their original form because each transport
+projection has to answer the same questions again for its own wire, and the
+question is the durable part.
 
 ### Q1 — What makes a capability streaming?
 
@@ -242,10 +254,15 @@ in-process stream lifetime contract.
 
 ## 8. Decision path
 
-This RFC remains open until a maintainer accepts answers to the questions above
-through one or more ADRs. The ADRs should separate the core stream contract
-from any transport projection so that an unresolved SSE, MCP or A2A feature
-cannot delay a kernel decision unnecessarily.
+The separation this section asked for is what happened. ADR 0084 decides the
+core stream contract and deliberately decides no projection, so an unresolved
+SSE, MCP or A2A question can no longer delay the kernel.
+
+This RFC stays open for those projections. Each one answers Q9 for its own
+transport -- which terminals it can expose faithfully, what it must reject,
+and which richer features stay extensions -- against the contract ADR 0084
+fixed, and none of them may re-decide ownership, backpressure, cancellation or
+terminal semantics.
 
 After implementation, update `docs/MATURITY.md` with only verified behavior,
 and update this RFC's index lifecycle to reflect the settled state. No adapter

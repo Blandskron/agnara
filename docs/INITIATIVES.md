@@ -23,9 +23,11 @@ I9 Public API governance ───→ 1.0.0 compatibility decision
 ### I2 — Streaming model
 
 **Horizon:** `1.0.0`
-**Status:** `DESIGN READY`
+**Status:** `IN PROGRESS`
 
 One transport-neutral model for cancellation, backpressure and partial failure.
+The kernel contract is decided (ADR 0084) and implemented; the transport
+projections it unblocks are not started.
 
 ### I3 — Execution identity and idempotency
 

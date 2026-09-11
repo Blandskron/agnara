@@ -25,9 +25,11 @@ from agnara.policy.base import Policy
 
 __all__ = ["CapabilityDefinition"]
 
-#: The handler's call semantics -- sync versus async, streaming, task
-#: handles -- are deliberately not decided here. EPIC 4 owns execution;
-#: this type only records what was declared.
+#: The handler's call semantics -- sync versus async, task handles -- are
+#: deliberately not decided here. EPIC 4 owns execution; this type only
+#: records what was declared. Streaming is the one exception, and only
+#: because it had to be: `streaming` is a declaration, and `ExecutionPlan`
+#: checks the handler's shape against it (ADR 0084 D1).
 Handler = Callable[..., Any]
 
 
@@ -96,8 +98,14 @@ class CapabilityDefinition:
     #: because nobody said otherwise (RFC 0001).
     idempotency: Idempotency = Idempotency.UNKNOWN
     policies: tuple[Policy, ...] = field(default_factory=tuple)
+    #: Whether this capability produces incremental output. Declared here and
+    #: verified against the handler's shape by `ExecutionPlan` (ADR 0084 D1);
+    #: the two must agree or compilation fails.
+    streaming: bool = False
 
     def __post_init__(self) -> None:
+        if not isinstance(self.streaming, bool):
+            raise DefinitionError(f"streaming must be a bool, got {type(self.streaming).__name__}")
         if not isinstance(self.policies, tuple):
             object.__setattr__(self, "policies", tuple(self.policies))
         for policy in self.policies:
@@ -137,6 +145,7 @@ class CapabilityDefinition:
         confirmation: Confirmation | str = Confirmation.NEVER,
         idempotency: Idempotency | str = Idempotency.UNKNOWN,
         policies: Iterable[Policy] = (),
+        streaming: bool = False,
     ) -> Self:
         """Build a definition from authoring-shaped arguments.
 
@@ -162,6 +171,7 @@ class CapabilityDefinition:
             confirmation=_coerce(confirmation, Confirmation, "confirmation"),
             idempotency=_coerce(idempotency, Idempotency, "idempotency"),
             policies=tuple(policies),
+            streaming=streaming,
         )
 
     def has_effect(self, effect: str) -> bool:
