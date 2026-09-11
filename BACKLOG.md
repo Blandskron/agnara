@@ -22,9 +22,6 @@ This file owns **decomposed work that is ready to implement**. It does not own t
 - [ ] API docs present. Partial: `docs/API_DESIGN.md` records intent, and
   there is no generated reference for the 41 public names. `I9`, then `I18`.
 
-- [ ] Migration policy for alpha documented. **Absent.** Needed before any API
-  is called stable. `I9`.
-
 - [ ] E0B.9 Configure independent reviewer identity when available.
 
 - [ ] E0B.12 Document release and hotfix automation evidence.
@@ -50,5 +47,4 @@ This file owns **decomposed work that is ready to implement**. It does not own t
   part of the serialized document and changing it needs an
   `INTROSPECTION_VERSION` bump. Rename it to `applications` in the next
   snapshot format change rather than separately.
-
 
