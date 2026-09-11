@@ -6,7 +6,12 @@ order.
 
 ## Ready after design acceptance
 
-- [ ] Implement the accepted protocol-neutral streaming model (I2).
+- [x] Implement the accepted protocol-neutral streaming *kernel* contract
+  (I2, ADR 0084): declaration, owned one-shot consumption, pull backpressure,
+  cancellation, cleanup and post-output failure.
+- [ ] Project the streaming contract onto each transport (I2): HTTP SSE and
+  WebSockets, MCP progress, A2A task events and the event adapter. Each needs
+  its own ADR answering RFC 0009 Q9 and its own conformance tests.
 - [ ] Implement execution identity and operational idempotency (I3).
 - [ ] Establish performance budgets and CI regression gates (I14).
 - [ ] Complete interoperability and composition contracts (I20, I8).

@@ -52,6 +52,8 @@ class ExecutionPlan:
                 f"target_deps must be a mapping, got {type(self.target_deps).__name__}"
             )
 
+        _check_streaming_shape(self.definition)
+
         immutable_deps = {
             target: tuple(dependencies) for target, dependencies in self.target_deps.items()
         }
@@ -183,3 +185,45 @@ class ExecutionPlan:
     def dependencies(self) -> tuple[type, ...]:
         """Direct dependency types in handler-signature order."""
         return tuple(self.target_deps.get(self.definition.handler, ()))
+
+    @property
+    def streaming(self) -> bool:
+        """Whether this plan must be consumed through ``open_stream``.
+
+        The declaration is the capability's; the plan republishes it because
+        the execution boundary is what acts on it, and a caller holding a
+        plan should not have to reach through to the definition to find out
+        which boundary applies.
+        """
+        return self.definition.streaming
+
+
+def _check_streaming_shape(definition: CapabilityDefinition) -> None:
+    """Hold a streaming declaration and its handler's shape to each other.
+
+    Both directions matter, and the second one is why this exists. An async
+    generator handler that nobody declared streaming would otherwise reach
+    `invoke_result`, which would wrap the generator object in `Success` and
+    hand a caller a producer with no owner, no cleanup and no way to report a
+    failure after output -- silently, and only at runtime. ADR 0084 D1 makes
+    that a compile-time `DefinitionError` instead.
+
+    A callable object is inspected through its ``__call__`` as well, so a
+    handler that is an instance rather than a function is judged by what it
+    actually does.
+    """
+    handler = definition.handler
+    produces_units = inspect.isasyncgenfunction(handler) or inspect.isasyncgenfunction(
+        type(handler).__call__
+    )
+    if definition.streaming and not produces_units:
+        raise DefinitionError(
+            f"capability {definition.id} declares streaming=True but its handler is not an "
+            "async generator function; a streaming handler yields its units"
+        )
+    if produces_units and not definition.streaming:
+        raise DefinitionError(
+            f"capability {definition.id} has an async generator handler but does not declare "
+            "streaming=True; an undeclared stream has no owner for its iteration, cleanup or "
+            "partial failure (ADR 0084)"
+        )

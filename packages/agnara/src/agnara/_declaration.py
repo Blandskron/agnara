@@ -99,6 +99,7 @@ def declare_into(
     risk: Risk | str,
     confirmation: Confirmation | str,
     idempotent: bool | None,
+    streaming: bool,
 ) -> None:
     """Register one declaration, or say which surface refused it.
 
@@ -123,5 +124,6 @@ def declare_into(
             risk=risk,
             confirmation=confirmation,
             idempotency=idempotency_from(idempotent),
+            streaming=streaming,
         )
     )

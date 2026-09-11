@@ -153,6 +153,7 @@ class App:
         risk: Risk | str = Risk.LOW,
         confirmation: Confirmation | str = Confirmation.NEVER,
         idempotent: bool | None = None,
+        streaming: bool = False,
     ) -> Callable[[F], F]: ...
 
     def capability(
@@ -167,6 +168,7 @@ class App:
         risk: Risk | str = Risk.LOW,
         confirmation: Confirmation | str = Confirmation.NEVER,
         idempotent: bool | None = None,
+        streaming: bool = False,
     ) -> Any:
         """Declare a capability owned by this app.
 
@@ -188,6 +190,7 @@ class App:
                 risk=risk,
                 confirmation=confirmation,
                 idempotent=idempotent,
+                streaming=streaming,
             )
             return func
 

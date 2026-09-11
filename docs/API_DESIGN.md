@@ -183,7 +183,32 @@ async def generate_report(...) -> AsyncIterator[ReportChunk]:
     ...
 ```
 
-Streaming semantics require a dedicated RFC.
+The declaration and the handler's shape are held to each other: `streaming=True`
+over a handler that is not an async generator is rejected when the plan
+compiles, and so is an async generator handler that never declared it.
+
+Consumption is owned, one-shot and pull-based. Nothing is buffered, so the
+producer advances exactly as fast as the consumer pulls, and closing the stream
+closes the producer before releasing the invocation's dependencies:
+
+```python
+from agnara.execution import StreamInterrupted, StreamTerminal, open_stream
+
+async with open_stream(plan, context) as stream:
+    async for chunk in stream:
+        ...
+assert stream.terminal is StreamTerminal.COMPLETED
+```
+
+Policy and input validation run before the first unit, so failure before then
+is the ordinary canonical failure. Once a unit has reached the consumer that is
+no longer honest, and a later failure raises `StreamInterrupted` instead,
+carrying a redacted canonical `Failure` and the number of units already
+emitted. Cancellation is neither: it propagates untouched.
+
+The kernel contract is ADR 0084. Every transport projection of it -- SSE,
+WebSockets, MCP progress, A2A task events -- is still open in RFC 0009, so no
+adapter exposes streamed capabilities yet.
 
 ## 16. Direct invocation
 

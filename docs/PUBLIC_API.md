@@ -69,12 +69,13 @@ from; that is why a distribution's export total exceeds its entry-point count.
 | `agnara.capability.registry` | 2 |
 | `agnara.core.di` | 9 |
 | `agnara.errors` | 12 |
-| `agnara.execution` | 14 |
+| `agnara.execution` | 18 |
 | `agnara.execution.context` | 1 |
 | `agnara.execution.invocation` | 1 |
 | `agnara.execution.plan` | 1 |
 | `agnara.execution.result` | 4 |
 | `agnara.execution.runtime` | 2 |
+| `agnara.execution.streaming` | 4 |
 | `agnara.execution.telemetry` | 3 |
 | `agnara.exposure` | 7 |
 | `agnara.introspection` | 23 |
