@@ -161,9 +161,10 @@ async def invoke_result[T](
             },
         )
     except Exception:
-        # Redaction is for the wire, not the operator: without this record a
-        # 500 produced by a handler would be undiagnosable anywhere.
-        _LOGGER.exception("capability %s failed", plan.definition.id)
+        # Application exceptions may carry credentials, payload fragments, or
+        # dependency values. Keep the capability identifier for correlation,
+        # but do not attach exception text or a traceback to default logs.
+        _LOGGER.error("capability %s failed", plan.definition.id)
         return Failure(FailureCode.INTERNAL_FAILURE, "capability invocation failed")
 
     if isinstance(value, Success | Failure):

@@ -17,6 +17,16 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 
 ## [Unreleased]
 
+Work in this section contributes to the first stable `1.0.0` release. Entries
+describe user- and contributor-visible changes only.
+
+## [0.1.0a9] - Security Hotfix
+
+Security hotfix for GHSA-j5rx-vm8v-f7p3 (CWE-532). Versions `<= 0.1.0a8`
+could record unexpected exception details in default runtime logs. This
+release removes exception text and tracebacks while retaining the capability
+identifier for correlation. It introduces no unrelated functional changes.
+
 ## [0.1.0a8] - 2026-09-09
 
 Release pipeline recovery after the immutable `v0.1.0a7` tag was created while

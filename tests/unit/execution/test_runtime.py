@@ -567,8 +567,7 @@ def test_canonical_invocation_maps_validation_with_immutable_path() -> None:
 def test_canonical_invocation_redacts_unexpected_handler_failure(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """The caller learns only that the invocation failed; the operator, who has
-    to fix it, gets the capability id and the traceback in the log."""
+    """Neither the caller nor default logs receive exception-carried secrets."""
 
     async def run_test() -> None:
         registry = DIRegistry()
@@ -591,8 +590,9 @@ def test_canonical_invocation_redacts_unexpected_handler_failure(
         assert record.name == "agnara.execution"
         assert record.levelno == logging.ERROR
         assert record.getMessage() == "capability payments.refund failed"
-        assert record.exc_info is not None
-        assert record.exc_info[0] is RuntimeError
+        assert "database password" not in caplog.text
+        assert "RuntimeError" not in caplog.text
+        assert record.exc_info is None
 
     asyncio.run(run_test())
 
