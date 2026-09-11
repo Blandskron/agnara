@@ -1,23 +1,85 @@
 name: Release to PyPI
 
+# A release is a run a maintainer dispatches from `main`, not a tag pushed by
+# hand. Four attempts, `0.1.0a4` to `0.1.0a7`, each burned a version the same
+# way: the annotated tag was the *trigger*, so it existed before any gate had
+# run, and a gate that failed afterwards left an immutable tag naming a release
+# that never happened.
+#
+# The order is now the other way round. Every gate runs first; a human then
+# approves the run in the protected `pypi` environment; the approved run
+# publishes and verifies on the index; only a verified publication is tagged
+# and announced.
+#
+# PyPI allows at most three Pending Trusted Publishers at a time, so the A8
+# bootstrap runs as three dispatches of this workflow, each with a `phase`:
+#
+#   bootstrap-1: agnara-a2a, agnara-cli, agnara-events      -> verify those 3
+#   bootstrap-2: agnara-http, agnara-mcp, agnara-telemetry  -> verify the 6 adapters
+#   final:       agnara                                      -> verify all 7 -> tag -> GitHub Release
+#
+#   validate ───────┐
+#                   ├─> build -> test-artifact -> publish-preflight
+#   preconditions ──┘                                   │
+#                                          [approval] publish -> this phase's OIDC jobs -> this phase's verification
+#                                                                                        (final only) -> tag -> github-release
+#
+# Each arrow is a real `needs`; the only `if:` conditions select the phase.
+# The tag is a consequence of a verified release: it is created only by the
+# `final` phase, only after the index confirms all fourteen files, so a failed
+# upload or a failed verification leaves no tag anywhere.
+# `scripts/check_release_preconditions.py` refuses a run that is not a
+# dispatch from the current head of `main`, a version that is already tagged
+# anywhere, or an environment whose approval would be automatic.
+# `scripts/check_publication_readiness.py --phase` requires the publisher
+# readback only for the projects a phase uploads, requires earlier phases to
+# be complete on the index, and refuses any file for later phases.
+#
+# See ADR 0082 for this order, ADR 0083 for the per-project OIDC identities and
+# the phases, and ADR 0079 for the upload order, the refusal to use
+# `skip-existing`, and post-publication verification.
+
 on:
-  push:
-    tags:
-      - "v*.*.*"
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (e.g. 0.1.0)'
-        required: false
+        description: >-
+          Release version to publish from the current HEAD of main, e.g. 0.1.0a8.
+          Must equal the synchronized workspace version.
+        required: true
+        type: string
+      phase:
+        description: >-
+          Bootstrap phase: bootstrap-1 publishes agnara-a2a, agnara-cli and
+          agnara-events; bootstrap-2 publishes agnara-http, agnara-mcp and
+          agnara-telemetry; final publishes agnara, verifies all seven and
+          creates the tag and the GitHub Release.
+        required: true
+        type: choice
+        options:
+          - bootstrap-1
+          - bootstrap-2
+          - final
 
 permissions:
   contents: read
+
+# One release at a time, and never cancelled halfway: a second dispatch waits
+# for the first instead of racing it for the same tag.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 env:
   # Fail rather than silently fall back to a different interpreter. Without
   # this, `uv venv` picked the runner's CPython 3.12 and the >=3.14 wheel
   # became uninstallable in the validation job.
   UV_PYTHON_DOWNLOADS: manual
+  BASELINE_PYTHON: "3.14"
+  # The dispatched inputs, exposed once as environment variables so no shell
+  # step interpolates an expression into a command line.
+  RELEASE_VERSION: ${{ inputs.version }}
+  RELEASE_PHASE: ${{ inputs.phase }}
 
 jobs:
   validate:
@@ -27,81 +89,171 @@ jobs:
       security-events: write
     uses: ./.github/workflows/ci.yml
 
-  build:
-    name: Build distributions
-    needs: validate
+  # Everything that must be true of the *run* before anything is built: it was
+  # dispatched from the current head of main, the version has no tag anywhere,
+  # the workspace is synchronized at exactly that version with a current
+  # lockfile, the recorded Trusted Publisher tuple is the identity this
+  # workflow will present, the phase's publishers have been read back, and the
+  # environment that holds the human gate really has one.
+  preconditions:
+    name: Release preconditions
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      
+
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.0.1
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
 
-      - name: Set up Python 3.14
-        run: uv python install 3.14
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
 
-      - name: Verify annotated release tag belongs to main
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-        run: uv run --no-project python scripts/check_release_tag.py "${GITHUB_REF#refs/tags/}"
-          
+      - name: Dispatched from the current head of main, for a version with no tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_release_preconditions.py \
+            --version "$RELEASE_VERSION" --require-protected-environment pypi
+
+      - name: The workspace is synchronized at exactly this version with a current lockfile
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/set_workspace_version.py release "$RELEASE_VERSION" --check
+          uv lock --check
+
+      - name: Publish readiness (offline) for this phase and the recorded Trusted Publisher identity
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_publication_readiness.py \
+            --workspace "$GITHUB_WORKSPACE" --version "$RELEASE_VERSION" \
+            --phase "$RELEASE_PHASE" --oidc-identity
+
+      - name: Resolve the version under release
+        id: resolve
+        run: |
+          set -euo pipefail
+          echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "releasing $RELEASE_VERSION phase $RELEASE_PHASE from $GITHUB_SHA"
+
+  build:
+    name: Build distributions
+    needs: [validate, preconditions]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
       - name: Build every reviewed distribution
         run: uv build --all-packages --out-dir dist/
 
-      - name: Validate artifact set, metadata, contents and tag version
+      - name: Validate artifact set, metadata, contents and version
         run: |
           set -euo pipefail
-          expected=()
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            expected=(--expected-version "${GITHUB_REF#refs/tags/v}")
-          fi
           uv run --no-project python scripts/check_distributions.py \
-            --workspace "$GITHUB_WORKSPACE" --dist dist/ "${expected[@]}"
-        
+            --workspace "$GITHUB_WORKSPACE" --dist dist/ \
+            --expected-version "$RELEASE_VERSION"
+
+      # CODE READY is not PUBLISH READY. This fails on an unconfirmed Trusted
+      # Publisher for this phase, a missing release note, an unsynchronized
+      # lockfile or an incomplete artifact set, before any credential exists
+      # anywhere in the pipeline and before any tag exists anywhere at all.
+      - name: Publish readiness (offline) against the built set
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_publication_readiness.py \
+            --workspace "$GITHUB_WORKSPACE" \
+            --version "$RELEASE_VERSION" \
+            --phase "$RELEASE_PHASE" --dist dist/
+
+      - name: Record artifact digests
+        run: |
+          set -euo pipefail
+          mkdir -p hashes
+          (cd dist && sha256sum ./*.whl ./*.tar.gz) | tee hashes/SHA256SUMS
+
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: agnara-distributions
           path: |
             dist/*.whl
             dist/*.tar.gz
           if-no-files-found: error
-          retention-days: 1
+          # A partial publication has to be diagnosed against the exact bundle
+          # that was uploaded. One day was not enough for `0.1.0a4`.
+          retention-days: 30
+
+      - name: Upload artifact digests
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: agnara-distribution-hashes
+          path: hashes/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 90
 
   test-artifact:
     name: Validate built artifacts
-    needs: build
+    needs: [preconditions, build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7.0.1
-      
-      - name: Install uv
-        uses: astral-sh/setup-uv@v10.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Set up Python 3.14
-        run: uv python install 3.14
-        
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
       - name: Download artifacts
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: agnara-distributions
           path: dist/
-          
+
       - name: Install and smoke test outside workspace
-        env:
-          EXPECTED_PYTHON: "3.14"
         run: |
           set -euo pipefail
           shopt -s nullglob
 
+          manifest() {
+            uv run --no-project python "$GITHUB_WORKSPACE/scripts/distributions.py" "$@"
+          }
+          expected_count="$(manifest --count)"
+
           wheels=("$GITHUB_WORKSPACE"/dist/*.whl)
-          if [[ "${#wheels[@]}" -ne 7 ]]; then
-            echo "::error::expected exactly seven reviewed wheels in dist/, found ${#wheels[@]}: ${wheels[*]-}"
+          if [[ "${#wheels[@]}" -ne "$expected_count" ]]; then
+            echo "::error::expected exactly $expected_count reviewed wheels in dist/, found ${#wheels[@]}: ${wheels[*]-}"
             exit 1
           fi
+
+          # Derived rather than retyped: the third-party requirements, the
+          # import names and the console scripts all come from
+          # docs/distributions.json, so adding a distribution cannot leave a
+          # stale list behind in this file.
+          readarray -t third_party < <(manifest --third-party | grep -v '^$' || true)
+          imports="$(manifest --import-names --separator ', ')"
+          readarray -t scripts < <(manifest --console-scripts | grep -v '^$' || true)
 
           rm -rf /tmp/smoke-test
           mkdir -p /tmp/smoke-test
@@ -111,72 +263,722 @@ jobs:
           # `uv run`. `uv run` re-discovers (and may create) an environment of
           # its own, so it can report success against something other than the
           # venv the wheel was installed into.
-          uv venv --python "$EXPECTED_PYTHON" .venv
+          uv venv --python "$BASELINE_PYTHON" .venv
           SMOKE_PYTHON=/tmp/smoke-test/.venv/bin/python
 
           # Resolve only adapter-owned third-party dependencies from the
           # index. The complete first-party candidate is then installed with
           # index access disabled, so an adapter cannot substitute PyPI core.
-          uv pip install --python "$SMOKE_PYTHON" \
-            "mcp==2.1.1" "opentelemetry-api>=1.44,<2"
+          if [[ "${#third_party[@]}" -gt 0 ]]; then
+            uv pip install --python "$SMOKE_PYTHON" "${third_party[@]}"
+          fi
           uv pip install --python "$SMOKE_PYTHON" \
             --no-index --find-links "$GITHUB_WORKSPACE/dist" "${wheels[@]}"
 
-          expected=()
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            expected=(--expected-version "${GITHUB_REF#refs/tags/v}")
-          fi
           "$SMOKE_PYTHON" -I "$GITHUB_WORKSPACE/scripts/check_distributions.py" \
-            --workspace "$GITHUB_WORKSPACE" --require-installed "${expected[@]}"
-          "$SMOKE_PYTHON" -I -c \
-            "import agnara, agnara_a2a, agnara_cli, agnara_events, agnara_http, agnara_mcp, agnara_telemetry"
-          .venv/bin/agnara --version
+            --workspace "$GITHUB_WORKSPACE" --require-installed \
+            --expected-version "$RELEASE_VERSION"
+          "$SMOKE_PYTHON" -I -c "import ${imports}"
+          for script in "${scripts[@]-}"; do
+            [[ -n "$script" ]] && ".venv/bin/${script}" --version
+          done
 
+  # Everything about the registry that can be known without a credential,
+  # checked before a credential exists and before any tag exists. `--online
+  # --phase` reads the public index: the projects of earlier phases must be
+  # complete at this version, the projects of this phase and later ones must
+  # carry no file of it -- the condition `skip-existing: true` would have
+  # hidden -- and each recorded publisher kind must agree with whether its
+  # project exists. The preconditions are re-checked because time has passed:
+  # main may have moved.
+  publish-preflight:
+    name: Publication preflight
+    needs: [preconditions, build, test-artifact]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
+      - name: Main has not moved and the version is still untagged
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_release_preconditions.py \
+            --version "$RELEASE_VERSION" \
+            --require-protected-environment pypi
+
+      - name: Registry state for this phase, publisher record and workflow identity
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_publication_readiness.py \
+            --workspace "$GITHUB_WORKSPACE" \
+            --version "$RELEASE_VERSION" \
+            --phase "$RELEASE_PHASE" --online --oidc-identity
+
+  # The human gate. Required reviewers on the `pypi` environment hold this job
+  # until a person approves the run; `preconditions` has already refused to
+  # get here if the environment has no such rule. It holds no OIDC token and
+  # cannot write repository contents: the phase's upload jobs below depend on
+  # it, and no tag exists until the `final` phase has been verified.
   publish:
-    name: Publish to PyPI
-    needs: test-artifact
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    name: Authorize this phase of the A8 publication
+    needs: [preconditions, build, test-artifact, publish-preflight]
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/manage/projects/
     permissions:
-      id-token: write  # Mandatory for PyPI Trusted Publishing (OIDC)
-      contents: write  # Needed to create GitHub Release
+      contents: read
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      
+
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.0.1
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
 
-      - name: Set up Python 3.14
-        run: uv python install 3.14
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
 
-      - name: Recheck release tag before publication
-        run: uv run --no-project python scripts/check_release_tag.py "${GITHUB_REF#refs/tags/}"
+      - name: Re-check every precondition after approval
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_release_preconditions.py \
+            --version "$RELEASE_VERSION" \
+            --require-protected-environment pypi
+
+  publish-a2a:
+    name: Publish agnara-a2a (bootstrap-1)
+    if: ${{ inputs.phase == 'bootstrap-1' }}
+    needs: [preconditions, publish]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi-a2a
+      url: https://pypi.org/manage/projects/
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      PUBLISH_PROJECT: agnara-a2a
+      PUBLISH_ENVIRONMENT: pypi-a2a
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
+      - name: Re-check every precondition after approval
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_release_preconditions.py \
+            --version "$RELEASE_VERSION" \
+            --require-protected-environment pypi
 
       - name: Download artifacts
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: agnara-distributions
           path: dist/
-          
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.14.2
+
+      # The bundle crossed a job boundary. Re-assert that it is still exactly
+      # the reviewed set at the dispatched version, that this job is the
+      # recorded bootstrap identity of its project, and that its project
+      # belongs to the dispatched phase, before anything is uploaded.
+      - name: Re-validate the downloaded bundle and this upload's identity
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_publication_readiness.py \
+            --workspace "$GITHUB_WORKSPACE" \
+            --version "$RELEASE_VERSION" \
+            --phase "$RELEASE_PHASE" --dist dist/ --oidc-identity \
+            --project "$PUBLISH_PROJECT" --environment "$PUBLISH_ENVIRONMENT"
+
+      # Only this project's wheel and sdist. The directory is the canonical
+      # PyPI project name: `agnara-a2a`, never `agnara_a2a`, which is only the
+      # filename normalization inside it.
+      - name: Stage this distribution
+        run: |
+          set -euo pipefail
+          stem="${PUBLISH_PROJECT//-/_}"
+          mkdir -p "staged/$PUBLISH_PROJECT"
+          cp "dist/${stem}-${RELEASE_VERSION}-py3-none-any.whl" "staged/$PUBLISH_PROJECT/"
+          cp "dist/${stem}-${RELEASE_VERSION}.tar.gz" "staged/$PUBLISH_PROJECT/"
+
+      - name: Publish agnara-a2a
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
-          packages-dir: dist/
+          packages-dir: staged/agnara-a2a
           verify-metadata: true
           attestations: true
           print-hash: true
-          
-      - name: Post-release verification
+
+  publish-cli:
+    name: Publish agnara-cli (bootstrap-1)
+    if: ${{ inputs.phase == 'bootstrap-1' }}
+    needs: [preconditions, publish-a2a]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi-cli
+      url: https://pypi.org/manage/projects/
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      PUBLISH_PROJECT: agnara-cli
+      PUBLISH_ENVIRONMENT: pypi-cli
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
+      - name: Re-check every precondition after approval
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          uv run --no-project python scripts/check_release_preconditions.py \
+            --version "$RELEASE_VERSION" \
+            --require-protected-environment pypi
 
-          # Wait a few seconds for PyPI to index
-          sleep 30
+      - name: Download artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agnara-distributions
+          path: dist/
+
+      # The bundle crossed a job boundary. Re-assert that it is still exactly
+      # the reviewed set at the dispatched version, that this job is the
+      # recorded bootstrap identity of its project, and that its project
+      # belongs to the dispatched phase, before anything is uploaded.
+      - name: Re-validate the downloaded bundle and this upload's identity
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_publication_readiness.py \
+            --workspace "$GITHUB_WORKSPACE" \
+            --version "$RELEASE_VERSION" \
+            --phase "$RELEASE_PHASE" --dist dist/ --oidc-identity \
+            --project "$PUBLISH_PROJECT" --environment "$PUBLISH_ENVIRONMENT"
+
+      # Only this project's wheel and sdist. The directory is the canonical
+      # PyPI project name: `agnara-a2a`, never `agnara_a2a`, which is only the
+      # filename normalization inside it.
+      - name: Stage this distribution
+        run: |
+          set -euo pipefail
+          stem="${PUBLISH_PROJECT//-/_}"
+          mkdir -p "staged/$PUBLISH_PROJECT"
+          cp "dist/${stem}-${RELEASE_VERSION}-py3-none-any.whl" "staged/$PUBLISH_PROJECT/"
+          cp "dist/${stem}-${RELEASE_VERSION}.tar.gz" "staged/$PUBLISH_PROJECT/"
+
+      - name: Publish agnara-cli
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: staged/agnara-cli
+          verify-metadata: true
+          attestations: true
+          print-hash: true
+
+  publish-events:
+    name: Publish agnara-events (bootstrap-1)
+    if: ${{ inputs.phase == 'bootstrap-1' }}
+    needs: [preconditions, publish-cli]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi-events
+      url: https://pypi.org/manage/projects/
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      PUBLISH_PROJECT: agnara-events
+      PUBLISH_ENVIRONMENT: pypi-events
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
+      - name: Re-check every precondition after approval
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_release_preconditions.py \
+            --version "$RELEASE_VERSION" \
+            --require-protected-environment pypi
+
+      - name: Download artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agnara-distributions
+          path: dist/
+
+      # The bundle crossed a job boundary. Re-assert that it is still exactly
+      # the reviewed set at the dispatched version, that this job is the
+      # recorded bootstrap identity of its project, and that its project
+      # belongs to the dispatched phase, before anything is uploaded.
+      - name: Re-validate the downloaded bundle and this upload's identity
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_publication_readiness.py \
+            --workspace "$GITHUB_WORKSPACE" \
+            --version "$RELEASE_VERSION" \
+            --phase "$RELEASE_PHASE" --dist dist/ --oidc-identity \
+            --project "$PUBLISH_PROJECT" --environment "$PUBLISH_ENVIRONMENT"
+
+      # Only this project's wheel and sdist. The directory is the canonical
+      # PyPI project name: `agnara-a2a`, never `agnara_a2a`, which is only the
+      # filename normalization inside it.
+      - name: Stage this distribution
+        run: |
+          set -euo pipefail
+          stem="${PUBLISH_PROJECT//-/_}"
+          mkdir -p "staged/$PUBLISH_PROJECT"
+          cp "dist/${stem}-${RELEASE_VERSION}-py3-none-any.whl" "staged/$PUBLISH_PROJECT/"
+          cp "dist/${stem}-${RELEASE_VERSION}.tar.gz" "staged/$PUBLISH_PROJECT/"
+
+      - name: Publish agnara-events
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: staged/agnara-events
+          verify-metadata: true
+          attestations: true
+          print-hash: true
+
+  # Completeness, not installability: the projects published so far must each
+  # carry a wheel and an sdist at this version, and nothing of a later phase
+  # may exist. The adapters pin a kernel that is not on the index yet, so an
+  # installation is only possible -- and only meaningful -- in the final phase.
+  # No tag is created in a bootstrap phase.
+  verify-bootstrap-1:
+    name: Verify the bootstrap-1 publication on PyPI
+    if: ${{ inputs.phase == 'bootstrap-1' }}
+    needs: [preconditions, publish-events]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
+      - name: Every distribution published so far is complete on the index
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            if uv run --no-project python scripts/check_publication_readiness.py \
+                 --workspace "$GITHUB_WORKSPACE" --version "$RELEASE_VERSION" \
+                 --phase "$RELEASE_PHASE" --online --require-published; then
+              exit 0
+            fi
+            echo "index not consistent yet; attempt $attempt of 6"
+            sleep 20
+          done
+          echo "::error::the index never reported the $RELEASE_PHASE distributions complete at $RELEASE_VERSION"
+          exit 1
+
+  publish-http:
+    name: Publish agnara-http (bootstrap-2)
+    if: ${{ inputs.phase == 'bootstrap-2' }}
+    needs: [preconditions, publish]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi-http
+      url: https://pypi.org/manage/projects/
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      PUBLISH_PROJECT: agnara-http
+      PUBLISH_ENVIRONMENT: pypi-http
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
+      - name: Re-check every precondition after approval
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_release_preconditions.py \
+            --version "$RELEASE_VERSION" \
+            --require-protected-environment pypi
+
+      - name: Download artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agnara-distributions
+          path: dist/
+
+      # The bundle crossed a job boundary. Re-assert that it is still exactly
+      # the reviewed set at the dispatched version, that this job is the
+      # recorded bootstrap identity of its project, and that its project
+      # belongs to the dispatched phase, before anything is uploaded.
+      - name: Re-validate the downloaded bundle and this upload's identity
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_publication_readiness.py \
+            --workspace "$GITHUB_WORKSPACE" \
+            --version "$RELEASE_VERSION" \
+            --phase "$RELEASE_PHASE" --dist dist/ --oidc-identity \
+            --project "$PUBLISH_PROJECT" --environment "$PUBLISH_ENVIRONMENT"
+
+      # Only this project's wheel and sdist. The directory is the canonical
+      # PyPI project name: `agnara-a2a`, never `agnara_a2a`, which is only the
+      # filename normalization inside it.
+      - name: Stage this distribution
+        run: |
+          set -euo pipefail
+          stem="${PUBLISH_PROJECT//-/_}"
+          mkdir -p "staged/$PUBLISH_PROJECT"
+          cp "dist/${stem}-${RELEASE_VERSION}-py3-none-any.whl" "staged/$PUBLISH_PROJECT/"
+          cp "dist/${stem}-${RELEASE_VERSION}.tar.gz" "staged/$PUBLISH_PROJECT/"
+
+      - name: Publish agnara-http
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: staged/agnara-http
+          verify-metadata: true
+          attestations: true
+          print-hash: true
+
+  publish-mcp:
+    name: Publish agnara-mcp (bootstrap-2)
+    if: ${{ inputs.phase == 'bootstrap-2' }}
+    needs: [preconditions, publish-http]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi-mcp
+      url: https://pypi.org/manage/projects/
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      PUBLISH_PROJECT: agnara-mcp
+      PUBLISH_ENVIRONMENT: pypi-mcp
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
+      - name: Re-check every precondition after approval
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_release_preconditions.py \
+            --version "$RELEASE_VERSION" \
+            --require-protected-environment pypi
+
+      - name: Download artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agnara-distributions
+          path: dist/
+
+      # The bundle crossed a job boundary. Re-assert that it is still exactly
+      # the reviewed set at the dispatched version, that this job is the
+      # recorded bootstrap identity of its project, and that its project
+      # belongs to the dispatched phase, before anything is uploaded.
+      - name: Re-validate the downloaded bundle and this upload's identity
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_publication_readiness.py \
+            --workspace "$GITHUB_WORKSPACE" \
+            --version "$RELEASE_VERSION" \
+            --phase "$RELEASE_PHASE" --dist dist/ --oidc-identity \
+            --project "$PUBLISH_PROJECT" --environment "$PUBLISH_ENVIRONMENT"
+
+      # Only this project's wheel and sdist. The directory is the canonical
+      # PyPI project name: `agnara-a2a`, never `agnara_a2a`, which is only the
+      # filename normalization inside it.
+      - name: Stage this distribution
+        run: |
+          set -euo pipefail
+          stem="${PUBLISH_PROJECT//-/_}"
+          mkdir -p "staged/$PUBLISH_PROJECT"
+          cp "dist/${stem}-${RELEASE_VERSION}-py3-none-any.whl" "staged/$PUBLISH_PROJECT/"
+          cp "dist/${stem}-${RELEASE_VERSION}.tar.gz" "staged/$PUBLISH_PROJECT/"
+
+      - name: Publish agnara-mcp
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: staged/agnara-mcp
+          verify-metadata: true
+          attestations: true
+          print-hash: true
+
+  publish-telemetry:
+    name: Publish agnara-telemetry (bootstrap-2)
+    if: ${{ inputs.phase == 'bootstrap-2' }}
+    needs: [preconditions, publish-mcp]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi-telemetry
+      url: https://pypi.org/manage/projects/
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      PUBLISH_PROJECT: agnara-telemetry
+      PUBLISH_ENVIRONMENT: pypi-telemetry
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
+      - name: Re-check every precondition after approval
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_release_preconditions.py \
+            --version "$RELEASE_VERSION" \
+            --require-protected-environment pypi
+
+      - name: Download artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agnara-distributions
+          path: dist/
+
+      # The bundle crossed a job boundary. Re-assert that it is still exactly
+      # the reviewed set at the dispatched version, that this job is the
+      # recorded bootstrap identity of its project, and that its project
+      # belongs to the dispatched phase, before anything is uploaded.
+      - name: Re-validate the downloaded bundle and this upload's identity
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_publication_readiness.py \
+            --workspace "$GITHUB_WORKSPACE" \
+            --version "$RELEASE_VERSION" \
+            --phase "$RELEASE_PHASE" --dist dist/ --oidc-identity \
+            --project "$PUBLISH_PROJECT" --environment "$PUBLISH_ENVIRONMENT"
+
+      # Only this project's wheel and sdist. The directory is the canonical
+      # PyPI project name: `agnara-a2a`, never `agnara_a2a`, which is only the
+      # filename normalization inside it.
+      - name: Stage this distribution
+        run: |
+          set -euo pipefail
+          stem="${PUBLISH_PROJECT//-/_}"
+          mkdir -p "staged/$PUBLISH_PROJECT"
+          cp "dist/${stem}-${RELEASE_VERSION}-py3-none-any.whl" "staged/$PUBLISH_PROJECT/"
+          cp "dist/${stem}-${RELEASE_VERSION}.tar.gz" "staged/$PUBLISH_PROJECT/"
+
+      - name: Publish agnara-telemetry
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: staged/agnara-telemetry
+          verify-metadata: true
+          attestations: true
+          print-hash: true
+
+  # Completeness, not installability: the projects published so far must each
+  # carry a wheel and an sdist at this version, and nothing of a later phase
+  # may exist. The adapters pin a kernel that is not on the index yet, so an
+  # installation is only possible -- and only meaningful -- in the final phase.
+  # No tag is created in a bootstrap phase.
+  verify-bootstrap-2:
+    name: Verify the bootstrap-2 publication on PyPI
+    if: ${{ inputs.phase == 'bootstrap-2' }}
+    needs: [preconditions, publish-telemetry]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
+      - name: Every distribution published so far is complete on the index
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            if uv run --no-project python scripts/check_publication_readiness.py \
+                 --workspace "$GITHUB_WORKSPACE" --version "$RELEASE_VERSION" \
+                 --phase "$RELEASE_PHASE" --online --require-published; then
+              exit 0
+            fi
+            echo "index not consistent yet; attempt $attempt of 6"
+            sleep 20
+          done
+          echo "::error::the index never reported the $RELEASE_PHASE distributions complete at $RELEASE_VERSION"
+          exit 1
+
+  publish-core:
+    name: Publish agnara (final)
+    if: ${{ inputs.phase == 'final' }}
+    needs: [preconditions, publish]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi-core
+      url: https://pypi.org/manage/projects/
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      PUBLISH_PROJECT: agnara
+      PUBLISH_ENVIRONMENT: pypi-core
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
+      - name: Re-check every precondition after approval
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_release_preconditions.py \
+            --version "$RELEASE_VERSION" \
+            --require-protected-environment pypi
+
+      - name: Download artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agnara-distributions
+          path: dist/
+
+      # The bundle crossed a job boundary. Re-assert that it is still exactly
+      # the reviewed set at the dispatched version, that this job is the
+      # recorded bootstrap identity of its project, and that its project
+      # belongs to the dispatched phase, before anything is uploaded.
+      - name: Re-validate the downloaded bundle and this upload's identity
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_publication_readiness.py \
+            --workspace "$GITHUB_WORKSPACE" \
+            --version "$RELEASE_VERSION" \
+            --phase "$RELEASE_PHASE" --dist dist/ --oidc-identity \
+            --project "$PUBLISH_PROJECT" --environment "$PUBLISH_ENVIRONMENT"
+
+      # Only this project's wheel and sdist. The directory is the canonical
+      # PyPI project name: `agnara-a2a`, never `agnara_a2a`, which is only the
+      # filename normalization inside it.
+      - name: Stage this distribution
+        run: |
+          set -euo pipefail
+          stem="${PUBLISH_PROJECT//-/_}"
+          mkdir -p "staged/$PUBLISH_PROJECT"
+          cp "dist/${stem}-${RELEASE_VERSION}-py3-none-any.whl" "staged/$PUBLISH_PROJECT/"
+          cp "dist/${stem}-${RELEASE_VERSION}.tar.gz" "staged/$PUBLISH_PROJECT/"
+
+      - name: Publish agnara
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: staged/agnara
+          verify-metadata: true
+          attestations: true
+          print-hash: true
+
+  verify-published:
+    name: Post-release verification
+    if: ${{ inputs.phase == 'final' }}
+    needs: [preconditions, publish-core]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
+      # Completeness, not installability. `agnara 0.1.0a4` is installable and
+      # has no sdist; this fails on exactly that, for each of the seven.
+      - name: Every distribution is complete on the index
+        run: |
+          set -euo pipefail
+          version="$RELEASE_VERSION"
+          for attempt in 1 2 3 4 5 6; do
+            if uv run --no-project python scripts/check_publication_readiness.py \
+                 --workspace "$GITHUB_WORKSPACE" --version "$version" \
+                 --phase "$RELEASE_PHASE" --online --require-published; then
+              exit 0
+            fi
+            echo "index not consistent yet; attempt $attempt of 6"
+            sleep 20
+          done
+          echo "::error::the index never reported all distributions complete at $version"
+          exit 1
+
+      - name: Install the published set and exercise it
+        run: |
+          set -euo pipefail
+          version="$RELEASE_VERSION"
+          manifest() {
+            uv run --no-project python "$GITHUB_WORKSPACE/scripts/distributions.py" "$@"
+          }
+          readarray -t pinned < <(manifest --pinned "$version")
+          imports="$(manifest --import-names --separator ', ')"
+          readarray -t scripts < <(manifest --console-scripts | grep -v '^$' || true)
 
           rm -rf /tmp/post-release
           mkdir -p /tmp/post-release
@@ -185,32 +987,100 @@ jobs:
           # Same reasoning as the pre-publish smoke test: drive the venv
           # interpreter directly so this cannot pass against some other
           # environment that `uv run` happened to resolve.
-          uv venv --python 3.14 .venv
+          uv venv --python "$BASELINE_PYTHON" .venv
           RELEASE_PYTHON=/tmp/post-release/.venv/bin/python
 
-          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
-          uv pip install --python "$RELEASE_PYTHON" \
-            "agnara==$TAG_VERSION" \
-            "agnara-a2a==$TAG_VERSION" \
-            "agnara-cli==$TAG_VERSION" \
-            "agnara-events==$TAG_VERSION" \
-            "agnara-http==$TAG_VERSION" \
-            "agnara-mcp==$TAG_VERSION" \
-            "agnara-telemetry==$TAG_VERSION"
+          uv pip install --python "$RELEASE_PYTHON" "${pinned[@]}"
+          "$RELEASE_PYTHON" -I -c "import ${imports}; import agnara; print(agnara.__version__)"
+          for script in "${scripts[@]-}"; do
+            [[ -n "$script" ]] && ".venv/bin/${script}" --version
+          done
 
-          "$RELEASE_PYTHON" -I -c \
-            "import agnara, agnara_a2a, agnara_cli, agnara_events, agnara_http, agnara_mcp, agnara_telemetry; print(agnara.__version__)"
-          .venv/bin/agnara --version
-          
-      - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v3.0.3
+  # Only now, in the final phase, with all fourteen files on the index and the
+  # published set installed and exercised, does the version become a fact of
+  # the repository. A failed upload or a failed verification leaves no tag
+  # behind: this job depends on both having succeeded, runs in no other phase,
+  # and nothing else creates one. The dispatched commit is tagged whether or
+  # not main has moved since, because PyPI already holds exactly what that
+  # commit built.
+  tag:
+    name: Tag the verified release
+    if: ${{ inputs.phase == 'final' }}
+    needs: [preconditions, publish-core, verify-published]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Set up Python
+        run: uv python install "$BASELINE_PYTHON"
+
+      - name: The published commit is checked out and the version is still untagged
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_release_preconditions.py \
+            --version "$RELEASE_VERSION" --after-publication
+
+      - name: Create the annotated release tag on the published commit
+        id: tag
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          DISPATCHED_BY: ${{ github.triggering_actor }}
+        run: |
+          set -euo pipefail
+          tag="v${RELEASE_VERSION}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" "$GITHUB_SHA" \
+            -m "Agnara ${tag}" \
+            -m "Created by release run ${RUN_URL}, dispatched by ${DISPATCHED_BY} from main at ${GITHUB_SHA}, after all seven distributions were published to PyPI and verified complete."
+          git push origin "refs/tags/${tag}"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+      - name: The tag is annotated, names this commit and reviewed main history
+        run: |
+          set -euo pipefail
+          uv run --no-project python scripts/check_release_tag.py "v${RELEASE_VERSION}"
+
+  # Last. The tag exists only because publication was verified, and this job
+  # exists only because the tag does.
+  github-release:
+    name: Create GitHub Release
+    if: ${{ inputs.phase == 'final' }}
+    needs: [preconditions, publish-core, verify-published, tag]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.tag.outputs.tag }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agnara-distributions
+          path: dist/
+
+      - name: Publish the GitHub Release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          tag_name: ${{ needs.tag.outputs.tag }}
+          name: Agnara ${{ needs.tag.outputs.tag }}
           # Curated notes per ADR 0021 step 7; the generated PR list is
-          # appended below them. A tag without a notes file falls back to the
-          # generated list alone.
-          body_path: docs/releases/${{ github.ref_name }}.md
+          # appended below them. `check_publication_readiness.py` already
+          # refused the release if this file is missing, so the notes can no
+          # longer degrade silently to the generated list.
+          body_path: docs/releases/${{ needs.tag.outputs.tag }}.md
           generate_release_notes: true
           files: dist/*
           # PEP 440 pre-release segments must never ship as a stable release.
-          prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') }}
+          prerelease: ${{ contains(needs.preconditions.outputs.version, 'a') || contains(needs.preconditions.outputs.version, 'b') || contains(needs.preconditions.outputs.version, 'rc') }}

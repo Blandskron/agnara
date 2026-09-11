@@ -12,9 +12,17 @@ mature enough to close a release.
    ↓
 0.1.0a3     subsystem integration      (published 2026-09-06)
    ↓
-0.1.0a4     external application validation   ← current target
+0.1.0a4     external application validation    (tagged 2026-09-08;
+   ↓                                            published partially)
+0.1.0a5     publication recovery              (aborted before upload)
    ↓
-0.1.0a5     execution semantics and cost
+0.1.0a6     publication recovery              (aborted on first upload)
+   ↓
+0.1.0a7     publication and security recovery (aborted before upload)
+   ↓
+0.1.0a8     release pipeline recovery         ← current target
+   ↓
+0.1.0a9     execution semantics and cost
    ↓
 0.1.0b1     interoperability and composition
    ↓
@@ -35,11 +43,15 @@ question it answers:
 | Release | Question | Owns |
 | --- | --- | --- |
 | `0.1.0a4` | Can Agnara be consumed as a framework from outside this repository? | I1, I7, the public exposure and composition surface |
-| `0.1.0a5` | Does execution have streaming, identity and a measured cost? | I2, I3, I14 |
+| `0.1.0a5` | Did publication readiness stop an unsafe release attempt before upload? | the first enforced preflight; aborted because publisher confirmation was absent |
+| `0.1.0a6` | Can Agnara publish the set it builds, completely, and prove that it did? | aborted on the first upload; no artifact published |
+| `0.1.0a7` | Can corrected publisher evidence and release security publish the complete set? | aborted before upload: tagged while the publication record was `UNVERIFIED` |
+| `0.1.0a8` | Can a release no longer consume a version before every gate and a human have said yes? | the dispatch-driven release flow, ADR 0082, with the A7 runtime unchanged |
+| `0.1.0a9` | Does execution have streaming, identity and a measured cost? | I2, I3, I14 |
 | `0.1.0b1` | Can the Python ecosystem use Agnara, and Agnara use it? | I20, and the beta contract gates |
 
-Neither alpha may declare stable support for an external framework;
-`EXPERIMENTAL` is the strongest status either may give an integration.
+No alpha may declare stable support for an external framework;
+`EXPERIMENTAL` is the strongest status any of them may give an integration.
 
 ## How this relates to existing rules
 
@@ -154,16 +166,17 @@ published documentation and installed candidate artifacts. Its exact-SHA
 evidence is recorded in `release-status.json`. Maintainer-only sufficiency and
 developer-experience judgments remain manual.
 
-Only `agnara` is published to PyPI today, so an adapter is not yet an ordinary
-public-index dependency. The clean-room consumer nevertheless proved normal
-wheel installation without an editable checkout or workspace resolution. The
-repository-side blocker is resolved: ADR 0073 defines the seven-package
-publication set and the tag workflow builds, validates, installs and is ready
-to publish it without package-specific surgery. The six new names still need
-their external Pending Trusted Publisher configuration and the authorized
-release tag. The second blocker —
-`agnara-http` declaring no public composition surface — was resolved by ADR
-0071. `docs/releases/release-status.json` tracks the operational state.
+No adapter is a public-index dependency yet. The clean-room consumer proved
+normal wheel installation without an editable checkout or workspace
+resolution, and ADR 0073 defined the seven-package publication set that the
+tag workflow builds, validates and installs. What `0.1.0a4` did not do was
+publish it: the tagged run uploaded the core wheel and was rejected on the
+first sibling, because the six new PyPI projects had no pending Trusted
+Publisher. That is not a gate this section was measuring, which is the point
+ADR 0078 and ADR 0079 make; `0.1.0a5` is where publication is proved. The
+second blocker — `agnara-http` declaring no public composition surface — was
+resolved by ADR 0071. `docs/releases/release-status.json` tracks the
+operational state.
 
 **Guardrail (ADR 0068).** `0.1.0a4` is not the FastAPI release, the Django
 release, the SQLAlchemy release or the interoperability release. It may run
@@ -176,7 +189,137 @@ surface.
 
 ---
 
-## 0.1.0a5 — Execution Alpha
+## 0.1.0a5 — Publication Recovery
+
+**Outcome:** aborted before upload. The immutable tag exercised publication
+readiness, which correctly refused to proceed while the publisher record was
+`UNVERIFIED`. No `0.1.0a5` artifact was published.
+
+**Does not prove:** anything new about the runtime. `0.1.0a5` carries the
+`0.1.0a4` implementation unchanged; no runtime source file differs.
+
+**Why it exists.** `0.1.0a4` passed every gate in this document and published
+one of fourteen artifacts. ADR 0078 records the incident and the decision to
+close it with a recovery release rather than by moving a tag or inventing a
+post-release; ADR 0079 records what changed in the pipeline.
+
+**Owns:** publish readiness as a claim distinct from code readiness, the
+publication order, post-publication completeness verification, the single
+source of truth for the reviewed set, and the supply-chain pinning of the
+publication path.
+
+| Gate | Kind | Mandatory |
+| --- | --- | --- |
+| Every `0.1.0a4` gate still satisfied | automated | yes |
+| The reviewed publication set is publishable, not merely buildable | automated | yes |
+| Every PyPI Trusted Publisher is confirmed for this exact target | manual | yes |
+| The release pipeline cannot report success on a partial publication | evidence | yes |
+| The `0.1.0a4` partial publication is recorded truthfully and not rewritten | evidence | yes |
+| Package build succeeds | evidence | yes |
+| Clean-environment installation smoke test succeeds | evidence | yes |
+| Full supported test suite passes | evidence | yes |
+| No known release-blocking regression | evidence | yes |
+
+**On the manual gate.** `pypi-trusted-publishers` is manual because it is the
+only kind of gate that can be honest about it. No check running in this
+repository can observe PyPI's publisher table. The repository's job is to
+refuse to proceed without a recorded human confirmation naming the exact target
+version, which is what `docs/releases/publication.json` is.
+`scripts/check_publication_readiness.py` fails while any project is
+`UNVERIFIED`, and `release.yml` runs it before the first upload.
+
+**Guardrail.** `0.1.0a5` is historical and immutable. It is not resumed,
+retagged or published manually. Publication recovery continued in `0.1.0a6`.
+
+---
+
+## 0.1.0a6 — Publication Recovery
+
+**Proves:** that the seven distributions this repository builds can be
+published as one complete, verified set, and that the pipeline cannot report
+success when they are not.
+
+**Does not prove:** anything new about the runtime. It carries the A5 runtime
+unchanged and owns only versioned release metadata and refreshed evidence.
+
+| Gate | Kind | Mandatory |
+| --- | --- | --- |
+| Every `0.1.0a5` code and release-system gate still satisfied | automated | yes |
+| The reviewed publication set is publishable, not merely buildable | automated | yes |
+| Every PyPI Trusted Publisher is confirmed for this exact target | manual | yes |
+| No `0.1.0a6` file exists before the first upload | automated | yes |
+| Package build and clean-environment installation succeed | evidence | yes |
+| Full supported test suite and security checks pass | evidence | yes |
+| No known release-blocking regression | evidence | yes |
+
+Publication readiness was satisfied by a recorded owner confirmation, but the
+first upload proved that the private Pending Trusted Publisher configuration
+still did not match `agnara-a2a`. A6 published nothing and remains immutable.
+
+---
+
+## 0.1.0a7 — Publication and Security Recovery
+
+**Outcome:** aborted before upload. The immutable `v0.1.0a7` tag was created
+while `docs/releases/publication.json` was still `UNVERIFIED`, and publication
+readiness stopped the workflow before its first upload. No `0.1.0a7` artifact
+was published. The three release-blocking CodeQL findings it fixed remain
+fixed.
+
+**What it proved.** The fourth consecutive attempt confirmed that the gates
+were right every time and positioned wrongly every time: a tag pushed by hand
+is created before the gates run, so a gate that refuses afterwards cannot
+save the version. That is the finding `0.1.0a8` closes.
+
+| Gate | Kind | Mandatory |
+| --- | --- | --- |
+| Every `0.1.0a6` code and release-system gate still satisfied | automated | yes |
+| Every exact PyPI Project name and Trusted Publisher tuple is confirmed | manual | yes |
+| No `0.1.0a7` file exists before the first upload | automated | yes |
+| The three release-blocking CodeQL findings are closed by fixes | evidence | yes |
+| Package build and clean-environment installation succeed | evidence | yes |
+| Full supported test suite and security checks pass | evidence | yes |
+
+---
+
+## 0.1.0a8 — Release Pipeline Recovery
+
+**Proves:** that a release can no longer consume a version before every gate
+has passed, a human has approved it, and PyPI holds and confirms all seven
+distributions. The tag is created by the `workflow_dispatch` run from `main`
+after validation, build, clean-room install, index preflight, the `pypi`
+environment approval, publication and post-release verification — never by
+hand, never first, never without a verified publication (ADR 0082).
+
+**Does not prove:** anything new about framework behavior. It carries the A7
+runtime unchanged.
+
+**Owns:** the dispatch-driven release workflow,
+`scripts/check_release_preconditions.py`, schema 2 of the publication record
+in which registry facts are versioned and the per-release authorization is the
+environment approval, and the regression tests that hold the order.
+
+| Gate | Kind | Mandatory |
+| --- | --- | --- |
+| Every `0.1.0a7` code and release-system gate still satisfied | automated | yes |
+| No tag exists until PyPI holds and verifies all seven distributions, and every gate precedes publication | automated | yes |
+| Publication requires the `pypi` environment and the approved tag | automated | yes |
+| The GitHub Release requires verified publication | automated | yes |
+| Every PyPI Trusted Publisher readback is confirmed by a human after the A6 failure | manual | yes |
+| The `pypi` environment requires reviewers and restricts deploying branches | manual | yes |
+| No `0.1.0a8` tag or file exists before the approved run | automated | yes |
+| Package build and clean-environment installation succeed | evidence | yes |
+| Full supported test suite and security checks pass | evidence | yes |
+
+**On the two manual gates.** The repository cannot observe PyPI's publisher
+table or set GitHub environment protection. It can refuse to proceed without a
+dated human readback recorded in `publication.json`, and it can read the
+environment's protection rules through the API and refuse while there are
+none. Both refusals happen before any tag exists.
+
+---
+
+## 0.1.0a9 — Execution Alpha
 
 **Proves:** execution has the semantics the rest of the architecture waits on.
 Streaming exists as one model rather than per adapter; an execution identity
@@ -190,7 +333,7 @@ I14 performance budgets, and the prerequisites already recorded for them.
 
 | Gate | Kind | Mandatory |
 | --- | --- | --- |
-| Every `0.1.0a4` gate still satisfied | automated | yes |
+| Every `0.1.0a8` gate still satisfied | automated | yes |
 | The streaming model is decided in an accepted record | evidence | yes |
 | A streaming capability behaves identically in direct invocation and in at least one adapter | evidence | yes |
 | Cancellation, backpressure and post-partial failure are specified and tested | evidence | yes |
@@ -202,8 +345,8 @@ I14 performance budgets, and the prerequisites already recorded for them.
 | Benchmarks remain engineering measurements, not rankings | manual | yes |
 | No known release-blocking regression | evidence | yes |
 
-**Guardrail (ADR 0068).** `0.1.0a5` is not the ecosystem integration release,
-the composition beta or a plugin marketplace. It may use an external
+**Guardrail (ADR 0068, renumbered through ADR 0081 and ADR 0082).** `0.1.0a9` is not the
+ecosystem integration release, the composition beta or a plugin marketplace. It may use an external
 integration as an experimental fixture where that genuinely helps validate
 streaming, idempotency or performance, and must not publish the fixture as a
 contract.
@@ -234,7 +377,7 @@ enables them is marked done.
 
 | Gate | Kind | Mandatory |
 | --- | --- | --- |
-| Every `0.1.0a4` gate still satisfied | automated | yes |
+| Every `0.1.0a9` gate still satisfied | automated | yes |
 | The supported public API surface is identified | evidence | yes |
 | Public API is distinguished from internals | automated | yes |
 | Accidental exports audited | evidence | yes |
@@ -373,9 +516,11 @@ release-closing checklist and a recommendation. `current_target` changes only
 after the owner confirms the release was published.
 
 **Nothing is published without explicit authorization.** No tag, no GitHub
-Release, no `develop` → `main` merge, no PyPI upload. `release.yml` publishes
-on a pushed `v*.*.*` tag through Trusted Publishing; this plan never creates
-one.
+Release, no `develop` → `main` merge, no PyPI upload. `release.yml` is
+dispatched by the owner from `main` and publishes through Trusted Publishing
+only after a reviewer approves the run in the `pypi` environment; the tag is
+created by that approved run and by nothing else (ADR 0082). This plan never
+creates one.
 
 **Do not inflate.** A release does not advance because many features landed.
 Implementing a feature to raise a percentage defeats the purpose of measuring.

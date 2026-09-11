@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "core": "agnara",
+  "adr": "docs/adr/0073-reviewed-distribution-publication-set.md",
+  "note": "The reviewed publication set. This file is the single source of truth for which distributions exist, what they import as, what console script they install and which third-party requirements an installer must resolve before a closed-index first-party install. Scripts, tests, the workspace root and both workflows derive their lists from here; tests/release/test_publication_set.py fails when any consumer disagrees. Canonical PyPI project names are dash-separated; wheel and sdist filenames normalize the dash to an underscore per PEP 427/625, which is not a naming error.",
+  "distributions": [
+    {
+      "name": "agnara",
+      "import_name": "agnara",
+      "role": "kernel",
+      "console_scripts": [],
+      "third_party_requirements": []
+    },
+    {
+      "name": "agnara-a2a",
+      "import_name": "agnara_a2a",
+      "role": "reserved",
+      "console_scripts": [],
+      "third_party_requirements": []
+    },
+    {
+      "name": "agnara-cli",
+      "import_name": "agnara_cli",
+      "role": "adapter",
+      "console_scripts": ["agnara"],
+      "third_party_requirements": []
+    },
+    {
+      "name": "agnara-events",
+      "import_name": "agnara_events",
+      "role": "reserved",
+      "console_scripts": [],
+      "third_party_requirements": []
+    },
+    {
+      "name": "agnara-http",
+      "import_name": "agnara_http",
+      "role": "adapter",
+      "console_scripts": [],
+      "third_party_requirements": []
+    },
+    {
+      "name": "agnara-mcp",
+      "import_name": "agnara_mcp",
+      "role": "adapter",
+      "console_scripts": [],
+      "third_party_requirements": ["mcp==2.1.1"]
+    },
+    {
+      "name": "agnara-telemetry",
+      "import_name": "agnara_telemetry",
+      "role": "adapter",
+      "console_scripts": [],
+      "third_party_requirements": ["opentelemetry-api>=1.44,<2"]
+    }
+  ]
+}

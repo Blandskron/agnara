@@ -379,8 +379,8 @@ deferred request feature rather than leaving it implicit.
 | --- | --- |
 | Multiple files, repeated form fields | Both need a collection binding, which ADR 0026 deferred deliberately and which decides how a list arrives through *every* transport. Use distinct part names. |
 | Client filename, per-part content type | Both need a public upload value type, and that is a core-visible schema shape MCP and introspection project too. Ask for a filename as a form field if you need one. |
-| Streaming request bodies, large uploads | Needs the streaming model, I2, `0.1.0a5`. Until then an upload is bounded `bytes`. |
-| Streaming responses, server-sent events, **WebSocket**s | I2, `0.1.0a5`. The ASGI boundary handles no `websocket` scope. |
+| Streaming request bodies, large uploads | Needs the streaming model, I2, `0.1.0a9`. Until then an upload is bounded `bytes`. |
+| Streaming responses, server-sent events, **WebSocket**s | I2, `0.1.0a9`. The ASGI boundary handles no `websocket` scope. |
 | CORS, compression, trusted hosts, proxy header trust | Put them in the reverse proxy or ASGI server in front of the application, or wrap the `HttpApplication` in any third-party ASGI middleware — it is an ASGI 3 callable, so they compose. |
 | Static files | A web server or CDN. Agnara serves capabilities. |
 | Middleware / interceptor hook | Deliberately absent. `docs/INITIATIVES.md` states why: "middleware in most frameworks is where transport types leak into application code, and Agnara must not reproduce that". Wrapping from outside, at the ASGI layer, keeps transport concerns where they belong. |

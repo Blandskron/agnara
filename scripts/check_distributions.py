@@ -40,6 +40,7 @@ import email.parser
 import importlib
 import importlib.metadata
 import importlib.resources
+import json
 import os
 import re
 import tarfile
@@ -53,18 +54,36 @@ from typing import Any
 #: `tests/architecture/test_workspace_layout.py` enforces and ADR 0017 fixes.
 SRC_LAYOUT = "src"
 
+#: Where the reviewed publication set is declared, relative to the workspace.
+#:
 #: The release contract is deliberately explicit. Workspace discovery still
 #: detects additions, while this allowlist prevents a newly added package from
-#: being uploaded merely because ``uv build --all-packages`` found it.
-SHIPPED_DISTRIBUTIONS: dict[str, str] = {
-    "agnara": "agnara",
-    "agnara-a2a": "agnara_a2a",
-    "agnara-cli": "agnara_cli",
-    "agnara-events": "agnara_events",
-    "agnara-http": "agnara_http",
-    "agnara-mcp": "agnara_mcp",
-    "agnara-telemetry": "agnara_telemetry",
-}
+#: being uploaded merely because ``uv build --all-packages`` found it. The
+#: allowlist is read from ``docs/distributions.json`` rather than retyped here,
+#: because the same seven names were previously spelled out in five places and
+#: nothing compared them.
+#:
+#: ``scripts/distributions.py`` owns that file and parses it for every other
+#: tool. This module deliberately does not import it: the installed-artifact
+#: mode runs as ``python -I .../scripts/check_distributions.py``, and ``-I``
+#: implies ``-P``, so the script's own directory is not on ``sys.path`` and a
+#: sibling import would fail exactly where the gate matters most.
+#: ``tests/release/test_publication_set.py`` asserts the two readers agree.
+MANIFEST_RELATIVE = Path("docs") / "distributions.json"
+
+
+def shipped_distributions(workspace: Path) -> dict[str, str]:
+    """The reviewed publication set: distribution name -> import package."""
+    path = workspace / MANIFEST_RELATIVE
+    document = json.loads(path.read_text(encoding="utf-8"))
+    if document.get("schema_version") != 1:
+        raise ValueError(f"{path}: unsupported schema_version")
+    entries = document["distributions"]
+    shipped = {entry["name"]: entry["import_name"] for entry in entries}
+    if len(shipped) != len(entries):
+        raise ValueError(f"{path}: distribution names must be unique")
+    return shipped
+
 
 FORBIDDEN_ARCHIVE_PARTS = frozenset(
     {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "experiments", "tests"}
@@ -86,17 +105,30 @@ class Distribution:
     import_name: str
 
 
-def check_release_set(distributions: list[Distribution]) -> list[str]:
+@dataclass(frozen=True, slots=True)
+class Report:
+    """What ``run`` found, split by where each part may safely be written.
+
+    ``summary`` is built only from the reviewed distribution names and is the
+    one thing ``main`` prints. ``problems`` may quote metadata, archive member
+    names or paths controlled by the artifact under inspection; they exist for
+    programmatic callers and never reach a CI log.
+    """
+
+    code: int
+    summary: str
+    problems: tuple[str, ...]
+
+
+def check_release_set(distributions: list[Distribution], shipped: dict[str, str]) -> list[str]:
     """The discovered workspace must equal the reviewed publication set."""
     actual = {distribution.name: distribution.import_name for distribution in distributions}
-    if actual == SHIPPED_DISTRIBUTIONS:
+    if actual == shipped:
         return []
-    missing = sorted(set(SHIPPED_DISTRIBUTIONS) - set(actual))
-    unexpected = sorted(set(actual) - set(SHIPPED_DISTRIBUTIONS))
+    missing = sorted(set(shipped) - set(actual))
+    unexpected = sorted(set(actual) - set(shipped))
     mismatched = sorted(
-        name
-        for name in set(actual) & set(SHIPPED_DISTRIBUTIONS)
-        if actual[name] != SHIPPED_DISTRIBUTIONS[name]
+        name for name in set(actual) & set(shipped) if actual[name] != shipped[name]
     )
     return [
         "workspace distribution set differs from the reviewed release set: "
@@ -619,10 +651,19 @@ def run(
     require_installed: bool = False,
     dist_dir: Path | None = None,
     expected_version: str | None = None,
-) -> tuple[int, list[str]]:
-    """Returns an exit code and the lines to report."""
+) -> Report:
+    """Returns the exit code, a loggable summary and the detailed problems."""
     distributions, problems = discover(workspace)
-    problems.extend(check_release_set(distributions))
+    try:
+        shipped = shipped_distributions(workspace)
+    except (OSError, UnicodeError, ValueError, KeyError, TypeError) as exc:
+        # Without the manifest there is no reviewed set to compare against, so
+        # the comparison is reported as missing rather than skipped. Whatever
+        # discovery already found is still reported alongside it: an unreadable
+        # manifest and an empty workspace are different failures.
+        problems.append(f"cannot read the reviewed publication set: {exc}")
+    else:
+        problems.extend(check_release_set(distributions, shipped))
     if expected_version is not None:
         wrong = {
             distribution.name: _project(workspace, distribution)["version"]
@@ -641,9 +682,9 @@ def run(
                 check_artifact_contents(distributions, workspace=workspace, dist_dir=dist_dir)
             )
         if problems:
-            return 1, problems
+            return Report(1, "distribution validation failed", tuple(problems))
         names = ", ".join(distribution.name for distribution in distributions)
-        return 0, [f"built {len(distributions)} distributions: {names}"]
+        return Report(0, f"built {len(distributions)} distributions: {names}", ())
 
     for distribution in distributions:
         failures = check_import(
@@ -659,9 +700,9 @@ def run(
     problems.extend(check_metadata(distributions, expected_version=expected_version))
 
     if problems:
-        return 1, problems
+        return Report(1, "distribution validation failed", tuple(problems))
     names = ", ".join(distribution.name for distribution in distributions)
-    return 0, [f"checked {len(distributions)} installed distributions: {names}"]
+    return Report(0, f"checked {len(distributions)} installed distributions: {names}", ())
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -690,17 +731,22 @@ def main(argv: list[str] | None = None) -> int:
     )
     arguments = parser.parse_args(argv)
 
-    code, lines = run(
+    report = run(
         arguments.workspace,
         require_installed=arguments.require_installed,
         dist_dir=arguments.dist,
         expected_version=arguments.expected_version,
     )
-    for line in lines:
-        # Say what was inspected on success too. A gate that prints nothing
-        # cannot be told apart from one that never ran.
-        print(f"::error::{line}" if code else line)
-    return code
+    if report.code:
+        # Diagnostics may quote metadata, member names or paths controlled by
+        # the artifact under inspection, so nothing derived from the report --
+        # not even a count -- is written to the CI log. Programmatic callers
+        # of ``run`` read ``Report.problems`` instead.
+        print("::error::distribution validation failed")
+    else:
+        # The success summary holds only names from the reviewed manifest.
+        print(report.summary)
+    return report.code
 
 
 if __name__ == "__main__":

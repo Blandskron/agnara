@@ -22,19 +22,61 @@ Horizons are the ordering; a release is the thing that closes. The mapping is
 fixed by ADR 0068 so that work lands where its question belongs rather than in
 whichever release happens to be open.
 
-### NOW — 0.1.0a4, Application Boundaries
+### DONE — 0.1.0a4, Application Boundaries
 
-Current baseline target. Its one question: can Agnara be consumed as a
-framework from outside this repository?
+Closed. Its question — can Agnara be consumed as a framework from outside this
+repository? — was answered by the unified exposure model (ADR 0070), the public
+HTTP composition surface (ADR 0071) and the HTTP request surface, all validated
+against a clean-room external consumer.
 
-- **Unified exposure model.** One neutral availability registry that both
-  shipped adapters compile into. ADR 0070.
-- **Public HTTP composition surface.** ADR 0071.
-- **HTTP request surface** — cookies, forms, multipart, uploads.
+Its *publication* did not close. One of fourteen artifacts reached PyPI; the
+rest were rejected before upload. `0.1.0a4` is superseded by `0.1.0a5` and
+should not be installed. ADR 0078.
 
-### NEXT — 0.1.0a5, Execution Semantics
+### ABORTED — 0.1.0a5, Publication Recovery
 
-Its one question: does execution have streaming, identity and a measured cost?
+The immutable `v0.1.0a5` tag exercised the corrected preflight. Publication
+readiness stopped the workflow before the first upload because the seven
+Trusted Publishers were still unverified. No `0.1.0a5` artifact was published.
+
+### ABORTED — 0.1.0a6, Publication Recovery
+
+The immutable `v0.1.0a6` tag reached the publication job, but PyPI rejected
+the first upload, `agnara-a2a`, because no Pending Trusted Publisher matched
+that canonical project name and the workflow's OIDC identity. No A6 artifact
+was published.
+
+### ABORTED — 0.1.0a7, Publication and Security Recovery
+
+The immutable `v0.1.0a7` tag was created while the publication record was
+still `UNVERIFIED`, and publication readiness stopped the workflow before its
+first upload. It fixed the three release-blocking CodeQL findings, which
+remain fixed. No A7 artifact was published.
+
+### NOW — 0.1.0a8, Release Pipeline Recovery
+
+Current baseline target, and deliberately small. It carries the `0.1.0a7`
+runtime unchanged and asks one question: can a release no longer consume a
+version before every gate and a human have said yes? ADR 0082.
+
+- **The tag is a consequence of the release, not its trigger.** A release is
+  a `workflow_dispatch` run from `main`; every gate runs first, a reviewer
+  approves in the protected `pypi` environment, and only that run creates the
+  annotated tag, publishes, verifies and announces.
+- **The human gate is verified by the pipeline.** A `pypi` environment without
+  required reviewers refuses the release before anything is built.
+- **`publication.json` records registry facts**, read back by a human after
+  the last registry failure; the per-release authorization is the environment
+  approval.
+- Everything A5 to A7 got right stays: publish readiness as a separate claim
+  (ADR 0079), kernel published last, post-publication verification gating the
+  GitHub Release, one source of truth for the seven distributions, a
+  SHA-pinned publication path.
+
+### NEXT — 0.1.0a9, Execution Semantics
+
+Unchanged in content; moved one release later by ADR 0082 after ADR 0081. Its
+one question: does execution have streaming, identity and a measured cost?
 
 - **Streaming model** — `I2`, which still blocks the most other work.
 - **Execution identity and idempotency behaviour.**

@@ -18,21 +18,23 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
+import distributions
+
 WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
 PACKAGES_DIR = WORKSPACE_ROOT / "packages"
 
-#: Distribution name -> top-level import package, per ADR 0017.
-DISTRIBUTIONS: dict[str, str] = {
-    "agnara": "agnara",
-    "agnara-http": "agnara_http",
-    "agnara-mcp": "agnara_mcp",
-    "agnara-a2a": "agnara_a2a",
-    "agnara-events": "agnara_events",
-    "agnara-telemetry": "agnara_telemetry",
-    "agnara-cli": "agnara_cli",
-}
+#: The reviewed publication set, read from `docs/distributions.json`.
+#:
+#: `tests/release/test_publication_set.py` holds that file to the workspace
+#: layout, the workspace root metadata and both workflows, so deriving the
+#: architecture vocabulary from it is stronger than restating it here: the
+#: seven names now have one definition that everything is checked against.
+MANIFEST = distributions.load(WORKSPACE_ROOT)
 
-CORE_DISTRIBUTION = "agnara"
+#: Distribution name -> top-level import package, per ADR 0017.
+DISTRIBUTIONS: dict[str, str] = MANIFEST.mapping
+
+CORE_DISTRIBUTION = MANIFEST.core
 CORE_IMPORT_NAME = DISTRIBUTIONS[CORE_DISTRIBUTION]
 
 ADAPTER_DISTRIBUTIONS: tuple[str, ...] = tuple(sorted(set(DISTRIBUTIONS) - {CORE_DISTRIBUTION}))
@@ -143,9 +145,9 @@ FORBIDDEN_IN_CORE: frozenset[str] = frozenset(
 
 #: Distributions no first-party Agnara package may declare as a dependency.
 #:
-#: ADR 0068 gives ecosystem interoperability to `0.1.0b1` and forbids
-#: `0.1.0a4` and `0.1.0a5` from shipping a framework, database, broker, task
-#: runtime or template engine integration as a supported contract. A denylist
+#: ADR 0068 gives ecosystem interoperability to `0.1.0b1` and forbids every
+#: alpha from shipping a framework, database, broker, task runtime or
+#: template engine integration as a supported contract. A denylist
 #: over source imports would not catch that, because an integration arrives as
 #: a *declared dependency* first.
 #:
