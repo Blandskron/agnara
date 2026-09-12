@@ -27,7 +27,7 @@ release.
 
 | Initiative | Current decision boundary | Cannot close until | Legitimate work now / in parallel |
 | --- | --- | --- | --- |
-| I2 — Streaming | Kernel implemented by ADR 0084; HTTP SSE designed by ADR 0085. | Each supported transport projection has its own implementation and conformance evidence. | Implement SSE; independently design the later MCP, A2A, event and WebSocket projections. |
+| I2 — Streaming | Kernel implemented by ADR 0084; HTTP SSE designed by ADR 0085. | The required SSE projection has implementation and ASGI conformance evidence. | Implement SSE for 1.0; defer WebSockets, MCP progress, A2A events and event-adapter projections until after 1.0. |
 | I3 — Execution identity and idempotency | No operational identity or deduplication contract exists. | An accepted identity/idempotency design, runtime and race/TTL/failure evidence. | Design work can proceed now; its runtime is independent of the SSE wire projection. |
 | I8 — Capability composition | RFC 0005 remains open; no nested invocation contract exists. | A policy-safe composition decision and propagated context/deadline/identity semantics. | Research and RFC work can proceed; runtime awaits the relevant I3 and I10 boundaries. |
 | I9 — Public API governance | All current exports are provisional and mechanically classified. | A maintainer-approved stable/deprecated classification with migration evidence. | Audit and prune the public surface in parallel with other initiatives. |
