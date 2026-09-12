@@ -172,17 +172,19 @@ survives contact with the second framework.
 ## 6. Integration matrix
 
 The research and future-conformance inventory. **Priority** is architectural
-importance, not popularity. **release blocker** means `1.0.0` cannot close without
-green evidence — the authoritative list is the gate table in
-`docs/releases/RELEASE_PLAN.md`, and this column points at it rather than being
-a second source.
+importance, not popularity. The authoritative release bar remains the gate
+table in `docs/releases/RELEASE_PLAN.md`; this matrix selects useful evidence
+scenarios without creating a second source of release authorization.
 
 Legend: `yes` — a coherent, intended direction; `no` — deliberately discarded,
 reason in the notes; `partial` — coherent for part of the technology only.
+`1.0.0 evidence` identifies scenarios that can contribute evidence to the
+release-plan interoperability gate; it is not a second release gate or an
+authorization to claim support.
 
 ### Web, ASGI and WSGI
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | Starlette | yes | yes | yes | CRITICAL | yes | The clean-room ASGI proof. Mounting, ASGI composition, request context, response mapping, middleware, lifespan and error boundaries, without FastAPI-specific behaviour confusing the result. |
 | FastAPI | yes | yes | yes | CRITICAL | yes | The highest-value adoption path. Progressive adoption inside an existing FastAPI application is the priority scenario, not a bonus. |
@@ -201,7 +203,7 @@ reason in the notes; `partial` — coherent for part of the technology only.
 Agnara is not becoming an ORM. The goal is to prove it can use the one the
 application already has.
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | SQLite | yes | n/a | n/a | CRITICAL | yes | The baseline that needs no external infrastructure. Capability → provider → repository → SQLite, validating connection lifecycle, transactions, rollback, invocation scope, cleanup and testability. |
 | PostgreSQL | yes | n/a | n/a | CRITICAL | yes | Pooling, transaction scope, concurrent execution, async where it applies, rollback, failure handling, startup and shutdown, resource cleanup. |
@@ -217,7 +219,7 @@ application already has.
 The core stays library-neutral (ADR 0004). The standard-library adapter is the
 baseline and ships today.
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | `dataclasses` | yes | n/a | n/a | BASELINE | yes | Already `IMPLEMENTED`. Nothing may make it the second-class path. |
 | Pydantic | yes | n/a | n/a | CRITICAL | yes | A formal `SchemaAdapter`: input models, output models, nesting, the validation boundary, JSON Schema, error translation, serialization. Never a kernel dependency. |
@@ -228,7 +230,7 @@ baseline and ships today.
 Agnara is not becoming a frontend framework. HTTP may return HTML; that is the
 whole commitment (`docs/TARGET_ARCHITECTURE.md` section 7).
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | Jinja2 | yes | n/a | yes | HIGH | yes, or equivalent | HTTP → capability → application data → template → HTML. Template context, a safe rendering boundary, response integration, and forms once I7 lands. |
 | Django templates | partial | yes | yes | MEDIUM | no | Validated inside a Django application, not as a standalone integration. |
@@ -239,7 +241,7 @@ whole commitment (`docs/TARGET_ARCHITECTURE.md` section 7).
 Agnara is not becoming a broker, scheduler or worker runtime. It integrates
 them.
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | Celery | yes | yes | yes | HIGH | yes, or one equivalent | Capability → task adapter → Celery → broker → worker → Agnara invocation. Must resolve serialization, execution identity, principal propagation, deadlines, retries, idempotency, failures, telemetry and capability lookup. A Celery retry is not an Agnara execution semantic and must never be confused for one. |
 | Taskiq | yes | yes | yes | MEDIUM | no | Modern async alternative; the second implementation that tests the task port. |
@@ -248,7 +250,7 @@ them.
 
 ### Messaging
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | Redis | yes | n/a | yes | HIGH | yes, with Celery | Cache, task backend, ephemeral state, coordination. Never part of the kernel. |
 | RabbitMQ | yes | n/a | yes | HIGH | alternative to Redis | Task and event transport. |
@@ -257,28 +259,28 @@ them.
 
 ### Durable execution
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | Temporal | yes | yes | n/a | HIGH | no | Depends on I6. Agnara contributes capability contracts, policies, identity, effects, risk, authorization and discovery; Temporal contributes durability, retries, workflow state, worker execution and recovery. The frontier stays explicit, and no proprietary workflow engine is built while a clean integration can answer the question. |
 | Prefect | yes | yes | n/a | MEDIUM | no | Data orchestration. A Prefect flow is not an Agnara capability and the two vocabularies must not be merged. |
 
 ### Observability
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | OpenTelemetry | yes | yes | yes | CRITICAL | yes | Bridges exist (ADR 0054 through ADR 0058); `1.0.0` validates them end to end — traces, spans, metrics, propagation, invocation and execution identity across HTTP, workers, databases and errors. The SDK never enters `agnara`. |
 | Sentry | yes | yes | yes | MEDIUM | no | Through an adapter or integration layer. Never an official dependency. |
 
 ### Agent and protocol interoperability
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | MCP | yes | yes | yes | CRITICAL | yes | Already implemented for tools. `1.0.0` proves HTTP and MCP project the *same* capability with no duplicated business logic, including from inside an embedded host. |
 | A2A | yes | yes | yes | HIGH | no | Enters when I4 is ready. Capabilities participate in agent-to-agent communication without kernel change, or the exposure model is wrong. |
 
 ### Command line
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | Typer, Click, `argparse` | yes | yes | yes | HIGH | no | Target: one capability reachable over HTTP, MCP and a CLI with no duplicated business logic. `agnara-cli` owns scaffolding and introspection (`ARCHITECTURE.md` section 15); an application's own CLI is an integration, not a CLI framework chosen on the user's behalf. |
 

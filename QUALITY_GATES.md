@@ -364,9 +364,10 @@ before completing E0B.12.
 
 ## Release readiness program
 
-`docs/releases/RELEASE_PLAN.md` defines the progressive path from the published
-`0.1.0a2` to `0.1.0`, and `scripts/check_release_readiness.py` measures how far
-the current state has come.
+`docs/releases/RELEASE_PLAN.md` defines the path from the retained
+`0.1.0a8` publication baseline to `1.0.0`, and
+`scripts/check_release_readiness.py` measures how far the current state has
+come.
 
 That program **supplements** this document and never relaxes it. Where the two
 differ, this document wins. In particular the security gates above keep their

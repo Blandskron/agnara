@@ -51,7 +51,7 @@ PyPI projects still require their Pending Trusted Publishers before the tag.
 
 Every distribution's public surface is classified in
 `docs/public-api.json` and enforced in both directions by the release gate:
-282 exports across 47 modules, all `provisional`. `agnara-cli` dropped from 17
+292 exports across 48 modules, all `provisional`. `agnara-cli` dropped from 17
 public names to 4 in the baseline, because the other thirteen were implementation
 helpers re-exported from underscore-prefixed modules and never documented,
 used or designed as an API (ADR 0076).
@@ -112,7 +112,8 @@ settled; the spelling is not.
 | Exposure compilation | `IMPLEMENTED` | Public `Http.compile()` derives neutral records from the compiled route table. ADR 0070, ADR 0071. |
 | Public composition API | `IMPLEMENTED` | Seven provisional exports compose and compile an ASGI application through supported entry points. ADR 0071. |
 | Cookies, forms, multipart, uploads | `IMPLEMENTED` | Public binding sources with bounded in-memory bodies and multipart part count. ADR 0072. |
-| Streaming, SSE, WebSockets | `PLANNED` | The ASGI boundary handles no `websocket` scope. |
+| SSE streaming projection | `DESIGNED` | ADR 0085 defines the projection; no `Http.sse` runtime or ASGI conformance suite exists yet. |
+| WebSockets | `PLANNED` | The ASGI boundary handles no `websocket` scope, and WebSocket streaming still needs its own decision. |
 | Middleware / interceptors | `DEFERRED` | No extension point, deliberately: ADR 0072 keeps cross-cutting concerns at the ASGI layer, which already wraps an `HttpApplication`. |
 | CORS, compression, static files, proxy headers, trusted hosts | `DEFERRED` | None present. ADR 0072 records where each belongs instead: the reverse proxy, the ASGI server, or ASGI middleware around the application. |
 | Content negotiation, conditional and range requests | `RESEARCH` | None present. |
