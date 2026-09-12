@@ -27,7 +27,7 @@ release.
 
 | Initiative | Current decision boundary | Cannot close until | Legitimate work now / in parallel |
 | --- | --- | --- | --- |
-| I2 — Streaming | Kernel implemented by ADR 0084 and ADR 0086; HTTP SSE designed by ADR 0085. | The required SSE projection has implementation and ASGI conformance evidence. | Implement SSE for 1.0; defer WebSockets, MCP progress, A2A events and event-adapter projections until after 1.0. |
+| I2 — Streaming | Kernel implemented by ADR 0084 and ADR 0086; HTTP SSE implemented by ADR 0085 with ASGI conformance evidence. | Nothing further is required for 1.0. | Defer WebSockets, MCP progress, A2A events and event-adapter projections until after 1.0. |
 | I3 — Execution identity and idempotency | No operational identity or deduplication contract exists. | An accepted identity/idempotency design, runtime and race/TTL/failure evidence. | Design work can proceed now; its runtime is independent of the SSE wire projection. |
 | I8 — Capability composition | RFC 0005 remains open; no nested invocation contract exists. | A policy-safe composition decision and propagated context/deadline/identity semantics. | Research and RFC work can proceed; runtime awaits the relevant I3 and I10 boundaries. |
 | I9 — Public API governance | All current exports are provisional and mechanically classified. | A maintainer-approved stable/deprecated classification with migration evidence. | Audit and prune the public surface in parallel with other initiatives. |
@@ -44,8 +44,9 @@ release.
 
 One transport-neutral model for cancellation, backpressure, typed output and
 partial failure. The kernel contract is decided (ADR 0084, ADR 0086) and
-implemented; the transport
-projections it unblocks are not started.
+implemented, and the first transport projection with it: HTTP SSE (ADR 0085).
+WebSockets, MCP progress, A2A events and event-adapter projections are not
+started.
 
 ### I3 — Execution identity and idempotency
 

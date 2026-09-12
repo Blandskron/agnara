@@ -76,6 +76,7 @@ from agnara_http._routing import (
     _RouteDefinitionError,
     _RouteRegistryFrozenError,
 )
+from agnara_http._sse import _SSEDefinitionError, _SSEProjection
 from agnara_http._surfaces import (
     _compile_surfaces,
     _HTTPSurface,
@@ -106,6 +107,7 @@ _TRANSLATED: tuple[type[Exception], ...] = (
     _ProblemDefinitionError,
     _RouteDefinitionError,
     _RouteRegistryFrozenError,
+    _SSEDefinitionError,
     _SurfaceDefinitionError,
 )
 
@@ -373,10 +375,12 @@ class _Declaration:
     __slots__ = (
         "bindings",
         "max_body_bytes",
+        "max_event_bytes",
         "max_parts",
         "method",
         "openapi",
         "path",
+        "sse",
         "target",
     )
 
@@ -389,6 +393,8 @@ class _Declaration:
         openapi: OpenApiOperation | None,
         max_body_bytes: int | None,
         max_parts: int | None,
+        sse: bool = False,
+        max_event_bytes: int | None = None,
     ) -> None:
         self.method = method
         self.path = path
@@ -397,6 +403,16 @@ class _Declaration:
         self.openapi = openapi
         self.max_body_bytes = max_body_bytes
         self.max_parts = max_parts
+        self.sse = sse
+        self.max_event_bytes = max_event_bytes
+
+    def projection(self) -> _SSEProjection | None:
+        """The SSE contract this declaration asked for, if it asked for one."""
+        if not self.sse:
+            return None
+        if self.max_event_bytes is None:
+            return _SSEProjection()
+        return _SSEProjection(self.max_event_bytes)
 
     def describe(self) -> str:
         return f"{self.method} {self.path}"
@@ -699,6 +715,74 @@ class Http:
         """Expose a capability at ``DELETE path``."""
         return self.route("DELETE", path, capability, *bindings, openapi=openapi)
 
+    def sse(
+        self,
+        path: str,
+        capability: CapabilityRef,
+        *bindings: Binding,
+        max_event_bytes: int | None = None,
+    ) -> Self:
+        """Expose a streaming capability at ``GET path`` as server-sent events.
+
+        This is the only supported SSE spelling, and it is deliberately not a
+        response type an ordinary `get` could acquire: a capability can be
+        projected through several adapters, so the wire representation belongs
+        to the exposure that chose it (ADR 0085 D1).
+
+        Each yielded unit becomes one standard ``message`` event carrying one
+        compact JSON value, so a browser ``EventSource`` needs no Agnara
+        vocabulary to read it. The response begins only once the first unit is
+        representable, which is what keeps an ordinary RFC 9457 problem
+        response available for a failure that exposed nothing. Every started
+        response then ends with one ``agnara.terminal`` event naming the
+        outcome and the exact number of units already sent, because a closed
+        connection cannot tell completion from failure.
+
+        Reconnection is a client transport behaviour and nothing more. This
+        projection sends no ``id`` or ``retry`` field and gives
+        ``Last-Event-ID`` no meaning: a reconnecting client starts a new,
+        ordinary invocation, with every policy and effect rule applied again.
+
+        Args:
+            path: a route template such as ``/reports/{report_id}``.
+            capability: a capability declared on the application with
+                ``streaming=True``, either the decorated function or its
+                `CapabilityDefinition`.
+            bindings: one `Binding` per input the request supplies. Body, form
+                and upload sources are refused: an ``EventSource`` issues a
+                GET, and this projection supplies no request-body streaming
+                contract.
+            max_event_bytes: the ceiling for one encoded event, defaulting to
+                the 1 MiB this adapter already uses for request bodies. A
+                larger unit fails the response rather than being truncated or
+                silently dropped.
+
+        Returns:
+            This builder, so declarations can be chained.
+
+        Raises:
+            HttpDefinitionError: the builder has already compiled, or an
+                argument is not of the expected type. That the capability is
+                streaming, and that no body binding was asked for, is checked
+                at `compile`, when the plan exists.
+
+        Note:
+            An SSE route is absent from the OpenAPI document and accepts no
+            `OpenApiOperation`. The document describes complete JSON
+            representations and has no reviewed schema for stream units or for
+            the terminal event, and claiming one would be exactly the
+            accidental promise ADR 0085 D6 refuses to make.
+        """
+        if max_event_bytes is not None and (
+            isinstance(max_event_bytes, bool) or not isinstance(max_event_bytes, int)
+        ):
+            raise HttpDefinitionError(f"GET {path}: max_event_bytes must be an integer or None")
+        self.route("GET", path, capability, *bindings)
+        declaration = self._declarations[-1]
+        declaration.sse = True
+        declaration.max_event_bytes = max_event_bytes
+        return self
+
     def compile(
         self,
         capabilities: FrozenCapabilityRegistry,
@@ -817,6 +901,7 @@ class Http:
                 tuple(binding._internal() for binding in declaration.bindings),
                 **_limits(declaration),
                 openapi=None if declaration.openapi is None else declaration.openapi._internal(),
+                sse=declaration.projection(),
             )
             for declaration, capability_id in resolved
         ]

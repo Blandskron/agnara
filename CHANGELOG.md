@@ -26,6 +26,20 @@ describe user- and contributor-visible changes only.
 - Lock the contributor-facing 1.0 scope: map each release gate to responsible
   work and evidence, classify integration evidence, and defer non-required
   streaming projections without claiming them as supported.
+- Add the HTTP server-sent events projection of a capability stream,
+  declared with the new provisional `Http.sse(path, capability, *bindings)`.
+  One yielded unit becomes one standard `message` event carrying compact JSON;
+  the response starts only once the first unit is representable, so a failure
+  that exposed nothing is still an ordinary RFC 9457 problem; and every started
+  response ends with one `agnara.terminal` event naming the outcome, the exact
+  unit count and, after a late failure, the redacted problem. Client
+  disconnect, send failure, deadline and cancellation close or cancel the owned
+  stream without a leaked task. SSE routes are `GET`-only, take no request-body
+  binding, imply no `HEAD`, and are absent from OpenAPI; replay and
+  `Last-Event-ID` carry no meaning.
+- Add `agnara.execution.classify_failure`, the canonical exception-to-`Failure`
+  rule `invoke_result` applies, published so an adapter owning a streaming wire
+  answers a pre-output failure exactly as every other boundary would.
 - Add the provisional, explicit `output=` capability contract for complete
   results and streaming units. It is compiled at startup and validates each
   successful value before delivery; an output violation is a redacted internal

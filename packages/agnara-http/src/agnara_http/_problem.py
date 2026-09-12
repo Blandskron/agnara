@@ -216,13 +216,19 @@ def _allow_header(methods: Iterable[str]) -> tuple[tuple[bytes, bytes], ...]:
     return ((b"allow", ", ".join(listed).encode("ascii")),)
 
 
-def _serialize_failure(
+def _failure_document(
     result: Failure,
     *,
     problem_types: Mapping[str, str] = _ABOUT_BLANK_TYPES,
     instance: str | None = None,
-) -> _SerializedResponse:
-    """Project one canonical failure onto a complete ``problem+json`` response."""
+) -> dict[str, Any]:
+    """Build the RFC 9457 document for one canonical failure.
+
+    Separate from emission because a failure does not always own the response
+    it travels in. The SSE projection carries this exact document inside its
+    terminal event once units have been exposed (ADR 0085 D4), and a document
+    that differed there would be a second, unreviewed redaction rule.
+    """
     if not isinstance(result, Failure):
         raise TypeError(f"result must be Failure, got {type(result).__name__}")
     mapping = _PROBLEMS.get(result.code)
@@ -249,10 +255,20 @@ def _serialize_failure(
             document["details"] = details
     if instance is not None:
         document["instance"] = _checked_instance(instance)
+    return document
 
+
+def _serialize_failure(
+    result: Failure,
+    *,
+    problem_types: Mapping[str, str] = _ABOUT_BLANK_TYPES,
+    instance: str | None = None,
+) -> _SerializedResponse:
+    """Project one canonical failure onto a complete ``problem+json`` response."""
+    document = _failure_document(result, problem_types=problem_types, instance=instance)
     body = _encode(document)
     return _SerializedResponse(
-        status=mapping.status,
+        status=document["status"],
         headers=(
             (b"content-type", _PROBLEM_MEDIA_TYPE),
             (b"content-length", str(len(body)).encode("ascii")),

@@ -15,6 +15,7 @@ from agnara.execution import (
     FailureCode,
     Invocation,
     Success,
+    classify_failure,
     invoke,
     invoke_result,
 )
@@ -659,3 +660,74 @@ def test_canonical_invocation_propagates_external_cancellation() -> None:
             await task
 
     asyncio.run(run_test())
+
+
+# ---------------------------------------------------------------------------
+# The published classifier an adapter owning its own boundary needs
+# ---------------------------------------------------------------------------
+
+
+class TestClassifyFailure:
+    """ADR 0085: one exception-to-`Failure` rule, published rather than copied.
+
+    `open_stream` raises an ordinary exception for a pre-output failure, so an
+    adapter that owns a streaming wire has to classify it itself. These cases
+    prove it gets the same answer `invoke_result` would have given, which is
+    the only reason exporting the rule is safer than letting each transport
+    write its own.
+    """
+
+    def test_a_known_runtime_error_keeps_its_semantic_category(self) -> None:
+        assert classify_failure(
+            PolicyDeniedError("no viewer may refund"), CapabilityId("payments", "refund")
+        ) == Failure(FailureCode.FORBIDDEN, "no viewer may refund")
+
+    def test_an_expired_deadline_is_a_timeout(self) -> None:
+        assert classify_failure(TimeoutError(), CapabilityId("payments", "refund")) == Failure(
+            FailureCode.TIMEOUT, "invocation deadline exceeded"
+        )
+
+    def test_an_unexpected_exception_is_redacted(self, caplog: pytest.LogCaptureFixture) -> None:
+        with caplog.at_level(logging.ERROR, logger="agnara.execution"):
+            failure = classify_failure(
+                RuntimeError("database password is secret"),
+                CapabilityId("payments", "refund"),
+            )
+
+        assert failure == Failure(FailureCode.INTERNAL_FAILURE, "capability invocation failed")
+        assert "secret" not in failure.message
+        assert "database password" not in caplog.text
+        [record] = caplog.records
+        assert record.getMessage() == "capability payments.refund failed"
+        assert record.exc_info is None
+
+    def test_it_answers_exactly_as_the_complete_result_boundary_does(self) -> None:
+        """The point of the export: two boundaries, one redaction decision."""
+
+        async def run_test() -> None:
+            registry = DIRegistry()
+
+            def refund() -> None:
+                raise RuntimeError("database password is secret")
+
+            plan = ExecutionPlan.compile(definition(refund), registry)
+            outcome = await invoke_result(plan, context_for(plan, registry))
+
+            assert outcome == classify_failure(
+                RuntimeError("database password is secret"), plan.definition.id
+            )
+
+        asyncio.run(run_test())
+
+    @pytest.mark.parametrize(
+        ("error", "capability_id", "message"),
+        [
+            ("not an exception", CapabilityId("payments", "refund"), "error must be an Exception"),
+            (RuntimeError("boom"), "payments.refund", "capability_id must be a CapabilityId"),
+        ],
+    )
+    def test_it_refuses_arguments_of_the_wrong_type(
+        self, error: Any, capability_id: Any, message: str
+    ) -> None:
+        with pytest.raises(TypeError, match=message):
+            classify_failure(error, capability_id)
