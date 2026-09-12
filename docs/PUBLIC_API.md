@@ -38,6 +38,19 @@ successful complete result or each stream unit under ADR 0086; they add no new
 export and make no stable compatibility commitment before the explicit 1.0 API
 classification decision.
 
+`agnara.execution.classify_failure` is the one export added for an adapter
+rather than for an application. `open_stream` raises an ordinary exception for
+a pre-output failure (ADR 0084 D6), so an adapter that owns a streaming wire
+has to answer it with the same canonical failure `invoke_result` would have
+produced. Publishing the rule is what keeps a transport from re-deriving it and
+redacting one capability on one wire and not on another (ADR 0077). It is
+deliberately narrower than a general error-mapping hook: it takes an exception
+and a capability identifier, and returns a `Failure`.
+
+`Http.sse` is a method on the existing provisional `Http` builder, not a new
+`agnara_http` export. The adapter's public surface is still the same seven
+names.
+
 ## Governed surface
 
 The manifest governs **every shipped distribution**, not the kernel alone. An

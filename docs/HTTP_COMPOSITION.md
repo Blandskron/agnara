@@ -15,7 +15,7 @@ Seven names, from `agnara_http`:
 
 | Name | What it is |
 | --- | --- |
-| `Http` | Declare which capabilities one named HTTP surface exposes, and compile it. |
+| `Http` | Declare which capabilities one named HTTP surface exposes, and compile it. `get`, `post`, `put`, `patch`, `delete` and `route` project a complete result; `sse` projects a stream. |
 | `HttpApplication` | The compiled result: an immutable ASGI 3 application. |
 | `Binding` | Read one capability input from one place in the request. |
 | `BindingSource` | Which place: `PATH`, `QUERY`, `HEADER`, `BODY`, `COOKIE`, `FORM`, `UPLOAD`. |
@@ -240,7 +240,7 @@ What you should know before using it:
 
 - **It is buffered in memory**, bounded by `max_body_bytes` (1 MiB by
   default). A route that raises the limit to 100 MB will hold 100 MB per
-  concurrent request. That is your decision; the baseline has no streaming.
+  concurrent request. That is your decision; request bodies are not streamed.
 - **Nothing touches the filesystem.** There is no temporary file, so there is
   nothing to leak and nothing to clean up on cancellation or error. The bytes
   are owned by the invocation and released with it.
@@ -262,6 +262,100 @@ an upload form posts.
 
 A route with an upload accepts `multipart/form-data` only; a route with fields
 alone accepts either encoding. The OpenAPI document advertises exactly that.
+
+## Streaming with server-sent events
+
+A capability declared `streaming=True` yields units instead of returning one
+value, so it has no complete JSON representation and an ordinary `get` refuses
+it. `Http.sse` is the one supported projection (ADR 0085):
+
+```python
+from collections.abc import AsyncIterator
+
+from agnara import Agnara
+from agnara_http import Binding, BindingSource, Http
+
+app = Agnara("reports")
+
+
+@app.capability(streaming=True, output=dict[str, int])
+async def rows(report_id: int) -> AsyncIterator[dict[str, int]]:
+    for line in range(report_id, report_id + 3):
+        yield {"line": line}
+
+
+http = Http()
+http.sse("/reports/{report_id}", rows, Binding("report_id", BindingSource.PATH))
+asgi = http.compile(app.compile())
+```
+
+A browser reads it with no Agnara vocabulary at all, because each unit is a
+standard unnamed `message` event carrying one compact JSON value:
+
+```text
+200
+content-type: text/event-stream; charset=utf-8
+cache-control: no-store
+
+data: {"line":7}
+
+data: {"line":8}
+
+data: {"line":9}
+
+event: agnara.terminal
+data: {"outcome":"completed","units":3}
+```
+
+**The response starts late, on purpose.** Policy, binding, validation,
+dependency construction and the *first* pull all happen before the `200`. A
+failure there has exposed nothing, so it is still an ordinary RFC 9457 problem
+response with the status the table above gives it — a denied policy is `403`,
+an expired deadline is `504`, a raised handler is a redacted `500`. An empty
+producer is a success, not a failure: the response starts and ends with
+`units: 0`.
+
+**The end is stated, not inferred.** A closed connection cannot tell
+exhaustion from failure, so every started response ends with one
+`agnara.terminal` event. `outcome` is the core `StreamTerminal` value and
+`units` is exactly how many data events were sent. A failure *after* output
+adds a `problem` member carrying the same redacted problem document the
+complete boundary would have produced:
+
+```text
+data: {"line":7}
+
+event: agnara.terminal
+data: {"outcome":"interrupted","problem":{...,"status":500},"units":1}
+```
+
+That is the whole point of the terminal event: a client that received one row
+is never told the invocation produced nothing.
+
+**Demand is the client's.** One pull, one encode, one awaited send, in that
+order. A slow reader slows the producer, and the adapter holds at most one
+encoded event — there is no queue anywhere. When the peer disconnects, the
+producer is cancelled and its `finally` runs before the request returns; no
+terminal event is promised to a connection that has gone.
+
+What an SSE route deliberately does not do:
+
+- **No request body.** `BODY`, `FORM` and `UPLOAD` bindings are refused: a
+  browser `EventSource` issues a `GET`, and this projection supplies no
+  request-body streaming contract. Path, query, header and cookie all work.
+- **No `HEAD`.** It answers `405`, and `Allow` says `GET` only. Consuming a
+  one-shot producer to discard every unit is not a useful answer.
+- **No OpenAPI operation.** `sse` takes no `OpenApiOperation` and the route is
+  absent from the document. There is no reviewed response schema for arbitrary
+  stream units or for the terminal event, and inventing one would be a promise
+  nobody reviewed (ADR 0085 D6).
+- **No replay.** No `id` or `retry` field is sent and `Last-Event-ID` carries
+  no meaning. A reconnecting client starts a new, ordinary invocation, with
+  every policy and effect rule applied again.
+
+`max_event_bytes` bounds one encoded event and defaults to the 1 MiB used for
+request bodies. A larger unit fails the response rather than being truncated:
+the operator gets a diagnostic naming the size, never the value.
 
 ## OpenAPI
 
@@ -380,7 +474,7 @@ deferred request feature rather than leaving it implicit.
 | Multiple files, repeated form fields | Both need a collection binding, which ADR 0026 deferred deliberately and which decides how a list arrives through *every* transport. Use distinct part names. |
 | Client filename, per-part content type | Both need a public upload value type, and that is a core-visible schema shape MCP and introspection project too. Ask for a filename as a form field if you need one. |
 | Streaming request bodies, large uploads | Needs the streaming model, I2, `0.1.0a9`. Until then an upload is bounded `bytes`. |
-| Streaming responses, server-sent events, **WebSocket**s | I2, `0.1.0a9`. The ASGI boundary handles no `websocket` scope. |
+| **WebSocket**s, SSE replay and `Last-Event-ID` | I2, after `1.0.0`. The ASGI boundary handles no `websocket` scope, and resumption waits for the operational identity I3 must decide. Streaming *responses* are implemented: see `Http.sse` above. |
 | CORS, compression, trusted hosts, proxy header trust | Put them in the reverse proxy or ASGI server in front of the application, or wrap the `HttpApplication` in any third-party ASGI middleware — it is an ASGI 3 callable, so they compose. |
 | Static files | A web server or CDN. Agnara serves capabilities. |
 | Middleware / interceptor hook | Deliberately absent. `docs/INITIATIVES.md` states why: "middleware in most frameworks is where transport types leak into application code, and Agnara must not reproduce that". Wrapping from outside, at the ASGI layer, keeps transport concerns where they belong. |

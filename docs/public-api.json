@@ -443,6 +443,10 @@
               "stability": "provisional"
             },
             {
+              "name": "classify_failure",
+              "stability": "provisional"
+            },
+            {
               "name": "invoke",
               "stability": "provisional"
             },
@@ -507,6 +511,10 @@
         {
           "module": "agnara.execution.runtime",
           "exports": [
+            {
+              "name": "classify_failure",
+              "stability": "provisional"
+            },
             {
               "name": "invoke",
               "stability": "provisional"

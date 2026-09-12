@@ -11,11 +11,11 @@ order.
   cancellation, cleanup and post-output failure.
   - [x] Stabilize its shared unary/stream output contract (ADR 0086): explicit
     per-unit declaration, startup compilation and redacted validation failure.
-- [ ] Implement the accepted HTTP SSE streaming projection (I2) for `1.0.0`.
-  It needs its ASGI conformance suite before the execution-semantics gate can
-  close.
-  - [x] Decide the HTTP SSE projection (ADR 0085); implementation remains
-    separate work.
+- [x] Implement the accepted HTTP SSE streaming projection (I2, ADR 0085)
+  for `1.0.0`, with the ASGI conformance suite the execution-semantics gate
+  needs: explicit `Http.sse` exposures, delayed response start, an explicit
+  terminal event, owned disconnect handling and redaction.
+  - [x] Decide the HTTP SSE projection (ADR 0085).
 - [ ] Revisit WebSockets, MCP progress, A2A task events and the event adapter
   after `1.0.0`. Each needs its own ADR answering RFC 0009 Q9 and conformance
   tests; none is a supported or required 1.0 projection (V1-02 scope lock).

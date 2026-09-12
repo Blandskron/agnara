@@ -166,6 +166,7 @@ Use `--check` in automation to verify that this projection has not drifted.
 | `StreamTerminal` | `provisional` |
 | `Success` | `provisional` |
 | `TelemetryHook` | `provisional` |
+| `classify_failure` | `provisional` |
 | `invoke` | `provisional` |
 | `invoke_result` | `provisional` |
 | `open_stream` | `provisional` |
@@ -201,6 +202,7 @@ Use `--check` in automation to verify that this projection has not drifted.
 
 | Name | Stability |
 | --- | --- |
+| `classify_failure` | `provisional` |
 | `invoke` | `provisional` |
 | `invoke_result` | `provisional` |
 
