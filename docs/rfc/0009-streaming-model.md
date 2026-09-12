@@ -5,8 +5,9 @@
 - Tracking: GitHub Issue #355
 - Initiative: I2
 - Supersedes: nothing
-- Answered by: ADR 0084, for the kernel contract only (Q1-Q9)
-- Related: RFC 0001, ADR 0022, ADR 0027, ADR 0031, ADR 0068, ADR 0084
+- Answered by: ADR 0084 (Q1-Q9) and ADR 0086 (declared output contract), for
+  the kernel only
+- Related: RFC 0001, ADR 0022, ADR 0027, ADR 0031, ADR 0068, ADR 0084, ADR 0086
 
 ## 1. Summary
 
@@ -16,9 +17,10 @@ value, no invocation boundary owns its consumption, and no adapter can give it
 consistent cancellation, backpressure, terminal-state or telemetry semantics.
 
 This RFC frames the decisions required before streaming is introduced. It
-decides none of them itself. **ADR 0084 answers Q1 to Q9 for the kernel** and
-the answers are implemented in `agnara.execution.streaming`, with the focused
-tests section 6 demands in `tests/unit/execution/test_streaming.py`.
+decides none of them itself. **ADR 0084 answers Q1 to Q9 for the kernel**, and
+ADR 0086 settles the shared unary/stream output-schema gap that D2 deliberately
+left open. The answers are implemented in `agnara.execution.streaming`, with
+the focused tests section 6 demands in `tests/unit/execution/test_streaming.py`.
 
 What remains open here is every transport projection except HTTP SSE: ADR 0085
 decides SSE's adapter contract but it is not implemented yet. WebSockets, MCP
@@ -103,8 +105,9 @@ Any proposal answering this RFC must preserve these constraints.
 ## 5. Open questions
 
 Q1 to Q9 are answered for the kernel by ADR 0084, decision by decision: Q1 by
-D1, Q2 by D2, Q3 by D3, Q4 by D4, Q5 by D5, Q6 by D6, Q7 and Q8 by D7, and Q9
-by D8. They are kept here in their original form because each transport
+D1, Q2 by D2 as amended by ADR 0086, Q3 by D3, Q4 by D4, Q5 by D5, Q6 by D6,
+Q7 and Q8 by D7, and Q9 by D8. They are kept here in their original form
+because each transport
 projection has to answer the same questions again for its own wire, and the
 question is the durable part.
 
@@ -259,7 +262,9 @@ The separation this section asked for is what happened. ADR 0084 decides the
 core stream contract and deliberately decides no projection, so an unresolved
 SSE, MCP or A2A question can no longer delay the kernel.
 
-This RFC stays open for the remaining projections. ADR 0085 answers Q9 for
+This RFC stays open for the remaining projections. ADR 0086 additionally makes
+the unit type explicit and validates every yielded value before delivery, while
+preserving ADR 0084's terminal behavior. ADR 0085 answers Q9 for
 HTTP SSE: it preserves pull demand, delays response start until the first unit
 is representable, uses an explicit terminal event, and gives reconnection no
 replay meaning. WebSockets, MCP, A2A and events still answer Q9 for their own

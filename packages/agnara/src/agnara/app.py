@@ -154,6 +154,7 @@ class App:
         confirmation: Confirmation | str = Confirmation.NEVER,
         idempotent: bool | None = None,
         streaming: bool = False,
+        output: object = Any,
     ) -> Callable[[F], F]: ...
 
     def capability(
@@ -169,6 +170,7 @@ class App:
         confirmation: Confirmation | str = Confirmation.NEVER,
         idempotent: bool | None = None,
         streaming: bool = False,
+        output: object = Any,
     ) -> Any:
         """Declare a capability owned by this app.
 
@@ -191,6 +193,7 @@ class App:
                 confirmation=confirmation,
                 idempotent=idempotent,
                 streaming=streaming,
+                output=output,
             )
             return func
 

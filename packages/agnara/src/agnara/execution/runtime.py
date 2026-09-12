@@ -12,6 +12,7 @@ from uuid import uuid4
 
 from agnara.errors import InvocationError
 from agnara.execution._outcome import classify
+from agnara.execution._output import validate_output
 from agnara.execution._preflight import bind_inputs, enforce_policies
 from agnara.execution._preflight import tracking_id as _tracking_id
 from agnara.execution.context import ExecutionContext
@@ -166,5 +167,5 @@ async def _execute(
 
         result = plan.definition.handler(**arguments)
         if inspect.isawaitable(result):
-            return await result
-        return result
+            result = await result
+        return validate_output(plan, result)

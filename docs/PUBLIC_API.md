@@ -29,6 +29,15 @@ evaluation spikes, so they are `provisional` like everything else. Marking a
 symbol `experimental` is a decision to make in the change that introduces it,
 not a mood.
 
+### Current provisional semantics
+
+`CapabilityDefinition.output` and the optional `output=` spelling on
+`Agnara.capability` and `App.capability` are additive semantics of existing
+provisional public classes and decorators. They describe and validate a
+successful complete result or each stream unit under ADR 0086; they add no new
+export and make no stable compatibility commitment before the explicit 1.0 API
+classification decision.
+
 ## Governed surface
 
 The manifest governs **every shipped distribution**, not the kernel alone. An

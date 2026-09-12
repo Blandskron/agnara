@@ -11,7 +11,7 @@ Most older ADRs still say `Status: Proposed`, including records whose decisions
 govern shipped code. ADR 0001 fixes the Python 3.14 baseline that CI enforces,
 and ADR 0005 fixes the startup freeze the runtime implements. A smaller set
 does explicitly say `Accepted`: ADR 0021, ADR 0068, ADR 0069, ADR 0073,
-ADR 0081, ADR 0084 and ADR 0085.
+ADR 0081, ADR 0084, ADR 0085 and ADR 0086.
 
 An explicit `Accepted` status is meaningful, but an older `Proposed` status is
 not reliable evidence that its decision is open or unused. Readers therefore

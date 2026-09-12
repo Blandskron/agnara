@@ -31,10 +31,11 @@ def provide_database() -> Database:
     return Database()
 
 
-def definition(handler: Callable[..., Any]) -> CapabilityDefinition:
+def definition(handler: Callable[..., Any], *, output: object = Any) -> CapabilityDefinition:
     return CapabilityDefinition(
         id=CapabilityId("payments", "refund"),
         handler=handler,
+        output=output,
     )
 
 
@@ -535,11 +536,36 @@ def test_canonical_invocation_wraps_an_ordinary_success() -> None:
     asyncio.run(run_test())
 
 
+def test_declared_unary_output_is_validated_before_a_success_is_returned() -> None:
+    async def run_test() -> None:
+        registry = DIRegistry()
+        plan = ExecutionPlan.compile(definition(lambda: "refunded", output=str), registry)
+
+        assert await invoke(plan, context_for(plan, registry)) == "refunded"
+        assert await invoke_result(plan, context_for(plan, registry)) == Success("refunded")
+
+    asyncio.run(run_test())
+
+
+def test_invalid_declared_unary_output_is_redacted_as_an_internal_failure() -> None:
+    async def run_test() -> None:
+        registry = DIRegistry()
+        plan = ExecutionPlan.compile(definition(lambda: "secret refund data", output=int), registry)
+
+        with pytest.raises(InvocationError, match="does not satisfy its declared output"):
+            await invoke(plan, context_for(plan, registry))
+
+        outcome = await invoke_result(plan, context_for(plan, registry))
+        assert outcome == Failure(FailureCode.INTERNAL_FAILURE, "capability invocation failed")
+
+    asyncio.run(run_test())
+
+
 def test_canonical_invocation_preserves_an_explicit_failure() -> None:
     async def run_test() -> None:
         registry = DIRegistry()
         expected = Failure(FailureCode.CONFLICT, "payment was already refunded")
-        plan = ExecutionPlan.compile(definition(lambda: expected), registry)
+        plan = ExecutionPlan.compile(definition(lambda: expected, output=str), registry)
 
         assert await invoke_result(plan, context_for(plan, registry)) is expected
 

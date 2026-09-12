@@ -26,6 +26,10 @@ describe user- and contributor-visible changes only.
 - Lock the contributor-facing 1.0 scope: map each release gate to responsible
   work and evidence, classify integration evidence, and defer non-required
   streaming projections without claiming them as supported.
+- Add the provisional, explicit `output=` capability contract for complete
+  results and streaming units. It is compiled at startup and validates each
+  successful value before delivery; an output violation is a redacted internal
+  failure, while omitted `output` remains the intentional `Any` contract.
 - Redact unexpected capability exception messages and tracebacks from default
   runtime logs while retaining the capability identifier for correlation.
 - Add the protocol-neutral streaming kernel contract decided by ADR 0084.

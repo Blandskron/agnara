@@ -9,6 +9,8 @@ order.
 - [x] Implement the accepted protocol-neutral streaming *kernel* contract
   (I2, ADR 0084): declaration, owned one-shot consumption, pull backpressure,
   cancellation, cleanup and post-output failure.
+  - [x] Stabilize its shared unary/stream output contract (ADR 0086): explicit
+    per-unit declaration, startup compilation and redacted validation failure.
 - [ ] Implement the accepted HTTP SSE streaming projection (I2) for `1.0.0`.
   It needs its ASGI conformance suite before the execution-semantics gate can
   close.
