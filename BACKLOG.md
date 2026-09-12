@@ -12,6 +12,8 @@ order.
 - [ ] Project the streaming contract onto each transport (I2): HTTP SSE and
   WebSockets, MCP progress, A2A task events and the event adapter. Each needs
   its own ADR answering RFC 0009 Q9 and its own conformance tests.
+  - [x] Decide the HTTP SSE projection (ADR 0085); implementation and its
+    ASGI conformance suite remain separate work.
 - [ ] Implement execution identity and operational idempotency (I3).
 - [ ] Establish performance budgets and CI regression gates (I14).
 - [ ] Complete interoperability and composition contracts (I20, I8).

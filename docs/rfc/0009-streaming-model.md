@@ -20,10 +20,11 @@ decides none of them itself. **ADR 0084 answers Q1 to Q9 for the kernel** and
 the answers are implemented in `agnara.execution.streaming`, with the focused
 tests section 6 demands in `tests/unit/execution/test_streaming.py`.
 
-What remains open here is every transport projection: HTTP SSE and WebSockets,
-MCP progress, A2A task events and the event adapter. Each needs its own ADR
-and its own conformance tests, and no adapter exposes streamed capabilities
-until it has them.
+What remains open here is every transport projection except HTTP SSE: ADR 0085
+decides SSE's adapter contract but it is not implemented yet. WebSockets, MCP
+progress, A2A task events and the event adapter each need their own ADR and
+conformance tests, and no adapter exposes a stream until its projection has
+both.
 
 ## 2. Context
 
@@ -258,8 +259,11 @@ The separation this section asked for is what happened. ADR 0084 decides the
 core stream contract and deliberately decides no projection, so an unresolved
 SSE, MCP or A2A question can no longer delay the kernel.
 
-This RFC stays open for those projections. Each one answers Q9 for its own
-transport -- which terminals it can expose faithfully, what it must reject,
+This RFC stays open for the remaining projections. ADR 0085 answers Q9 for
+HTTP SSE: it preserves pull demand, delays response start until the first unit
+is representable, uses an explicit terminal event, and gives reconnection no
+replay meaning. WebSockets, MCP, A2A and events still answer Q9 for their own
+transport -- which terminals they can expose faithfully, what they must reject,
 and which richer features stay extensions -- against the contract ADR 0084
 fixed, and none of them may re-decide ownership, backpressure, cancellation or
 terminal semantics.
