@@ -20,6 +20,9 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Clarify the contributor-facing A8-to-1.0 governance baseline: `0.1.0a8` is
+  the retained publication baseline, `1.0.0` is the next release, and active
+  planning no longer presents historical beta labels as required releases.
 - Redact unexpected capability exception messages and tracebacks from default
   runtime logs while retaining the capability identifier for correlation.
 - Add the protocol-neutral streaming kernel contract decided by ADR 0084.

@@ -7,15 +7,15 @@ RFC 0004 was briefly two different documents.
 
 ## Read this before trusting a Status line
 
-Every ADR in this directory says `Status: Proposed`, including ones whose
-decisions have governed the codebase for three published releases. ADR 0001
-fixes the Python 3.14 baseline that CI enforces. ADR 0005 fixes the startup
-freeze the runtime implements. ADR 0021 governs how every release has been
-versioned, and ADR 0069 governs the development identity and adapter-to-core
-constraint. None of them is a proposal in any meaningful sense.
+Most older ADRs still say `Status: Proposed`, including records whose decisions
+govern shipped code. ADR 0001 fixes the Python 3.14 baseline that CI enforces,
+and ADR 0005 fixes the startup freeze the runtime implements. A smaller set
+does explicitly say `Accepted`: ADR 0021, ADR 0068, ADR 0069, ADR 0073,
+ADR 0081, ADR 0084 and ADR 0085.
 
-So **the Status field currently carries no information**, and a reader cannot
-use it to tell a settled decision from an open one.
+An explicit `Accepted` status is meaningful, but an older `Proposed` status is
+not reliable evidence that its decision is open or unused. Readers therefore
+cannot infer implementation status from that field alone.
 
 Until the maintainer runs a governance pass over these statuses, use
 `docs/MATURITY.md` to find out what is actually implemented. That file is

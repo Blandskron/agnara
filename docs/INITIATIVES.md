@@ -18,6 +18,23 @@ I14 Performance program ────→ 1.0.0 regression gate
 I9 Public API governance ───→ 1.0.0 compatibility decision
 ```
 
+## Foundation dependency register
+
+This is the execution-order map for the active `1.0.0` program. It names
+dependencies rather than repeating subsystem status; `docs/MATURITY.md` owns
+what exists and `docs/releases/RELEASE_PLAN.md` owns which evidence closes the
+release.
+
+| Initiative | Current decision boundary | Cannot close until | Legitimate work now / in parallel |
+| --- | --- | --- | --- |
+| I2 — Streaming | Kernel implemented by ADR 0084; HTTP SSE designed by ADR 0085. | Each supported transport projection has its own implementation and conformance evidence. | Implement SSE; independently design the later MCP, A2A, event and WebSocket projections. |
+| I3 — Execution identity and idempotency | No operational identity or deduplication contract exists. | An accepted identity/idempotency design, runtime and race/TTL/failure evidence. | Design work can proceed now; its runtime is independent of the SSE wire projection. |
+| I8 — Capability composition | RFC 0005 remains open; no nested invocation contract exists. | A policy-safe composition decision and propagated context/deadline/identity semantics. | Research and RFC work can proceed; runtime awaits the relevant I3 and I10 boundaries. |
+| I9 — Public API governance | All current exports are provisional and mechanically classified. | A maintainer-approved stable/deprecated classification with migration evidence. | Audit and prune the public surface in parallel with other initiatives. |
+| I10 — Security program | The retained threat model is historical; the 1.0 program is not closed. | Current threat-boundary analysis, supply-chain evidence and abuse/failure tests. | Threat-model and supply-chain design work can proceed in parallel; it constrains I3, I8 and I20 implementation. |
+| I14 — Performance program | Baselines exist, but no budgets or CI regression gate. | Reviewed methodology, calibrated budgets and a failing/pass CI proof. | Establish methodology in parallel; calibrate final thresholds after affected execution semantics settle. |
+| I20 — Framework interoperability | RFC 0008 remains open; no embedding contract or conformance harness exists. | The approved host boundary plus standalone, hosted, embedded and side-by-side evidence. | Contract research can proceed; host implementations wait for the I3, I8 and I10 boundaries RFC 0008 identifies. |
+
 ## 1.0.0 initiatives
 
 ### I2 — Streaming model
