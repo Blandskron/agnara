@@ -23,6 +23,9 @@ describe user- and contributor-visible changes only.
 - Clarify the contributor-facing A8-to-1.0 governance baseline: `0.1.0a8` is
   the retained publication baseline, `1.0.0` is the next release, and active
   planning no longer presents historical beta labels as required releases.
+- Lock the contributor-facing 1.0 scope: map each release gate to responsible
+  work and evidence, classify integration evidence, and defer non-required
+  streaming projections without claiming them as supported.
 - Redact unexpected capability exception messages and tracebacks from default
   runtime logs while retaining the capability identifier for correlation.
 - Add the protocol-neutral streaming kernel contract decided by ADR 0084.

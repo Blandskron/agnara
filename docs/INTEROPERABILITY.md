@@ -291,6 +291,62 @@ them.
 | GraphQL (Strawberry, Graphene) | RESEARCH | A capability → GraphQL projection needs an approved RFC before it is a commitment. Already an open research question in `docs/INITIATIVES.md`. |
 | gRPC | RESEARCH | Projection and adapter architecture only. |
 
+## 6A. `1.0.0` scope-lock classification
+
+This classification is the authoritative interpretation of the matrix for the
+first stable release. It describes what evidence can close the interoperability
+gate; it does not claim that any integration is implemented today. A direction
+already marked `no` in the matrix remains **DISCARDED/NOT MEANINGFUL**, even
+when the same technology has a meaningful direction in another category.
+
+| Area | REQUIRED FOR 1.0 | SUPPORTED IF EVIDENCE LANDS | EXPERIMENTAL FIXTURE ONLY | DEFER AFTER 1.0 |
+| --- | --- | --- | --- | --- |
+| Web hosts | Starlette; FastAPI; Django | Litestar; Flask; Django REST Framework | Django Ninja; Falcon; aiohttp | Sanic; Quart; Robyn |
+| Data and persistence | SQLite; SQLAlchemy | PostgreSQL; Alembic | psycopg | asyncpg; SQLModel; MySQL; MariaDB |
+| Schemas | `dataclasses`; Pydantic | msgspec | — | — |
+| Presentation | — | Jinja2 | Django templates | HTMX |
+| Background execution | — | Celery | — | Taskiq; Dramatiq; RQ |
+| Messaging | — | Redis; RabbitMQ | — | Kafka; NATS |
+| Durable execution | — | — | — | Temporal; Prefect |
+| Observability | OpenTelemetry | Sentry | — | — |
+| Agent/protocol | MCP | — | — | A2A |
+| Application CLI | — | — | Typer; Click; `argparse` | — |
+| Research projections | — | — | — | GraphQL; gRPC |
+
+The required web set is deliberately three-dimensional rather than a popularity
+ranking: Starlette proves the smallest ASGI boundary, FastAPI proves a second
+ASGI host does not dictate the contract, and Django exercises a materially
+different application and lifecycle model. Litestar or Flask can add diversity
+when evidence lands, but neither blocks 1.0. SQLite plus SQLAlchemy is the
+minimal hosted-infrastructure proof; PostgreSQL is a supported extension, not
+a second mandatory database gate. Pydantic is the required second schema
+boundary, while msgspec remains a valuable but non-blocking independence check.
+
+SSE is the required streaming projection because ADR 0085 fixes a bounded HTTP
+contract over the implemented kernel stream. WebSockets, MCP progress, A2A
+task events and the event adapter are **DEFER AFTER 1.0**: they would add new
+wire semantics without being necessary to prove the selected HTTP/MCP capability
+surfaces. Celery and its Redis/RabbitMQ backing are conditional integration
+evidence only; they do not authorize Agnara to own a worker, broker, scheduler
+or retry policy.
+
+The minimum release evidence is therefore explicit: standalone uses the core,
+HTTP and MCP surfaces with no external framework; hosted evidence uses
+SQLite/SQLAlchemy and OpenTelemetry through explicit ports; embedded evidence
+uses Starlette, FastAPI and Django; and side-by-side evidence uses native host
+routes beside Agnara exposures in the FastAPI and Django scenarios. The same
+capability must be reachable through HTTP and MCP in at least one selected
+scenario. A successful isolated fixture proves only its stated mode, not a
+broader support promise.
+
+Every classification marked **DEFER AFTER 1.0** has a named owner: streaming
+wire extensions remain under RFC 0009 and I2; embedding-related framework
+research remains under RFC 0008 and I20; A2A and Events remain their reserved
+adapter boundaries in `docs/TARGET_ARCHITECTURE.md`; durable execution remains
+G5 in that same target architecture; and GraphQL/gRPC require their own RFC.
+They are excluded from the 1.0 support claim, not deleted from the architectural
+roadmap.
+
 ## 7. The framework embedding contract
 
 The minimum an external host needs in order to invoke Agnara. It must be small,
@@ -460,23 +516,25 @@ of one costs the kernel its size.
 
 ## 13. Validation order
 
-The order implementation follows while `1.0.0` is built. It changes only for a
-demonstrated technical dependency, and the change is recorded.
+The V1-02 scope lock replaces the earlier broad ordering with a gate-oriented
+sequence. Required evidence comes first; conditional support is attempted only
+when it adds evidence without delaying a required gate; experimental fixtures
+cannot become a support claim.
 
 ```text
- 1. Starlette                      9. msgspec
- 2. FastAPI                       10. Jinja2
- 3. SQLAlchemy + SQLite           11. Celery
- 4. PostgreSQL                    12. Redis / RabbitMQ
- 5. Django                        13. OpenTelemetry end to end
- 6. Litestar                      14. MCP + HTTP shared capability
- 7. Flask                         15. research integrations
- 8. Pydantic
+ 1. Framework-neutral embedding contract and common conformance harness
+ 2. Starlette, FastAPI and Django host scenarios
+ 3. SQLAlchemy + SQLite hosted-infrastructure scenario
+ 4. Pydantic schema boundary and OpenTelemetry end-to-end evidence
+ 5. HTTP + MCP shared-capability scenario
+ 6. Conditional: PostgreSQL, Litestar/Flask, Jinja2, Celery, Redis/RabbitMQ,
+    msgspec, Sentry and the explicitly classified secondary fixtures
+ 7. Deferred: every post-1.0 entry in section 6A
 ```
 
-Starlette is first deliberately. It is the smallest host that can exercise the
-whole embedding contract, so a defect it finds is a defect in the contract
-rather than in FastAPI's interpretation of it.
+Starlette begins the host scenarios deliberately. It is the smallest ASGI host
+that can exercise the contract, so a defect it finds is a contract defect rather
+than FastAPI's interpretation of it.
 
 ## 14. Historical reference strategy
 
