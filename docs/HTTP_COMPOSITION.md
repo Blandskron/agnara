@@ -357,6 +357,12 @@ What an SSE route deliberately does not do:
 request bodies. A larger unit fails the response rather than being truncated:
 the operator gets a diagnostic naming the size, never the value.
 
+This is deliberately the adapter's only per-unit resource limit. Connection
+admission, concurrent connection counts, idle/read/write timeouts, TLS,
+reverse-proxy buffering and process memory ceilings belong to the ASGI server
+or reverse proxy that owns those resources. Configure them there; neither the
+kernel nor `Http.sse` fabricates server policy.
+
 ## OpenAPI
 
 `OpenApiInfo` supplies document metadata; `OpenApiOperation` on a route is the
