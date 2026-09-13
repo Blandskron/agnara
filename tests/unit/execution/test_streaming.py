@@ -14,11 +14,11 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import AsyncIterator, Callable, Iterator
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
-from agnara import DefinitionError, InvocationError, PolicyDeniedError
+from agnara import DefinitionError, InvocationError, PolicyDeniedError, SchemaError
 from agnara.capability import CapabilityDefinition, CapabilityId
 from agnara.core.di import DIContainer, DIRegistry, provider
 from agnara.execution import (
@@ -70,8 +70,10 @@ def _clear_teardown() -> Iterator[None]:
     TEARDOWN.clear()
 
 
-def definition(handler: Callable[..., Any], *, streaming: bool = True) -> CapabilityDefinition:
-    return CapabilityDefinition(id=CAPABILITY, handler=handler, streaming=streaming)
+def definition(
+    handler: Callable[..., Any], *, streaming: bool = True, output: object = Any
+) -> CapabilityDefinition:
+    return CapabilityDefinition(id=CAPABILITY, handler=handler, streaming=streaming, output=output)
 
 
 def plan_for(
@@ -81,6 +83,7 @@ def plan_for(
     streaming: bool = True,
     hooks: tuple[Any, ...] = (),
     policies: tuple[Any, ...] = (),
+    output: object = Any,
 ) -> ExecutionPlan:
     return ExecutionPlan.compile(
         CapabilityDefinition(
@@ -88,6 +91,7 @@ def plan_for(
             handler=handler,
             streaming=streaming,
             policies=policies,
+            output=output,
         ),
         registry if registry is not None else DIRegistry(),
         hooks=hooks,
@@ -174,6 +178,154 @@ def test_a_non_streaming_capability_keeps_the_existing_boundary() -> None:
         assert isinstance(result, Success)
         assert result.value == [1, 2]
         assert plan.streaming is False
+        await context.di_container.aclose()
+
+    asyncio.run(run_test())
+
+
+def test_stream_output_is_declared_explicitly_not_inferred_from_generator_annotation() -> None:
+    """The declared type governs a unit even when an annotation says something else."""
+
+    async def rows() -> AsyncIterator[str]:
+        yield cast(str, 1)
+
+    async def run_test() -> None:
+        registry = DIRegistry()
+        plan = plan_for(rows, registry, output=int)
+
+        async with open_stream(plan, context_for(plan, registry)) as stream:
+            assert [unit async for unit in stream] == [1]
+            assert stream.terminal is StreamTerminal.COMPLETED
+
+    asyncio.run(run_test())
+
+
+def test_an_unsupported_declared_stream_output_fails_at_compilation() -> None:
+    async def rows() -> AsyncIterator[int]:
+        yield 1
+
+    with pytest.raises(SchemaError, match=r"capability reports\.rows output"):
+        plan_for(rows, output=set[int])
+
+
+def test_empty_stream_validates_its_declared_unit_contract_without_a_final_payload() -> None:
+    async def rows() -> AsyncIterator[int]:
+        if False:
+            yield 1
+
+    async def run_test() -> None:
+        registry = DIRegistry()
+        plan = plan_for(rows, registry, output=int)
+
+        async with open_stream(plan, context_for(plan, registry)) as stream:
+            assert [unit async for unit in stream] == []
+            assert stream.units_emitted == 0
+            assert stream.terminal is StreamTerminal.COMPLETED
+
+    asyncio.run(run_test())
+
+
+def test_invalid_first_declared_unit_is_a_redacted_interruption_with_no_output() -> None:
+    async def rows() -> AsyncIterator[int]:
+        yield cast(int, "secret report content")
+
+    async def run_test() -> None:
+        registry = DIRegistry()
+        plan = plan_for(rows, registry, output=int)
+
+        async with open_stream(plan, context_for(plan, registry)) as stream:
+            with pytest.raises(StreamInterrupted) as caught:
+                await anext(stream)
+
+            assert caught.value.units_emitted == 0
+            assert caught.value.failure.code is FailureCode.INTERNAL_FAILURE
+            assert caught.value.failure.message == "capability invocation failed"
+            assert "secret" not in caught.value.failure.message
+            assert stream.terminal is StreamTerminal.INTERRUPTED
+
+    asyncio.run(run_test())
+
+
+def test_invalid_unit_after_partial_output_preserves_the_observed_count() -> None:
+    async def rows() -> AsyncIterator[int]:
+        yield 1
+        yield cast(int, "secret report content")
+
+    async def run_test() -> None:
+        registry = DIRegistry()
+        plan = plan_for(rows, registry, output=int)
+
+        async with open_stream(plan, context_for(plan, registry)) as stream:
+            assert await anext(stream) == 1
+            with pytest.raises(StreamInterrupted) as caught:
+                await anext(stream)
+
+            assert caught.value.units_emitted == 1
+            assert caught.value.failure.code is FailureCode.INTERNAL_FAILURE
+            assert stream.units_emitted == 1
+            assert stream.terminal is StreamTerminal.INTERRUPTED
+
+    asyncio.run(run_test())
+
+
+def test_a_deadline_under_a_declared_output_is_still_a_timeout() -> None:
+    """ADR 0086 D3: validation refines units; it does not reclassify lifecycle."""
+
+    async def rows() -> AsyncIterator[int]:
+        yield 1
+        await asyncio.sleep(5)
+        yield 2  # pragma: no cover - the deadline arrives first
+
+    async def run_test() -> None:
+        registry = DIRegistry()
+        plan = plan_for(rows, registry, output=int)
+        loop = asyncio.get_running_loop()
+        context = context_for(plan, registry, deadline=loop.time() + 0.05)
+
+        async with open_stream(plan, context) as stream:
+            assert await anext(stream) == 1
+            with pytest.raises(StreamInterrupted) as raised:
+                await anext(stream)
+
+            assert raised.value.failure.code is FailureCode.TIMEOUT
+            assert raised.value.units_emitted == 1
+            assert stream.terminal is StreamTerminal.TIMED_OUT
+
+        await context.di_container.aclose()
+
+    asyncio.run(run_test())
+
+
+def test_cancellation_under_a_declared_output_stays_cancellation() -> None:
+    """ADR 0086 D3: cancellation is control flow, never an output violation."""
+
+    async def rows() -> AsyncIterator[int]:
+        yield 1
+        await asyncio.sleep(5)
+        yield 2  # pragma: no cover - cancelled first
+
+    async def run_test() -> None:
+        registry = DIRegistry()
+        plan = plan_for(rows, registry, output=int)
+        context = context_for(plan, registry)
+        observed: list[StreamTerminal | None] = []
+
+        async def consume() -> None:
+            async with open_stream(plan, context) as stream:
+                try:
+                    assert await anext(stream) == 1
+                    await anext(stream)
+                finally:
+                    observed.append(stream.terminal)
+
+        task = asyncio.create_task(consume())
+        await asyncio.sleep(0.02)
+        task.cancel()
+
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+        assert observed == [StreamTerminal.CANCELLED]
         await context.di_container.aclose()
 
     asyncio.run(run_test())

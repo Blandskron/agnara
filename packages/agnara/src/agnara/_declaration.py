@@ -100,6 +100,7 @@ def declare_into(
     confirmation: Confirmation | str,
     idempotent: bool | None,
     streaming: bool,
+    output: object,
 ) -> None:
     """Register one declaration, or say which surface refused it.
 
@@ -125,5 +126,6 @@ def declare_into(
             confirmation=confirmation,
             idempotency=idempotency_from(idempotent),
             streaming=streaming,
+            output=output,
         )
     )

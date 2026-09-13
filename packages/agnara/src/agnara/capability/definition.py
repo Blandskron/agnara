@@ -102,6 +102,12 @@ class CapabilityDefinition:
     #: verified against the handler's shape by `ExecutionPlan` (ADR 0084 D1);
     #: the two must agree or compilation fails.
     streaming: bool = False
+    #: The explicit schema annotation for a complete result or one streaming
+    #: unit. It is deliberately not inferred from the handler's return
+    #: annotation: generators and arbitrary awaitables do not make a reliable
+    #: public contract. `ExecutionPlan` compiles and owns the resulting schema
+    #: (ADR 0086).
+    output: object = Any
 
     def __post_init__(self) -> None:
         if not isinstance(self.streaming, bool):
@@ -146,6 +152,7 @@ class CapabilityDefinition:
         idempotency: Idempotency | str = Idempotency.UNKNOWN,
         policies: Iterable[Policy] = (),
         streaming: bool = False,
+        output: object = Any,
     ) -> Self:
         """Build a definition from authoring-shaped arguments.
 
@@ -172,6 +179,7 @@ class CapabilityDefinition:
             idempotency=_coerce(idempotency, Idempotency, "idempotency"),
             policies=tuple(policies),
             streaming=streaming,
+            output=output,
         )
 
     def has_effect(self, effect: str) -> bool:

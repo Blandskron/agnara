@@ -22,6 +22,7 @@ from agnara.core.di.resolver import DIContainer
 from agnara.execution import ExecutionContext, ExecutionPlan, Invocation, invoke_result
 from agnara.schema import materialize_json
 from agnara_http._binding import (
+    _BODY_SOURCES,
     _DEFAULT_MAX_PARTS,
     _bind_request,
     _BindingDefinitionError,
@@ -48,6 +49,7 @@ from agnara_http._routing import (
     _parse_template,
     _RouteRegistry,
 )
+from agnara_http._sse import _serve_sse, _SSEProjection, _SSERequest
 
 type _Scope = dict[str, Any]
 type _Message = dict[str, Any]
@@ -102,6 +104,11 @@ class _HTTPExposure:
     max_body_bytes: int = 1_048_576
     max_parts: int = _DEFAULT_MAX_PARTS
     openapi: _OpenAPIPublication | None = None
+    #: Present exactly when this exposure is the SSE projection of a streaming
+    #: capability. It is a separate declaration rather than an inferred
+    #: response type, because a transport representation belongs to the
+    #: exposure and not to the capability (ADR 0085 D1).
+    sse: _SSEProjection | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,6 +118,7 @@ class _CompiledExposure:
     plan: ExecutionPlan
     binding: _HTTPBindingPlan
     openapi: _OpenAPIPublication | None
+    sse: _SSEProjection | None = None
 
 
 def _compile_exposures(
@@ -125,6 +133,7 @@ def _compile_exposures(
             )
         if exposure.openapi is not None and not isinstance(exposure.openapi, _OpenAPIPublication):
             raise _BindingDefinitionError("openapi must be _OpenAPIPublication or None")
+        _check_streaming(exposure)
         _, parameter_names = _parse_template(exposure.path_template)
         binding = _HTTPBindingPlan.compile(
             exposure.plan,
@@ -136,9 +145,52 @@ def _compile_exposures(
         registry.register(
             exposure.method,
             exposure.path_template,
-            _CompiledExposure(exposure.plan, binding, exposure.openapi),
+            _CompiledExposure(exposure.plan, binding, exposure.openapi, exposure.sse),
         )
     return registry.freeze()
+
+
+def _check_streaming(exposure: _HTTPExposure) -> None:
+    """Hold the streaming declaration and the HTTP representation together.
+
+    Both directions are refused, because either one alone would silently
+    change what a route means: an ordinary route onto a streaming plan would
+    quietly lose the complete-JSON boundary ADR 0027 owns, and an SSE route
+    onto a complete-result plan would promise a producer that does not exist.
+    """
+    target = f"{exposure.method} {exposure.path_template}"
+    if exposure.sse is None:
+        if exposure.plan.streaming:
+            raise _BindingDefinitionError(
+                f"{target}: capability {exposure.plan.definition.id} is declared streaming and "
+                "has no complete JSON representation; declare it with Http.sse()"
+            )
+        return
+    if not isinstance(exposure.sse, _SSEProjection):
+        raise _BindingDefinitionError("sse must be an _SSEProjection or None")
+    if not exposure.plan.streaming:
+        raise _BindingDefinitionError(
+            f"{target}: capability {exposure.plan.definition.id} is not declared streaming, so "
+            "it has no units to project as server-sent events"
+        )
+    if exposure.method != "GET":
+        raise _BindingDefinitionError(
+            f"{target}: an SSE exposure is GET-only; a browser EventSource issues a GET and "
+            "this projection supplies no request-body streaming contract"
+        )
+    body_bound = sorted(
+        binding.input_name for binding in exposure.bindings if binding.source in _BODY_SOURCES
+    )
+    if body_bound:
+        raise _BindingDefinitionError(
+            f"{target}: an SSE exposure reads no request body, so {', '.join(body_bound)} "
+            "cannot be bound to a body, form or upload source"
+        )
+    if exposure.openapi is not None:
+        raise _BindingDefinitionError(
+            f"{target}: an SSE exposure has no reviewed OpenAPI response schema for its data "
+            "or terminal events, so it cannot be published as an operation"
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -192,8 +244,13 @@ class _HTTPDispatcher:
 
         match = self._routes.match(method, path)
         if match is None and head:
-            # HEAD is implied by GET: same headers, no body.
-            match = self._routes.match("GET", path)
+            # HEAD is implied by GET: same headers, no body. An SSE GET is the
+            # exception -- consuming a one-shot producer only to discard every
+            # unit is not a useful or honest answer (ADR 0085 D1) -- so it
+            # falls through to the ordinary 405 below.
+            implied = self._routes.match("GET", path)
+            if implied is not None and implied.route.target.sse is None:
+                match = implied
         if match is None:
             await _send_response(self._not_matched(path, instance), send, head=head)
             return
@@ -213,17 +270,35 @@ class _HTTPDispatcher:
             await _send_response(self._binding_problem(error, instance), send, head=head)
             return
 
+        context = ExecutionContext(
+            Invocation(
+                capability_id=exposure.plan.definition.id,
+                payload=payload,
+                metadata={"transport": "http", "method": method, "path": path},
+                deadline=self._deadline(),
+            ),
+            self._container,
+        )
+
+        if exposure.sse is not None:
+            await _serve_sse(
+                exposure.plan,
+                context,
+                _SSERequest(
+                    projection=exposure.sse,
+                    capability_id=exposure.plan.definition.id,
+                    target=f"{method} {path}",
+                    problem_types=self._options.problem_types,
+                    instance=instance,
+                ),
+                receive,
+                send,
+            )
+            return
+
         result = await invoke_result(
             exposure.plan,
-            ExecutionContext(
-                Invocation(
-                    capability_id=exposure.plan.definition.id,
-                    payload=payload,
-                    metadata={"transport": "http", "method": method, "path": path},
-                    deadline=self._deadline(),
-                ),
-                self._container,
-            ),
+            context,
             input_materializer=materialize_json,
         )
 
@@ -290,9 +365,16 @@ def _allowed_methods(
     routes: _FrozenRouteRegistry[_CompiledExposure],
     path: str,
 ) -> tuple[str, ...]:
-    """List the methods this target accepts, adding the HEAD implied by GET."""
+    """List the methods this target accepts, adding the HEAD implied by GET.
+
+    An SSE GET implies no HEAD, and `Allow` must say so: advertising a method
+    the very next request would answer with 405 is worse than not listing it.
+    """
     allowed = routes.allowed_methods(path)
     if "GET" not in allowed or "HEAD" in allowed:
+        return allowed
+    implied = routes.match("GET", path)
+    if implied is not None and implied.route.target.sse is not None:
         return allowed
     index = allowed.index("GET")
     return (*allowed[: index + 1], "HEAD", *allowed[index + 1 :])

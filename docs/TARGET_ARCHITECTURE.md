@@ -141,11 +141,13 @@ exposure introspection. Stability remains a later explicit decision.
 
 ### G2 — Streaming projections
 
-The kernel now owns the stream lifetime contract (ADR 0084): declared async
-generators, pull-based demand, cancellation, cleanup and post-output failure.
+The kernel now owns the stream lifetime and item contract (ADR 0084, ADR 0086):
+declared async generators, explicit per-unit output schemas, pull-based demand,
+cancellation, cleanup and post-output failure.
 Adding wire projections independently would still produce incompatible
 cancellation, backpressure and partial-failure semantics, so each projection
-must preserve that contract rather than redefining it. HTTP SSE is designed in
+must preserve that contract rather than redefining it. HTTP SSE is implemented
+against it and adds no stream vocabulary to core. It is designed in
 ADR 0085 but is not implemented.
 
 *Blocks:* SSE, WebSockets, MCP progress, A2A streaming, event consumption,

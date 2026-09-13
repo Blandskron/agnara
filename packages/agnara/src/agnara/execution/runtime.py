@@ -10,8 +10,10 @@ from collections.abc import Callable
 from typing import Any
 from uuid import uuid4
 
+from agnara.capability.identity import CapabilityId
 from agnara.errors import InvocationError
 from agnara.execution._outcome import classify
+from agnara.execution._output import validate_output
 from agnara.execution._preflight import bind_inputs, enforce_policies
 from agnara.execution._preflight import tracking_id as _tracking_id
 from agnara.execution.context import ExecutionContext
@@ -20,7 +22,32 @@ from agnara.execution.result import CanonicalResult, Failure, Success
 from agnara.execution.telemetry import InvocationStartEvent, InvocationTerminalEvent
 from agnara.schema import TypeSchema
 
-__all__ = ["invoke", "invoke_result"]
+__all__ = ["classify_failure", "invoke", "invoke_result"]
+
+
+def classify_failure(error: Exception, capability_id: CapabilityId) -> Failure:
+    """Classify one raised exception into the canonical failure it deserves.
+
+    This is the rule `invoke_result` applies, published for an adapter that
+    owns a boundary the kernel does not complete for it. The HTTP SSE
+    projection is the first: `open_stream` raises an ordinary exception for a
+    pre-output failure (ADR 0084 D6), and the adapter must answer it with the
+    same canonical failure any other boundary would have produced (ADR 0085).
+
+    Reusing this is not a convenience. An adapter that re-derived the rule
+    would eventually redact one capability on one transport and not on
+    another, which is the divergence ADR 0077 exists to prevent. Unexpected
+    exceptions are redacted here: the capability identifier is kept for
+    correlation, the message and traceback are not.
+
+    ``asyncio.CancelledError`` must never be passed: cancellation is control
+    flow, not an outcome, and callers re-raise it untouched.
+    """
+    if not isinstance(error, Exception):
+        raise TypeError(f"error must be an Exception, got {type(error).__name__}")
+    if not isinstance(capability_id, CapabilityId):
+        raise TypeError(f"capability_id must be a CapabilityId, got {type(capability_id).__name__}")
+    return classify(error, capability_id)
 
 
 async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
@@ -166,5 +193,5 @@ async def _execute(
 
         result = plan.definition.handler(**arguments)
         if inspect.isawaitable(result):
-            return await result
-        return result
+            result = await result
+        return validate_output(plan, result)

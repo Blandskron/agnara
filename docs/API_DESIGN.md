@@ -178,7 +178,7 @@ Runtime cancellation must propagate.
 ## 15. Streaming
 
 ```python
-@app.capability(streaming=True)
+@app.capability(streaming=True, output=ReportChunk)
 async def generate_report(...) -> AsyncIterator[ReportChunk]:
     ...
 ```
@@ -186,6 +186,13 @@ async def generate_report(...) -> AsyncIterator[ReportChunk]:
 The declaration and the handler's shape are held to each other: `streaming=True`
 over a handler that is not an async generator is rejected when the plan
 compiles, and so is an async generator handler that never declared it.
+
+`output=...` is the explicit contract for one successful complete result or,
+for a stream, one yielded unit. It is compiled when the plan is built and
+validated before a caller receives the value. Omitting it means the intentional
+unconstrained `Any` contract; return annotations do not silently define a
+transport or adapter contract. An output violation is a redacted internal
+failure, not caller `invalid_input`.
 
 Consumption is owned, one-shot and pull-based. Nothing is buffered, so the
 producer advances exactly as fast as the consumer pulls, and closing the stream

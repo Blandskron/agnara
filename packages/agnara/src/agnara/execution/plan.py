@@ -41,6 +41,7 @@ class ExecutionPlan:
     protected_parameters: frozenset[str] = field(init=False)
     input_schemas: Mapping[str, TypeSchema] = field(init=False)
     required_inputs: frozenset[str] = field(init=False)
+    output_schema: TypeSchema = field(init=False)
 
     def __post_init__(self, schema_adapter: SchemaAdapter | None) -> None:
         if not isinstance(self.definition, CapabilityDefinition):
@@ -141,6 +142,24 @@ class ExecutionPlan:
 
         object.__setattr__(self, "input_schemas", MappingProxyType(input_schemas))
         object.__setattr__(self, "required_inputs", frozenset(required_inputs))
+
+        if self.definition.output is Any:
+            # An undeclared output is intentionally unconstrained. Compile it
+            # once with the kernel baseline rather than requiring every
+            # application-provided input adapter to recognize ``Any`` merely
+            # because output validation was added after that adapter.
+            output_schema = StandardSchemaAdapter().compile(Any)
+        else:
+            try:
+                output_schema = adapter.compile(self.definition.output)
+            except SchemaError as error:
+                raise SchemaError(f"capability {self.definition.id} output: {error}") from error
+        if not isinstance(output_schema, TypeSchema):
+            raise DefinitionError(
+                f"schema adapter returned an invalid schema for capability "
+                f"{self.definition.id} output"
+            )
+        object.__setattr__(self, "output_schema", output_schema)
 
     @classmethod
     def compile(
