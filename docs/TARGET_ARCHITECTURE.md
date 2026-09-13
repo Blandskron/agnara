@@ -147,11 +147,12 @@ cancellation, cleanup and post-output failure.
 Adding wire projections independently would still produce incompatible
 cancellation, backpressure and partial-failure semantics, so each projection
 must preserve that contract rather than redefining it. HTTP SSE is implemented
-against it and adds no stream vocabulary to core. It is designed in
-ADR 0085 but is not implemented.
+against it and adds no stream vocabulary to core. ADR 0085 defines its bounded
+projection, with ASGI conformance evidence for delayed commitment, terminal
+reporting, backpressure and disconnect cleanup.
 
-*Blocks:* SSE, WebSockets, MCP progress, A2A streaming, event consumption,
-task progress.
+*Blocks:* WebSockets, MCP progress, A2A streaming, event consumption and task
+progress.
 
 ### G3 — Execution identity and idempotency behaviour
 
@@ -252,10 +253,10 @@ Event capability             → AsyncAPI
 Capability graph             → Agnara introspection
 ```
 
-**HTTP** — cookies, forms, multipart and uploads are implemented. The immediate
-gap is streaming: SSE has an accepted design but no runtime, while WebSockets
-need their own decision. Cross-cutting concerns remain deliberately outside the
-adapter as outer ASGI middleware or server/proxy policy.
+**HTTP** — cookies, forms, multipart, uploads and the bounded SSE streaming
+projection are implemented. WebSockets still need their own decision.
+Cross-cutting concerns remain deliberately outside the adapter as outer ASGI
+middleware or server/proxy policy.
 
 **MCP** — tools are projected; resources and prompts need a decision about
 whether a capability maps to them coherently at all, rather than an
