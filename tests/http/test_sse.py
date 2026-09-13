@@ -323,6 +323,20 @@ def test_no_id_or_retry_field_gives_last_event_id_a_meaning() -> None:
     assert "retry:" not in body
 
 
+def test_json_escaping_prevents_a_unit_from_injecting_an_sse_frame() -> None:
+    """Newlines stay inside one JSON value, never becoming SSE syntax."""
+
+    async def rows() -> AsyncIterator[str]:
+        yield "line one\n\nevent: forged\ndata: forged\n☃"
+
+    events = request(dispatcher(sse_exposure(rows)))
+
+    assert data_units(events) == ["line one\n\nevent: forged\ndata: forged\n☃"]
+    assert [line for line in wire(events).splitlines() if line.startswith("event:")] == [
+        "event: agnara.terminal"
+    ]
+
+
 def test_a_unit_over_the_event_ceiling_is_refused_rather_than_truncated(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
