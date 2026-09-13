@@ -26,7 +26,12 @@ from agnara import Agnara
 from agnara.capability import CapabilityDefinition, CapabilityId
 from agnara.core.di import DIRegistry
 from agnara.core.di.resolver import DIContainer
-from agnara.execution import ExecutionPlan
+from agnara.execution import (
+    ExecutionPlan,
+    InvocationStartEvent,
+    InvocationTerminalEvent,
+    TelemetryHook,
+)
 from agnara_http import Binding, BindingSource, Http, HttpDefinitionError, OpenApiOperation
 from agnara_http._binding import _BindingDefinitionError, _BindingSource, _InputBinding
 from agnara_http._dispatch import (
@@ -46,10 +51,12 @@ def plan(
     *,
     streaming: bool = True,
     registry: DIRegistry | None = None,
+    hooks: tuple[TelemetryHook, ...] = (),
 ) -> ExecutionPlan:
     return ExecutionPlan.compile(
         CapabilityDefinition(CAPABILITY, handler, streaming=streaming),
         registry if registry is not None else DIRegistry(),
+        hooks=hooks,
     )
 
 
@@ -59,11 +66,12 @@ def sse_exposure(
     path: str = "/reports",
     max_event_bytes: int = 1_048_576,
     registry: DIRegistry | None = None,
+    hooks: tuple[TelemetryHook, ...] = (),
 ) -> _HTTPExposure:
     return _HTTPExposure(
         "GET",
         path,
-        plan(handler, registry=registry),
+        plan(handler, registry=registry, hooks=hooks),
         bindings,
         sse=_SSEProjection(max_event_bytes),
     )
@@ -559,6 +567,33 @@ def _problem_types() -> Any:
 # ---------------------------------------------------------------------------
 # D5 -- send demand is the stream's demand, and disconnect is owned
 # ---------------------------------------------------------------------------
+
+
+def test_sse_uses_one_canonical_telemetry_lifecycle() -> None:
+    class Recorder(TelemetryHook):
+        def __init__(self) -> None:
+            self.starts: list[InvocationStartEvent] = []
+            self.terminals: list[InvocationTerminalEvent] = []
+
+        def on_invocation_start(self, event: InvocationStartEvent) -> None:
+            self.starts.append(event)
+
+        def on_invocation_terminal(self, event: InvocationTerminalEvent) -> None:
+            self.terminals.append(event)
+
+    async def rows() -> AsyncIterator[int]:
+        yield 1
+        yield 2
+
+    recorder = Recorder()
+    events = request(dispatcher(sse_exposure(rows, hooks=(recorder,))))
+
+    assert data_units(events) == [1, 2]
+    [start] = recorder.starts
+    [ended] = recorder.terminals
+    assert ended.invocation_id == start.invocation_id
+    assert ended.outcome == "completed"
+    assert ended.units == 2
 
 
 def test_a_slow_client_slows_the_producer() -> None:
