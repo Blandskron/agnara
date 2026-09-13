@@ -28,7 +28,7 @@ release.
 | Initiative | Current decision boundary | Cannot close until | Legitimate work now / in parallel |
 | --- | --- | --- | --- |
 | I2 — Streaming | Kernel implemented by ADR 0084 and ADR 0086; HTTP SSE implemented by ADR 0085 with ASGI conformance evidence. | Nothing further is required for 1.0. | Defer WebSockets, MCP progress, A2A events and event-adapter projections until after 1.0. |
-| I3 — Execution identity and idempotency | No operational identity or deduplication contract exists. | An accepted identity/idempotency design, runtime and race/TTL/failure evidence. | Design work can proceed now; its runtime is independent of the SSE wire projection. |
+| I3 — Execution identity and idempotency | ADR 0087 and the runtime identity exist; no idempotency store, deduplication or result reuse exists. | Operational idempotency store semantics plus race, TTL and failure-retention evidence. | Implement the explicit store boundary and its evidence without coupling it to a transport or automatic retry. |
 | I8 — Capability composition | RFC 0005 remains open; no nested invocation contract exists. | A policy-safe composition decision and propagated context/deadline/identity semantics. | Research and RFC work can proceed; runtime awaits the relevant I3 and I10 boundaries. |
 | I9 — Public API governance | All current exports are provisional and mechanically classified. | A maintainer-approved stable/deprecated classification with migration evidence. | Audit and prune the public surface in parallel with other initiatives. |
 | I10 — Security program | The retained threat model is historical; the 1.0 program is not closed. | Current threat-boundary analysis, supply-chain evidence and abuse/failure tests. | Threat-model and supply-chain design work can proceed in parallel; it constrains I3, I8 and I20 implementation. |
@@ -51,9 +51,12 @@ started.
 ### I3 — Execution identity and idempotency
 
 **Horizon:** `1.0.0`
-**Status:** `PLANNED`
+**Status:** `IN PROGRESS`
 
-Reproducible identity and idempotency behavior with release evidence.
+Runtime execution identity is implemented by ADR 0087: it remains distinct from
+tracking and telemetry invocation identifiers and has no persistence, replay or
+retry behavior. Operational idempotency still requires its explicit store,
+race/TTL/failure evidence and release review.
 
 ### I8 — Capability composition
 

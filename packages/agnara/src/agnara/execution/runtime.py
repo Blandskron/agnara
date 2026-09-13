@@ -7,6 +7,7 @@ import contextlib
 import inspect
 import time
 from collections.abc import Callable
+from dataclasses import replace
 from typing import Any
 from uuid import uuid4
 
@@ -108,6 +109,7 @@ async def _invoke(
             capability_id=plan.definition.id,
             tracking_id=tracking_id,
             invocation_id=invocation_id,
+            execution_id=context.execution_id,
         )
         for hook in observers:
             with contextlib.suppress(Exception):
@@ -136,6 +138,7 @@ async def _invoke(
                 duration_ns=time.monotonic_ns() - start_ns,
                 outcome=outcome,
                 invocation_id=invocation_id,
+                execution_id=context.execution_id,
             )
             for hook in observers:
                 with contextlib.suppress(Exception):
@@ -169,11 +172,11 @@ async def invoke_result[T](
     except asyncio.CancelledError:
         raise
     except Exception as error:
-        return classify(error, plan.definition.id)
+        return replace(classify(error, plan.definition.id), execution_id=context.execution_id)
 
     if isinstance(value, Success | Failure):
-        return value
-    return Success(value)
+        return replace(value, execution_id=context.execution_id)
+    return Success(value, execution_id=context.execution_id)
 
 
 async def _execute(
