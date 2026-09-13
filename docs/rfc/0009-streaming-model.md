@@ -22,11 +22,11 @@ ADR 0086 settles the shared unary/stream output-schema gap that D2 deliberately
 left open. The answers are implemented in `agnara.execution.streaming`, with
 the focused tests section 6 demands in `tests/unit/execution/test_streaming.py`.
 
-What remains open here is every transport projection except HTTP SSE: ADR 0085
-decides SSE's adapter contract but it is not implemented yet. WebSockets, MCP
-progress, A2A task events and the event adapter each need their own ADR and
-conformance tests, and no adapter exposes a stream until its projection has
-both.
+HTTP SSE is the one implemented transport projection: ADR 0085 defines its
+adapter contract and its ASGI conformance suite proves the bounded projection.
+WebSockets, MCP progress, A2A task events and the event adapter remain deferred
+until after 1.0; each needs its own ADR and conformance tests before an adapter
+may expose a stream.
 
 ## 2. Context
 
