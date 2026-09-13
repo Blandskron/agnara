@@ -112,7 +112,7 @@ settled; the spelling is not.
 | Exposure compilation | `IMPLEMENTED` | Public `Http.compile()` derives neutral records from the compiled route table. ADR 0070, ADR 0071. |
 | Public composition API | `IMPLEMENTED` | Seven provisional exports compose and compile an ASGI application through supported entry points. ADR 0071. |
 | Cookies, forms, multipart, uploads | `IMPLEMENTED` | Public binding sources with bounded in-memory bodies and multipart part count. ADR 0072. |
-| SSE streaming projection | `DESIGNED` | ADR 0085 defines the projection; no `Http.sse` runtime or ASGI conformance suite exists yet. |
+| SSE streaming projection | `IMPLEMENTED` | ADR 0085. `Http.sse` is a GET-only, bounded projection with delayed response commitment, one message per unit, one explicit terminal event, no replay/keepalive policy, pull-based demand and owned disconnect cleanup. `tests/http/test_sse.py` supplies ASGI conformance evidence. |
 | WebSockets | `PLANNED` | The ASGI boundary handles no `websocket` scope, and WebSocket streaming still needs its own decision. |
 | Middleware / interceptors | `DEFERRED` | No extension point, deliberately: ADR 0072 keeps cross-cutting concerns at the ASGI layer, which already wraps an `HttpApplication`. |
 | CORS, compression, static files, proxy headers, trusted hosts | `DEFERRED` | None present. ADR 0072 records where each belongs instead: the reverse proxy, the ASGI server, or ASGI middleware around the application. |
