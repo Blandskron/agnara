@@ -25,6 +25,7 @@ class InvocationStartEvent:
     capability_id: CapabilityId
     tracking_id: str | None
     invocation_id: str
+    execution_id: str | None = None
 
 
 @frozen_slots_dataclass
@@ -48,6 +49,7 @@ class InvocationTerminalEvent:
     outcome: str
     invocation_id: str
     units: int | None = None
+    execution_id: str | None = None
 
 
 @runtime_checkable

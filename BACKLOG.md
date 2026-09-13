@@ -19,7 +19,12 @@ order.
 - [ ] Revisit WebSockets, MCP progress, A2A task events and the event adapter
   after `1.0.0`. Each needs its own ADR answering RFC 0009 Q9 and conformance
   tests; none is a supported or required 1.0 projection (V1-02 scope lock).
-- [ ] Implement execution identity and operational idempotency (I3).
+- [~] Implement execution identity and operational idempotency (I3).
+  - [x] Implement the ADR 0087 runtime execution identity in `ExecutionContext`,
+    canonical outcomes, stream diagnostics and lifecycle telemetry (#388).
+  - [ ] Define and implement the explicit idempotency store, including its
+    capability/principal/fingerprint scope, atomic in-flight races, TTL and
+    failure-retention evidence. It must not imply replay or automatic retry.
 - [ ] Establish performance budgets and CI regression gates (I14).
 - [ ] Complete interoperability and composition contracts (I20, I8).
 - [ ] Complete the security program evidence (I10).

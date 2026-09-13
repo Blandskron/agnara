@@ -47,6 +47,19 @@ redacting one capability on one wire and not on another (ADR 0077). It is
 deliberately narrower than a general error-mapping hook: it takes an exception
 and a capability identifier, and returns a `Failure`.
 
+ADR 0087 evolves existing provisional execution values without adding a new
+export: `ExecutionContext.execution_id` is an opaque logical execution token;
+runtime `Success`/`Failure`, `CapabilityStream`, and lifecycle telemetry carry
+the same token.  It is deliberately distinct from caller `tracking_id` and
+telemetry `invocation_id`; a reused context retains its execution token while
+each handler attempt gets a fresh invocation token.  The runtime generates the
+token and rejects the reserved `Invocation.metadata["execution_id"]` channel
+before handler work; a caller-supplied idempotency key is not accepted until a
+future governed store can validate and scope it. The identity is absent from
+transport fields and frozen introspection. This is a provisional semantic
+extension, not an idempotency store, replay protocol, retry policy, or
+durable-execution promise.
+
 `Http.sse` is a method on the existing provisional `Http` builder, not a new
 `agnara_http` export. The adapter's public surface is still the same seven
 names.

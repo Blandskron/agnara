@@ -26,6 +26,7 @@ import asyncio
 import contextlib
 import time
 from collections.abc import AsyncGenerator, AsyncIterator, Callable
+from dataclasses import replace
 from enum import StrEnum
 from types import TracebackType
 from typing import Any, Self
@@ -158,6 +159,7 @@ class CapabilityStream:
     __slots__ = (
         "_context",
         "_events",
+        "_execution_id",
         "_generator",
         "_invocation_id",
         "_materializer",
@@ -185,6 +187,7 @@ class CapabilityStream:
         self._terminal: StreamTerminal | None = None
         self._units = 0
         self._events = bool(plan.hooks)
+        self._execution_id = context.execution_id
         self._invocation_id = ""
         self._tracking_id: str | None = None
         self._start_ns = 0
@@ -198,6 +201,11 @@ class CapabilityStream:
     def terminal(self) -> StreamTerminal | None:
         """How the stream ended, or ``None`` while it is still live."""
         return self._terminal
+
+    @property
+    def execution_id(self) -> str:
+        """The logical execution identity carried by this stream."""
+        return self._execution_id
 
     async def __aenter__(self) -> Self:
         """Run the whole pre-output phase and stop before the first unit.
@@ -227,6 +235,7 @@ class CapabilityStream:
                 capability_id=self._plan.definition.id,
                 tracking_id=self._tracking_id,
                 invocation_id=self._invocation_id,
+                execution_id=self._execution_id,
             )
             for hook in self._plan.hooks:
                 with contextlib.suppress(Exception):
@@ -320,13 +329,21 @@ class CapabilityStream:
         except TimeoutError:
             self._terminal = StreamTerminal.TIMED_OUT
             raise StreamInterrupted(
-                Failure(FailureCode.TIMEOUT, "invocation deadline exceeded"),
+                Failure(
+                    FailureCode.TIMEOUT,
+                    "invocation deadline exceeded",
+                    execution_id=self._execution_id,
+                ),
                 self._units,
             ) from None
         except Exception as error:
             self._terminal = StreamTerminal.INTERRUPTED
             raise StreamInterrupted(
-                classify(error, self._plan.definition.id), self._units
+                replace(
+                    classify(error, self._plan.definition.id),
+                    execution_id=self._execution_id,
+                ),
+                self._units,
             ) from error
 
         self._units += 1
@@ -380,6 +397,7 @@ class CapabilityStream:
                     outcome=(self._terminal or StreamTerminal.ABANDONED).value,
                     invocation_id=self._invocation_id,
                     units=self._units,
+                    execution_id=self._execution_id,
                 )
                 for hook in self._plan.hooks:
                     with contextlib.suppress(Exception):

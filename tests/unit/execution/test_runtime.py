@@ -568,7 +568,12 @@ def test_canonical_invocation_preserves_an_explicit_failure() -> None:
         expected = Failure(FailureCode.CONFLICT, "payment was already refunded")
         plan = ExecutionPlan.compile(definition(lambda: expected, output=str), registry)
 
-        assert await invoke_result(plan, context_for(plan, registry)) is expected
+        context = context_for(plan, registry)
+        outcome = await invoke_result(plan, context)
+
+        assert outcome == expected
+        assert outcome is not expected
+        assert outcome.execution_id == context.execution_id
 
     asyncio.run(run_test())
 
