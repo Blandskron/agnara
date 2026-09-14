@@ -69,7 +69,10 @@ def test_default_public_swagger_page_renders_from_the_compiled_asgi_app(browser:
             response = page.goto(host.url("/docs"), wait_until="networkidle")
             assert response is not None and response.status == 200
             page.locator("#swagger-ui .info").wait_for()
-            assert page.get_by_text("Public documentation fixture", exact=True).count() >= 1
+            # Swagger UI renders the title as a bare text node beside the version
+            # spans, so the heading's own text is never the title alone.
+            title = page.locator("#swagger-ui .info .title").text_content()
+            assert title is not None and title.startswith("Public documentation fixture")
             assert page.get_by_text("Show a widget", exact=True).count() >= 1
             assert all(url.startswith(host.origin) for url in requests)
             assert page.locator("body").evaluate("node => node.scrollWidth <= window.innerWidth")
