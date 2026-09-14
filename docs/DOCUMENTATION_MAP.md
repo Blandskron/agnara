@@ -56,6 +56,7 @@ Each level may cite the level above it. None should restate it.
 | Manifest format | `docs/PROJECT_MANIFEST.md` | cite |
 | Public API shape and intent | `docs/API_DESIGN.md` | cite |
 | How to serve capabilities over HTTP | `docs/HTTP_COMPOSITION.md` | cite; never restate a limitation |
+| How to run the official reference container | `docs/CONTAINERS.md` | cite; PyPI remains canonical |
 | Public API inventory and stability policy | `docs/PUBLIC_API.md` + `docs/public-api.json` | cite |
 | External standards studied | `docs/REFERENCE_RESEARCH.md` | cite |
 | Contribution and git process | `CONTRIBUTING.md`, `GIT_WORKFLOW.md` | cite |

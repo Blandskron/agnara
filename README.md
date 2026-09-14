@@ -88,3 +88,7 @@ uv run pytest
 Publication is a reviewed dispatch from `main`. The workflow verifies the
 complete distribution set before it creates a tag; see
 [docs/MAINTAINERS_RELEASE.md](docs/MAINTAINERS_RELEASE.md).
+
+The official executable reference runtime is published separately to GHCR;
+PyPI remains the canonical Python distribution. See
+[docs/CONTAINERS.md](docs/CONTAINERS.md) for verified pull, run and digest-pinning commands.

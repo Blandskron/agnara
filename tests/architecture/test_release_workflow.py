@@ -24,6 +24,7 @@ WORKFLOW = WORKSPACE_ROOT / ".github" / "workflows" / "release.yml"
 STATUS = WORKSPACE_ROOT / "docs" / "releases" / "release-status.json"
 
 TAG_JOB = "tag"
+CONTAINER_JOB = "container"
 GATE_JOB = "publish"
 PHASE_UPLOADS = {
     "bootstrap-1": ["publish-a2a", "publish-cli", "publish-events"],
@@ -262,6 +263,7 @@ def test_the_final_phase_publishes_only_the_kernel_then_verifies_tags_and_announ
         "verify-published",
         TAG_JOB,
         "github-release",
+        CONTAINER_JOB,
     }
     assert not running & set(PHASE_UPLOADS["bootstrap-1"] + PHASE_UPLOADS["bootstrap-2"])
 

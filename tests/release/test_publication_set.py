@@ -50,6 +50,7 @@ CI_WORKFLOW = WORKSPACE_ROOT / ".github" / "workflows" / "ci.yml"
 UPLOAD_JOBS = [
     "publish-" + suffix for suffix in ("a2a", "cli", "events", "http", "mcp", "telemetry", "core")
 ]
+ATTESTATION_JOBS = ["container"]
 
 MANIFEST = distributions.load(WORKSPACE_ROOT)
 
@@ -239,9 +240,15 @@ def test_only_the_publishing_job_holds_an_oidc_token_and_it_cannot_write_content
         and job["permissions"].get("id-token") == "write"
     ]
 
-    assert holders == UPLOAD_JOBS
-    for name in holders:
+    assert holders == UPLOAD_JOBS + ATTESTATION_JOBS
+    for name in UPLOAD_JOBS:
         assert jobs[name]["permissions"] == {"contents": "read", "id-token": "write"}
+    assert jobs["container"]["permissions"] == {
+        "contents": "read",
+        "packages": "write",
+        "attestations": "write",
+        "id-token": "write",
+    }
     assert jobs["publish"]["permissions"] == {"contents": "read"}
     assert jobs["publish"]["permissions"]["contents"] == "read"
     assert jobs["publish"]["environment"]["name"] == "pypi"
