@@ -22,7 +22,7 @@ mean inventing an implementation on top of an unsettled exposure model —
 exactly the mistake `docs/INITIATIVES.md` records as the reason I1 exists.
 
 The answers become one or more ADRs, and the implementation belongs to
-`0.1.0b1` (ADR 0068).
+`1.0.0` (ADR 0068).
 
 ## 2. Context
 
@@ -41,7 +41,7 @@ ownership per infrastructure category, so every application invents its own.
 
 **Agnara embedded** has no contract at all. An external host would have to
 import private modules — the same problem `docs/releases/release-status.json`
-records as a `0.1.0a4` blocker, one level further out.
+records as a baseline blocker, one level further out.
 
 **Side-by-side** has no contract, and is where the design errors hide: two
 lifecycles, two containers, two telemetry pipelines, one process.
@@ -272,8 +272,7 @@ is likely the right shape.
 ## 7. Non-goals
 
 - Choosing a framework to favour.
-- Shipping any integration in any `0.1.0a*` release (ADR 0068; the alpha
-  line gained `0.1.0a5` and renumbered execution to `0.1.0a6` in ADR 0078).
+- Shipping any integration outside a reviewed `1.0.0` release gate (ADR 0068).
 - A universal adapter interface over unlike infrastructure categories.
 - A plugin or entry-point discovery model (I13, post-1.0).
 - Replacing anything the host already does well: routing, ORM, admin, auth,

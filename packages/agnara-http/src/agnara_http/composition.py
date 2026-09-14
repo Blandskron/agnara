@@ -46,8 +46,9 @@ this package declared no public surface for three releases.
 from __future__ import annotations
 
 import json
-from collections.abc import AsyncIterator, Callable, Sequence
+from collections.abc import AsyncIterator, Callable, Mapping, Sequence
 from contextlib import AbstractAsyncContextManager, AsyncExitStack, asynccontextmanager
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Self
 
@@ -56,7 +57,8 @@ from agnara.capability import CapabilityId
 from agnara.core.di import DIContainer, DIRegistry
 from agnara.execution import ExecutionPlan, TelemetryHook
 from agnara.exposure import SurfaceCompilation, SurfaceId
-from agnara.policy import ConfirmationVerifier
+from agnara.introspection import DiscoveryVisibility, IntrospectionSnapshot
+from agnara.policy import ConfirmationVerifier, Principal
 from agnara.schema import SchemaAdapter
 from agnara_http._asgi import _ASGIBoundary
 from agnara_http._binding import _BindingDefinitionError, _BindingSource, _InputBinding
@@ -66,31 +68,62 @@ from agnara_http._dispatch import (
     _HTTPDispatcher,
     _HTTPExposure,
     _OpenAPIPublication,
+    _problem_instance,
+    _routed_path,
 )
+from agnara_http._documentation import (
+    _documentation_security_headers,
+    _DocumentationDefinitionError,
+    _DocumentationPage,
+    _DocumentationRegistry,
+    _DocumentationRequest,
+    _DocumentationUnavailable,
+    _https_origin,
+)
+from agnara_http._explorer import _compile_explorer, _ExplorerDispatcher, _ExplorerRoute
 from agnara_http._exposures import DEFAULT_SURFACE, _compile_exposure_surface
 from agnara_http._lifespan import _LifespanDispatcher
 from agnara_http._openapi import _OpenAPIDefinitionError, _OpenAPIInfo, _project_openapi
-from agnara_http._problem import _compile_problem_types, _ProblemDefinitionError
+from agnara_http._problem import (
+    _allow_header,
+    _compile_problem_types,
+    _ProblemDefinitionError,
+    _serialize_transport_failure,
+    _TransportFailure,
+)
+from agnara_http._redoc import _ReDocProvider
+from agnara_http._response import _send_response, _SerializedResponse
 from agnara_http._routing import (
     _FrozenRouteRegistry,
+    _normalize_method,
     _RouteDefinitionError,
     _RouteRegistryFrozenError,
 )
+from agnara_http._scalar import _ScalarProvider
+from agnara_http._sse import _SSEDefinitionError, _SSEProjection
 from agnara_http._surfaces import (
     _compile_surfaces,
     _HTTPSurface,
     _SurfaceDefinitionError,
     _SurfaceDispatcher,
 )
+from agnara_http._swagger import _SwaggerUIProvider
 
 __all__ = [
     "Binding",
     "BindingSource",
+    "DocumentationAssets",
     "Http",
     "HttpApplication",
     "HttpDefinitionError",
+    "HttpDocumentation",
+    "HttpExplorer",
     "OpenApiInfo",
     "OpenApiOperation",
+    "OpenApiSchema",
+    "ReDoc",
+    "Scalar",
+    "SwaggerUI",
 ]
 
 #: Adapter-internal failures translated into `HttpDefinitionError`.
@@ -102,10 +135,13 @@ __all__ = [
 #: whoever is debugging.
 _TRANSLATED: tuple[type[Exception], ...] = (
     _BindingDefinitionError,
+    _DocumentationDefinitionError,
+    _DocumentationUnavailable,
     _OpenAPIDefinitionError,
     _ProblemDefinitionError,
     _RouteDefinitionError,
     _RouteRegistryFrozenError,
+    _SSEDefinitionError,
     _SurfaceDefinitionError,
 )
 
@@ -357,6 +393,282 @@ class OpenApiOperation:
         return f"OpenApiOperation(summary={self._summary!r}, tags={self._tags!r})"
 
 
+@dataclass(frozen=True, slots=True)
+class DocumentationAssets:
+    """Choose verified local assets or explicitly allow pinned CDN origins.
+
+    ``local()`` is the default and has no runtime network dependency.
+    ``remote(...)`` does not accept arbitrary URLs: built-in providers keep
+    their own exact-version URL and SRI evidence, while this value grants only
+    the exact HTTPS origins a deployment accepts.
+    """
+
+    allowed_remote_origins: frozenset[str] = frozenset()
+    remote_assets: bool = False
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.allowed_remote_origins, frozenset):
+            raise HttpDefinitionError("allowed_remote_origins must be a frozenset of HTTPS origins")
+        if not isinstance(self.remote_assets, bool):
+            raise HttpDefinitionError("remote_assets must be a boolean")
+        if self.remote_assets and not self.allowed_remote_origins:
+            raise HttpDefinitionError(
+                "remote documentation assets need at least one allowed HTTPS origin"
+            )
+        for origin in self.allowed_remote_origins:
+            try:
+                _https_origin(origin, label="allowed remote origin")
+            except _DocumentationDefinitionError as error:
+                raise HttpDefinitionError(str(error)) from error
+
+    @classmethod
+    def local(cls) -> Self:
+        """Use the package's hash-verified, same-origin assets."""
+        return cls()
+
+    @classmethod
+    def remote(cls, *origins: str) -> Self:
+        """Allow built-in CDN assets only from these exact HTTPS origins."""
+        return cls(frozenset(origins), remote_assets=True)
+
+
+@dataclass(frozen=True, slots=True)
+class OpenApiSchema:
+    """Publish the generated OpenAPI JSON at one explicit static path."""
+
+    path: str = "/openapi.json"
+
+
+@dataclass(frozen=True, slots=True)
+class SwaggerUI:
+    """Configure the built-in Swagger UI documentation page."""
+
+    path: str = "/docs"
+    try_it: bool = False
+    assets: DocumentationAssets = field(default_factory=DocumentationAssets.local)
+
+
+@dataclass(frozen=True, slots=True)
+class Scalar:
+    """Configure the built-in Scalar documentation page."""
+
+    path: str = "/scalar"
+    try_it: bool = False
+    assets: DocumentationAssets = field(default_factory=DocumentationAssets.local)
+
+
+@dataclass(frozen=True, slots=True)
+class ReDoc:
+    """Configure the built-in read-only ReDoc documentation page.
+
+    The bundled ReDoc release currently declares OpenAPI 3.1 support only.
+    Selecting it for Agnara's canonical 3.2 document therefore fails during
+    compilation with a diagnostic rather than receiving a rewritten schema.
+    """
+
+    path: str = "/redoc"
+    assets: DocumentationAssets = field(default_factory=DocumentationAssets.local)
+
+
+@dataclass(frozen=True, slots=True)
+class HttpDocumentation:
+    """Independently select OpenAPI publication and built-in browser UIs.
+
+    ``HttpDocumentation()`` is the local development profile: it publishes
+    ``/openapi.json`` and serves Swagger UI at ``/docs``. Passing ``None``
+    for an individual selection disables only that surface. A UI still works
+    when ``schema=None`` because it receives the generated document directly.
+    """
+
+    schema: OpenApiSchema | None = field(default_factory=OpenApiSchema)
+    swagger: SwaggerUI | None = field(default_factory=SwaggerUI)
+    scalar: Scalar | None = None
+    redoc: ReDoc | None = None
+
+    def __post_init__(self) -> None:
+        selections = (
+            ("schema", self.schema, OpenApiSchema),
+            ("swagger", self.swagger, SwaggerUI),
+            ("scalar", self.scalar, Scalar),
+            ("redoc", self.redoc, ReDoc),
+        )
+        for name, value, expected in selections:
+            if value is not None and not isinstance(value, expected):
+                raise HttpDefinitionError(
+                    f"documentation {name} must be a {expected.__name__} or None"
+                )
+
+
+@dataclass(frozen=True, slots=True)
+class HttpExplorer:
+    """Publish the read-only Explorer from an authorized filtered snapshot.
+
+    Explorer is deliberately separate from OpenAPI documentation. The caller
+    supplies the protocol-neutral snapshot, its visibility policy and the
+    application's principal resolver; this adapter never infers identity from
+    HTTP headers and viewing never authorizes invocation.
+    """
+
+    snapshot: IntrospectionSnapshot
+    visibility: DiscoveryVisibility
+    principals: Callable[[_Scope], Principal | None]
+    path: str = "/agnara"
+    challenge: str | None = None
+    allow_anonymous: bool = False
+    cache_control: str = "private, no-store"
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.snapshot, IntrospectionSnapshot):
+            raise HttpDefinitionError("explorer snapshot must be an IntrospectionSnapshot")
+        if not isinstance(self.visibility, DiscoveryVisibility):
+            raise HttpDefinitionError("explorer visibility must be a DiscoveryVisibility")
+        if not callable(self.principals):
+            raise HttpDefinitionError("explorer principals must be callable")
+        if not isinstance(self.allow_anonymous, bool):
+            raise HttpDefinitionError("explorer allow_anonymous must be a boolean")
+        if not self.allow_anonymous and self.challenge is None:
+            raise HttpDefinitionError(
+                "an authenticated explorer needs a WWW-Authenticate challenge; "
+                "set challenge=... or allow_anonymous=True"
+            )
+        if self.allow_anonymous and self.challenge is not None:
+            raise HttpDefinitionError("an anonymous explorer must not declare a challenge")
+
+
+@dataclass(frozen=True, slots=True)
+class _DocumentationRoute:
+    """One built-in page, rendered from a fixed generated document."""
+
+    name: str
+    path: str
+    assets_path: str
+    provider: object
+    artifact: bytes
+    openapi_version: str
+    title: str
+    schema_path: str | None
+    allowed_remote_origins: frozenset[str]
+    try_it: bool
+
+
+class _DocumentationDispatcher:
+    """Render documentation pages and root-aware initializer assets on demand.
+
+    The compiled route choices and document bytes are immutable. Rendering at
+    request time is intentional: an ASGI mount prefix is request metadata, so
+    baking ``/docs`` into the initializer would make a mounted application
+    fetch from the host root instead of its own ``root_path``.
+    """
+
+    __slots__ = ("_fallback", "_problem_types", "_routes")
+
+    def __init__(
+        self,
+        routes: tuple[_DocumentationRoute, ...],
+        fallback: Callable[[_Scope, Callable[[], Any], Callable[[Any], Any]], Any],
+        *,
+        problem_types: Mapping[str, str],
+    ) -> None:
+        self._routes = routes
+        self._fallback = fallback
+        self._problem_types = dict(problem_types)
+
+    async def __call__(
+        self, scope: _Scope, receive: Callable[[], Any], send: Callable[[Any], Any]
+    ) -> None:
+        method = scope.get("method")
+        if not isinstance(method, str):
+            raise TypeError("ASGI scope 'method' must be a string")
+        path = _routed_path(scope)
+        matched = self._match(path)
+        if matched is None:
+            await self._fallback(scope, receive, send)
+            return
+        route, asset_name = matched
+        normalized = _normalize_method(method)
+        if normalized not in {"GET", "HEAD"}:
+            response = _serialize_transport_failure(
+                _TransportFailure.METHOD_NOT_ALLOWED,
+                "the target does not accept this method",
+                headers=_allow_header(("GET", "HEAD")),
+                problem_types=self._problem_types,
+                instance=_problem_instance(path),
+            )
+            await _send_response(response, send)
+            return
+        page = self._render(route, scope)
+        if asset_name is None:
+            response = _SerializedResponse(
+                200,
+                (
+                    (b"content-type", b"text/html; charset=utf-8"),
+                    (b"content-length", str(len(page.html)).encode("ascii")),
+                    *_documentation_security_headers(page.csp),
+                ),
+                page.html,
+            )
+        else:
+            asset = page.assets.get(asset_name)
+            if asset is None:
+                await self._fallback(scope, receive, send)
+                return
+            response = _SerializedResponse(
+                200,
+                (
+                    (b"content-type", asset.media_type.encode("ascii")),
+                    (b"content-length", str(len(asset.body)).encode("ascii")),
+                    (b"cache-control", b"no-store"),
+                    (b"x-content-type-options", b"nosniff"),
+                ),
+                asset.body,
+            )
+        await _send_response(response, send, head=normalized == "HEAD")
+
+    def _match(self, path: str) -> tuple[_DocumentationRoute, str | None] | None:
+        for route in self._routes:
+            if path == route.path:
+                return route, None
+            prefix = f"{route.assets_path}/"
+            if path.startswith(prefix):
+                return route, path[len(prefix) :]
+        return None
+
+    def _render(self, route: _DocumentationRoute, scope: _Scope) -> _DocumentationPage:
+        return _render_documentation_page(route, scope)
+
+
+def _mounted_path(path: str, scope: _Scope) -> str:
+    """Prefix a configured same-origin path with ASGI's trusted mount path."""
+    root_path = scope.get("root_path", "")
+    if not isinstance(root_path, str):
+        raise TypeError("ASGI scope 'root_path' must be a string")
+    if not root_path:
+        return path
+    if not root_path.startswith("/") or root_path.startswith("//"):
+        raise TypeError("ASGI scope 'root_path' must be a same-origin absolute path")
+    return f"{root_path.rstrip('/')}{path}"
+
+
+def _render_documentation_page(route: _DocumentationRoute, scope: _Scope) -> _DocumentationPage:
+    """Render one validated built-in provider with exactly one schema source."""
+    schema_url = None if route.schema_path is None else _mounted_path(route.schema_path, scope)
+    request = _DocumentationRequest(
+        document_url=schema_url,
+        document=None if schema_url is not None else route.artifact,
+        title=route.title,
+        assets_url=_mounted_path(route.assets_path, scope),
+        openapi_version=route.openapi_version,
+        try_it=route.try_it,
+    )
+    registry = _DocumentationRegistry()
+    registry.register(route.provider)
+    return registry.render(
+        route.name,
+        request,
+        allowed_remote_origins=route.allowed_remote_origins,
+    )
+
+
 def _limits(declaration: _Declaration) -> dict[str, int]:
     """Only the limits this route overrode, so adapter defaults still apply."""
     limits: dict[str, int] = {}
@@ -373,10 +685,12 @@ class _Declaration:
     __slots__ = (
         "bindings",
         "max_body_bytes",
+        "max_event_bytes",
         "max_parts",
         "method",
         "openapi",
         "path",
+        "sse",
         "target",
     )
 
@@ -389,6 +703,8 @@ class _Declaration:
         openapi: OpenApiOperation | None,
         max_body_bytes: int | None,
         max_parts: int | None,
+        sse: bool = False,
+        max_event_bytes: int | None = None,
     ) -> None:
         self.method = method
         self.path = path
@@ -397,6 +713,16 @@ class _Declaration:
         self.openapi = openapi
         self.max_body_bytes = max_body_bytes
         self.max_parts = max_parts
+        self.sse = sse
+        self.max_event_bytes = max_event_bytes
+
+    def projection(self) -> _SSEProjection | None:
+        """The SSE contract this declaration asked for, if it asked for one."""
+        if not self.sse:
+            return None
+        if self.max_event_bytes is None:
+            return _SSEProjection()
+        return _SSEProjection(self.max_event_bytes)
 
     def describe(self) -> str:
         return f"{self.method} {self.path}"
@@ -699,6 +1025,74 @@ class Http:
         """Expose a capability at ``DELETE path``."""
         return self.route("DELETE", path, capability, *bindings, openapi=openapi)
 
+    def sse(
+        self,
+        path: str,
+        capability: CapabilityRef,
+        *bindings: Binding,
+        max_event_bytes: int | None = None,
+    ) -> Self:
+        """Expose a streaming capability at ``GET path`` as server-sent events.
+
+        This is the only supported SSE spelling, and it is deliberately not a
+        response type an ordinary `get` could acquire: a capability can be
+        projected through several adapters, so the wire representation belongs
+        to the exposure that chose it (ADR 0085 D1).
+
+        Each yielded unit becomes one standard ``message`` event carrying one
+        compact JSON value, so a browser ``EventSource`` needs no Agnara
+        vocabulary to read it. The response begins only once the first unit is
+        representable, which is what keeps an ordinary RFC 9457 problem
+        response available for a failure that exposed nothing. Every started
+        response then ends with one ``agnara.terminal`` event naming the
+        outcome and the exact number of units already sent, because a closed
+        connection cannot tell completion from failure.
+
+        Reconnection is a client transport behaviour and nothing more. This
+        projection sends no ``id`` or ``retry`` field and gives
+        ``Last-Event-ID`` no meaning: a reconnecting client starts a new,
+        ordinary invocation, with every policy and effect rule applied again.
+
+        Args:
+            path: a route template such as ``/reports/{report_id}``.
+            capability: a capability declared on the application with
+                ``streaming=True``, either the decorated function or its
+                `CapabilityDefinition`.
+            bindings: one `Binding` per input the request supplies. Body, form
+                and upload sources are refused: an ``EventSource`` issues a
+                GET, and this projection supplies no request-body streaming
+                contract.
+            max_event_bytes: the ceiling for one encoded event, defaulting to
+                the 1 MiB this adapter already uses for request bodies. A
+                larger unit fails the response rather than being truncated or
+                silently dropped.
+
+        Returns:
+            This builder, so declarations can be chained.
+
+        Raises:
+            HttpDefinitionError: the builder has already compiled, or an
+                argument is not of the expected type. That the capability is
+                streaming, and that no body binding was asked for, is checked
+                at `compile`, when the plan exists.
+
+        Note:
+            An SSE route is absent from the OpenAPI document and accepts no
+            `OpenApiOperation`. The document describes complete JSON
+            representations and has no reviewed schema for stream units or for
+            the terminal event, and claiming one would be exactly the
+            accidental promise ADR 0085 D6 refuses to make.
+        """
+        if max_event_bytes is not None and (
+            isinstance(max_event_bytes, bool) or not isinstance(max_event_bytes, int)
+        ):
+            raise HttpDefinitionError(f"GET {path}: max_event_bytes must be an integer or None")
+        self.route("GET", path, capability, *bindings)
+        declaration = self._declarations[-1]
+        declaration.sse = True
+        declaration.max_event_bytes = max_event_bytes
+        return self
+
     def compile(
         self,
         capabilities: FrozenCapabilityRegistry,
@@ -706,6 +1100,8 @@ class Http:
         dependencies: DIRegistry | None = None,
         openapi: OpenApiInfo | None = None,
         openapi_path: str | None = None,
+        documentation: HttpDocumentation | None = None,
+        explorer: HttpExplorer | None = None,
         lifecycle: Lifecycle | None = None,
         request_timeout: float | None = None,
         problem_base_uri: str | None = None,
@@ -740,6 +1136,10 @@ class Http:
                 ``"/openapi.json"``. Omitted means the document is not served;
                 publishing an API description is a deliberate act (ADR 0035),
                 so there is no default path.
+            documentation: typed OpenAPI schema and built-in UI selections.
+                ``HttpDocumentation()`` publishes ``/openapi.json`` and local
+                Swagger UI at ``/docs``; individual selections may be ``None``.
+            explorer: an independently authorized, read-only Explorer route.
             lifecycle: an async context manager factory run once per ASGI
                 lifespan cycle. Startup enters it, shutdown exits it.
                 HTTP-owned singleton providers close before it exits. Without
@@ -794,6 +1194,24 @@ class Http:
                 "openapi_path serves an OpenAPI document, so it needs "
                 "openapi=OpenApiInfo(title, version)"
             )
+        if documentation is not None and not isinstance(documentation, HttpDocumentation):
+            raise HttpDefinitionError(
+                "documentation must be an HttpDocumentation or None, got "
+                f"{type(documentation).__name__}"
+            )
+        if documentation is not None and openapi is None:
+            raise HttpDefinitionError(
+                "documentation needs openapi=OpenApiInfo(title, version) to generate its contract"
+            )
+        if documentation is not None and openapi_path is not None:
+            raise HttpDefinitionError(
+                "openapi_path and documentation are alternative schema-publication configurations; "
+                "use HttpDocumentation(schema=OpenApiSchema(...))"
+            )
+        if explorer is not None and not isinstance(explorer, HttpExplorer):
+            raise HttpDefinitionError(
+                f"explorer must be an HttpExplorer or None, got {type(explorer).__name__}"
+            )
         if lifecycle is not None and not callable(lifecycle):
             raise HttpDefinitionError(
                 f"lifecycle must be callable or None, got {type(lifecycle).__name__}"
@@ -817,6 +1235,7 @@ class Http:
                 tuple(binding._internal() for binding in declaration.bindings),
                 **_limits(declaration),
                 openapi=None if declaration.openapi is None else declaration.openapi._internal(),
+                sse=declaration.projection(),
             )
             for declaration, capability_id in resolved
         ]
@@ -830,15 +1249,47 @@ class Http:
             )
             container = DIContainer(dependencies)
             dispatch = _HTTPDispatcher(routes, container, options)
-            boundary = _ASGIBoundary(
-                _SurfaceDispatcher(
-                    _compile_surfaces(self._static_surfaces(openapi, openapi_path, routes), routes),
-                    dispatch,
+            static_surfaces, documentation_routes = self._documentation_surfaces(
+                openapi, openapi_path, documentation, routes
+            )
+            static_dispatch = _SurfaceDispatcher(
+                _compile_surfaces(static_surfaces, routes),
+                dispatch,
+                problem_types=options.problem_types,
+            )
+            published: Callable[[_Scope, Callable[[], Any], Callable[[Any], Any]], Any] = (
+                _DocumentationDispatcher(
+                    documentation_routes,
+                    static_dispatch,
                     problem_types=options.problem_types,
-                ),
+                )
+                if documentation_routes
+                else static_dispatch
+            )
+            if explorer is not None:
+                compiled_explorer = _compile_explorer(
+                    _ExplorerRoute(
+                        base_path=explorer.path,
+                        snapshot=explorer.snapshot,
+                        visibility=explorer.visibility,
+                        principals=explorer.principals,
+                        challenge=explorer.challenge,
+                        allow_anonymous=explorer.allow_anonymous,
+                        cache_control=explorer.cache_control,
+                    ),
+                    routes,
+                )
+                self._check_explorer_collisions(compiled_explorer.base_path, static_surfaces)
+                published = _ExplorerDispatcher(
+                    compiled_explorer,
+                    published,
+                    problem_types=options.problem_types,
+                )
+            boundary = _ASGIBoundary(
+                published,
                 _LifespanDispatcher(lambda: _owned_lifecycle(container, lifecycle)),
             )
-            if openapi is not None and openapi_path is None:
+            if openapi is not None and openapi_path is None and documentation is None:
                 # Not served, but still promised: `HttpApplication.openapi()`
                 # projects on demand, and a surface it cannot describe is a
                 # startup failure, not one the first caller of that method finds.
@@ -862,29 +1313,114 @@ class Http:
             openapi,
         )
 
-    def _static_surfaces(
+    def _documentation_surfaces(
         self,
         openapi: OpenApiInfo | None,
         openapi_path: str | None,
+        documentation: HttpDocumentation | None,
         routes: _Routes,
-    ) -> tuple[_HTTPSurface, ...]:
-        """The document route, when the application asked for one."""
-        if openapi_path is None or openapi is None:
-            return ()
+    ) -> tuple[tuple[_HTTPSurface, ...], tuple[_DocumentationRoute, ...]]:
+        """Compile every static documentation reservation before serving it."""
+        if openapi is None:
+            return (), ()
         document = json.dumps(
             _project_openapi(routes, openapi._internal()),
             sort_keys=True,
             separators=(",", ":"),
         ).encode("utf-8")
-        return (
-            _HTTPSurface(
-                "openapi",
-                openapi_path,
-                "application/json; charset=utf-8",
-                document,
-                ((b"cache-control", b"no-store"),),
-            ),
-        )
+        if documentation is None:
+            if openapi_path is None:
+                return (), ()
+            return (
+                _HTTPSurface(
+                    "openapi",
+                    openapi_path,
+                    "application/json; charset=utf-8",
+                    document,
+                    ((b"cache-control", b"no-store"),),
+                ),
+            ), ()
+
+        surfaces: list[_HTTPSurface] = []
+        if documentation.schema is not None:
+            surfaces.append(
+                _HTTPSurface(
+                    "openapi",
+                    documentation.schema.path,
+                    "application/json; charset=utf-8",
+                    document,
+                    ((b"cache-control", b"no-store"),),
+                )
+            )
+        selected: list[tuple[str, SwaggerUI | Scalar | ReDoc]] = []
+        if documentation.swagger is not None:
+            selected.append(("swagger-ui", documentation.swagger))
+        if documentation.scalar is not None:
+            selected.append(("scalar", documentation.scalar))
+        if documentation.redoc is not None:
+            selected.append(("redoc", documentation.redoc))
+        compiled_routes: list[_DocumentationRoute] = []
+        for name, selection in selected:
+            if not isinstance(selection.path, str) or not selection.path.startswith("/"):
+                raise HttpDefinitionError(f"{name} path must be a same-origin absolute path")
+            if not isinstance(selection.assets, DocumentationAssets):
+                raise HttpDefinitionError(f"{name} assets must be a DocumentationAssets")
+            if not isinstance(getattr(selection, "try_it", False), bool):
+                raise HttpDefinitionError(f"{name} try_it must be a boolean")
+            assets_path = (
+                "/assets" if selection.path == "/" else f"{selection.path.rstrip('/')}/assets"
+            )
+            provider = (
+                _SwaggerUIProvider(cdn=selection.assets.remote_assets)
+                if isinstance(selection, SwaggerUI)
+                else _ScalarProvider(cdn=selection.assets.remote_assets)
+                if isinstance(selection, Scalar)
+                else _ReDocProvider(cdn=selection.assets.remote_assets)
+            )
+            route = _DocumentationRoute(
+                name=provider.name,
+                path=selection.path,
+                assets_path=assets_path,
+                provider=provider,
+                artifact=document,
+                openapi_version="3.2.0",
+                title=openapi.title,
+                schema_path=None if documentation.schema is None else documentation.schema.path,
+                allowed_remote_origins=selection.assets.allowed_remote_origins,
+                try_it=getattr(selection, "try_it", False),
+            )
+            page = _render_documentation_page(route, {"root_path": ""})
+            surfaces.append(
+                _HTTPSurface(
+                    f"documentation.{name}.page",
+                    route.path,
+                    "text/html; charset=utf-8",
+                    page.html,
+                    _documentation_security_headers(page.csp),
+                )
+            )
+            for index, (asset_name, asset) in enumerate(sorted(page.assets.items())):
+                surfaces.append(
+                    _HTTPSurface(
+                        f"documentation.{name}.asset.{index}",
+                        f"{route.assets_path}/{asset_name}",
+                        asset.media_type,
+                        asset.body,
+                        ((b"cache-control", b"no-store"), (b"x-content-type-options", b"nosniff")),
+                    )
+                )
+            compiled_routes.append(route)
+        return tuple(surfaces), tuple(compiled_routes)
+
+    def _check_explorer_collisions(self, base_path: str, surfaces: Sequence[_HTTPSurface]) -> None:
+        """Explorer owns a subtree, so no static surface may live inside it."""
+        prefix = f"{base_path}/"
+        for surface in sorted(surfaces, key=lambda item: (item.path, item.name)):
+            if surface.path == base_path or surface.path.startswith(prefix):
+                raise _SurfaceDefinitionError(
+                    f"Explorer at {base_path!r} would shadow HTTP surface "
+                    f"{surface.name!r} at {surface.path!r}"
+                )
 
     def _plans(
         self,

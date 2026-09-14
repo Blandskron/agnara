@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import importlib
 import json
+import subprocess
+import sys
 from typing import Any
 
 import pytest
@@ -24,6 +26,8 @@ from tests.architecture.boundaries import DISTRIBUTIONS, WORKSPACE_ROOT
 
 MANIFEST = WORKSPACE_ROOT / "docs" / "public-api.json"
 POLICY = WORKSPACE_ROOT / "docs" / "PUBLIC_API.md"
+REFERENCE = WORKSPACE_ROOT / "docs" / "API_REFERENCE.md"
+REFERENCE_RENDERER = WORKSPACE_ROOT / "scripts" / "render_public_api_reference.py"
 STABILITIES = {"stable", "provisional", "experimental", "internal"}
 
 
@@ -149,6 +153,20 @@ def test_policy_defines_every_stability_term() -> None:
 
 def test_policy_names_the_machine_readable_inventory() -> None:
     assert "public-api.json" in POLICY.read_text(encoding="utf-8")
+
+
+def test_generated_reference_matches_the_manifest() -> None:
+    """The reader-facing inventory is a projection, never a second manifest."""
+    completed = subprocess.run(
+        [sys.executable, str(REFERENCE_RENDERER), "--check"],
+        cwd=WORKSPACE_ROOT,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "API_REFERENCE.md" in POLICY.read_text(encoding="utf-8")
+    assert REFERENCE.is_file()
 
 
 @pytest.mark.parametrize("distribution", DISTRIBUTION_NAMES)

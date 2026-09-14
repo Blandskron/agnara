@@ -335,7 +335,15 @@ def test_joining_a_caller_trace_adds_no_transport_attribute(spans: Any) -> None:
 
     (span,) = exporter.get_finished_spans()
     assert span.attributes is not None
-    assert set(span.attributes) == {"agnara.capability.id", "agnara.invocation.outcome"}
+    assert set(span.attributes) == {
+        "agnara.capability.id",
+        "agnara.execution.id",
+        "agnara.invocation.id",
+        "agnara.invocation.outcome",
+    }
+    assert span.attributes["agnara.execution.id"] != span.attributes["agnara.invocation.id"]
+    assert len(span.attributes["agnara.execution.id"]) == 32
+    assert len(span.attributes["agnara.invocation.id"]) == 32
     assert "traceparent" not in span.to_json()
 
 

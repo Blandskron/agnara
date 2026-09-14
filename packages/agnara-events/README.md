@@ -2,7 +2,7 @@
 
 Reserved namespace for future event exposure abstractions and AsyncAPI projection.
 
-This `0.1.0a4` package deliberately has no public API or event runtime. It is
+This baseline package deliberately has no public API or event runtime. It is
 built and versioned with the synchronized workspace set to reserve the official
 package boundary, not to claim broker or AsyncAPI support.
 

@@ -39,7 +39,7 @@ asgi = http.compile(app.compile(), openapi=OpenApiInfo("Users", "1.0"))
 `http` is a typed adapter surface selected by project composition, not a
 capability property. The exposure lifecycle is settled by ADR 0070 and this
 public composition syntax is implemented by ADR 0071. Its seven exports are
-`provisional` during the alpha line; implemented does not mean stable.
+`provisional` until `1.0.0`; implemented does not mean stable.
 
 ## 5. MCP exposure
 
@@ -178,12 +178,44 @@ Runtime cancellation must propagate.
 ## 15. Streaming
 
 ```python
-@app.capability(streaming=True)
+@app.capability(streaming=True, output=ReportChunk)
 async def generate_report(...) -> AsyncIterator[ReportChunk]:
     ...
 ```
 
-Streaming semantics require a dedicated RFC.
+The declaration and the handler's shape are held to each other: `streaming=True`
+over a handler that is not an async generator is rejected when the plan
+compiles, and so is an async generator handler that never declared it.
+
+`output=...` is the explicit contract for one successful complete result or,
+for a stream, one yielded unit. It is compiled when the plan is built and
+validated before a caller receives the value. Omitting it means the intentional
+unconstrained `Any` contract; return annotations do not silently define a
+transport or adapter contract. An output violation is a redacted internal
+failure, not caller `invalid_input`.
+
+Consumption is owned, one-shot and pull-based. Nothing is buffered, so the
+producer advances exactly as fast as the consumer pulls, and closing the stream
+closes the producer before releasing the invocation's dependencies:
+
+```python
+from agnara.execution import StreamInterrupted, StreamTerminal, open_stream
+
+async with open_stream(plan, context) as stream:
+    async for chunk in stream:
+        ...
+assert stream.terminal is StreamTerminal.COMPLETED
+```
+
+Policy and input validation run before the first unit, so failure before then
+is the ordinary canonical failure. Once a unit has reached the consumer that is
+no longer honest, and a later failure raises `StreamInterrupted` instead,
+carrying a redacted canonical `Failure` and the number of units already
+emitted. Cancellation is neither: it propagates untouched.
+
+The kernel contract is ADR 0084. Every transport projection of it -- SSE,
+WebSockets, MCP progress, A2A task events -- is still open in RFC 0009, so no
+adapter exposes streamed capabilities yet.
 
 ## 16. Direct invocation
 
@@ -365,21 +397,25 @@ parse a documentation HTML page to discover capabilities.
 
 ## 19A. Optional documentation interfaces
 
-Conceptual target only:
+ADR 0090 makes the reviewed, still-provisional composition explicit rather
+than using a boolean bag:
 
 ```python
-http = app.use(
-    Http(
-        openapi=True,
-        docs=True,
-        redoc=False,
-        explorer=True,
-    )
+asgi = http.compile(
+    app.compile(),
+    openapi=OpenApiInfo("Shop API", "1.0.0"),
+    documentation=HttpDocumentation(),
 )
 ```
 
-The booleans and default routes are deliberately provisional. The reviewed
-public API must make these independent:
+The default profile serves local Swagger UI at `/docs` and the generated
+OpenAPI 3.2 document at `/openapi.json`. `HttpDocumentation` independently
+selects `OpenApiSchema`, `SwaggerUI`, `Scalar` and `ReDoc`; absence disables a
+single surface, and `schema=None` embeds the one generated document in a
+selected UI. `HttpExplorer` is separate and requires a snapshot, visibility
+policy and principal resolver.
+
+The public API keeps these independent:
 
 - OpenAPI schema generation and serving;
 - one or more replaceable OpenAPI UI providers;
@@ -387,16 +423,17 @@ public API must make these independent:
 - interactive "try it" execution;
 - visibility/authorization policy for each published surface.
 
-Target route shapes such as `/openapi.json`, `/docs`, `/redoc` and `/agnara`
-are familiar candidates, not stable contracts. Every route must be
-configurable, disableable and checked for collisions.
+The default route shapes `/openapi.json`, `/docs`, `/scalar`, `/redoc` and
+`/agnara` are configurable, disableable and checked for collisions. Every
+selected documentation route supports GET/HEAD/405 and respects ASGI
+`root_path` when producing page and initializer URLs.
 
 Documentation providers consume an already-filtered OpenAPI contract. Agnara
 Explorer consumes the already-filtered protocol-neutral snapshot instead.
 
 No UI provider is required for OpenAPI export. Production deployments can
 disable all HTML while preserving an authorized machine-readable schema or
-snapshot.
+snapshot. The third-party provider protocol remains internal for 1.0.
 
 ## 20. Testing without a server
 

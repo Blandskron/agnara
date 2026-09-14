@@ -1,124 +1,60 @@
-# ADR 0021 — Synchronized Pre-One Releases and Curated Changelog
+# ADR 0021 — Synchronized Stable Releases and Curated Changelog
 
-- Status: Proposed
-- Date: 2026-08-31
+- Status: Accepted
+- Date: 2026-09-11
 - Tracking: GitHub Issue #16
 
 ## Context
 
-Agnara is one repository containing seven first-party Python distributions.
-Every package currently uses version `0.0.0`, the project has no release tag,
-and the Git workflow names release branches without defining how versions,
-tags, package metadata and release notes remain consistent.
+Agnara ships seven first-party Python distributions that form one tested
+workspace. The retained A8 publication is a historical baseline; the next
+release is the first stable public release, `1.0.0`.
 
-Independent package versions would add compatibility-matrix and automation
-cost before any package has been released. Fully generated release notes, on
-the other hand, do not reliably distinguish public behavior from internal
-maintenance.
+Independent package cadence would introduce a compatibility matrix before the
+project has evidence to support it. Release notes also need deliberate human
+curation rather than a commit dump.
 
 ## Decision
 
-### Version line
+All first-party distributions use one synchronized PEP 440 version. `1.0.0`
+is the current target. A release updates every `packages/*/pyproject.toml`
+version together, uses the corresponding immutable `v<version>` tag, and is
+prepared on a release branch.
 
-Through the pre-1.0 development line, all first-party Agnara distributions use
-one synchronized PEP 440 version. A release updates every
-`packages/*/pyproject.toml` project version together.
+Between releases, `develop` carries `<target>.dev0`; this development identity
+is never published. The repository-owned version tool updates package versions,
+exact adapter-to-core requirements and the lockfile as one validated operation.
 
-Git tags use the exact package version prefixed with `v`:
+`CHANGELOG.md` begins with `[Unreleased]` and records observable outcomes under
+the relevant categories: Added, Changed, Deprecated, Removed, Fixed and
+Security. A user-visible API, behavior, configuration, security, dependency or
+migration change requires an Unreleased entry. Pure internal work may omit one
+when the PR explains why.
 
-```text
-package version: 0.1.0a1
-Git tag: v0.1.0a1
-release branch: release/v0.1.0a1
-```
+The release workflow must:
 
-Version intent follows semantic-version ordering:
-
-- patch: compatible bug/documentation fixes in the current release line;
-- minor: new capability or adapter behavior;
-- major: stable-API incompatible change after 1.0;
-- `aN`, `bN`, `rcN`: PEP 440 alpha, beta and release-candidate builds.
-
-Before 1.0, a minor release may contain breaking changes, but each one requires
-an explicit changelog entry and migration guidance. `0.0.0` remains an
-unreleased-development sentinel and must not be published as a release.
-
-### Changelog
-
-`CHANGELOG.md` is the curated project-level release record. It always begins
-with `[Unreleased]` and uses only the relevant conventional categories:
-
-```text
-Added
-Changed
-Deprecated
-Removed
-Fixed
-Security
-```
-
-Entries describe user/contributor-observable outcomes, link the relevant
-Issue or PR, avoid commit-by-commit narration and never disclose embargoed
-security details.
-
-A PR requires an Unreleased entry when it changes public API or behavior,
-configuration, CLI output, schemas/protocol mapping, dependencies, security,
-performance claims, deprecations/removals, migration needs, or contributor
-workflow. A test-only, refactor-only or internal documentation change may omit
-one, but the PR records why.
-
-### Release preparation
-
-A release branch:
-
-1. selects one PEP 440 version in its tracking Issue;
-2. updates every first-party package to that exact version and refreshes the
-   lockfile;
-3. renames `[Unreleased]` entries to `[version] — YYYY-MM-DD` and creates a new
-   empty `[Unreleased]` section;
-4. updates changelog comparison links;
-5. passes release consistency, full CI and packaging checks;
-6. merges to `main`, then receives an annotated `v<version>` tag on the exact
-   accepted commit;
-7. uses that changelog section as the source for GitHub release notes;
-8. propagates release-only commits back to `develop` through a PR.
-
-No package registry publication occurs until credentials, trusted publishing,
-license and release gates are separately approved.
-
-Hotfixes follow the same synchronized version, changelog and tag rules from
-`main`, then propagate to `develop`.
+1. select the synchronized target in the tracking issue;
+2. move the workspace to the exact public version;
+3. date the changelog section and prepare release notes from it;
+4. pass full CI, packaging, installation and release-consistency gates;
+5. merge the accepted release change to `main`;
+6. dispatch publication, which verifies artifacts and creates the immutable tag
+   only after authorization succeeds;
+7. propagate release-only changes back to `develop`.
 
 ## Consequences
 
-Positive:
-
-- one version identifies a tested cross-package workspace state;
-- release notes are intentional and reviewable;
-- tags, package metadata and changelog sections can be checked mechanically;
-- the process supports alpha/beta/RC releases without pretending stability;
-- release automation can be added later against a defined contract.
-
-Negative:
-
-- a change in one package increments every first-party package version;
-- the central changelog can conflict when many PRs edit it concurrently;
-- maintainers must decide whether each PR is release-note-worthy;
-- independent package cadence is deferred.
+One version identifies a fully tested cross-package state, and package
+metadata, changelog and tags can be checked mechanically. The cost is that a
+release increments all first-party projects and requires intentional changelog
+curation. Independent package versions remain deferred until evidence justifies
+them.
 
 ## Guardrails
 
-- never publish `0.0.0`;
-- never create a release tag before required checks pass;
-- never move or reuse a published release tag;
-- never release packages with mismatched versions;
-- never generate security release notes that expose an embargoed issue;
-- never claim a release/hotfix flow was validated without actual evidence;
-- never publish packages until license and publishing authorization exist.
-
-## Revisit when
-
-- first-party packages need demonstrably independent release cadences;
-- changelog conflicts justify reviewed change fragments;
-- trusted publishing and artifact provenance are implemented;
-- the project approaches a stable 1.0 compatibility promise.
+- Never publish `0.0.0` or a development version.
+- Never create, move or reuse a release tag outside the approved workflow.
+- Never publish mismatched first-party package versions.
+- Never claim a release gate passed without reproducible evidence.
+- Never publish before license, provenance and registry authorization gates
+  pass.

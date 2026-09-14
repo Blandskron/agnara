@@ -194,6 +194,13 @@ class TestDescription:
 
         assert app.capabilities["payments.refund"].description == "Explicit wins"
 
+    def test_an_explicit_output_declaration_is_preserved(self, app: Agnara) -> None:
+        @app.capability(output=str)
+        def refund() -> str:
+            return "refunded"
+
+        assert app.capabilities["payments.refund"].output is str
+
     def test_is_none_without_a_docstring(self, app: Agnara) -> None:
         @app.capability
         def refund() -> None: ...

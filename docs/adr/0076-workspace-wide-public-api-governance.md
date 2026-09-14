@@ -7,7 +7,7 @@
 
 ## Context
 
-`0.1.0a4` asks one question: can Agnara be consumed as a framework from outside
+The baseline asks one question: can Agnara be consumed as a framework from outside
 this repository? An application that answers yes imports `agnara_http` and
 `agnara_mcp` as readily as `agnara`.
 
@@ -83,7 +83,7 @@ are listed with their reasons in a test, so widening them is an edit.
 
 **Nothing is promoted.** All 280 exports are `provisional`. Classifying an
 adapter's surface records that it is a deliberate entry point; it creates no
-compatibility promise, and the alpha line makes none.
+compatibility promise, and pre-stable work makes none.
 
 ## Consequences
 
@@ -102,7 +102,7 @@ compatibility promise, and the alpha line makes none.
 - `docs/MATURITY.md` keeps its per-distribution counts. A count is a summary of
   the manifest, not a substitute for it.
 - I9 becomes `IMPLEMENTED` for classification and stays open for stability
-  promotion, which the beta and release-candidate gates own.
+  promotion, which the `1.0.0` release gates own.
 
 ## Alternatives considered
 

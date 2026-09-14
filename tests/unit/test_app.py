@@ -109,6 +109,16 @@ def test_an_app_namespaces_its_capabilities_with_its_own_name() -> None:
     assert [str(identifier) for identifier in payments.capabilities] == ["payments.refund"]
 
 
+def test_an_app_preserves_an_explicit_output_declaration() -> None:
+    payments = App("payments")
+
+    @payments.capability(output=str)
+    def refund() -> str:
+        return "refunded"
+
+    assert payments.capabilities["payments.refund"].output is str
+
+
 def test_the_bare_decorator_form_works() -> None:
     payments = App("payments")
 

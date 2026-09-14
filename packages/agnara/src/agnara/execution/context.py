@@ -2,6 +2,8 @@ import asyncio
 from typing import Any
 
 from agnara.core.di.resolver import DIContainer
+from agnara.errors import DefinitionError
+from agnara.execution._execution_identity import ExecutionId
 from agnara.execution.invocation import Invocation
 from agnara.policy.confirmation import ConfirmationEvidence
 from agnara.policy.principal import AnonymousPrincipal, Principal
@@ -26,6 +28,11 @@ class ExecutionContext:
     ) -> None:
         self.invocation = invocation
         self.di_container = di_container
+        if "execution_id" in invocation.metadata:
+            raise DefinitionError(
+                "execution_id is runtime-owned and must not be supplied through invocation metadata"
+            )
+        self._execution_id = ExecutionId.generate()
         self.tracking_id = tracking_id
         self.principal = principal or AnonymousPrincipal()
         if confirmation_evidence is not None and not isinstance(
@@ -36,6 +43,17 @@ class ExecutionContext:
         # State that policies or interceptors might attach during this execution.
         # This is strictly bound to a single capability execution.
         self.state: dict[str, Any] = {}
+
+    @property
+    def execution_id(self) -> str:
+        """The opaque logical identity for this execution.
+
+        It is distinct from optional caller correlation (``tracking_id``) and
+        the telemetry-only ``invocation_id``.  Reusing this context deliberately
+        retains the same execution identity while each runtime invocation gets
+        its own telemetry attempt identity (ADR 0087).
+        """
+        return str(self._execution_id)
 
     @property
     def deadline(self) -> float | None:

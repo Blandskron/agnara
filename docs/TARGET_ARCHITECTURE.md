@@ -77,7 +77,7 @@ normalization        IMPLEMENTED   (metadata coercion at declaration)
 schema compilation   IMPLEMENTED
 dependency compile   IMPLEMENTED
 policy compilation   IMPLEMENTED
-exposure compilation  PARTIAL      HTTP and MCP compile exposures; no shared model
+exposure compilation  IMPLEMENTED  HTTP and MCP compile through one frozen, neutral availability registry
 validation           IMPLEMENTED
 freeze               IMPLEMENTED
 startup              IMPLEMENTED
@@ -85,7 +85,7 @@ discovery            IMPLEMENTED
 invocation           IMPLEMENTED
 authorization        IMPLEMENTED
 execution            IMPLEMENTED
-streaming / result   PARTIAL       single result only; no stream
+streaming / result   PARTIAL       complete results and kernel streams; no transport stream projection
 telemetry            IMPLEMENTED
 audit                MISSING
 cleanup              IMPLEMENTED   (DI teardown, invocation scope)
@@ -128,7 +128,7 @@ capability means, which is the one thing adapters must never do.
 The systems the thesis requires and Agnara does not have. Ordered by how much
 of the rest depends on them, not by size.
 
-### G1 — Unified exposure model (resolved for `0.1.0a4`)
+### G1 — Unified exposure model (resolved for the baseline)
 
 ADR 0070 now gives HTTP and MCP one neutral compiled availability model, and
 ADR 0071 builds the public HTTP composition API on it. A third adapter can
@@ -139,15 +139,20 @@ reopen this model.
 *Former blockers removed:* public adapter composition and protocol-neutral
 exposure introspection. Stability remains a later explicit decision.
 
-### G2 — Streaming
+### G2 — Streaming projections
 
-Nothing in the kernel can return a stream. Adding streaming to each adapter
-separately would produce incompatible cancellation, backpressure and
-partial-failure semantics, and the "one capability, many surfaces" promise
-would quietly stop applying to streaming capabilities.
+The kernel now owns the stream lifetime and item contract (ADR 0084, ADR 0086):
+declared async generators, explicit per-unit output schemas, pull-based demand,
+cancellation, cleanup and post-output failure.
+Adding wire projections independently would still produce incompatible
+cancellation, backpressure and partial-failure semantics, so each projection
+must preserve that contract rather than redefining it. HTTP SSE is implemented
+against it and adds no stream vocabulary to core. ADR 0085 defines its bounded
+projection, with ASGI conformance evidence for delayed commitment, terminal
+reporting, backpressure and disconnect cleanup.
 
-*Blocks:* SSE, WebSockets, MCP progress, A2A streaming, event consumption,
-task progress.
+*Blocks:* WebSockets, MCP progress, A2A streaming, event consumption and task
+progress.
 
 ### G3 — Execution identity and idempotency behaviour
 
@@ -197,11 +202,12 @@ an ecosystem exists means defining it under compatibility constraints.
 No tenant concept. Retrofitting one through DI, policies, caches, task queues
 and telemetry is far harder than designing the propagation now.
 
-### G10 — Public API governance
+### G10 — Public API stabilization
 
-41 public names in the kernel with no stability classification. Every one is
-an implicit commitment. Before the surface grows, each needs to be `stable`,
-`provisional`, `experimental` or `internal`.
+All 292 governed exports across 48 modules are deliberately classified
+`provisional` (docs/PUBLIC_API.md). Before `1.0.0`, maintainers must make the
+evidence-backed stable-or-deprecated compatibility decision; classification is
+complete, stability is not implicit.
 
 ### G11 — Ecosystem interoperability
 
@@ -216,7 +222,7 @@ it. `docs/INTEROPERABILITY.md` states the contract this gap has to close and
 RFC 0008 states the open questions.
 
 *Blocks:* embedding, side-by-side composition, progressive adoption, and
-`0.1.0b1` (ADR 0068).
+`1.0.0` (ADR 0068).
 
 ## 5. Package roadmap
 
@@ -247,9 +253,10 @@ Event capability             → AsyncAPI
 Capability graph             → Agnara introspection
 ```
 
-**HTTP** — the immediate gaps are request surface (cookies, forms, multipart,
-uploads), streaming, and an extension point for cross-cutting concerns.
-Everything else in a mature HTTP framework depends on one of those three.
+**HTTP** — cookies, forms, multipart, uploads and the bounded SSE streaming
+projection are implemented. WebSockets still need their own decision.
+Cross-cutting concerns remain deliberately outside the adapter as outer ASGI
+middleware or server/proxy policy.
 
 **MCP** — tools are projected; resources and prompts need a decision about
 whether a capability maps to them coherently at all, rather than an

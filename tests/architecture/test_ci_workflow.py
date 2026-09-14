@@ -119,7 +119,8 @@ def test_documentation_browser_conformance_is_an_explicit_required_job(
     assert "browser:\n    name: Documentation browsers" in workflow_text
     assert "playwright install --with-deps chromium" in workflow_text
     assert 'AGNARA_RUN_BROWSER_TESTS: "1"' in workflow_text
-    assert "pytest tests/http/test_documentation_browser.py -m browser" in workflow_text
+    assert "pytest tests/http/test_documentation_browser.py" in workflow_text
+    assert "tests/http/test_public_documentation_browser.py -m browser" in workflow_text
     assert "pytest tests/http/test_explorer_browser.py -m browser" in workflow_text
 
 

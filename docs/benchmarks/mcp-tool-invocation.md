@@ -98,7 +98,7 @@ logical CPU count: 8
 Python: CPython 3.14.4
 GIL enabled: true
 timer: QueryPerformanceCounter(), 100 ns reported resolution
-mcp 2.1.1, mcp-types 2.1.1, agnara 0.1.0a2, agnara-mcp 0.1.0a2
+mcp 2.1.1, mcp-types 2.1.1, agnara baseline, agnara-mcp baseline
 network / framing / concurrency: excluded
 ```
 
@@ -147,7 +147,7 @@ With that noise stated, three things are supported by the data:
 
 What the data does not support: a claim that Agnara is faster than FastMCP in
 production, on another platform, under concurrency, over a network transport,
-or once Agnara publishes and validates output schemas.
+or once the MCP adapter publishes output schemas.
 
 ## Architectural interpretation
 
@@ -158,7 +158,7 @@ threshold `PERFORMANCE.md` sets for considering native acceleration. The
 comparison's main actionable finding concerns the SDK's synchronous-tool
 policy rather than Agnara's own code.
 
-Revisit when output schema projection lands, when a network transport is
+Revisit when MCP output-schema projection lands, when a network transport is
 implemented, or when a concurrency benchmark exists — each changes the
 measured path enough to invalidate this baseline.
 

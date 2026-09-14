@@ -11,25 +11,30 @@ its limits.
 
 ## The whole public surface
 
-Seven names, from `agnara_http`:
+Fourteen names, from `agnara_http`:
 
 | Name | What it is |
 | --- | --- |
-| `Http` | Declare which capabilities one named HTTP surface exposes, and compile it. |
+| `Http` | Declare which capabilities one named HTTP surface exposes, and compile it. `get`, `post`, `put`, `patch`, `delete` and `route` project a complete result; `sse` projects a stream. |
 | `HttpApplication` | The compiled result: an immutable ASGI 3 application. |
 | `Binding` | Read one capability input from one place in the request. |
 | `BindingSource` | Which place: `PATH`, `QUERY`, `HEADER`, `BODY`, `COOKIE`, `FORM`, `UPLOAD`. |
 | `OpenApiInfo` | OpenAPI document metadata. |
 | `OpenApiOperation` | The per-operation decision to publish, and its metadata. |
+| `HttpDocumentation` | Independent OpenAPI schema and built-in documentation UI selections. Its default is local Swagger UI at `/docs` plus `/openapi.json`. |
+| `OpenApiSchema` | A configurable OpenAPI publication path. |
+| `SwaggerUI`, `Scalar`, `ReDoc` | The built-in documentation renderer selections. |
+| `DocumentationAssets` | Verified local assets or an explicit exact-origin CDN permission. |
+| `HttpExplorer` | The separately authorized, read-only capability explorer. |
 | `HttpDefinitionError` | One composition mistake, raised at startup. |
 
 Everything else in `agnara_http` is underscore-prefixed and carries no
 compatibility promise. If you find yourself needing one, that is a missing
-public API and worth an issue — it is exactly the finding `0.1.0a4` exists to
+public API and worth an issue — it is exactly the kind of finding the baseline exists to
 surface.
 
 All seven are `provisional`: deliberate entry points, with no compatibility
-promise during the alpha line.
+promise before `1.0.0`.
 
 ## A complete application
 
@@ -39,7 +44,14 @@ from typing import Any
 
 from agnara import Agnara
 from agnara.core.di import DIRegistry, Scope, provider
-from agnara_http import Binding, BindingSource, Http, OpenApiInfo, OpenApiOperation
+from agnara_http import (
+    Binding,
+    BindingSource,
+    Http,
+    HttpDocumentation,
+    OpenApiInfo,
+    OpenApiOperation,
+)
 
 
 class Ledger:
@@ -87,7 +99,7 @@ asgi = http.compile(
     app.compile(),
     dependencies=dependencies,
     openapi=OpenApiInfo("Shop API", "1.0.0"),
-    openapi_path="/openapi.json",
+    documentation=HttpDocumentation(),
 )
 ```
 
@@ -99,7 +111,7 @@ uvicorn app:asgi
 
 Being ASGI is a boundary, not an integration. Agnara speaks ASGI 3; supported
 integration with a specific framework — FastAPI, Django, Starlette — belongs to
-`0.1.0b1` and is not promised here (ADR 0068).
+`1.0.0` and is not promised here (ADR 0068).
 
 ## Who owns what
 
@@ -176,7 +188,7 @@ shared strict validation path runs (ADR 0075).
 
 ## Cookies, forms and uploads
 
-ADR 0072 fixes what `0.1.0a4` owns of the request surface. Three sources join
+ADR 0072 fixes what the baseline owns of the request surface. Three sources join
 the four above, and they are the difference between "serves JSON" and "serves
 an ordinary web application".
 
@@ -240,7 +252,7 @@ What you should know before using it:
 
 - **It is buffered in memory**, bounded by `max_body_bytes` (1 MiB by
   default). A route that raises the limit to 100 MB will hold 100 MB per
-  concurrent request. That is your decision; nothing streams in `0.1.0a4`.
+  concurrent request. That is your decision; request bodies are not streamed.
 - **Nothing touches the filesystem.** There is no temporary file, so there is
   nothing to leak and nothing to clean up on cancellation or error. The bytes
   are owned by the invocation and released with it.
@@ -263,6 +275,106 @@ an upload form posts.
 A route with an upload accepts `multipart/form-data` only; a route with fields
 alone accepts either encoding. The OpenAPI document advertises exactly that.
 
+## Streaming with server-sent events
+
+A capability declared `streaming=True` yields units instead of returning one
+value, so it has no complete JSON representation and an ordinary `get` refuses
+it. `Http.sse` is the one supported projection (ADR 0085):
+
+```python
+from collections.abc import AsyncIterator
+
+from agnara import Agnara
+from agnara_http import Binding, BindingSource, Http
+
+app = Agnara("reports")
+
+
+@app.capability(streaming=True, output=dict[str, int])
+async def rows(report_id: int) -> AsyncIterator[dict[str, int]]:
+    for line in range(report_id, report_id + 3):
+        yield {"line": line}
+
+
+http = Http()
+http.sse("/reports/{report_id}", rows, Binding("report_id", BindingSource.PATH))
+asgi = http.compile(app.compile())
+```
+
+A browser reads it with no Agnara vocabulary at all, because each unit is a
+standard unnamed `message` event carrying one compact JSON value:
+
+```text
+200
+content-type: text/event-stream; charset=utf-8
+cache-control: no-store
+
+data: {"line":7}
+
+data: {"line":8}
+
+data: {"line":9}
+
+event: agnara.terminal
+data: {"outcome":"completed","units":3}
+```
+
+**The response starts late, on purpose.** Policy, binding, validation,
+dependency construction and the *first* pull all happen before the `200`. A
+failure there has exposed nothing, so it is still an ordinary RFC 9457 problem
+response with the status the table above gives it — a denied policy is `403`,
+an expired deadline is `504`, a raised handler is a redacted `500`. An empty
+producer is a success, not a failure: the response starts and ends with
+`units: 0`.
+
+**The end is stated, not inferred.** A closed connection cannot tell
+exhaustion from failure, so every started response ends with one
+`agnara.terminal` event. `outcome` is the core `StreamTerminal` value and
+`units` is exactly how many data events were sent. A failure *after* output
+adds a `problem` member carrying the same redacted problem document the
+complete boundary would have produced:
+
+```text
+data: {"line":7}
+
+event: agnara.terminal
+data: {"outcome":"interrupted","problem":{...,"status":500},"units":1}
+```
+
+That is the whole point of the terminal event: a client that received one row
+is never told the invocation produced nothing.
+
+**Demand is the client's.** One pull, one encode, one awaited send, in that
+order. A slow reader slows the producer, and the adapter holds at most one
+encoded event — there is no queue anywhere. When the peer disconnects, the
+producer is cancelled and its `finally` runs before the request returns; no
+terminal event is promised to a connection that has gone.
+
+What an SSE route deliberately does not do:
+
+- **No request body.** `BODY`, `FORM` and `UPLOAD` bindings are refused: a
+  browser `EventSource` issues a `GET`, and this projection supplies no
+  request-body streaming contract. Path, query, header and cookie all work.
+- **No `HEAD`.** It answers `405`, and `Allow` says `GET` only. Consuming a
+  one-shot producer to discard every unit is not a useful answer.
+- **No OpenAPI operation.** `sse` takes no `OpenApiOperation` and the route is
+  absent from the document. There is no reviewed response schema for arbitrary
+  stream units or for the terminal event, and inventing one would be a promise
+  nobody reviewed (ADR 0085 D6).
+- **No replay.** No `id` or `retry` field is sent and `Last-Event-ID` carries
+  no meaning. A reconnecting client starts a new, ordinary invocation, with
+  every policy and effect rule applied again.
+
+`max_event_bytes` bounds one encoded event and defaults to the 1 MiB used for
+request bodies. A larger unit fails the response rather than being truncated:
+the operator gets a diagnostic naming the size, never the value.
+
+This is deliberately the adapter's only per-unit resource limit. Connection
+admission, concurrent connection counts, idle/read/write timeouts, TLS,
+reverse-proxy buffering and process memory ceilings belong to the ASGI server
+or reverse proxy that owns those resources. Configure them there; neither the
+kernel nor `Http.sse` fabricates server policy.
+
 ## OpenAPI
 
 `OpenApiInfo` supplies document metadata; `OpenApiOperation` on a route is the
@@ -277,8 +389,70 @@ nowhere in the document — no path, no identifier, no description, no tag, no
 schema fragment (ADR 0035). Publication is opt-in so that a deployment which
 has not decided what to publish publishes nothing.
 
-`openapi_path` serves the document. There is no default path: publishing an API
-description is a deliberate act.
+`HttpDocumentation()` is the supported local documentation profile. It serves
+the generated canonical OpenAPI 3.2 document at `/openapi.json` and local,
+hash-verified Swagger UI at `/docs`; no CDN, separate ASGI app or
+application-authored HTML is needed. `try_it` is disabled and authorization is
+not persisted by default.
+
+```python
+from agnara_http import DocumentationAssets, HttpDocumentation, Scalar, SwaggerUI
+
+# A different Swagger route, explicit request controls, and a supported
+# alternative UI. Each selected UI owns its own route and try-it setting.
+documentation = HttpDocumentation(
+    swagger=SwaggerUI(path="/reference", try_it=True),
+    scalar=Scalar(path="/scalar"),
+)
+
+# Schema-only publication:
+schema_only = HttpDocumentation(swagger=None)
+
+# HTML without a published schema: the UI receives the generated document
+# directly and `/openapi.json` is absent.
+embedded = HttpDocumentation(schema=None)
+
+# CDN delivery is explicit and grants exactly this built-in provider origin.
+cdn = HttpDocumentation(
+    swagger=SwaggerUI(assets=DocumentationAssets.remote("https://unpkg.com"))
+)
+```
+
+`ReDoc()` is available as a selection but currently refuses Agnara's canonical
+OpenAPI 3.2 document at compile time because the pinned ReDoc 2.5.3 release
+declares only 3.1 support. Agnara never downgrades the generated document to
+make a viewer render. The extension protocol for third-party providers remains
+internal for 1.0.
+
+The selected page, schema and every local asset reserve routes through the same
+startup collision boundary as capabilities. They support GET/HEAD and return
+405 with `Allow: GET, HEAD` otherwise. Under an ASGI mount (`root_path="/api"`)
+the page and initializer use `/api/...` URLs automatically.
+
+## Explorer
+
+Explorer is not an OpenAPI UI. It renders a filtered protocol-neutral snapshot
+and requires the application to provide the visibility policy and identity
+resolver explicitly:
+
+```python
+from agnara import Principal
+from agnara.introspection import DiscoveryVisibility, ScopeVisible, snapshot
+from agnara_http import HttpExplorer
+
+explorer = HttpExplorer(
+    snapshot=snapshot([], project="shop"),
+    visibility=DiscoveryVisibility.unrestricted(ScopeVisible()),
+    principals=lambda scope: Principal("operator"),
+    challenge="Bearer",
+)
+asgi = http.compile(app.compile(), explorer=explorer)
+```
+
+`HttpExplorer` does not authorize invocation; it only filters what a viewer
+may see. The JSON discovery endpoint and third-party documentation providers
+remain internal. `openapi_path` remains the legacy schema-only spelling and
+cannot be combined with `documentation`.
 
 The request surface projects truthfully. A cookie is `in: cookie`. Form fields
 and uploads are properties of one `requestBody` object with
@@ -317,7 +491,7 @@ the capability input name rather than transport `details.location`. Direct
 Python invocation remains strict. See ADR 0077 and
 `CROSS_SURFACE_CONFORMANCE.md`.
 
-Capability dispatch in `0.1.0a4` has no HTTP authentication bridge and runs as
+Baseline capability dispatch has no HTTP authentication bridge and runs as
 anonymous. Because declared scopes compile into the common plan, a scoped HTTP
 capability fails closed with `403`; discovery visibility is not authorization.
 
@@ -358,29 +532,25 @@ so you need not compile them again. `describe_app` wants a plan for every
 declared capability, so an application with capabilities HTTP does not expose
 must compile those itself and pass the combined set.
 
-## Limitations of `0.1.0a4`
+## Baseline limitations
 
 Stated plainly, because a guide that omits its limits is how a framework earns
 distrust.
 
-**Not exposed publicly, though implemented internally.** The documentation UI
-providers (Swagger UI, ReDoc, Scalar), the read-only Agnara **Explorer** and
-the authorized introspection **discovery** endpoint. These are not merely
-unexported: the publication planner compiles placeholder routes and no code
-path in the product renders a provider, so publishing an API for them would
-publish an API for something that does not yet work end to end. Their
-configuration is also security-sensitive — content security policy, asset
-policy, principal resolution, redaction — and deserves its own review.
+**Kept internal deliberately.** The third-party documentation-provider
+extension protocol and the authorized introspection **discovery** endpoint are
+not public composition APIs. Built-in Swagger UI, Scalar, ReDoc selection and
+the read-only Agnara **Explorer** are supported through the typed values above.
 
 **Not implemented, and where to put it instead.** ADR 0072 classifies every
 deferred request feature rather than leaving it implicit.
 
-| Deferred | Why, and what to do in `0.1.0a4` |
+| Deferred | Why, and what to do in the baseline |
 | --- | --- |
 | Multiple files, repeated form fields | Both need a collection binding, which ADR 0026 deferred deliberately and which decides how a list arrives through *every* transport. Use distinct part names. |
 | Client filename, per-part content type | Both need a public upload value type, and that is a core-visible schema shape MCP and introspection project too. Ask for a filename as a form field if you need one. |
 | Streaming request bodies, large uploads | Needs the streaming model, I2, `0.1.0a9`. Until then an upload is bounded `bytes`. |
-| Streaming responses, server-sent events, **WebSocket**s | I2, `0.1.0a9`. The ASGI boundary handles no `websocket` scope. |
+| **WebSocket**s, SSE replay and `Last-Event-ID` | I2, after `1.0.0`. The ASGI boundary handles no `websocket` scope, and resumption waits for the operational identity I3 must decide. Streaming *responses* are implemented: see `Http.sse` above. |
 | CORS, compression, trusted hosts, proxy header trust | Put them in the reverse proxy or ASGI server in front of the application, or wrap the `HttpApplication` in any third-party ASGI middleware — it is an ASGI 3 callable, so they compose. |
 | Static files | A web server or CDN. Agnara serves capabilities. |
 | Middleware / interceptor hook | Deliberately absent. `docs/INITIATIVES.md` states why: "middleware in most frameworks is where transport types leak into application code, and Agnara must not reproduce that". Wrapping from outside, at the ASGI layer, keeps transport concerns where they belong. |
@@ -397,7 +567,7 @@ conversion (ADR 0075, [issue #296](https://github.com/Blandskron/agnara/issues/2
 **No authentication.** Every HTTP invocation runs as the anonymous principal,
 so a capability carrying a `ScopePolicy` always answers `403`. Nothing here can
 produce a `401`. Authentication integration is part of the security program
-(I10, `0.1.0b1`).
+(I10, `1.0.0`).
 
 **Publication-ready, not published.** Only the `agnara` core distribution is
 uploaded today, so `agnara-http` must currently be installed from a locally
@@ -405,6 +575,6 @@ built wheel. ADR 0073 and
 [issue #291](https://github.com/Blandskron/agnara/issues/291) make the tagged
 workflow ready to publish the synchronized set; they do not perform a release.
 
-**No compatibility promise.** Every name here is `provisional`. The alpha line
+**No compatibility promise.** Every name here is `provisional`. The path to `1.0.0`
 may change any of them; `docs/PUBLIC_API.md` records the policy and ADR 0021
 requires a changelog entry and migration guidance for a break.

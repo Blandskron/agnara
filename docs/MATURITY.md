@@ -36,7 +36,7 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 | Package | Status | Published to PyPI | Public names | Notes |
 | --- | --- | --- | --- | --- |
 | `agnara` | `IMPLEMENTED` | yes | 41 | The kernel. Standard library only. |
-| `agnara-http` | `EXPERIMENTAL` | no | 7 | Publication-ready public composition API; documentation UI, Explorer and discovery stay internal. |
+| `agnara-http` | `EXPERIMENTAL` | no | 14 | Public HTTP composition includes generated OpenAPI, built-in documentation UIs and authorized Explorer; third-party providers and discovery stay internal. |
 | `agnara-mcp` | `IMPLEMENTED` | no | 20 | Publication-ready tool projection; see the MCP table. |
 | `agnara-cli` | `IMPLEMENTED` | no | 4 | Publication-ready scaffolding, introspection and `agnara` script. |
 | `agnara-telemetry` | `IMPLEMENTED` | no | 2 | Publication-ready OpenTelemetry metrics and tracing hooks. |
@@ -51,20 +51,21 @@ PyPI projects still require their Pending Trusted Publishers before the tag.
 
 Every distribution's public surface is classified in
 `docs/public-api.json` and enforced in both directions by the release gate:
-282 exports across 47 modules, all `provisional`. `agnara-cli` dropped from 17
-public names to 4 in `0.1.0a4`, because the other thirteen were implementation
+324 exports across 49 modules, all `provisional`. `agnara-cli` dropped from 17
+public names to 4 in the baseline, because the other thirteen were implementation
 helpers re-exported from underscore-prefixed modules and never documented,
 used or designed as an API (ADR 0076).
 
-`agnara-http` now declares a public surface: seven `provisional` names that
-compose capabilities, compile an ASGI 3 application and project OpenAPI.
-`docs/HTTP_COMPOSITION.md` is the supported guide.
+`agnara-http` now declares fourteen `provisional` names that compose
+capabilities, compile an ASGI 3 application, project OpenAPI and publish the
+reviewed documentation profile. `docs/HTTP_COMPOSITION.md` is the supported
+guide.
 
-It stays `EXPERIMENTAL` rather than becoming `IMPLEMENTED` because three
-implemented subsystems are deliberately not reachable through it — the
-documentation UI providers, the Explorer and the authorized discovery endpoint
-— and because the surface is one release old. The transport behaviour is
-settled; the spelling is not.
+It stays `EXPERIMENTAL` rather than becoming `IMPLEMENTED` because the public
+spelling is still provisional before 1.0, third-party provider extension and
+the authorized discovery endpoint remain intentionally internal, and the
+surface is newly expanded. The transport behaviour is settled; the spelling is
+not.
 
 ## Kernel — `agnara`
 
@@ -88,8 +89,9 @@ settled; the spelling is not.
 | Unified exposure model | `IMPLEMENTED` | `agnara.exposure`: neutral identity, per-surface adapter compilation, one frozen availability registry. ADR 0070, RFC 0006. Both shipped adapters go through it. |
 | Introspection snapshot | `IMPLEMENTED` | Versioned, frozen, no runtime objects reachable. ADR 0045. Exposures are derived from the frozen exposure registry. |
 | Discovery visibility | `IMPLEMENTED` | Per-field publication decisions. ADR 0046. |
-| Idempotency | `IMPLEMENTED` as metadata, `PLANNED` as behaviour | Declared and published; the runtime performs no deduplication or replay. |
-| Streaming results | `RESEARCH` | Nothing in the kernel returns or transports an async iterator. |
+| Execution identity | `IMPLEMENTED` | ADR 0087, ADR 0088. Each `ExecutionContext` owns an opaque runtime-generated identity; `invoke_result`, `CapabilityStream` and lifecycle telemetry retain it while each actual handler attempt still receives a separate telemetry `invocation_id`. Caller metadata cannot choose it. HTTP returns only the generated identity in `agnara-execution-id`; HTTP/MCP request IDs are bounded untrusted correlation only, never execution selection, authority or idempotency proof. No store, replay or retry behavior exists. |
+| Idempotency | `IMPLEMENTED` as metadata and storage contract, `PLANNED` as runtime behaviour | ADR 0089 defines atomic capability/principal/key/fingerprint storage transitions and ships a bounded process-local reference store. The runtime and transports do not yet accept caller keys, deduplicate handler execution or replay results. |
+| Streaming results | `IMPLEMENTED` (kernel and HTTP SSE) | ADR 0084, ADR 0085, ADR 0086, RFC 0009. `open_stream` owns a declared async generator: pull-based demand with no kernel buffer, policy and input validation before the first unit, `StreamInterrupted` for failure after output, and an explicit `StreamTerminal`. `output=...` declares and validates each unit before delivery; omitted output is the intentional unconstrained `Any` contract. `Http.sse` projects it over HTTP with a delayed response start, one `message` event per unit, an explicit terminal event and owned disconnect handling; MCP, A2A, events and WebSockets do not project it. |
 | Audit trail | `PLANNED` | The word appears in docstrings; there is no audit system. |
 | Capability-to-capability composition | `RESEARCH` | No nested `ExecutionContext`, no propagation contract. |
 | Multi-tenancy | `RESEARCH` | No tenant concept anywhere in the kernel. |
@@ -112,7 +114,8 @@ settled; the spelling is not.
 | Exposure compilation | `IMPLEMENTED` | Public `Http.compile()` derives neutral records from the compiled route table. ADR 0070, ADR 0071. |
 | Public composition API | `IMPLEMENTED` | Seven provisional exports compose and compile an ASGI application through supported entry points. ADR 0071. |
 | Cookies, forms, multipart, uploads | `IMPLEMENTED` | Public binding sources with bounded in-memory bodies and multipart part count. ADR 0072. |
-| Streaming, SSE, WebSockets | `PLANNED` | The ASGI boundary handles no `websocket` scope. |
+| SSE streaming projection | `IMPLEMENTED` | ADR 0085. `Http.sse` is a GET-only, bounded projection with delayed response commitment, one message per unit, one explicit terminal event, no replay/keepalive policy, pull-based demand and owned disconnect cleanup. `tests/http/test_sse.py` supplies ASGI conformance evidence. |
+| WebSockets | `PLANNED` | The ASGI boundary handles no `websocket` scope, and WebSocket streaming still needs its own decision. |
 | Middleware / interceptors | `DEFERRED` | No extension point, deliberately: ADR 0072 keeps cross-cutting concerns at the ASGI layer, which already wraps an `HttpApplication`. |
 | CORS, compression, static files, proxy headers, trusted hosts | `DEFERRED` | None present. ADR 0072 records where each belongs instead: the reverse proxy, the ASGI server, or ASGI middleware around the application. |
 | Content negotiation, conditional and range requests | `RESEARCH` | None present. |
@@ -154,7 +157,7 @@ settled; the spelling is not.
 | Plugin system | `RESEARCH` | No discovery, loading or trust model. |
 | Persistence, cache, queue and scheduler integrations | `RESEARCH` | No port, no adapter, no dependency. `docs/INTEROPERABILITY.md` records the intent; I20 owns the work. |
 | Framework embedding contract | `RESEARCH` | RFC 0008 states the questions. Nothing exists that an external host could call. |
-| Side-by-side composition with an external framework | `RESEARCH` | HTTP now has a public composition surface (ADR 0071); interoperability with an external framework still requires its own conformance evidence and belongs to beta. |
+| Side-by-side composition with an external framework | `RESEARCH` | HTTP now has a public composition surface (ADR 0071); interoperability with an external framework still requires its own conformance evidence and belongs to `1.0.0`. |
 | Second shipped schema adapter | `RESEARCH` | Pydantic and msgspec remain `experiments/`; neither is packaged or supported. |
 | Typed client generation | `RESEARCH` | |
 | Native acceleration | `DEFERRED` | ADR-level position: only after measured bottlenecks. |

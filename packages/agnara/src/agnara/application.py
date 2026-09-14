@@ -87,6 +87,8 @@ class Agnara:
         risk: Risk | str = Risk.LOW,
         confirmation: Confirmation | str = Confirmation.NEVER,
         idempotent: bool | None = None,
+        streaming: bool = False,
+        output: object = Any,
     ) -> Callable[[F], F]: ...
 
     def capability(
@@ -101,6 +103,8 @@ class Agnara:
         risk: Risk | str = Risk.LOW,
         confirmation: Confirmation | str = Confirmation.NEVER,
         idempotent: bool | None = None,
+        streaming: bool = False,
+        output: object = Any,
     ) -> Any:
         """Declare a capability, bare or with metadata.
 
@@ -135,6 +139,8 @@ class Agnara:
                 risk=risk,
                 confirmation=confirmation,
                 idempotent=idempotent,
+                streaming=streaming,
+                output=output,
             )
             return func
 

@@ -64,7 +64,15 @@ class OpenTelemetryTracingHook:
         span = self._tracer.start_span(
             str(event.capability_id),
             kind=SpanKind.INTERNAL,
-            attributes={"agnara.capability.id": str(event.capability_id)},
+            attributes={
+                "agnara.capability.id": str(event.capability_id),
+                "agnara.invocation.id": event.invocation_id,
+                **(
+                    {"agnara.execution.id": event.execution_id}
+                    if event.execution_id is not None
+                    else {}
+                ),
+            },
         )
         token = attach(set_span_in_context(span))
         with self._lock:
