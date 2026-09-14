@@ -13,6 +13,8 @@ returns a canonical outcome and ``project_mcp_result`` maps it.
 from __future__ import annotations
 
 import asyncio
+import math
+import re
 from collections.abc import Iterable
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -48,6 +50,7 @@ __all__ = ["McpInvocationDefinitionError", "McpToolInvoker", "build_mcp_server"]
 #: Longest client request id copied into invocation telemetry. A request id is
 #: caller-controlled, so an unbounded one must not reach every telemetry sink.
 _MAX_TRACKING_ID = 128
+_TRACKING_TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._~-]*\Z")
 
 
 class McpInvocationDefinitionError(DefinitionError):
@@ -64,7 +67,12 @@ class _InvocationRoute:
 def _timeout_seconds(value: object) -> float | None:
     if value is None:
         return None
-    if isinstance(value, bool) or not isinstance(value, int | float) or value <= 0:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, int | float)
+        or not math.isfinite(value)
+        or value <= 0
+    ):
         raise McpInvocationDefinitionError(
             "MCP invocation timeout must be a positive number of seconds or None"
         )
@@ -75,7 +83,9 @@ def _tracking_id(request_id: object) -> str | None:
     if isinstance(request_id, bool) or not isinstance(request_id, int | str):
         return None
     rendered = str(request_id)
-    return rendered if len(rendered) <= _MAX_TRACKING_ID else None
+    if len(rendered) > _MAX_TRACKING_ID or not _TRACKING_TOKEN.fullmatch(rendered):
+        return None
+    return rendered
 
 
 def _project(outcome: CanonicalResult[object]) -> CallToolResult | InputRequiredResult:

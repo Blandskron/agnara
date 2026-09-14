@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import math
 from collections.abc import Callable
 from typing import Any
 
@@ -11,7 +12,7 @@ import pytest
 from agnara.capability import CapabilityDefinition, CapabilityId
 from agnara.core.di import DIRegistry
 from agnara.core.di.resolver import DIContainer
-from agnara.execution import ExecutionPlan, Failure, FailureCode, Success
+from agnara.execution import ExecutionContext, ExecutionPlan, Failure, FailureCode, Success
 from agnara_http._binding import _BindingDefinitionError, _BindingSource, _InputBinding
 from agnara_http._dispatch import (
     _compile_exposures,
@@ -229,6 +230,48 @@ def test_a_matched_request_binds_invokes_and_returns_a_success_response() -> Non
     assert events[1]["more_body"] is False
 
 
+def test_http_correlation_never_selects_the_generated_execution_identity() -> None:
+    observed: list[tuple[str, str | None]] = []
+
+    def show(context: ExecutionContext) -> str:
+        observed.append((context.execution_id, context.tracking_id))
+        return "ok"
+
+    served = dispatcher(_HTTPExposure("GET", "/v1/identity", plan(show)))
+    events = request(served, "GET", "/v1/identity", headers=((b"x-request-id", b"host-7"),))
+
+    execution_id, tracking_id = observed[0]
+    assert tracking_id == "host-7"
+    assert execution_id != tracking_id
+    assert headers_of(events)[b"agnara-execution-id"] == execution_id.encode("ascii")
+
+
+@pytest.mark.parametrize(
+    "headers",
+    [
+        ((b"x-request-id", b"bad id"),),
+        ((b"x-request-id", b"first"), (b"X-Request-ID", b"second")),
+        ((b"x-request-id", b"x" * 129),),
+    ],
+)
+def test_malformed_or_repeated_http_correlation_is_refused_before_effects(
+    headers: tuple[tuple[bytes, bytes], ...],
+) -> None:
+    called = False
+
+    def show() -> str:
+        nonlocal called
+        called = True
+        return "never"
+
+    served = dispatcher(_HTTPExposure("GET", "/v1/identity", plan(show)))
+    events = request(served, "GET", "/v1/identity", headers=headers)
+
+    assert events[0]["status"] == 400
+    assert b"agnara-execution-id" not in headers_of(events)
+    assert called is False
+
+
 def test_a_json_body_reaches_the_capability() -> None:
     def create(order: dict[str, Any]) -> dict[str, Any]:
         return {"received": order}
@@ -252,7 +295,7 @@ def test_a_none_result_is_a_bodyless_204() -> None:
     events = request(served, "POST", "/v1/archive")
 
     assert events[0]["status"] == 204
-    assert events[0]["headers"] == []
+    assert set(headers_of(events)) == {b"agnara-execution-id"}
     assert events[1]["body"] == b""
 
 
@@ -279,7 +322,8 @@ def test_head_reuses_the_get_exposure_with_headers_but_no_body() -> None:
     head = request(served, "HEAD", "/v1/state")
 
     assert head[0]["status"] == get[0]["status"] == 200
-    assert head[0]["headers"] == get[0]["headers"]
+    assert headers_of(head)[b"content-type"] == headers_of(get)[b"content-type"]
+    assert headers_of(head)[b"agnara-execution-id"] != headers_of(get)[b"agnara-execution-id"]
     assert headers_of(head)[b"content-length"] == str(len(get[1]["body"])).encode("ascii")
     assert head[1]["body"] == b""
 
@@ -651,7 +695,7 @@ def test_a_configured_timeout_gives_the_invocation_a_deadline() -> None:
     assert seen == [200]
 
 
-@pytest.mark.parametrize("timeout", [0, -1, True, "30"])
+@pytest.mark.parametrize("timeout", [0, -1, True, "30", math.nan, math.inf, -math.inf])
 def test_an_unusable_timeout_is_refused(timeout: object) -> None:
     with pytest.raises(ValueError, match="positive number of seconds"):
         _DispatchOptions(timeout=timeout)  # ty: ignore[invalid-argument-type]

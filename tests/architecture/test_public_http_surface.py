@@ -27,18 +27,25 @@ from tests.architecture.boundaries import WORKSPACE_ROOT, package_source_root
 HTTP_DISTRIBUTION = "agnara-http"
 HTTP_IMPORT_NAME = "agnara_http"
 
-#: The exact surface `0.1.0a4` promises, in `__all__` order.
+#: The exact surface the documentation-composition gate promises, in `__all__` order.
 #:
 #: Written out rather than imported so that adding an export is a deliberate
 #: edit here as well as in the package. A count would not catch a rename.
 PUBLIC_SURFACE = (
     "Binding",
     "BindingSource",
+    "DocumentationAssets",
     "Http",
     "HttpApplication",
     "HttpDefinitionError",
+    "HttpDocumentation",
+    "HttpExplorer",
     "OpenApiInfo",
     "OpenApiOperation",
+    "OpenApiSchema",
+    "ReDoc",
+    "Scalar",
+    "SwaggerUI",
 )
 
 #: Files an application is invited to copy. A private import in one of these
@@ -150,11 +157,11 @@ def test_the_composition_guide_shows_the_supported_path() -> None:
         assert f"`{name}`" in guide or f"{name}(" in guide, name
 
 
-def test_the_guide_states_what_this_release_does_not_expose() -> None:
+def test_the_guide_states_what_the_public_boundary_keeps_internal() -> None:
     """A guide that omits its limits is how a framework earns distrust."""
     guide = (WORKSPACE_ROOT / "docs" / "HTTP_COMPOSITION.md").read_text(encoding="utf-8")
 
-    for limitation in ("Explorer", "discovery", "WebSocket", "#296"):
+    for limitation in ("discovery", "third-party providers", "WebSocket", "#296"):
         assert limitation in guide, limitation
 
 

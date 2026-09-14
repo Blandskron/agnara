@@ -2,7 +2,7 @@
 
 Reserved namespace for the future Agent-to-Agent exposure adapter.
 
-This `0.1.0a4` package deliberately has no public API or A2A runtime. It is built and
+This baseline package deliberately has no public API or A2A runtime. It is built and
 versioned with the synchronized workspace set to reserve the official package
 boundary, not to claim Agent Card, skill, task, streaming or protocol support.
 

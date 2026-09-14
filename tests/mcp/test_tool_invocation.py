@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import math
 from collections.abc import AsyncIterator, Awaitable
 from dataclasses import dataclass
 from enum import Enum
@@ -466,7 +467,7 @@ def test_a_request_id_reaches_telemetry_and_not_only_the_handler(
     assert telemetry.terminals == [("dispatch.with_context", "req-7", "success")]
 
 
-@pytest.mark.parametrize("request_id", [None, "x" * 129, ["list"]])
+@pytest.mark.parametrize("request_id", [None, "x" * 129, "bad id", ["list"]])
 def test_an_unusable_request_id_is_dropped_from_telemetry_too(
     telemetry: _TelemetryJournal,
     request_id: object,
@@ -479,7 +480,7 @@ def test_an_unusable_request_id_is_dropped_from_telemetry_too(
     assert telemetry.starts == [("dispatch.with_context", None)]
 
 
-@pytest.mark.parametrize("request_id", [None, "x" * 129, ["list"]])
+@pytest.mark.parametrize("request_id", [None, "x" * 129, "bad id", ["list"]])
 def test_an_unusable_request_id_is_dropped_rather_than_copied(request_id: object) -> None:
     invoker, _ = surface()
 
@@ -611,7 +612,7 @@ def test_an_authorization_configured_for_other_exposures_is_refused_at_startup()
         )
 
 
-@pytest.mark.parametrize("timeout", [0, -1, True, "5"])
+@pytest.mark.parametrize("timeout", [0, -1, True, "5", math.nan, math.inf, -math.inf])
 def test_an_invalid_timeout_is_refused_at_startup(timeout: Any) -> None:
     with pytest.raises(McpInvocationDefinitionError):
         surface(timeout=timeout)

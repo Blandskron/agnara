@@ -233,7 +233,9 @@ def test_a_bound_header_value_cannot_reach_a_response_header() -> None:
     )
 
     assert sent[0]["status"] == 200
-    assert {name for name, _ in sent[0]["headers"]} == {b"content-type", b"content-length"}
+    headers = dict(sent[0]["headers"])
+    assert set(headers) == {b"content-type", b"content-length", b"agnara-execution-id"}
+    assert headers[b"agnara-execution-id"] != b"ok\r\nX-Injected: 1"
     assert json.loads(sent[1]["body"]) == "ok\r\nX-Injected: 1"
 
 

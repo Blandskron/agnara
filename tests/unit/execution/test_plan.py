@@ -61,10 +61,11 @@ def provide_repository(database: Database) -> Repository:
     return Repository()
 
 
-def define(handler: Callable[..., Any]) -> CapabilityDefinition:
+def define(handler: Callable[..., Any], *, output: object = Any) -> CapabilityDefinition:
     return CapabilityDefinition(
         id=CapabilityId("payments", "refund"),
         handler=handler,
+        output=output,
     )
 
 
@@ -171,6 +172,57 @@ def test_plan_uses_supplied_schema_adapter_once_per_ordinary_input() -> None:
 
     assert compiled == [str]
     assert tuple(plan.input_schemas) == ("payment_id",)
+
+
+def test_plan_compiles_a_declared_output_with_the_supplied_adapter() -> None:
+    """ADR 0086 D2: an explicit output is the adapter's to compile, like an input."""
+    compiled: list[Any] = []
+
+    class Adapter:
+        def compile(self, annotation: Any) -> TypeSchema:
+            compiled.append(annotation)
+            return PrimitiveSchema(annotation)
+
+        def supports(self, annotation: Any) -> bool:
+            return True
+
+    def refund(payment_id: str) -> str:
+        return "refunded"
+
+    plan = ExecutionPlan.compile(define(refund, output=str), DIRegistry(), schema_adapter=Adapter())
+
+    assert compiled == [str, str]
+    assert plan.output_schema == PrimitiveSchema(str)
+
+
+def test_plan_compiles_an_omitted_output_without_asking_the_supplied_adapter() -> None:
+    """ADR 0086 D2: an application adapter written before output schemas existed
+    has no ``Any`` case, and must not be required to grow one to keep compiling.
+    """
+
+    class InputOnlyAdapter:
+        def compile(self, annotation: Any) -> TypeSchema:
+            if annotation is Any:
+                raise SchemaError("this adapter describes inputs only")
+            return PrimitiveSchema(annotation)
+
+        def supports(self, annotation: Any) -> bool:
+            return annotation is not Any
+
+    def refund(payment_id: str) -> None:
+        pass
+
+    plan = ExecutionPlan.compile(define(refund), DIRegistry(), schema_adapter=InputOnlyAdapter())
+
+    assert plan.output_schema.validate("anything at all") == "anything at all"
+
+
+def test_plan_reports_output_context_for_an_unsupported_schema() -> None:
+    def refund() -> None:
+        pass
+
+    with pytest.raises(SchemaError, match=r"capability payments\.refund output"):
+        ExecutionPlan.compile(define(refund, output=object), DIRegistry())
 
 
 @pytest.mark.parametrize(

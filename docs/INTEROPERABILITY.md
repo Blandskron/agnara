@@ -1,6 +1,6 @@
 # Interoperability and Composition
 
-How Agnara relates to the rest of the Python ecosystem, and what `0.1.0b1` has
+How Agnara relates to the rest of the Python ecosystem, and what `1.0.0` has
 to demonstrate before that relationship can be called a contract.
 
 This document owns the **interoperability contract and the integration
@@ -172,17 +172,19 @@ survives contact with the second framework.
 ## 6. Integration matrix
 
 The research and future-conformance inventory. **Priority** is architectural
-importance, not popularity. **b1 blocker** means `0.1.0b1` cannot close without
-green evidence — the authoritative list is the gate table in
-`docs/releases/RELEASE_PLAN.md`, and this column points at it rather than being
-a second source.
+importance, not popularity. The authoritative release bar remains the gate
+table in `docs/releases/RELEASE_PLAN.md`; this matrix selects useful evidence
+scenarios without creating a second source of release authorization.
 
 Legend: `yes` — a coherent, intended direction; `no` — deliberately discarded,
 reason in the notes; `partial` — coherent for part of the technology only.
+`1.0.0 evidence` identifies scenarios that can contribute evidence to the
+release-plan interoperability gate; it is not a second release gate or an
+authorization to claim support.
 
 ### Web, ASGI and WSGI
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | Starlette | yes | yes | yes | CRITICAL | yes | The clean-room ASGI proof. Mounting, ASGI composition, request context, response mapping, middleware, lifespan and error boundaries, without FastAPI-specific behaviour confusing the result. |
 | FastAPI | yes | yes | yes | CRITICAL | yes | The highest-value adoption path. Progressive adoption inside an existing FastAPI application is the priority scenario, not a bonus. |
@@ -193,7 +195,7 @@ reason in the notes; `partial` — coherent for part of the technology only.
 | Litestar | yes | yes | yes | HIGH | conditional | The fourth web gate is satisfied by Flask **or** Litestar. Validates ASGI, DI coexistence, lifecycle, routing, serialization, middleware and embedding. |
 | Falcon | no | yes | research | MEDIUM | no | Kept only while it produces new evidence about WSGI/ASGI independence. |
 | aiohttp | no | yes | research | MEDIUM | no | Low-level async interoperability outside the ASGI ecosystem. |
-| Sanic, Quart | no | research | research | LOW | no | Research. They block `0.1.0b1` only if they reveal an architectural problem the others hid. |
+| Sanic, Quart | no | research | research | LOW | no | Research. They block `1.0.0` only if they reveal an architectural problem the others hid. |
 | Robyn | research | research | research | LOW | no | Research. |
 
 ### Data and persistence
@@ -201,7 +203,7 @@ reason in the notes; `partial` — coherent for part of the technology only.
 Agnara is not becoming an ORM. The goal is to prove it can use the one the
 application already has.
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | SQLite | yes | n/a | n/a | CRITICAL | yes | The baseline that needs no external infrastructure. Capability → provider → repository → SQLite, validating connection lifecycle, transactions, rollback, invocation scope, cleanup and testability. |
 | PostgreSQL | yes | n/a | n/a | CRITICAL | yes | Pooling, transaction scope, concurrent execution, async where it applies, rollback, failure handling, startup and shutdown, resource cleanup. |
@@ -217,7 +219,7 @@ application already has.
 The core stays library-neutral (ADR 0004). The standard-library adapter is the
 baseline and ships today.
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | `dataclasses` | yes | n/a | n/a | BASELINE | yes | Already `IMPLEMENTED`. Nothing may make it the second-class path. |
 | Pydantic | yes | n/a | n/a | CRITICAL | yes | A formal `SchemaAdapter`: input models, output models, nesting, the validation boundary, JSON Schema, error translation, serialization. Never a kernel dependency. |
@@ -228,7 +230,7 @@ baseline and ships today.
 Agnara is not becoming a frontend framework. HTTP may return HTML; that is the
 whole commitment (`docs/TARGET_ARCHITECTURE.md` section 7).
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | Jinja2 | yes | n/a | yes | HIGH | yes, or equivalent | HTTP → capability → application data → template → HTML. Template context, a safe rendering boundary, response integration, and forms once I7 lands. |
 | Django templates | partial | yes | yes | MEDIUM | no | Validated inside a Django application, not as a standalone integration. |
@@ -239,16 +241,16 @@ whole commitment (`docs/TARGET_ARCHITECTURE.md` section 7).
 Agnara is not becoming a broker, scheduler or worker runtime. It integrates
 them.
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | Celery | yes | yes | yes | HIGH | yes, or one equivalent | Capability → task adapter → Celery → broker → worker → Agnara invocation. Must resolve serialization, execution identity, principal propagation, deadlines, retries, idempotency, failures, telemetry and capability lookup. A Celery retry is not an Agnara execution semantic and must never be confused for one. |
 | Taskiq | yes | yes | yes | MEDIUM | no | Modern async alternative; the second implementation that tests the task port. |
 | Dramatiq | yes | yes | yes | MEDIUM | no | |
-| RQ | yes | yes | yes | LOW | no | Does not block the beta. |
+| RQ | yes | yes | yes | LOW | no | Does not block `1.0.0`. |
 
 ### Messaging
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | Redis | yes | n/a | yes | HIGH | yes, with Celery | Cache, task backend, ephemeral state, coordination. Never part of the kernel. |
 | RabbitMQ | yes | n/a | yes | HIGH | alternative to Redis | Task and event transport. |
@@ -257,37 +259,93 @@ them.
 
 ### Durable execution
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | Temporal | yes | yes | n/a | HIGH | no | Depends on I6. Agnara contributes capability contracts, policies, identity, effects, risk, authorization and discovery; Temporal contributes durability, retries, workflow state, worker execution and recovery. The frontier stays explicit, and no proprietary workflow engine is built while a clean integration can answer the question. |
 | Prefect | yes | yes | n/a | MEDIUM | no | Data orchestration. A Prefect flow is not an Agnara capability and the two vocabularies must not be merged. |
 
 ### Observability
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
-| OpenTelemetry | yes | yes | yes | CRITICAL | yes | Bridges exist (ADR 0054 through ADR 0058); `0.1.0b1` validates them end to end — traces, spans, metrics, propagation, invocation and execution identity across HTTP, workers, databases and errors. The SDK never enters `agnara`. |
+| OpenTelemetry | yes | yes | yes | CRITICAL | yes | Bridges exist (ADR 0054 through ADR 0058); `1.0.0` validates them end to end — traces, spans, metrics, propagation, invocation and execution identity across HTTP, workers, databases and errors. The SDK never enters `agnara`. |
 | Sentry | yes | yes | yes | MEDIUM | no | Through an adapter or integration layer. Never an official dependency. |
 
 ### Agent and protocol interoperability
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
-| MCP | yes | yes | yes | CRITICAL | yes | Already implemented for tools. `0.1.0b1` proves HTTP and MCP project the *same* capability with no duplicated business logic, including from inside an embedded host. |
+| MCP | yes | yes | yes | CRITICAL | yes | Already implemented for tools. `1.0.0` proves HTTP and MCP project the *same* capability with no duplicated business logic, including from inside an embedded host. |
 | A2A | yes | yes | yes | HIGH | no | Enters when I4 is ready. Capabilities participate in agent-to-agent communication without kernel change, or the exposure model is wrong. |
 
 ### Command line
 
-| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | b1 blocker | Notes |
+| Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | Typer, Click, `argparse` | yes | yes | yes | HIGH | no | Target: one capability reachable over HTTP, MCP and a CLI with no duplicated business logic. `agnara-cli` owns scaffolding and introspection (`ARCHITECTURE.md` section 15); an application's own CLI is an integration, not a CLI framework chosen on the user's behalf. |
 
-### Under research, with no `0.1.0b1` commitment
+### Under research, with no `1.0.0` commitment
 
 | Technology | Priority | Notes |
 | --- | --- | --- |
 | GraphQL (Strawberry, Graphene) | RESEARCH | A capability → GraphQL projection needs an approved RFC before it is a commitment. Already an open research question in `docs/INITIATIVES.md`. |
 | gRPC | RESEARCH | Projection and adapter architecture only. |
+
+## 6A. `1.0.0` scope-lock classification
+
+This classification is the authoritative interpretation of the matrix for the
+first stable release. It describes what evidence can close the interoperability
+gate; it does not claim that any integration is implemented today. A direction
+already marked `no` in the matrix remains **DISCARDED/NOT MEANINGFUL**, even
+when the same technology has a meaningful direction in another category.
+
+| Area | REQUIRED FOR 1.0 | SUPPORTED IF EVIDENCE LANDS | EXPERIMENTAL FIXTURE ONLY | DEFER AFTER 1.0 |
+| --- | --- | --- | --- | --- |
+| Web hosts | Starlette; FastAPI; Django | Litestar; Flask; Django REST Framework | Django Ninja; Falcon; aiohttp | Sanic; Quart; Robyn |
+| Data and persistence | SQLite; SQLAlchemy | PostgreSQL; Alembic | psycopg | asyncpg; SQLModel; MySQL; MariaDB |
+| Schemas | `dataclasses`; Pydantic | msgspec | — | — |
+| Presentation | — | Jinja2 | Django templates | HTMX |
+| Background execution | — | Celery | — | Taskiq; Dramatiq; RQ |
+| Messaging | — | Redis; RabbitMQ | — | Kafka; NATS |
+| Durable execution | — | — | — | Temporal; Prefect |
+| Observability | OpenTelemetry | Sentry | — | — |
+| Agent/protocol | MCP | — | — | A2A |
+| Application CLI | — | — | Typer; Click; `argparse` | — |
+| Research projections | — | — | — | GraphQL; gRPC |
+
+The required web set is deliberately three-dimensional rather than a popularity
+ranking: Starlette proves the smallest ASGI boundary, FastAPI proves a second
+ASGI host does not dictate the contract, and Django exercises a materially
+different application and lifecycle model. Litestar or Flask can add diversity
+when evidence lands, but neither blocks 1.0. SQLite plus SQLAlchemy is the
+minimal hosted-infrastructure proof; PostgreSQL is a supported extension, not
+a second mandatory database gate. Pydantic is the required second schema
+boundary, while msgspec remains a valuable but non-blocking independence check.
+
+SSE is the required streaming projection because ADR 0085 fixes a bounded HTTP
+contract over the implemented kernel stream. WebSockets, MCP progress, A2A
+task events and the event adapter are **DEFER AFTER 1.0**: they would add new
+wire semantics without being necessary to prove the selected HTTP/MCP capability
+surfaces. Celery and its Redis/RabbitMQ backing are conditional integration
+evidence only; they do not authorize Agnara to own a worker, broker, scheduler
+or retry policy.
+
+The minimum release evidence is therefore explicit: standalone uses the core,
+HTTP and MCP surfaces with no external framework; hosted evidence uses
+SQLite/SQLAlchemy and OpenTelemetry through explicit ports; embedded evidence
+uses Starlette, FastAPI and Django; and side-by-side evidence uses native host
+routes beside Agnara exposures in the FastAPI and Django scenarios. The same
+capability must be reachable through HTTP and MCP in at least one selected
+scenario. A successful isolated fixture proves only its stated mode, not a
+broader support promise.
+
+Every classification marked **DEFER AFTER 1.0** has a named owner: streaming
+wire extensions remain under RFC 0009 and I2; embedding-related framework
+research remains under RFC 0008 and I20; A2A and Events remain their reserved
+adapter boundaries in `docs/TARGET_ARCHITECTURE.md`; durable execution remains
+G5 in that same target architecture; and GraphQL/gRPC require their own RFC.
+They are excluded from the 1.0 support claim, not deleted from the architectural
+roadmap.
 
 ## 7. The framework embedding contract
 
@@ -396,7 +454,7 @@ separate conformance repository — is an open question in RFC 0008.
 
 ## 10. Side-by-side composition
 
-An explicit `0.1.0b1` objective, and the mode most likely to expose a design
+An explicit `1.0.0` objective, and the mode most likely to expose a design
 error, because it is where two lifecycles meet.
 
 ```text
@@ -458,23 +516,25 @@ of one costs the kernel its size.
 
 ## 13. Validation order
 
-The order implementation follows once `0.1.0b1` opens. It changes only for a
-demonstrated technical dependency, and the change is recorded.
+The V1-02 scope lock replaces the earlier broad ordering with a gate-oriented
+sequence. Required evidence comes first; conditional support is attempted only
+when it adds evidence without delaying a required gate; experimental fixtures
+cannot become a support claim.
 
 ```text
- 1. Starlette                      9. msgspec
- 2. FastAPI                       10. Jinja2
- 3. SQLAlchemy + SQLite           11. Celery
- 4. PostgreSQL                    12. Redis / RabbitMQ
- 5. Django                        13. OpenTelemetry end to end
- 6. Litestar                      14. MCP + HTTP shared capability
- 7. Flask                         15. research integrations
- 8. Pydantic
+ 1. Framework-neutral embedding contract and common conformance harness
+ 2. Starlette, FastAPI and Django host scenarios
+ 3. SQLAlchemy + SQLite hosted-infrastructure scenario
+ 4. Pydantic schema boundary and OpenTelemetry end-to-end evidence
+ 5. HTTP + MCP shared-capability scenario
+ 6. Conditional: PostgreSQL, Litestar/Flask, Jinja2, Celery, Redis/RabbitMQ,
+    msgspec, Sentry and the explicitly classified secondary fixtures
+ 7. Deferred: every post-1.0 entry in section 6A
 ```
 
-Starlette is first deliberately. It is the smallest host that can exercise the
-whole embedding contract, so a defect it finds is a defect in the contract
-rather than in FastAPI's interpretation of it.
+Starlette begins the host scenarios deliberately. It is the smallest ASGI host
+that can exercise the contract, so a defect it finds is a contract defect rather
+than FastAPI's interpretation of it.
 
 ## 14. Historical reference strategy
 
@@ -482,7 +542,7 @@ No historical reference application is created for any of these integrations
 now. A historical reference freezes a public surface, and freezing an
 experimental one converts an experiment into a contract nobody agreed to.
 
-When `0.1.0b1` exists, references are grouped by **architecture, not by
+For `1.0.0`, references are grouped by **architecture, not by
 library**, so that adding a fourth ASGI framework does not mean a fourth
 repository:
 
@@ -508,8 +568,8 @@ agnara-django-interoperability    agnara-schema-interoperability
 - `ARCHITECTURE.md` — the boundaries as they exist today
 - `docs/TARGET_ARCHITECTURE.md` — where the structure is going
 - `docs/INITIATIVES.md` — I20, and the order this work happens in
-- `docs/releases/RELEASE_PLAN.md` — the `0.1.0b1` gates
+- `docs/releases/RELEASE_PLAN.md` — the `1.0.0` gates
 - `docs/rfc/0008-framework-embedding-and-ecosystem-composition.md` — the open
   design questions
 - `docs/adr/0068-interoperability-release-ownership.md` — why this belongs to
-  `0.1.0b1`
+  `1.0.0`

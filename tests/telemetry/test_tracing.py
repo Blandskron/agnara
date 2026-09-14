@@ -176,6 +176,7 @@ def test_outcome_attribute_and_status_are_a_closed_vocabulary(
     assert span.attributes is not None
     expected = {
         "agnara.capability.id": str(CAPABILITY),
+        "agnara.invocation.id": identity,
         "agnara.invocation.outcome": recorded,
     }
     if status is StatusCode.ERROR:
@@ -277,14 +278,16 @@ def test_no_caller_or_runtime_payload_reaches_the_exporter(traced: Any) -> None:
     assert span.attributes is not None
     assert set(span.attributes) == {
         "agnara.capability.id",
+        "agnara.execution.id",
+        "agnara.invocation.id",
         "agnara.invocation.outcome",
         "error.type",
     }
     assert span.attributes["error.type"] == "failure"
 
 
-def test_an_invocation_identity_is_not_exported_as_an_attribute(traced: Any) -> None:
-    """It pairs events in-process; as an attribute it is unbounded cardinality."""
+def test_an_invocation_identity_is_exported_only_on_spans(traced: Any) -> None:
+    """A span may correlate one attempt; metrics deliberately never receive it."""
     hook, exporter = traced
     identity = uuid4().hex
 
@@ -292,7 +295,8 @@ def test_an_invocation_identity_is_not_exported_as_an_attribute(traced: Any) -> 
     hook.on_invocation_terminal(terminal(identity, "success"))
 
     (span,) = exported(exporter)
-    assert identity not in span.to_json()
+    assert span.attributes is not None
+    assert span.attributes["agnara.invocation.id"] == identity
 
 
 # ---------------------------------------------------------------------------

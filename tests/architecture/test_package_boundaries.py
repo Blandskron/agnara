@@ -9,6 +9,7 @@ They must fail when:
 - ``agnara`` imports a forbidden dependency;
 - protocol-neutral policy tests import a transport or protocol SDK;
 - an adapter imports a sibling adapter;
+- an adapter reaches into a private core module;
 - a package cycle appears;
 - a new ``agnara`` runtime dependency is introduced.
 """
@@ -16,6 +17,8 @@ They must fail when:
 from __future__ import annotations
 
 import ast
+from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 
@@ -369,4 +372,48 @@ def test_the_http_adapter_declares_no_browser_documentation_dependency() -> None
     assert not declared & FORBIDDEN_UI_PACKAGES, (
         f"agnara-http declares a browser documentation dependency: "
         f"{sorted(declared & FORBIDDEN_UI_PACKAGES)}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Rule 9 — an adapter consumes the core's published surface, not its internals
+# ---------------------------------------------------------------------------
+
+
+def _dotted_imports(path: Path) -> Iterator[tuple[str, int]]:
+    """Every absolute module path a file imports, dotted and unshortened."""
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                yield alias.name, node.lineno
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            yield node.module, node.lineno
+
+
+@pytest.mark.parametrize("dist_name", ADAPTER_DISTRIBUTIONS)
+def test_adapter_imports_no_private_core_module(dist_name: str) -> None:
+    """ADR 0085: a shared rule an adapter needs is published, not reached into.
+
+    The HTTP SSE projection is why this rule is written down. It needs the
+    canonical exception-to-`Failure` classifier for a pre-output stream
+    failure, and the classifier lives in `agnara.execution._outcome`. Importing
+    it there would have worked and would have been wrong: an underscore module
+    carries no compatibility promise, and a transport silently depending on one
+    is how a core refactor starts breaking adapters. The classifier was
+    published as `agnara.execution.classify_failure` instead.
+
+    `external_imports_of` cannot see this, because it keeps only the top-level
+    module name -- to it, `agnara.execution._outcome` is just `agnara`.
+    """
+    offenders = [
+        f"  {path.relative_to(WORKSPACE_ROOT).as_posix()}:{lineno}: {module}"
+        for path in source_files(dist_name)
+        for module, lineno in _dotted_imports(path)
+        if module.split(".")[0] == CORE_IMPORT_NAME
+        and any(segment.startswith("_") for segment in module.split("."))
+    ]
+    assert not offenders, (
+        f"{dist_name} reaches into a private core module; publish the name it needs:\n"
+        + "\n".join(offenders)
     )

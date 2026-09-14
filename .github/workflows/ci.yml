@@ -147,7 +147,9 @@ jobs:
       - name: Documentation provider browser conformance
         env:
           AGNARA_RUN_BROWSER_TESTS: "1"
-        run: uv run pytest tests/http/test_documentation_browser.py -m browser
+        run: >-
+          uv run pytest tests/http/test_documentation_browser.py
+          tests/http/test_public_documentation_browser.py -m browser
 
       - name: Explorer browser accessibility and navigation
         env:
@@ -247,13 +249,32 @@ jobs:
           print('imported agnara', agnara.__version__)
           "
 
+  container:
+    name: Container build and smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build reference image
+        run: >-
+          docker build --tag agnara:ci
+          --build-arg OCI_CREATED="$GITHUB_RUN_STARTED_AT"
+          --build-arg OCI_REVISION="$GITHUB_SHA" .
+        env:
+          GITHUB_RUN_STARTED_AT: ${{ github.run_started_at }}
+
+      - name: Smoke test reference image
+        run: python scripts/container_smoke.py agnara:ci
+
   # Aggregates every required check into one status, so branch protection
   # needs a single entry that does not have to be edited when the matrix
   # changes. See BACKLOG.md E0B.4.
   ci:
     name: CI
     if: always()
-    needs: [security, lint, types, test, browser, lockfile, package]
+    needs: [security, lint, types, test, browser, lockfile, package, container]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job did not succeed

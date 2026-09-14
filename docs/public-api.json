@@ -387,6 +387,10 @@
               "stability": "provisional"
             },
             {
+              "name": "CapabilityStream",
+              "stability": "provisional"
+            },
+            {
               "name": "ExecutionContext",
               "stability": "provisional"
             },
@@ -400,6 +404,42 @@
             },
             {
               "name": "FailureCode",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyClaimed",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyCompleted",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyConflict",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyInProgress",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyReservation",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyScope",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyStorageError",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyStore",
+              "stability": "provisional"
+            },
+            {
+              "name": "InMemoryIdempotencyStore",
               "stability": "provisional"
             },
             {
@@ -423,11 +463,23 @@
               "stability": "provisional"
             },
             {
+              "name": "StreamInterrupted",
+              "stability": "provisional"
+            },
+            {
+              "name": "StreamTerminal",
+              "stability": "provisional"
+            },
+            {
               "name": "Success",
               "stability": "provisional"
             },
             {
               "name": "TelemetryHook",
+              "stability": "provisional"
+            },
+            {
+              "name": "classify_failure",
               "stability": "provisional"
             },
             {
@@ -437,6 +489,10 @@
             {
               "name": "invoke_result",
               "stability": "provisional"
+            },
+            {
+              "name": "open_stream",
+              "stability": "provisional"
             }
           ]
         },
@@ -445,6 +501,47 @@
           "exports": [
             {
               "name": "ExecutionContext",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.execution.idempotency",
+          "exports": [
+            {
+              "name": "IdempotencyClaimed",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyCompleted",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyConflict",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyInProgress",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyReservation",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyScope",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyStorageError",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyStore",
+              "stability": "provisional"
+            },
+            {
+              "name": "InMemoryIdempotencyStore",
               "stability": "provisional"
             }
           ]
@@ -492,11 +589,36 @@
           "module": "agnara.execution.runtime",
           "exports": [
             {
+              "name": "classify_failure",
+              "stability": "provisional"
+            },
+            {
               "name": "invoke",
               "stability": "provisional"
             },
             {
               "name": "invoke_result",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.execution.streaming",
+          "exports": [
+            {
+              "name": "CapabilityStream",
+              "stability": "provisional"
+            },
+            {
+              "name": "StreamInterrupted",
+              "stability": "provisional"
+            },
+            {
+              "name": "StreamTerminal",
+              "stability": "provisional"
+            },
+            {
+              "name": "open_stream",
               "stability": "provisional"
             }
           ]
@@ -1108,6 +1230,10 @@
               "stability": "provisional"
             },
             {
+              "name": "DocumentationAssets",
+              "stability": "provisional"
+            },
+            {
               "name": "Http",
               "stability": "provisional"
             },
@@ -1120,11 +1246,35 @@
               "stability": "provisional"
             },
             {
+              "name": "HttpDocumentation",
+              "stability": "provisional"
+            },
+            {
+              "name": "HttpExplorer",
+              "stability": "provisional"
+            },
+            {
               "name": "OpenApiInfo",
               "stability": "provisional"
             },
             {
               "name": "OpenApiOperation",
+              "stability": "provisional"
+            },
+            {
+              "name": "OpenApiSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "ReDoc",
+              "stability": "provisional"
+            },
+            {
+              "name": "Scalar",
+              "stability": "provisional"
+            },
+            {
+              "name": "SwaggerUI",
               "stability": "provisional"
             }
           ]
@@ -1141,6 +1291,10 @@
               "stability": "provisional"
             },
             {
+              "name": "DocumentationAssets",
+              "stability": "provisional"
+            },
+            {
               "name": "Http",
               "stability": "provisional"
             },
@@ -1153,11 +1307,35 @@
               "stability": "provisional"
             },
             {
+              "name": "HttpDocumentation",
+              "stability": "provisional"
+            },
+            {
+              "name": "HttpExplorer",
+              "stability": "provisional"
+            },
+            {
               "name": "OpenApiInfo",
               "stability": "provisional"
             },
             {
               "name": "OpenApiOperation",
+              "stability": "provisional"
+            },
+            {
+              "name": "OpenApiSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "ReDoc",
+              "stability": "provisional"
+            },
+            {
+              "name": "Scalar",
+              "stability": "provisional"
+            },
+            {
+              "name": "SwaggerUI",
               "stability": "provisional"
             }
           ]

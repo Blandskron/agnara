@@ -25,6 +25,7 @@ class InvocationStartEvent:
     capability_id: CapabilityId
     tracking_id: str | None
     invocation_id: str
+    execution_id: str | None = None
 
 
 @frozen_slots_dataclass
@@ -32,6 +33,14 @@ class InvocationTerminalEvent:
     """Emitted exactly once when an invocation terminates.
 
     ``invocation_id`` repeats the identity of the matching start event.
+
+    ``outcome`` carries one of ``success``, ``failure``, ``cancellation`` and
+    ``timeout`` for a complete-result invocation, and a ``StreamTerminal``
+    value for a streaming one. ``units`` tells the two apart without parsing
+    the outcome: it is ``None`` when the concept does not apply and the unit
+    count when it does. A stream's ``duration_ns`` spans its whole lifetime,
+    which can be long, so a hook that assumes a short span is wrong about
+    streaming rather than about this event (ADR 0084 D7).
     """
 
     capability_id: CapabilityId
@@ -39,6 +48,8 @@ class InvocationTerminalEvent:
     duration_ns: int
     outcome: str
     invocation_id: str
+    units: int | None = None
+    execution_id: str | None = None
 
 
 @runtime_checkable

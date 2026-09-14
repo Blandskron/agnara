@@ -3,6 +3,8 @@
 This document owns compatibility expectations for Agnara's Python API.
 `docs/API_DESIGN.md` owns the intended shape and examples; the machine-readable
 [`public-api.json`](public-api.json) file owns the exact classified export list.
+The generated [API reference](API_REFERENCE.md) renders that list for readers;
+it does not define stability policy separately.
 
 ## Stability vocabulary
 
@@ -13,11 +15,11 @@ This document owns compatibility expectations for Agnara's Python API.
 | `experimental` | Public only for evaluation. It may change or disappear in the next pre-1.0 release. |
 | `internal` | Unsupported implementation detail. Internal names are excluded from public manifests and `__all__`. |
 
-No API is classified `stable` during the alpha line. All 282 currently governed
+No API is classified `stable` before the `1.0.0` release. All 310 currently governed
 exports are `provisional`: they are deliberate public entry points, but the
-alpha line explicitly makes no compatibility promise. A stable classification
-requires a later, explicit decision supported by the beta and release-candidate
-gates; descriptive phrases such as "stable identifier" do not silently promote
+pre-stable work explicitly makes no compatibility promise. A stable classification
+requires an explicit `1.0.0` decision supported by release evidence; descriptive phrases
+such as "stable identifier" do not silently promote
 a Python symbol.
 
 Nothing is `experimental` today either. `agnara-http` is an `EXPERIMENTAL`
@@ -26,6 +28,50 @@ the package is; its seven exports are still deliberate entry points rather than
 evaluation spikes, so they are `provisional` like everything else. Marking a
 symbol `experimental` is a decision to make in the change that introduces it,
 not a mood.
+
+### Current provisional semantics
+
+`CapabilityDefinition.output` and the optional `output=` spelling on
+`Agnara.capability` and `App.capability` are additive semantics of existing
+provisional public classes and decorators. They describe and validate a
+successful complete result or each stream unit under ADR 0086; they add no new
+export and make no stable compatibility commitment before the explicit 1.0 API
+classification decision.
+
+`agnara.execution.classify_failure` is the one export added for an adapter
+rather than for an application. `open_stream` raises an ordinary exception for
+a pre-output failure (ADR 0084 D6), so an adapter that owns a streaming wire
+has to answer it with the same canonical failure `invoke_result` would have
+produced. Publishing the rule is what keeps a transport from re-deriving it and
+redacting one capability on one wire and not on another (ADR 0077). It is
+deliberately narrower than a general error-mapping hook: it takes an exception
+and a capability identifier, and returns a `Failure`.
+
+ADR 0087 evolves existing provisional execution values without adding a new
+export: `ExecutionContext.execution_id` is an opaque logical execution token;
+runtime `Success`/`Failure`, `CapabilityStream`, and lifecycle telemetry carry
+the same token.  It is deliberately distinct from caller `tracking_id` and
+telemetry `invocation_id`; a reused context retains its execution token while
+each handler attempt gets a fresh invocation token.  The runtime generates the
+token and rejects the reserved `Invocation.metadata["execution_id"]` channel
+before handler work; a caller-supplied idempotency key is not accepted until a
+future governed store can validate and scope it. The identity is absent from
+transport fields and frozen introspection. This is a provisional semantic
+extension, not an idempotency store, replay protocol, retry policy, or
+durable-execution promise.
+
+`Http.sse` is a method on the existing provisional `Http` builder. ADR 0090
+adds seven deliberate `agnara_http` documentation-composition exports; the
+provider extension protocol remains internal.
+
+ADR 0089 adds the provisional `agnara.execution.idempotency` storage port and
+its process-local reference implementation, re-exported from
+`agnara.execution`. `IdempotencyScope` requires an application to provide the
+validated capability, principal, key and canonical fingerprint boundary; the
+port atomically reserves, observes, completes or abandons that selector. It
+stores only bounded caller-serialized successful bytes and does not select
+transport keys, serialize values, cache failures, authorize a retry, or promise
+durability or multi-process coordination.
 
 ## Governed surface
 
@@ -36,15 +82,15 @@ ungoverned adapter is not a governed framework (ADR 0076).
 
 | Distribution | Import root | Governed modules | Classified exports | Entry point exports |
 | --- | --- | --- | --- | --- |
-| `agnara` | `agnara` | 30 | 220 | 41 |
+| `agnara` | `agnara` | 32 | 248 | 41 |
 | `agnara-a2a` | `agnara_a2a` | 1 | 0 | 0 |
 | `agnara-cli` | `agnara_cli` | 1 | 4 | 4 |
 | `agnara-events` | `agnara_events` | 1 | 0 | 0 |
-| `agnara-http` | `agnara_http` | 2 | 14 | 7 |
+| `agnara-http` | `agnara_http` | 2 | 28 | 14 |
 | `agnara-mcp` | `agnara_mcp` | 9 | 40 | 20 |
 | `agnara-telemetry` | `agnara_telemetry` | 3 | 4 | 2 |
 
-282 exports across 47 modules. A count is not a substitute for the list. The
+324 exports across 49 modules. A count is not a substitute for the list. The
 release gate compares each module's ordered export list against the manifest
 and also walks each distribution's source tree in the reverse direction, so
 adding a public package or leaf module without classifying it fails the gate.
@@ -67,12 +113,13 @@ from; that is why a distribution's export total exceeds its entry-point count.
 | `agnara.capability.registry` | 2 |
 | `agnara.core.di` | 9 |
 | `agnara.errors` | 12 |
-| `agnara.execution` | 14 |
+| `agnara.execution` | 18 |
 | `agnara.execution.context` | 1 |
 | `agnara.execution.invocation` | 1 |
 | `agnara.execution.plan` | 1 |
 | `agnara.execution.result` | 4 |
 | `agnara.execution.runtime` | 2 |
+| `agnara.execution.streaming` | 4 |
 | `agnara.execution.telemetry` | 3 |
 | `agnara.exposure` | 7 |
 | `agnara.introspection` | 23 |
@@ -84,9 +131,9 @@ from; that is why a distribution's export total exceeds its entry-point count.
 | `agnara.policy.confirmation` | 4 |
 | `agnara.policy.principal` | 2 |
 | `agnara.policy.scopes` | 1 |
-| `agnara.schema` | 16 |
+| `agnara.schema` | 17 |
 | `agnara.schema.port` | 3 |
-| `agnara.schema.standard` | 13 |
+| `agnara.schema.standard` | 14 |
 
 Governing the subpackages is not a formality. The first three lines of the
 README and of `examples/quickstart.py` import from `agnara`, `agnara.core.di`
@@ -97,13 +144,13 @@ outside the governed surface until these manifests existed.
 
 | Module | Exports |
 | --- | --- |
-| `agnara_http` | 7 |
-| `agnara_http.composition` | 7 |
+| `agnara_http` | 14 |
+| `agnara_http.composition` | 14 |
 
 The package re-exports one module, so the two lists must not diverge.
-`docs/HTTP_COMPOSITION.md` is the supported guide; the documentation UI
-providers, the Explorer and the authorized discovery endpoint are implemented
-but deliberately unreachable through this surface (ADR 0071, ADR 0072).
+`docs/HTTP_COMPOSITION.md` is the supported guide. Built-in documentation UIs
+and Explorer are supported through ADR 0090; the third-party provider protocol
+and authorized discovery endpoint remain internal.
 
 ### `agnara-mcp`
 
@@ -137,8 +184,8 @@ but deliberately unreachable through this surface (ADR 0071, ADR 0072).
 `EXIT_USAGE` and `main` are what a caller needs to run that command in-process,
 and nothing else is a contract. Thirteen further names — manifest parsing,
 generation planning and target resolution — were re-exported from
-underscore-prefixed modules through `0.1.0a3` without ever being documented,
-used or designed as an API; `0.1.0a4` removes them (ADR 0076). Code that
+underscore-prefixed modules before the retained baseline without ever being documented,
+used or designed as an API; the baseline removes them (ADR 0076). Code that
 needs them is reading the CLI's implementation and should say so by importing
 the private module directly.
 

@@ -8,6 +8,7 @@ from enum import StrEnum
 from types import MappingProxyType
 
 from agnara._frozen import frozen_slots_dataclass
+from agnara.execution._execution_identity import ExecutionId
 
 __all__ = ["CanonicalResult", "Failure", "FailureCode", "Success"]
 
@@ -35,6 +36,10 @@ class Success[T]:
     """A successfully produced capability value."""
 
     value: T
+    execution_id: str | None = field(default=None, compare=False, repr=False)
+
+    def __post_init__(self) -> None:
+        _validate_execution_id(self.execution_id)
 
 
 @frozen_slots_dataclass
@@ -49,6 +54,7 @@ class Failure:
     code: FailureCode
     message: str
     details: Mapping[str, FailureDetail] = field(default_factory=dict)
+    execution_id: str | None = field(default=None, compare=False, repr=False)
 
     def __post_init__(self) -> None:
         if not isinstance(self.code, FailureCode):
@@ -57,6 +63,7 @@ class Failure:
             raise TypeError("message must be a non-empty string")
         if not isinstance(self.details, Mapping):
             raise TypeError("details must be a mapping")
+        _validate_execution_id(self.execution_id)
 
         copied: dict[str, FailureDetail] = {}
         for key, value in self.details.items():
@@ -75,3 +82,11 @@ def _is_detail(value: object) -> bool:
     if value is None or isinstance(value, str | bool | int | float):
         return True
     return isinstance(value, tuple) and all(_is_detail(item) for item in value)
+
+
+def _validate_execution_id(value: str | None) -> None:
+    if value is None:
+        return
+    if not isinstance(value, str):
+        raise TypeError("execution_id must be a non-empty string or None")
+    ExecutionId(value)

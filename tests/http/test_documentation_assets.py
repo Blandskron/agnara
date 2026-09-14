@@ -1,11 +1,14 @@
 """Repository-wide packaging evidence for documentation UI assets (E6.19)."""
 
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 import hashlib
 import json
 import shutil
 import subprocess
+import sys
 import tomllib
 import zipfile
 from importlib.resources import files
@@ -76,3 +79,91 @@ def test_built_wheel_contains_the_complete_verified_resource_tree(tmp_path: Path
 
     assert expected
     assert all(path.startswith("agnara_http/_vendor/") for path in expected)
+
+
+def test_clean_room_wheels_serve_the_public_documentation_profile(tmp_path: Path) -> None:
+    """A consumer can serve `/docs` without source-tree or private imports."""
+    uv = shutil.which("uv")
+    assert uv is not None, "the documented release tool must be available"
+    dist = tmp_path / "dist"
+    for package in ("agnara", "agnara-http"):
+        built = subprocess.run(
+            [uv, "build", "--package", package, "--out-dir", str(dist)],
+            cwd=WORKSPACE_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        assert built.returncode == 0, built.stdout + built.stderr
+
+    environment = tmp_path / "environment"
+    created = subprocess.run(
+        [sys.executable, "-m", "venv", str(environment)],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert created.returncode == 0, created.stdout + created.stderr
+    interpreter = environment / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
+    installed = subprocess.run(
+        [
+            str(interpreter),
+            "-m",
+            "pip",
+            "install",
+            "--no-index",
+            "--find-links",
+            str(dist),
+            "agnara",
+            "agnara-http",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert installed.returncode == 0, installed.stdout + installed.stderr
+
+    script = tmp_path / "consumer.py"
+    script.write_text(
+        """import asyncio
+from agnara import Agnara
+from agnara_http import Binding, BindingSource, Http, HttpDocumentation, OpenApiInfo, OpenApiOperation
+
+app = Agnara("consumer")
+@app.capability
+def show(widget_id: str) -> dict[str, str]:
+    return {"id": widget_id}
+
+http = Http()
+http.get("/widgets/{widget_id}", show, Binding("widget_id", BindingSource.PATH), openapi=OpenApiOperation(summary="Show widget"))
+asgi = http.compile(app.compile(), openapi=OpenApiInfo("Consumer API", "1.0.0"), documentation=HttpDocumentation())
+
+async def request(path: str) -> tuple[int, bytes]:
+    messages = []
+    async def receive():
+        return {"type": "http.request", "body": b"", "more_body": False}
+    async def send(message):
+        messages.append(message)
+    await asgi({"type": "http", "method": "GET", "path": path, "raw_path": path.encode(), "query_string": b"", "headers": [], "root_path": ""}, receive, send)
+    return messages[0]["status"], b"".join(message.get("body", b"") for message in messages[1:])
+
+assert asyncio.run(request("/openapi.json"))[0] == 200
+status, page = asyncio.run(request("/docs"))
+assert status == 200 and b"swagger-ui-bundle.js" in page
+print("clean-room documentation ok")
+""",
+        encoding="utf-8",
+    )
+    consumed = subprocess.run(
+        [str(interpreter), "-I", str(script)],
+        cwd=tmp_path,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert consumed.returncode == 0, consumed.stdout + consumed.stderr
+    assert consumed.stdout.strip() == "clean-room documentation ok"

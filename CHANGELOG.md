@@ -20,12 +20,74 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
-## [0.1.0a9] - Security Hotfix
+- Add the official GHCR executable reference runtime at
+  `ghcr.io/blandskron/agnara`, with non-root execution, container smoke tests,
+  multi-architecture release publication, SBOM and provenance attestations.
 
-Security hotfix for GHSA-j5rx-vm8v-f7p3 (CWE-532). Versions `<= 0.1.0a8`
-could record unexpected exception details in default runtime logs. This
-release removes exception text and tracebacks while retaining the capability
-identifier for correlation. It introduces no unrelated functional changes.
+- Add the provisional, transport-neutral `agnara.execution` idempotency
+  storage contract under ADR 0089. It atomically reserves a key scoped by
+  capability, principal and request fingerprint, supports finite in-progress
+  and successful-result windows, and provides a bounded process-local
+  reference store. It does not select transport keys, serialize handler
+  values, cache failures, authorize retries, or promise durability or
+  multi-process coordination.
+
+- Add integrated HTTP documentation composition (ADR 0090):
+  `HttpDocumentation()` serves generated OpenAPI 3.2 at `/openapi.json` and
+  pinned local Swagger UI at `/docs`; typed selections independently configure
+  schema publication, Swagger, Scalar, ReDoc, CDN origin permission, explicit
+  try-it and the separately authorized Explorer. ReDoc refuses the canonical
+  3.2 document rather than downgrading it.
+
+- Add runtime execution identity under ADR 0087. Every `ExecutionContext` now
+  owns an opaque generated execution token which is retained by canonical
+  outcomes, streams and lifecycle telemetry, without aliasing caller tracking
+  or per-attempt invocation identifiers. This adds no transport field,
+  idempotency storage, replay or automatic retry behavior.
+- Add the ADR 0088 HTTP/MCP identity bridge. HTTP responses expose the
+  generated `agnara-execution-id`; bounded request IDs are correlation only,
+  while OpenTelemetry spans distinguish execution and invocation identifiers
+  without exporting caller correlation or request metadata.
+
+- Clarify the contributor-facing A8-to-1.0 governance baseline: `0.1.0a8` is
+  the retained publication baseline, `1.0.0` is the next release, and active
+  planning no longer presents historical beta labels as required releases.
+- Lock the contributor-facing 1.0 scope: map each release gate to responsible
+  work and evidence, classify integration evidence, and defer non-required
+  streaming projections without claiming them as supported.
+- Add the HTTP server-sent events projection of a capability stream,
+  declared with the new provisional `Http.sse(path, capability, *bindings)`.
+  One yielded unit becomes one standard `message` event carrying compact JSON;
+  the response starts only once the first unit is representable, so a failure
+  that exposed nothing is still an ordinary RFC 9457 problem; and every started
+  response ends with one `agnara.terminal` event naming the outcome, the exact
+  unit count and, after a late failure, the redacted problem. Client
+  disconnect, send failure, deadline and cancellation close or cancel the owned
+  stream without a leaked task. SSE routes are `GET`-only, take no request-body
+  binding, imply no `HEAD`, and are absent from OpenAPI; replay and
+  `Last-Event-ID` carry no meaning.
+- Add `agnara.execution.classify_failure`, the canonical exception-to-`Failure`
+  rule `invoke_result` applies, published so an adapter owning a streaming wire
+  answers a pre-output failure exactly as every other boundary would.
+- Add the provisional, explicit `output=` capability contract for complete
+  results and streaming units. It is compiled at startup and validates each
+  successful value before delivery; an output violation is a redacted internal
+  failure, while omitted `output` remains the intentional `Any` contract.
+- Redact unexpected capability exception messages and tracebacks from default
+  runtime logs while retaining the capability identifier for correlation.
+- Add the protocol-neutral streaming kernel contract decided by ADR 0084.
+  A capability declares `streaming=True` and yields its units from an async
+  generator; `agnara.execution.open_stream` returns an owned, one-shot
+  `CapabilityStream` with pull-based backpressure and no kernel buffer,
+  evaluates policy and validates input before the first unit, closes the
+  producer before releasing the invocation scope, and reports how it ended
+  through `StreamTerminal`. A failure after output raises `StreamInterrupted`
+  carrying a redacted canonical `Failure` and the number of units already
+  emitted, instead of a result that implies nothing was produced.
+- Refuse a streaming capability at `invoke` and `invoke_result`, and refuse an
+  async generator handler that was never declared streaming at compile time.
+- Add `InvocationTerminalEvent.units`: the unit count for a streaming
+  invocation, `None` for a complete-result one.
 
 ## [0.1.0a8] - 2026-09-09
 

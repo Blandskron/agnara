@@ -13,13 +13,13 @@ execution kernel: the capability model, registry, execution context,
 dependency graph, policies, execution planning and canonical errors. It
 depends on nothing but the standard library.
 
-## Status: alpha
+## Status: publication baseline
 
-This is the `0.1.0a4` application alpha, which adds public application and
-exposure boundaries and builds the synchronized adapter set alongside the
-kernel. It is **not production-ready**, the public API may change without a
-deprecation cycle, and it makes no claim of protocol conformance, benchmark
-leadership or security guarantees.
+The retained A8 publication establishes the public application and exposure
+boundaries alongside the synchronized adapter set. The project is working
+toward its first stable public release, `1.0.0`; do not infer production
+readiness, protocol conformance, benchmark leadership or security guarantees
+without the release evidence.
 
 Which versions are on PyPI is answered by the project page rather than by this
 file. `CHANGELOG.md` records what each version contains.
@@ -30,12 +30,10 @@ file. `CHANGELOG.md` records what each version contains.
 pip install agnara
 ```
 
-Every published version so far is a pre-release, so this resolves to the newest
-alpha without a version pin or `--pre`. Pin explicitly when a build must not
-move:
+Pin explicitly when a build must not move:
 
 ```bash
-pip install "agnara==0.1.0a4"
+pip install "agnara==0.1.0a8"
 ```
 
 Requires CPython 3.14 or newer.
@@ -162,12 +160,11 @@ Exporter startup, flushing and shutdown belong to adapters, not the core
 runtime. The separate `agnara-telemetry` package provides metrics and tracing
 hooks over an application-supplied meter and tracer.
 
-**Migration:** the migration guide in `docs/releases/v0.1.0a4.md` covers
-every user-visible change from `0.1.0a3`. For the hook types specifically, code constructing
-`InvocationStartEvent` or `InvocationTerminalEvent` has had to supply
-`invocation_id` since `0.1.0a3`. Use the same identity for matching
-start/terminal events; `tracking_id` is not unique. Hooks that only read events
-are unaffected, and plans without hooks skip event construction entirely.
+**Identity:** code constructing `InvocationStartEvent` or
+`InvocationTerminalEvent` supplies `invocation_id`. Use the same identity for
+matching start and terminal events; `tracking_id` is not unique. Hooks that
+only read events are unaffected, and plans without hooks skip event
+construction entirely.
 
 ## Links
 

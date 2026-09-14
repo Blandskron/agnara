@@ -1084,3 +1084,71 @@ jobs:
           files: dist/*
           # PEP 440 pre-release segments must never ship as a stable release.
           prerelease: ${{ contains(needs.preconditions.outputs.version, 'a') || contains(needs.preconditions.outputs.version, 'b') || contains(needs.preconditions.outputs.version, 'rc') }}
+
+  container:
+    name: Publish official GHCR image
+    if: ${{ inputs.phase == 'final' }}
+    needs: [preconditions, tag, github-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.tag.outputs.tag }}
+          persist-credentials: false
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.6.0
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.0.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build release image for smoke test
+        run: >-
+          docker build --platform linux/amd64 --tag agnara:release-smoke
+          --build-arg OCI_CREATED="$GITHUB_RUN_STARTED_AT"
+          --build-arg OCI_REVISION="$GITHUB_SHA"
+          --build-arg OCI_VERSION="$RELEASE_VERSION" .
+
+      - name: Smoke test release image
+        run: python scripts/container_smoke.py agnara:release-smoke
+        env:
+          RELEASE_VERSION: ${{ needs.preconditions.outputs.version }}
+
+      - name: Build, publish and attest release image
+        id: publish
+        uses: docker/build-push-action@0a97817b6ade9f46837855d676c4cca3a2471fc9 # v4.0.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/agnara:${{ needs.preconditions.outputs.version }}
+          build-args: |
+            OCI_CREATED=${{ github.run_started_at }}
+            OCI_REVISION=${{ github.sha }}
+            OCI_VERSION=${{ needs.preconditions.outputs.version }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ needs.preconditions.outputs.version }}
+          sbom: true
+          provenance: mode=max
+
+      - name: Record immutable image digest
+        run: |
+          set -euo pipefail
+          echo "Published ghcr.io/${GITHUB_REPOSITORY_OWNER}/agnara:${RELEASE_VERSION}"
+          echo "Digest: $IMAGE_DIGEST"
+        env:
+          RELEASE_VERSION: ${{ needs.preconditions.outputs.version }}
+          IMAGE_DIGEST: ${{ steps.publish.outputs.digest }}

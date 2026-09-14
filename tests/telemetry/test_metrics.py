@@ -235,7 +235,12 @@ def test_canonical_failure_return_retains_core_success_semantics(recorded: Any) 
         return failure
 
     plan = plan_for(hook, handler)
-    assert asyncio.run(invoke_result(plan, context_for(plan))) is failure
+    context = context_for(plan)
+    outcome = asyncio.run(invoke_result(plan, context))
+
+    assert outcome == failure
+    assert outcome is not failure
+    assert outcome.execution_id == context.execution_id
     point = measurements(reader)["agnara.invocation.count"].data.data_points[0]
     assert dict(point.attributes)["agnara.invocation.outcome"] == "success"
 

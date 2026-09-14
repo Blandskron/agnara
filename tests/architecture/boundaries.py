@@ -28,7 +28,7 @@ PACKAGES_DIR = WORKSPACE_ROOT / "packages"
 #: `tests/release/test_publication_set.py` holds that file to the workspace
 #: layout, the workspace root metadata and both workflows, so deriving the
 #: architecture vocabulary from it is stronger than restating it here: the
-#: seven names now have one definition that everything is checked against.
+#: public names now have one definition that everything is checked against.
 MANIFEST = distributions.load(WORKSPACE_ROOT)
 
 #: Distribution name -> top-level import package, per ADR 0017.

@@ -1,6 +1,6 @@
 # Schema, Policy and Failure Conformance
 
-This is the `0.1.0a4` semantic matrix for direct runtime, HTTP/OpenAPI and MCP.
+This is the semantic matrix for direct runtime, HTTP/OpenAPI and MCP.
 It records equivalence, not byte identity. Executable evidence lives in
 `tests/conformance/test_a4_schema_policy_failure_consistency.py`; adapter suites
 retain their protocol-specific cases.
@@ -84,6 +84,14 @@ failure.
 
 ## Deferred
 
-Output schemas/validation, HTTP authentication, MCP MRTR resumption, A2A,
-streaming and additional schema libraries are not `0.1.0a4` behavior. Their
-absence is not papered over by a parallel schema or application workaround.
+HTTP authentication, MCP MRTR resumption, A2A and additional schema libraries
+are not baseline behavior. Their absence is not papered over by a parallel
+schema or application workaround.
+
+Declared output validation (ADR 0086) is common runtime behavior on every
+surface, but it is not yet *published* by any surface: no adapter projects
+`plan.output_schema` into OpenAPI, an MCP `outputSchema` or the introspection
+snapshot, so a client still learns an output contract from documentation
+rather than from a wire description. Streaming is common runtime behavior with
+exactly one projection: HTTP `Http.sse` (ADR 0085). MCP and A2A project no
+stream, and no surface publishes a stream unit's schema.
