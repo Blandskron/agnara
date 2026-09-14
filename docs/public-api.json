@@ -1230,6 +1230,10 @@
               "stability": "provisional"
             },
             {
+              "name": "DocumentationAssets",
+              "stability": "provisional"
+            },
+            {
               "name": "Http",
               "stability": "provisional"
             },
@@ -1242,11 +1246,35 @@
               "stability": "provisional"
             },
             {
+              "name": "HttpDocumentation",
+              "stability": "provisional"
+            },
+            {
+              "name": "HttpExplorer",
+              "stability": "provisional"
+            },
+            {
               "name": "OpenApiInfo",
               "stability": "provisional"
             },
             {
               "name": "OpenApiOperation",
+              "stability": "provisional"
+            },
+            {
+              "name": "OpenApiSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "ReDoc",
+              "stability": "provisional"
+            },
+            {
+              "name": "Scalar",
+              "stability": "provisional"
+            },
+            {
+              "name": "SwaggerUI",
               "stability": "provisional"
             }
           ]
@@ -1263,6 +1291,10 @@
               "stability": "provisional"
             },
             {
+              "name": "DocumentationAssets",
+              "stability": "provisional"
+            },
+            {
               "name": "Http",
               "stability": "provisional"
             },
@@ -1275,11 +1307,35 @@
               "stability": "provisional"
             },
             {
+              "name": "HttpDocumentation",
+              "stability": "provisional"
+            },
+            {
+              "name": "HttpExplorer",
+              "stability": "provisional"
+            },
+            {
               "name": "OpenApiInfo",
               "stability": "provisional"
             },
             {
               "name": "OpenApiOperation",
+              "stability": "provisional"
+            },
+            {
+              "name": "OpenApiSchema",
+              "stability": "provisional"
+            },
+            {
+              "name": "ReDoc",
+              "stability": "provisional"
+            },
+            {
+              "name": "Scalar",
+              "stability": "provisional"
+            },
+            {
+              "name": "SwaggerUI",
               "stability": "provisional"
             }
           ]

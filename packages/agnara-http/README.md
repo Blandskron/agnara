@@ -4,11 +4,11 @@ HTTP/ASGI exposure adapter. Owns routing, request decoding, response encoding, R
 
 ## Status
 
-The current public surface exposes the seven-name composition API described in
-`docs/HTTP_COMPOSITION.md`, including path, query, header, JSON, cookie, form
-and upload bindings. Documentation providers, Explorer and the discovery
-endpoint are implemented internally but are not yet reachable from that public
-composition surface.
+The current public surface exposes the fourteen-name composition API described
+in `docs/HTTP_COMPOSITION.md`, including path, query, header, JSON, cookie,
+form and upload bindings plus typed OpenAPI documentation and Explorer
+composition. Swagger UI is local and pinned by default; third-party providers
+and the JSON discovery endpoint remain internal.
 
 This distribution is built and versioned with the synchronized workspace set.
 Which versions exist on an index is answered by its PyPI project page, not by

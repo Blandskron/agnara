@@ -28,6 +28,13 @@ describe user- and contributor-visible changes only.
   values, cache failures, authorize retries, or promise durability or
   multi-process coordination.
 
+- Add integrated HTTP documentation composition (ADR 0090):
+  `HttpDocumentation()` serves generated OpenAPI 3.2 at `/openapi.json` and
+  pinned local Swagger UI at `/docs`; typed selections independently configure
+  schema publication, Swagger, Scalar, ReDoc, CDN origin permission, explicit
+  try-it and the separately authorized Explorer. ReDoc refuses the canonical
+  3.2 document rather than downgrading it.
+
 - Add runtime execution identity under ADR 0087. Every `ExecutionContext` now
   owns an opaque generated execution token which is retained by canonical
   outcomes, streams and lifecycle telemetry, without aliasing caller tracking

@@ -22,30 +22,44 @@ from typing import Any
 
 import pytest
 
-from agnara import Agnara, AgnaraError, DefinitionError, Risk, ScopePolicy
+from agnara import Agnara, AgnaraError, DefinitionError, Principal, Risk, ScopePolicy
 from agnara.capability import CapabilityDefinition, CapabilityId
 from agnara.core.di import DIRegistry, Scope, provider
 from agnara.execution import ExecutionPlan, TelemetryHook
 from agnara.exposure import ExposureId, SurfaceId, compile_exposures
-from agnara.introspection import describe_app, snapshot
+from agnara.introspection import DiscoveryVisibility, ScopeVisible, describe_app, snapshot
 from agnara_http import (
     Binding,
     BindingSource,
+    DocumentationAssets,
     Http,
     HttpApplication,
     HttpDefinitionError,
+    HttpDocumentation,
+    HttpExplorer,
     OpenApiInfo,
     OpenApiOperation,
+    OpenApiSchema,
+    ReDoc,
+    Scalar,
+    SwaggerUI,
 )
 
 PUBLIC_NAMES = [
     "Binding",
     "BindingSource",
+    "DocumentationAssets",
     "Http",
     "HttpApplication",
     "HttpDefinitionError",
+    "HttpDocumentation",
+    "HttpExplorer",
     "OpenApiInfo",
     "OpenApiOperation",
+    "OpenApiSchema",
+    "ReDoc",
+    "Scalar",
+    "SwaggerUI",
 ]
 
 
@@ -155,6 +169,7 @@ def request(
     query: bytes = b"",
     body: bytes | None = None,
     headers: tuple[tuple[bytes, bytes], ...] = (),
+    root_path: str = "",
 ) -> Exchange:
     """Drive one request the way an ASGI server would."""
     events: list[dict[str, Any]] = []
@@ -173,7 +188,7 @@ def request(
         "raw_path": path.encode("utf-8"),
         "query_string": query,
         "headers": list(headers),
-        "root_path": "",
+        "root_path": root_path,
     }
     asyncio.run(asgi(scope, receive, send))
     return (
@@ -518,6 +533,168 @@ def test_a_document_route_cannot_shadow_a_capability(dependencies: DIRegistry) -
             openapi=OpenApiInfo("Tiny", "1.0"),
             openapi_path="/ping",
         )
+
+
+def test_documentation_default_publishes_local_swagger_and_its_schema(
+    app: Agnara, dependencies: DIRegistry
+) -> None:
+    asgi = compose(
+        app,
+        dependencies,
+        openapi=OpenApiInfo("Shop API", "1.0.0"),
+        documentation=HttpDocumentation(),
+    )
+
+    status, headers, page = request(asgi, "GET", "/docs")
+    schema_status, _, schema = request(asgi, "GET", "/openapi.json")
+    asset_status, asset_headers, initializer = request(
+        asgi, "GET", "/docs/assets/swagger-initializer.js"
+    )
+
+    assert status == schema_status == asset_status == 200
+    assert headers[b"content-type"] == b"text/html; charset=utf-8"
+    assert b"content-security-policy" in headers
+    assert b"swagger-ui-bundle.js" in page
+    assert json.loads(schema)["info"]["title"] == "Shop API"
+    assert asset_headers[b"content-type"] == b"text/javascript; charset=utf-8"
+    assert b'url: "/openapi.json"' in initializer
+    assert b"supportedSubmitMethods: []" in initializer
+
+
+def test_documentation_routes_have_static_surface_semantics(
+    app: Agnara, dependencies: DIRegistry
+) -> None:
+    asgi = compose(
+        app,
+        dependencies,
+        openapi=OpenApiInfo("Shop API", "1.0.0"),
+        documentation=HttpDocumentation(),
+    )
+
+    get_status, get_headers, _ = request(asgi, "GET", "/docs")
+    head_status, head_headers, head_body = request(asgi, "HEAD", "/docs")
+    post_status, post_headers, _ = request(asgi, "POST", "/docs")
+
+    assert head_status == get_status == 200
+    assert head_headers == get_headers
+    assert head_body == b""
+    assert post_status == 405
+    assert post_headers[b"allow"] == b"GET, HEAD"
+
+
+def test_documentation_mount_prefix_is_applied_to_page_and_initializer_urls(
+    app: Agnara, dependencies: DIRegistry
+) -> None:
+    asgi = compose(
+        app,
+        dependencies,
+        openapi=OpenApiInfo("Shop API", "1.0.0"),
+        documentation=HttpDocumentation(),
+    )
+
+    _, _, page = request(asgi, "GET", "/api/docs", root_path="/api")
+    _, _, initializer = request(
+        asgi,
+        "GET",
+        "/api/docs/assets/swagger-initializer.js",
+        root_path="/api",
+    )
+
+    assert b'href="/api/docs/assets/swagger-ui.css"' in page
+    assert b'url: "/api/openapi.json"' in initializer
+
+
+def test_documentation_can_embed_a_schema_and_enable_try_it_explicitly(
+    app: Agnara, dependencies: DIRegistry
+) -> None:
+    asgi = compose(
+        app,
+        dependencies,
+        openapi=OpenApiInfo("Shop API", "1.0.0"),
+        documentation=HttpDocumentation(schema=None, swagger=SwaggerUI(try_it=True)),
+    )
+
+    assert request(asgi, "GET", "/openapi.json")[0] == 404
+    _, _, initializer = request(asgi, "GET", "/docs/assets/swagger-initializer.js")
+    assert b"spec: JSON.parse" in initializer
+    assert b'"get"' in initializer
+    assert b"persistAuthorization: false" in initializer
+    assert b"withCredentials: false" in initializer
+
+
+def test_scalar_is_optional_and_redoc_refuses_the_canonical_openapi_version(
+    app: Agnara, dependencies: DIRegistry
+) -> None:
+    scalar = compose(
+        app,
+        dependencies,
+        openapi=OpenApiInfo("Shop API", "1.0.0"),
+        documentation=HttpDocumentation(swagger=None, scalar=Scalar()),
+    )
+
+    assert request(scalar, "GET", "/scalar")[0] == 200
+    with pytest.raises(HttpDefinitionError, match=r"does not support OpenAPI 3\.2\.0"):
+        compose(
+            app,
+            dependencies,
+            openapi=OpenApiInfo("Shop API", "1.0.0"),
+            documentation=HttpDocumentation(swagger=None, redoc=ReDoc()),
+        )
+
+
+def test_remote_assets_require_an_explicit_matching_origin(
+    app: Agnara, dependencies: DIRegistry
+) -> None:
+    with pytest.raises(HttpDefinitionError, match="has not permitted"):
+        compose(
+            app,
+            dependencies,
+            openapi=OpenApiInfo("Shop API", "1.0.0"),
+            documentation=HttpDocumentation(
+                swagger=SwaggerUI(assets=DocumentationAssets.remote("https://cdn.jsdelivr.net"))
+            ),
+        )
+
+
+def test_documentation_collisions_fail_at_compilation(dependencies: DIRegistry) -> None:
+    application = Agnara("tiny")
+
+    @application.capability
+    def docs() -> str:
+        return "docs"
+
+    http = Http()
+    http.get("/docs", docs, openapi=OpenApiOperation())
+
+    with pytest.raises(HttpDefinitionError, match="conflicts with capability"):
+        http.compile(
+            application.compile(),
+            openapi=OpenApiInfo("Tiny", "1.0"),
+            documentation=HttpDocumentation(),
+        )
+
+
+def test_schema_and_explorer_are_independently_configured_through_public_types(
+    app: Agnara, dependencies: DIRegistry
+) -> None:
+    explorer = HttpExplorer(
+        snapshot=snapshot([], project="shop"),
+        visibility=DiscoveryVisibility.unrestricted(ScopeVisible()),
+        principals=lambda _scope: Principal("viewer"),
+        challenge="Bearer",
+    )
+    asgi = compose(
+        app,
+        dependencies,
+        openapi=OpenApiInfo("Shop API", "1.0.0"),
+        documentation=HttpDocumentation(schema=OpenApiSchema("/contract.json"), swagger=None),
+        explorer=explorer,
+    )
+
+    assert request(asgi, "GET", "/contract.json")[0] == 200
+    status, _, page = request(asgi, "GET", "/api/agnara", root_path="/api")
+    assert status == 200
+    assert b"Agnara Explorer" in page
 
 
 # ---------------------------------------------------------------------------

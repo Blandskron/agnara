@@ -60,9 +60,9 @@ transport fields and frozen introspection. This is a provisional semantic
 extension, not an idempotency store, replay protocol, retry policy, or
 durable-execution promise.
 
-`Http.sse` is a method on the existing provisional `Http` builder, not a new
-`agnara_http` export. The adapter's public surface is still the same seven
-names.
+`Http.sse` is a method on the existing provisional `Http` builder. ADR 0090
+adds seven deliberate `agnara_http` documentation-composition exports; the
+provider extension protocol remains internal.
 
 ADR 0089 adds the provisional `agnara.execution.idempotency` storage port and
 its process-local reference implementation, re-exported from
@@ -86,11 +86,11 @@ ungoverned adapter is not a governed framework (ADR 0076).
 | `agnara-a2a` | `agnara_a2a` | 1 | 0 | 0 |
 | `agnara-cli` | `agnara_cli` | 1 | 4 | 4 |
 | `agnara-events` | `agnara_events` | 1 | 0 | 0 |
-| `agnara-http` | `agnara_http` | 2 | 14 | 7 |
+| `agnara-http` | `agnara_http` | 2 | 28 | 14 |
 | `agnara-mcp` | `agnara_mcp` | 9 | 40 | 20 |
 | `agnara-telemetry` | `agnara_telemetry` | 3 | 4 | 2 |
 
-310 exports across 49 modules. A count is not a substitute for the list. The
+324 exports across 49 modules. A count is not a substitute for the list. The
 release gate compares each module's ordered export list against the manifest
 and also walks each distribution's source tree in the reverse direction, so
 adding a public package or leaf module without classifying it fails the gate.
@@ -144,13 +144,13 @@ outside the governed surface until these manifests existed.
 
 | Module | Exports |
 | --- | --- |
-| `agnara_http` | 7 |
-| `agnara_http.composition` | 7 |
+| `agnara_http` | 14 |
+| `agnara_http.composition` | 14 |
 
 The package re-exports one module, so the two lists must not diverge.
-`docs/HTTP_COMPOSITION.md` is the supported guide; the documentation UI
-providers, the Explorer and the authorized discovery endpoint are implemented
-but deliberately unreachable through this surface (ADR 0071, ADR 0072).
+`docs/HTTP_COMPOSITION.md` is the supported guide. Built-in documentation UIs
+and Explorer are supported through ADR 0090; the third-party provider protocol
+and authorized discovery endpoint remain internal.
 
 ### `agnara-mcp`
 
