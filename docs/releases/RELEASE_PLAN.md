@@ -20,9 +20,9 @@ mature enough to close a release.
    ↓
 0.1.0a7     publication and security recovery (aborted before upload)
    ↓
-0.1.0a8     release pipeline recovery         ← current target
+0.1.0a8     previous publication baseline
    ↓
-0.1.0a9     execution semantics and cost
+0.1.0a9     exceptional security-only hotfix
    ↓
 0.1.0b1     interoperability and composition
    ↓
@@ -319,7 +319,24 @@ none. Both refusals happen before any tag exists.
 
 ---
 
-## 0.1.0a9 — Execution Alpha
+## 0.1.0a9 — Security Hotfix Exception
+
+`0.1.0a9` is an exceptional security-only hotfix for GHSA-j5rx-vm8v-f7p3
+(CWE-532). It is based on the `0.1.0a8` publication baseline and contains no
+unrelated product features. The next planned product release remains `1.0.0`.
+
+**Release boundary:** the security fix removes unexpected exception text and
+tracebacks from default runtime logs while retaining the capability identifier
+for correlation. It does not redefine the roadmap or advance execution-alpha
+scope; those product milestones remain governed by the existing plan toward
+`1.0.0`.
+
+---
+
+## Execution Alpha — Planned Product Scope
+
+The execution-alpha scope remains planned product work for the normal `1.0.0`
+line. It is not consumed by the exceptional `0.1.0a9` security hotfix.
 
 **Proves:** execution has the semantics the rest of the architecture waits on.
 Streaming exists as one model rather than per adapter; an execution identity
@@ -345,11 +362,11 @@ I14 performance budgets, and the prerequisites already recorded for them.
 | Benchmarks remain engineering measurements, not rankings | manual | yes |
 | No known release-blocking regression | evidence | yes |
 
-**Guardrail (ADR 0068, renumbered through ADR 0081 and ADR 0082).** `0.1.0a9` is not the
-ecosystem integration release, the composition beta or a plugin marketplace. It may use an external
-integration as an experimental fixture where that genuinely helps validate
-streaming, idempotency or performance, and must not publish the fixture as a
-contract.
+**Guardrail (ADR 0068, renumbered through ADR 0081 and ADR 0082).** This
+scope is not the ecosystem integration release, the composition beta or a
+plugin marketplace. It may use an external integration as an experimental
+fixture where that genuinely helps validate streaming, idempotency or
+performance, and must not publish the fixture as a contract.
 
 ---
 
