@@ -546,17 +546,31 @@ def test_head_matches_its_get_representation_without_sending_it(path: str) -> No
     head = conformance(exchange("HEAD", path), representation_length=len(get.body))
 
     assert head.status == get.status
-    assert head.events[0]["headers"] == get.events[0]["headers"]
+    get_headers = dict(get.events[0]["headers"])
+    head_headers = dict(head.events[0]["headers"])
+    assert {
+        name: value for name, value in head_headers.items() if name != b"agnara-execution-id"
+    } == {name: value for name, value in get_headers.items() if name != b"agnara-execution-id"}
+    if (get_execution_id := get_headers.get(b"agnara-execution-id")) is None:
+        assert b"agnara-execution-id" not in head_headers
+    else:
+        assert head_headers[b"agnara-execution-id"] != get_execution_id
     assert head.body == b""
 
 
 def test_head_on_a_204_stays_bodyless_and_bare() -> None:
     get = conformance(exchange("GET", "/v1/empty"))
     assert get.status == 204
+    assert get.events[0]["headers"] == [
+        (b"agnara-execution-id", get.headers[b"agnara-execution-id"])
+    ]
 
     head = conformance(exchange("HEAD", "/v1/empty"), representation_length=0)
     assert head.status == 204
-    assert head.events[0]["headers"] == []
+    assert head.events[0]["headers"] == [
+        (b"agnara-execution-id", head.headers[b"agnara-execution-id"])
+    ]
+    assert head.headers[b"agnara-execution-id"] != get.headers[b"agnara-execution-id"]
 
 
 def test_head_without_a_get_at_the_target_is_a_405() -> None:
