@@ -461,11 +461,18 @@ This module currently exports no public names.
 | --- | --- |
 | `Binding` | `provisional` |
 | `BindingSource` | `provisional` |
+| `DocumentationAssets` | `provisional` |
 | `Http` | `provisional` |
 | `HttpApplication` | `provisional` |
 | `HttpDefinitionError` | `provisional` |
+| `HttpDocumentation` | `provisional` |
+| `HttpExplorer` | `provisional` |
 | `OpenApiInfo` | `provisional` |
 | `OpenApiOperation` | `provisional` |
+| `OpenApiSchema` | `provisional` |
+| `ReDoc` | `provisional` |
+| `Scalar` | `provisional` |
+| `SwaggerUI` | `provisional` |
 
 ### `agnara_http.composition`
 
@@ -473,11 +480,18 @@ This module currently exports no public names.
 | --- | --- |
 | `Binding` | `provisional` |
 | `BindingSource` | `provisional` |
+| `DocumentationAssets` | `provisional` |
 | `Http` | `provisional` |
 | `HttpApplication` | `provisional` |
 | `HttpDefinitionError` | `provisional` |
+| `HttpDocumentation` | `provisional` |
+| `HttpExplorer` | `provisional` |
 | `OpenApiInfo` | `provisional` |
 | `OpenApiOperation` | `provisional` |
+| `OpenApiSchema` | `provisional` |
+| `ReDoc` | `provisional` |
+| `Scalar` | `provisional` |
+| `SwaggerUI` | `provisional` |
 
 
 ## `agnara-mcp`

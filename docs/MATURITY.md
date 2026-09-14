@@ -36,7 +36,7 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 | Package | Status | Published to PyPI | Public names | Notes |
 | --- | --- | --- | --- | --- |
 | `agnara` | `IMPLEMENTED` | yes | 41 | The kernel. Standard library only. |
-| `agnara-http` | `EXPERIMENTAL` | no | 7 | Publication-ready public composition API; documentation UI, Explorer and discovery stay internal. |
+| `agnara-http` | `EXPERIMENTAL` | no | 14 | Public HTTP composition includes generated OpenAPI, built-in documentation UIs and authorized Explorer; third-party providers and discovery stay internal. |
 | `agnara-mcp` | `IMPLEMENTED` | no | 20 | Publication-ready tool projection; see the MCP table. |
 | `agnara-cli` | `IMPLEMENTED` | no | 4 | Publication-ready scaffolding, introspection and `agnara` script. |
 | `agnara-telemetry` | `IMPLEMENTED` | no | 2 | Publication-ready OpenTelemetry metrics and tracing hooks. |
@@ -51,20 +51,21 @@ PyPI projects still require their Pending Trusted Publishers before the tag.
 
 Every distribution's public surface is classified in
 `docs/public-api.json` and enforced in both directions by the release gate:
-310 exports across 49 modules, all `provisional`. `agnara-cli` dropped from 17
+324 exports across 49 modules, all `provisional`. `agnara-cli` dropped from 17
 public names to 4 in the baseline, because the other thirteen were implementation
 helpers re-exported from underscore-prefixed modules and never documented,
 used or designed as an API (ADR 0076).
 
-`agnara-http` now declares a public surface: seven `provisional` names that
-compose capabilities, compile an ASGI 3 application and project OpenAPI.
-`docs/HTTP_COMPOSITION.md` is the supported guide.
+`agnara-http` now declares fourteen `provisional` names that compose
+capabilities, compile an ASGI 3 application, project OpenAPI and publish the
+reviewed documentation profile. `docs/HTTP_COMPOSITION.md` is the supported
+guide.
 
-It stays `EXPERIMENTAL` rather than becoming `IMPLEMENTED` because three
-implemented subsystems are deliberately not reachable through it — the
-documentation UI providers, the Explorer and the authorized discovery endpoint
-— and because the surface is one release old. The transport behaviour is
-settled; the spelling is not.
+It stays `EXPERIMENTAL` rather than becoming `IMPLEMENTED` because the public
+spelling is still provisional before 1.0, third-party provider extension and
+the authorized discovery endpoint remain intentionally internal, and the
+surface is newly expanded. The transport behaviour is settled; the spelling is
+not.
 
 ## Kernel — `agnara`
 

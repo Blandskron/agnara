@@ -73,7 +73,7 @@ so no public-index core can substitute for the locally built one. Without
 `--require-installed` the same command runs against the development
 environment, where importing from `packages/*/src` is correct.
 
-The pre-install gate also fixes the reviewed seven-name publication set and
+The pre-install gate also fixes the reviewed public publication set and
 checks each wheel/sdist's metadata, license, README, Python floor,
 dependencies, console scripts, package data, archive paths, local build-path
 leaks and recognized credential signatures. Vendored documentation assets use
@@ -87,6 +87,7 @@ reproducible commands are:
 ```bash
 uv run playwright install --with-deps chromium
 AGNARA_RUN_BROWSER_TESTS=1 uv run pytest tests/http/test_documentation_browser.py -m browser
+AGNARA_RUN_BROWSER_TESTS=1 uv run pytest tests/http/test_public_documentation_browser.py -m browser
 AGNARA_RUN_BROWSER_TESTS=1 uv run pytest tests/http/test_explorer_browser.py -m browser
 ```
 

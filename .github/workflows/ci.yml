@@ -147,7 +147,9 @@ jobs:
       - name: Documentation provider browser conformance
         env:
           AGNARA_RUN_BROWSER_TESTS: "1"
-        run: uv run pytest tests/http/test_documentation_browser.py -m browser
+        run: >-
+          uv run pytest tests/http/test_documentation_browser.py
+          tests/http/test_public_documentation_browser.py -m browser
 
       - name: Explorer browser accessibility and navigation
         env:

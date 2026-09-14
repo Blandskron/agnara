@@ -29,6 +29,8 @@ order.
     failure-retention evidence (#392). It must not imply replay or automatic
     retry.
 - [ ] Establish performance budgets and CI regression gates (I14).
+- [x] Integrate supported HTTP OpenAPI documentation, built-in browser UIs and
+  authorized Explorer composition for the 1.0 gate (ADR 0090, #394).
 - [ ] Complete interoperability and composition contracts (I20, I8).
 - [ ] Complete the security program evidence (I10).
 

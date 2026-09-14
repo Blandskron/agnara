@@ -397,21 +397,25 @@ parse a documentation HTML page to discover capabilities.
 
 ## 19A. Optional documentation interfaces
 
-Conceptual target only:
+ADR 0090 makes the reviewed, still-provisional composition explicit rather
+than using a boolean bag:
 
 ```python
-http = app.use(
-    Http(
-        openapi=True,
-        docs=True,
-        redoc=False,
-        explorer=True,
-    )
+asgi = http.compile(
+    app.compile(),
+    openapi=OpenApiInfo("Shop API", "1.0.0"),
+    documentation=HttpDocumentation(),
 )
 ```
 
-The booleans and default routes are deliberately provisional. The reviewed
-public API must make these independent:
+The default profile serves local Swagger UI at `/docs` and the generated
+OpenAPI 3.2 document at `/openapi.json`. `HttpDocumentation` independently
+selects `OpenApiSchema`, `SwaggerUI`, `Scalar` and `ReDoc`; absence disables a
+single surface, and `schema=None` embeds the one generated document in a
+selected UI. `HttpExplorer` is separate and requires a snapshot, visibility
+policy and principal resolver.
+
+The public API keeps these independent:
 
 - OpenAPI schema generation and serving;
 - one or more replaceable OpenAPI UI providers;
@@ -419,16 +423,17 @@ public API must make these independent:
 - interactive "try it" execution;
 - visibility/authorization policy for each published surface.
 
-Target route shapes such as `/openapi.json`, `/docs`, `/redoc` and `/agnara`
-are familiar candidates, not stable contracts. Every route must be
-configurable, disableable and checked for collisions.
+The default route shapes `/openapi.json`, `/docs`, `/scalar`, `/redoc` and
+`/agnara` are configurable, disableable and checked for collisions. Every
+selected documentation route supports GET/HEAD/405 and respects ASGI
+`root_path` when producing page and initializer URLs.
 
 Documentation providers consume an already-filtered OpenAPI contract. Agnara
 Explorer consumes the already-filtered protocol-neutral snapshot instead.
 
 No UI provider is required for OpenAPI export. Production deployments can
 disable all HTML while preserving an authorized machine-readable schema or
-snapshot.
+snapshot. The third-party provider protocol remains internal for 1.0.
 
 ## 20. Testing without a server
 

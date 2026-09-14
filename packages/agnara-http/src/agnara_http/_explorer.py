@@ -510,10 +510,11 @@ class _ExplorerDispatcher:
             self._explorer.discovery.visibility,
             principal,
         )
+        rendered_base = _mounted_base(base, scope)
         if path == base:
-            body = _render_index(base, document, self._explorer.discovery.visibility)
+            body = _render_index(rendered_base, document, self._explorer.discovery.visibility)
         else:
-            body = self._subpage(base, document, path)
+            body = self._subpage(rendered_base, document, path)
         if body is None:
             # Hidden and absent are the same answer on purpose: telling them
             # apart would publish the existence of something withheld.
@@ -595,3 +596,15 @@ class _ExplorerDispatcher:
             problem_types=self._problem_types,
             instance=_problem_instance(path),
         )
+
+
+def _mounted_base(base_path: str, scope: _Scope) -> str:
+    """Keep Explorer links inside the ASGI mount that served the page."""
+    root_path = scope.get("root_path", "")
+    if not isinstance(root_path, str):
+        raise TypeError("ASGI scope 'root_path' must be a string")
+    if not root_path:
+        return base_path
+    if not root_path.startswith("/") or root_path.startswith("//"):
+        raise TypeError("ASGI scope 'root_path' must be a same-origin absolute path")
+    return f"{root_path.rstrip('/')}{base_path}"

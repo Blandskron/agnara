@@ -11,7 +11,7 @@ its limits.
 
 ## The whole public surface
 
-Seven names, from `agnara_http`:
+Fourteen names, from `agnara_http`:
 
 | Name | What it is |
 | --- | --- |
@@ -21,6 +21,11 @@ Seven names, from `agnara_http`:
 | `BindingSource` | Which place: `PATH`, `QUERY`, `HEADER`, `BODY`, `COOKIE`, `FORM`, `UPLOAD`. |
 | `OpenApiInfo` | OpenAPI document metadata. |
 | `OpenApiOperation` | The per-operation decision to publish, and its metadata. |
+| `HttpDocumentation` | Independent OpenAPI schema and built-in documentation UI selections. Its default is local Swagger UI at `/docs` plus `/openapi.json`. |
+| `OpenApiSchema` | A configurable OpenAPI publication path. |
+| `SwaggerUI`, `Scalar`, `ReDoc` | The built-in documentation renderer selections. |
+| `DocumentationAssets` | Verified local assets or an explicit exact-origin CDN permission. |
+| `HttpExplorer` | The separately authorized, read-only capability explorer. |
 | `HttpDefinitionError` | One composition mistake, raised at startup. |
 
 Everything else in `agnara_http` is underscore-prefixed and carries no
@@ -39,7 +44,14 @@ from typing import Any
 
 from agnara import Agnara
 from agnara.core.di import DIRegistry, Scope, provider
-from agnara_http import Binding, BindingSource, Http, OpenApiInfo, OpenApiOperation
+from agnara_http import (
+    Binding,
+    BindingSource,
+    Http,
+    HttpDocumentation,
+    OpenApiInfo,
+    OpenApiOperation,
+)
 
 
 class Ledger:
@@ -87,7 +99,7 @@ asgi = http.compile(
     app.compile(),
     dependencies=dependencies,
     openapi=OpenApiInfo("Shop API", "1.0.0"),
-    openapi_path="/openapi.json",
+    documentation=HttpDocumentation(),
 )
 ```
 
@@ -377,8 +389,70 @@ nowhere in the document — no path, no identifier, no description, no tag, no
 schema fragment (ADR 0035). Publication is opt-in so that a deployment which
 has not decided what to publish publishes nothing.
 
-`openapi_path` serves the document. There is no default path: publishing an API
-description is a deliberate act.
+`HttpDocumentation()` is the supported local documentation profile. It serves
+the generated canonical OpenAPI 3.2 document at `/openapi.json` and local,
+hash-verified Swagger UI at `/docs`; no CDN, separate ASGI app or
+application-authored HTML is needed. `try_it` is disabled and authorization is
+not persisted by default.
+
+```python
+from agnara_http import DocumentationAssets, HttpDocumentation, Scalar, SwaggerUI
+
+# A different Swagger route, explicit request controls, and a supported
+# alternative UI. Each selected UI owns its own route and try-it setting.
+documentation = HttpDocumentation(
+    swagger=SwaggerUI(path="/reference", try_it=True),
+    scalar=Scalar(path="/scalar"),
+)
+
+# Schema-only publication:
+schema_only = HttpDocumentation(swagger=None)
+
+# HTML without a published schema: the UI receives the generated document
+# directly and `/openapi.json` is absent.
+embedded = HttpDocumentation(schema=None)
+
+# CDN delivery is explicit and grants exactly this built-in provider origin.
+cdn = HttpDocumentation(
+    swagger=SwaggerUI(assets=DocumentationAssets.remote("https://unpkg.com"))
+)
+```
+
+`ReDoc()` is available as a selection but currently refuses Agnara's canonical
+OpenAPI 3.2 document at compile time because the pinned ReDoc 2.5.3 release
+declares only 3.1 support. Agnara never downgrades the generated document to
+make a viewer render. The extension protocol for third-party providers remains
+internal for 1.0.
+
+The selected page, schema and every local asset reserve routes through the same
+startup collision boundary as capabilities. They support GET/HEAD and return
+405 with `Allow: GET, HEAD` otherwise. Under an ASGI mount (`root_path="/api"`)
+the page and initializer use `/api/...` URLs automatically.
+
+## Explorer
+
+Explorer is not an OpenAPI UI. It renders a filtered protocol-neutral snapshot
+and requires the application to provide the visibility policy and identity
+resolver explicitly:
+
+```python
+from agnara import Principal
+from agnara.introspection import DiscoveryVisibility, ScopeVisible, snapshot
+from agnara_http import HttpExplorer
+
+explorer = HttpExplorer(
+    snapshot=snapshot([], project="shop"),
+    visibility=DiscoveryVisibility.unrestricted(ScopeVisible()),
+    principals=lambda scope: Principal("operator"),
+    challenge="Bearer",
+)
+asgi = http.compile(app.compile(), explorer=explorer)
+```
+
+`HttpExplorer` does not authorize invocation; it only filters what a viewer
+may see. The JSON discovery endpoint and third-party documentation providers
+remain internal. `openapi_path` remains the legacy schema-only spelling and
+cannot be combined with `documentation`.
 
 The request surface projects truthfully. A cookie is `in: cookie`. Form fields
 and uploads are properties of one `requestBody` object with
@@ -463,14 +537,10 @@ must compile those itself and pass the combined set.
 Stated plainly, because a guide that omits its limits is how a framework earns
 distrust.
 
-**Not exposed publicly, though implemented internally.** The documentation UI
-providers (Swagger UI, ReDoc, Scalar), the read-only Agnara **Explorer** and
-the authorized introspection **discovery** endpoint. These are not merely
-unexported: the publication planner compiles placeholder routes and no code
-path in the product renders a provider, so publishing an API for them would
-publish an API for something that does not yet work end to end. Their
-configuration is also security-sensitive — content security policy, asset
-policy, principal resolution, redaction — and deserves its own review.
+**Kept internal deliberately.** The third-party documentation-provider
+extension protocol and the authorized introspection **discovery** endpoint are
+not public composition APIs. Built-in Swagger UI, Scalar, ReDoc selection and
+the read-only Agnara **Explorer** are supported through the typed values above.
 
 **Not implemented, and where to put it instead.** ADR 0072 classifies every
 deferred request feature rather than leaving it implicit.
