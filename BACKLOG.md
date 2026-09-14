@@ -22,6 +22,8 @@ order.
 - [~] Implement execution identity and operational idempotency (I3).
   - [x] Implement the ADR 0087 runtime execution identity in `ExecutionContext`,
     canonical outcomes, stream diagnostics and lifecycle telemetry (#388).
+  - [x] Project generated execution identity through the current HTTP/MCP
+    boundaries and tracing bridge without accepting a transport-selected identity (#390).
   - [ ] Define and implement the explicit idempotency store, including its
     capability/principal/fingerprint scope, atomic in-flight races, TTL and
     failure-retention evidence. It must not imply replay or automatic retry.

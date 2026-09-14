@@ -47,6 +47,7 @@ from agnara_http._problem import (
     _INTERNAL_PROBLEM,
     _failure_document,
     _serialize_failure,
+    _with_headers,
 )
 from agnara_http._response import (
     _ResponseSerializationError,
@@ -116,6 +117,8 @@ async def _serve_sse(
     request: _SSERequest,
     receive: _Receive,
     send: _Send,
+    *,
+    execution_header: tuple[bytes, bytes],
 ) -> None:
     """Serve one SSE response for one streaming capability invocation.
 
@@ -140,16 +143,19 @@ async def _serve_sse(
             # so the ordinary complete problem response is still the honest
             # answer, classified by the rule every other boundary uses.
             await _send_response(
-                _serialize_failure(
-                    classify_failure(error, request.capability_id),
-                    problem_types=request.problem_types,
-                    instance=request.instance,
+                _with_headers(
+                    _serialize_failure(
+                        classify_failure(error, request.capability_id),
+                        problem_types=request.problem_types,
+                        instance=request.instance,
+                    ),
+                    (execution_header,),
                 ),
                 send,
             )
             return
 
-        wire = await _start_response(stream, request, send)
+        wire = await _start_response(stream, request, send, execution_header=execution_header)
         if wire is None:
             return
 
@@ -216,6 +222,8 @@ async def _start_response(
     stream: CapabilityStream,
     request: _SSERequest,
     send: _Send,
+    *,
+    execution_header: tuple[bytes, bytes],
 ) -> _SSEWire | None:
     """Pull and encode the first unit, then begin the response, or answer 9457.
 
@@ -232,10 +240,13 @@ async def _start_response(
         first = None
     except StreamInterrupted as interrupted:
         await _send_response(
-            _serialize_failure(
-                interrupted.failure,
-                problem_types=request.problem_types,
-                instance=request.instance,
+            _with_headers(
+                _serialize_failure(
+                    interrupted.failure,
+                    problem_types=request.problem_types,
+                    instance=request.instance,
+                ),
+                (execution_header,),
             ),
             send,
         )
@@ -245,10 +256,12 @@ async def _start_response(
             first = _data_event(unit, request.projection.max_event_bytes)
         except (_ResponseSerializationError, RecursionError) as error:
             _log_unrepresentable(request, error)
-            await _send_response(_INTERNAL_PROBLEM, send)
+            await _send_response(_with_headers(_INTERNAL_PROBLEM, (execution_header,)), send)
             return None
 
-    await send({"type": "http.response.start", "status": 200, "headers": list(_SSE_HEADERS)})
+    await send(
+        {"type": "http.response.start", "status": 200, "headers": [*_SSE_HEADERS, execution_header]}
+    )
     wire = _SSEWire(send, request)
     if first is not None and not await wire.send_event(first):
         return None

@@ -225,11 +225,15 @@ def test_the_smallest_useful_application_needs_four_public_names() -> None:
     http.get("/ping", ping)
     asgi = http.compile(application.compile())
 
-    assert request(asgi, "GET", "/ping") == (
-        200,
-        {b"content-type": b"application/json; charset=utf-8", b"content-length": b"6"},
-        b'"pong"',
-    )
+    status, headers, body = request(asgi, "GET", "/ping")
+
+    assert status == 200
+    assert {name: value for name, value in headers.items() if name != b"agnara-execution-id"} == {
+        b"content-type": b"application/json; charset=utf-8",
+        b"content-length": b"6",
+    }
+    assert len(headers[b"agnara-execution-id"]) == 32
+    assert body == b'"pong"'
 
 
 def test_a_capability_can_be_declared_by_callable_or_by_definition() -> None:
