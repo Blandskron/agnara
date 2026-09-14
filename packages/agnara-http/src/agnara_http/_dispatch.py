@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
@@ -206,6 +207,7 @@ class _DispatchOptions:
         if self.timeout is not None and (
             isinstance(self.timeout, bool)
             or not isinstance(self.timeout, int | float)
+            or not math.isfinite(self.timeout)
             or self.timeout <= 0
         ):
             raise ValueError("timeout must be a positive number of seconds or None")

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import math
 from collections.abc import AsyncIterator, Awaitable
 from dataclasses import dataclass
 from enum import Enum
@@ -611,7 +612,7 @@ def test_an_authorization_configured_for_other_exposures_is_refused_at_startup()
         )
 
 
-@pytest.mark.parametrize("timeout", [0, -1, True, "5"])
+@pytest.mark.parametrize("timeout", [0, -1, True, "5", math.nan, math.inf, -math.inf])
 def test_an_invalid_timeout_is_refused_at_startup(timeout: Any) -> None:
     with pytest.raises(McpInvocationDefinitionError):
         surface(timeout=timeout)
