@@ -25,6 +25,10 @@ describe user- and contributor-visible changes only.
   outcomes, streams and lifecycle telemetry, without aliasing caller tracking
   or per-attempt invocation identifiers. This adds no transport field,
   idempotency storage, replay or automatic retry behavior.
+- Add the ADR 0088 HTTP/MCP identity bridge. HTTP responses expose the
+  generated `agnara-execution-id`; bounded request IDs are correlation only,
+  while OpenTelemetry spans distinguish execution and invocation identifiers
+  without exporting caller correlation or request metadata.
 
 - Clarify the contributor-facing A8-to-1.0 governance baseline: `0.1.0a8` is
   the retained publication baseline, `1.0.0` is the next release, and active

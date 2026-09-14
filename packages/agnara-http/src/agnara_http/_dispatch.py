@@ -31,6 +31,7 @@ from agnara_http._binding import (
     _InputBinding,
     _RequestBindingError,
 )
+from agnara_http._identity import _execution_header, _RequestIdentityError, _tracking_id
 from agnara_http._problem import (
     _ABOUT_BLANK_TYPES,
     _INTERNAL_PROBLEM,
@@ -38,6 +39,7 @@ from agnara_http._problem import (
     _serialize_result,
     _serialize_transport_failure,
     _TransportFailure,
+    _with_headers,
 )
 from agnara_http._response import (
     _ResponseSerializationError,
@@ -256,12 +258,27 @@ class _HTTPDispatcher:
             return
 
         exposure = match.route.target
+        headers = scope.get("headers", ())
+        try:
+            tracking_id = _tracking_id(headers)
+        except _RequestIdentityError:
+            await _send_response(
+                _serialize_transport_failure(
+                    _TransportFailure.INVALID_INPUT,
+                    "invalid request correlation identifier",
+                    problem_types=self._options.problem_types,
+                    instance=instance,
+                ),
+                send,
+                head=head,
+            )
+            return
         try:
             payload = await _bind_request(
                 exposure.binding,
                 path_parameters=match.path_parameters,
                 query_string=scope.get("query_string", b""),
-                headers=scope.get("headers", ()),
+                headers=headers,
                 receive=receive,
             )
         except _RequestBindingError as error:
@@ -278,6 +295,7 @@ class _HTTPDispatcher:
                 deadline=self._deadline(),
             ),
             self._container,
+            tracking_id=tracking_id,
         )
 
         if exposure.sse is not None:
@@ -293,6 +311,7 @@ class _HTTPDispatcher:
                 ),
                 receive,
                 send,
+                execution_header=_execution_header(context.execution_id),
             )
             return
 
@@ -322,7 +341,9 @@ class _HTTPDispatcher:
                 error,
             )
             response = _INTERNAL_PROBLEM
-        await _send_response(response, send, head=head)
+        await _send_response(
+            _with_headers(response, (_execution_header(context.execution_id),)), send, head=head
+        )
 
     def _deadline(self) -> float | None:
         timeout = self._options.timeout

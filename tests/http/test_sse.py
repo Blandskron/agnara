@@ -312,10 +312,13 @@ def test_each_unit_becomes_one_unnamed_message_event() -> None:
     events = request(dispatcher(sse_exposure(rows)))
 
     assert events[0]["status"] == 200
-    assert headers_of(events) == {
+    assert {
+        name: value for name, value in headers_of(events).items() if name != b"agnara-execution-id"
+    } == {
         b"content-type": b"text/event-stream; charset=utf-8",
         b"cache-control": b"no-store",
     }
+    assert len(headers_of(events)[b"agnara-execution-id"]) == 32
     assert b"content-length" not in headers_of(events)
     assert wire(events).startswith('data: {"row":1}\n\ndata: {"row":2}\n\n')
     assert data_units(events) == [{"row": 1}, {"row": 2}]

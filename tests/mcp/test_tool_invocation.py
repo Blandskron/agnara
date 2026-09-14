@@ -466,7 +466,7 @@ def test_a_request_id_reaches_telemetry_and_not_only_the_handler(
     assert telemetry.terminals == [("dispatch.with_context", "req-7", "success")]
 
 
-@pytest.mark.parametrize("request_id", [None, "x" * 129, ["list"]])
+@pytest.mark.parametrize("request_id", [None, "x" * 129, "bad id", ["list"]])
 def test_an_unusable_request_id_is_dropped_from_telemetry_too(
     telemetry: _TelemetryJournal,
     request_id: object,
@@ -479,7 +479,7 @@ def test_an_unusable_request_id_is_dropped_from_telemetry_too(
     assert telemetry.starts == [("dispatch.with_context", None)]
 
 
-@pytest.mark.parametrize("request_id", [None, "x" * 129, ["list"]])
+@pytest.mark.parametrize("request_id", [None, "x" * 129, "bad id", ["list"]])
 def test_an_unusable_request_id_is_dropped_rather_than_copied(request_id: object) -> None:
     invoker, _ = surface()
 
