@@ -407,6 +407,42 @@
               "stability": "provisional"
             },
             {
+              "name": "IdempotencyClaimed",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyCompleted",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyConflict",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyInProgress",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyReservation",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyScope",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyStorageError",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyStore",
+              "stability": "provisional"
+            },
+            {
+              "name": "InMemoryIdempotencyStore",
+              "stability": "provisional"
+            },
+            {
               "name": "InteractionRequiredError",
               "stability": "provisional"
             },
@@ -465,6 +501,47 @@
           "exports": [
             {
               "name": "ExecutionContext",
+              "stability": "provisional"
+            }
+          ]
+        },
+        {
+          "module": "agnara.execution.idempotency",
+          "exports": [
+            {
+              "name": "IdempotencyClaimed",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyCompleted",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyConflict",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyInProgress",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyReservation",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyScope",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyStorageError",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyStore",
+              "stability": "provisional"
+            },
+            {
+              "name": "InMemoryIdempotencyStore",
               "stability": "provisional"
             }
           ]

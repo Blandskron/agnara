@@ -51,7 +51,7 @@ PyPI projects still require their Pending Trusted Publishers before the tag.
 
 Every distribution's public surface is classified in
 `docs/public-api.json` and enforced in both directions by the release gate:
-292 exports across 48 modules, all `provisional`. `agnara-cli` dropped from 17
+310 exports across 49 modules, all `provisional`. `agnara-cli` dropped from 17
 public names to 4 in the baseline, because the other thirteen were implementation
 helpers re-exported from underscore-prefixed modules and never documented,
 used or designed as an API (ADR 0076).
@@ -89,7 +89,7 @@ settled; the spelling is not.
 | Introspection snapshot | `IMPLEMENTED` | Versioned, frozen, no runtime objects reachable. ADR 0045. Exposures are derived from the frozen exposure registry. |
 | Discovery visibility | `IMPLEMENTED` | Per-field publication decisions. ADR 0046. |
 | Execution identity | `IMPLEMENTED` | ADR 0087, ADR 0088. Each `ExecutionContext` owns an opaque runtime-generated identity; `invoke_result`, `CapabilityStream` and lifecycle telemetry retain it while each actual handler attempt still receives a separate telemetry `invocation_id`. Caller metadata cannot choose it. HTTP returns only the generated identity in `agnara-execution-id`; HTTP/MCP request IDs are bounded untrusted correlation only, never execution selection, authority or idempotency proof. No store, replay or retry behavior exists. |
-| Idempotency | `IMPLEMENTED` as metadata, `PLANNED` as behaviour | Declared and published; the runtime performs no deduplication or replay. |
+| Idempotency | `IMPLEMENTED` as metadata and storage contract, `PLANNED` as runtime behaviour | ADR 0089 defines atomic capability/principal/key/fingerprint storage transitions and ships a bounded process-local reference store. The runtime and transports do not yet accept caller keys, deduplicate handler execution or replay results. |
 | Streaming results | `IMPLEMENTED` (kernel and HTTP SSE) | ADR 0084, ADR 0085, ADR 0086, RFC 0009. `open_stream` owns a declared async generator: pull-based demand with no kernel buffer, policy and input validation before the first unit, `StreamInterrupted` for failure after output, and an explicit `StreamTerminal`. `output=...` declares and validates each unit before delivery; omitted output is the intentional unconstrained `Any` contract. `Http.sse` projects it over HTTP with a delayed response start, one `message` event per unit, an explicit terminal event and owned disconnect handling; MCP, A2A, events and WebSockets do not project it. |
 | Audit trail | `PLANNED` | The word appears in docstrings; there is no audit system. |
 | Capability-to-capability composition | `RESEARCH` | No nested `ExecutionContext`, no propagation contract. |

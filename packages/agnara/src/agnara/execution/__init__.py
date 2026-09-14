@@ -1,6 +1,17 @@
 from agnara.errors import InteractionRequiredError, PolicyDeniedError
 
 from .context import ExecutionContext
+from .idempotency import (
+    IdempotencyClaimed,
+    IdempotencyCompleted,
+    IdempotencyConflict,
+    IdempotencyInProgress,
+    IdempotencyReservation,
+    IdempotencyScope,
+    IdempotencyStorageError,
+    IdempotencyStore,
+    InMemoryIdempotencyStore,
+)
 from .invocation import Invocation
 from .plan import ExecutionPlan
 from .result import CanonicalResult, Failure, FailureCode, Success
@@ -15,6 +26,15 @@ __all__ = [
     "ExecutionPlan",
     "Failure",
     "FailureCode",
+    "IdempotencyClaimed",
+    "IdempotencyCompleted",
+    "IdempotencyConflict",
+    "IdempotencyInProgress",
+    "IdempotencyReservation",
+    "IdempotencyScope",
+    "IdempotencyStorageError",
+    "IdempotencyStore",
+    "InMemoryIdempotencyStore",
     "InteractionRequiredError",
     "Invocation",
     "InvocationStartEvent",
