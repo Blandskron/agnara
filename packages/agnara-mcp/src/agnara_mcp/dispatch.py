@@ -13,6 +13,7 @@ returns a canonical outcome and ``project_mcp_result`` maps it.
 from __future__ import annotations
 
 import asyncio
+import math
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -66,7 +67,12 @@ class _InvocationRoute:
 def _timeout_seconds(value: object) -> float | None:
     if value is None:
         return None
-    if isinstance(value, bool) or not isinstance(value, int | float) or value <= 0:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, int | float)
+        or not math.isfinite(value)
+        or value <= 0
+    ):
         raise McpInvocationDefinitionError(
             "MCP invocation timeout must be a positive number of seconds or None"
         )

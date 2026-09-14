@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import math
 from collections.abc import Callable
 from typing import Any
 
@@ -694,7 +695,7 @@ def test_a_configured_timeout_gives_the_invocation_a_deadline() -> None:
     assert seen == [200]
 
 
-@pytest.mark.parametrize("timeout", [0, -1, True, "30"])
+@pytest.mark.parametrize("timeout", [0, -1, True, "30", math.nan, math.inf, -math.inf])
 def test_an_unusable_timeout_is_refused(timeout: object) -> None:
     with pytest.raises(ValueError, match="positive number of seconds"):
         _DispatchOptions(timeout=timeout)  # ty: ignore[invalid-argument-type]
