@@ -157,6 +157,15 @@ Use `--check` in automation to verify that this projection has not drifted.
 | `ExecutionPlan` | `provisional` |
 | `Failure` | `provisional` |
 | `FailureCode` | `provisional` |
+| `IdempotencyClaimed` | `provisional` |
+| `IdempotencyCompleted` | `provisional` |
+| `IdempotencyConflict` | `provisional` |
+| `IdempotencyInProgress` | `provisional` |
+| `IdempotencyReservation` | `provisional` |
+| `IdempotencyScope` | `provisional` |
+| `IdempotencyStorageError` | `provisional` |
+| `IdempotencyStore` | `provisional` |
+| `InMemoryIdempotencyStore` | `provisional` |
 | `InteractionRequiredError` | `provisional` |
 | `Invocation` | `provisional` |
 | `InvocationStartEvent` | `provisional` |
@@ -176,6 +185,20 @@ Use `--check` in automation to verify that this projection has not drifted.
 | Name | Stability |
 | --- | --- |
 | `ExecutionContext` | `provisional` |
+
+### `agnara.execution.idempotency`
+
+| Name | Stability |
+| --- | --- |
+| `IdempotencyClaimed` | `provisional` |
+| `IdempotencyCompleted` | `provisional` |
+| `IdempotencyConflict` | `provisional` |
+| `IdempotencyInProgress` | `provisional` |
+| `IdempotencyReservation` | `provisional` |
+| `IdempotencyScope` | `provisional` |
+| `IdempotencyStorageError` | `provisional` |
+| `IdempotencyStore` | `provisional` |
+| `InMemoryIdempotencyStore` | `provisional` |
 
 ### `agnara.execution.invocation`
 

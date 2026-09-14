@@ -15,7 +15,7 @@ it does not define stability policy separately.
 | `experimental` | Public only for evaluation. It may change or disappear in the next pre-1.0 release. |
 | `internal` | Unsupported implementation detail. Internal names are excluded from public manifests and `__all__`. |
 
-No API is classified `stable` before the `1.0.0` release. All 292 currently governed
+No API is classified `stable` before the `1.0.0` release. All 310 currently governed
 exports are `provisional`: they are deliberate public entry points, but the
 pre-stable work explicitly makes no compatibility promise. A stable classification
 requires an explicit `1.0.0` decision supported by release evidence; descriptive phrases
@@ -64,6 +64,15 @@ durable-execution promise.
 `agnara_http` export. The adapter's public surface is still the same seven
 names.
 
+ADR 0089 adds the provisional `agnara.execution.idempotency` storage port and
+its process-local reference implementation, re-exported from
+`agnara.execution`. `IdempotencyScope` requires an application to provide the
+validated capability, principal, key and canonical fingerprint boundary; the
+port atomically reserves, observes, completes or abandons that selector. It
+stores only bounded caller-serialized successful bytes and does not select
+transport keys, serialize values, cache failures, authorize a retry, or promise
+durability or multi-process coordination.
+
 ## Governed surface
 
 The manifest governs **every shipped distribution**, not the kernel alone. An
@@ -73,7 +82,7 @@ ungoverned adapter is not a governed framework (ADR 0076).
 
 | Distribution | Import root | Governed modules | Classified exports | Entry point exports |
 | --- | --- | --- | --- | --- |
-| `agnara` | `agnara` | 31 | 230 | 41 |
+| `agnara` | `agnara` | 32 | 248 | 41 |
 | `agnara-a2a` | `agnara_a2a` | 1 | 0 | 0 |
 | `agnara-cli` | `agnara_cli` | 1 | 4 | 4 |
 | `agnara-events` | `agnara_events` | 1 | 0 | 0 |
@@ -81,7 +90,7 @@ ungoverned adapter is not a governed framework (ADR 0076).
 | `agnara-mcp` | `agnara_mcp` | 9 | 40 | 20 |
 | `agnara-telemetry` | `agnara_telemetry` | 3 | 4 | 2 |
 
-292 exports across 48 modules. A count is not a substitute for the list. The
+310 exports across 49 modules. A count is not a substitute for the list. The
 release gate compares each module's ordered export list against the manifest
 and also walks each distribution's source tree in the reverse direction, so
 adding a public package or leaf module without classifying it fails the gate.

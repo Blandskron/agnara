@@ -20,6 +20,14 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Add the provisional, transport-neutral `agnara.execution` idempotency
+  storage contract under ADR 0089. It atomically reserves a key scoped by
+  capability, principal and request fingerprint, supports finite in-progress
+  and successful-result windows, and provides a bounded process-local
+  reference store. It does not select transport keys, serialize handler
+  values, cache failures, authorize retries, or promise durability or
+  multi-process coordination.
+
 - Add runtime execution identity under ADR 0087. Every `ExecutionContext` now
   owns an opaque generated execution token which is retained by canonical
   outcomes, streams and lifecycle telemetry, without aliasing caller tracking
