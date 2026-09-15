@@ -18,6 +18,7 @@ from agnara.execution.idempotency import (
     IdempotencyStorageError,
     IdempotencyStore,
     InMemoryIdempotencyStore,
+    _Record,
 )
 
 
@@ -213,5 +214,66 @@ def test_fingerprints_and_results_are_bounded_and_not_implicitly_serialized() ->
         assert isinstance(claim, IdempotencyClaimed)
         with pytest.raises(TypeError, match="result must be bytes"):
             await store.complete(claim.reservation, cast("bytes", "not bytes"), result_ttl=30)
+
+    asyncio.run(run())
+
+
+def test_incompatible_stored_state_fails_closed_without_an_assertion() -> None:
+    async def run() -> None:
+        store = InMemoryIdempotencyStore(clock=lambda: 0.0)
+        requested = scope()
+        store._records[(requested.capability_id, requested.principal_id, requested.key)] = _Record(
+            fingerprint=requested.fingerprint,
+            execution_id="e" * 32,
+            token=None,
+            expires_at=30,
+            result=None,
+        )
+
+        with pytest.raises(IdempotencyStorageError, match="incompatible state"):
+            await store.lookup(requested)
+
+    asyncio.run(run())
+
+
+def test_synchronized_claims_have_one_owner_and_one_conflict() -> None:
+    async def run() -> None:
+        store = InMemoryIdempotencyStore()
+        barrier = asyncio.Barrier(2)
+
+        async def claim(requested: IdempotencyScope) -> object:
+            await barrier.wait()
+            return await store.claim(requested, lease_ttl=30)
+
+        outcomes = await asyncio.gather(
+            claim(scope()),
+            claim(scope(fingerprint=b"request-b")),
+        )
+
+        assert sum(isinstance(outcome, IdempotencyClaimed) for outcome in outcomes) == 1
+        assert sum(isinstance(outcome, IdempotencyConflict) for outcome in outcomes) == 1
+
+    asyncio.run(run())
+
+
+def test_synchronized_distinct_claims_fail_closed_under_capacity_pressure() -> None:
+    async def run() -> None:
+        store = InMemoryIdempotencyStore(max_entries=1)
+        barrier = asyncio.Barrier(2)
+
+        async def claim(requested: IdempotencyScope) -> object:
+            await barrier.wait()
+            try:
+                return await store.claim(requested, lease_ttl=30)
+            except IdempotencyStorageError as error:
+                return error
+
+        outcomes = await asyncio.gather(
+            claim(scope(key="capacity-a")),
+            claim(scope(key="capacity-b")),
+        )
+
+        assert sum(isinstance(outcome, IdempotencyClaimed) for outcome in outcomes) == 1
+        assert sum(isinstance(outcome, IdempotencyStorageError) for outcome in outcomes) == 1
 
     asyncio.run(run())

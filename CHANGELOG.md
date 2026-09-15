@@ -20,6 +20,10 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Add deterministic ADR 0089 store-conformance evidence for exact TTL
+  expiration, stale reservations, bounded capacity, concurrent claims and
+  fail-closed runtime storage behavior.
+
 - Harden the CI container smoke test by running the reference image with all
   Linux capabilities dropped and privilege escalation disabled.
 

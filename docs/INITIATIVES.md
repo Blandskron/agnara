@@ -60,6 +60,12 @@ direct complete-result idempotency operational over ADR 0089's store; race,
 TTL/failure evidence and release review remain required. HTTP and MCP do not
 accept idempotency selectors.
 
+The V1-15 audit adds deterministic evidence for atomic claims, exact TTL
+boundaries, failure and cancellation cleanup, bounded capacity, stale-state
+rejection, sensitive-data redaction and a reusable store conformance suite.
+I3 remains in progress because transport selector projections and the
+process-local store's deployment limitations remain intentionally open.
+
 ### I8 — Capability composition
 
 **Horizon:** `1.0.0`
@@ -80,6 +86,8 @@ Generated public reference and a deliberate stable classification decision.
 **Status:** `PLANNED`
 
 Authentication/delegation design, supply-chain evidence and threat-model closure.
+The V1-15 idempotency audit contributes failure, stale-state and sensitive-data
+evidence but does not close the broader I10 program.
 
 ### I14 — Performance program
 
