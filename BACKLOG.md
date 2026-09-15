@@ -63,6 +63,13 @@ order.
     principal mapping, composition, idempotency reuse, canonical failure and
     stream refusal, plus disconnect cancellation evidence. It remains an
     experimental fixture rather than framework support or release closure.
+  - [x] Exercise FastAPI progressive adoption (V1-24): FastAPI 0.141.1 keeps
+    its native routes, dependency-based verified actor mapping, exception
+    handling and middleware while directly invoking the same compiled Agnara
+    snapshot. A separately mounted public `HttpApplication` surface proves
+    complete and SSE projection with explicitly coordinated child lifespan and
+    separate OpenAPI ownership. This remains a clean-room experimental fixture,
+    not FastAPI integration support, merged documentation or release closure.
 - [ ] Complete the security program evidence (I10).
 
 ## Deferred decisions

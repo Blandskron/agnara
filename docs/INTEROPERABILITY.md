@@ -187,7 +187,7 @@ authorization to claim support.
 | Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | Starlette | yes | yes | yes | CRITICAL | local fixture | Starlette 1.6.0 is the version-pinned clean-room fixture in `tests/integration/starlette/`: native and direct-runtime routes share one host lifespan; it exercises principal fail-closed mapping, composition, idempotency reuse, canonical failure/stream refusal and disconnect cancellation. This is conformance evidence, not a framework support claim. |
-| FastAPI | yes | yes | yes | CRITICAL | yes | The highest-value adoption path. Progressive adoption inside an existing FastAPI application is the priority scenario, not a bonus. |
+| FastAPI | yes | yes | yes | CRITICAL | local fixture | FastAPI 0.141.1 is the version-pinned clean-room fixture in `tests/integration/fastapi/`: native routes, a dependency-verified actor and host exception/middleware layers remain host-owned while a direct route uses the ADR 0094 complete-result bridge. A separately mounted `HttpApplication` proves complete and SSE projection with explicitly coordinated ASGI child lifespan. FastAPI and Agnara OpenAPI documents remain separate; no route-table, middleware or OpenAPI merge is claimed. This is conformance evidence, not framework support. |
 | Django | partial | yes | yes | CRITICAL | yes | The host direction covers Django *infrastructure* — ORM, auth, templates — not Django's routing or process model. Agnara never replaces the ORM, Admin, Auth or Templates; it cooperates with them. |
 | Django REST Framework | no | yes | yes | HIGH | no | Embedding into existing DRF APIs. Hosting DRF is meaningless: DRF is a view layer inside Django. |
 | Django Ninja | no | yes | yes | MEDIUM | no | Secondary confirmation that the Django embedding contract is not DRF-shaped. |
@@ -562,6 +562,18 @@ complete-result bridge; HTTP SSE remains the separate Agnara HTTP projection.
 The fixture's clean-room process installs built wheels outside the workspace,
 first imports `agnara` without Starlette present, then installs Starlette and
 executes the host bridge. One fixture is not a support or release decision.
+
+`tests/integration/fastapi/` repeats the direct public bridge against FastAPI
+0.141.1 without rewriting native routes or passing FastAPI values into a
+capability. Its fixed security dependency maps only its verified actor to an
+Agnara `Principal`; unknown input fails closed. The fixture also mounts a
+separately compiled public `HttpApplication` to exercise complete HTTP and
+SSE projection. FastAPI does not automatically run mounted application
+lifespans, so the host explicitly owns and joins the child ASGI lifespan in
+this fixture. That is evidence of a bounded composition technique, not a
+promise of automatic lifecycle integration. FastAPI's generated OpenAPI and
+the mounted application's `openapi()` remain separate; the fixture does not
+merge specifications, mutate route tables or adapt middleware semantics.
 
 ## 14. Historical reference strategy
 
