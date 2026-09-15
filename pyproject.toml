@@ -30,6 +30,9 @@ dev = [
     # E6.10 comparison fixtures only. These must never enter a distributable
     # Agnara package or be confused with an HTTP implementation dependency.
     "fastapi==0.141.1",
+    # V1-25 conformance fixture only. Django remains outside every Agnara
+    # distribution and the fixture records the exact tested host version.
+    "Django==6.1.1",
     "litestar==2.24.0",
     "starlette==1.6.0",
     # Third-party schema adapters remain experiments until E2.7 compares

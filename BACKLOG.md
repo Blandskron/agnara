@@ -70,6 +70,12 @@ order.
     complete and SSE projection with explicitly coordinated child lifespan and
     separate OpenAPI ownership. This remains a clean-room experimental fixture,
     not FastAPI integration support, merged documentation or release closure.
+  - [x] Exercise Django request/ORM boundary conformance (V1-25): Django
+    6.1.1 async views retain host request, authentication and ORM/transaction
+    ownership while passing only a verified actor to the ADR 0094 bridge.
+    The fixture covers canonical failure, composition, idempotency and cleanup;
+    sync/WSGI reuse of a live runtime is explicitly not covered. This is
+    required evidence, not a Django plugin or integration-support claim.
 - [ ] Complete the security program evidence (I10).
 
 ## Deferred decisions
