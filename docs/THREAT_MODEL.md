@@ -189,9 +189,11 @@ an ExecutionContext, but must not manufacture scopes, confirmation, delegation,
 execution identity or idempotency state from request data. Raw host
 request/session/transaction, telemetry and exception objects remain outside
 kernel state and normal handler parameters; the host maps canonical results and
-owns its own resources. These are accepted contract constraints, not evidence
-that a framework integration is supported: version-pinned host fixtures and
-their abuse/failure tests remain I20/I10 release work.
+owns its own resources. The Starlette 1.6.0 fixture now exercises fail-closed
+identity mapping, redacted canonical failure, fixed trusted idempotency
+selection and disconnect cancellation; `tests/integration/starlette/` is its
+evidence. These remain bounded fixture checks, not a framework support claim
+or completed release security review.
 
 ## 8. CLI and reserved distribution boundaries
 

@@ -57,6 +57,12 @@ order.
   ownership, value-only principal/context bridge, one-event-loop reuse rules
   and framework-neutral architecture evidence. Concrete framework fixtures
   remain release-gate work; this does not claim integration support.
+  - [x] Exercise the first version-pinned external-host fixture (V1-23):
+    Starlette 1.6.0 embeds direct complete-result invocation beside native
+    routes in one lifespan, with clean-room wheel installation, fail-closed
+    principal mapping, composition, idempotency reuse, canonical failure and
+    stream refusal, plus disconnect cancellation evidence. It remains an
+    experimental fixture rather than framework support or release closure.
 - [ ] Complete the security program evidence (I10).
 
 ## Deferred decisions
