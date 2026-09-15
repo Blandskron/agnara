@@ -181,6 +181,18 @@ status:
 | Unbounded tool recursion | Partially addressed for nested capabilities. `CapabilityRuntime` keeps private immutable ancestry per child, refuses direct and indirect repeated identities and applies a finite `1..32` runtime depth limit before the next child policy, dependencies or effects. Ordinary application Python recursion remains application-owned; a streaming child is refused before producer start, and streams and cross-app composition are not part of this boundary. |
 | SSRF through generic HTTP capabilities | Application's own concern; Agnara makes no outbound call. |
 
+### Embedded-host bridge
+
+ADR 0094 defines the host adapter as a trust boundary rather than a source of
+ambient authority. Its principal mapper may pass a verified direct actor into
+an ExecutionContext, but must not manufacture scopes, confirmation, delegation,
+execution identity or idempotency state from request data. Raw host
+request/session/transaction, telemetry and exception objects remain outside
+kernel state and normal handler parameters; the host maps canonical results and
+owns its own resources. These are accepted contract constraints, not evidence
+that a framework integration is supported: version-pinned host fixtures and
+their abuse/failure tests remain I20/I10 release work.
+
 ## 8. CLI and reserved distribution boundaries
 
 All seven distributions, including `agnara-cli`, `agnara-a2a` and

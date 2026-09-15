@@ -340,44 +340,61 @@ scenario. A successful isolated fixture proves only its stated mode, not a
 broader support promise.
 
 Every classification marked **DEFER AFTER 1.0** has a named owner: streaming
-wire extensions remain under RFC 0009 and I2; embedding-related framework
-research remains under RFC 0008 and I20; A2A and Events remain their reserved
+wire extensions remain under RFC 0009 and I2; the accepted host boundary is
+ADR 0094 while framework-fixture research remains I20; A2A and Events remain their reserved
 adapter boundaries in `docs/TARGET_ARCHITECTURE.md`; durable execution remains
 G5 in that same target architecture; and GraphQL/gRPC require their own RFC.
 They are excluded from the 1.0 support claim, not deleted from the architectural
 roadmap.
 
-## 7. The framework embedding contract
+## 7. Accepted host and embedding contract
 
-The minimum an external host needs in order to invoke Agnara. It must be small,
-framework-neutral and stable enough that FastAPI, Django, Flask, Litestar and
-Starlette all use the same one.
+ADR 0094 accepts the minimal 1.0.0 architectural contract. It is one async,
+complete-result bridge over the existing **provisional** public runtime values,
+not a framework facade or a claim that any named framework is supported.
 
 ```text
-Host framework
-     │
-     │  1. obtain the compiled application / runtime
-     │  2. look up a capability by id
-     │  3. create an invocation
-     │  4. provide context
-     │  5. propagate principal
-     │  6. pass a deadline
-     │  7. execute
-     │  8. receive a canonical result
-     │  9. map errors into host terms
-     │ 10. observe telemetry
-     ↓
-Agnara runtime
+host-owned route/task
+  -> explicit CapabilityRuntime handle
+  -> Invocation + ExecutionContext (plain values only)
+  -> await invoke_result()
+  -> canonical Success / Failure
+  -> host-owned result and error mapping
 ```
 
-Each step is a question RFC 0008 has to answer, not an API this document
-invents. Two constraints are already fixed by existing decisions and are not
-open:
+At startup, application code freezes one Agnara application, compiles its
+ExecutionPlan values, creates one matching DIContainer, and constructs a
+CapabilityRuntime. The adapter keeps that handle explicitly. It never finds
+one through a global, ambient request state or private module. Each call uses
+the same container and normal compiled path; CancelledError propagates.
 
-- the host never hands a request, session or connection object to a capability
-  (invariants 4 and 5, ADR 0026);
-- the result the host receives is canonical and the host maps it, rather than
-  Agnara producing a host-shaped result (invariant 7, ADR 0022).
+The bridge carries a capability id, schema-bound plain input, optional opaque
+correlation label, non-extendable absolute deadline and application-mapped
+Principal. It never carries raw request/response/session, ORM transaction,
+connection, host user, middleware/task state, telemetry object, credential or
+host exception into metadata, context state, handler parameters or DI bindings.
+An application-defined port may encapsulate host infrastructure outside the
+kernel; its cleanup stays with its declared owner.
+
+The four modes differ only in who owns the outer lifespan and routing:
+
+| Mode | Outer owner | Required boundary |
+| --- | --- | --- |
+| Standalone | Agnara composition root | Compile and invoke with core alone. |
+| Agnara host | Agnara composition root | Reach external infrastructure through application-defined ports. |
+| Embedded Agnara | External host | Invoke the explicit runtime handle from a host route or task. |
+| Side-by-side | External host | Keep native routes and the runtime handle in one lifespan without duplicated ownership. |
+
+A frozen registry and plans can be shared. A live DIContainer and runtime are
+owned by one event loop: concurrent tasks on it are permitted, cross-loop or
+cross-thread calls are not. The owner drains calls before awaiting
+runtime.aclose(); the runtime creates no detached work and closing one runtime
+never closes a different application.
+
+The public spelling remains provisional until I9's explicit 1.0.0
+classification. Sync entry points, streaming hosts, delegated authority,
+cross-application execution, framework-specific convenience APIs and automatic
+retry are out of scope. Idempotency is never authorization to retry.
 
 ## 8. The infrastructure adapter contract
 
@@ -570,6 +587,6 @@ agnara-django-interoperability    agnara-schema-interoperability
 - `docs/INITIATIVES.md` — I20, and the order this work happens in
 - `docs/releases/RELEASE_PLAN.md` — the `1.0.0` gates
 - `docs/rfc/0008-framework-embedding-and-ecosystem-composition.md` — the open
-  design questions
+  research record and deferred fixture questions
 - `docs/adr/0068-interoperability-release-ownership.md` — why this belongs to
   `1.0.0`

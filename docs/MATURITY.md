@@ -156,8 +156,8 @@ not.
 | Testing utilities | `PLANNED` | No first-party harness; the repository tests the framework, not applications built on it. |
 | Plugin system | `RESEARCH` | No discovery, loading or trust model. |
 | Persistence, cache, queue and scheduler integrations | `RESEARCH` | No port, no adapter, no dependency. `docs/INTEROPERABILITY.md` records the intent; I20 owns the work. |
-| Framework embedding contract | `RESEARCH` | RFC 0008 states the questions. Nothing exists that an external host could call. |
-| Side-by-side composition with an external framework | `RESEARCH` | HTTP now has a public composition surface (ADR 0071); interoperability with an external framework still requires its own conformance evidence and belongs to `1.0.0`. |
+| Framework embedding contract | `DESIGNED` | ADR 0094 accepts an explicit async complete-result host boundary over existing provisional runtime values: lifecycle/resource ownership, principal/context/error/telemetry bridges and one-event-loop reuse rules are defined. It adds no framework dependency or support claim; version-pinned host fixtures remain required. |
+| Side-by-side composition with an external framework | `RESEARCH` | ADR 0094 defines the ownership boundary, but no external framework fixture has exercised it. HTTP has a public composition surface (ADR 0071); concrete interoperability evidence remains `1.0.0` work. |
 | Second shipped schema adapter | `RESEARCH` | Pydantic and msgspec remain `experiments/`; neither is packaged or supported. |
 | Typed client generation | `RESEARCH` | |
 | Native acceleration | `DEFERRED` | ADR-level position: only after measured bottlenecks. |
