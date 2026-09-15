@@ -42,6 +42,11 @@ order.
   recursion/depth enforcement, idempotency isolation and deterministic abuse
   evidence (#412). Stream, delegated and cross-app composition require their own
   accepted follow-up decisions.
+- [x] Verify and harden direct-actor composition propagation (I8, I10): a
+  child has a detached actor context, bounded correlation only, no inherited
+  delegation evidence, and deterministic two-level deadline/cancellation and
+  concurrent telemetry-tree evidence (#414). RFC 0005 delegation remains
+  unimplemented.
 - [ ] Complete the framework interoperability contract (I20).
 - [ ] Complete the security program evidence (I10).
 

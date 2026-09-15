@@ -93,7 +93,11 @@ confirmation, input and output validation and dependencies. Parent execution
 state, confirmation evidence and idempotency configuration do not cross that
 boundary. It refuses targets absent from the snapshot, streaming targets,
 recursive/depth-exceeding calls and deadline extension. Delegation, stream and
-cross-application composition remain unsupported.
+cross-application composition remain unsupported. The child is a detached
+direct-actor invocation: it receives no subject or delegation state, raw
+invocation metadata, or confirmation/idempotency option; it may retain only a
+bounded correlation label. This changes no public spelling or delegation
+compatibility promise.
 
 ## Governed surface
 

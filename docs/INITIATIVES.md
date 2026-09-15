@@ -75,9 +75,10 @@ process-local store's deployment limitations remain intentionally open.
 ADR 0093's policy-safe `CapabilityRuntime` invokes a complete-result child
 only from the same frozen plan snapshot. Deterministic evidence covers
 independent policy/confirmation and validation, child context/DI isolation,
-deadline/cancellation, telemetry linkage, recursion/depth refusal and
-idempotency isolation. Delegation, streams and cross-app composition remain
-deferred.
+deadline/cancellation across two child levels, telemetry-tree linkage,
+bounded correlation, recursion/depth refusal and idempotency isolation. A
+child receives only a detached direct actor; delegation, streams and cross-app
+composition remain deferred.
 
 ### I9 — Public API governance
 
