@@ -6,10 +6,12 @@ Docker is not required to use Agnara.
 
 ## Pull and run
 
-Published images use the release version without the leading `v`:
+Published images use the release version without the leading `v` and are pushed
+to both GHCR and Docker Hub:
 
 ```bash
 docker pull ghcr.io/blandskron/agnara:1.0.0
+docker pull docker.io/blandskron/agnara:1.0.0
 docker run --rm -p 8000:8000 ghcr.io/blandskron/agnara:1.0.0
 ```
 
@@ -28,6 +30,7 @@ not receive `latest`; an `edge` tag, if enabled later, will mean unstable
 development output and will never represent a release.
 
 The release workflow builds the image from the same verified commit as the
-Python release, publishes it to `ghcr.io/blandskron/agnara`, and attaches
-BuildKit SBOM and provenance attestations. The package source label points to
-the public repository so GitHub can associate the package with `Blandskron/agnara`.
+Python release, publishes it to both `ghcr.io/blandskron/agnara` and
+`docker.io/blandskron/agnara`, and attaches BuildKit SBOM and provenance
+attestations. The package source label points to the public repository so
+GitHub can associate the package with `Blandskron/agnara`.
