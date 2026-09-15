@@ -358,7 +358,8 @@ def _state(
         return IdempotencyConflict()
     if record.token is not None:
         return IdempotencyInProgress(record.execution_id)
-    assert record.result is not None
+    if record.result is None:
+        raise IdempotencyStorageError("idempotency store contains incompatible state")
     return IdempotencyCompleted(record.execution_id, record.result)
 
 

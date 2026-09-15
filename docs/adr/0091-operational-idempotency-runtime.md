@@ -60,6 +60,13 @@ runtime fails closed and retains the lease until its configured expiry; no
 claim is silently released for an immediate duplicate execution.  Lease expiry
 remains a liveness boundary, not proof that an earlier handler stopped.
 
+If ``abandon`` fails or returns false after a handler failure, the runtime
+returns the canonical unavailable storage failure and retains the reservation.
+If cleanup fails during cancellation, cancellation is re-raised unchanged and
+the reservation likewise remains protected by its lease. A failed decode of a
+completed result is also an unavailable storage failure; no opaque bytes or
+decoded value is included in the caller-visible failure.
+
 ### D3 — No transport selector is added by this decision
 
 This decision adds no HTTP header, MCP request field, task-resumption field,

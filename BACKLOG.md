@@ -31,9 +31,8 @@ order.
   - [x] Make the ADR 0091 direct complete-result boundary operational: claim
     after policy/input preflight and before dependencies or handler work;
     reuse only completed successes; fail closed on storage errors (#400).
-  - [x] Audit the direct boundary with deterministic race, inclusive-TTL,
-    cleanup, failure and reusable store-conformance evidence (#404). This does
-    not add automatic retry, streaming reuse or an adapter selector.
+  - [x] Audit race, exact TTL, failure/cancellation, bounded capacity,
+    sensitive-data and independent-store conformance behavior (#404).
 - [ ] Establish performance budgets and CI regression gates (I14).
 - [x] Integrate supported HTTP OpenAPI documentation, built-in browser UIs and
   authorized Explorer composition for the 1.0 gate (ADR 0090, #394).

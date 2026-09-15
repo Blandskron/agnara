@@ -55,19 +55,13 @@ liveness boundary, not evidence that the previous handler stopped; a future
 runtime integration must choose lease lengths and any renewal policy relative
 to its owned execution deadline.
 
-The deduplication window begins when a successful `claim()` creates a
-reservation and a successful `complete()` publishes a result. An entry expires
-at its deadline (`expires_at <= clock`), not one tick afterwards. Every port
-operation discards expired entries before reading capacity or current state, so
-expired records make space but a stale reservation cannot complete or abandon a
-replacement. Stores use a monotonic, implementation-owned clock; conformance
-suites must control an equivalent clock rather than sleep.
-
-The port treats result bytes as opaque. A codec or store migration that cannot
-interpret retained data must fail the attempted reuse closed and must not
-execute the handler as a fallback. Result format/version migration, retention
-purging and any compatibility policy remain application/store ownership rather
-than a hidden core schema contract.
+Expiration is defined as ``expires_at <= clock()``. A record is usable
+immediately before its deadline, expired exactly at the deadline, and removed
+before the next operation can observe it at or after that boundary. Stores
+must apply this rule atomically with claim, lookup, complete and abandon, and
+must reject stale completion or abandonment after cleanup. The reusable
+contract at ``tests/conformance/idempotency_store.py`` exercises these rules
+with an injected clock and a provider factory.
 
 ### D4 — The reference implementation is deliberately process-local
 
@@ -90,6 +84,12 @@ abandon compare the opaque reservation token under the same lock. Expired
 entries are removed deterministically, preventing immortal-key accumulation;
 capacity exhaustion raises an explicit storage error rather than evicting a
 live record or silently executing twice.
+
+An incompatible stored state, failed completion, or failed abandonment is a
+storage failure. The runtime must not convert any of these conditions into a
+successful reuse or a second handler execution. Cancellation remains
+cancellation; if cleanup cannot be confirmed, the reservation remains owned
+until its finite lease expires.
 
 ## Consequences
 
