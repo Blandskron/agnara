@@ -20,12 +20,15 @@ from tests.conformance.harness import (
 def test_harness_accepts_a_direct_agnara_host(host: DirectAgnaraHost, expected: str) -> None:
     harness = HostHarness()
 
-    assert harness.run_case(
-        host,
-        "sync",
-        lambda fixture: fixture.call_sync(42),
-        lambda value: value == expected,
-    ) == expected
+    assert (
+        harness.run_case(
+            host,
+            "sync",
+            lambda fixture: fixture.call_sync(42),
+            lambda value: value == expected,
+        )
+        == expected
+    )
     assert host.events == ["start", "sync", "stop"]
 
 
