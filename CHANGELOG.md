@@ -20,6 +20,12 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Define and test the composition/streaming boundary: `CapabilityInvoker`
+  refuses a streaming child with a canonical conflict, and a streaming parent
+  cannot receive an invoker. Direct-runtime conformance also proves parent
+  idempotency cannot select a child namespace and adversarial indirect cycles
+  or depth exhaustion stop before the next effect.
+
 - Harden nested composition's direct-actor boundary: a child receives a
   detached actor input and, at most, a 128-character correlation label. Raw
   invocation metadata, confirmation, idempotency and unimplemented delegation

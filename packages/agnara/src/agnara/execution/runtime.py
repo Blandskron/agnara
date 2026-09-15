@@ -584,6 +584,14 @@ class CapabilityRuntime:
             return Failure(FailureCode.CONFLICT, "nested capability recursion is not allowed")
         if len(parent._composition_ancestry) >= self._max_composition_depth:
             return Failure(FailureCode.CONFLICT, "nested capability depth limit exceeded")
+        if plan.streaming:
+            # ADR 0093 deliberately has complete-result semantics.  Returning
+            # a stream here would leave iteration, backpressure, partial
+            # failure and cleanup without one owner.
+            return Failure(
+                FailureCode.CONFLICT,
+                "nested streaming capability cannot be invoked",
+            )
 
         deadline = parent.deadline
         if timeout is not None:
