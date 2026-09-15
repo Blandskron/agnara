@@ -1086,7 +1086,7 @@ jobs:
           prerelease: ${{ contains(needs.preconditions.outputs.version, 'a') || contains(needs.preconditions.outputs.version, 'b') || contains(needs.preconditions.outputs.version, 'rc') }}
 
   container:
-    name: Publish official GHCR image
+    name: Publish official GHCR and Docker Hub images
     if: ${{ inputs.phase == 'final' }}
     needs: [preconditions, tag, github-release]
     runs-on: ubuntu-latest
@@ -1114,6 +1114,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Build release image for smoke test
         run: >-
           docker build --platform linux/amd64 --tag agnara:release-smoke
@@ -1133,7 +1139,9 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/agnara:${{ needs.preconditions.outputs.version }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/agnara:${{ needs.preconditions.outputs.version }}
+            docker.io/blandskron/agnara:${{ needs.preconditions.outputs.version }}
           build-args: |
             OCI_CREATED=${{ github.run_started_at }}
             OCI_REVISION=${{ github.sha }}
@@ -1148,6 +1156,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "Published ghcr.io/${GITHUB_REPOSITORY_OWNER}/agnara:${RELEASE_VERSION}"
+          echo "Published docker.io/blandskron/agnara:${RELEASE_VERSION}"
           echo "Digest: $IMAGE_DIGEST"
         env:
           RELEASE_VERSION: ${{ needs.preconditions.outputs.version }}
