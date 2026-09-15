@@ -20,6 +20,12 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Harden nested composition's direct-actor boundary: a child receives a
+  detached actor input and, at most, a 128-character correlation label. Raw
+  invocation metadata, confirmation, idempotency and unimplemented delegation
+  state do not cross the boundary; nested deadline/cancellation and telemetry
+  tree evidence now covers two child levels.
+
 - Add provisional same-compiled-application nested capability invocation under
   ADR 0093. `CapabilityRuntime` supplies a handler-only `CapabilityInvoker`
   that runs a complete-result child through its compiled plan with fresh

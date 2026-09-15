@@ -78,11 +78,14 @@ def context(
     payload: dict[str, Any] | None = None,
     deadline: float | None = None,
     evidence: ConfirmationEvidence | None = None,
+    principal: Principal | None = None,
+    tracking_id: str | None = None,
 ) -> ExecutionContext:
     return ExecutionContext(
         Invocation(capability_id, payload or {}, {}, deadline),
         container,
-        principal=Principal("actor", scopes={"outer:invoke"}),
+        tracking_id=tracking_id,
+        principal=principal or Principal("actor", scopes={"outer:invoke"}),
         confirmation_evidence=evidence,
     )
 
@@ -145,6 +148,64 @@ def test_child_uses_compiled_plan_with_fresh_context_and_causal_telemetry() -> N
         assert child_result.execution_id == child_context.execution_id
         assert recorder.starts[1].parent_execution_id == parent.execution_id
         assert recorder.starts[0].invocation_id != recorder.starts[1].invocation_id
+        await runtime.aclose()
+
+    asyncio.run(run())
+
+
+def test_child_uses_detached_direct_actor_and_bounded_correlation_only() -> None:
+    async def run() -> None:
+        registry = DIRegistry()
+        child_context: ExecutionContext | None = None
+
+        def child(execution: ExecutionContext) -> str:
+            nonlocal child_context
+            child_context = execution
+            # Principal metadata is deliberately detached together with the
+            # principal object; a child cannot mutate the parent policy input.
+            execution.principal.metadata["child-only"] = "value"
+            return execution.principal.identity
+
+        async def outer(invoker: CapabilityInvoker) -> str:
+            result = await invoker.invoke(CHILD, {})
+            assert isinstance(result, Success)
+            return result.value
+
+        child_plan = ExecutionPlan.compile(
+            CapabilityDefinition(id=CHILD, handler=child, scopes=frozenset({"child:invoke"})),
+            registry,
+        )
+        outer_plan = ExecutionPlan.compile(
+            CapabilityDefinition(id=OUTER, handler=outer, scopes=frozenset({"outer:invoke"})),
+            registry,
+        )
+        container = DIContainer(registry)
+        runtime = runtime_for([outer_plan, child_plan], container)
+        actor = Principal(
+            "actor",
+            metadata={"authenticated-claim": "safe-policy-input"},
+            scopes={"outer:invoke", "child:invoke", "unrelated:admin"},
+        )
+        parent = context(
+            OUTER,
+            container,
+            principal=actor,
+            tracking_id="x" * 129,
+        )
+
+        assert await runtime.invoke_result(parent) == Success("actor")
+        assert child_context is not None
+        assert child_context.principal is not actor
+        assert child_context.principal.identity == "actor"
+        assert child_context.principal.scopes == actor.scopes
+        assert child_context.principal.metadata == {
+            "authenticated-claim": "safe-policy-input",
+            "child-only": "value",
+        }
+        assert actor.metadata == {"authenticated-claim": "safe-policy-input"}
+        assert child_context.invocation.metadata == {}
+        assert not hasattr(child_context, "delegation")
+        assert child_context.tracking_id is None
         await runtime.aclose()
 
     asyncio.run(run())
@@ -353,6 +414,136 @@ def test_child_deadline_and_cancellation_preserve_lifecycle_ownership() -> None:
     asyncio.run(run())
 
 
+def test_two_level_child_deadline_cannot_outlive_parent_and_cleans_once() -> None:
+    async def run() -> None:
+        registry = DIRegistry()
+        acquired = released = calls = 0
+        started = asyncio.Event()
+        middle = CapabilityId.parse("composition.middle")
+        leaf = CapabilityId.parse("composition.leaf")
+
+        @provider()
+        async def resource() -> AsyncIterator[Resource]:
+            nonlocal acquired, released
+            acquired += 1
+            try:
+                yield Resource()
+            finally:
+                released += 1
+
+        registry.bind(Resource, resource)
+
+        async def leaf_handler(resource: Resource) -> None:
+            nonlocal calls
+            assert isinstance(resource, Resource)
+            calls += 1
+            started.set()
+            await asyncio.Event().wait()
+
+        async def middle_handler(invoker: CapabilityInvoker) -> Failure:
+            result = await invoker.invoke(leaf, {}, timeout=60)
+            assert isinstance(result, Failure)
+            return result
+
+        async def outer_handler(invoker: CapabilityInvoker) -> Failure:
+            result = await invoker.invoke(middle, {}, timeout=60)
+            assert isinstance(result, Failure)
+            return result
+
+        leaf_plan = ExecutionPlan.compile(
+            CapabilityDefinition(id=leaf, handler=leaf_handler), registry
+        )
+        middle_plan = ExecutionPlan.compile(
+            CapabilityDefinition(id=middle, handler=middle_handler), registry
+        )
+        outer_plan = ExecutionPlan.compile(
+            CapabilityDefinition(id=OUTER, handler=outer_handler), registry
+        )
+        container = DIContainer(registry)
+        runtime = runtime_for([outer_plan, middle_plan, leaf_plan], container)
+        deadline = asyncio.get_running_loop().time() + 0.05
+
+        task = asyncio.create_task(
+            runtime.invoke_result(context(OUTER, container, deadline=deadline))
+        )
+        await started.wait()
+        outcome = await task
+
+        assert isinstance(outcome, Failure)
+        assert outcome.code is FailureCode.TIMEOUT
+        assert calls == acquired == released == 1
+        await runtime.aclose()
+
+    asyncio.run(run())
+
+
+def test_parent_cancellation_cleans_active_two_level_child_once_and_keeps_tree() -> None:
+    async def run() -> None:
+        registry = DIRegistry()
+        recorder = Recorder()
+        acquired = released = 0
+        started = asyncio.Event()
+        middle = CapabilityId.parse("composition.middle")
+        leaf = CapabilityId.parse("composition.leaf")
+
+        @provider()
+        async def resource() -> AsyncIterator[Resource]:
+            nonlocal acquired, released
+            acquired += 1
+            try:
+                yield Resource()
+            finally:
+                released += 1
+
+        registry.bind(Resource, resource)
+
+        async def leaf_handler(resource: Resource) -> None:
+            assert isinstance(resource, Resource)
+            started.set()
+            await asyncio.Event().wait()
+
+        async def middle_handler(invoker: CapabilityInvoker) -> None:
+            await invoker.invoke(leaf, {})
+
+        async def outer_handler(invoker: CapabilityInvoker) -> None:
+            await invoker.invoke(middle, {})
+
+        leaf_plan = ExecutionPlan.compile(
+            CapabilityDefinition(id=leaf, handler=leaf_handler), registry, hooks=[recorder]
+        )
+        middle_plan = ExecutionPlan.compile(
+            CapabilityDefinition(id=middle, handler=middle_handler), registry, hooks=[recorder]
+        )
+        outer_plan = ExecutionPlan.compile(
+            CapabilityDefinition(id=OUTER, handler=outer_handler), registry, hooks=[recorder]
+        )
+        container = DIContainer(registry)
+        runtime = runtime_for([outer_plan, middle_plan, leaf_plan], container)
+        parent = context(OUTER, container, tracking_id="correlation-123")
+
+        task = asyncio.create_task(runtime.invoke_result(parent))
+        await started.wait()
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+        assert acquired == released == 1
+        assert [event.capability_id for event in recorder.starts] == [OUTER, middle, leaf]
+        assert [event.parent_execution_id for event in recorder.starts] == [
+            None,
+            parent.execution_id,
+            recorder.starts[1].execution_id,
+        ]
+        assert len({event.execution_id for event in recorder.starts}) == 3
+        assert len({event.invocation_id for event in recorder.starts}) == 3
+        assert [event.tracking_id for event in recorder.starts] == ["correlation-123"] * 3
+        assert [event.outcome for event in recorder.terminals] == ["cancellation"] * 3
+        assert [event.capability_id for event in recorder.terminals] == [leaf, middle, OUTER]
+        await runtime.aclose()
+
+    asyncio.run(run())
+
+
 def test_recursion_depth_and_foreign_target_are_refused_before_effects() -> None:
     async def run() -> None:
         registry = DIRegistry()
@@ -473,26 +664,69 @@ def test_child_does_not_inherit_parent_idempotency_or_run_a_stream_target() -> N
 def test_concurrent_parents_do_not_share_child_ancestry_or_context() -> None:
     async def run() -> None:
         registry = DIRegistry()
+        recorder = Recorder()
+        child_contexts: list[ExecutionContext] = []
 
-        async def child(execution: ExecutionContext) -> str:
+        async def child(marker: str, execution: ExecutionContext) -> tuple[str, str]:
+            child_contexts.append(execution)
+            execution.state["marker"] = marker
             await asyncio.sleep(0)
-            return execution.execution_id
+            assert execution.state == {"marker": marker}
+            return marker, execution.execution_id
 
-        async def outer(invoker: CapabilityInvoker) -> str:
-            result = await invoker.invoke(CHILD, {})
+        async def outer(
+            marker: str, invoker: CapabilityInvoker, execution: ExecutionContext
+        ) -> tuple[str, str]:
+            execution.state["marker"] = marker
+            result = await invoker.invoke(CHILD, {"marker": marker})
             assert isinstance(result, Success)
+            assert execution.state == {"marker": marker}
             return result.value
 
-        child_plan = ExecutionPlan.compile(CapabilityDefinition(id=CHILD, handler=child), registry)
-        outer_plan = ExecutionPlan.compile(CapabilityDefinition(id=OUTER, handler=outer), registry)
+        child_plan = ExecutionPlan.compile(
+            CapabilityDefinition(id=CHILD, handler=child), registry, hooks=[recorder]
+        )
+        outer_plan = ExecutionPlan.compile(
+            CapabilityDefinition(id=OUTER, handler=outer), registry, hooks=[recorder]
+        )
         container = DIContainer(registry)
         runtime = runtime_for([outer_plan, child_plan], container)
-        parents = [context(OUTER, container) for _ in range(20)]
+        parents = [
+            context(
+                OUTER,
+                container,
+                payload={"marker": str(index)},
+                tracking_id=f"parent-{index}",
+            )
+            for index in range(20)
+        ]
         outcomes = await asyncio.gather(*(runtime.invoke_result(parent) for parent in parents))
 
-        child_ids = {outcome.value for outcome in outcomes if isinstance(outcome, Success)}
+        child_ids = {
+            outcome.value[1]
+            for outcome in outcomes
+            if isinstance(outcome, Success) and isinstance(outcome.value, tuple)
+        }
         assert len(child_ids) == 20
         assert child_ids.isdisjoint({parent.execution_id for parent in parents})
+        assert len({id(child) for child in child_contexts}) == 20
+        assert {child.state["marker"] for child in child_contexts} == {
+            str(index) for index in range(20)
+        }
+
+        starts_by_execution = {event.execution_id: event for event in recorder.starts}
+        for parent in parents:
+            parent_event = starts_by_execution[parent.execution_id]
+            children = [
+                event
+                for event in recorder.starts
+                if event.parent_execution_id == parent.execution_id
+            ]
+            assert len(children) == 1
+            child_event = children[0]
+            assert child_event.execution_id != parent_event.execution_id
+            assert child_event.invocation_id != parent_event.invocation_id
+            assert child_event.tracking_id == parent_event.tracking_id
         await runtime.aclose()
 
     asyncio.run(run())

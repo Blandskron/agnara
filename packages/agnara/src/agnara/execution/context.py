@@ -12,6 +12,11 @@ from agnara.policy.principal import AnonymousPrincipal, Principal
 __all__ = ["ExecutionContext"]
 
 
+# This matches the reviewed MCP request-correlation ceiling.  Nested
+# composition does not need a second caller-controlled cardinality channel.
+_MAX_COMPOSITION_TRACKING_ID = 128
+
+
 class ExecutionContext:
     """The active runtime environment for a single capability execution.
 
@@ -86,16 +91,18 @@ class ExecutionContext:
 
     @classmethod
     def _child(cls, parent: ExecutionContext, invocation: Invocation) -> ExecutionContext:
-        """Derive one isolated child context for nested composition."""
-        principal = Principal(
-            parent.principal.identity,
-            metadata=parent.principal.metadata,
-            scopes=parent.principal.scopes,
-        )
+        """Derive one isolated direct-actor child for nested composition.
+
+        RFC 0005 delegation is not implemented.  The child therefore receives
+        a detached copy of the authenticated actor, not a subject, delegation
+        chain, raw evidence, confirmation or an ambient authority object.
+        Target policies evaluate the child's direct actor independently.
+        """
+        principal = _copy_direct_actor(parent.principal)
         child = cls(
             invocation,
             parent.di_container,
-            tracking_id=parent.tracking_id if isinstance(parent.tracking_id, str) else None,
+            tracking_id=_child_tracking_id(parent.tracking_id),
             principal=principal,
         )
         child._composition_ancestry = (
@@ -104,3 +111,19 @@ class ExecutionContext:
         )
         child._parent_execution_id = parent.execution_id
         return child
+
+
+def _copy_direct_actor(principal: Principal) -> Principal:
+    """Detach the direct actor input without introducing delegation semantics."""
+    return Principal(
+        principal.identity,
+        metadata=principal.metadata,
+        scopes=principal.scopes,
+    )
+
+
+def _child_tracking_id(value: object) -> str | None:
+    """Retain only a bounded correlation label for a nested lifecycle."""
+    if isinstance(value, str) and len(value) <= _MAX_COMPOSITION_TRACKING_ID:
+        return value
+    return None
