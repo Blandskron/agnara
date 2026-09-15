@@ -20,6 +20,9 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Harden the CI container smoke test by running the reference image with all
+  Linux capabilities dropped and privilege escalation disabled.
+
 - Add the official GHCR executable reference runtime at
   `ghcr.io/blandskron/agnara`, with non-root execution, container smoke tests,
   multi-architecture release publication, SBOM and provenance attestations.
