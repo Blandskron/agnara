@@ -20,6 +20,12 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Add a separate, CI-gated `develop` container publication workflow for the
+  mutable `ghcr.io/blandskron/agnara:edge` and
+  `docker.io/blandskron/agnara:edge` images. It smoke-tests before registry
+  login, publishes one multi-architecture Buildx manifest with SBOM and
+  provenance, records its digest and never creates a release or moves `latest`.
+
 - Define and test the composition/streaming boundary: `CapabilityInvoker`
   refuses a streaming child with a canonical conflict, and a streaming parent
   cannot receive an invoker. Direct-runtime conformance also proves parent
