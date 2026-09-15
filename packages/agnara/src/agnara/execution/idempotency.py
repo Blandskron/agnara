@@ -26,8 +26,12 @@ __all__ = [
     "IdempotencyClaimed",
     "IdempotencyCompleted",
     "IdempotencyConflict",
+    "IdempotencyConflictError",
     "IdempotencyInProgress",
+    "IdempotencyInProgressError",
+    "IdempotencyInvocation",
     "IdempotencyReservation",
+    "IdempotencyResultCodec",
     "IdempotencyScope",
     "IdempotencyStorageError",
     "IdempotencyStore",
@@ -49,6 +53,60 @@ class IdempotencyStorageError(RuntimeError):
     a canonical capability failure, because the runtime is not the store's
     owner and must not silently turn storage loss into a retry.
     """
+
+
+class IdempotencyConflictError(RuntimeError):
+    """A selector cannot be used for the current logical invocation."""
+
+
+class IdempotencyInProgressError(RuntimeError):
+    """A matching selector is currently owned by another invocation."""
+
+
+@runtime_checkable
+class IdempotencyResultCodec(Protocol):
+    """Encode and decode only successful values for an idempotency store.
+
+    The application or an approved adapter owns this trusted boundary.  Core
+    deliberately does not choose JSON, pickle, a schema library, or any
+    result sensitivity policy.
+    """
+
+    def encode(self, value: object, /) -> bytes:
+        """Return bounded opaque bytes for a successful value."""
+
+    def decode(self, payload: bytes, /) -> object:
+        """Return the successful value represented by stored bytes."""
+
+
+@frozen_slots_dataclass
+class IdempotencyInvocation:
+    """Explicit runtime opt-in for one idempotent complete-result invocation.
+
+    It is intentionally a context argument rather than invocation metadata:
+    a transport cannot accidentally promote arbitrary caller metadata into a
+    replay selector.  The runtime additionally checks the scope against its
+    compiled capability and resolved principal before it calls the store.
+    """
+
+    scope: IdempotencyScope
+    store: IdempotencyStore
+    codec: IdempotencyResultCodec
+    lease_ttl: float
+    result_ttl: float
+
+    def __post_init__(self) -> None:
+        _validate_scope(self.scope)
+        if not isinstance(self.store, IdempotencyStore):
+            raise TypeError("store must satisfy IdempotencyStore")
+        if not isinstance(self.codec, IdempotencyResultCodec):
+            raise TypeError("codec must satisfy IdempotencyResultCodec")
+        object.__setattr__(self, "lease_ttl", _validate_ttl(self.lease_ttl, name="lease_ttl"))
+        object.__setattr__(
+            self,
+            "result_ttl",
+            _validate_ttl(self.result_ttl, name="result_ttl"),
+        )
 
 
 @frozen_slots_dataclass

@@ -21,6 +21,11 @@ from agnara.errors import (
     UnknownCapabilityError,
     ValidationError,
 )
+from agnara.execution.idempotency import (
+    IdempotencyConflictError,
+    IdempotencyInProgressError,
+    IdempotencyStorageError,
+)
 from agnara.execution.result import Failure, FailureCode
 
 if TYPE_CHECKING:
@@ -69,5 +74,11 @@ def classify(error: Exception, capability_id: CapabilityId) -> Failure:
                 "hints": tuple(sorted(request.hints.items())),
             },
         )
+    if isinstance(error, IdempotencyConflictError):
+        return Failure(FailureCode.CONFLICT, "idempotency key conflicts with a different request")
+    if isinstance(error, IdempotencyInProgressError):
+        return Failure(FailureCode.CONFLICT, "idempotency request is already in progress")
+    if isinstance(error, IdempotencyStorageError):
+        return Failure(FailureCode.UNAVAILABLE, "idempotency storage is unavailable")
     LOGGER.error("capability %s failed", capability_id)
     return Failure(FailureCode.INTERNAL_FAILURE, "capability invocation failed")

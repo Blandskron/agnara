@@ -15,7 +15,7 @@ it does not define stability policy separately.
 | `experimental` | Public only for evaluation. It may change or disappear in the next pre-1.0 release. |
 | `internal` | Unsupported implementation detail. Internal names are excluded from public manifests and `__all__`. |
 
-No API is classified `stable` before the `1.0.0` release. All 310 currently governed
+No API is classified `stable` before the `1.0.0` release. All 332 currently governed
 exports are `provisional`: they are deliberate public entry points, but the
 pre-stable work explicitly makes no compatibility promise. A stable classification
 requires an explicit `1.0.0` decision supported by release evidence; descriptive phrases
@@ -71,7 +71,14 @@ validated capability, principal, key and canonical fingerprint boundary; the
 port atomically reserves, observes, completes or abandons that selector. It
 stores only bounded caller-serialized successful bytes and does not select
 transport keys, serialize values, cache failures, authorize a retry, or promise
-durability or multi-process coordination.
+durability or multi-process coordination. ADR 0091 adds the provisional
+`IdempotencyInvocation` and `IdempotencyResultCodec` direct-runtime opt-in:
+an application explicitly supplies its validated scope, store, bounded TTLs
+and trusted successful-result codec through `ExecutionContext`. The runtime
+verifies its capability/principal binding, re-evaluates policy and confirmation,
+and never reads a selector from invocation metadata. Completed reuse, conflict,
+in-progress and storage-outage behavior is canonical; HTTP and MCP do not yet
+accept idempotency selectors.
 
 ## Governed surface
 
@@ -82,7 +89,7 @@ ungoverned adapter is not a governed framework (ADR 0076).
 
 | Distribution | Import root | Governed modules | Classified exports | Entry point exports |
 | --- | --- | --- | --- | --- |
-| `agnara` | `agnara` | 32 | 248 | 41 |
+| `agnara` | `agnara` | 32 | 256 | 41 |
 | `agnara-a2a` | `agnara_a2a` | 1 | 0 | 0 |
 | `agnara-cli` | `agnara_cli` | 1 | 4 | 4 |
 | `agnara-events` | `agnara_events` | 1 | 0 | 0 |
@@ -90,7 +97,7 @@ ungoverned adapter is not a governed framework (ADR 0076).
 | `agnara-mcp` | `agnara_mcp` | 9 | 40 | 20 |
 | `agnara-telemetry` | `agnara_telemetry` | 3 | 4 | 2 |
 
-324 exports across 49 modules. A count is not a substitute for the list. The
+332 exports across 49 modules. A count is not a substitute for the list. The
 release gate compares each module's ordered export list against the manifest
 and also walks each distribution's source tree in the reverse direction, so
 adding a public package or leaf module without classifying it fails the gate.

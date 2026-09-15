@@ -32,6 +32,15 @@ describe user- and contributor-visible changes only.
   values, cache failures, authorize retries, or promise durability or
   multi-process coordination.
 
+- Add the provisional ADR 0091 direct-runtime idempotency boundary. An
+  `Idempotency.YES` capability can explicitly bind a validated
+  capability/principal/key/fingerprint scope, store, TTLs and successful-result
+  codec through `ExecutionContext`; completed duplicates reuse the stored
+  success without running dependencies or handler effects again. Conflicts and
+  in-progress claims are canonical conflicts, storage errors fail closed, and
+  failures/cancellation are not cached. HTTP and MCP still accept no
+  idempotency selector.
+
 - Add integrated HTTP documentation composition (ADR 0090):
   `HttpDocumentation()` serves generated OpenAPI 3.2 at `/openapi.json` and
   pinned local Swagger UI at `/docs`; typed selections independently configure

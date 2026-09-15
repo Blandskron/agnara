@@ -160,8 +160,12 @@ Use `--check` in automation to verify that this projection has not drifted.
 | `IdempotencyClaimed` | `provisional` |
 | `IdempotencyCompleted` | `provisional` |
 | `IdempotencyConflict` | `provisional` |
+| `IdempotencyConflictError` | `provisional` |
 | `IdempotencyInProgress` | `provisional` |
+| `IdempotencyInProgressError` | `provisional` |
+| `IdempotencyInvocation` | `provisional` |
 | `IdempotencyReservation` | `provisional` |
+| `IdempotencyResultCodec` | `provisional` |
 | `IdempotencyScope` | `provisional` |
 | `IdempotencyStorageError` | `provisional` |
 | `IdempotencyStore` | `provisional` |
@@ -193,8 +197,12 @@ Use `--check` in automation to verify that this projection has not drifted.
 | `IdempotencyClaimed` | `provisional` |
 | `IdempotencyCompleted` | `provisional` |
 | `IdempotencyConflict` | `provisional` |
+| `IdempotencyConflictError` | `provisional` |
 | `IdempotencyInProgress` | `provisional` |
+| `IdempotencyInProgressError` | `provisional` |
+| `IdempotencyInvocation` | `provisional` |
 | `IdempotencyReservation` | `provisional` |
+| `IdempotencyResultCodec` | `provisional` |
 | `IdempotencyScope` | `provisional` |
 | `IdempotencyStorageError` | `provisional` |
 | `IdempotencyStore` | `provisional` |
