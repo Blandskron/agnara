@@ -21,7 +21,18 @@ def main() -> int:
     args = parser.parse_args()
     name = "agnara-container-smoke"
     run("rm", "-f", name, check=False)
-    run("run", "-d", "--rm", "--name", name, "-p", "127.0.0.1::8000", args.image)
+    run(
+        "run",
+        "-d",
+        "--rm",
+        "--name",
+        name,
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "-p",
+        "127.0.0.1::8000",
+        args.image,
+    )
     try:
         inspection = json.loads(run("inspect", name).stdout)[0]
         assert inspection["Config"]["User"] == "agnara:agnara"
