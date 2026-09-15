@@ -108,9 +108,11 @@ Measured budgets and a CI regression gate.
 ### I20 — Framework interoperability
 
 **Horizon:** `1.0.0`
-**Status:** `RESEARCH`
+**Status:** `DESIGNED`
 
-A framework-neutral embedding contract and conformance evidence.
+ADR 0094 accepts the framework-neutral embedding contract. Version-pinned host
+fixtures and conformance evidence remain required; no framework integration is
+supported by the decision alone.
 
 ## Deliberately after 1.0.0
 
