@@ -1,6 +1,6 @@
 # ADR 0091 — Operational Idempotency Runtime Boundary
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-14
 - Tracking: GitHub Issue #400
 - Initiative: I3
@@ -22,7 +22,7 @@ explicit, validated selector reaches the runtime.  It must preserve ADR 0025's
 policy-before-validation ordering and must not cache failures, cancellations,
 or arbitrary Python values.
 
-## Proposed decision
+## Decision
 
 ### D1 — An explicit transport-neutral invocation option owns the selector
 

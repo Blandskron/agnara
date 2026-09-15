@@ -12,12 +12,23 @@ from typing import Any
 from uuid import uuid4
 
 from agnara.capability.identity import CapabilityId
+from agnara.capability.metadata import Idempotency
 from agnara.errors import InvocationError
 from agnara.execution._outcome import classify
 from agnara.execution._output import validate_output
 from agnara.execution._preflight import bind_inputs, enforce_policies
 from agnara.execution._preflight import tracking_id as _tracking_id
 from agnara.execution.context import ExecutionContext
+from agnara.execution.idempotency import (
+    IdempotencyClaimed,
+    IdempotencyCompleted,
+    IdempotencyConflict,
+    IdempotencyConflictError,
+    IdempotencyInProgress,
+    IdempotencyInProgressError,
+    IdempotencyResultCodec,
+    IdempotencyStorageError,
+)
 from agnara.execution.plan import ExecutionPlan
 from agnara.execution.result import CanonicalResult, Failure, Success
 from agnara.execution.telemetry import InvocationStartEvent, InvocationTerminalEvent
@@ -118,9 +129,9 @@ async def _invoke(
     outcome = "success"
     try:
         if context.deadline is None:
-            return await _execute(plan, context, input_materializer)
+            return await _execute_with_idempotency(plan, context, input_materializer)
         async with asyncio.timeout_at(context.deadline):
-            return await _execute(plan, context, input_materializer)
+            return await _execute_with_idempotency(plan, context, input_materializer)
     except asyncio.CancelledError:
         outcome = "cancellation"
         raise
@@ -179,14 +190,107 @@ async def invoke_result[T](
     return Success(value, execution_id=context.execution_id)
 
 
-async def _execute(
+async def _execute_with_idempotency(
     plan: ExecutionPlan,
     context: ExecutionContext,
     input_materializer: Callable[[TypeSchema, object], object] | None,
 ) -> Any:
-    """Enforce policies, validate inputs, resolve dependencies, and call the handler."""
+    """Run the shared preflight and an optional atomic idempotency boundary."""
     await enforce_policies(plan, context)
     arguments = bind_inputs(plan, context, input_materializer)
+    configured = context.idempotency
+    if configured is None:
+        return await _execute(plan, context, arguments)
+
+    if plan.streaming:
+        raise InvocationError("idempotency result reuse is unavailable for streaming capabilities")
+    if plan.definition.idempotency is not Idempotency.YES:
+        raise InvocationError(
+            f"capability {plan.definition.id} is not declared idempotent and cannot use "
+            "IdempotencyInvocation"
+        )
+    if configured.scope.capability_id != plan.definition.id:
+        raise InvocationError("idempotency scope capability does not match the compiled plan")
+    if configured.scope.principal_id != context.principal.identity:
+        raise InvocationError("idempotency scope principal does not match the execution context")
+
+    claim = await configured.store.claim(configured.scope, lease_ttl=configured.lease_ttl)
+    if isinstance(claim, IdempotencyConflict):
+        raise IdempotencyConflictError()
+    if isinstance(claim, IdempotencyInProgress):
+        raise IdempotencyInProgressError()
+    if isinstance(claim, IdempotencyCompleted):
+        return _reuse_completed(context, configured.codec, claim)
+    if not isinstance(claim, IdempotencyClaimed):
+        raise IdempotencyStorageError("idempotency store returned an invalid claim result")
+
+    context._adopt_idempotency_execution_id(claim.reservation.execution_id)
+    try:
+        value = await _execute(plan, context, arguments)
+    except asyncio.CancelledError:
+        with contextlib.suppress(Exception):
+            await configured.store.abandon(claim.reservation)
+        raise
+    except Exception:
+        try:
+            abandoned = await configured.store.abandon(claim.reservation)
+        except Exception as error:
+            raise IdempotencyStorageError(
+                "idempotency reservation could not be abandoned"
+            ) from error
+        if not abandoned:
+            raise IdempotencyStorageError(
+                "idempotency reservation could not be abandoned"
+            ) from None
+        raise
+
+    if isinstance(value, Failure):
+        try:
+            abandoned = await configured.store.abandon(claim.reservation)
+        except Exception as error:
+            raise IdempotencyStorageError(
+                "idempotency reservation could not be abandoned"
+            ) from error
+        if not abandoned:
+            raise IdempotencyStorageError("idempotency reservation could not be abandoned")
+        return value
+
+    try:
+        encoded = configured.codec.encode(value)
+        if not isinstance(encoded, bytes):
+            raise TypeError("idempotency codec encode() must return bytes")
+        completed = await configured.store.complete(
+            claim.reservation,
+            encoded,
+            result_ttl=configured.result_ttl,
+        )
+    except Exception as error:
+        raise IdempotencyStorageError("idempotency result could not be stored") from error
+    if not completed:
+        raise IdempotencyStorageError("idempotency result could not be stored")
+    return value
+
+
+def _reuse_completed(
+    context: ExecutionContext,
+    codec: IdempotencyResultCodec,
+    completed: IdempotencyCompleted,
+) -> object:
+    """Decode one stored success without exposing its bytes to normal diagnostics."""
+    context._adopt_idempotency_execution_id(completed.execution_id)
+    try:
+        value = codec.decode(completed.result)
+    except Exception as error:
+        raise IdempotencyStorageError("idempotency result could not be decoded") from error
+    return value
+
+
+async def _execute(
+    plan: ExecutionPlan,
+    context: ExecutionContext,
+    arguments: dict[str, Any],
+) -> Any:
+    """Resolve dependencies, call the handler, and validate its output."""
     async with context.di_container.resolve_dependencies(
         plan.definition.handler,
         plan.target_deps,

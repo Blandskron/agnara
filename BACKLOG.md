@@ -28,6 +28,9 @@ order.
     capability/principal/fingerprint scope, atomic in-flight races, TTL and
     failure-retention evidence (#392). It must not imply replay or automatic
     retry.
+  - [x] Make the ADR 0091 direct complete-result boundary operational: claim
+    after policy/input preflight and before dependencies or handler work;
+    reuse only completed successes; fail closed on storage errors (#400).
 - [ ] Establish performance budgets and CI regression gates (I14).
 - [x] Integrate supported HTTP OpenAPI documentation, built-in browser UIs and
   authorized Explorer composition for the 1.0 gate (ADR 0090, #394).

@@ -419,11 +419,27 @@
               "stability": "provisional"
             },
             {
+              "name": "IdempotencyConflictError",
+              "stability": "provisional"
+            },
+            {
               "name": "IdempotencyInProgress",
               "stability": "provisional"
             },
             {
+              "name": "IdempotencyInProgressError",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyInvocation",
+              "stability": "provisional"
+            },
+            {
               "name": "IdempotencyReservation",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyResultCodec",
               "stability": "provisional"
             },
             {
@@ -521,11 +537,27 @@
               "stability": "provisional"
             },
             {
+              "name": "IdempotencyConflictError",
+              "stability": "provisional"
+            },
+            {
               "name": "IdempotencyInProgress",
               "stability": "provisional"
             },
             {
+              "name": "IdempotencyInProgressError",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyInvocation",
+              "stability": "provisional"
+            },
+            {
               "name": "IdempotencyReservation",
+              "stability": "provisional"
+            },
+            {
+              "name": "IdempotencyResultCodec",
               "stability": "provisional"
             },
             {
