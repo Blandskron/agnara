@@ -103,6 +103,15 @@ streaming target returns a canonical `CONFLICT` before producer start, and
 composition remains unsupported rather than borrowing an iterator or cleanup
 owner.
 
+ADR 0094 selects no new host API. Its framework-neutral embedding contract uses
+the existing provisional Agnara.compile, ExecutionPlan, DIContainer,
+ExecutionContext, Invocation, CapabilityRuntime, Success and Failure surface
+through explicit application code. A host adapter owns routing, lifecycle and
+host-shaped error mapping; it must not use private modules, globals or raw
+framework objects as a shortcut. The contract is accepted architecture, not a
+stability promotion or a supported framework integration; I9 still classifies
+every public symbol for 1.0.0.
+
 ## Governed surface
 
 The manifest governs **every shipped distribution**, not the kernel alone. An

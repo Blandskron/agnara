@@ -52,7 +52,11 @@ order.
   idempotency cannot select a child namespace, and indirect cycles/depth
   exhaustion stop before the next effect (#416). Stream composition remains a
   separate deferred decision.
-- [ ] Complete the framework interoperability contract (I20).
+- [x] Complete the framework interoperability contract (I20, ADR 0094):
+  explicit async complete-result embedding boundary, singular lifecycle/resource
+  ownership, value-only principal/context bridge, one-event-loop reuse rules
+  and framework-neutral architecture evidence. Concrete framework fixtures
+  remain release-gate work; this does not claim integration support.
 - [ ] Complete the security program evidence (I10).
 
 ## Deferred decisions
