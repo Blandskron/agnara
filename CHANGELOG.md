@@ -20,6 +20,15 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Add provisional same-compiled-application nested capability invocation under
+  ADR 0093. `CapabilityRuntime` supplies a handler-only `CapabilityInvoker`
+  that runs a complete-result child through its compiled plan with fresh
+  context/identity, independent policy, confirmation, validation and DI
+  scope. It preserves cancellation and only shortens deadlines; it refuses
+  inherited confirmation/idempotency, stream, absent, recursive and
+  depth-exceeding targets. Delegation and cross-application composition remain
+  unsupported.
+
 - Add deterministic ADR 0089 store-conformance evidence for exact TTL
   expiration, stale reservations, bounded capacity, concurrent claims and
   fail-closed runtime storage behavior.

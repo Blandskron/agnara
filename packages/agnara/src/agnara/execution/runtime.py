@@ -6,14 +6,18 @@ import asyncio
 import contextlib
 import inspect
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import replace
+from types import MappingProxyType
 from typing import Any, NoReturn
 from uuid import uuid4
 
 from agnara.capability.identity import CapabilityId
 from agnara.capability.metadata import Idempotency
+from agnara.capability.registry import FrozenCapabilityRegistry
+from agnara.core.di.resolver import DIContainer
 from agnara.errors import InvocationError
+from agnara.execution._composition import CapabilityInvoker
 from agnara.execution._outcome import classify
 from agnara.execution._output import validate_output
 from agnara.execution._preflight import bind_inputs, enforce_policies
@@ -31,12 +35,13 @@ from agnara.execution.idempotency import (
     IdempotencyStorageError,
     IdempotencyStore,
 )
+from agnara.execution.invocation import Invocation
 from agnara.execution.plan import ExecutionPlan
-from agnara.execution.result import CanonicalResult, Failure, Success
+from agnara.execution.result import CanonicalResult, Failure, FailureCode, Success
 from agnara.execution.telemetry import InvocationStartEvent, InvocationTerminalEvent
 from agnara.schema import TypeSchema
 
-__all__ = ["classify_failure", "invoke", "invoke_result"]
+__all__ = ["CapabilityRuntime", "classify_failure", "invoke", "invoke_result"]
 
 
 def classify_failure(error: Exception, capability_id: CapabilityId) -> Failure:
@@ -78,7 +83,12 @@ async def invoke(plan: ExecutionPlan, context: ExecutionContext) -> Any:
     semantics and cannot own a producer's iteration, cleanup or partial
     failure. Use ``open_stream`` instead (ADR 0084).
     """
-    return await _invoke(plan, context, input_materializer=None)
+    return await _invoke(
+        plan,
+        context,
+        input_materializer=None,
+        capability_invoker=None,
+    )
 
 
 async def _invoke(
@@ -86,6 +96,7 @@ async def _invoke(
     context: ExecutionContext,
     *,
     input_materializer: Callable[[TypeSchema, object], object] | None,
+    capability_invoker: CapabilityInvoker | None,
 ) -> Any:
     if not isinstance(plan, ExecutionPlan):
         raise TypeError(f"plan must be an ExecutionPlan, got {type(plan).__name__}")
@@ -113,7 +124,12 @@ async def _invoke(
                 context,
                 lambda: _within_deadline(
                     context,
-                    lambda: _execute_with_idempotency(plan, context, input_materializer),
+                    lambda: _execute_with_idempotency(
+                        plan,
+                        context,
+                        input_materializer,
+                        capability_invoker,
+                    ),
                 ),
             )
 
@@ -123,11 +139,19 @@ async def _invoke(
         # construction and handler work.
         try:
             if context.deadline is None:
-                operation = await _prepare_idempotent_execution(plan, context, input_materializer)
+                operation = await _prepare_idempotent_execution(
+                    plan,
+                    context,
+                    input_materializer,
+                    capability_invoker,
+                )
             else:
                 async with asyncio.timeout_at(context.deadline):
                     operation = await _prepare_idempotent_execution(
-                        plan, context, input_materializer
+                        plan,
+                        context,
+                        input_materializer,
+                        capability_invoker,
                     )
         except Exception as error:
             # A rejected preflight or unavailable claim has no claimed logical
@@ -147,6 +171,16 @@ async def _within_deadline(context: ExecutionContext, operation: Callable[[], An
     """Run one observed operation inside its existing absolute deadline."""
     if context.deadline is None:
         return await operation()
+    # The established direct boundary deliberately enters the dependency scope
+    # before an already-expired timeout is delivered, so acquired resources
+    # still exercise their teardown path. A nested child has a stronger
+    # confused-deputy boundary: a parent cannot use an exhausted child limit to
+    # start even synchronous child work.
+    if (
+        context._parent_execution_id is not None
+        and context.deadline <= asyncio.get_running_loop().time()
+    ):
+        raise TimeoutError("invocation deadline exceeded")
     async with asyncio.timeout_at(context.deadline):
         return await operation()
 
@@ -174,6 +208,7 @@ async def _observe_invocation(
             tracking_id=tracking_id,
             invocation_id=invocation_id,
             execution_id=context.execution_id,
+            parent_execution_id=context._parent_execution_id,
         )
         for hook in observers:
             with contextlib.suppress(Exception):
@@ -200,6 +235,7 @@ async def _observe_invocation(
                 outcome=outcome,
                 invocation_id=invocation_id,
                 execution_id=context.execution_id,
+                parent_execution_id=context._parent_execution_id,
             )
             for hook in observers:
                 with contextlib.suppress(Exception):
@@ -228,8 +264,28 @@ async def invoke_result[T](
     refuses it: ``Success`` cannot describe a producer, and ``Failure``
     cannot describe an error that arrives after output (ADR 0084).
     """
+    return await _invoke_result(
+        plan,
+        context,
+        input_materializer=input_materializer,
+        capability_invoker=None,
+    )
+
+
+async def _invoke_result[T](
+    plan: ExecutionPlan,
+    context: ExecutionContext,
+    *,
+    input_materializer: Callable[[TypeSchema, object], object] | None,
+    capability_invoker: CapabilityInvoker | None,
+) -> CanonicalResult[T]:
     try:
-        value = await _invoke(plan, context, input_materializer=input_materializer)
+        value = await _invoke(
+            plan,
+            context,
+            input_materializer=input_materializer,
+            capability_invoker=capability_invoker,
+        )
     except asyncio.CancelledError:
         raise
     except Exception as error:
@@ -244,17 +300,19 @@ async def _execute_with_idempotency(
     plan: ExecutionPlan,
     context: ExecutionContext,
     input_materializer: Callable[[TypeSchema, object], object] | None,
+    capability_invoker: CapabilityInvoker | None,
 ) -> Any:
     """Run the ordinary shared preflight without an idempotency option."""
     await enforce_policies(plan, context)
     arguments = bind_inputs(plan, context, input_materializer)
-    return await _execute(plan, context, arguments)
+    return await _execute(plan, context, arguments, capability_invoker)
 
 
 async def _prepare_idempotent_execution(
     plan: ExecutionPlan,
     context: ExecutionContext,
     input_materializer: Callable[[TypeSchema, object], object] | None,
+    capability_invoker: CapabilityInvoker | None,
 ) -> Callable[[], Any]:
     """Preflight and claim before telemetry observes the logical identity.
 
@@ -300,6 +358,7 @@ async def _prepare_idempotent_execution(
         configured.store,
         claim.reservation,
         configured.result_ttl,
+        capability_invoker,
     )
 
 
@@ -318,10 +377,11 @@ async def _execute_claimed_idempotency(
     store: IdempotencyStore,
     reservation: IdempotencyReservation,
     result_ttl: float,
+    capability_invoker: CapabilityInvoker | None,
 ) -> Any:
     """Execute, abandon failures, and publish one successful claimed result."""
     try:
-        value = await _execute(plan, context, arguments)
+        value = await _execute(plan, context, arguments, capability_invoker)
     except asyncio.CancelledError:
         with contextlib.suppress(Exception):
             await store.abandon(reservation)
@@ -393,16 +453,150 @@ async def _execute(
     plan: ExecutionPlan,
     context: ExecutionContext,
     arguments: dict[str, Any],
+    capability_invoker: CapabilityInvoker | None,
 ) -> Any:
     """Resolve dependencies, call the handler, and validate its output."""
+    if plan.capability_invoker_parameters and capability_invoker is None:
+        raise InvocationError(
+            f"capability {plan.definition.id} requires a CapabilityRuntime invocation boundary"
+        )
     async with context.di_container.resolve_dependencies(
         plan.definition.handler,
         plan.target_deps,
     ) as dependencies:
         arguments.update(dependencies)
         arguments.update(dict.fromkeys(plan.context_parameters, context))
+        arguments.update(dict.fromkeys(plan.capability_invoker_parameters, capability_invoker))
 
         result = plan.definition.handler(**arguments)
         if inspect.isawaitable(result):
             result = await result
         return validate_output(plan, result)
+
+
+class CapabilityRuntime:
+    """Immutable same-application runtime for nested capability execution.
+
+    A frozen capability snapshot owns every supplied plan by identity at
+    construction. Its only composition surface is the invocation-scoped
+    :class:`CapabilityInvoker` injected into handlers that explicitly request
+    it. A target absent from this snapshot is not reachable through
+    composition.
+    """
+
+    __slots__ = ("_container", "_max_composition_depth", "_plans")
+
+    def __init__(
+        self,
+        capabilities: FrozenCapabilityRegistry,
+        plans: Sequence[ExecutionPlan],
+        container: DIContainer,
+        *,
+        max_composition_depth: int = 8,
+    ) -> None:
+        if not isinstance(capabilities, FrozenCapabilityRegistry):
+            raise TypeError("capabilities must be a FrozenCapabilityRegistry")
+        if not isinstance(container, DIContainer):
+            raise TypeError("container must be a DIContainer")
+        if (
+            isinstance(max_composition_depth, bool)
+            or not isinstance(max_composition_depth, int)
+            or not 1 <= max_composition_depth <= 32
+        ):
+            raise ValueError("max_composition_depth must be an integer from 1 through 32")
+        compiled: dict[CapabilityId, ExecutionPlan] = {}
+        for plan in plans:
+            if not isinstance(plan, ExecutionPlan):
+                raise TypeError("plans must contain ExecutionPlan instances")
+            capability_id = plan.definition.id
+            if (
+                capability_id not in capabilities
+                or capabilities[capability_id] is not plan.definition
+            ):
+                raise InvocationError(
+                    f"compiled plan for {capability_id} does not belong to this capability snapshot"
+                )
+            if capability_id in compiled:
+                raise InvocationError(f"duplicate compiled plan for capability {capability_id}")
+            compiled[capability_id] = plan
+        if not compiled:
+            raise InvocationError("CapabilityRuntime requires at least one compiled plan")
+        self._plans = MappingProxyType(compiled)
+        self._container = container
+        self._max_composition_depth = max_composition_depth
+
+    async def invoke(self, context: ExecutionContext) -> Any:
+        """Invoke the plan named by ``context`` with ordinary Python semantics."""
+        plan = self._plan_for(context)
+        return await _invoke(
+            plan,
+            context,
+            input_materializer=None,
+            capability_invoker=CapabilityInvoker(self, context),
+        )
+
+    async def invoke_result[T](
+        self,
+        context: ExecutionContext,
+        *,
+        input_materializer: Callable[[TypeSchema, object], object] | None = None,
+    ) -> CanonicalResult[T]:
+        """Invoke the plan named by ``context`` and return its canonical result."""
+        plan = self._plan_for(context)
+        return await _invoke_result(
+            plan,
+            context,
+            input_materializer=input_materializer,
+            capability_invoker=CapabilityInvoker(self, context),
+        )
+
+    async def aclose(self) -> None:
+        """Close application-owned singleton dependencies."""
+        await self._container.aclose()
+
+    def _plan_for(self, context: ExecutionContext) -> ExecutionPlan:
+        if not isinstance(context, ExecutionContext):
+            raise TypeError("context must be an ExecutionContext")
+        if context.di_container is not self._container:
+            raise InvocationError("execution context does not belong to this CapabilityRuntime")
+        plan = self._plans.get(context.invocation.capability_id)
+        if plan is None:
+            raise InvocationError(
+                f"no compiled capability is registered for {context.invocation.capability_id}"
+            )
+        return plan
+
+    async def _invoke_child(
+        self,
+        parent: ExecutionContext,
+        capability_id: CapabilityId,
+        payload: dict[str, Any],
+        *,
+        timeout: float | None,
+    ) -> CanonicalResult[Any]:
+        """Run one child plan after all composition-boundary refusals."""
+        plan = self._plans.get(capability_id)
+        if plan is None:
+            return Failure(FailureCode.NOT_FOUND, "nested target capability is not available")
+
+        ancestry = (*parent._composition_ancestry, parent.invocation.capability_id)
+        if capability_id in ancestry:
+            return Failure(FailureCode.CONFLICT, "nested capability recursion is not allowed")
+        if len(parent._composition_ancestry) >= self._max_composition_depth:
+            return Failure(FailureCode.CONFLICT, "nested capability depth limit exceeded")
+
+        deadline = parent.deadline
+        if timeout is not None:
+            child_deadline = asyncio.get_running_loop().time() + timeout
+            deadline = child_deadline if deadline is None else min(deadline, child_deadline)
+
+        child = ExecutionContext._child(
+            parent,
+            Invocation(capability_id, payload, {}, deadline),
+        )
+        return await _invoke_result(
+            plan,
+            child,
+            input_materializer=None,
+            capability_invoker=CapabilityInvoker(self, child),
+        )

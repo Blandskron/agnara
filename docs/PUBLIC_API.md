@@ -15,7 +15,7 @@ it does not define stability policy separately.
 | `experimental` | Public only for evaluation. It may change or disappear in the next pre-1.0 release. |
 | `internal` | Unsupported implementation detail. Internal names are excluded from public manifests and `__all__`. |
 
-No API is classified `stable` before the `1.0.0` release. All 332 currently governed
+No API is classified `stable` before the `1.0.0` release. All 337 currently governed
 exports are `provisional`: they are deliberate public entry points, but the
 pre-stable work explicitly makes no compatibility promise. A stable classification
 requires an explicit `1.0.0` decision supported by release evidence; descriptive phrases
@@ -38,7 +38,7 @@ successful complete result or each stream unit under ADR 0086; they add no new
 export and make no stable compatibility commitment before the explicit 1.0 API
 classification decision.
 
-`agnara.execution.classify_failure` is the one export added for an adapter
+`agnara.execution.classify_failure` is the export added for an adapter
 rather than for an application. `open_stream` raises an ordinary exception for
 a pre-output failure (ADR 0084 D6), so an adapter that owns a streaming wire
 has to answer it with the same canonical failure `invoke_result` would have
@@ -84,6 +84,17 @@ successful store transition and expires inclusively; stale or incompatible
 stored bytes fail closed through the codec rather than re-running effects.
 HTTP and MCP do not yet accept idempotency selectors.
 
+ADR 0093 adds the provisional `CapabilityRuntime` and its handler-only,
+invocation-scoped `CapabilityInvoker` at `agnara.execution`. A runtime accepts
+one supplied frozen capability snapshot plus its compiled plans and injects an invoker only into a handler
+that explicitly annotates that parameter. The invoker returns the child
+`CanonicalResult` after a fresh child context independently evaluates policy,
+confirmation, input and output validation and dependencies. Parent execution
+state, confirmation evidence and idempotency configuration do not cross that
+boundary. It refuses targets absent from the snapshot, streaming targets,
+recursive/depth-exceeding calls and deadline extension. Delegation, stream and
+cross-application composition remain unsupported.
+
 ## Governed surface
 
 The manifest governs **every shipped distribution**, not the kernel alone. An
@@ -93,7 +104,7 @@ ungoverned adapter is not a governed framework (ADR 0076).
 
 | Distribution | Import root | Governed modules | Classified exports | Entry point exports |
 | --- | --- | --- | --- | --- |
-| `agnara` | `agnara` | 32 | 256 | 41 |
+| `agnara` | `agnara` | 32 | 261 | 41 |
 | `agnara-a2a` | `agnara_a2a` | 1 | 0 | 0 |
 | `agnara-cli` | `agnara_cli` | 1 | 4 | 4 |
 | `agnara-events` | `agnara_events` | 1 | 0 | 0 |
@@ -101,7 +112,7 @@ ungoverned adapter is not a governed framework (ADR 0076).
 | `agnara-mcp` | `agnara_mcp` | 9 | 40 | 20 |
 | `agnara-telemetry` | `agnara_telemetry` | 3 | 4 | 2 |
 
-332 exports across 49 modules. A count is not a substitute for the list. The
+337 exports across 49 modules. A count is not a substitute for the list. The
 release gate compares each module's ordered export list against the manifest
 and also walks each distribution's source tree in the reverse direction, so
 adding a public package or leaf module without classifying it fails the gate.
@@ -124,12 +135,12 @@ from; that is why a distribution's export total exceeds its entry-point count.
 | `agnara.capability.registry` | 2 |
 | `agnara.core.di` | 9 |
 | `agnara.errors` | 12 |
-| `agnara.execution` | 18 |
+| `agnara.execution` | 34 |
 | `agnara.execution.context` | 1 |
 | `agnara.execution.invocation` | 1 |
 | `agnara.execution.plan` | 1 |
 | `agnara.execution.result` | 4 |
-| `agnara.execution.runtime` | 2 |
+| `agnara.execution.runtime` | 4 |
 | `agnara.execution.streaming` | 4 |
 | `agnara.execution.telemetry` | 3 |
 | `agnara.exposure` | 7 |
