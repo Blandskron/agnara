@@ -189,10 +189,11 @@ an ExecutionContext, but must not manufacture scopes, confirmation, delegation,
 execution identity or idempotency state from request data. Raw host
 request/session/transaction, telemetry and exception objects remain outside
 kernel state and normal handler parameters; the host maps canonical results and
-owns its own resources. The Starlette 1.6.0 and FastAPI 0.141.1 fixtures
+owns its own resources. The Starlette 1.6.0, FastAPI 0.141.1 and Django 6.1.1 fixtures
 exercise fail-closed identity mapping, redacted canonical failure, fixed
 trusted idempotency selection and disconnect cancellation; their evidence is
-in `tests/integration/starlette/` and `tests/integration/fastapi/`. The
+in `tests/integration/starlette/`, `tests/integration/fastapi/` and
+`tests/integration/django/`. The
 FastAPI fixture also keeps its dependency verifier, middleware and exception
 handler outside the capability boundary, and explicitly joins a mounted
 ASGI-child lifespan rather than assuming FastAPI propagates it. These remain
