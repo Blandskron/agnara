@@ -651,9 +651,7 @@ def test_child_does_not_inherit_parent_idempotency_or_run_a_stream_target() -> N
             ),
         )
 
-        assert await runtime.invoke_result(parent) == Success(
-            (FailureCode.INTERNAL_FAILURE, "child")
-        )
+        assert await runtime.invoke_result(parent) == Success((FailureCode.CONFLICT, "child"))
         assert observed == [None]
         assert stream_started is False
         await runtime.aclose()

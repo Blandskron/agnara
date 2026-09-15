@@ -47,6 +47,11 @@ order.
   delegation evidence, and deterministic two-level deadline/cancellation and
   concurrent telemetry-tree evidence (#414). RFC 0005 delegation remains
   unimplemented.
+- [x] Add direct-runtime composition conformance (I2, I3, I8): streaming
+  children and streaming parents are refused before producer start, parent
+  idempotency cannot select a child namespace, and indirect cycles/depth
+  exhaustion stop before the next effect (#416). Stream composition remains a
+  separate deferred decision.
 - [ ] Complete the framework interoperability contract (I20).
 - [ ] Complete the security program evidence (I10).
 

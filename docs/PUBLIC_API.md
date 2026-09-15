@@ -97,7 +97,11 @@ cross-application composition remain unsupported. The child is a detached
 direct-actor invocation: it receives no subject or delegation state, raw
 invocation metadata, or confirmation/idempotency option; it may retain only a
 bounded correlation label. This changes no public spelling or delegation
-compatibility promise.
+compatibility promise. `CapabilityInvoker` has complete-result semantics: a
+streaming target returns a canonical `CONFLICT` before producer start, and
+`open_stream` refuses a streaming handler that requests an invoker. Stream
+composition remains unsupported rather than borrowing an iterator or cleanup
+owner.
 
 ## Governed surface
 

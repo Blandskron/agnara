@@ -134,6 +134,11 @@ def open_stream(
         raise InvocationError(
             f"capability {plan.definition.id} is not declared streaming; use invoke_result()"
         )
+    if plan.capability_invoker_parameters:
+        raise InvocationError(
+            f"streaming capability {plan.definition.id} cannot receive CapabilityInvoker; "
+            "nested composition has complete-result semantics"
+        )
     if context.invocation.capability_id != plan.definition.id:
         raise InvocationError(
             f"invocation targets {context.invocation.capability_id}, but the compiled plan is "
