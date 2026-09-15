@@ -120,42 +120,42 @@ Git history is the source of truth for accepted authorship. PRs and reviews
 provide the complementary record of roles, contributions and verification
 limitations.
 
-For human-directed work, keep the human as primary commit author. Use a
-`Co-authored-by: Name <email>` trailer for an AI agent only when:
+For agent-written work, the materially implementing agent is the primary
+commit author. Before committing, read `.github/ai-agent-identities.toml` and
+use only its exact registered `git_name` and `email`; do not infer or invent an
+identity. Examples presently registered are `Codex <codex@openai.com>`,
+`Claude <noreply@anthropic.com>` and
+`gemini-cli <218195315+gemini-cli@users.noreply.github.com>`.
 
-- the agent materially authored the change;
-- the exact identity is authorized for Agnara;
-- the email verifiably maps to that GitHub account; and
-- the trailer does not duplicate the primary author.
+Do not make Blandskron the author or a co-author of agent-written commits, and
+do not add automatic `Co-authored-by` trailers. If multiple agents make
+materially distinct changes, prefer separate commits authored by each verified
+agent. Never credit an agent that did not participate, create empty commits or
+split trivial work for contribution statistics.
 
-Do not infer an identity from a model or product name, invent an email, or add
-another agent without evidence that it participated. Review-only agents are
-credited in the PR review trail, not normally as co-authors.
+The agent opens or prepares a PR to `develop`, requests formal review from
+`Blandskron`, and leaves it unmerged. Blandskron is repository owner,
+maintainer, reviewer, governance decision maker and merge authority. A PR
+comment or self-review is useful evidence but is not a formal GitHub review;
+the maintainer uses GitHub's `Approve`, `Request changes`, or `Comment` review
+flow. An agent never approves or merges its own PR.
 
-Place valid trailers after a blank line at the end of the commit message:
+Before push, verify the result with:
 
-```text
-docs(governance): define agent attribution
-
-Explain the governance change.
-
-Co-authored-by: Exact Verified Agent <exact-verified-email>
+```bash
+git log -1 --format=fuller
+git log -1 --format=%B
 ```
 
-The angle-bracketed value is a placeholder and must be replaced only with an
-exact verified identity. If an agent lacks one, omit the trailer and complete
-the PR template's AI / Agent contribution section with its name, role and
-contribution.
+The author must be the implementing agent and Blandskron must be absent from
+the author and co-author trailers unless he materially implemented part of
+that exact commit and explicitly requested credit. Before merge, the
+maintainer chooses a method that preserves the verified implementation author;
+do not rewrite historical commits solely to apply this current policy.
 
-Preserve legitimate trailers during amend/rebase or any deliberate commit
-recreation, and explicitly carry them into a squash-merge message. Verify the
-resulting commit after merge. Do not rewrite historical commits solely to
-apply the current policy.
-
-See `GIT_WORKFLOW.md` and `docs/adr/0019-ai-agent-attribution.md` for the
-complete evidence and merge rules.
+See `GIT_WORKFLOW.md` and ADR 0092 for the complete workflow and platform
+limitations.
 
 ## Licensing of Contributions
 
 By submitting a pull request, you agree that your contributions will be licensed under the Apache License 2.0 (see [LICENSE](LICENSE)). No additional Contributor License Agreement (CLA) or Developer Certificate of Origin (DCO) is required at this time.
-

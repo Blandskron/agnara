@@ -20,6 +20,11 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Define the contributor workflow for agent-authored commits: verified agent
+  identity as primary author, formal GitHub review by Blandskron, and no
+  agent-side merge of the PR. The versioned ruleset definitions now require
+  one approval when the maintainer applies them in GitHub.
+
 - Fix direct idempotency telemetry so a lifecycle start and terminal pair use
   the same claimed logical execution identity. Define and test inclusive TTL
   expiry, stale-result fail-closed behavior and reusable store conformance;
