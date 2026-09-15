@@ -29,7 +29,7 @@ release.
 | --- | --- | --- | --- |
 | I2 — Streaming | Kernel implemented by ADR 0084 and ADR 0086; HTTP SSE implemented by ADR 0085 with ASGI conformance evidence. | Nothing further is required for 1.0. | Defer WebSockets, MCP progress, A2A events and event-adapter projections until after 1.0. |
 | I3 — Execution identity and idempotency | ADRs 0087–0089 and 0091 define identity, storage and an explicit direct runtime boundary. | Streaming interaction decision and release review. | Keep idempotency transport-neutral and separate from automatic retry; HTTP/MCP selector projections require their own accepted contracts. |
-| I8 — Capability composition | RFC 0005 remains open; no nested invocation contract exists. | A policy-safe composition decision and propagated context/deadline/identity semantics. | Research and RFC work can proceed; runtime awaits the relevant I3 and I10 boundaries. |
+| I8 — Capability composition | ADR 0093 defines the nested-invocation contract; no runtime exists. | An implemented, policy-safe composition boundary with deterministic lifecycle and abuse evidence. | Implement only the accepted same-compiled-application boundary; delegation, streams and host/cross-app work retain their separate decisions. |
 | I9 — Public API governance | All current exports are provisional and mechanically classified. | A maintainer-approved stable/deprecated classification with migration evidence. | Audit and prune the public surface in parallel with other initiatives. |
 | I10 — Security program | The retained threat model is historical; the 1.0 program is not closed. | Current threat-boundary analysis, supply-chain evidence and abuse/failure tests. | Threat-model and supply-chain design work can proceed in parallel; it constrains I3, I8 and I20 implementation. |
 | I14 — Performance program | Baselines exist, but no budgets or CI regression gate. | Reviewed methodology, calibrated budgets and a failing/pass CI proof. | Establish methodology in parallel; calibrate final thresholds after affected execution semantics settle. |
@@ -64,9 +64,13 @@ MCP do not accept idempotency selectors.
 ### I8 — Capability composition
 
 **Horizon:** `1.0.0`
-**Status:** `RESEARCH`
+**Status:** `IN PROGRESS`
 
-A policy-safe nested-invocation contract.
+ADR 0093 defines a policy-safe nested-invocation contract for a child compiled
+plan in the same application. Runtime evidence for independent policy and
+confirmation, context/DI isolation, deadline/cancellation, recursion limits,
+and idempotency isolation is still required; cross-app and stream composition
+remain deferred.
 
 ### I9 — Public API governance
 

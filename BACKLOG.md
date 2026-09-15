@@ -37,7 +37,13 @@ order.
 - [ ] Establish performance budgets and CI regression gates (I14).
 - [x] Integrate supported HTTP OpenAPI documentation, built-in browser UIs and
   authorized Explorer composition for the 1.0 gate (ADR 0090, #394).
-- [ ] Complete interoperability and composition contracts (I20, I8).
+- [ ] Implement the accepted same-compiled-application nested capability
+  invocation boundary (I8, ADR 0093), with policy/confirmation re-evaluation,
+  child context and DI isolation, deadline/cancellation propagation,
+  recursion/depth enforcement, idempotency isolation and deterministic abuse
+  evidence. Stream, delegated and cross-app composition require their own
+  accepted follow-up decisions.
+- [ ] Complete the framework interoperability contract (I20).
 - [ ] Complete the security program evidence (I10).
 
 ## Deferred decisions
