@@ -72,6 +72,11 @@ class OpenTelemetryTracingHook:
                     if event.execution_id is not None
                     else {}
                 ),
+                **(
+                    {"agnara.parent_execution.id": event.parent_execution_id}
+                    if event.parent_execution_id is not None
+                    else {}
+                ),
             },
         )
         token = attach(set_span_in_context(span))

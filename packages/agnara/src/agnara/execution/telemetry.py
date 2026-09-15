@@ -26,6 +26,7 @@ class InvocationStartEvent:
     tracking_id: str | None
     invocation_id: str
     execution_id: str | None = None
+    parent_execution_id: str | None = None
 
 
 @frozen_slots_dataclass
@@ -50,6 +51,7 @@ class InvocationTerminalEvent:
     invocation_id: str
     units: int | None = None
     execution_id: str | None = None
+    parent_execution_id: str | None = None
 
 
 @runtime_checkable

@@ -387,6 +387,14 @@
               "stability": "provisional"
             },
             {
+              "name": "CapabilityInvoker",
+              "stability": "provisional"
+            },
+            {
+              "name": "CapabilityRuntime",
+              "stability": "provisional"
+            },
+            {
               "name": "CapabilityStream",
               "stability": "provisional"
             },
@@ -620,6 +628,10 @@
         {
           "module": "agnara.execution.runtime",
           "exports": [
+            {
+              "name": "CapabilityRuntime",
+              "stability": "provisional"
+            },
             {
               "name": "classify_failure",
               "stability": "provisional"

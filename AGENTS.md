@@ -216,7 +216,12 @@ Add package-specific commands when useful.
 
 ## Git
 
-Do not push unless the human explicitly asks for a push.
+Blandskron grants agents standing authorization to create Issues, branches,
+commits, pushes and Pull Requests required by an assigned repository task.
+Do not ask again for confirmation of those ordinary Git/GitHub workflow
+operations. This authorization does not permit an agent to approve or merge
+its own PR, bypass protections, publish packages, create release tags or
+GitHub Releases, or modify protected-branch governance.
 
 When asked to prepare a final commit, first verify the entire documented quality gate appropriate to the current stage.
 

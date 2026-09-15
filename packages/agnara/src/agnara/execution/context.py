@@ -45,6 +45,10 @@ class ExecutionContext:
         if idempotency is not None and not isinstance(idempotency, IdempotencyInvocation):
             raise TypeError("idempotency must be IdempotencyInvocation or None")
         self.idempotency = idempotency
+        # Runtime-owned nested-composition values. A handler must not be able
+        # to manufacture ancestry, a causal link, or an aliased child scope.
+        self._composition_ancestry: tuple[object, ...] = ()
+        self._parent_execution_id: str | None = None
         # State that policies or interceptors might attach during this execution.
         # This is strictly bound to a single capability execution.
         self.state: dict[str, Any] = {}
@@ -79,3 +83,24 @@ class ExecutionContext:
         it is deliberately not an application or transport input channel.
         """
         self._execution_id = ExecutionId(execution_id)
+
+    @classmethod
+    def _child(cls, parent: ExecutionContext, invocation: Invocation) -> ExecutionContext:
+        """Derive one isolated child context for nested composition."""
+        principal = Principal(
+            parent.principal.identity,
+            metadata=parent.principal.metadata,
+            scopes=parent.principal.scopes,
+        )
+        child = cls(
+            invocation,
+            parent.di_container,
+            tracking_id=parent.tracking_id if isinstance(parent.tracking_id, str) else None,
+            principal=principal,
+        )
+        child._composition_ancestry = (
+            *parent._composition_ancestry,
+            parent.invocation.capability_id,
+        )
+        child._parent_execution_id = parent.execution_id
+        return child

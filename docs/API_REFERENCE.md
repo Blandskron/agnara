@@ -152,6 +152,8 @@ Use `--check` in automation to verify that this projection has not drifted.
 | Name | Stability |
 | --- | --- |
 | `CanonicalResult` | `provisional` |
+| `CapabilityInvoker` | `provisional` |
+| `CapabilityRuntime` | `provisional` |
 | `CapabilityStream` | `provisional` |
 | `ExecutionContext` | `provisional` |
 | `ExecutionPlan` | `provisional` |
@@ -233,6 +235,7 @@ Use `--check` in automation to verify that this projection has not drifted.
 
 | Name | Stability |
 | --- | --- |
+| `CapabilityRuntime` | `provisional` |
 | `classify_failure` | `provisional` |
 | `invoke` | `provisional` |
 | `invoke_result` | `provisional` |
