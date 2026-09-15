@@ -20,6 +20,12 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Fix direct idempotency telemetry so a lifecycle start and terminal pair use
+  the same claimed logical execution identity. Define and test inclusive TTL
+  expiry, stale-result fail-closed behavior and reusable store conformance;
+  this does not add automatic retries, streaming result reuse or transport
+  selectors.
+
 - Add the official GHCR executable reference runtime at
   `ghcr.io/blandskron/agnara`, with non-root execution, container smoke tests,
   multi-architecture release publication, SBOM and provenance attestations.

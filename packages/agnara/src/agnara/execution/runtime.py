@@ -8,7 +8,7 @@ import inspect
 import time
 from collections.abc import Callable
 from dataclasses import replace
-from typing import Any
+from typing import Any, NoReturn
 from uuid import uuid4
 
 from agnara.capability.identity import CapabilityId
@@ -26,8 +26,10 @@ from agnara.execution.idempotency import (
     IdempotencyConflictError,
     IdempotencyInProgress,
     IdempotencyInProgressError,
+    IdempotencyReservation,
     IdempotencyResultCodec,
     IdempotencyStorageError,
+    IdempotencyStore,
 )
 from agnara.execution.plan import ExecutionPlan
 from agnara.execution.result import CanonicalResult, Failure, Success
@@ -104,6 +106,57 @@ async def _invoke(
             f"capability {plan.definition.id} is declared streaming; use open_stream()"
         )
 
+    async def run() -> Any:
+        if context.idempotency is None:
+            return await _observe_invocation(
+                plan,
+                context,
+                lambda: _within_deadline(
+                    context,
+                    lambda: _execute_with_idempotency(plan, context, input_materializer),
+                ),
+            )
+
+        # A claim assigns the logical execution identity.  Prepare this
+        # boundary before emitting telemetry so start and terminal events pair
+        # on the same identity, while the start event still precedes dependency
+        # construction and handler work.
+        try:
+            if context.deadline is None:
+                operation = await _prepare_idempotent_execution(plan, context, input_materializer)
+            else:
+                async with asyncio.timeout_at(context.deadline):
+                    operation = await _prepare_idempotent_execution(
+                        plan, context, input_materializer
+                    )
+        except Exception as error:
+            # A rejected preflight or unavailable claim has no claimed logical
+            # identity, but it is still an invocation lifecycle with the
+            # context's provisional runtime-generated identity.
+            operation = _raise_idempotency_error(error)
+        return await _observe_invocation(
+            plan,
+            context,
+            lambda: _within_deadline(context, operation),
+        )
+
+    return await run()
+
+
+async def _within_deadline(context: ExecutionContext, operation: Callable[[], Any]) -> Any:
+    """Run one observed operation inside its existing absolute deadline."""
+    if context.deadline is None:
+        return await operation()
+    async with asyncio.timeout_at(context.deadline):
+        return await operation()
+
+
+async def _observe_invocation(
+    plan: ExecutionPlan,
+    context: ExecutionContext,
+    operation: Callable[[], Any],
+) -> Any:
+    """Emit the lifecycle pair around work whose logical identity is settled."""
     # Building a lifecycle event pair costs roughly two microseconds, and an
     # application that registered no hook can observe none of it. The work is
     # therefore guarded rather than unconditional; measured by
@@ -128,10 +181,7 @@ async def _invoke(
 
     outcome = "success"
     try:
-        if context.deadline is None:
-            return await _execute_with_idempotency(plan, context, input_materializer)
-        async with asyncio.timeout_at(context.deadline):
-            return await _execute_with_idempotency(plan, context, input_materializer)
+        return await operation()
     except asyncio.CancelledError:
         outcome = "cancellation"
         raise
@@ -195,12 +245,28 @@ async def _execute_with_idempotency(
     context: ExecutionContext,
     input_materializer: Callable[[TypeSchema, object], object] | None,
 ) -> Any:
-    """Run the shared preflight and an optional atomic idempotency boundary."""
+    """Run the ordinary shared preflight without an idempotency option."""
+    await enforce_policies(plan, context)
+    arguments = bind_inputs(plan, context, input_materializer)
+    return await _execute(plan, context, arguments)
+
+
+async def _prepare_idempotent_execution(
+    plan: ExecutionPlan,
+    context: ExecutionContext,
+    input_materializer: Callable[[TypeSchema, object], object] | None,
+) -> Callable[[], Any]:
+    """Preflight and claim before telemetry observes the logical identity.
+
+    Policy and input checks intentionally remain before the claim.  The
+    returned operation starts after a claimed or completed identity has been
+    adopted and before dependency resolution, so one telemetry lifecycle pair
+    cannot contain two execution identities.
+    """
     await enforce_policies(plan, context)
     arguments = bind_inputs(plan, context, input_materializer)
     configured = context.idempotency
-    if configured is None:
-        return await _execute(plan, context, arguments)
+    assert configured is not None
 
     if plan.streaming:
         raise InvocationError("idempotency result reuse is unavailable for streaming capabilities")
@@ -216,24 +282,53 @@ async def _execute_with_idempotency(
 
     claim = await configured.store.claim(configured.scope, lease_ttl=configured.lease_ttl)
     if isinstance(claim, IdempotencyConflict):
-        raise IdempotencyConflictError()
+        return _raise_idempotency_error(IdempotencyConflictError())
     if isinstance(claim, IdempotencyInProgress):
-        raise IdempotencyInProgressError()
+        return _raise_idempotency_error(IdempotencyInProgressError())
     if isinstance(claim, IdempotencyCompleted):
-        return _reuse_completed(context, configured.codec, claim)
+        context._adopt_idempotency_execution_id(claim.execution_id)
+        return lambda: _reuse_completed_async(context, configured.codec, claim)
     if not isinstance(claim, IdempotencyClaimed):
         raise IdempotencyStorageError("idempotency store returned an invalid claim result")
 
     context._adopt_idempotency_execution_id(claim.reservation.execution_id)
+    return lambda: _execute_claimed_idempotency(
+        plan,
+        context,
+        arguments,
+        configured.codec,
+        configured.store,
+        claim.reservation,
+        configured.result_ttl,
+    )
+
+
+def _raise_idempotency_error(error: Exception) -> Callable[[], Any]:
+    async def raise_error() -> NoReturn:
+        raise error
+
+    return raise_error
+
+
+async def _execute_claimed_idempotency(
+    plan: ExecutionPlan,
+    context: ExecutionContext,
+    arguments: dict[str, Any],
+    codec: IdempotencyResultCodec,
+    store: IdempotencyStore,
+    reservation: IdempotencyReservation,
+    result_ttl: float,
+) -> Any:
+    """Execute, abandon failures, and publish one successful claimed result."""
     try:
         value = await _execute(plan, context, arguments)
     except asyncio.CancelledError:
         with contextlib.suppress(Exception):
-            await configured.store.abandon(claim.reservation)
+            await store.abandon(reservation)
         raise
     except Exception:
         try:
-            abandoned = await configured.store.abandon(claim.reservation)
+            abandoned = await store.abandon(reservation)
         except Exception as error:
             raise IdempotencyStorageError(
                 "idempotency reservation could not be abandoned"
@@ -246,7 +341,7 @@ async def _execute_with_idempotency(
 
     if isinstance(value, Failure):
         try:
-            abandoned = await configured.store.abandon(claim.reservation)
+            abandoned = await store.abandon(reservation)
         except Exception as error:
             raise IdempotencyStorageError(
                 "idempotency reservation could not be abandoned"
@@ -256,13 +351,13 @@ async def _execute_with_idempotency(
         return value
 
     try:
-        encoded = configured.codec.encode(value)
+        encoded = codec.encode(value)
         if not isinstance(encoded, bytes):
             raise TypeError("idempotency codec encode() must return bytes")
-        completed = await configured.store.complete(
-            claim.reservation,
+        completed = await store.complete(
+            reservation,
             encoded,
-            result_ttl=configured.result_ttl,
+            result_ttl=result_ttl,
         )
     except Exception as error:
         raise IdempotencyStorageError("idempotency result could not be stored") from error
@@ -283,6 +378,15 @@ def _reuse_completed(
     except Exception as error:
         raise IdempotencyStorageError("idempotency result could not be decoded") from error
     return value
+
+
+async def _reuse_completed_async(
+    context: ExecutionContext,
+    codec: IdempotencyResultCodec,
+    completed: IdempotencyCompleted,
+) -> object:
+    """Adapt a completed value to the asynchronous invocation operation."""
+    return _reuse_completed(context, codec, completed)
 
 
 async def _execute(

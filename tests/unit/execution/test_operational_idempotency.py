@@ -22,7 +22,10 @@ from agnara.execution import (
     IdempotencyStorageError,
     InMemoryIdempotencyStore,
     Invocation,
+    InvocationStartEvent,
+    InvocationTerminalEvent,
     Success,
+    TelemetryHook,
     invoke_result,
 )
 from agnara.policy import Principal
@@ -40,7 +43,10 @@ CAPTURE = CapabilityId.parse("payments.capture")
 
 
 def plan_for(
-    handler: Callable[..., Any], *, idempotency: Idempotency = Idempotency.YES
+    handler: Callable[..., Any],
+    *,
+    idempotency: Idempotency = Idempotency.YES,
+    hooks: tuple[TelemetryHook, ...] = (),
 ) -> ExecutionPlan:
     registry = DIRegistry()
     definition = CapabilityDefinition.declare(
@@ -48,7 +54,7 @@ def plan_for(
         handler=handler,
         idempotency=idempotency,
     )
-    return ExecutionPlan.compile(definition, registry)
+    return ExecutionPlan.compile(definition, registry, hooks=hooks)
 
 
 def context_for(
@@ -60,6 +66,7 @@ def context_for(
     principal: Principal | None = None,
     scope_capability: CapabilityId = CAPTURE,
     scope_principal: str | None = None,
+    codec: JsonCodec | None = None,
 ) -> ExecutionContext:
     resolved_principal = principal or Principal("customer-1")
     scope = IdempotencyScope(
@@ -72,7 +79,9 @@ def context_for(
         Invocation(plan.definition.id, {}, {}),
         DIContainer(DIRegistry()),
         principal=resolved_principal,
-        idempotency=IdempotencyInvocation(scope, store, JsonCodec(), 30, 60),
+        idempotency=IdempotencyInvocation(
+            scope, store, JsonCodec() if codec is None else codec, 30, 60
+        ),
     )
 
 
@@ -129,6 +138,40 @@ def test_simultaneous_duplicate_observes_in_progress_and_never_runs_handler_twic
             FailureCode.CONFLICT, "idempotency request is already in progress"
         )
         assert first == Success("captured")
+        assert effects == 1
+
+    asyncio.run(run())
+
+
+def test_many_simultaneous_duplicates_never_run_effects_twice_and_reuse_after_completion() -> None:
+    async def run() -> None:
+        started = asyncio.Event()
+        release = asyncio.Event()
+        effects = 0
+
+        async def capture() -> str:
+            nonlocal effects
+            effects += 1
+            started.set()
+            await release.wait()
+            return "captured"
+
+        plan = plan_for(capture)
+        store = InMemoryIdempotencyStore()
+        first_task = asyncio.create_task(invoke_result(plan, context_for(plan, store)))
+        await started.wait()
+        duplicates = await asyncio.gather(
+            *(invoke_result(plan, context_for(plan, store)) for _ in range(32))
+        )
+        assert (
+            duplicates
+            == [Failure(FailureCode.CONFLICT, "idempotency request is already in progress")] * 32
+        )
+        assert effects == 1
+
+        release.set()
+        assert await first_task == Success("captured")
+        assert await invoke_result(plan, context_for(plan, store)) == Success("captured")
         assert effects == 1
 
     asyncio.run(run())
@@ -218,6 +261,121 @@ def test_completed_result_storage_failure_fails_closed_and_keeps_the_lease() -> 
             FailureCode.CONFLICT, "idempotency request is already in progress"
         )
         assert effects == 1
+
+    asyncio.run(run())
+
+
+def test_abandon_storage_failure_fails_closed_after_handler_failure() -> None:
+    class AbandonFailsStore(InMemoryIdempotencyStore):
+        async def abandon(self, reservation: IdempotencyReservation) -> bool:
+            del reservation
+            raise IdempotencyStorageError("unavailable")
+
+    async def run() -> None:
+        effects = 0
+
+        def capture() -> str:
+            nonlocal effects
+            effects += 1
+            raise RuntimeError("downstream failed")
+
+        plan = plan_for(capture)
+        store = AbandonFailsStore()
+
+        assert await invoke_result(plan, context_for(plan, store)) == Failure(
+            FailureCode.UNAVAILABLE, "idempotency storage is unavailable"
+        )
+        assert await invoke_result(plan, context_for(plan, store)) == Failure(
+            FailureCode.CONFLICT, "idempotency request is already in progress"
+        )
+        assert effects == 1
+
+    asyncio.run(run())
+
+
+def test_cancellation_keeps_its_control_flow_when_abandoning_the_lease_fails() -> None:
+    class AbandonFailsStore(InMemoryIdempotencyStore):
+        async def abandon(self, reservation: IdempotencyReservation) -> bool:
+            del reservation
+            raise IdempotencyStorageError("unavailable")
+
+    async def run() -> None:
+        started = asyncio.Event()
+
+        async def capture() -> str:
+            started.set()
+            await asyncio.Event().wait()
+            return "unreachable"
+
+        plan = plan_for(capture)
+        store = AbandonFailsStore()
+        task = asyncio.create_task(invoke_result(plan, context_for(plan, store)))
+        await started.wait()
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+        assert await invoke_result(plan, context_for(plan, store)) == Failure(
+            FailureCode.CONFLICT, "idempotency request is already in progress"
+        )
+
+    asyncio.run(run())
+
+
+def test_stale_or_incompatible_completed_data_fails_closed_without_reexecuting() -> None:
+    class OldCodec(JsonCodec):
+        def decode(self, payload: bytes, /) -> object:
+            del payload
+            raise ValueError("obsolete schema payload contains secret")
+
+    async def run() -> None:
+        effects = 0
+
+        def capture() -> str:
+            nonlocal effects
+            effects += 1
+            return "captured"
+
+        plan = plan_for(capture)
+        store = InMemoryIdempotencyStore()
+        assert await invoke_result(plan, context_for(plan, store)) == Success("captured")
+        stale = await invoke_result(plan, context_for(plan, store, codec=OldCodec()))
+
+        assert stale == Failure(FailureCode.UNAVAILABLE, "idempotency storage is unavailable")
+        assert effects == 1
+
+    asyncio.run(run())
+
+
+def test_idempotent_telemetry_events_pair_on_the_claimed_logical_execution_identity() -> None:
+    class Recorder(TelemetryHook):
+        def __init__(self) -> None:
+            self.starts: list[InvocationStartEvent] = []
+            self.terminals: list[InvocationTerminalEvent] = []
+
+        def on_invocation_start(self, event: InvocationStartEvent) -> None:
+            self.starts.append(event)
+
+        def on_invocation_terminal(self, event: InvocationTerminalEvent) -> None:
+            self.terminals.append(event)
+
+    async def run() -> None:
+        recorder = Recorder()
+        plan = plan_for(lambda: "captured", hooks=(recorder,))
+        store = InMemoryIdempotencyStore()
+        first_context = context_for(plan, store)
+        duplicate_context = context_for(plan, store)
+
+        assert await invoke_result(plan, first_context) == Success("captured")
+        assert await invoke_result(plan, duplicate_context) == Success("captured")
+
+        execution_id = first_context.execution_id
+        assert duplicate_context.execution_id == execution_id
+        assert [event.execution_id for event in recorder.starts] == [execution_id, execution_id]
+        assert [event.execution_id for event in recorder.terminals] == [execution_id, execution_id]
+        assert [event.invocation_id for event in recorder.starts] == [
+            event.invocation_id for event in recorder.terminals
+        ]
 
     asyncio.run(run())
 
