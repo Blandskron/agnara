@@ -186,7 +186,7 @@ authorization to claim support.
 
 | Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
-| Starlette | yes | yes | yes | CRITICAL | yes | The clean-room ASGI proof. Mounting, ASGI composition, request context, response mapping, middleware, lifespan and error boundaries, without FastAPI-specific behaviour confusing the result. |
+| Starlette | yes | yes | yes | CRITICAL | local fixture | Starlette 1.6.0 is the version-pinned clean-room fixture in `tests/integration/starlette/`: native and direct-runtime routes share one host lifespan; it exercises principal fail-closed mapping, composition, idempotency reuse, canonical failure/stream refusal and disconnect cancellation. This is conformance evidence, not a framework support claim. |
 | FastAPI | yes | yes | yes | CRITICAL | yes | The highest-value adoption path. Progressive adoption inside an existing FastAPI application is the priority scenario, not a bonus. |
 | Django | partial | yes | yes | CRITICAL | yes | The host direction covers Django *infrastructure* — ORM, auth, templates — not Django's routing or process model. Agnara never replaces the ORM, Admin, Auth or Templates; it cooperates with them. |
 | Django REST Framework | no | yes | yes | HIGH | no | Embedding into existing DRF APIs. Hosting DRF is meaningless: DRF is a view layer inside Django. |
@@ -552,6 +552,16 @@ cannot become a support claim.
 Starlette begins the host scenarios deliberately. It is the smallest ASGI host
 that can exercise the contract, so a defect it finds is a contract defect rather
 than FastAPI's interpretation of it.
+
+The first version-pinned scenario is `tests/integration/starlette/`. It uses
+only the public provisional runtime values chosen by ADR 0094 and Starlette
+1.6.0 as an optional fixture dependency. It proves a native route and an
+embedded Agnara route can share one external-host lifespan without a global or
+a second container. It deliberately refuses a streaming capability at the
+complete-result bridge; HTTP SSE remains the separate Agnara HTTP projection.
+The fixture's clean-room process installs built wheels outside the workspace,
+first imports `agnara` without Starlette present, then installs Starlette and
+executes the host bridge. One fixture is not a support or release decision.
 
 ## 14. Historical reference strategy
 

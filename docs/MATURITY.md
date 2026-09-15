@@ -156,8 +156,8 @@ not.
 | Testing utilities | `PLANNED` | No first-party harness; the repository tests the framework, not applications built on it. |
 | Plugin system | `RESEARCH` | No discovery, loading or trust model. |
 | Persistence, cache, queue and scheduler integrations | `RESEARCH` | No port, no adapter, no dependency. `docs/INTEROPERABILITY.md` records the intent; I20 owns the work. |
-| Framework embedding contract | `DESIGNED` | ADR 0094 accepts an explicit async complete-result host boundary over existing provisional runtime values: lifecycle/resource ownership, principal/context/error/telemetry bridges and one-event-loop reuse rules are defined. It adds no framework dependency or support claim; version-pinned host fixtures remain required. |
-| Side-by-side composition with an external framework | `RESEARCH` | ADR 0094 defines the ownership boundary, but no external framework fixture has exercised it. HTTP has a public composition surface (ADR 0071); concrete interoperability evidence remains `1.0.0` work. |
+| Framework embedding contract | `DESIGNED` | ADR 0094 accepts an explicit async complete-result host boundary over existing provisional runtime values: lifecycle/resource ownership, principal/context/error/telemetry bridges and one-event-loop reuse rules are defined. The Starlette 1.6.0 fixture exercises those provisional values without adding a framework dependency or support claim. |
+| Side-by-side composition with an external framework | `EXPERIMENTAL` | `tests/integration/starlette/` exercises native and direct-runtime routes in one Starlette 1.6.0 lifespan, including fail-closed principal mapping, composition, idempotency reuse, canonical failures, stream refusal and disconnect cancellation. It is one optional fixture, not integration support or release-gate closure. |
 | Second shipped schema adapter | `RESEARCH` | Pydantic and msgspec remain `experiments/`; neither is packaged or supported. |
 | Typed client generation | `RESEARCH` | |
 | Native acceleration | `DEFERRED` | ADR-level position: only after measured bottlenecks. |
