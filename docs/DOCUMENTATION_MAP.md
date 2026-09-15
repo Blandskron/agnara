@@ -60,7 +60,7 @@ Each level may cite the level above it. None should restate it.
 | Public API inventory and stability policy | `docs/PUBLIC_API.md` + `docs/public-api.json` | cite |
 | External standards studied | `docs/REFERENCE_RESEARCH.md` | cite |
 | Contribution and git process | `CONTRIBUTING.md`, `GIT_WORKFLOW.md` | cite |
-| Agent operating rules | `AGENTS.md` | cite |
+| Agent authorship and human review | ADR 0092, `AGENTS.md` | cite; do not rewrite historical ADRs/commits |
 
 ## Rules
 

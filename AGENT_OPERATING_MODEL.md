@@ -29,9 +29,10 @@ The operating model defines logical roles even when one runtime agent temporaril
 ### Review Agent
 
 - starts from Issue + architecture + diff;
-- reviews independently;
-- requests changes or approves;
-- does not rewrite history to hide review findings.
+- may provide preliminary evidence or comments;
+- does not rewrite history to hide review findings;
+- does not replace Blandskron's required formal GitHub review of an
+  agent-authored PR.
 
 ### Release Agent
 
@@ -64,11 +65,10 @@ OBSERVE
 → VERIFY ATTRIBUTION
 → PUSH
 → PR
-→ REVIEW
-→ FIX IF NEEDED
-→ MERGE
+→ REQUEST BLANDSKRON REVIEW
+→ WAIT / FIX IF REQUESTED
+→ MAINTAINER MERGE
 → RECONCILE
-→ NEXT
 ```
 
 The agent repeats this loop rather than waiting for a human to provide every next command.
@@ -117,25 +117,28 @@ participated, their roles and their material contributions. Record that
 information in the PR (or Issue when no PR is possible), even when an agent
 cannot receive Git-native credit.
 
-In a human-directed session, the human remains the primary commit author. An
-agent may receive a `Co-authored-by` trailer only for material authorship and
-only when its exact identity is authorized and GitHub-verifiable. A model name,
-product name or plausible provider email is not verification. An agent must
-not attribute other agents without evidence of their participation.
+When an agent materially implements a change, it is the primary commit author.
+It must use its exact registered identity from
+`.github/ai-agent-identities.toml`; a model name, product name or plausible
+provider email is not verification. The agent must not attribute other agents
+without evidence of their participation.
 
 Authorized identities live in `.github/ai-agent-identities.toml`. Each agent
 is responsible for selecting its own matching entry when it materially
 authors a change. Registry membership never causes automatic attribution and
 does not authorize one agent to claim another agent's work.
 
-A fully autonomous bot with its own verified and authorized GitHub identity
-may be the primary author. It must not impersonate a human or duplicate itself
-as both primary author and co-author.
+A verified agent must not impersonate a human or duplicate itself as a
+co-author. Blandskron is not author or co-author of agent-written commits by
+default: his normal contribution is repository ownership, maintenance,
+architecture/governance decisions and formal GitHub code review. Separate
+commits are preferred when different agents materially author different work.
 
-Review is credited through the GitHub review/comment trail. A Review Agent is
-not normally a co-author unless it also made a material implementation
-contribution, in which case that contribution and the identity evidence are
-documented separately.
+Review is credited through GitHub's formal review trail. A conversation
+comment or implementation self-review does not replace `Approve`, `Request
+changes`, or `Comment` in the review flow. An agent opens or prepares the PR,
+requests review from Blandskron and leaves it unmerged; agents never approve
+or merge their own PRs.
 
 If no verified agent identity exists, preserve transparency by documenting:
 
@@ -143,7 +146,7 @@ If no verified agent identity exists, preserve transparency by documenting:
 Agent
 Role
 Contribution
-Identity verified for GitHub attribution: no
+Identity verified for commit authorship: no
 ```
 
 and omit `Co-authored-by`.
@@ -197,17 +200,13 @@ They must never silently lower quality, security or branch rules to make automat
 
 ## Single-agent vs multi-agent
 
-### Single identity
+### Agent implementation and human review
 
-Use PRs and objective CI gates, plus mandatory self-review.
-
-Do not configure impossible self-approval requirements.
-
-### Multiple independent identities
-
-Use independent PR review and require at least one reviewer where repository governance permits.
-
-The implementation and reviewer roles should be separate for high-risk areas even if ordinary changes can operate with lighter review.
+Use a PR, objective CI gates and a mandatory self-review, then request formal
+review from Blandskron. Self-review is supplementary, never approval. The
+versioned ruleset definitions require one approval, dismiss it after a push and
+require approval of the last push; GitHub cannot force a named reviewer, so the
+PR request and formal review record Blandskron's decision.
 
 ## High-risk changes
 

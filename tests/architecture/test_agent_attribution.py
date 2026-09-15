@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import tomllib
 from typing import Any
@@ -10,6 +11,12 @@ from tests.architecture.boundaries import WORKSPACE_ROOT
 
 REGISTRY = WORKSPACE_ROOT / ".github" / "ai-agent-identities.toml"
 POLICY = WORKSPACE_ROOT / "AGENTS.md"
+WORKFLOW = WORKSPACE_ROOT / "GIT_WORKFLOW.md"
+TEMPLATE = WORKSPACE_ROOT / ".github" / "PULL_REQUEST_TEMPLATE.md"
+RULESETS = (
+    WORKSPACE_ROOT / ".github" / "rulesets" / "protect-develop.json",
+    WORKSPACE_ROOT / ".github" / "rulesets" / "protect-main.json",
+)
 REQUIRED_FIELDS = {
     "id",
     "display_name",
@@ -75,10 +82,33 @@ def test_vendor_addresses_are_all_registered() -> None:
     assert registered >= VENDOR_ADDRESSES
 
 
-def test_exact_trailers_are_discoverable_by_future_agents() -> None:
+def test_exact_primary_author_identities_are_discoverable_by_future_agents() -> None:
     policy = POLICY.read_text(encoding="utf-8")
-    for trailer in (
-        "Co-authored-by: Codex <codex@openai.com>",
-        "Co-authored-by: Claude <noreply@anthropic.com>",
+    for identity in (
+        "Codex <codex@openai.com>",
+        "Claude <noreply@anthropic.com>",
+        "gemini-cli <218195315+gemini-cli@users.noreply.github.com>",
     ):
-        assert trailer in policy
+        assert identity in policy
+    assert "Blandskron como `Author`" in policy
+    assert "Co-authored-by` para trabajo escrito" in policy
+
+
+def test_active_workflow_requires_human_review_and_no_agent_merge() -> None:
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+    template = TEMPLATE.read_text(encoding="utf-8")
+    assert "ADR 0092 governs current work" in workflow
+    assert "leaves it unmerged." in workflow
+    assert "Only Blandskron merges an agent-authored PR" in workflow
+    assert "Reviewer requested: Blandskron" in template
+    assert "Formal GitHub review completed by Blandskron" in template
+
+
+def test_versioned_branch_rulesets_require_fresh_human_approval() -> None:
+    for path in RULESETS:
+        ruleset = json.loads(path.read_text(encoding="utf-8"))
+        pull_request = next(rule for rule in ruleset["rules"] if rule["type"] == "pull_request")
+        parameters = pull_request["parameters"]
+        assert parameters["required_approving_review_count"] == 1
+        assert parameters["dismiss_stale_reviews_on_push"] is True
+        assert parameters["require_last_push_approval"] is True

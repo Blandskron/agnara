@@ -1,8 +1,8 @@
 # Public Git attribution identities authorized for this repository.
 #
-# An entry proves only that an identity may receive Git-native credit. It does
-# not prove participation in a particular change. AGENTS.md and ADR 0019 still
-# require material authorship before an agent adds its trailer.
+# An entry proves only that an identity may author agent-written commits. It
+# does not prove participation in a particular change. AGENTS.md and ADR 0092
+# require material authorship before an agent uses its identity.
 
 schema_version = 1
 

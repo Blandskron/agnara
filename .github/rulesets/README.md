@@ -1,8 +1,10 @@
 # Branch and tag rulesets
 
-The JSON files here are the rulesets applied to `main`, `develop` and the
-`v*` release tags. They are version controlled so the enforced configuration
-is reviewable in the repository rather than only visible in GitHub settings.
+The JSON files here are the reviewed source definitions for `main`, `develop`
+and `v*` release tags. They are version controlled so the intended enforced
+configuration is reviewable in the repository rather than only visible in
+GitHub settings. ADR 0092 found no active GitHub rulesets; Blandskron imports
+or updates these definitions after approving the governance PR.
 
 `protect-release-tags.json` makes every `v*` tag immutable: it blocks update,
 force-update and deletion. It deliberately does **not** restrict creation. The
@@ -39,24 +41,25 @@ Both branches, identically:
 
 | Rule | Effect |
 |---|---|
-| `pull_request` | Direct pushes rejected; every change arrives through a PR |
+| `pull_request` | Direct pushes rejected; every change arrives through a PR with one approval |
 | `required_status_checks` | The aggregate `CI` check must pass before merge |
 | `required_review_thread_resolution` | Open review conversations block merge |
 | `non_fast_forward` | Force pushes rejected |
 | `deletion` | The branch cannot be deleted |
 
-## Why zero required approvals
+## Human approval required
 
-`required_approving_review_count` is deliberately `0`.
+`required_approving_review_count` is `1`, stale reviews are dismissed after a
+push, and the most recent push requires approval. ADR 0092 requires
+agent-authored PRs to request that formal review from `Blandskron`; GitHub
+rulesets cannot select an individual reviewer, so the request and review trail
+make that accountability explicit. A PR author cannot satisfy the approval.
 
-GitHub does not permit a pull request author to approve their own pull
-request. While Agnara has a single agent identity, any non-zero value would
-make the repository impossible to merge into, which `GIT_WORKFLOW.md`
-forbids and ADR 0016 addresses directly: the repository must represent the
-real strength of its review process rather than fabricate one.
-
-Raise this to `1` when a second independent identity exists — see `BACKLOG.md`
-E0B.9. That is the single change needed to move from Mode B to Mode A.
+These JSON files are the reviewed source definitions. The current GitHub
+repository returned no active rulesets during the ADR 0092 audit, so a
+maintainer must import or update these definitions through Settings or the API
+after approving the governance PR. This repository change does not silently
+mutate GitHub settings.
 
 ## Why no bypass actors
 
