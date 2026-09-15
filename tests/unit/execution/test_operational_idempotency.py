@@ -24,7 +24,10 @@ from agnara.execution import (
     IdempotencyStorageError,
     InMemoryIdempotencyStore,
     Invocation,
+    InvocationStartEvent,
+    InvocationTerminalEvent,
     Success,
+    TelemetryHook,
     invoke_result,
 )
 from agnara.policy import Principal
@@ -42,7 +45,10 @@ CAPTURE = CapabilityId.parse("payments.capture")
 
 
 def plan_for(
-    handler: Callable[..., Any], *, idempotency: Idempotency = Idempotency.YES
+    handler: Callable[..., Any],
+    *,
+    idempotency: Idempotency = Idempotency.YES,
+    hooks: tuple[TelemetryHook, ...] = (),
 ) -> ExecutionPlan:
     registry = DIRegistry()
     definition = CapabilityDefinition.declare(
@@ -50,7 +56,7 @@ def plan_for(
         handler=handler,
         idempotency=idempotency,
     )
-    return ExecutionPlan.compile(definition, registry)
+    return ExecutionPlan.compile(definition, registry, hooks=hooks)
 
 
 def context_for(
@@ -132,6 +138,40 @@ def test_simultaneous_duplicate_observes_in_progress_and_never_runs_handler_twic
             FailureCode.CONFLICT, "idempotency request is already in progress"
         )
         assert first == Success("captured")
+        assert effects == 1
+
+    asyncio.run(run())
+
+
+def test_many_simultaneous_duplicates_never_run_effects_twice_and_reuse_after_completion() -> None:
+    async def run() -> None:
+        started = asyncio.Event()
+        release = asyncio.Event()
+        effects = 0
+
+        async def capture() -> str:
+            nonlocal effects
+            effects += 1
+            started.set()
+            await release.wait()
+            return "captured"
+
+        plan = plan_for(capture)
+        store = InMemoryIdempotencyStore()
+        first_task = asyncio.create_task(invoke_result(plan, context_for(plan, store)))
+        await started.wait()
+        duplicates = await asyncio.gather(
+            *(invoke_result(plan, context_for(plan, store)) for _ in range(32))
+        )
+        assert (
+            duplicates
+            == [Failure(FailureCode.CONFLICT, "idempotency request is already in progress")] * 32
+        )
+        assert effects == 1
+
+        release.set()
+        assert await first_task == Success("captured")
+        assert await invoke_result(plan, context_for(plan, store)) == Success("captured")
         assert effects == 1
 
     asyncio.run(run())

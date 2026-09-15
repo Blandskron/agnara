@@ -75,27 +75,31 @@ Explain:
 - [ ] None
 - [ ] Breaking change documented with migration path
 
-## Agent review
+## Authorship
 
-- [ ] Implementation self-review completed
-- [ ] Independent agent review requested/complete when available
+<!-- For agent-written work, use the exact identity in ai-agent-identities.toml. -->
+
+Primary author:
+
+Implementation authored by:
+
+Commit authorship verified (`git log -1 --format=fuller`): yes/no
+
+Human maintainer: Blandskron
+
+Human implementation contribution: none / describe exact material work
+
+Confirmation: Blandskron is absent from commit author/co-author metadata unless
+he materially implemented part of the commit and explicitly requested credit.
+
+## Formal maintainer review
+
+Reviewer requested: Blandskron
+
+- [ ] Implementation self-review completed (supplementary only)
+- [ ] Formal GitHub review completed by Blandskron (`Approve`, `Request changes`, or `Comment`)
 - [ ] All review conversations resolved
-
-## AI / Agent contribution
-
-<!-- Optional for human-only PRs: write "None" or remove this section. -->
-
-Agent(s):
-
-Role(s):
-
-Contribution:
-
-Identity verified for GitHub attribution: yes/no
-
-Co-authored-by trailers included:
-
-Non-verifiable agents documented:
+- [ ] PR left unmerged for maintainer merge authority
 
 ## Merge checklist
 
@@ -103,5 +107,5 @@ Non-verifiable agents documented:
 - [ ] Required CI green
 - [ ] No known unresolved blocker
 - [ ] Backlog synchronized
-- [ ] Commit/squash attribution verified
+- [ ] Commit/merge attribution verified and preserves the implementation author
 - [ ] Issue closed after merge (not automatic on `develop`)
