@@ -230,7 +230,7 @@ def test_clean_room_installs_wheels_without_workspace_source_discovery(tmp_path:
     )
     assert installed.returncode == 0, installed.stderr
     starlette = subprocess.run(
-        ["uv", "pip", "install", "--python", str(python), "--offline", "starlette==1.6.0"],
+        ["uv", "pip", "install", "--python", str(python), "starlette==1.6.0"],
         check=False,
         text=True,
         capture_output=True,
