@@ -33,7 +33,7 @@ def test_harness_catches_a_broken_host_fixture() -> None:
     host = BrokenHostFixture("broken")
     harness = HostHarness()
 
-    with pytest.raises(HostContractError, match="startup|shutdown|cleanup"):
+    with pytest.raises(HostContractError, match=r"startup|shutdown|cleanup"):
         harness.run_case(
             host,
             "sync",

@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 T = TypeVar("T")
 
@@ -78,24 +78,23 @@ class BrokenHostFixture(HostFixture):
 class HostHarness:
     """Framework-neutral runner for same-logic host conformance tests."""
 
-    def _execute(self, action: Callable[[HostFixture], T | Awaitable[T]], host: HostFixture) -> T:
-        result = action(host)
-        if asyncio.iscoroutine(result):
-            return asyncio.run(result)
-        if isinstance(result, Awaitable):
-            return asyncio.run(result)
-        return result
+    def _execute(self, value: T | Awaitable[T]) -> T:
+        if asyncio.iscoroutine(value):
+            return cast(T, asyncio.run(cast(Any, value)))
+        if isinstance(value, Awaitable):
+            return cast(T, asyncio.run(cast(Any, value)))
+        return cast(T, value)
 
     def run_case(
         self,
         host: HostFixture,
         mode: str,
-        action: Callable[[HostFixture], T | Awaitable[T]],
+        action: Callable[[HostFixture], T],
         assertion: Callable[[T], bool],
     ) -> T:
         host.start()
         try:
-            value = self._execute(action, host)
+            value = self._execute(action(host))
             if not assertion(value):
                 raise HostContractError(f"{host.name}: assertion failed for {mode}")
             return value
@@ -106,14 +105,14 @@ class HostHarness:
         self,
         native: HostFixture,
         agnara: HostFixture,
-        action: Callable[[HostFixture], T | Awaitable[T]],
+        action: Callable[[HostFixture], T],
         assertion: Callable[[T], bool],
     ) -> dict[str, T]:
         native.start()
         agnara.start()
         try:
-            native_value = self._execute(action, native)
-            agnara_value = self._execute(action, agnara)
+            native_value = self._execute(action(native))
+            agnara_value = self._execute(action(agnara))
             if not assertion(native_value) or not assertion(agnara_value):
                 raise HostContractError("side-by-side host assertion failed")
             return {"native": native_value, "agnara": agnara_value}
