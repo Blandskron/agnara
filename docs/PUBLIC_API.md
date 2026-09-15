@@ -54,8 +54,10 @@ the same token.  It is deliberately distinct from caller `tracking_id` and
 telemetry `invocation_id`; a reused context retains its execution token while
 each handler attempt gets a fresh invocation token.  The runtime generates the
 token and rejects the reserved `Invocation.metadata["execution_id"]` channel
-before handler work; a caller-supplied idempotency key is not accepted until a
-future governed store can validate and scope it. The identity is absent from
+before handler work; a caller-supplied idempotency key is never accepted from
+invocation metadata. The explicit ADR 0091 invocation option is the only
+current direct boundary that can supply an already validated and scoped
+selector. The identity is absent from
 transport fields and frozen introspection. This is a provisional semantic
 extension, not an idempotency store, replay protocol, retry policy, or
 durable-execution promise.
@@ -77,8 +79,10 @@ an application explicitly supplies its validated scope, store, bounded TTLs
 and trusted successful-result codec through `ExecutionContext`. The runtime
 verifies its capability/principal binding, re-evaluates policy and confirmation,
 and never reads a selector from invocation metadata. Completed reuse, conflict,
-in-progress and storage-outage behavior is canonical; HTTP and MCP do not yet
-accept idempotency selectors.
+in-progress and storage-outage behavior is canonical. The TTL starts at the
+successful store transition and expires inclusively; stale or incompatible
+stored bytes fail closed through the codec rather than re-running effects.
+HTTP and MCP do not yet accept idempotency selectors.
 
 ## Governed surface
 

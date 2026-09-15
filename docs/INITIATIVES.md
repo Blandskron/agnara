@@ -28,7 +28,7 @@ release.
 | Initiative | Current decision boundary | Cannot close until | Legitimate work now / in parallel |
 | --- | --- | --- | --- |
 | I2 — Streaming | Kernel implemented by ADR 0084 and ADR 0086; HTTP SSE implemented by ADR 0085 with ASGI conformance evidence. | Nothing further is required for 1.0. | Defer WebSockets, MCP progress, A2A events and event-adapter projections until after 1.0. |
-| I3 — Execution identity and idempotency | ADRs 0087–0089 and 0091 define identity, storage and an explicit direct runtime boundary. | Race, TTL, failure-retention and independent-store conformance evidence. | Keep idempotency transport-neutral and separate from automatic retry; HTTP/MCP selector projections require their own accepted contracts. |
+| I3 — Execution identity and idempotency | ADRs 0087–0089 and 0091 define identity, storage and an explicit direct runtime boundary. | Streaming interaction decision and release review. | Keep idempotency transport-neutral and separate from automatic retry; HTTP/MCP selector projections require their own accepted contracts. |
 | I8 — Capability composition | RFC 0005 remains open; no nested invocation contract exists. | A policy-safe composition decision and propagated context/deadline/identity semantics. | Research and RFC work can proceed; runtime awaits the relevant I3 and I10 boundaries. |
 | I9 — Public API governance | All current exports are provisional and mechanically classified. | A maintainer-approved stable/deprecated classification with migration evidence. | Audit and prune the public surface in parallel with other initiatives. |
 | I10 — Security program | The retained threat model is historical; the 1.0 program is not closed. | Current threat-boundary analysis, supply-chain evidence and abuse/failure tests. | Threat-model and supply-chain design work can proceed in parallel; it constrains I3, I8 and I20 implementation. |
@@ -56,9 +56,10 @@ started.
 Runtime execution identity is implemented by ADR 0087: it remains distinct from
 tracking and telemetry invocation identifiers and has no persistence, automatic
 retry or durable-execution behavior. ADR 0091 makes explicitly configured,
-direct complete-result idempotency operational over ADR 0089's store; race,
-TTL/failure evidence and release review remain required. HTTP and MCP do not
-accept idempotency selectors.
+direct complete-result idempotency operational over ADR 0089's store;
+deterministic race, inclusive-TTL, failure and store-conformance evidence is
+complete. Streaming interaction and release review remain required. HTTP and
+MCP do not accept idempotency selectors.
 
 ### I8 — Capability composition
 

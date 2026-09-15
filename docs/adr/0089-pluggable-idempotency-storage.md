@@ -55,6 +55,20 @@ liveness boundary, not evidence that the previous handler stopped; a future
 runtime integration must choose lease lengths and any renewal policy relative
 to its owned execution deadline.
 
+The deduplication window begins when a successful `claim()` creates a
+reservation and a successful `complete()` publishes a result. An entry expires
+at its deadline (`expires_at <= clock`), not one tick afterwards. Every port
+operation discards expired entries before reading capacity or current state, so
+expired records make space but a stale reservation cannot complete or abandon a
+replacement. Stores use a monotonic, implementation-owned clock; conformance
+suites must control an equivalent clock rather than sleep.
+
+The port treats result bytes as opaque. A codec or store migration that cannot
+interpret retained data must fail the attempted reuse closed and must not
+execute the handler as a fallback. Result format/version migration, retention
+purging and any compatibility policy remain application/store ownership rather
+than a hidden core schema contract.
+
 ### D4 — The reference implementation is deliberately process-local
 
 `InMemoryIdempotencyStore` uses a lock and a monotonic process clock for

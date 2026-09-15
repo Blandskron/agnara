@@ -180,6 +180,26 @@ def test_capacity_failure_is_explicit_and_expired_entries_make_space() -> None:
     asyncio.run(run())
 
 
+def test_expired_entries_are_collected_before_capacity_is_checked_for_many_keys() -> None:
+    async def run() -> None:
+        clock = Clock()
+        store = InMemoryIdempotencyStore(max_entries=3, clock=clock)
+        for index in range(3):
+            claimed = await store.claim(scope(key=f"payment-{index}"), lease_ttl=5)
+            assert isinstance(claimed, IdempotencyClaimed)
+
+        clock.value = 4.999
+        with pytest.raises(IdempotencyStorageError, match="capacity"):
+            await store.claim(scope(key="payment-before-expiry"), lease_ttl=5)
+
+        clock.value = 5
+        for index in range(3):
+            replacement = await store.claim(scope(key=f"replacement-{index}"), lease_ttl=5)
+            assert isinstance(replacement, IdempotencyClaimed)
+
+    asyncio.run(run())
+
+
 def test_a_third_party_store_can_satisfy_the_port_without_runtime_internals() -> None:
     class ThirdPartyStore:
         async def claim(self, scope: IdempotencyScope, *, lease_ttl: float) -> IdempotencyConflict:
