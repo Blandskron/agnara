@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from collections.abc import Awaitable
+from collections.abc import AsyncIterator, Awaitable
 from typing import Any, cast
 
 import pytest
@@ -19,12 +19,19 @@ from mcp.server import ServerRequestContext
 from mcp_types import CallToolRequestParams, CallToolResult, TextContent
 
 from agnara import Agnara, Confirmation, DefinitionError
+from agnara.capability import CapabilityDefinition, CapabilityId, Idempotency
 from agnara.core.di import DIContainer, DIRegistry
+from agnara.errors import InvocationError
 from agnara.execution import (
     ExecutionContext,
     ExecutionPlan,
+    IdempotencyInvocation,
+    IdempotencyScope,
+    InMemoryIdempotencyStore,
+    Invocation,
     InvocationStartEvent,
     InvocationTerminalEvent,
+    open_stream,
 )
 from agnara.policy import Principal, ScopePolicy
 from agnara_http import Binding, BindingSource, Http
@@ -440,3 +447,105 @@ def test_authority_shaped_arguments_are_unknown_input_even_without_a_scope() -> 
     assert result.is_error is True
     assert json.loads(text(result))["code"] == "invalid_input"
     assert calls == []
+
+
+# ---------------------------------------------------------------------------
+# Idempotency is a safety instruction, so ignoring it must not be an option
+# ---------------------------------------------------------------------------
+
+
+class _Codec:
+    """The application-owned result codec ADR 0089 requires."""
+
+    def encode(self, value: object, /) -> bytes:
+        return json.dumps(value).encode("utf-8")
+
+    def decode(self, payload: bytes, /) -> object:
+        return json.loads(payload)
+
+
+def _streaming_plan(effects: list[str]) -> ExecutionPlan:
+    async def emit() -> AsyncIterator[int]:
+        effects.append("executed")
+        yield 1
+
+    definition = CapabilityDefinition(
+        id=CapabilityId("audit", "stream"),
+        handler=emit,
+        streaming=True,
+        idempotency=Idempotency.YES,
+    )
+    return ExecutionPlan.compile(definition, DIRegistry())
+
+
+def test_a_streaming_invocation_refuses_an_idempotency_selector() -> None:
+    """A safety control that is accepted and dropped is worse than one refused.
+
+    `_execute_with_idempotency` carries the refusal "idempotency result reuse is
+    unavailable for streaming capabilities", but its only caller is the
+    complete-result path, which rejects a streaming plan several frames earlier.
+    The guard could therefore never fire, and `open_stream` consulted
+    `context.idempotency` nowhere at all: the selector was accepted in silence,
+    the store was never asked, and the producer ran again on every attempt.
+
+    ADR 0089 keeps idempotency separate from streams, so refusing is the
+    behaviour. Silently discarding a caller's exactly-once instruction is not.
+    """
+    effects: list[str] = []
+    plan = _streaming_plan(effects)
+    principal = Principal("actor")
+    store = InMemoryIdempotencyStore()
+    scope = IdempotencyScope(plan.definition.id, principal.identity, "key", b"fingerprint")
+
+    context = ExecutionContext(
+        Invocation(plan.definition.id, {}, {}),
+        DIContainer(DIRegistry()),
+        principal=principal,
+        idempotency=IdempotencyInvocation(scope, store, _Codec(), 30, 60),
+    )
+
+    with pytest.raises(InvocationError, match="streaming"):
+        open_stream(plan, context)
+
+    assert effects == [], "the producer must not run when the selector is refused"
+
+
+def test_refusing_the_selector_happens_before_the_producer_can_start() -> None:
+    """Refusal belongs with the other `open_stream` guards, not mid-stream.
+
+    A refusal raised once iteration began would already have let effects run,
+    which is the outcome the selector was supposed to prevent.
+    """
+    effects: list[str] = []
+    plan = _streaming_plan(effects)
+    principal = Principal("actor")
+    scope = IdempotencyScope(plan.definition.id, principal.identity, "key", b"fingerprint")
+
+    def build() -> ExecutionContext:
+        return ExecutionContext(
+            Invocation(plan.definition.id, {}, {}),
+            DIContainer(DIRegistry()),
+            principal=principal,
+            idempotency=IdempotencyInvocation(scope, InMemoryIdempotencyStore(), _Codec(), 30, 60),
+        )
+
+    # `open_stream` itself raises: the caller never receives a stream object to
+    # enter, so there is no window in which the producer could be started.
+    with pytest.raises(InvocationError):
+        open_stream(plan, build())
+
+    # Without a selector the same capability still streams normally.
+    plain = ExecutionContext(
+        Invocation(plan.definition.id, {}, {}),
+        DIContainer(DIRegistry()),
+        principal=principal,
+    )
+
+    async def drain() -> list[int]:
+        units: list[int] = []
+        async with open_stream(plan, plain) as stream:
+            units = [unit async for unit in stream]
+        return units
+
+    assert run(drain()) == [1]
+    assert effects == ["executed"]
