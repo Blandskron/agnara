@@ -327,6 +327,13 @@ async def _prepare_idempotent_execution(
     assert configured is not None
 
     if plan.streaming:
+        # Defence in depth only. This helper is reached from `invoke`/
+        # `invoke_result`, which refuse a streaming plan several frames earlier,
+        # so this branch cannot fire today. It was once the *only* statement of
+        # this rule, which is exactly how the gap hid: `open_stream` consulted
+        # `context.idempotency` nowhere, so a streaming caller's selector was
+        # accepted and dropped in silence. The reachable refusal now lives in
+        # `open_stream`, next to the other entry guards.
         raise InvocationError("idempotency result reuse is unavailable for streaming capabilities")
     if plan.definition.idempotency is not Idempotency.YES:
         raise InvocationError(
