@@ -115,12 +115,14 @@ def test_only_edge_is_published_to_both_registries_with_attestations() -> None:
     # publish from `develop` failed that way. The owner is therefore lowercased
     # into a step output first, and this asserts the resulting property rather
     # than one spelling, so the next author cannot reintroduce the raw value.
+    # Matched whole rather than by prefix and suffix: a substring check on
+    # something URL-shaped is the pattern CodeQL flags as bypassable, and a
+    # full match says what is actually required anyway.
     tags = build["with"]["tags"].splitlines()
     assert len(tags) == 2
     ghcr_tag, dockerhub_tag = tags
     assert dockerhub_tag == "docker.io/blandskron/agnara:edge"
-    assert ghcr_tag.startswith("ghcr.io/")
-    assert ghcr_tag.endswith("/agnara:edge")
+    assert re.fullmatch(r"ghcr\.io/\$\{\{[^}]+\}\}/agnara:edge", ghcr_tag), ghcr_tag
     assert "github.repository_owner" not in ghcr_tag, (
         "the raw owner preserves case; a container repository name must be lowercase"
     )
