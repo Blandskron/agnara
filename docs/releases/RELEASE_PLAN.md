@@ -67,9 +67,13 @@ refer to the 1.0 work program; each becomes a GitHub Issue before implementation
 
 ## Public-surface commitment
 
-The seven reviewed distributions remain the publication set. Their 292 current
-public exports are all provisional today; none becomes stable through this
-scope lock. V1-31–V1-33 must explicitly classify every release-set export as
+The seven reviewed distributions remain the publication set. Their 337 current
+classified exports -- 166 distinct names reachable at 337 import paths -- are all
+provisional today; none becomes stable through this
+scope lock. `docs/releases/1.0-api-classification.md` holds the measured evidence for that
+decision, including the finding that the 337 figure counts import paths and that
+171 of them are aliases for a name reachable at a shallower path.
+V1-31–V1-33 must explicitly classify every release-set export as
 stable, deprecated with migration guidance, or removed before the 1.0
 compatibility gate can close. The empty `agnara-a2a` and `agnara-events`
 namespaces have no export to stabilize. New experimental integrations and all

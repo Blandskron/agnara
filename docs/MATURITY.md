@@ -51,7 +51,10 @@ PyPI projects still require their Pending Trusted Publishers before the tag.
 
 Every distribution's public surface is classified in
 `docs/public-api.json` and enforced in both directions by the release gate:
-324 exports across 49 modules, all `provisional`. `agnara-cli` dropped from 17
+337 classified exports across 49 modules, all `provisional`. Those entries are
+import paths rather than distinct symbols: 166 names are reachable at 337 paths,
+because a name is classified once per module it can be imported from.
+`agnara-cli` dropped from 17
 public names to 4 in the baseline, because the other thirteen were implementation
 helpers re-exported from underscore-prefixed modules and never documented,
 used or designed as an API (ADR 0076).

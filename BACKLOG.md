@@ -101,6 +101,15 @@ order.
   and streams with `opentelemetry` unimportable, so the bridge is optional in
   behaviour and not only in declared dependencies.
 
+- [x] Freeze the 1.0 public surface and remove documentation drift (V1-32):
+  measured 337 classified entries across 49 modules, which are 166 distinct names
+  reachable at 337 import paths; 171 entries are aliases and 36 of 49 modules
+  contribute no canonical name. Fixed three stale counts and gated every stated
+  count against the manifest. Added the 1.x compatibility contract. The stable
+  classification itself remains the maintainer's decision and every export is
+  still provisional; the evidence and proposals are in
+  `docs/releases/1.0-api-classification.md`.
+
 - [x] Calibrate performance budgets and enforce them (V1-30): the eleven critical
   paths were audited; `benchmarks/runtime_paths.py` now covers the seven that had
   no benchmark. `docs/performance/budgets.json` holds 13 limits expressed as

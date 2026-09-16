@@ -20,6 +20,18 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Define the `1.x` compatibility contract in `docs/PUBLIC_API.md`: what a stable
+  promise covers, what counts as a breaking change, what a minor release may add,
+  the deprecation window, adapter and schema stability, and the closed telemetry
+  attribute set. No export is promoted; everything remains provisional.
+
+- Reconcile the public-surface counts. `docs/MATURITY.md` said 324 exports,
+  `docs/releases/RELEASE_PLAN.md` said 292 and `docs/TARGET_ARCHITECTURE.md` said
+  292 across 48 modules, against a manifest holding 337 across 49. The manifest
+  was right. The documents now also distinguish the 337 classified import paths
+  from the 166 distinct names behind them, and an architecture test reads every
+  stated count back from the manifest.
+
 - Fix quadratic behaviour in `InMemoryIdempotencyStore`. Every `claim`,
   `lookup`, `complete` and `abandon` swept and copied the whole record table to
   discard expired entries, so each operation was linear in the number of stored
