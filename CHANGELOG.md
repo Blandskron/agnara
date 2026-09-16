@@ -20,6 +20,22 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Fix quadratic behaviour in `InMemoryIdempotencyStore`. Every `claim`,
+  `lookup`, `complete` and `abandon` swept and copied the whole record table to
+  discard expired entries, so each operation was linear in the number of stored
+  records and a busy process paid quadratic cost overall. Expiry is now resolved
+  for the record being touched and the full sweep runs only when capacity is
+  exhausted. One claim plus complete measured 473us against 4,000 stored records
+  before and a flat 9us after, and is about 2x cheaper even on an empty store.
+  Observable expiry and capacity semantics are unchanged.
+
+- Add enforced performance budgets. `docs/performance/budgets.json` holds 13
+  calibrated limits covering dependency injection, policy evaluation, execution
+  identity, idempotency, nested invocation, streaming, compile scaling and
+  compile memory; `scripts/check_performance_budgets.py` enforces them in CI.
+  Budgets are ratios between scenarios measured in the same run rather than
+  absolute latency, so a slow runner does not by itself fail the gate.
+
 - Add shared-host OpenTelemetry conformance with FastAPI 0.141.1 and the
   in-memory OpenTelemetry SDK 1.44.0 exporter. Capability spans join an
   application-owned host trace, preserve nested execution relationships and

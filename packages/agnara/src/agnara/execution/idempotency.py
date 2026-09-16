@@ -272,9 +272,13 @@ class InMemoryIdempotencyStore:
         now = self._now()
         selector = _selector(scope)
         with self._lock:
-            self._discard_expired(now)
-            record = self._records.get(selector)
+            record = self._live(selector, now)
             if record is None:
+                if len(self._records) >= self._max_entries:
+                    # Only sweep when space is actually needed. Sweeping on every
+                    # operation made each call linear in the number of stored
+                    # records, so a busy process paid quadratic cost overall.
+                    self._discard_expired(now)
                 if len(self._records) >= self._max_entries:
                     raise IdempotencyStorageError("idempotency store capacity exhausted")
                 reservation = IdempotencyReservation(
@@ -297,8 +301,7 @@ class InMemoryIdempotencyStore:
         _validate_scope(scope)
         now = self._now()
         with self._lock:
-            self._discard_expired(now)
-            record = self._records.get(_selector(scope))
+            record = self._live(_selector(scope), now)
             return None if record is None else _state(scope, record)
 
     async def complete(
@@ -310,8 +313,7 @@ class InMemoryIdempotencyStore:
         now = self._now()
         selector = _selector(reservation.scope)
         with self._lock:
-            self._discard_expired(now)
-            record = self._records.get(selector)
+            record = self._live(selector, now)
             if record is None or record.token != reservation.token:
                 return False
             record.token = None
@@ -324,8 +326,7 @@ class InMemoryIdempotencyStore:
         now = self._now()
         selector = _selector(reservation.scope)
         with self._lock:
-            self._discard_expired(now)
-            record = self._records.get(selector)
+            record = self._live(selector, now)
             if record is None or record.token != reservation.token:
                 return False
             del self._records[selector]
@@ -340,6 +341,22 @@ class InMemoryIdempotencyStore:
         ):
             raise IdempotencyStorageError("clock must return a finite number")
         return float(value)
+
+    def _live(self, selector: tuple[CapabilityId, str, str], now: float) -> _Record | None:
+        """Return the record for ``selector``, dropping it if it has expired.
+
+        Expiry is resolved for the one record being touched rather than by
+        sweeping the whole store, so an operation costs the same whether the
+        store holds ten records or ten thousand. The boundary stays ``<= now``,
+        so a record expires exactly when its deadline is reached.
+        """
+        record = self._records.get(selector)
+        if record is None:
+            return None
+        if record.expires_at <= now:
+            del self._records[selector]
+            return None
+        return record
 
     def _discard_expired(self, now: float) -> None:
         for selector, record in tuple(self._records.items()):

@@ -173,7 +173,8 @@ not.
 | Cross-platform CI | `IMPLEMENTED` | Linux, macOS, Windows. |
 | Packaging gate | `IMPLEMENTED` | Builds and inspects all seven wheels/sdists, then installs all seven wheels outside the workspace with first-party index access disabled. |
 | Release readiness program | `IMPLEMENTED` | Evidence expires against the commit it was recorded on. |
-| Benchmarks | `IMPLEMENTED` (baseline only) | Four recorded baselines; no budgets, no regression gate. |
+| Benchmarks | `IMPLEMENTED` | Five recorded baselines. `benchmarks/runtime_paths.py` covers dependency injection, policy evaluation, execution identity, idempotency, nested invocation, streaming and compile scaling. |
+| Performance budgets | `IMPLEMENTED` | `docs/performance/budgets.json` holds 13 calibrated limits enforced by `scripts/check_performance_budgets.py` in CI. Budgets are ratios between scenarios measured in the same run, not absolute latency. The gate is demonstrated to fail on a real regression. Limits were calibrated on one developer machine and remain subject to maintainer approval. |
 | Property testing and fuzzing | `PLANNED` | None. |
 | Protocol conformance suites | `PLANNED` | MCP conformance is repository-authored; no upstream suite is run. |
 | Security scanning, SBOM, signing | `PLANNED` | None configured. `SECURITY.md` records this. |
