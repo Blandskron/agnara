@@ -76,6 +76,10 @@ order.
     The fixture covers canonical failure, composition, idempotency and cleanup;
     sync/WSGI reuse of a live runtime is explicitly not covered. This is
     required evidence, not a Django plugin or integration-support claim.
+  - [x] Exercise the selected second host-diversity fixture (V1-26): Litestar
+    2.24.0 proves the public host boundary without adding Flask or a core
+    special case. Its host-owned result/status mapping, fail-closed principal,
+    composition, idempotency and cleanup remain fixture evidence only.
 - [ ] Complete the security program evidence (I10).
 
 ## Deferred decisions

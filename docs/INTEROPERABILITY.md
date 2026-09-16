@@ -192,7 +192,7 @@ authorization to claim support.
 | Django REST Framework | no | yes | yes | HIGH | no | Embedding into existing DRF APIs. Hosting DRF is meaningless: DRF is a view layer inside Django. |
 | Django Ninja | no | yes | yes | MEDIUM | no | Secondary confirmation that the Django embedding contract is not DRF-shaped. |
 | Flask | no | yes | research | HIGH | no | Embedding and the migration path matter. Hosting Flask does not: Agnara's HTTP boundary is ASGI (ADR 0041), and a WSGI host bridge belongs on the Flask side. Agnara must not adopt WSGI semantics in the core. |
-| Litestar | yes | yes | yes | HIGH | conditional | The fourth web gate is satisfied by Flask **or** Litestar. Validates ASGI, DI coexistence, lifecycle, routing, serialization, middleware and embedding. |
+| Litestar | yes | yes | yes | HIGH | local fixture | Litestar 2.24.0 is the selected conditional host-diversity fixture in `tests/integration/litestar/`. It retains host-owned routing and result/status mapping while exercising the public embedding boundary, fail-closed principal mapping, composition, idempotency and cleanup. This is evidence only; Flask remains unimplemented and neither framework is supported. |
 | Falcon | no | yes | research | MEDIUM | no | Kept only while it produces new evidence about WSGI/ASGI independence. |
 | aiohttp | no | yes | research | MEDIUM | no | Low-level async interoperability outside the ASGI ecosystem. |
 | Sanic, Quart | no | research | research | LOW | no | Research. They block `1.0.0` only if they reveal an architectural problem the others hid. |
