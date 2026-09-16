@@ -20,6 +20,15 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Refuse an `IdempotencyInvocation` on a streaming invocation instead of
+  silently discarding it. `open_stream` consulted `context.idempotency`
+  nowhere, and the refusal that existed sat on a code path a streaming plan can
+  never reach, so a caller asking for exactly-once effects had its producer
+  rerun on every attempt with the store never consulted. `open_stream` now
+  raises `InvocationError` before the producer can start. ADR 0089 keeps
+  idempotency separate from streams; this makes that separation enforced rather
+  than assumed.
+
 - Fix quadratic behaviour in `InMemoryIdempotencyStore`. Every `claim`,
   `lookup`, `complete` and `abandon` swept and copied the whole record table to
   discard expired entries, so each operation was linear in the number of stored

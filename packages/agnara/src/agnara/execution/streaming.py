@@ -144,6 +144,18 @@ def open_stream(
             f"invocation targets {context.invocation.capability_id}, but the compiled plan is "
             f"for {plan.definition.id}"
         )
+    if context.idempotency is not None:
+        # ADR 0089 keeps idempotency separate from streams: there is no stored
+        # success to reuse, because a stream's value is the sequence and its
+        # terminal, not one serializable result. Refusing here rather than
+        # ignoring the selector is the point. A caller that supplies one is
+        # asking for exactly-once effects, and accepting that instruction while
+        # silently discarding it would let the producer rerun on every attempt
+        # with nothing to say so.
+        raise InvocationError(
+            f"streaming capability {plan.definition.id} cannot receive IdempotencyInvocation; "
+            "idempotency result reuse has complete-result semantics"
+        )
     return CapabilityStream(plan, context, input_materializer)
 
 

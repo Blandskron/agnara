@@ -96,6 +96,7 @@ this audit; the other paths existed already.
 | Task-augmented and resumed MCP calls are refused before dispatch | `tests/mcp/test_tool_invocation.py` |
 | Telemetry carries no payload, principal, value or exception text | `tests/security/test_trust_boundaries.py`, `tests/integration/telemetry/test_opentelemetry_shared_host.py`, `packages/agnara-telemetry` |
 | An over-long or unusable MCP request id never reaches telemetry | `tests/mcp/test_tool_invocation.py` |
+| A streaming invocation refuses an idempotency selector instead of discarding it | `tests/security/test_trust_boundaries.py` |
 | Reviewed files and built distributions are checked for recognized credential signatures; this does not prove absence of every secret format | `tests/security/test_repository_secrets.py`, `scripts/check_distributions.py` |
 
 Two structural properties are worth stating separately, because they remove
@@ -120,6 +121,7 @@ because there is no decompression.
 | H-4 | P2 | Fixed. `_read_body` bounded total bytes but not the number of events. An empty chunk moves `max_body_bytes` no closer to its limit, so a client sending them with `more_body` set held a worker open indefinitely and grew a list without bound. Empty events are now capped. |
 | H-5 | P3 | Fixed. `request_timeout` was documented as a per-request deadline. It starts after binding, so it bounds execution and not how long a client may take to send a body. The documentation now says which. |
 | H-6 | P3 | Fixed. Unexpected capability exceptions were redacted on the wire but logged with `exc_info`, so exception-carried credentials, dependency values or payload fragments could reach the application's default log sink. The runtime now logs only the capability identifier; a regression test proves that exception text and traceback are absent. |
+| S-1 | P2 | Fixed. A streaming invocation silently discarded an `IdempotencyInvocation`. The refusal existed in `_execute_with_idempotency`, but its only caller is the complete-result path, which rejects a streaming plan several frames earlier, so the guard could never fire; `open_stream` consulted `context.idempotency` nowhere. A caller asking for exactly-once effects got the producer rerun on every attempt, with the store never consulted and nothing reported. `open_stream` now refuses the selector before the producer can start. |
 
 ### H-3 — declared scopes are enforced transport-neutrally
 
@@ -176,7 +178,7 @@ status:
 | Tool name and schema spoofing | Addressed. Names and schemas come from one frozen startup snapshot; discovery and invocation cannot disagree. |
 | Approval bypass | Addressed for confirmation: no evidence channel exists on either transport, resumed calls are refused, and a missing verifier fails at startup. |
 | Prompt and tool injection across trust boundaries | Not addressed. Agnara does not inspect argument content. |
-| Automated destructive invocation, replay of non-idempotent operations | Partially addressed. ADR 0091 makes an explicit direct `Idempotency.YES` selector claim atomically before dependencies or handler work and reuses only a bound completed success. It re-evaluates policy and confirmation, rejects scope/principal mismatch, and fails closed on store or stale-codec errors without logging opaque result bytes. Inclusive lease/result expiry is a liveness boundary, never proof the former handler stopped; automatic retries remain absent. It neither authenticates callers nor adds HTTP/MCP selector fields; anonymous HTTP and unreviewed protocol metadata remain untrusted. |
+| Automated destructive invocation, replay of non-idempotent operations | Partially addressed. A streaming invocation now refuses an idempotency selector rather than discarding it (S-1), so a caller cannot believe it has exactly-once effects on a path that never had them. ADR 0091 makes an explicit direct `Idempotency.YES` selector claim atomically before dependencies or handler work and reuses only a bound completed success. It re-evaluates policy and confirmation, rejects scope/principal mismatch, and fails closed on store or stale-codec errors without logging opaque result bytes. Inclusive lease/result expiry is a liveness boundary, never proof the former handler stopped; automatic retries remain absent. It neither authenticates callers nor adds HTTP/MCP selector fields; anonymous HTTP and unreviewed protocol metadata remain untrusted. |
 | Cross-tenant context leakage | Not applicable in the baseline: no tenant concept, and no per-request state is shared between invocations. |
 | Unbounded tool recursion | Partially addressed for nested capabilities. `CapabilityRuntime` keeps private immutable ancestry per child, refuses direct and indirect repeated identities and applies a finite `1..32` runtime depth limit before the next child policy, dependencies or effects. Ordinary application Python recursion remains application-owned; a streaming child is refused before producer start, and streams and cross-app composition are not part of this boundary. |
 | SSRF through generic HTTP capabilities | Application's own concern; Agnara makes no outbound call. |
@@ -249,7 +251,30 @@ The locked runtime dependency audit recorded in the release closure is
 separate evidence; it does not cover development tools or future advisory
 database updates.
 
-## 10. What this audit did not do
+## 10. Adversarial review for 1.0.0
+
+A second adversarial pass covered authorization and principal handling, nested
+capability invocation, idempotency, streaming and SSE, the documentation UIs,
+supply-chain controls and telemetry.
+
+It produced one finding, S-1 above. The following were probed directly and
+behaved correctly; they are recorded so a later reviewer knows they were tried
+rather than assumed:
+
+| Probe | Result |
+| --- | --- |
+| A stored idempotent result read back by a different principal using the same key | Refused. The selector binds capability, principal and key, and the two principals received their own results. |
+| An idempotency scope naming a different capability than the compiled plan | Refused before the claim, as a redacted canonical failure. |
+| A nested child inheriting the parent's idempotency selector | Does not happen; the child's execution adds no store record. |
+| An idempotency selector on a capability not declared `Idempotency.YES` | Refused, fail-closed, as a redacted canonical failure. |
+| A stream unit containing SSE frame separators | Cannot inject a frame: every unit goes through the same JSON value rule, so separators are escaped. Covered by `tests/http/test_sse.py`. |
+| Unbounded buffering or a slow SSE consumer | Structurally prevented: the pump performs one pull per completed send with no queue between them, so ASGI send demand is the producer's demand. |
+| GitHub Actions pinned to mutable references, or default write permissions | Enforced by `tests/architecture/test_ci_workflow.py` and `test_release_workflow.py`. |
+
+The probes are not a substitute for the limits in section 11. In particular,
+none of them is a concurrency or load test.
+
+## 11. What this audit did not do
 
 No fuzzing, no penetration test, no load or denial-of-service testing under
 real concurrency, no review of the
