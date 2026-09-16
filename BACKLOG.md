@@ -85,6 +85,13 @@ order.
   optional development fixtures. Their supported evidence is JSON-normalized
   nested dataclass-shaped data materialized and validated by the standard
   adapter; no whole-library compatibility or shipped adapter is claimed.
+- [x] Add persistence-boundary conformance (V1-28): SQLAlchemy 2.0.54 is an
+  optional SQLite-only development fixture in `tests/integration/persistence/`.
+  An application-owned invocation provider supplies the store while the host
+  retains `Session`, commit and rollback ownership; success, validation,
+  policy, handler failure, cancellation, nested invocation and parallel-session
+  isolation are covered. PostgreSQL was **NOT RUN** because it remains
+  supported-if-evidence, not a required 1.0.0 gate.
 
 ## Deferred decisions
 
