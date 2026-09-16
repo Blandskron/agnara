@@ -29,6 +29,10 @@ from agnara.core.di import DIContainer, DIRegistry
 from agnara.execution import ExecutionContext, ExecutionPlan, Invocation, Success, invoke_result
 from agnara_telemetry import OpenTelemetryTracingHook
 
+#: Long, non-hexadecimal and non-numeric, so finding it in exported span
+#: JSON can only mean the payload leaked.
+SECRET_TOKEN = "zzz-payload-must-never-be-exported-zzz"
+
 
 def build_tracer() -> tuple[Tracer, Any]:
     """Return (tracer, exporter). The exporter is None without the SDK.
@@ -59,8 +63,11 @@ def build_application() -> App:
         return amount + tax
 
     @app.capability
-    def refuse(amount: int) -> int:
-        raise RuntimeError(f"a secret that must not be exported: {amount}")
+    def refuse(token: str) -> int:
+        # The token is deliberately long and non-hexadecimal. A short or numeric
+        # value would collide with a random span id or a nanosecond timestamp,
+        # and the check below would fail on chance rather than on a leak.
+        raise RuntimeError(f"secret payload reached the logs: {token}")
 
     return app
 
@@ -86,7 +93,7 @@ async def main() -> None:
     try:
         for identifier, payload in (
             ("billing.total", {"amount": 100, "tax": 19}),
-            ("billing.refuse", {"amount": 4242}),
+            ("billing.refuse", {"token": SECRET_TOKEN}),
         ):
             plan = plans[identifier]
             result = await invoke_result(
@@ -117,7 +124,7 @@ async def main() -> None:
         print(f"  {span.name}: outcome={outcome}")
 
     rendered = "\n".join(span.to_json() for span in exporter.get_finished_spans())
-    for secret in ("4242", "a secret that must not be exported"):
+    for secret in (SECRET_TOKEN, "secret payload reached the logs"):
         assert secret not in rendered, "telemetry must not carry payloads or exception text"
     print("\nno payload, argument value or exception message reached the exporter")
 

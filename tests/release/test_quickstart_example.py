@@ -146,8 +146,11 @@ def test_the_telemetry_example_runs_and_proves_redaction(tmp_path: Path) -> None
     assert "outcome=success" in output
     assert "outcome=failure" in output
     assert "no payload, argument value or exception message reached the exporter" in output
-    # The handler embeds the argument in its exception message on purpose.
-    assert "4242" not in output.split("exported spans:")[-1]
+    # The handler embeds the argument in its exception message on purpose. The
+    # token is long and non-hexadecimal so it cannot collide with a random span
+    # id or a nanosecond timestamp; an earlier 4-digit value did, and failed on
+    # Windows CI by chance rather than on a leak.
+    assert "zzz-payload-must-never-be-exported-zzz" not in output
 
 
 def test_the_fastapi_embedding_example_runs_and_fails_closed(tmp_path: Path) -> None:
