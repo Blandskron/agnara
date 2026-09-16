@@ -48,6 +48,8 @@ dev = [
     "pyyaml>=6,<7",
     "pytest>=8.4",
     "ruff>=0.14",
+    # V1-28 SQLite persistence fixture only; never a core dependency.
+    "SQLAlchemy==2.0.54",
     "ty>=0.0.1a1",
 ]
 

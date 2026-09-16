@@ -205,9 +205,9 @@ application already has.
 
 | Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
-| SQLite | yes | n/a | n/a | CRITICAL | yes | The baseline that needs no external infrastructure. Capability → provider → repository → SQLite, validating connection lifecycle, transactions, rollback, invocation scope, cleanup and testability. |
-| PostgreSQL | yes | n/a | n/a | CRITICAL | yes | Pooling, transaction scope, concurrent execution, async where it applies, rollback, failure handling, startup and shutdown, resource cleanup. |
-| SQLAlchemy | yes | no | n/a | CRITICAL | yes | The primary persistence integration, over both SQLite and PostgreSQL. Engine lifecycle, `Session`, `AsyncSession`, DI scopes, unit of work, commit, rollback, nested execution, teardown. Agnara reimplements none of these. |
+| SQLite | yes | n/a | n/a | CRITICAL | local fixture | `tests/integration/persistence/test_sqlalchemy_sqlite.py` uses SQLite with SQLAlchemy 2.0.54. The application-owned provider supplies a store, while the host retains `Session`, commit and rollback ownership; success, validation/policy refusal, handler failure, cancellation, nested invocation and parallel-session isolation are asserted. It is evidence only, not an ORM feature. |
+| PostgreSQL | yes | n/a | n/a | CRITICAL | NOT RUN (conditional) | Pooling, transaction scope, concurrent execution, async where it applies, rollback, failure handling, startup and shutdown remain supported-if-evidence work. V1-28 does not start a PostgreSQL service because the scope lock does not make it a required 1.0.0 blocker. |
+| SQLAlchemy | yes | no | n/a | CRITICAL | local SQLite fixture | SQLAlchemy 2.0.54 is an optional development-only fixture, not a package dependency. It proves the primary persistence boundary over SQLite only: the host owns engine and `Session` lifecycle, unit of work and transaction decision; Agnara reimplements none of them. `AsyncSession`, PostgreSQL and Alembic remain unverified. |
 | psycopg | yes | no | n/a | HIGH | no | PostgreSQL without an ORM, proving the persistence port is not SQLAlchemy-shaped. |
 | asyncpg | yes | no | n/a | MEDIUM | no | Async database provider validation. |
 | Alembic | coexist | n/a | yes | HIGH | no | Migrations must coexist with an Agnara application unchanged. Agnara never gets its own migration system. |
