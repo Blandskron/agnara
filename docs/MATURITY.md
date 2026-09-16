@@ -147,7 +147,7 @@ not.
 | CLI scaffolding | `IMPLEMENTED` | `project create`, `app create`, architectures, `--with`, profiles, aliases. |
 | CLI introspection | `IMPLEMENTED` | `apps`, `inspect`, `graph`, `schema openapi`, `context`. |
 | Project manifest | `IMPLEMENTED` | `agnara.toml`. ADR 0059. No schema version field yet. |
-| Telemetry bridges | `IMPLEMENTED` | OpenTelemetry metrics and spans. ADR 0054-0058. |
+| Telemetry bridges | `IMPLEMENTED` | Optional OpenTelemetry metrics and spans. `tests/integration/telemetry/` proves one FastAPI 0.141.1 host trace with nested capability spans, concurrent isolation, stream terminal closure and redaction using SDK 1.44.0 in-memory export. Host extraction, providers, exporters and shutdown remain application-owned; compilation, nested invocation and streaming are additionally proven in an interpreter where `opentelemetry` is unimportable. No network-exporter or framework-support claim follows. ADR 0054-0058. |
 | A2A | `PLANNED` | Namespace reserved. |
 | Events / AsyncAPI | `PLANNED` | Namespace reserved. |
 | Tasks and durable execution | `RESEARCH` | No package, no abstraction. |

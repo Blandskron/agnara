@@ -94,7 +94,7 @@ this audit; the other paths existed already.
 | An MCP tool hidden by discovery filtering is still refused when named directly | `tests/security/test_trust_boundaries.py` |
 | An MCP mapper failure is redacted and fails closed | `tests/mcp/test_authorization.py` |
 | Task-augmented and resumed MCP calls are refused before dispatch | `tests/mcp/test_tool_invocation.py` |
-| Telemetry carries no payload, principal, value or exception text | `tests/security/test_trust_boundaries.py`, `packages/agnara-telemetry` |
+| Telemetry carries no payload, principal, value or exception text | `tests/security/test_trust_boundaries.py`, `tests/integration/telemetry/test_opentelemetry_shared_host.py`, `packages/agnara-telemetry` |
 | An over-long or unusable MCP request id never reaches telemetry | `tests/mcp/test_tool_invocation.py` |
 | Reviewed files and built distributions are checked for recognized credential signatures; this does not prove absence of every secret format | `tests/security/test_repository_secrets.py`, `scripts/check_distributions.py` |
 

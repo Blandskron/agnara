@@ -268,7 +268,7 @@ them.
 
 | Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
-| OpenTelemetry | yes | yes | yes | CRITICAL | yes | Bridges exist (ADR 0054 through ADR 0058); `1.0.0` validates them end to end — traces, spans, metrics, propagation, invocation and execution identity across HTTP, workers, databases and errors. The SDK never enters `agnara`. |
+| OpenTelemetry | yes | yes | yes | CRITICAL | local fixture | `tests/integration/telemetry/test_opentelemetry_shared_host.py` uses FastAPI 0.141.1 plus the in-memory OpenTelemetry SDK 1.44.0 exporter. The host owns extraction, its SERVER span, provider and shutdown; Agnara contributes exactly one nested capability span tree through its optional bridge. The fixture proves parallel context isolation, stream completion/late failure/cancellation closure, redaction, and that the kernel still compiles, invokes and streams when `opentelemetry` cannot be imported at all. It does not claim network-exporter, worker or database instrumentation support. The SDK never enters `agnara`. |
 | Sentry | yes | yes | yes | MEDIUM | no | Through an adapter or integration layer. Never an official dependency. |
 
 ### Agent and protocol interoperability

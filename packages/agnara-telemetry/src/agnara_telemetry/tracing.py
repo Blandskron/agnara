@@ -13,6 +13,18 @@ __all__ = ["OpenTelemetryTracingHook"]
 
 _OUTCOMES = frozenset({"success", "failure", "timeout", "cancellation"})
 
+#: Streaming owns a richer terminal vocabulary than complete-result execution.
+#: A span still has to speak the one closed invocation-outcome vocabulary so
+#: dashboards do not split one capability lifecycle into incompatible series.
+#: An owner abandoning a stream is deliberately ``unknown``: it is neither a
+#: capability failure nor proof that the caller cancelled it.
+_STREAM_OUTCOMES = {
+    "completed": "success",
+    "interrupted": "failure",
+    "cancelled": "cancellation",
+    "timed_out": "timeout",
+}
+
 #: Outcomes that describe the capability itself going wrong. A cancellation is
 #: the caller withdrawing, so it is recorded but left ``UNSET`` rather than
 #: reported as an error the capability caused.
@@ -99,7 +111,10 @@ class OpenTelemetryTracingHook:
             return
         span, token = tracked
         try:
-            outcome = event.outcome if event.outcome in _OUTCOMES else "unknown"
+            outcome = _STREAM_OUTCOMES.get(
+                event.outcome,
+                event.outcome if event.outcome in _OUTCOMES else "unknown",
+            )
             span.set_attribute("agnara.invocation.outcome", outcome)
             if outcome in _ERROR_OUTCOMES:
                 # The outcome name is a fixed vocabulary, not error text.

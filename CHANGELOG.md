@@ -20,6 +20,15 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Add shared-host OpenTelemetry conformance with FastAPI 0.141.1 and the
+  in-memory OpenTelemetry SDK 1.44.0 exporter. Capability spans join an
+  application-owned host trace, preserve nested execution relationships and
+  redact payloads, credentials, claims and idempotent results; a fresh-interpreter
+  check proves the kernel still runs with `opentelemetry` unimportable. Streaming
+  terminals now normalize `completed`, `interrupted`, `cancelled` and
+  `timed_out` to the adapter's closed success/failure/cancellation/timeout
+  outcome vocabulary; an abandoned stream remains `unknown`.
+
 - Add a separate, CI-gated `develop` container publication workflow for the
   mutable `ghcr.io/blandskron/agnara:edge` and
   `docker.io/blandskron/agnara:edge` images. It smoke-tests before registry

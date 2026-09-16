@@ -92,6 +92,14 @@ order.
   policy, handler failure, cancellation, nested invocation and parallel-session
   isolation are covered. PostgreSQL was **NOT RUN** because it remains
   supported-if-evidence, not a required 1.0.0 gate.
+- [x] Add shared-host OpenTelemetry conformance (V1-29): the optional
+  OpenTelemetry SDK 1.44.0 fixture uses FastAPI 0.141.1 to prove one
+  application-owned host trace and one capability span tree. It covers remote
+  propagation, nested/parallel isolation, streaming success/late-failure/
+  cancellation closure and redaction of payloads, credentials, claims and
+  idempotent results. A fresh-interpreter check additionally compiles, invokes
+  and streams with `opentelemetry` unimportable, so the bridge is optional in
+  behaviour and not only in declared dependencies.
 
 ## Deferred decisions
 
