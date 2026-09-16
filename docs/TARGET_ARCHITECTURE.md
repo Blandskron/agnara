@@ -204,7 +204,8 @@ and telemetry is far harder than designing the propagation now.
 
 ### G10 — Public API stabilization
 
-All 292 governed exports across 48 modules are deliberately classified
+All 337 governed exports across 49 modules, being 166 distinct names reachable
+at 337 import paths, are deliberately classified
 `provisional` (docs/PUBLIC_API.md). Before `1.0.0`, maintainers must make the
 evidence-backed stable-or-deprecated compatibility decision; classification is
 complete, stability is not implicit.

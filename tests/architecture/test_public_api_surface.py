@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import re
 import subprocess
 import sys
 from typing import Any
@@ -180,3 +181,95 @@ def test_policy_lists_every_governed_module(module: str) -> None:
     policy = POLICY.read_text(encoding="utf-8")
 
     assert f"`{module}`" in policy, module
+
+
+# ---------------------------------------------------------------------------
+# Documentation may not state a count the manifest contradicts
+# ---------------------------------------------------------------------------
+
+#: Documents allowed to quote a public-surface size. A document not listed here
+#: is not forbidden from existing; it is forbidden from carrying a number that
+#: silently rots.
+COUNTED_DOCUMENTS = (
+    "docs/PUBLIC_API.md",
+    "docs/MATURITY.md",
+    "docs/TARGET_ARCHITECTURE.md",
+    "docs/releases/RELEASE_PLAN.md",
+)
+
+#: "337 exports", "337 classified exports", "337 governed exports", ...
+_EXPORT_COUNT = re.compile(r"(\d[\d,]*)\s+(?:\w+\s+){0,2}exports\b")
+#: "across 49 modules", "49 governed modules"
+_MODULE_COUNT = re.compile(r"(\d[\d,]*)\s+(?:\w+\s+){0,1}modules\b")
+#: Only the exact phrase used for the surface figure. Prose such as "dropped
+#: from 17 public names to 4" is a historical fact about one distribution, not
+#: a claim about the current surface, and this gate must not police it.
+_NAME_COUNT = re.compile(r"(\d[\d,]*)\s+distinct\s+names\b")
+
+
+def _surface_totals() -> tuple[int, int, int]:
+    """Return (export paths, modules, distinct names) from the manifest."""
+    paths = 0
+    modules = 0
+    names: set[tuple[str, str]] = set()
+    for entry in distributions():
+        for module in entry["modules"]:
+            modules += 1
+            for export in module["exports"]:
+                paths += 1
+                names.add((entry["distribution"], export["name"]))
+    return paths, modules, len(names)
+
+
+def _numbers(pattern: re.Pattern[str], text: str) -> set[int]:
+    return {int(match.replace(",", "")) for match in pattern.findall(text)}
+
+
+@pytest.mark.parametrize("relative", COUNTED_DOCUMENTS)
+def test_no_document_states_a_public_surface_count_the_manifest_contradicts(
+    relative: str,
+) -> None:
+    """One manifest, one set of numbers.
+
+    `docs/MATURITY.md` said 324 exports, `docs/releases/RELEASE_PLAN.md` said
+    292, `docs/TARGET_ARCHITECTURE.md` said 292 across 48 modules, and the
+    manifest said 337 across 49. Four documents, four answers, no way for a
+    reader to know which to trust. Counts written by hand drift the moment an
+    export is added, so the gate reads them back.
+    """
+    paths, modules, names = _surface_totals()
+    text = (WORKSPACE_ROOT / relative).read_text(encoding="utf-8")
+
+    stale_exports = _numbers(_EXPORT_COUNT, text) - {paths}
+    stale_modules = _numbers(_MODULE_COUNT, text) - {modules}
+    stale_names = _numbers(_NAME_COUNT, text) - {names}
+
+    assert not stale_exports, (
+        f"{relative} states {sorted(stale_exports)} exports; the manifest has {paths}"
+    )
+    assert not stale_modules, (
+        f"{relative} states {sorted(stale_modules)} modules; the manifest has {modules}"
+    )
+    assert not stale_names, (
+        f"{relative} states {sorted(stale_names)} distinct names; the manifest has {names}"
+    )
+
+
+def test_the_owning_document_states_the_current_count() -> None:
+    """A gate that only rejects wrong numbers passes when every number is deleted."""
+    paths, modules, names = _surface_totals()
+    text = (WORKSPACE_ROOT / "docs" / "PUBLIC_API.md").read_text(encoding="utf-8")
+    assert paths in _numbers(_EXPORT_COUNT, text)
+    assert modules in _numbers(_MODULE_COUNT, text)
+    assert names in _numbers(_NAME_COUNT, text)
+
+
+def test_distinct_names_are_fewer_than_classified_paths() -> None:
+    """The two figures are different measurements, and 1.0 has to know which it promises.
+
+    A name reachable from three modules is classified three times. Promising
+    every classified path keeps three import spellings working for the whole
+    1.x series; promising the names leaves the alias paths free to move.
+    """
+    paths, _modules, names = _surface_totals()
+    assert names < paths, "if these ever match, the alias-path analysis needs redoing"

@@ -129,7 +129,11 @@ ungoverned adapter is not a governed framework (ADR 0076).
 | `agnara-mcp` | `agnara_mcp` | 9 | 40 | 20 |
 | `agnara-telemetry` | `agnara_telemetry` | 3 | 4 | 2 |
 
-337 exports across 49 modules. A count is not a substitute for the list. The
+337 exports across 49 modules, which is 166 distinct names reachable at 337
+import paths. Both figures matter and neither replaces the other: the path count
+is what the manifest classifies and the gate enforces, while the name count is
+what an application actually learns. Quote whichever one a sentence means, and
+say which. A count is not a substitute for the list. The
 release gate compares each module's ordered export list against the manifest
 and also walks each distribution's source tree in the reverse direction, so
 adding a public package or leaf module without classifying it fails the gate.
@@ -299,3 +303,96 @@ rather than an omission.
 
 The manifest is a review gate, not an automatic stability promotion. Updating
 the snapshot makes a change explicit; it does not make that change compatible.
+
+## The `1.x` compatibility contract
+
+This section defines what a `stable` classification will mean once `1.0.0`
+ships. It is policy, not a promotion: nothing is `stable` until the maintainer
+takes the decision `docs/releases/RELEASE_PLAN.md` reserves.
+
+### What a stable promise covers
+
+The promise attaches to a **name reachable at a promised import path**, its
+call signature, and its documented behaviour. It does not attach to
+representation details: a `repr`, an exception message's wording, attribute
+ordering, or the concrete class of a returned iterable are not part of it
+unless this document says otherwise.
+
+### What is a breaking change
+
+Within `1.x`, all of these are breaking and require a major release:
+
+- removing a stable name, or moving it off a promised import path;
+- renaming a parameter, making an optional parameter required, removing a
+  parameter, or reordering positional parameters;
+- narrowing an accepted input type or widening a returned type;
+- adding a new required field to a type an application constructs;
+- changing a `FailureCode` a given condition produces, or removing one;
+- turning a previously returned canonical `Failure` into a raised exception, or
+  the reverse;
+- changing when a policy, confirmation or idempotency check runs relative to
+  dependency resolution or handler execution;
+- removing a field from a schema Agnara emits, or changing its type;
+- renaming or removing a telemetry attribute listed as contract below.
+
+### What may be added in a minor release
+
+- a new name, module or distribution;
+- a new optional parameter with a behaviour-preserving default;
+- a new optional field on a type Agnara constructs and the application reads;
+- a new `FailureCode` member, for a condition that previously had no code —
+  applications must treat an unrecognized code as a failure they do not
+  specifically handle, and this document says so here so that requirement is
+  not a surprise;
+- a new telemetry attribute.
+
+### Deprecation
+
+`docs/releases/RELEASE_PLAN.md` left the window to be decided before any symbol
+is promoted. It is: **a stable name marked deprecated in `1.n` may be removed no
+earlier than `2.0`, and never in a minor release.** A deprecation must land with
+a changelog entry, the replacement, and a migration note in the reference. A
+`DeprecationWarning` is emitted where a warning is possible without cost on a
+hot path.
+
+Security fixes may shorten this, and the changelog must say so explicitly
+without disclosing embargoed detail.
+
+### Adapters
+
+`agnara-http`, `agnara-mcp` and `agnara-telemetry` version and promise
+independently of `agnara`, but each pins an exact `agnara` requirement. An
+adapter may not be the reason a kernel promise is broken, and an adapter's own
+breaking change is its own major release.
+
+A wire projection is part of an adapter's promise: an HTTP status for a given
+canonical failure, the problem-document media type and its documented fields,
+and the SSE event shape do not change within an adapter's major series.
+
+### Schemas
+
+The JSON Schema Agnara generates for a given capability signature is stable in
+what it accepts and requires. Additive vocabulary a validator ignores may
+appear in a minor release. A schema becoming stricter is breaking.
+
+### Outcomes and errors
+
+`Success`, `Failure` and `FailureCode` are the canonical result boundary; their
+identity and meaning are part of the promise. Redaction is a security property,
+not an implementation detail: a release does not start including exception text,
+payload fragments or principal detail in a canonical failure.
+
+### Telemetry attributes
+
+These attribute names are contract once stable, because dashboards and alerts
+are built on them:
+
+`agnara.capability.id`, `agnara.execution.id`, `agnara.invocation.id`,
+`agnara.parent_execution.id`, `agnara.invocation.outcome`.
+
+The `agnara.invocation.outcome` vocabulary is closed: `success`, `failure`,
+`timeout`, `cancellation`, `unknown`. Adding a member is additive; changing
+which outcome a condition reports is breaking.
+
+Everything else a bridge emits is not contract, and a bridge's own exporter
+configuration never was.

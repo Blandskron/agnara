@@ -101,14 +101,14 @@ order.
   and streams with `opentelemetry` unimportable, so the bridge is optional in
   behaviour and not only in declared dependencies.
 
-- [x] Adversarial security review for 1.0.0 (V1-31): authorization/principal,
-  nested invocation, idempotency, streaming/SSE, documentation UIs, supply chain
-  and telemetry were probed directly. One finding, S-1: a streaming invocation
-  silently discarded an idempotency selector because the only refusal sat on an
-  unreachable path. Fixed in `open_stream` with regression tests. Probes that
-  behaved correctly are recorded in `docs/THREAT_MODEL.md` section 10 so they
-  are not re-derived. No fuzzing, penetration test or concurrency/load test was
-  performed; those remain open and the security-program gate stays NEEDS_REVIEW.
+- [x] Freeze the 1.0 public surface and remove documentation drift (V1-32):
+  measured 337 classified entries across 49 modules, which are 166 distinct names
+  reachable at 337 import paths; 171 entries are aliases and 36 of 49 modules
+  contribute no canonical name. Fixed three stale counts and gated every stated
+  count against the manifest. Added the 1.x compatibility contract. The stable
+  classification itself remains the maintainer's decision and every export is
+  still provisional; the evidence and proposals are in
+  `docs/releases/1.0-api-classification.md`.
 
 - [x] Calibrate performance budgets and enforce them (V1-30): the eleven critical
   paths were audited; `benchmarks/runtime_paths.py` now covers the seven that had
