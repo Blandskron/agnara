@@ -101,6 +101,19 @@ order.
   and streams with `opentelemetry` unimportable, so the bridge is optional in
   behaviour and not only in declared dependencies.
 
+- [x] Rehearse the 1.0.0 release end to end (V1-33): resolved the main/develop
+  divergence by cherry-picking the one exclusive commit (a full merge would have
+  reverted develop's idempotency runtime), built and installed all seven
+  distributions outside the workspace, audited documentation coverage for the
+  eleven clean-room features and closed the two gaps, and audited branch
+  protection. Three findings: a superseded action pin, two actions not pinned to
+  a SHA, and a merge that silently reverted a release gate's evidence. All fixed
+  with gates. The governance gap -- rulesets require the CI check but zero
+  approving reviews, so the documented review step is unenforced -- is recorded
+  for the maintainer rather than changed, because requiring one approval would
+  block a solo maintainer from merging. Report in
+  `docs/releases/1.0-release-rehearsal.md`. FINAL RELEASE READY: NO.
+
 - [x] Freeze the 1.0 public surface and remove documentation drift (V1-32):
   measured 337 classified entries across 49 modules, which are 166 distinct names
   reachable at 337 import paths; 171 entries are aliases and 36 of 49 modules

@@ -20,6 +20,20 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Pin every third-party GitHub Action to a commit SHA in every workflow.
+  `agent-coordination.yml` used `actions/checkout@v7` and
+  `actions/setup-python@v7`, two floating major tags, and escaped the existing
+  rules because those read `ci.yml` and `release.yml` only. A new gate requires a
+  40-character SHA plus a version comment across all workflows.
+
+- Add `examples/telemetry.py` and `examples/fastapi_embedding.py`. Telemetry and
+  host embedding had no runnable example in the public documentation, so wiring
+  either one meant reading the test suite.
+
+- Restore the `security-program` gate evidence in
+  `docs/releases/release-status.json`, which a merge had silently reverted to its
+  placeholder, and add a test linking each gate to the evidence file it rests on.
+
 - Define the `1.x` compatibility contract in `docs/PUBLIC_API.md`: what a stable
   promise covers, what counts as a breaking change, what a minor release may add,
   the deprecation window, adapter and schema stability, and the closed telemetry
