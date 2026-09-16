@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import yaml
@@ -107,10 +108,22 @@ def test_only_edge_is_published_to_both_registries_with_attestations() -> None:
     assert build["uses"] == "docker/build-push-action@0a97817b6ade9f46837855d676c4cca3a2471fc9"
     assert build["with"]["platforms"] == "linux/amd64,linux/arm64"
     assert build["with"]["push"] is True
-    assert build["with"]["tags"].splitlines() == [
-        "ghcr.io/${{ github.repository_owner }}/agnara:edge",
-        "docker.io/blandskron/agnara:edge",
-    ]
+    # A container repository name must be lowercase. `github.repository_owner`
+    # preserves the account's case, so interpolating it directly produced
+    # `ghcr.io/Blandskron/agnara:edge` and buildx refused the tag before any
+    # push: "invalid tag ... repository name must be lowercase". Every edge
+    # publish from `develop` failed that way. The owner is therefore lowercased
+    # into a step output first, and this asserts the resulting property rather
+    # than one spelling, so the next author cannot reintroduce the raw value.
+    tags = build["with"]["tags"].splitlines()
+    assert len(tags) == 2
+    ghcr_tag, dockerhub_tag = tags
+    assert dockerhub_tag == "docker.io/blandskron/agnara:edge"
+    assert ghcr_tag.startswith("ghcr.io/")
+    assert ghcr_tag.endswith("/agnara:edge")
+    assert "github.repository_owner" not in ghcr_tag, (
+        "the raw owner preserves case; a container repository name must be lowercase"
+    )
     assert build["with"]["sbom"] is True
     assert build["with"]["provenance"] == "mode=max"
     assert "OCI_REVISION=${{ github.sha }}" in build["with"]["build-args"]
@@ -130,8 +143,14 @@ def test_registry_credentials_are_secret_backed_and_post_push_smoke_is_real() ->
         "username": "${{ secrets.DOCKERHUB_USERNAME }}",
         "password": "${{ secrets.DOCKERHUB_TOKEN }}",
     }
-    assert 'docker pull "ghcr.io/${GITHUB_REPOSITORY_OWNER}/agnara:edge"' in verify["run"]
-    assert "docker pull docker.io/blandskron/agnara:edge" in verify["run"]
+    # Same lowercase rule as the publish tag: `GITHUB_REPOSITORY_OWNER` carries
+    # the account's case, so pulling through it would fail even once the push
+    # succeeded. What matters is that both registries are really pulled back.
+    assert re.search(r'docker pull "ghcr\.io/\$\{\w+\}/agnara:edge"', verify["run"])
+    assert "GITHUB_REPOSITORY_OWNER" not in verify["run"], (
+        "the raw owner preserves case; pull the lowercased owner instead"
+    )
+    assert re.search(r'docker pull "?docker\.io/blandskron/agnara:edge"?', verify["run"])
     assert "container_smoke.py docker.io/blandskron/agnara:edge" in verify["run"]
     assert "steps.publish.outputs.digest" in _text()
 
