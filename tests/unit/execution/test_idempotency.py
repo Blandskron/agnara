@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-from typing import cast
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from _collections_abc import dict_items
 
 import pytest
 
@@ -295,5 +298,86 @@ def test_synchronized_distinct_claims_fail_closed_under_capacity_pressure() -> N
 
         assert sum(isinstance(outcome, IdempotencyClaimed) for outcome in outcomes) == 1
         assert sum(isinstance(outcome, IdempotencyStorageError) for outcome in outcomes) == 1
+
+    asyncio.run(run())
+
+
+class ScanCountingRecords(dict[tuple[CapabilityId, str, str], _Record]):
+    """A record mapping that counts full traversals.
+
+    ``_discard_expired`` is the only code that walks every record, and it does
+    so through ``items()``. Counting that call is therefore a direct measure of
+    "did this operation scan the whole store", without asserting a wall-clock
+    number that would make the test fail on a loaded machine.
+    """
+
+    def __init__(self, records: dict[tuple[CapabilityId, str, str], _Record]) -> None:
+        super().__init__(records)
+        self.scans = 0
+
+    def items(self) -> dict_items[tuple[CapabilityId, str, str], _Record]:
+        self.scans += 1
+        return super().items()
+
+
+def test_store_operations_do_not_scan_every_record_below_capacity() -> None:
+    """A store operation must cost the same whether it holds ten or ten thousand.
+
+    Sweeping expired records on every call made `claim`, `lookup`, `complete`
+    and `abandon` linear in the number of stored records, so a process doing N
+    idempotent invocations paid O(N^2) overall: measured here, one
+    claim+complete went from 19us on an empty store to 473us at 4,000 records.
+    Expiry is now resolved for the record being touched, and the full sweep runs
+    only when capacity is actually exhausted.
+    """
+
+    async def run() -> None:
+        clock = Clock()
+        store = InMemoryIdempotencyStore(max_entries=10_000, clock=clock)
+
+        for index in range(1_000):
+            claimed = await store.claim(scope(key=f"seed-{index}"), lease_ttl=300)
+            assert isinstance(claimed, IdempotencyClaimed)
+            assert await store.complete(claimed.reservation, b"stored", result_ttl=300)
+
+        counting = ScanCountingRecords(store._records)
+        store._records = counting
+
+        fresh = await store.claim(scope(key="fresh"), lease_ttl=300)
+        assert isinstance(fresh, IdempotencyClaimed)
+        assert await store.lookup(scope(key="seed-0")) is not None
+        assert await store.complete(fresh.reservation, b"stored", result_ttl=300)
+
+        abandoned = await store.claim(scope(key="abandoned"), lease_ttl=300)
+        assert isinstance(abandoned, IdempotencyClaimed)
+        assert await store.abandon(abandoned.reservation)
+
+        assert counting.scans == 0, (
+            f"store operations scanned every record {counting.scans} times below capacity"
+        )
+
+    asyncio.run(run())
+
+
+def test_expired_records_are_still_invisible_without_a_full_sweep() -> None:
+    """Lazy expiry must not let an expired record be observed."""
+
+    async def run() -> None:
+        clock = Clock()
+        store = InMemoryIdempotencyStore(clock=clock)
+
+        claimed = await store.claim(scope(key="lazy"), lease_ttl=5)
+        assert isinstance(claimed, IdempotencyClaimed)
+        assert await store.complete(claimed.reservation, b"stored", result_ttl=5)
+
+        clock.value = 4.999
+        assert isinstance(await store.lookup(scope(key="lazy")), IdempotencyCompleted)
+
+        clock.value = 5
+        assert await store.lookup(scope(key="lazy")) is None
+        replacement = await store.claim(scope(key="lazy"), lease_ttl=5)
+        assert isinstance(replacement, IdempotencyClaimed)
+        # The stale record must not linger now that a live one replaced it.
+        assert not await store.complete(claimed.reservation, b"stale", result_ttl=5)
 
     asyncio.run(run())

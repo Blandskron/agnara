@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "documentation": "docs/performance/README.md",
+  "checked_by": "scripts/check_performance_budgets.py",
+  "methodology": {
+    "summary": "Budgets are ratios between two scenarios measured in the same process and the same run. An absolute nanosecond limit is not portable between a workstation and a shared CI runner, so it would fail on a busy machine instead of on a regression.",
+    "feature_overhead_baseline": "compiled_invoke",
+    "feature_overhead_rationale": "A bare `await handler()` costs about 100ns, close enough to loop and timer overhead that it moved by 2x between calibration runs. Dividing a ~10us runtime path by it inherits that noise. compiled_invoke is the same order of magnitude as the paths being budgeted and moves with the same machine conditions.",
+    "calibration": {
+      "runs": 6,
+      "samples_per_run": 7,
+      "iterations_per_sample": 2000,
+      "warmup_batches": 2,
+      "garbage_collector_disabled_during_samples": true,
+      "observed_ratio_spread_across_runs": "1.07x to 1.42x for feature-overhead ratios, 2.06x for startup_scaling_ratio",
+      "environment": {
+        "implementation": "CPython",
+        "python_version": "3.14.4",
+        "platform": "Windows-11-10.0.26200-SP0",
+        "machine": "AMD64",
+        "processor": "Intel64 Family 6 Model 140 Stepping 1, GenuineIntel",
+        "cpu_count": 8,
+        "gil_enabled": true
+      }
+    },
+    "headroom_policy": "Each limit sits at 1.6x the highest value seen across six calibration runs, rounded up. That clears the widest spread observed for any ratio metric (1.42x, for the ratios nearest 1.0, where a small absolute difference is a large relative one) while still catching a regression of roughly 1.6x or worse on a feature path. The limits are not a claim that Agnara is fast."
+  },
+  "benchmarks": {
+    "agnara.runtime.paths": {
+      "command": [
+        "benchmarks/runtime_paths.py",
+        "--json"
+      ],
+      "metrics": {
+        "median_ratio_to_compiled_invoke": {
+          "dependency_injection_one": {
+            "maximum": 2.6,
+            "observed_maximum": 1.604,
+            "note": "Cost of resolving one invocation-scoped dependency."
+          },
+          "dependency_injection_ten": {
+            "maximum": 4.1,
+            "observed_maximum": 2.555,
+            "note": "Ten dependencies must stay well below ten times one dependency."
+          },
+          "policy_evaluation_one": {
+            "maximum": 2.1,
+            "observed_maximum": 1.275,
+            "note": "One always-allow policy. Evaluation is the measured path; a denying policy would short-circuit."
+          },
+          "policy_evaluation_three": {
+            "maximum": 2.5,
+            "observed_maximum": 1.542,
+            "note": "Policy evaluation must stay close to linear and cheap."
+          },
+          "execution_identity": {
+            "maximum": 1.8,
+            "observed_maximum": 1.068,
+            "note": "Carrying a principal and a correlation id must stay near free."
+          },
+          "idempotency_hit": {
+            "maximum": 3.3,
+            "observed_maximum": 2.042,
+            "note": "Replaying a stored result."
+          },
+          "idempotency_miss": {
+            "maximum": 6.5,
+            "observed_maximum": 4.009,
+            "note": "Claim plus complete against the store. This is the metric that exposed the O(n^2) in-memory store sweep."
+          },
+          "nested_depth_one": {
+            "maximum": 7.0,
+            "observed_maximum": 4.314,
+            "note": "One nested capability invocation through the runtime."
+          },
+          "nested_depth_three": {
+            "maximum": 15.2,
+            "observed_maximum": 9.442,
+            "note": "Three levels must stay near three times one level, not super-linear."
+          },
+          "streaming_unit": {
+            "maximum": 0.6,
+            "observed_maximum": 0.317,
+            "note": "Per emitted unit, so a stream unit must stay cheaper than a whole complete-result invocation."
+          }
+        },
+        "median_ratio_to_reference": {
+          "compiled_invoke": {
+            "maximum": 200.0,
+            "observed_maximum": 125.5,
+            "note": "What the framework costs over a bare awaited handler. Deliberately coarse: the bare handler is the noisiest measurement here, so this guards against the runtime roughly doubling, not against small drift."
+          }
+        },
+        "startup_scaling_ratio": {
+          "maximum": 3.5,
+          "observed_maximum": 1.613,
+          "note": "Compile cost per capability at 1,000 capabilities divided by the cost at 100. Catches compilation that stops being linear in the number of capabilities. Observed spread across six runs was 2.06x, the noisiest metric here, so the limit is deliberately loose: a genuinely quadratic regression shows up as roughly 10x."
+        },
+        "startup_peak_bytes_per_capability": {
+          "maximum": 4096,
+          "observed_maximum": 2695,
+          "note": "Peak compile memory per capability. Allocation counts are deterministic across runs, so this limit can be tighter than the timing limits."
+        }
+      }
+    }
+  }
+}

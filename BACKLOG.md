@@ -101,6 +101,16 @@ order.
   and streams with `opentelemetry` unimportable, so the bridge is optional in
   behaviour and not only in declared dependencies.
 
+- [x] Calibrate performance budgets and enforce them (V1-30): the eleven critical
+  paths were audited; `benchmarks/runtime_paths.py` now covers the seven that had
+  no benchmark. `docs/performance/budgets.json` holds 13 limits expressed as
+  ratios between scenarios measured in the same run, calibrated over three runs.
+  `scripts/check_performance_budgets.py` enforces them in CI and was demonstrated
+  to fail on a real regression. The audit found and fixed a quadratic sweep in
+  `InMemoryIdempotencyStore`: one claim plus complete went from 473us at 4,000
+  records to a flat 9us. HTTP SSE throughput and free-threaded builds remain
+  unbudgeted and are recorded as open.
+
 ## Deferred decisions
 
 - [ ] D7 Decide whether `agnara.core.di` remains the public dependency
