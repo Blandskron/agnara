@@ -222,8 +222,8 @@ baseline and ships today.
 | Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | `dataclasses` | yes | n/a | n/a | BASELINE | yes | Already `IMPLEMENTED`. Nothing may make it the second-class path. |
-| Pydantic | yes | n/a | n/a | CRITICAL | yes | A formal `SchemaAdapter`: input models, output models, nesting, the validation boundary, JSON Schema, error translation, serialization. Never a kernel dependency. |
-| msgspec | yes | n/a | n/a | HIGH | yes, if ready | The evidence that `SchemaAdapter` was not designed around Pydantic. Whether the port needs a second *shipped* adapter is its own open question in `docs/INITIATIVES.md`. |
+| Pydantic | yes | n/a | n/a | CRITICAL | local fixture | `tests/integration/schema/` validates a deliberately narrow JSON-normalized nested/optional/collection subset against the standard adapter. Pydantic remains optional; no shipped adapter, full compatibility or output-schema publication is claimed. |
+| msgspec | yes | n/a | n/a | HIGH | local fixture | The same fixture converts the shared subset through msgspec before standard-adapter materialization. It proves the port is not Pydantic-shaped, not whole-library compatibility or a second shipped adapter. |
 
 ### Presentation
 

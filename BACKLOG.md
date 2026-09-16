@@ -81,6 +81,10 @@ order.
     special case. Its host-owned result/status mapping, fail-closed principal,
     composition, idempotency and cleanup remain fixture evidence only.
 - [ ] Complete the security program evidence (I10).
+- [x] Add schema-boundary conformance (V1-27): Pydantic and msgspec remain
+  optional development fixtures. Their supported evidence is JSON-normalized
+  nested dataclass-shaped data materialized and validated by the standard
+  adapter; no whole-library compatibility or shipped adapter is claimed.
 
 ## Deferred decisions
 
