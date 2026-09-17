@@ -414,7 +414,9 @@ uses `Approve`, `Request changes`, or `Comment`. Required CI never replaces
 that human decision.
 
 A self-review or conversation comment may identify defects and is encouraged,
-but it is not a formal review and cannot satisfy the required approval. The
+but it is not a formal review and does not satisfy the review this policy
+requires — which the platform does not enforce, so nothing but discipline
+stands behind it. The
 implementation agent fixes requested changes, using its verified agent author
 identity, and waits for re-review. An agent never fabricates a review, approves
 its own PR or merges it.
@@ -610,17 +612,21 @@ After resolution:
 
 The reviewed source definitions for `main` and `develop` live in
 `.github/rulesets/` so the intended enforced configuration is reviewable here
-and not only in GitHub settings. The ADR 0092 audit found no active GitHub
-rulesets; Blandskron applies these reviewed definitions after the governance PR
-is approved. `.github/rulesets/protect-release-tags.json` additionally defines
-immutable `v*` tags (no update, no force-update or deletion) without
-restricting creation, because the approved release workflow run is the only
-thing that creates one (ADR 0082).
+and not only in GitHub settings. Blandskron applies these reviewed definitions
+after the governance PR is approved.
+
+`protect-release-tags` is applied and active: a `v*` tag cannot be moved,
+force-updated or deleted, and creation is deliberately not restricted because
+the approved release workflow run is the only thing that creates one
+(ADR 0082). The two branch definitions are not yet applied, so the live
+rulesets still carry the pre-review configuration.
 
 Once applied, both branches enforce:
 
 - Pull Request required, so direct pushes are rejected;
 - the aggregate `CI` status check must pass before merge;
+- the branch must be up to date with its base before merge
+  (`strict_required_status_checks_policy`);
 - review conversations must be resolved;
 - force pushes rejected;
 - branch deletion blocked;
@@ -639,16 +645,37 @@ git push --force origin main:develop
   - Cannot force-push to this branch
 ```
 
-### Required human approval
+### Human approval is a commitment, not an enforced control
 
-The versioned ruleset definitions set `required_approving_review_count` to
-`1`, dismiss stale approvals after every push and require approval of the last
-push. Agents request that review from Blandskron. GitHub rulesets cannot name
-one reviewer, so the request and formal review provide that accountability.
+`required_approving_review_count` is `0`, and that is a decision rather than an
+oversight. GitHub does not let a pull request author approve their own pull
+request, so on a repository with one human maintainer a required approval is
+not a stricter rule — it is a rule that can only be satisfied by having some
+other account approve the maintainer's own work. Manufacturing that review
+trail would defeat ADR 0092, which exists to keep authorship and review
+honest rather than merely present.
 
-During the ADR 0092 audit GitHub returned no active rulesets; the reviewed
-definitions in `.github/rulesets/` must be imported or updated by the
-maintainer after this PR is approved. This policy does not silently change
+So the `review → approval` half of the rule above is a commitment Blandskron
+keeps, evidenced by the formal review on each pull request, and not something
+the platform enforces. Stating that plainly is the point: the earlier version
+of this section claimed one approval was required while nothing enforced it,
+and a governance document that overstates its own enforcement is worse than one
+that admits the gap. `docs/releases/1.0-release-rehearsal.md` section 7 reached
+this conclusion and these definitions follow it.
+
+Everything that does not need a second person **is** enforced: no direct
+pushes, `CI` green, the branch up to date with its base, every review
+conversation resolved, no force push, no deletion. Agents still request review
+from Blandskron and still leave the PR unmerged; none of that changes.
+
+If a second maintainer or a review bot ever exists, raising
+`required_approving_review_count` to `1` makes the documented rule real, and
+the definitions already carry `dismiss_stale_reviews_on_push` and
+`require_last_push_approval` so that becomes a one-line change. Until then
+those two parameters gate nothing.
+
+The reviewed definitions in `.github/rulesets/` must be imported or updated by
+the maintainer after this PR is approved. This policy does not silently change
 GitHub settings.
 
 ### No bypass actors
