@@ -63,3 +63,36 @@ def test_harness_supports_side_by_side_process_lifecycles() -> None:
     }
     assert native.events == ["start", "sync", "stop"]
     assert agnara.events == ["start", "sync", "stop"]
+
+
+@pytest.mark.parametrize(
+    "host_factory",
+    [
+        lambda: DirectAgnaraHost("standalone"),
+        lambda: __import__(
+            "tests.integration.starlette.test_embedding", fromlist=["_StarletteHarnessHost"]
+        )._StarletteHarnessHost("starlette"),
+        lambda: __import__(
+            "tests.integration.fastapi.test_embedding", fromlist=["_FastApiHarnessHost"]
+        )._FastApiHarnessHost("fastapi"),
+        lambda: __import__(
+            "tests.integration.django.test_embedding", fromlist=["DjangoHarness"]
+        ).DjangoHarness("django"),
+        lambda: __import__(
+            "tests.integration.litestar.test_embedding", fromlist=["_LitestarHarnessHost"]
+        )._LitestarHarnessHost("litestar"),
+    ],
+    ids=["standalone", "starlette", "fastapi", "django", "litestar"],
+)
+def test_shared_conformance_harness_across_all_host_classes(host_factory) -> None:
+    host = host_factory()
+    harness = HostHarness()
+    expected_prefix = f"sync:{host.name}:"
+    result = harness.run_case(
+        host,
+        "conformance",
+        lambda fixture: fixture.call_sync("harness-run"),
+        lambda value: value.startswith(expected_prefix),
+    )
+    assert result == f"sync:{host.name}:harness-run"
+    assert host.events == ["start", "sync", "stop"]

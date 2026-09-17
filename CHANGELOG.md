@@ -20,6 +20,14 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Audit framework interoperability and close the 1.0 supported matrix: verified
+  lifecycle and context isolation under concurrent adversarial conditions across
+  all host fixtures (Starlette 1.6.0, FastAPI 0.141.1, Django 6.1.1, Litestar
+  2.24.0), executed the shared conformance harness across all host classes,
+  verified framework absence and minimal installation in an isolated subprocess
+  (zero pollution from external web/ORM/schema/telemetry dependencies), eliminated
+  stale references, and updated the I20 supported matrix in `docs/INTEROPERABILITY.md`.
+
 - Pin every third-party GitHub Action to a commit SHA in every workflow.
   `agent-coordination.yml` used `actions/checkout@v7` and
   `actions/setup-python@v7`, two floating major tags, and escaped the existing

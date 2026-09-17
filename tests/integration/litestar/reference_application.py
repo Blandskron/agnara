@@ -108,9 +108,11 @@ class Host:
         )
 
     async def close(self) -> None:
-        assert self.state.runtime
-        await self.state.runtime.aclose()
-        self.state.closes += 1
+        if self.state.runtime is not None:
+            await self.state.runtime.aclose()
+            self.state.runtime = None
+            self.state.container = None
+            self.state.closes += 1
 
 
 def _response(result: Success[object] | Failure) -> Response:

@@ -243,6 +243,61 @@ def test_disconnect_cancels_direct_runtime_work_and_closes_host_owned_resources(
     asyncio.run(run())
 
 
+def test_adversarial_context_isolation_and_lifecycle_integrity() -> None:
+    async def run() -> None:
+        state = FixtureState()
+        app = create_application(state)
+        async with app.router.lifespan_context(app):
+            # 1. Concurrent authenticated vs attacker calls with conflicting credentials
+            auth_headers = {"x-fixture-auth": "reader"}
+            attacker_headers = {
+                "x-fixture-auth": "attacker",
+                "x-fixture-retry": "fixture-duplicate",
+            }
+
+            auth_get = _request(app, "GET", "/agnara/echo/secret-token", headers=auth_headers)
+            attacker_get = _request(
+                app, "GET", "/agnara/echo/secret-token", headers=attacker_headers
+            )
+            attacker_post = _request(app, "POST", "/agnara/write", headers=attacker_headers)
+            auth_post = _request(app, "POST", "/agnara/write", headers=auth_headers)
+
+            (
+                auth_get_resp,
+                attacker_get_resp,
+                attacker_post_resp,
+                auth_post_resp,
+            ) = await asyncio.gather(auth_get, attacker_get, attacker_post, auth_post)
+
+            # Verified actor succeeds
+            assert _json(auth_get_resp) == (200, {"ok": True, "value": "agnara:secret-token"})
+            assert _json(auth_post_resp) == (200, {"ok": True, "value": 1})
+
+            # Attacker fails closed on both read and write
+            assert _json(attacker_get_resp) == (403, {"ok": False, "code": "forbidden"})
+            assert _json(attacker_post_resp) == (403, {"ok": False, "code": "forbidden"})
+
+            # Only the single authenticated write had an effect
+            assert state.effects == 1
+
+            # 2. Verify FastAPI Request or Response is NOT bound in the DI container
+            assert state.runtime is not None
+            assert state.container is not None
+            from fastapi import Request, Response
+
+            assert not state.container.registry.is_bound(Request)
+            assert not state.container.registry.is_bound(Response)
+
+            # 3. Double-close idempotency on runtime: calling aclose multiple times is safe
+            await state.runtime.aclose()
+            await state.runtime.aclose()
+
+        assert (state.starts, state.stops) == (1, 1)
+        assert (state.projected_starts, state.projected_stops) == (1, 1)
+
+    asyncio.run(run())
+
+
 def test_clean_room_installs_wheels_and_uses_only_public_fastapi_and_agnara_imports(
     tmp_path: Path,
 ) -> None:

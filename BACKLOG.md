@@ -80,6 +80,12 @@ order.
     2.24.0 proves the public host boundary without adding Flask or a core
     special case. Its host-owned result/status mapping, fail-closed principal,
     composition, idempotency and cleanup remain fixture evidence only.
+  - [x] Interoperability reliability/security audit and supported-matrix closure (Task 30, I20, I10):
+    verified lifecycle/context isolation under adversarial conditions across all host classes
+    (Starlette 1.6.0, FastAPI 0.141.1, Django 6.1.1, Litestar 2.24.0), executed the shared conformance
+    harness across all host classes in `tests/conformance/test_host_harness.py`, proved framework
+    absence and minimal install in an isolated subprocess (`tests/integration/test_framework_absence.py`),
+    removed stale references, and updated the I20 supported matrix in `docs/INTEROPERABILITY.md`.
 - [ ] Complete the security program evidence (I10).
 - [x] Add schema-boundary conformance (V1-27): Pydantic and msgspec remain
   optional development fixtures. Their supported evidence is JSON-normalized
