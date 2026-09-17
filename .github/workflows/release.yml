@@ -1101,6 +1101,29 @@ jobs:
           ref: ${{ needs.tag.outputs.tag }}
           persist-credentials: false
 
+      # A container repository name must be lowercase. `github.repository_owner`
+      # preserves the account's case, so interpolating it directly names
+      # `ghcr.io/Blandskron/agnara:...` and buildx refuses the tag before any
+      # push. `container-edge.yml` already burned every edge publish that way;
+      # the release path carried the same raw value and would have failed the
+      # 1.0.0 container publish identically, after the tag and the GitHub
+      # Release already existed. The owner is lowercased into a step output
+      # once, and every later reference reads that output.
+      - name: Prepare container metadata
+        id: metadata
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ needs.preconditions.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          GHCR_OWNER="$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
+
+          echo "ghcr_owner=$GHCR_OWNER" >> "$GITHUB_OUTPUT"
+
+          echo "GHCR image: ghcr.io/${GHCR_OWNER}/agnara:${RELEASE_VERSION}"
+          echo "Docker Hub image: docker.io/blandskron/agnara:${RELEASE_VERSION}"
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.6.0
 
@@ -1120,7 +1143,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Both build arguments are read from this step's own environment. They
+      # were previously declared on the *following* step, so the smoke-test
+      # image was built with an empty `OCI_CREATED` and an empty
+      # `OCI_VERSION`: the artefact the gate exercised did not carry the
+      # release identity the published artefact would carry, and the smoke
+      # test could not have noticed.
       - name: Build release image for smoke test
+        env:
+          GITHUB_RUN_STARTED_AT: ${{ github.run_started_at }}
+          RELEASE_VERSION: ${{ needs.preconditions.outputs.version }}
         run: >-
           docker build --platform linux/amd64 --tag agnara:release-smoke
           --build-arg OCI_CREATED="$GITHUB_RUN_STARTED_AT"
@@ -1129,8 +1161,6 @@ jobs:
 
       - name: Smoke test release image
         run: python scripts/container_smoke.py agnara:release-smoke
-        env:
-          RELEASE_VERSION: ${{ needs.preconditions.outputs.version }}
 
       - name: Build, publish and attest release image
         id: publish
@@ -1140,7 +1170,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/agnara:${{ needs.preconditions.outputs.version }}
+            ghcr.io/${{ steps.metadata.outputs.ghcr_owner }}/agnara:${{ needs.preconditions.outputs.version }}
             docker.io/blandskron/agnara:${{ needs.preconditions.outputs.version }}
           build-args: |
             OCI_CREATED=${{ github.run_started_at }}
@@ -1155,9 +1185,10 @@ jobs:
       - name: Record immutable image digest
         run: |
           set -euo pipefail
-          echo "Published ghcr.io/${GITHUB_REPOSITORY_OWNER}/agnara:${RELEASE_VERSION}"
+          echo "Published ghcr.io/${GHCR_OWNER}/agnara:${RELEASE_VERSION}"
           echo "Published docker.io/blandskron/agnara:${RELEASE_VERSION}"
           echo "Digest: $IMAGE_DIGEST"
         env:
+          GHCR_OWNER: ${{ steps.metadata.outputs.ghcr_owner }}
           RELEASE_VERSION: ${{ needs.preconditions.outputs.version }}
           IMAGE_DIGEST: ${{ steps.publish.outputs.digest }}

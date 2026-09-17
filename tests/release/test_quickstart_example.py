@@ -170,3 +170,11 @@ def test_the_fastapi_embedding_example_runs_and_fails_closed(tmp_path: Path) -> 
     assert "no credential                  -> 401" in output
     # The host's own routes keep working beside the capability.
     assert "plain FastAPI route            -> 200" in output
+    # The correlation header is the one raw request value the host forwards to
+    # Agnara. The runtime keeps a `tracking_id` opaque and never treats it as a
+    # selector, but opaque is not unconstrained: when Agnara owns the transport
+    # its HTTP adapter bounds the header, and an embedding host has no adapter
+    # doing that for it. An example is copied, so it has to show the check.
+    assert re.search(r"^correlation accepted\s+-> 'req-7f3a9c'$", output, re.M), output
+    assert re.search(r"^correlation dropped \(long\)\s+-> None$", output, re.M), output
+    assert re.search(r"^correlation dropped \(token\)\s+-> None$", output, re.M), output
