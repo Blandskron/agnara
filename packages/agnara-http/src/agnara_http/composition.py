@@ -737,7 +737,7 @@ class HttpApplication:
 
     Being ASGI is a boundary, not an integration. Agnara speaks ASGI 3 and
     nothing here promises support for a specific framework; that is
-    `0.1.0b1` (ADR 0068).
+    `1.0.0` (ADR 0068).
 
     Compiled routes and plans are immutable. The owned DI container and
     lifespan belong to one application's event loop, not multiple worker loops.

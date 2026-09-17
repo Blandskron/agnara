@@ -186,13 +186,13 @@ authorization to claim support.
 
 | Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
-| Starlette | yes | yes | yes | CRITICAL | local fixture | Starlette 1.6.0 is the version-pinned clean-room fixture in `tests/integration/starlette/`: native and direct-runtime routes share one host lifespan; it exercises principal fail-closed mapping, composition, idempotency reuse, canonical failure/stream refusal and disconnect cancellation. This is conformance evidence, not a framework support claim. |
-| FastAPI | yes | yes | yes | CRITICAL | local fixture | FastAPI 0.141.1 is the version-pinned clean-room fixture in `tests/integration/fastapi/`: native routes, a dependency-verified actor and host exception/middleware layers remain host-owned while a direct route uses the ADR 0094 complete-result bridge. A separately mounted `HttpApplication` proves complete and SSE projection with explicitly coordinated ASGI child lifespan. FastAPI and Agnara OpenAPI documents remain separate; no route-table, middleware or OpenAPI merge is claimed. This is conformance evidence, not framework support. |
-| Django | partial | yes | yes | CRITICAL | local fixture | Django 6.1.1 is a version-pinned async-view fixture in `tests/integration/django/`: the host retains its request, auth and ORM/transaction ownership, maps one verified actor to `Principal`, and exercises canonical outcomes, composition, idempotency and explicit runtime cleanup. Sync/WSGI reuse of a live runtime is not covered; no Django plugin, ORM injection or support claim follows. |
+| Starlette | yes | yes | yes | CRITICAL | local fixture | Starlette 1.6.0 is the version-pinned clean-room fixture in `tests/integration/starlette/`: native and direct-runtime routes share one host lifespan; it exercises principal fail-closed mapping, composition, idempotency reuse, canonical failure/stream refusal and disconnect cancellation. Adversarial context isolation, lifecycle integrity (idempotent shutdown, zero DI leakage of host Request objects) and cross-host harness conformance are verified. This is conformance evidence, not a framework support claim. |
+| FastAPI | yes | yes | yes | CRITICAL | local fixture | FastAPI 0.141.1 is the version-pinned clean-room fixture in `tests/integration/fastapi/`: native routes, a dependency-verified actor and host exception/middleware layers remain host-owned while a direct route uses the ADR 0094 complete-result bridge. A separately mounted `HttpApplication` proves complete and SSE projection with explicitly coordinated ASGI child lifespan. FastAPI and Agnara OpenAPI documents remain separate; no route-table, middleware or OpenAPI merge is claimed. Adversarial context isolation (concurrent unauthenticated/tampered requests, fail-closed 403, zero host Request/Response DI leakage) and shared harness conformance are verified. This is conformance evidence, not framework support. |
+| Django | partial | yes | yes | CRITICAL | local fixture | Django 6.1.1 is a version-pinned async-view fixture in `tests/integration/django/`: the host retains its request, auth and ORM/transaction ownership, maps one verified actor to `Principal`, and exercises canonical outcomes, composition, idempotency and explicit runtime cleanup. Adversarial context isolation (concurrent untrusted requests, fail-closed 403, zero HttpRequest/HttpResponse in DI, idempotent close) and shared harness conformance are verified. Sync/WSGI reuse of a live runtime is not covered; no Django plugin, ORM injection or support claim follows. |
 | Django REST Framework | no | yes | yes | HIGH | no | Embedding into existing DRF APIs. Hosting DRF is meaningless: DRF is a view layer inside Django. |
 | Django Ninja | no | yes | yes | MEDIUM | no | Secondary confirmation that the Django embedding contract is not DRF-shaped. |
 | Flask | no | yes | research | HIGH | no | Embedding and the migration path matter. Hosting Flask does not: Agnara's HTTP boundary is ASGI (ADR 0041), and a WSGI host bridge belongs on the Flask side. Agnara must not adopt WSGI semantics in the core. |
-| Litestar | yes | yes | yes | HIGH | local fixture | Litestar 2.24.0 is the selected conditional host-diversity fixture in `tests/integration/litestar/`. It retains host-owned routing and result/status mapping while exercising the public embedding boundary, fail-closed principal mapping, composition, idempotency and cleanup. This is evidence only; Flask remains unimplemented and neither framework is supported. |
+| Litestar | yes | yes | yes | HIGH | local fixture | Litestar 2.24.0 is the selected conditional host-diversity fixture in `tests/integration/litestar/`. It retains host-owned routing and result/status mapping while exercising the public embedding boundary, fail-closed principal mapping, composition, idempotency, adversarial context isolation (zero Request leakage in DI, fail-closed auth) and safe double close, conforming to the shared host harness. This is evidence only; Flask remains unimplemented and neither framework is supported. |
 | Falcon | no | yes | research | MEDIUM | no | Kept only while it produces new evidence about WSGI/ASGI independence. |
 | aiohttp | no | yes | research | MEDIUM | no | Low-level async interoperability outside the ASGI ecosystem. |
 | Sanic, Quart | no | research | research | LOW | no | Research. They block `1.0.0` only if they reveal an architectural problem the others hid. |
@@ -206,7 +206,7 @@ application already has.
 | Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | SQLite | yes | n/a | n/a | CRITICAL | local fixture | `tests/integration/persistence/test_sqlalchemy_sqlite.py` uses SQLite with SQLAlchemy 2.0.54. The application-owned provider supplies a store, while the host retains `Session`, commit and rollback ownership; success, validation/policy refusal, handler failure, cancellation, nested invocation and parallel-session isolation are asserted. It is evidence only, not an ORM feature. |
-| PostgreSQL | yes | n/a | n/a | CRITICAL | NOT RUN (conditional) | Pooling, transaction scope, concurrent execution, async where it applies, rollback, failure handling, startup and shutdown remain supported-if-evidence work. V1-28 does not start a PostgreSQL service because the scope lock does not make it a required 1.0.0 blocker. |
+| PostgreSQL | yes | n/a | n/a | CRITICAL | NOT RUN (conditional) | Pooling, transaction scope, concurrent execution, async where it applies, rollback, failure handling, startup and shutdown remain supported-if-evidence work. V1-28 and Task 30 do not start a PostgreSQL service because the scope lock does not make it a required 1.0.0 blocker; PostgreSQL is NOT RUN (conditional). |
 | SQLAlchemy | yes | no | n/a | CRITICAL | local SQLite fixture | SQLAlchemy 2.0.54 is an optional development-only fixture, not a package dependency. It proves the primary persistence boundary over SQLite only: the host owns engine and `Session` lifecycle, unit of work and transaction decision; Agnara reimplements none of them. `AsyncSession`, PostgreSQL and Alembic remain unverified. |
 | psycopg | yes | no | n/a | HIGH | no | PostgreSQL without an ORM, proving the persistence port is not SQLAlchemy-shaped. |
 | asyncpg | yes | no | n/a | MEDIUM | no | Async database provider validation. |
@@ -468,6 +468,37 @@ evidence that the contract is missing something.
 
 The suite's own home — `agnara-testing` (I12), a repository test tier, or a
 separate conformance repository — is an open question in RFC 0008.
+
+### 9.1 Shared host harness and adversarial isolation audit (Task 30 / I20)
+
+Task 30 closes the I20 interoperability audit across all supported host classes
+using the common harness in `tests/conformance/test_host_harness.py` and
+adversarial context isolation tests across every host fixture:
+
+1. **Shared host conformance harness**: `tests/conformance/test_host_harness.py`
+   tests a parameterized suite against `HostFixture` implementations for
+   Standalone, Starlette (1.6.0), FastAPI (0.141.1), Django (6.1.1), and
+   Litestar (2.24.0). Every host demonstrates deterministic context creation,
+   dependency resolution, policy enforcement, result translation, and clean
+   resource disposal.
+2. **Adversarial context isolation & lifecycle integrity**: Each host fixture
+   includes explicit adversarial tests (`test_adversarial_context_isolation_and_lifecycle_integrity`):
+   - **Concurrent request isolation**: Authenticated and unauthenticated or
+     malicious requests execute concurrently; security policies fail closed
+     (HTTP 403) for untrusted callers without polluting or delaying legitimate
+     invocations or leaking idempotency keys.
+   - **DI container hygiene**: Verifies that raw host objects (`Request`,
+     `Response`, `HttpRequest`, `HttpResponse`, etc.) are never bound into or
+     leaked via Agnara's dependency injection container.
+   - **Lifecycle idempotency**: Verifies that multiple sequential calls to
+     host shutdown/close methods are safe and idempotent, with zero resource
+     leaks or exceptions.
+3. **Framework absence & minimal install**: `tests/integration/test_framework_absence.py`
+   verifies that Agnara core and `agnara-http` function in an isolated clean
+   subprocess where `starlette`, `fastapi`, `django`, `litestar`, `sqlalchemy`,
+   `pydantic`, `msgspec`, and `opentelemetry.sdk` are strictly blocked. Agnara
+   compiles, executes complete invocations, streams SSE, and processes HTTP
+   requests without importing any third-party framework or polluting `sys.modules`.
 
 ## 10. Side-by-side composition
 

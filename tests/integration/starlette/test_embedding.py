@@ -10,6 +10,7 @@ from collections.abc import Awaitable, Callable, MutableMapping
 from pathlib import Path
 from typing import Any
 
+from tests.conformance.harness import HostFixture, HostHarness
 from tests.integration.starlette.reference_application import FixtureState, create_application
 
 type Message = MutableMapping[str, Any]
@@ -61,6 +62,49 @@ async def _request(
     )
     body = b"".join(message.get("body", b"") for message in sent)
     return sent[0]["status"], json.loads(body)
+
+
+class _StarletteHarnessHost(HostFixture):
+    """Adapt the real Starlette fixture to the framework-neutral harness."""
+
+    state: FixtureState | None = None
+
+    def call_sync(self, value: object) -> str:
+        async def run() -> None:
+            state = FixtureState()
+            app = create_application(state)
+            async with app.router.lifespan_context(app):
+                status, data = await _request(
+                    app,
+                    "GET",
+                    f"/agnara/echo/{value}",
+                    headers={"x-fixture-auth": "reader"},
+                )
+                assert status == 200
+                assert data == {"ok": True, "value": f"agnara:{value}"}
+            self.state = state
+
+        asyncio.run(run())
+        return super().call_sync(value)
+
+    def stop(self) -> None:
+        assert self.state is not None
+        assert (self.state.starts, self.state.stops) == (1, 1)
+        super().stop()
+
+
+def test_starlette_fixture_uses_the_framework_neutral_host_harness() -> None:
+    host = _StarletteHarnessHost("starlette")
+
+    result = HostHarness().run_case(
+        host,
+        "direct-runtime",
+        lambda fixture: fixture.call_sync("harness"),
+        lambda value: value == "sync:starlette:harness",
+    )
+
+    assert result == "sync:starlette:harness"
+    assert host.events == ["start", "sync", "stop"]
 
 
 def test_native_and_embedded_routes_share_one_lifespan_and_runtime() -> None:
@@ -147,6 +191,52 @@ def test_disconnect_cancels_structured_runtime_work_and_closes_it() -> None:
             await app(scope, receive, send)
             assert state.cancellations == 1
             assert sent[0]["status"] == 499
+
+        assert (state.starts, state.stops) == (1, 1)
+
+    asyncio.run(run())
+
+
+def test_adversarial_context_isolation_and_lifecycle_integrity() -> None:
+    async def run() -> None:
+        state = FixtureState()
+        app = create_application(state)
+        async with app.router.lifespan_context(app):
+            # 1. Concurrent authenticated vs unauthenticated/malicious requests
+            auth_headers = {"x-fixture-auth": "reader"}
+            attacker_headers = {
+                "x-fixture-auth": "attacker",
+                "x-fixture-retry": "fixture-duplicate",
+            }
+
+            auth_req = _request(app, "GET", "/agnara/echo/secret-payload", headers=auth_headers)
+            attacker_req = _request(
+                app, "GET", "/agnara/echo/secret-payload", headers=attacker_headers
+            )
+            attacker_post = _request(app, "POST", "/agnara/write", headers=attacker_headers)
+
+            auth_resp, attacker_resp, attacker_post_resp = await asyncio.gather(
+                auth_req, attacker_req, attacker_post
+            )
+
+            # Authenticated request succeeds with its payload
+            assert auth_resp == (200, {"ok": True, "value": "agnara:secret-payload"})
+            # Attacker requests fail closed with 403 Forbidden without leaking reader state
+            assert attacker_resp == (403, {"ok": False, "code": "forbidden"})
+            assert attacker_post_resp == (403, {"ok": False, "code": "forbidden"})
+            # No state effects occurred from the unauthorized caller
+            assert state.effects == 0
+
+            # 2. Verify raw request or ASGI scope is NOT bound in the DI container
+            assert state.runtime is not None
+            assert state.container is not None
+            from starlette.requests import Request
+
+            assert not state.container.registry.is_bound(Request)
+
+            # 3. Double-close idempotency on runtime: calling aclose multiple times is safe
+            await state.runtime.aclose()
+            await state.runtime.aclose()
 
         assert (state.starts, state.stops) == (1, 1)
 
