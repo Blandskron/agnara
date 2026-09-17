@@ -10,8 +10,15 @@ RFC 0004 was briefly two different documents.
 Most older ADRs still say `Status: Proposed`, including records whose decisions
 govern shipped code. ADR 0001 fixes the Python 3.14 baseline that CI enforces,
 and ADR 0005 fixes the startup freeze the runtime implements. A smaller set
-does explicitly say `Accepted`: ADR 0021, ADR 0068, ADR 0069, ADR 0073,
-ADR 0081, ADR 0084, ADR 0085 and ADR 0086.
+does explicitly say `Accepted`: ADR 0021, ADR 0023, ADR 0068, ADR 0069,
+ADR 0073, ADR 0081, ADR 0084, ADR 0085, ADR 0086, ADR 0087, ADR 0088,
+ADR 0089, ADR 0091, ADR 0092, ADR 0093 and ADR 0094.
+
+This list is the claim a reader checks a Status line against, so it is gated by
+`tests/architecture/test_documentation_consistency.py` rather than maintained
+by hand. It had already drifted once: the eight records accepted through the
+1.0.0 work were not added, so the paragraph named half the accepted set while
+telling readers it named all of it.
 
 An explicit `Accepted` status is meaningful, but an older `Proposed` status is
 not reliable evidence that its decision is open or unused. Readers therefore

@@ -108,7 +108,9 @@ this that a machine can check:
 - every status token used is in the declared vocabulary;
 - every canonical document this map names exists;
 - every ADR and RFC referenced by the planning documents exists;
-- no planning document references a file that has been deleted.
+- no planning document references a file that has been deleted;
+- `docs/adr/README.md` names exactly the records that declare themselves
+  `Accepted`, in both directions.
 
 `tests/architecture/test_repository_encoding.py` additionally rejects the
 text-corruption modes that a lossy Windows write has twice introduced into
