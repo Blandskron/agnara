@@ -41,25 +41,46 @@ Both branches, identically:
 
 | Rule | Effect |
 |---|---|
-| `pull_request` | Direct pushes rejected; every change arrives through a PR with one approval |
-| `required_status_checks` | The aggregate `CI` check must pass before merge |
+| `pull_request` | Direct pushes rejected; every change arrives through a PR |
+| `required_status_checks` | The aggregate `CI` check must pass, on an up-to-date branch |
 | `required_review_thread_resolution` | Open review conversations block merge |
 | `non_fast_forward` | Force pushes rejected |
 | `deletion` | The branch cannot be deleted |
 
-## Human approval required
+## Human approval is a commitment, not an enforced control
 
-`required_approving_review_count` is `1`, stale reviews are dismissed after a
-push, and the most recent push requires approval. ADR 0092 requires
-agent-authored PRs to request that formal review from `Blandskron`; GitHub
-rulesets cannot select an individual reviewer, so the request and review trail
-make that accountability explicit. A PR author cannot satisfy the approval.
+`required_approving_review_count` is `0`, and that is deliberate rather than an
+oversight. GitHub does not let a pull request author approve their own pull
+request, so on a repository with one human maintainer a required approval is
+not a stricter rule — it is a rule that can only be satisfied by having some
+other account approve the maintainer's own work. That would manufacture the
+review trail ADR 0092 exists to keep honest, which is worse than not enforcing
+it. `docs/releases/1.0-release-rehearsal.md` section 7 reached the same
+conclusion and this configuration follows it.
 
-These JSON files are the reviewed source definitions. The current GitHub
-repository returned no active rulesets during the ADR 0092 audit, so a
-maintainer must import or update these definitions through Settings or the API
-after approving the governance PR. This repository change does not silently
-mutate GitHub settings.
+What is enforced instead is everything that does not require a second person:
+no direct pushes, `CI` green, the branch up to date with its base
+(`strict_required_status_checks_policy`), every review conversation resolved,
+no force push, no deletion.
+
+So the review half of `Issue → branch → PR → CI → review → approval → merge` is
+a commitment the maintainer keeps, recorded in the PR's review trail, not a
+control the platform applies. `GIT_WORKFLOW.md` says the same thing in the same
+words, on purpose: the previous version of this file claimed one approval was
+required while the workflow documentation described a rule nothing enforced,
+and a governance document that overstates its own enforcement is worse than one
+that admits the gap.
+
+`dismiss_stale_reviews_on_push` and `require_last_push_approval` stay `true` in
+these definitions. With no approval required they gate nothing today; they are
+kept so that adding a second maintainer or a review bot is a one-line change to
+`required_approving_review_count` rather than a redesign.
+
+These JSON files are the reviewed source definitions. Applying them is a
+maintainer action through Settings or the API — this repository change does not
+silently mutate GitHub settings. `protect-release-tags` is applied and active;
+the two branch definitions above are not yet applied, and the live rulesets
+still carry the pre-review configuration.
 
 ## Why no bypass actors
 
