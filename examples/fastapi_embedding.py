@@ -15,11 +15,13 @@ ADR 0094 defines the boundary, and the division of labour is the whole point:
 * **Agnara** owns execution. It receives a payload and a principal, and returns
   a canonical `Success` or `Failure`.
 
-Two rules this example exists to show. The host's request object never reaches a
-capability: `authenticate` turns a header into a `Principal` and the capability
-sees only that. And identity mapping fails closed -- a missing or unrecognised
+Three rules this example exists to show. The host's request object never reaches
+a capability: `authenticate` turns a header into a `Principal` and the capability
+sees only that. Identity mapping fails closed -- a missing or unrecognised
 credential yields no principal, so a scoped capability is refused rather than
-executed anonymously.
+executed anonymously. And every request value the host does forward is validated
+by the host: `correlate` bounds the one correlation header before it becomes a
+`tracking_id`, because an embedding host has no adapter doing that for it.
 
 Requires `fastapi` in the environment; it is not an Agnara dependency and never
 becomes one.
@@ -28,6 +30,7 @@ becomes one.
 from __future__ import annotations
 
 import asyncio
+import re
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
@@ -50,6 +53,11 @@ from agnara.policy import Principal
 
 #: A credential store stands in for whatever the host really uses.
 _TOKENS = {"token-alice": ("alice", {"orders:read"}), "token-bob": ("bob", set())}
+
+#: The shape Agnara's own HTTP adapter accepts for caller correlation. An
+#: embedding host is its own adapter, so it owns this check too.
+_TRACKING_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._~-]*\Z")
+_MAX_TRACKING_ID = 128
 
 
 @dataclass
@@ -104,6 +112,25 @@ def authenticate(authorization: str | None) -> Principal | None:
     return Principal(identity, scopes=scopes)
 
 
+def correlate(request_id: str | None) -> str | None:
+    """Accept one bounded opaque correlation token, or nothing.
+
+    `tracking_id` is the one piece of raw request data a host hands straight to
+    Agnara, and the runtime keeps it opaque: it is copied into telemetry and is
+    never an execution selector. Opaque is not the same as unconstrained, so
+    something still has to bound it -- when Agnara owns the transport its HTTP
+    adapter does, and when the host embeds the runtime the host does.
+
+    An unusable value is dropped rather than refused. Correlation is optional,
+    so a malformed header must not turn a valid request into an error.
+    """
+    if request_id is None:
+        return None
+    if len(request_id) > _MAX_TRACKING_ID or not _TRACKING_ID.fullmatch(request_id):
+        return None
+    return request_id
+
+
 def build_host() -> FastAPI:
     embedded = Embedded()
 
@@ -153,7 +180,7 @@ def build_host() -> FastAPI:
                 Invocation(plan.definition.id, {"order_id": order_id}, {}),
                 embedded.container,
                 principal=principal,
-                tracking_id=request.headers.get("x-request-id"),
+                tracking_id=correlate(request.headers.get("x-request-id")),
             )
         )
 
@@ -221,8 +248,19 @@ async def main() -> None:
         status, body = await drive(host, "/health", {})
         print(f"{'plain FastAPI route':<30} -> {status} {body.decode()}")
 
-    print("\nThe capability never saw the request object, and an unmapped")
-    print("credential was refused rather than executed anonymously.")
+    # The correlation header is the one raw request value the host forwards, so
+    # the host is what bounds it. A rejected value becomes no correlation at
+    # all; the request itself still succeeds.
+    for label, header in (
+        ("correlation accepted", "req-7f3a9c"),
+        ("correlation dropped (long)", "a" * 129),
+        ("correlation dropped (token)", "req-7f3a\r\nx-injected: 1"),
+    ):
+        print(f"{label:<30} -> {correlate(header)!r}")
+
+    print("\nThe capability never saw the request object, an unmapped")
+    print("credential was refused rather than executed anonymously, and")
+    print("unbounded request data never reached a tracking_id.")
 
 
 if __name__ == "__main__":

@@ -183,6 +183,30 @@ describe user- and contributor-visible changes only.
 - Add `InvocationTerminalEvent.units`: the unit count for a streaming
   invocation, `None` for a complete-result one.
 
+- Fix two defects in the release workflow's container publication that would
+  each have failed the `1.0.0` image after the tag and the GitHub Release
+  already existed. The GHCR tag interpolated `github.repository_owner`, which
+  preserves the account's case, so buildx would have refused
+  `ghcr.io/Blandskron/agnara` exactly as it refused every edge publish; and
+  the smoke-test build read `OCI_CREATED` and `OCI_VERSION` from an `env:`
+  block written under the *following* step, so the gate exercised an image
+  built with both empty. Two tests assert the properties rather than the
+  spellings.
+
+- Install the reference image's runtime dependencies from a hash-pinned
+  export under `pip --require-hashes`, so an official image contains the
+  artifacts `uv.lock` resolved rather than whatever the index serves for those
+  versions at build time. The hand-appended `uvicorn` pin is gone: it is
+  already in the resolved closure, and a second unhashed pin would be a weaker
+  statement about the same package.
+
+- Validate the correlation header in `examples/fastapi_embedding.py` before it
+  becomes a `tracking_id`. The runtime keeps the value opaque and never treats
+  it as a selector, but bounding it belongs to whoever owns the transport --
+  Agnara's HTTP adapter when Agnara owns it, the host when the host embeds the
+  runtime. The example forwarded the raw header, which is the wrong thing to
+  copy.
+
 ## [0.1.0a8] - 2026-09-09
 
 Release pipeline recovery after the immutable `v0.1.0a7` tag was created while

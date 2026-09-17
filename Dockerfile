@@ -12,11 +12,22 @@ RUN python -m pip install --no-cache-dir "uv==${UV_VERSION}"
 COPY pyproject.toml uv.lock ./
 COPY packages/ packages/
 
+# The export carries the lock's hashes, so the runtime stage installs exactly
+# the artefacts `uv.lock` resolved rather than whatever the index serves for
+# those versions at build time. That is the point of publishing an official
+# image: a version pin says which release, a hash says which bytes.
+#
+# `uvicorn` is not appended by hand. It is already in the resolved runtime
+# closure -- `agnara-mcp` depends on `mcp`, which depends on `uvicorn` -- so an
+# extra unhashed pin would be a second, weaker statement about the same
+# package in a file pip reads in hash-checking mode. The grep asserts the
+# server the image's CMD invokes really is in the pinned set, so the build
+# fails loudly here if that dependency ever goes away.
 RUN uv build --all-packages --out-dir /dist \
     && uv export --frozen --all-packages --no-dev --no-editable \
-        --no-hashes --no-emit-project --no-emit-workspace --format requirements.txt \
+        --no-emit-project --no-emit-workspace --format requirements.txt \
         --output-file /runtime-requirements.txt \
-    && printf 'uvicorn==0.52.4\n' >> /runtime-requirements.txt
+    && grep -q '^uvicorn==' /runtime-requirements.txt
 
 FROM ${PYTHON_IMAGE} AS runtime
 
@@ -39,7 +50,11 @@ RUN groupadd --gid 10001 agnara \
 
 COPY --from=builder /runtime-requirements.txt /tmp/runtime-requirements.txt
 COPY --from=builder /dist/ /tmp/dist/
-RUN python -m pip install --no-cache-dir --requirement /tmp/runtime-requirements.txt \
+# `--require-hashes` is stated rather than inferred: pip enters hash-checking
+# mode on its own as soon as one hash appears, so an export that silently lost
+# its hashes would install unverified instead of failing.
+RUN python -m pip install --no-cache-dir --require-hashes \
+        --requirement /tmp/runtime-requirements.txt \
     && python -m pip install --no-cache-dir --no-deps /tmp/dist/*.whl \
     && rm -rf /tmp/dist /tmp/runtime-requirements.txt \
     && python -m pip cache purge
