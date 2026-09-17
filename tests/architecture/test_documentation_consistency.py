@@ -217,3 +217,71 @@ def test_the_documentation_map_names_documents_that_exist() -> None:
         if not (WORKSPACE_ROOT / name).exists() and not (WORKSPACE_ROOT / "docs" / name).exists()
     )
     assert not missing, f"the documentation map names missing documents: {missing}"
+
+
+# ---------------------------------------------------------------------------
+# The decision-record index matches the records
+# ---------------------------------------------------------------------------
+
+
+def _adr_status(text: str) -> str | None:
+    """Read one record's declared status, in either spelling the corpus uses.
+
+    Ninety-three records carry `- Status: X` in a header list; ADR 0023 uses a
+    `## Status` section instead. Accepting both is deliberate -- the point is to
+    read what the corpus says, not to make a historical record's structure a
+    precondition for checking the index that describes it.
+    """
+    inline = re.search(r"^\s*[-*]\s*(?:\*\*)?Status(?:\*\*)?\s*:\s*(.+?)\s*$", text, re.M)
+    if inline is not None:
+        return inline.group(1).strip().strip("*` ")
+    section = re.search(r"^#{2,3}\s*Status\s*$\s*\n+\s*(.+?)\s*$", text, re.M)
+    return section.group(1).strip().strip("*` ") if section is not None else None
+
+
+def test_the_record_index_names_every_accepted_decision() -> None:
+    """`docs/adr/README.md` tells readers which Status lines to trust.
+
+    That paragraph is the reason a reader believes an `Accepted` line means
+    something and a `Proposed` line may not. Enumerating the accepted set by
+    hand made the claim rot: the eight records accepted through the 1.0.0 work
+    -- execution identity, the adapter bridges, both idempotency records,
+    agent authorship, nested composition and framework-neutral embedding --
+    were never added, so the paragraph named eight of sixteen while telling
+    readers it named all of them. A reader checking ADR 0093 then found
+    `Accepted` on the record and no mention in the index, with nothing to say
+    which one was authoritative.
+
+    This asserts the set both ways. A record promoted to `Accepted` without
+    the index following fails here, and so does an index that keeps naming a
+    record whose status moved back.
+    """
+    index = WORKSPACE_ROOT / "docs" / "adr" / "README.md"
+    records = sorted((WORKSPACE_ROOT / "docs" / "adr").glob("[0-9][0-9][0-9][0-9]-*.md"))
+    assert records, "no decision records were found; the check would be vacuous"
+
+    accepted = {
+        path.name[:4]
+        for path in records
+        if (_adr_status(read(path)) or "").lower().startswith("accepted")
+    }
+    assert accepted, "no record declares itself accepted; the check would be vacuous"
+
+    # Only the enumeration itself. The same paragraph cites ADR 0001 and
+    # ADR 0005 as examples of *Proposed* records that govern shipped code, so
+    # reading every citation on the page would assert the opposite of the claim.
+    sentence = re.search(r"does explicitly say `Accepted`:(.+?)\.", read(index), re.S)
+    assert sentence is not None, (
+        "docs/adr/README.md no longer enumerates the accepted records; "
+        "this check reads that sentence"
+    )
+    listed = set(re.findall(r"\bADR (0\d{3})\b", sentence.group(1)))
+
+    assert not accepted - listed, (
+        f"records declare Accepted but docs/adr/README.md does not list them: "
+        f"{sorted(accepted - listed)}"
+    )
+    assert not listed - accepted, (
+        f"docs/adr/README.md lists records as Accepted that do not declare it: "
+        f"{sorted(listed - accepted)}"
+    )
