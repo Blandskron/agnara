@@ -87,6 +87,15 @@ order.
     absence and minimal install in an isolated subprocess (`tests/integration/test_framework_absence.py`),
     removed stale references, and updated the I20 supported matrix in `docs/INTEROPERABILITY.md`.
 - [ ] Complete the security program evidence (I10).
+  - [x] Stabilize the authentication/authorization boundary and add the
+    confused-deputy regression suite (V1-35): fixed S-2, an authority
+    amplification path where a handler could reassign the verified actor a
+    nested child inherits; made `principal`, `confirmation_evidence` and
+    `idempotency` immutable for an execution; required `principal` to be a
+    `Principal` so credential objects stay outside the kernel; and added
+    `tests/security/test_authority_boundary.py`. Delegation stays
+    unimplemented (RFC 0005 is Draft). This is not I10 closure: maintainer
+    review and the final-candidate audit remain mandatory.
   - [x] Close the current threat-model and security-boundary evidence (V1-34):
     replace the historical A8 framing with the `1.0.0` candidate model across
     execution identity, direct/HTTP/MCP/embedded invocation, composition,

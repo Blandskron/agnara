@@ -69,6 +69,12 @@ direct actor or fail closed to anonymous. Core rejects caller metadata named
 the caller that supplied a principal, confirmation evidence or idempotency
 selector.
 
+What core does enforce is the shape of that hand-off. A principal must be a
+`Principal`, so a raw token or session object cannot pose as one, and the
+verified authority inputs are fixed once the execution exists, so a running
+capability cannot reassign the actor its own children inherit. `SECURITY.md`
+owns the accepted identity vocabulary.
+
 **B6 — schema and persistence.** Core compiles the selected schema contract
 and strictly validates materialized input, but a custom schema adapter and any
 durable idempotency store are application code. The bundled store is
@@ -134,6 +140,13 @@ this audit; the other paths existed already.
 | Telemetry carries no payload, principal, value or exception text | `tests/security/test_trust_boundaries.py`, `tests/integration/telemetry/test_opentelemetry_shared_host.py`, `packages/agnara-telemetry` |
 | An over-long or unusable MCP request id never reaches telemetry | `tests/mcp/test_tool_invocation.py` |
 | A caller cannot choose the runtime execution identity through invocation metadata | `tests/unit/execution/test_execution_identity.py` |
+| A privileged parent cannot lend its authority to a child the caller lacks scope for | `tests/security/test_authority_boundary.py` |
+| A running capability cannot reassign the verified actor, confirmation evidence or idempotency selector | `tests/security/test_authority_boundary.py` |
+| A credential-shaped object offered as a principal is refused before execution | `tests/security/test_authority_boundary.py` |
+| Principal metadata never grants authority under any claim name | `tests/security/test_authority_boundary.py` |
+| A cached or replayed discovery snapshot never authorizes a later invocation | `tests/security/test_authority_boundary.py` |
+| An unavailable or ambiguous confirmation verdict denies instead of approving | `tests/security/test_authority_boundary.py` |
+| Interleaved executions never exchange principals between parents or children | `tests/security/test_authority_boundary.py` |
 | A nested child has a detached actor, new execution identity and no inherited confirmation or idempotency selector | `tests/unit/execution/test_nested_composition.py` |
 | An idempotency selector is bound to capability, principal and fingerprint, with atomic in-flight behavior | `tests/unit/execution/test_idempotency.py` |
 | A streaming invocation refuses an idempotency selector instead of discarding it | `tests/security/test_trust_boundaries.py` |
@@ -164,6 +177,7 @@ because there is no decompression.
 | H-4 | P2 | Fixed. `_read_body` bounded total bytes but not the number of events. An empty chunk moves `max_body_bytes` no closer to its limit, so a client sending them with `more_body` set held a worker open indefinitely and grew a list without bound. Empty events are now capped. |
 | H-5 | P3 | Fixed. `request_timeout` was documented as a per-request deadline. It starts after binding, so it bounds execution and not how long a client may take to send a body. The documentation now says which. |
 | H-6 | P3 | Fixed. Unexpected capability exceptions were redacted on the wire but logged with `exc_info`, so exception-carried credentials, dependency values or payload fragments could reach the application's default log sink. The runtime now logs only the capability identifier; a regression test proves that exception text and traceback are absent. |
+| S-2 | P2 | Fixed. `ExecutionContext.principal` was an ordinary mutable attribute, and nested composition derives a child's authority from it. A capability that received its `ExecutionContext` could therefore assign a principal of its choosing and invoke a child with scopes the authenticated caller never held — privilege amplification reachable by an ordinary handler bug, not only by malicious code. The verified authority inputs (`principal`, `confirmation_evidence`, `idempotency`) are now fixed for the lifetime of an execution and refuse assignment; the attempt fails closed as a redacted canonical failure and the child never runs. The same repair validates the principal's type, so a duck-typed token or session object can no longer stand in for a verified identity. |
 | S-1 | P2 | Fixed. A streaming invocation silently discarded an `IdempotencyInvocation`. The refusal existed in `_execute_with_idempotency`, but its only caller is the complete-result path, which rejects a streaming plan several frames earlier, so the guard could never fire; `open_stream` consulted `context.idempotency` nowhere. A caller asking for exactly-once effects got the producer rerun on every attempt, with the store never consulted and nothing reported. `open_stream` now refuses the selector before the producer can start. |
 
 ### H-3 — declared scopes are enforced transport-neutrally
@@ -219,7 +233,7 @@ current candidate status:
 
 | Threat | candidate status |
 | --- | --- |
-| Confused deputy, over-broad delegated authority | Addressed at the implemented boundary. Declared scopes run before effects. ADR 0093's implemented same-snapshot nested boundary re-evaluates child policy/confirmation and refuses ambient context, scope union, inherited confirmation and raw delegation evidence. The child receives a detached direct actor plus at most a bounded correlation label; parent state, idempotency and raw invocation metadata do not cross. Delegation is deliberately unimplemented. MCP maps a verified SDK token through an application mapper; native HTTP remains anonymous and fails closed for scoped capabilities. |
+| Confused deputy, over-broad delegated authority | Addressed at the implemented boundary, with a dedicated regression suite in `tests/security/test_authority_boundary.py`. A caller that may invoke a privileged parent gains nothing the parent can lend: the child re-evaluates the caller's own actor. The verified authority inputs are immutable for the execution, so a handler cannot escalate its own children, and a credential-shaped object is refused as a principal. Declared scopes run before effects. ADR 0093's implemented same-snapshot nested boundary re-evaluates child policy/confirmation and refuses ambient context, scope union, inherited confirmation and raw delegation evidence. The child receives a detached direct actor plus at most a bounded correlation label; parent state, idempotency and raw invocation metadata do not cross. Delegation is deliberately unimplemented. MCP maps a verified SDK token through an application mapper; native HTTP remains anonymous and fails closed for scoped capabilities. |
 | Tool name and schema spoofing | Addressed. Names and schemas come from one frozen startup snapshot; discovery and invocation cannot disagree. |
 | Approval bypass | Addressed for confirmation: no evidence channel exists on either transport, resumed calls are refused, and a missing verifier fails at startup. |
 | Prompt and tool injection across trust boundaries | Residual application/agent risk. Agnara does not inspect argument content or decide whether untrusted descriptions, schemas, examples or retrieved text may authorize a tool. Applications must keep untrusted prompt data separate from authority and confirmation decisions. |
@@ -306,7 +320,7 @@ and embedded host bridges, nested capability invocation, execution identity,
 idempotency, streaming and SSE, schema/persistence seams, documentation UIs,
 supply-chain controls and telemetry.
 
-It produced one finding, S-1 above. The following were probed directly and
+It produced findings S-1 and S-2 above. The following were probed directly and
 behaved correctly; they are recorded so a later reviewer knows they were tried
 rather than assumed:
 
@@ -316,6 +330,12 @@ rather than assumed:
 | An idempotency scope naming a different capability than the compiled plan | Refused before the claim, as a redacted canonical failure. |
 | A nested child inheriting the parent's idempotency selector | Does not happen; the child's execution adds no store record. |
 | Caller metadata attempting to select a runtime execution identity | Refused before policy or effects; the runtime generates the execution identity. |
+| A caller invoking a privileged parent whose child needs a scope it lacks | Refused at the child boundary; the privileged effect never ran and the parent still returned a canonical result. |
+| A handler reassigning `context.principal` before invoking a child | Refused. This was a real finding (S-2); the authority inputs are now immutable and the attempt fails closed as a redacted canonical failure. |
+| A verified-token object passed where a principal belongs | Refused at construction, although it was duck-type compatible with scope evaluation. |
+| Forged `scopes`, `scp`, `roles` or `permissions` entries in principal metadata | Inert. Only granted scopes authorize. |
+| Invocation metadata asserting `subject`, `on_behalf_of`, `act_as` or `delegation` | Inert. No subject or delegation surface exists to read. |
+| A discovery snapshot filtered for a privileged viewer, replayed by an unprivileged one | Discloses descriptions only; authorization is re-decided from the invoking principal. |
 | A host fixture passing raw request/session/transaction state into the kernel | Out of contract: the value-only bridge fixtures retain those objects and lifecycle ownership in the host. |
 | An idempotency selector on a capability not declared `Idempotency.YES` | Refused, fail-closed, as a redacted canonical failure. |
 | A stream unit containing SSE frame separators | Cannot inject a frame: every unit goes through the same JSON value rule, so separators are escaped. Covered by `tests/http/test_sse.py`. |
