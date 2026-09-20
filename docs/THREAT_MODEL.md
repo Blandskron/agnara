@@ -1,14 +1,16 @@
-# Threat Model — A8 Baseline
+# Threat Model — 1.0 Candidate
 
-What an attacker can reach in the baseline surface, what Agnara
-itself refuses, and what it does not attempt. It covers the retained baseline surface:
-the ASGI/HTTP adapter, the MCP adapter, the policy pipeline, error mapping,
-observability and the published distributions.
+What an attacker can reach in the `1.0.0` candidate, what Agnara itself
+refuses, and what it deliberately leaves to the application or deployment.
+It covers direct capability execution; the ASGI/HTTP and SSE projection; MCP;
+nested composition and idempotency; embedded and side-by-side hosts; schema,
+persistence and telemetry seams; the local CLI; and published distributions.
 
-This is not the complete `1.0.0` security program. There is no penetration test, no fuzzing
-corpus and no cryptographic review behind it. Every "verified" claim below
-names the test that proves it; everything else is written as an assumption or a
-gap on purpose.
+This is source-and-test-backed release evidence, not a production-security
+certification. There is no penetration test, fuzzing corpus, load test,
+cryptographic review or audit of an application's deployment. Every
+"verified" claim below names repository evidence; everything else is written
+as an assumption, residual risk or post-1.0 decision on purpose.
 
 `SECURITY.md` owns the reporting channel and the project's security posture.
 This document owns the analysis.
@@ -23,20 +25,24 @@ This document owns the analysis.
 | Request and response content | Other callers' data, whatever the application processes. |
 | Server availability | A worker held open, memory consumed, a process degraded. |
 | Server-side detail | Tracebacks, internal paths, dependency names, policy internals. |
+| Execution and idempotency identities | A forged execution identity, replayed key or cross-principal result can confuse effects and audit trails. |
+| Schema, persistence and telemetry data | A custom adapter, store or exporter can disclose or corrupt application data outside core controls. |
+| Host and release authority | A host identity mapper, local CLI operator or publisher can cause privileged effects or publish compromised artifacts. |
 | The published distributions | Anything shipped to PyPI is executed by every consumer. |
 
 ## 2. Trust boundaries
 
 ```text
-       untrusted                     │ Agnara owns          │ application owns
-─────────────────────────────────────┼──────────────────────┼───────────────────
- HTTP client ──▶ ASGI server ──▶ ASGI events ──▶ binding ──▶ policies ──▶ handler
- MCP client ──▶ official SDK ──▶ tools/call ──▶ dispatch ──▶ policies ──▶ handler
-                                     │                      │
-                              telemetry hooks ──▶ exporter (application owns)
+       untrusted / host-owned          │ Agnara owns              │ application owns
+───────────────────────────────────────┼──────────────────────────┼───────────────────
+ HTTP client ──▶ ASGI server ──▶ binding ──▶ policies ──▶ handler / result mapping
+ MCP client ──▶ official SDK ──▶ dispatch ──▶ policies ──▶ handler / result mapping
+ direct or embedded caller ──▶ value-only context bridge ──▶ policies ──▶ handler
+ schema adapter / idempotency store ───────────────────────────────────────▶ selected by app
+ telemetry hook ───────────────────────────────────────────────────────────▶ exporter and retention
 ```
 
-Four boundaries matter.
+Eight boundaries matter.
 
 **B1 — the ASGI server.** Everything before the adapter's first line: TLS,
 connection limits, HTTP framing, header size limits, request smuggling, and how
@@ -54,13 +60,44 @@ supplies the policies and, for confirmation, the verifier.
 exporters and any failure message an application writes. Agnara cannot make an
 application's own disclosure safe; it can keep its own out of the way.
 
+**B5 — direct and embedded execution.** A caller that can construct an
+`ExecutionContext` is a trusted composition root, not an authenticated remote
+principal. The ADR 0094 host bridge passes plain values only; the host owns
+request/session/transaction/span objects and must map verified identity to a
+direct actor or fail closed to anonymous. Core rejects caller metadata named
+`execution_id` and generates that identity itself, but it cannot authenticate
+the caller that supplied a principal, confirmation evidence or idempotency
+selector.
+
+**B6 — schema and persistence.** Core compiles the selected schema contract
+and strictly validates materialized input, but a custom schema adapter and any
+durable idempotency store are application code. The bundled store is
+process-local; the SQLAlchemy/SQLite exercises are fixtures in which the host
+owns session, commit and rollback, not a shipped persistence integration.
+
+**B7 — observability.** The optional telemetry bridge emits a fixed allowlist
+and excludes payloads, principals, values and exception text. Tracer/meter
+providers, exporter endpoint, retention, access and host propagation remain
+application-owned.
+
+**B8 — local tooling and release.** CLI target import is local code execution,
+not a sandbox. Publication crosses protected GitHub environment review,
+phase-specific OIDC and package registries; their live settings need external
+readback and are not established by source inspection alone.
+
 ## 3. Attacker-controlled inputs
 
 Everything in this list is untrusted, including values the transport looks
 structural: method, path, `root_path`, query string, every header name and
 value, cookies, the body and its media type, multipart boundaries, part names
 and filenames, the number and size of ASGI body events, an MCP tool name, its
-arguments, the JSON-RPC request id, and any OAuth token the SDK verifies.
+arguments, the JSON-RPC request id and SDK access token. A direct or embedded
+caller can also supply a principal, confirmation evidence, deadline,
+idempotency selector, opaque correlation label and custom schema/store/exporter
+configuration; those are trusted only after its application composition root
+has validated them. Capability descriptions, schemas, examples, prompt text
+and metadata are untrusted data when an application sends them to a human or
+agent; the framework does not inspect semantic prompt/tool injection.
 
 ## 4. Verified protections
 
@@ -96,13 +133,19 @@ this audit; the other paths existed already.
 | Task-augmented and resumed MCP calls are refused before dispatch | `tests/mcp/test_tool_invocation.py` |
 | Telemetry carries no payload, principal, value or exception text | `tests/security/test_trust_boundaries.py`, `tests/integration/telemetry/test_opentelemetry_shared_host.py`, `packages/agnara-telemetry` |
 | An over-long or unusable MCP request id never reaches telemetry | `tests/mcp/test_tool_invocation.py` |
+| A caller cannot choose the runtime execution identity through invocation metadata | `tests/unit/execution/test_execution_identity.py` |
+| A nested child has a detached actor, new execution identity and no inherited confirmation or idempotency selector | `tests/unit/execution/test_nested_composition.py` |
+| An idempotency selector is bound to capability, principal and fingerprint, with atomic in-flight behavior | `tests/unit/execution/test_idempotency.py` |
 | A streaming invocation refuses an idempotency selector instead of discarding it | `tests/security/test_trust_boundaries.py` |
+| Slow SSE consumers exert pull backpressure and disconnect/cancellation close the owned stream | `tests/http/test_sse.py` |
+| Host fixtures retain host identity, lifespan and transaction ownership while the core re-evaluates policy | `tests/conformance/test_host_harness.py`, `tests/integration/persistence/test_sqlalchemy_sqlite.py` |
+| The optional OpenTelemetry bridge omits payloads, claims and idempotent results, including in a shared host | `tests/integration/telemetry/test_opentelemetry_shared_host.py` |
 | Reviewed files and built distributions are checked for recognized credential signatures; this does not prove absence of every secret format | `tests/security/test_repository_secrets.py`, `scripts/check_distributions.py` |
 
 Two structural properties are worth stating separately, because they remove
 whole classes rather than one case.
 
-**No filesystem, no subprocess, no outbound network.** The a4 request path
+**No filesystem, no subprocess, no outbound network.** The Agnara HTTP/SSE request path
 opens no file, spawns nothing and makes no outbound call. Multipart is parsed
 in memory, so there is no temporary upload to leak or clean up, and no static
 file route exists for a traversal to reach.
@@ -136,11 +179,13 @@ forbidden without executing the handler and that MCP refuses the same scoped
 capability. The broader cross-surface ordering is fixed by
 `tests/conformance/test_a4_schema_policy_failure_consistency.py`.
 
-The a4 HTTP surface still has no authentication or principal-mapping contract.
-Consequently, a declared scope fails closed there rather than being silently
-ignored. Applications needing authenticated scoped HTTP calls must wait for or
-provide the future authentication integration; the framework does not infer
-authority from headers, cookies, query parameters or capability arguments.
+The native HTTP surface still constructs an anonymous principal and has no
+general authentication or principal-mapping contract. Consequently, a declared
+scope fails closed there rather than being silently ignored. An embedded host
+may map a verified identity through the value-only ADR 0094 bridge, but that is
+the host application's security boundary, not an HTTP adapter feature. The
+framework does not infer authority from headers, cookies, query parameters or
+capability arguments.
 
 ## 6. Delegated assumptions
 
@@ -155,7 +200,7 @@ it, and none is verified by this repository's tests.
 | How long a client may take to send a body (slowloris) | ASGI server or proxy; `request_timeout` does not cover it |
 | Connection and concurrency limits, backpressure | ASGI server |
 | Rate limiting, quotas, abuse detection | Application or proxy |
-| Authentication and principal issuance over HTTP | Not designed in a4; no HTTP path produces a `401` |
+| Authentication and principal issuance over native HTTP | Not implemented; native HTTP invocation is anonymous and does not produce a `401` |
 | OAuth token verification, JSON-RPC framing, MCP session and transport handling | Official MCP SDK |
 | Correctness and disclosure of application policies, handlers and failure messages | Application |
 | Telemetry exporter destination, retention and access | Application |
@@ -169,17 +214,17 @@ anything Agnara does.
 
 ## 7. Agent-specific threats
 
-`SECURITY.md` lists the agent threats the project intends to model. Their baseline
-status:
+`SECURITY.md` lists the agent threats the project intends to model. Their
+current candidate status:
 
-| Threat | baseline status |
+| Threat | candidate status |
 | --- | --- |
-| Confused deputy, over-broad delegated authority | Declared scopes are enforced transport-neutrally before effects. ADR 0093's implemented same-snapshot nested boundary re-evaluates child policy/confirmation and refuses ambient context, scope union, inherited confirmation and raw delegation evidence. The child receives a detached direct actor plus at most a bounded correlation label; parent state, idempotency and raw invocation metadata do not cross. Delegated authority is not implemented. MCP maps a verified token to a principal through an application mapper; HTTP remains anonymous and fails closed for scoped capabilities. Broader authentication and delegation implementation remains `1.0.0` work. |
+| Confused deputy, over-broad delegated authority | Addressed at the implemented boundary. Declared scopes run before effects. ADR 0093's implemented same-snapshot nested boundary re-evaluates child policy/confirmation and refuses ambient context, scope union, inherited confirmation and raw delegation evidence. The child receives a detached direct actor plus at most a bounded correlation label; parent state, idempotency and raw invocation metadata do not cross. Delegation is deliberately unimplemented. MCP maps a verified SDK token through an application mapper; native HTTP remains anonymous and fails closed for scoped capabilities. |
 | Tool name and schema spoofing | Addressed. Names and schemas come from one frozen startup snapshot; discovery and invocation cannot disagree. |
 | Approval bypass | Addressed for confirmation: no evidence channel exists on either transport, resumed calls are refused, and a missing verifier fails at startup. |
-| Prompt and tool injection across trust boundaries | Not addressed. Agnara does not inspect argument content. |
+| Prompt and tool injection across trust boundaries | Residual application/agent risk. Agnara does not inspect argument content or decide whether untrusted descriptions, schemas, examples or retrieved text may authorize a tool. Applications must keep untrusted prompt data separate from authority and confirmation decisions. |
 | Automated destructive invocation, replay of non-idempotent operations | Partially addressed. A streaming invocation now refuses an idempotency selector rather than discarding it (S-1), so a caller cannot believe it has exactly-once effects on a path that never had them. ADR 0091 makes an explicit direct `Idempotency.YES` selector claim atomically before dependencies or handler work and reuses only a bound completed success. It re-evaluates policy and confirmation, rejects scope/principal mismatch, and fails closed on store or stale-codec errors without logging opaque result bytes. Inclusive lease/result expiry is a liveness boundary, never proof the former handler stopped; automatic retries remain absent. It neither authenticates callers nor adds HTTP/MCP selector fields; anonymous HTTP and unreviewed protocol metadata remain untrusted. |
-| Cross-tenant context leakage | Not applicable in the baseline: no tenant concept, and no per-request state is shared between invocations. |
+| Cross-tenant context leakage | No tenant model is supplied. Per-invocation context, nested ancestry and idempotency namespaces are isolated in the reviewed runtime; tenant isolation, host caches and application stores remain application-owned. |
 | Unbounded tool recursion | Partially addressed for nested capabilities. `CapabilityRuntime` keeps private immutable ancestry per child, refuses direct and indirect repeated identities and applies a finite `1..32` runtime depth limit before the next child policy, dependencies or effects. Ordinary application Python recursion remains application-owned; a streaming child is refused before producer start, and streams and cross-app composition are not part of this boundary. |
 | SSRF through generic HTTP capabilities | Application's own concern; Agnara makes no outbound call. |
 
@@ -191,11 +236,12 @@ an ExecutionContext, but must not manufacture scopes, confirmation, delegation,
 execution identity or idempotency state from request data. Raw host
 request/session/transaction, telemetry and exception objects remain outside
 kernel state and normal handler parameters; the host maps canonical results and
-owns its own resources. The Starlette 1.6.0, FastAPI 0.141.1 and Django 6.1.1 fixtures
-exercise fail-closed identity mapping, redacted canonical failure, fixed
-trusted idempotency selection and disconnect cancellation; their evidence is
-in `tests/integration/starlette/`, `tests/integration/fastapi/` and
-`tests/integration/django/`. The
+owns its own resources. The Starlette 1.6.0, FastAPI 0.141.1, Django 6.1.1 and
+Litestar 2.24.0 fixtures exercise fail-closed identity mapping, redacted
+canonical failure, fixed trusted idempotency selection and disconnect
+cancellation; their evidence is in `tests/integration/starlette/`,
+`tests/integration/fastapi/`, `tests/integration/django/` and
+`tests/integration/litestar/`. The
 FastAPI fixture also keeps its dependency verifier, middleware and exception
 handler outside the capability boundary, and explicitly joins a mounted
 ASGI-child lifespan rather than assuming FastAPI propagates it. These remain
@@ -205,7 +251,7 @@ security review.
 ## 8. CLI and reserved distribution boundaries
 
 All seven distributions, including `agnara-cli`, `agnara-a2a` and
-`agnara-events`, belong to the reviewed a4 publication set (ADR 0073).
+`agnara-events`, belong to the reviewed candidate publication set (ADR 0073).
 The latter two expose empty `__all__` lists and implement no protocol runtime;
 their current security evidence is package-boundary, archive and installed
 metadata validation, not A2A or event-protocol conformance.
@@ -235,11 +281,13 @@ transport request path, not to this developer tool or application handlers.
 ## 9. Repository security controls
 
 The Cycle 3 follow-up in Issue #326 enables GitHub secret scanning, push
-protection and Dependabot alerts/security updates. Settings must be read back
-from GitHub; a successful update request alone is not evidence of activation.
-Non-provider-pattern scanning remained disabled after the enable request;
-secret validity checks were not enabled. These limitations remain visible in
-the release closure record.
+protection and Dependabot alerts/security updates. On 2026-09-20, a GitHub API
+readback for the repository reported Dependabot security updates, secret
+scanning and push protection enabled, and returned zero open Dependabot and
+secret-scanning alerts. This is a point-in-time observation, not proof that a
+future candidate or every historical revision is clean. Non-provider-pattern
+scanning and secret validity checks were reported disabled. These limitations
+remain visible in the release closure record.
 
 Required CI includes CodeQL for Python and GitHub Actions, with immutable
 action references and security-result upload permission limited to that job.
@@ -253,8 +301,9 @@ database updates.
 
 ## 10. Adversarial review for 1.0.0
 
-A second adversarial pass covered authorization and principal handling, nested
-capability invocation, idempotency, streaming and SSE, the documentation UIs,
+A second adversarial pass covered authorization and principal handling, direct
+and embedded host bridges, nested capability invocation, execution identity,
+idempotency, streaming and SSE, schema/persistence seams, documentation UIs,
 supply-chain controls and telemetry.
 
 It produced one finding, S-1 above. The following were probed directly and
@@ -266,9 +315,12 @@ rather than assumed:
 | A stored idempotent result read back by a different principal using the same key | Refused. The selector binds capability, principal and key, and the two principals received their own results. |
 | An idempotency scope naming a different capability than the compiled plan | Refused before the claim, as a redacted canonical failure. |
 | A nested child inheriting the parent's idempotency selector | Does not happen; the child's execution adds no store record. |
+| Caller metadata attempting to select a runtime execution identity | Refused before policy or effects; the runtime generates the execution identity. |
+| A host fixture passing raw request/session/transaction state into the kernel | Out of contract: the value-only bridge fixtures retain those objects and lifecycle ownership in the host. |
 | An idempotency selector on a capability not declared `Idempotency.YES` | Refused, fail-closed, as a redacted canonical failure. |
 | A stream unit containing SSE frame separators | Cannot inject a frame: every unit goes through the same JSON value rule, so separators are escaped. Covered by `tests/http/test_sse.py`. |
 | Unbounded buffering or a slow SSE consumer | Structurally prevented: the pump performs one pull per completed send with no queue between them, so ASGI send demand is the producer's demand. |
+| A telemetry hook receiving payload, principal, result or exception text | Refused by the adapter's fixed attribute allowlist; exporter routing and retention remain application-owned. |
 | GitHub Actions pinned to mutable references, or default write permissions | Enforced by `tests/architecture/test_ci_workflow.py` and `test_release_workflow.py`. |
 
 The probes are not a substitute for the limits in section 11. In particular,

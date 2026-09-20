@@ -87,6 +87,13 @@ order.
     absence and minimal install in an isolated subprocess (`tests/integration/test_framework_absence.py`),
     removed stale references, and updated the I20 supported matrix in `docs/INTEROPERABILITY.md`.
 - [ ] Complete the security program evidence (I10).
+  - [x] Close the current threat-model and security-boundary evidence (V1-34):
+    replace the historical A8 framing with the `1.0.0` candidate model across
+    execution identity, direct/HTTP/MCP/embedded invocation, composition,
+    idempotency, streaming, schema/persistence and telemetry; record the
+    2026-09-20 GitHub alert readback and residual host/application boundaries.
+    This is not I10 or release closure: final-candidate audit and maintainer
+    review remain mandatory.
 - [x] Add schema-boundary conformance (V1-27): Pydantic and msgspec remain
   optional development fixtures. Their supported evidence is JSON-normalized
   nested dataclass-shaped data materialized and validated by the standard
