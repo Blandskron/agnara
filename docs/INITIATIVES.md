@@ -94,6 +94,11 @@ Generated public reference and a deliberate stable classification decision.
 **Horizon:** `1.0.0`
 **Status:** `IN PROGRESS`
 
+V1-36 added the property-based and bounded-fuzz lanes in `tests/property/`,
+which found and fixed two request-path defects (F-1, F-2) in HTTP method
+handling. The lanes are derandomized and bounded so CI stays reproducible;
+continuous fuzzing and a crash corpus remain out of 1.0 scope.
+
 V1-35 stabilized the authentication/authorization boundary: the verified
 authority inputs are immutable for an execution, a credential object cannot
 pose as a principal, and `tests/security/test_authority_boundary.py` holds the

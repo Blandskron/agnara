@@ -39,3 +39,9 @@ uv.lock.bak
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Hypothesis writes a constants cache here. It ships its own .gitignore,
+# but relying on a generated file to keep generated data out of the tree is
+# not a control. The property lanes set database=None, so nothing here is
+# evidence: discovered failures are pinned as @example instead.
+.hypothesis/

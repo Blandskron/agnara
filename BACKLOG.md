@@ -87,6 +87,14 @@ order.
     absence and minimal install in an isolated subprocess (`tests/integration/test_framework_absence.py`),
     removed stale references, and updated the I20 supported matrix in `docs/INTEROPERABILITY.md`.
 - [ ] Complete the security program evidence (I10).
+  - [x] Establish the property-based and bounded-fuzz program (V1-36): added
+    `tests/property/` covering the four targets `QUALITY_GATES.md` names plus
+    identity/selector normalization and an end-to-end adversarial request
+    lane. Found and fixed F-1 (a non-token request method escaped the
+    dispatcher uncaught) and F-2 (request methods were uppercased, so `post`
+    reached a `POST` route against RFC 9110). Lanes are derandomized and
+    bounded; they are a regression net, not continuous fuzzing, and no
+    coverage or verification claim follows.
   - [x] Stabilize the authentication/authorization boundary and add the
     confused-deputy regression suite (V1-35): fixed S-2, an authority
     amplification path where a handler could reassign the verified actor a

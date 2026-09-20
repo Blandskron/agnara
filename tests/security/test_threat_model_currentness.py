@@ -27,6 +27,7 @@ def test_threat_model_covers_current_runtime_and_host_boundaries() -> None:
         "A caller cannot choose the runtime execution identity",
         "A streaming invocation refuses an idempotency selector",
         "## 10. Adversarial review for 1.0.0",
-        "No fuzzing, no penetration test, no load or denial-of-service testing",
+        "no continuous or\ncoverage-guided fuzzing campaign",
+        "no penetration test,\nno load or denial-of-service testing",
     ):
         assert required in text

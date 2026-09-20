@@ -65,11 +65,39 @@ class _FrozenNode[T]:
 
 
 def _normalize_method(method: str) -> str:
+    """Normalize an *authored* method. A malformed one is a definition error.
+
+    Uppercasing belongs to registration only: it is what lets ``http.post(...)``
+    and an explicit ``"POST"`` name one route. It must not be applied to a
+    request -- see `_request_method`.
+    """
     if not isinstance(method, str):
         raise _RouteDefinitionError(f"HTTP method must be a string, got {type(method).__name__}")
     if not _METHOD_TOKEN.fullmatch(method):
         raise _RouteDefinitionError(f"invalid HTTP method token: {method!r}")
     return method.upper()
+
+
+def _request_method(method: str) -> str | None:
+    """Accept a request method, or answer ``None`` for one no route can match.
+
+    This is the method-side counterpart of `_request_segments`, and it differs
+    from `_normalize_method` in both directions on purpose.
+
+    It does not raise. A request method is attacker controlled, so a value
+    outside the RFC 9110 token grammar is a target nothing is exposed at, not
+    an authoring mistake. Raising here would leave the dispatcher with nothing
+    sent, and the ASGI server -- not Agnara -- would decide what the client and
+    the operator's log receive, echoing the caller's own bytes.
+
+    It also does not uppercase. RFC 9110 section 9.1 makes the method token
+    case-sensitive, so ``post`` is not ``POST``. Folding them would let a
+    request slip past a proxy or gateway rule written against the real method
+    name, and it already disagreed with the dispatcher's own ``== "HEAD"``.
+    """
+    if not isinstance(method, str) or not _METHOD_TOKEN.fullmatch(method):
+        return None
+    return method
 
 
 def _path_segments(path: str) -> tuple[str, ...]:
@@ -191,11 +219,13 @@ class _FrozenRouteRegistry[T]:
         return f"{type(self).__name__}({len(self)} routes)"
 
     def match(self, method: str, path: str) -> _RouteMatch[T] | None:
-        normalized_method = _normalize_method(method)
+        request_method = _request_method(method)
+        if request_method is None:
+            return None
         segments = _request_segments(path)
         if segments is None:
             return None
-        root = self._roots.get(normalized_method)
+        root = self._roots.get(request_method)
         if root is None:
             return None
         matched = _match_node(root, segments)
