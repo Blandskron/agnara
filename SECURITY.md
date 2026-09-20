@@ -43,6 +43,45 @@ Agnara must explicitly distinguish:
 
 No single decorator should claim to solve all of these.
 
+### What the kernel accepts as an identity
+
+Agnara authenticates nobody. A composition root — an adapter, an embedding
+host, or a direct caller — verifies a credential and hands the kernel the
+result. That result is a `Principal`, and it is the entire vocabulary:
+
+| Field | Meaning | Rule |
+| --- | --- | --- |
+| `identity` | Stable non-empty string naming the verified actor | Compared, never parsed for authority |
+| `scopes` | The permission labels the verifier granted | The only grant channel |
+| `metadata` | Opaque facts a policy may read | Never authority by itself |
+
+Four consequences follow, and each is enforced rather than advised:
+
+- **Credentials stay outside.** `principal` must be a `Principal`. A raw JWT,
+  claims mapping, access token or framework session object is refused at
+  construction even when it is duck-type compatible with scope evaluation.
+  Credential material therefore never needs to reach a handler or telemetry.
+- **Scopes are the only grant.** Nothing in `metadata` grants authority, under
+  any name — `scopes`, `scp`, `roles`, `permissions` or otherwise.
+- **Authority is fixed for the execution.** `principal`,
+  `confirmation_evidence` and `idempotency` cannot be reassigned once an
+  execution exists. A running capability is not its own authorization
+  authority.
+- **Absence fails closed.** No verified identity resolves to
+  `AnonymousPrincipal`, which holds no scopes, so every scoped capability
+  refuses it. A capability that declares no scope declares no requirement and
+  is not treated as secret.
+
+There is no `subject`, actor/subject split, grant chain or attenuation to
+configure. RFC 0005 delegation is Draft and deliberately unimplemented, so a
+nested child receives a detached copy of the caller's own actor and its own
+policies are re-evaluated against it. Invocation metadata naming a subject or
+a delegation is inert data, never verified authority.
+
+`tests/security/test_authority_boundary.py` holds the regression evidence,
+including the confused-deputy case where a caller may run a privileged parent
+but lacks the child's scope.
+
 ## Default posture
 
 - deny when a required policy cannot be evaluated;

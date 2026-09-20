@@ -20,6 +20,18 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Fix an authority-amplification path in nested composition. A running
+  capability could reassign `ExecutionContext.principal`, and a nested child
+  derives its authority from that attribute, so a handler could hand a child
+  scopes the authenticated caller never held. The verified authority inputs
+  (`principal`, `confirmation_evidence`, `idempotency`) are now fixed for the
+  lifetime of an execution and raise `InvocationError` on assignment.
+  `ExecutionContext` also now requires `principal` to be a `Principal`: a raw
+  token, claims mapping or session object that merely looks like one is
+  refused, which keeps credential material outside the kernel. No supported
+  code assigned these attributes, so this narrows accepted input before the
+  1.0 contract freezes rather than breaking a released promise.
+
 - Finalize the 1.0 Python API: 166 canonical names are now stable, while 171
   duplicate leaf-module re-exports are no longer public. Import DI from
   `agnara.di` instead of `agnara.core.di`; read snapshot applications through

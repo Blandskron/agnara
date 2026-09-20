@@ -94,6 +94,14 @@ Generated public reference and a deliberate stable classification decision.
 **Horizon:** `1.0.0`
 **Status:** `IN PROGRESS`
 
+V1-35 stabilized the authentication/authorization boundary: the verified
+authority inputs are immutable for an execution, a credential object cannot
+pose as a principal, and `tests/security/test_authority_boundary.py` holds the
+confused-deputy, forged-claim, cached-discovery, verifier-failure and
+cross-execution regression evidence. It fixed S-2, an amplification path where
+a handler could reassign the actor its nested children inherit. Delegation
+remains unimplemented because RFC 0005 is still Draft.
+
 V1-34 replaces the historical A8 model with current candidate evidence for
 execution identity, direct/HTTP/MCP/embedded invocation, composition,
 idempotency, streaming, schema/persistence and telemetry boundaries. It also

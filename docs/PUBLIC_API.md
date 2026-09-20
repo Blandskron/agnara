@@ -56,6 +56,19 @@ types from `agnara.di`. `IntrospectionSnapshot.apps` and the top-level JSON
 field `apps` have been renamed to `applications`. The `apps` member of an
 `ApplicationDescriptor` still represents bounded contexts and is unchanged.
 
+`ExecutionContext` narrows two previously unchecked inputs. `principal` must
+be a `Principal`; a duck-typed token, claims mapping or session object is now
+a `TypeError` at construction. `principal`, `confirmation_evidence` and
+`idempotency` are read-only after construction and raise `InvocationError` on
+assignment, because a nested child derives its authority from the parent's
+principal and a reassignable one is an amplification path. Supply authority
+through the constructor from the composition root that authenticated the
+caller. `state` and `tracking_id` remain mutable; neither is authority.
+
+Both narrowings land before the 1.0 contract freezes. Under the 1.x rules
+below they would each require a major release, so they are deliberately taken
+now rather than after the promise exists.
+
 ## Enforcement
 
 The architecture tests compare each literal `__all__` to the manifest, ensure
