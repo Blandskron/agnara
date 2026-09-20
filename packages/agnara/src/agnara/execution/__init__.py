@@ -1,4 +1,4 @@
-from agnara.errors import InteractionRequiredError, PolicyDeniedError
+from agnara.errors import InteractionRequiredError, PolicyDeniedError  # noqa: F401
 
 from ._composition import CapabilityInvoker
 from .context import ExecutionContext
@@ -46,11 +46,9 @@ __all__ = [
     "IdempotencyStorageError",
     "IdempotencyStore",
     "InMemoryIdempotencyStore",
-    "InteractionRequiredError",
     "Invocation",
     "InvocationStartEvent",
     "InvocationTerminalEvent",
-    "PolicyDeniedError",
     "StreamInterrupted",
     "StreamTerminal",
     "Success",

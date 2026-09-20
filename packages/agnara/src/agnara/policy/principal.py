@@ -5,7 +5,7 @@ from typing import Any
 from agnara._frozen import frozen_slots_dataclass
 from agnara.policy.scopes import _normalize_scopes
 
-__all__ = ["AnonymousPrincipal", "Principal"]
+__all__: list[str] = []
 
 
 @frozen_slots_dataclass

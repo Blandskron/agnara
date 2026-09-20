@@ -180,7 +180,7 @@ def test_the_graph_and_inspect_agree_under_one_visibility_decision(
 
     described = {
         capability["id"]: [item["type"]["name"] for item in capability["dependencies"]]
-        for app in document["apps"]
+        for app in document["applications"]
         for capability in app["capabilities"]
     }
     assert described == {"billing.refund": ["Ledger"], "billing.health": []}

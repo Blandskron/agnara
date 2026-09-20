@@ -391,7 +391,7 @@ cross-thread calls are not. The owner drains calls before awaiting
 runtime.aclose(); the runtime creates no detached work and closing one runtime
 never closes a different application.
 
-The public spelling remains provisional until I9's explicit 1.0.0
+The public spelling is stable after I9's explicit 1.0.0
 classification. Sync entry points, streaming hosts, delegated authority,
 cross-application execution, framework-specific convenience APIs and automatic
 retry are out of scope. Idempotency is never authorization to retry.
@@ -585,7 +585,7 @@ that can exercise the contract, so a defect it finds is a contract defect rather
 than FastAPI's interpretation of it.
 
 The first version-pinned scenario is `tests/integration/starlette/`. It uses
-only the public provisional runtime values chosen by ADR 0094 and Starlette
+only the public stable runtime values chosen by ADR 0094 and Starlette
 1.6.0 as an optional fixture dependency. It proves a native route and an
 embedded Agnara route can share one external-host lifespan without a global or
 a second container. It deliberately refuses a streaming capability at the

@@ -119,7 +119,7 @@ Call it from the project composition root::
 from __future__ import annotations
 
 from agnara import Agnara, App
-from agnara.core.di import DIRegistry
+from agnara.di import DIRegistry
 
 from .capabilities import get_record, list_records
 

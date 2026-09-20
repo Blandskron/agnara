@@ -98,7 +98,7 @@ def test_the_manifest_the_auditor_reads_is_the_governed_one() -> None:
 def test_a_governed_import_is_accepted(tmp_path: Path) -> None:
     source = (
         "from agnara import Agnara, Risk\n"
-        "from agnara.core.di import DIRegistry, provider\n"
+        "from agnara.di import DIRegistry, provider\n"
         "from agnara.execution import invoke_result\n"
         "from agnara_http import Http, OpenApiInfo\n"
         "from agnara_mcp import build_mcp_server\n"
@@ -155,7 +155,7 @@ def test_a_markdown_fence_is_audited(tmp_path: Path) -> None:
 
 def test_a_markdown_fragment_that_does_not_parse_is_still_audited(tmp_path: Path) -> None:
     """Guides show fragments, and a fragment still teaches an import."""
-    source = "```python\nfrom agnara_mcp.dispatch import build_mcp_server\n\n    ...\n```\n"
+    source = "```python\nfrom agnara_mcp import build_mcp_server\n\n    ...\n```\n"
 
     findings = audit(source, tmp_path, suffix=".md")
 

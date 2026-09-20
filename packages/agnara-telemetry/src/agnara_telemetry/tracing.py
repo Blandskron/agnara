@@ -9,7 +9,7 @@ from opentelemetry.trace.status import Status, StatusCode
 
 from agnara.execution import InvocationStartEvent, InvocationTerminalEvent
 
-__all__ = ["OpenTelemetryTracingHook"]
+__all__: list[str] = []
 
 _OUTCOMES = frozenset({"success", "failure", "timeout", "cancellation"})
 

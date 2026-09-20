@@ -28,9 +28,9 @@ public surface is listed in [docs/API_REFERENCE.md](docs/API_REFERENCE.md).
 import asyncio
 
 from agnara import Agnara, Risk, StandardEffect
-from agnara.core.di import DIContainer, DIRegistry, provider
+from agnara.di import DIContainer, DIRegistry, provider
 from agnara.execution import ExecutionContext, ExecutionPlan, Invocation, invoke_result
-from agnara.policy import Principal
+from agnara import Principal
 
 
 class Ledger:

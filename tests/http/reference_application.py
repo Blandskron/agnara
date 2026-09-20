@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from agnara.capability import CapabilityDefinition, CapabilityId
-from agnara.core.di import DIRegistry
+from agnara.di import DIRegistry
 from agnara.execution import ExecutionPlan
 from agnara_http._binding import _BindingSource, _InputBinding
 from agnara_http._dispatch import (

@@ -25,7 +25,7 @@ from typing import Any
 from opentelemetry.trace import Tracer, get_tracer
 
 from agnara import Agnara, App
-from agnara.core.di import DIContainer, DIRegistry
+from agnara.di import DIContainer, DIRegistry
 from agnara.execution import ExecutionContext, ExecutionPlan, Invocation, Success, invoke_result
 from agnara_telemetry import OpenTelemetryTracingHook
 

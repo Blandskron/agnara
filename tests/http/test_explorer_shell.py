@@ -230,7 +230,7 @@ def test_the_index_carries_the_snapshot_provenance() -> None:
 
     _, _, body = request(served)
 
-    assert "agnara-introspection version 0" in body
+    assert "agnara-introspection version 1" in body
     assert "project billing" in body
 
 

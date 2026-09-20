@@ -118,7 +118,7 @@ def test_text_output_presents_the_compiled_application(
 
     assert code == EXIT_OK
     assert err == ""
-    assert "agnara-introspection 0" in out
+    assert "agnara-introspection 1" in out
     assert "app billing (2 capabilities)" in out
     assert "billing.refund" in out
     assert "Refund a captured payment." in out
@@ -145,10 +145,10 @@ def test_json_output_is_the_versioned_snapshot(
 
     assert code == EXIT_OK
     assert document["format"] == "agnara-introspection"
-    assert document["version"] == "0"
+    assert document["version"] == "1"
     assert document["filtered"] is True
-    assert [app["name"] for app in document["apps"]] == ["billing"]
-    assert [item["id"] for item in document["apps"][0]["capabilities"]] == [
+    assert [app["name"] for app in document["applications"]] == ["billing"]
+    assert [item["id"] for item in document["applications"][0]["capabilities"]] == [
         "billing.refund",
         "billing.health",
     ]
@@ -174,12 +174,12 @@ def test_both_modes_describe_the_same_filtered_snapshot(
     )
     document = json.loads(encoded)
 
-    identifiers = [item["id"] for app in document["apps"] for item in app["capabilities"]]
+    identifiers = [item["id"] for app in document["applications"] for item in app["capabilities"]]
     assert identifiers == ["billing.refund", "billing.health"]
     for identifier in identifiers:
         assert identifier in text
     # agent visibility withholds dependencies from both renderings.
-    assert document["apps"][0]["capabilities"][0]["dependencies"] == []
+    assert document["applications"][0]["capabilities"][0]["dependencies"] == []
     assert "ledger: Ledger" not in text
 
 
@@ -255,7 +255,7 @@ def test_an_empty_result_is_still_a_valid_json_document(
     document = json.loads(out)
 
     assert code == EXIT_OK
-    assert document["apps"] == []
+    assert document["applications"] == []
     assert document["project"] is None
     assert document["filtered"] is True
 

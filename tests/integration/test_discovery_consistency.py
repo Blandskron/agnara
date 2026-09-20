@@ -169,7 +169,7 @@ def test_both_surfaces_hide_the_same_capability_from_an_unscoped_viewer(
     from_cli = exported(project, capsys, "--visibility", "agent", "--as-scope", "other:read")
 
     identifiers = [
-        capability["id"] for app in over_http["apps"] for capability in app["capabilities"]
+        capability["id"] for app in over_http["applications"] for capability in app["capabilities"]
     ]
     assert identifiers == ["billing.health"]
     assert over_http == from_cli

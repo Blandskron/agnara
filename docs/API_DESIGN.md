@@ -39,7 +39,8 @@ asgi = http.compile(app.compile(), openapi=OpenApiInfo("Users", "1.0"))
 `http` is a typed adapter surface selected by project composition, not a
 capability property. The exposure lifecycle is settled by ADR 0070 and this
 public composition syntax is implemented by ADR 0071. Its seven exports are
-`provisional` until `1.0.0`; implemented does not mean stable.
+stable in the 1.0 contract; implementation alone does not imply a new public
+commitment.
 
 ## 5. MCP exposure
 
@@ -266,7 +267,7 @@ asks for `CapabilityInvoker` can invoke a target from that frozen snapshot:
 
 ```python
 from agnara import CapabilityId
-from agnara.core.di import DIContainer
+from agnara.di import DIContainer
 from agnara.execution import (
     CapabilityInvoker,
     CapabilityRuntime,

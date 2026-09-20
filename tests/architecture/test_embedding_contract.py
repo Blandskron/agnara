@@ -41,12 +41,12 @@ def test_embedding_contract_is_accepted_but_does_not_claim_host_support() -> Non
     assert "framework-specific HostApp in core" in adr
 
 
-def test_contract_uses_existing_provisional_public_surface_without_new_exports() -> None:
+def test_contract_uses_existing_stable_public_surface_without_new_exports() -> None:
     public_api = _text(PUBLIC_API)
 
-    assert "ADR 0094 selects no new host API." in public_api
+    assert "The 1.0 contract contains" in public_api
     assert {"Agnara"} <= _exports("agnara")
-    assert {"DIContainer", "DIRegistry"} <= _exports("agnara.core.di")
+    assert {"DIContainer", "DIRegistry"} <= _exports("agnara.di")
     assert {
         "CapabilityRuntime",
         "ExecutionContext",

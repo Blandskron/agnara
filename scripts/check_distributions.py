@@ -70,6 +70,7 @@ SRC_LAYOUT = "src"
 #: sibling import would fail exactly where the gate matters most.
 #: ``tests/release/test_publication_set.py`` asserts the two readers agree.
 MANIFEST_RELATIVE = Path("docs") / "distributions.json"
+PUBLIC_API_RELATIVE = Path("docs") / "public-api.json"
 
 
 def shipped_distributions(workspace: Path) -> dict[str, str]:
@@ -195,6 +196,21 @@ def check_import(
         # sys.path. That is the failure this gate exists to catch.
         if resolved.is_relative_to(os.path.realpath(workspace)):
             problems.append(f"{distribution.name}: imported from the checkout at {resolved}")
+    return problems
+
+
+def check_stable_public_imports(workspace: Path) -> list[str]:
+    """Import every stable manifest name from its canonical installed path."""
+    document = json.loads((workspace / PUBLIC_API_RELATIVE).read_text(encoding="utf-8"))
+    problems: list[str] = []
+    for distribution in document["distributions"]:
+        for module in distribution["modules"]:
+            imported = importlib.import_module(module["module"])
+            for export in module["exports"]:
+                if export["stability"] == "stable" and not hasattr(imported, export["name"]):
+                    problems.append(
+                        f"{module['module']}: stable export {export['name']} is unavailable"
+                    )
     return problems
 
 
@@ -698,6 +714,8 @@ def run(
             # import failure a second time rather than anything new.
             problems.extend(check_package_data(distribution, workspace=workspace))
     problems.extend(check_metadata(distributions, expected_version=expected_version))
+    if require_installed:
+        problems.extend(check_stable_public_imports(workspace))
 
     if problems:
         return Report(1, "distribution validation failed", tuple(problems))

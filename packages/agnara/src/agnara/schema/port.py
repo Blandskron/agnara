@@ -25,11 +25,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, Protocol, runtime_checkable
 
-__all__ = [
-    "JsonSchema",
-    "SchemaAdapter",
-    "TypeSchema",
-]
+__all__: list[str] = []
 
 #: A JSON Schema document fragment, as plain data.
 #:

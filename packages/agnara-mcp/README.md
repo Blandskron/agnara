@@ -81,7 +81,7 @@ names everything a plan is needed for:
 
 ```python
 from agnara import Agnara
-from agnara.core.di import DIRegistry
+from agnara.di import DIRegistry
 from agnara.execution import ExecutionPlan
 from agnara_mcp import Mcp, project_mcp_tools
 
@@ -121,7 +121,7 @@ unenforced response contract would make client validation unreliable.
 Build a discovery-only official SDK server after exposure and plan compilation:
 
 ```python
-from agnara.policy import Principal
+from agnara import Principal
 from agnara_mcp import McpAuthorization, build_mcp_discovery_server, project_mcp_tools
 
 
@@ -171,7 +171,7 @@ serves discovery alone and answers `tools/call` with `METHOD_NOT_FOUND`; use
 ## Tool invocation
 
 ```python
-from agnara.core.di import DIContainer
+from agnara.di import DIContainer
 from agnara_mcp import build_mcp_server
 
 server = build_mcp_server(

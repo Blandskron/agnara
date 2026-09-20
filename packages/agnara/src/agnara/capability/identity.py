@@ -17,7 +17,7 @@ from typing import Final
 from agnara._frozen import frozen_slots_dataclass
 from agnara.errors import DefinitionError
 
-__all__ = ["CapabilityId"]
+__all__: list[str] = []
 
 SEPARATOR: Final = "."
 

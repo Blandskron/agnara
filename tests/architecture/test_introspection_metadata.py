@@ -71,7 +71,7 @@ IDENTITY_FIELDS = {
     (ApplicationDescriptor, "name"),
     (ApplicationDescriptor, "capabilities"),
     (BoundedContextDescriptor, "name"),
-    (IntrospectionSnapshot, "apps"),
+    (IntrospectionSnapshot, "applications"),
     (IntrospectionSnapshot, "project"),
     (IntrospectionSnapshot, "format"),
     (IntrospectionSnapshot, "version"),

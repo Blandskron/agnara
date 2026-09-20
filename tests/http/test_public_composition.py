@@ -221,7 +221,7 @@ def test_every_exported_name_exists_and_is_public() -> None:
 def test_the_composition_module_agrees_with_the_package() -> None:
     from agnara_http import composition
 
-    assert composition.__all__ == PUBLIC_NAMES
+    assert composition.__all__ == []
 
 
 # ---------------------------------------------------------------------------
@@ -1179,7 +1179,7 @@ def test_introspection_describes_the_compiled_surface(
 
     described = {
         capability["id"]: [entry["name"] for entry in capability["exposures"]]
-        for capability in document["apps"][0]["capabilities"]
+        for capability in document["applications"][0]["capabilities"]
     }
     assert described["shop.show"] == ["GET /orders/{order_id}"]
     assert described["shop.create"] == ["POST /orders"]

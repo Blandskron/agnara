@@ -7,11 +7,7 @@ from typing import Protocol, runtime_checkable
 from agnara._frozen import frozen_slots_dataclass
 from agnara.capability.identity import CapabilityId
 
-__all__ = [
-    "InvocationStartEvent",
-    "InvocationTerminalEvent",
-    "TelemetryHook",
-]
+__all__: list[str] = []
 
 
 @frozen_slots_dataclass

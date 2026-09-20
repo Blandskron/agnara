@@ -145,11 +145,11 @@ def render_context(snapshot: IntrospectionSnapshot, visibility: DiscoveryVisibil
         )
         lines.append("")
 
-    if not snapshot.apps:
+    if not snapshot.applications:
         lines.append("No capabilities are visible to you.")
         return "\n".join(lines)
 
-    for app in snapshot.apps:
+    for app in snapshot.applications:
         lines.extend(_app(app, visibility))
     while lines and not lines[-1]:
         lines.pop()

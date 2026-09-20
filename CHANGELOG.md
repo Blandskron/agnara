@@ -20,6 +20,12 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Finalize the 1.0 Python API: 166 canonical names are now stable, while 171
+  duplicate leaf-module re-exports are no longer public. Import DI from
+  `agnara.di` instead of `agnara.core.di`; read snapshot applications through
+  `IntrospectionSnapshot.applications` and serialized `applications` instead
+  of `apps`.
+
 - Audit framework interoperability and close the 1.0 supported matrix: verified
   lifecycle and context isolation under concurrent adversarial conditions across
   all host fixtures (Starlette 1.6.0, FastAPI 0.141.1, Django 6.1.1, Litestar
@@ -42,17 +48,9 @@ describe user- and contributor-visible changes only.
   `docs/releases/release-status.json`, which a merge had silently reverted to its
   placeholder, and add a test linking each gate to the evidence file it rests on.
 
-- Define the `1.x` compatibility contract in `docs/PUBLIC_API.md`: what a stable
-  promise covers, what counts as a breaking change, what a minor release may add,
-  the deprecation window, adapter and schema stability, and the closed telemetry
-  attribute set. No export is promoted; everything remains provisional.
-
-- Reconcile the public-surface counts. `docs/MATURITY.md` said 324 exports,
-  `docs/releases/RELEASE_PLAN.md` said 292 and `docs/TARGET_ARCHITECTURE.md` said
-  292 across 48 modules, against a manifest holding 337 across 49. The manifest
-  was right. The documents now also distinguish the 337 classified import paths
-  from the 166 distinct names behind them, and an architecture test reads every
-  stated count back from the manifest.
+- Define and enforce the `1.x` compatibility contract in `docs/PUBLIC_API.md`.
+  The inventory is 166 stable canonical exports across 13 modules; installed
+  artifacts import every supported name as part of the publication gate.
 
 - Fix quadratic behaviour in `InMemoryIdempotencyStore`. Every `claim`,
   `lookup`, `complete` and `abandon` swept and copied the whole record table to
