@@ -31,7 +31,7 @@ release.
 | I3 — Execution identity and idempotency | ADRs 0087–0089 and 0091 define identity, storage and an explicit direct runtime boundary. | Streaming interaction decision and release review. | Keep idempotency transport-neutral and separate from automatic retry; HTTP/MCP selector projections require their own accepted contracts. |
 | I8 — Capability composition | ADR 0093's same-compiled-application complete-result boundary is implemented with deterministic policy, confirmation, lifecycle and abuse evidence. | Release review and the separate decisions for delegation, streams and hosts/cross-app composition. | Keep the implemented boundary narrow; delegation, streams and host/cross-app work retain their separate decisions. |
 | I9 — Public API governance | The 1.0 inventory contains 166 stable canonical exports across 13 modules, with migration evidence. | Formal maintainer review of the 1.0 compatibility PR. | Keep aliases and implementation modules outside the governed surface. |
-| I10 — Security program | The retained threat model is historical; the 1.0 program is not closed. | Current threat-boundary analysis, supply-chain evidence and abuse/failure tests. | Threat-model and supply-chain design work can proceed in parallel; it constrains I3, I8 and I20 implementation. |
+| I10 — Security program | The current 1.0 threat-boundary analysis and abuse/failure evidence are recorded; it is not release authorization. | Human release review, final-candidate supply-chain readback/audit and any accepted disposition of residual deployment risk. | Keep host identity, durable stores, exporters and application policy explicitly outside framework claims; threat-model and supply-chain work constrain I3, I8 and I20. |
 | I14 — Performance program | Baselines exist, but no budgets or CI regression gate. | Reviewed methodology, calibrated budgets and a failing/pass CI proof. | Establish methodology in parallel; calibrate final thresholds after affected execution semantics settle. |
 | I20 — Framework interoperability | RFC 0008 remains open; no embedding contract or conformance harness exists. | The approved host boundary plus standalone, hosted, embedded and side-by-side evidence. | Contract research can proceed; host implementations wait for the I3, I8 and I10 boundaries RFC 0008 identifies. |
 
@@ -92,11 +92,16 @@ Generated public reference and a deliberate stable classification decision.
 ### I10 — Security program
 
 **Horizon:** `1.0.0`
-**Status:** `PLANNED`
+**Status:** `IN PROGRESS`
 
-Authentication/delegation design, supply-chain evidence and threat-model closure.
-The V1-15 idempotency audit contributes failure, stale-state and sensitive-data
-evidence but does not close the broader I10 program.
+V1-34 replaces the historical A8 model with current candidate evidence for
+execution identity, direct/HTTP/MCP/embedded invocation, composition,
+idempotency, streaming, schema/persistence and telemetry boundaries. It also
+records the point-in-time Dependabot and secret-scanning readback. The I10
+program remains open: native HTTP authentication and delegation are not
+framework features; durable stores, host identity, telemetry exporters and
+application policy remain external boundaries; maintainer release review and
+the final-candidate audit are still required.
 
 ### I14 — Performance program
 

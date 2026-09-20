@@ -8,20 +8,26 @@ Agnara treats security as part of the capability execution model, not as transpo
 
 Report suspected vulnerabilities privately through
 [GitHub private vulnerability reporting](https://github.com/Blandskron/agnara/security/advisories/new).
-The channel was enabled and verified for the `0.1.0a3` release preparation.
+A 2026-09-20 GitHub API readback confirmed the channel is enabled for this
+repository. That observes the setting at one point in time; it is not a
+response-time commitment, and it must be re-read during release preflight.
 
 Do not request vulnerability details through public issues.
 
 ## Threat model
 
-`docs/THREAT_MODEL.md` records the analysis for the surface `0.1.0a4`
-publishes: assets, trust boundaries, attacker-controlled inputs, the
-protections each of which names the test that proves it, the findings this
-audit produced, and the assumptions delegated to ASGI servers, proxies and
-applications.
+`docs/THREAT_MODEL.md` is the current threat-boundary analysis for the
+`1.0.0` candidate. It covers direct capability execution, HTTP/ASGI and SSE,
+MCP, embedded and side-by-side hosts, schema and persistence seams,
+idempotency, nested composition, telemetry, the local CLI and release
+publication. It separates controls proved by this repository from deployment
+and application responsibilities.
 
-It is scoped to a4 and is not the beta security program (`I10`). Read what it
-says it did not do before citing it.
+It is evidence for the I10 release gate, not a production-security
+certification. Read its residual risks and unverified deployment assumptions
+before citing it. In particular, Agnara does not provide a general HTTP
+authentication product, a durable idempotency store, a telemetry exporter or
+application-policy review.
 
 ## Security boundaries
 
