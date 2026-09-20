@@ -177,6 +177,28 @@ Use property-based tests where contracts are algebraic or combinatorial:
 - dependency DAGs;
 - metadata normalization.
 
+`tests/property/` holds these lanes, built on Hypothesis. Each named target
+above has coverage: router matching and request totality, schema round trips
+and total validation, dependency DAG resolution and cycle refusal, capability
+identity and idempotency selector normalization, plus a bounded fuzz lane that
+drives arbitrary ASGI requests end to end.
+
+Two constraints are not negotiable, because these lanes run inside the
+ordinary test matrix:
+
+- **Reproducible.** Profiles are registered in `tests/property/conftest.py`
+  with `derandomize=True` and no example database, so a given commit explores
+  the same inputs everywhere and a failure is reproducible from the commit
+  alone.
+- **Bounded.** Example counts, input sizes and a per-example deadline are
+  explicit. A lane must not become a denial-of-service against CI.
+
+A discovered violation is pinned as an `@example` on the property that found
+it, before the fix, so the corpus is code under review rather than a generated
+file. These lanes are a regression net, not a search: they do not constitute
+continuous fuzzing, and no claim of formal verification or complete input
+coverage follows from them.
+
 ## Protocol conformance
 
 MCP's bounded official SDK suite and exclusions are recorded in

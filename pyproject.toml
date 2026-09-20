@@ -30,6 +30,9 @@ dev = [
     # E6.10 comparison fixtures only. These must never enter a distributable
     # Agnara package or be confused with an HTTP implementation dependency.
     "fastapi==0.141.1",
+    # V1-36 property-based and bounded-fuzz lanes only. Test-time tooling: it
+    # is never a runtime dependency of any distributable Agnara package.
+    "hypothesis>=6.131,<7",
     # V1-25 conformance fixture only. Django remains outside every Agnara
     # distribution and the fixture records the exact tested host version.
     "Django==6.1.1",

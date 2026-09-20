@@ -147,6 +147,12 @@ this audit; the other paths existed already.
 | A cached or replayed discovery snapshot never authorizes a later invocation | `tests/security/test_authority_boundary.py` |
 | An unavailable or ambiguous confirmation verdict denies instead of approving | `tests/security/test_authority_boundary.py` |
 | Interleaved executions never exchange principals between parents or children | `tests/security/test_authority_boundary.py` |
+| Any ASGI request produces one reviewed response or a deliberate silence, never an escaped exception | `tests/property/test_adversarial_requests.py` |
+| A request method is matched case-sensitively and a non-token is unmatched rather than raised | `tests/property/test_routing.py` |
+| A capability id round-trips through its string form, and arbitrary text is parsed or refused | `tests/property/test_identity_and_selectors.py` |
+| Two idempotency selectors collide only when capability, principal and key all match | `tests/property/test_identity_and_selectors.py` |
+| A declared schema round-trips without loss and validation is total | `tests/property/test_schema_roundtrip.py` |
+| A dependency cycle of any length is refused rather than recursing | `tests/property/test_schema_roundtrip.py` |
 | A nested child has a detached actor, new execution identity and no inherited confirmation or idempotency selector | `tests/unit/execution/test_nested_composition.py` |
 | An idempotency selector is bound to capability, principal and fingerprint, with atomic in-flight behavior | `tests/unit/execution/test_idempotency.py` |
 | A streaming invocation refuses an idempotency selector instead of discarding it | `tests/security/test_trust_boundaries.py` |
@@ -178,6 +184,8 @@ because there is no decompression.
 | H-5 | P3 | Fixed. `request_timeout` was documented as a per-request deadline. It starts after binding, so it bounds execution and not how long a client may take to send a body. The documentation now says which. |
 | H-6 | P3 | Fixed. Unexpected capability exceptions were redacted on the wire but logged with `exc_info`, so exception-carried credentials, dependency values or payload fragments could reach the application's default log sink. The runtime now logs only the capability identifier; a regression test proves that exception text and traceback are absent. |
 | S-2 | P2 | Fixed. `ExecutionContext.principal` was an ordinary mutable attribute, and nested composition derives a child's authority from it. A capability that received its `ExecutionContext` could therefore assign a principal of its choosing and invoke a child with scopes the authenticated caller never held — privilege amplification reachable by an ordinary handler bug, not only by malicious code. The verified authority inputs (`principal`, `confirmation_evidence`, `idempotency`) are now fixed for the lifetime of an execution and refuse assignment; the attempt fails closed as a redacted canonical failure and the child never runs. The same repair validates the principal's type, so a duck-typed token or session object can no longer stand in for a verified identity. |
+| F-1 | P2 | Fixed. A request method outside the RFC 9110 token grammar raised `_RouteDefinitionError` out of `_FrozenRouteRegistry.match`, and the dispatcher passes `scope["method"]` to it unchanged. The dispatcher therefore sent nothing, so the ASGI server -- not Agnara -- decided what the client and the operator's log received, bypassing the reviewed problem mapping and its redaction, and the exception message echoed the caller's own bytes. `_request_segments` already made exactly this split for attacker-controlled *paths*; the method side was missing. A request method is now accepted or answered as unmatched, never raised, while an authored one is still a definition error. Found by the property lane in `tests/property/test_routing.py`. |
+| F-2 | P2 | Fixed. Request methods were uppercased before lookup, so `post` matched a route registered as `POST`. RFC 9110 section 9.1 makes the method token case-sensitive, and `post` is a well-formed token that a compliant server passes through unchanged, so this was reachable in production rather than only through a lenient server. A proxy, gateway or WAF rule written against the real method name -- deny `POST /admin` -- could be bypassed by changing its case. The dispatcher's own `method == "HEAD"` check was already case-sensitive, so the two disagreed. Uppercasing is now confined to registration, where it is the convenience that lets `http.post(...)` and `"POST"` name one route. |
 | S-1 | P2 | Fixed. A streaming invocation silently discarded an `IdempotencyInvocation`. The refusal existed in `_execute_with_idempotency`, but its only caller is the complete-result path, which rejects a streaming plan several frames earlier, so the guard could never fire; `open_stream` consulted `context.idempotency` nowhere. A caller asking for exactly-once effects got the producer rerun on every attempt, with the store never consulted and nothing reported. `open_stream` now refuses the selector before the producer can start. |
 
 ### H-3 — declared scopes are enforced transport-neutrally
@@ -320,7 +328,7 @@ and embedded host bridges, nested capability invocation, execution identity,
 idempotency, streaming and SSE, schema/persistence seams, documentation UIs,
 supply-chain controls and telemetry.
 
-It produced findings S-1 and S-2 above. The following were probed directly and
+It produced findings S-1 and S-2 above; the property and fuzz lanes later added F-1 and F-2. The following were probed directly and
 behaved correctly; they are recorded so a later reviewer knows they were tried
 rather than assumed:
 
@@ -336,6 +344,9 @@ rather than assumed:
 | Forged `scopes`, `scp`, `roles` or `permissions` entries in principal metadata | Inert. Only granted scopes authorize. |
 | Invocation metadata asserting `subject`, `on_behalf_of`, `act_as` or `delegation` | Inert. No subject or delegation surface exists to read. |
 | A discovery snapshot filtered for a privileged viewer, replayed by an unprivileged one | Discloses descriptions only; authorization is re-decided from the invoking principal. |
+| A request method outside the RFC 9110 token grammar | Refused as unmatched. This was a real finding (F-1); it previously raised out of the dispatcher carrying the caller's bytes. |
+| The same method in a different case, against a proxy rule written for the real one | Unmatched. This was a real finding (F-2); `post` previously reached a `POST` route. |
+| A problem document reflecting the body it refused | Does not happen within the generated corpus: a refusal at or above 400 never contains the submitted marker. |
 | A host fixture passing raw request/session/transaction state into the kernel | Out of contract: the value-only bridge fixtures retain those objects and lifecycle ownership in the host. |
 | An idempotency selector on a capability not declared `Idempotency.YES` | Refused, fail-closed, as a redacted canonical failure. |
 | A stream unit containing SSE frame separators | Cannot inject a frame: every unit goes through the same JSON value rule, so separators are escaped. Covered by `tests/http/test_sse.py`. |
@@ -348,9 +359,15 @@ none of them is a concurrency or load test.
 
 ## 11. What this audit did not do
 
-No fuzzing, no penetration test, no load or denial-of-service testing under
-real concurrency, no review of the
-vendored documentation bundles' own code, no analysis of git history for
+The property and fuzz lanes in `tests/property/` are deliberately bounded and
+derandomized so they can run in the ordinary CI matrix: a few hundred examples
+per property, capped input sizes and a per-example deadline. That makes them a
+reproducible regression net, not a search. There is no continuous or
+coverage-guided fuzzing campaign, no accumulated crash corpus, and no claim of
+formal verification or complete input coverage; a property that holds over
+this corpus is evidence about this corpus. There is also no penetration test,
+no load or denial-of-service testing under real concurrency, no review of the
+vendored documentation bundles' own code, and no analysis of git history for
 previously committed credentials. The CLI review is bounded to section 8;
 there is no hostile-local-filesystem or plugin-execution audit. Reserved A2A
 and events distributions have no implemented protocol behavior to review.

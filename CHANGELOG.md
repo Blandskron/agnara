@@ -20,6 +20,24 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Match HTTP request methods exactly, and never raise on one. Two defects
+  found by the new property lanes: a method outside the RFC 9110 token
+  grammar escaped the dispatcher as an uncaught error carrying the caller's
+  own bytes (F-1), and request methods were uppercased before lookup, so
+  `post` reached a route registered as `POST` (F-2). RFC 9110 section 9.1
+  makes the method token case-sensitive, and `post` is a well-formed token a
+  compliant server passes through, so a proxy rule written against the real
+  method name could be bypassed by changing its case. Case folding is now
+  confined to registration, where `http.post(...)` and `"POST"` still name one
+  route. An unroutable method is answered as unmatched.
+
+- Add `tests/property/`: Hypothesis-backed property and bounded-fuzz lanes for
+  router matching, schema round trips, dependency DAGs, capability identity
+  and idempotency selector normalization, plus an end-to-end lane that drives
+  arbitrary ASGI requests. The lanes are derandomized and explicitly bounded
+  so they stay reproducible and cannot hold CI open; they are a regression
+  net rather than a continuous fuzzing campaign.
+
 - Fix an authority-amplification path in nested composition. A running
   capability could reassign `ExecutionContext.principal`, and a nested child
   derives its authority from that attribute, so a handler could hand a child

@@ -475,6 +475,14 @@ machine-readable discriminator.
 | --- | --- | --- |
 | No route matches | 404 | `not_found` |
 | Route matches, method does not | 405 | — (`Allow` header) |
+
+A request method is matched exactly. RFC 9110 section 9.1 makes the method
+token case-sensitive, so `post` is not `POST` and reaches no route registered
+under the latter. Authoring stays forgiving in the other direction:
+`http.post(...)` and an explicit `"POST"` register one route, because case
+folding belongs to declaration rather than to dispatch. A request method
+outside the RFC 9110 token grammar is unroutable, answered like any other
+unmatched target rather than raised.
 | Query, header or body cannot be decoded | 400 | `invalid_input` (`details.location`) |
 | Value fails its compiled schema | 400 | `invalid_input` (`details.path`) |
 | Body exceeds the limit | 413 | `content_too_large` |
