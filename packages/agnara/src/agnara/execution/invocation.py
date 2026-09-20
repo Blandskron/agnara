@@ -5,7 +5,7 @@ from agnara._frozen import frozen_slots_dataclass
 from agnara.capability.identity import CapabilityId
 from agnara.errors import DefinitionError
 
-__all__ = ["Invocation"]
+__all__: list[str] = []
 
 
 @frozen_slots_dataclass

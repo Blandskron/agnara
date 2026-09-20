@@ -23,7 +23,7 @@ from agnara.capability.metadata import Confirmation, Idempotency, Risk
 from agnara.errors import DefinitionError
 from agnara.policy.base import Policy
 
-__all__ = ["CapabilityDefinition"]
+__all__: list[str] = []
 
 #: The handler's call semantics -- sync versus async, task handles -- are
 #: deliberately not decided here. EPIC 4 owns execution; this type only

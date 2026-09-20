@@ -43,7 +43,7 @@ import asyncio
 from typing import Any
 
 from agnara import Agnara
-from agnara.core.di import DIRegistry, Scope, provider
+from agnara.di import DIRegistry, Scope, provider
 from agnara_http import (
     Binding,
     BindingSource,
@@ -575,6 +575,6 @@ built wheel. ADR 0073 and
 [issue #291](https://github.com/Blandskron/agnara/issues/291) make the tagged
 workflow ready to publish the synchronized set; they do not perform a release.
 
-**No compatibility promise.** Every name here is `provisional`. The path to `1.0.0`
-may change any of them; `docs/PUBLIC_API.md` records the policy and ADR 0021
-requires a changelog entry and migration guidance for a break.
+**Compatibility promise.** Every supported name here is `stable`. The 1.x
+contract preserves those names; `docs/PUBLIC_API.md` records the policy and ADR
+0021 requires a changelog entry and migration guidance for a future break.

@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from agnara import Agnara, Risk, StandardEffect
-from agnara.core.di import DIRegistry, Scope, provider
+from agnara.di import DIRegistry, Scope, provider
 from agnara.exposure import compile_exposures
 from agnara_http import Binding, BindingSource, Http, OpenApiInfo, OpenApiOperation
 

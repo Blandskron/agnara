@@ -42,12 +42,7 @@ from agnara.execution.result import Failure, FailureCode
 from agnara.execution.telemetry import InvocationStartEvent, InvocationTerminalEvent
 from agnara.schema import TypeSchema
 
-__all__ = [
-    "CapabilityStream",
-    "StreamInterrupted",
-    "StreamTerminal",
-    "open_stream",
-]
+__all__: list[str] = []
 
 
 class StreamTerminal(StrEnum):

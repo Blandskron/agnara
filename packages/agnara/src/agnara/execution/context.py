@@ -9,7 +9,7 @@ from agnara.execution.invocation import Invocation
 from agnara.policy.confirmation import ConfirmationEvidence
 from agnara.policy.principal import AnonymousPrincipal, Principal
 
-__all__ = ["ExecutionContext"]
+__all__: list[str] = []
 
 
 # This matches the reviewed MCP request-correlation ceiling.  Nested

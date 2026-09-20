@@ -10,372 +10,208 @@
           "exports": [
             {
               "name": "Agnara",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "AgnaraError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "AnonymousPrincipal",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "App",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "AppDescriptor",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "CapabilityDefinition",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "CapabilityId",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "CapabilityRegistry",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "Confirmation",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ConfirmationEvidence",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ConfirmationVerdict",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ConfirmationVerifier",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "DefinitionError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "DuplicateAppError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "DuplicateCapabilityError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "FrozenCapabilityRegistry",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "Idempotency",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "InteractionKind",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "InteractionRequest",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "InteractionRequiredError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "InvocationError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "JsonSchema",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "Policy",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "PolicyDeniedError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "PolicyFailure",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "PolicyInteractionRequired",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "PolicyResult",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "PolicySuccess",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "Principal",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "RegistryError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "RegistryFrozenError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "Risk",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "SchemaAdapter",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "SchemaError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ScopePolicy",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "StandardEffect",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "StandardSchemaAdapter",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "TypeSchema",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "UnknownCapabilityError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ValidationError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "__version__",
-              "stability": "provisional"
+              "stability": "stable"
             }
           ]
         },
         {
-          "module": "agnara.app",
-          "exports": [
-            {
-              "name": "App",
-              "stability": "provisional"
-            },
-            {
-              "name": "AppDescriptor",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.application",
-          "exports": [
-            {
-              "name": "Agnara",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.capability",
-          "exports": [
-            {
-              "name": "CapabilityDefinition",
-              "stability": "provisional"
-            },
-            {
-              "name": "CapabilityId",
-              "stability": "provisional"
-            },
-            {
-              "name": "CapabilityRegistry",
-              "stability": "provisional"
-            },
-            {
-              "name": "Confirmation",
-              "stability": "provisional"
-            },
-            {
-              "name": "FrozenCapabilityRegistry",
-              "stability": "provisional"
-            },
-            {
-              "name": "Idempotency",
-              "stability": "provisional"
-            },
-            {
-              "name": "Risk",
-              "stability": "provisional"
-            },
-            {
-              "name": "StandardEffect",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.capability.definition",
-          "exports": [
-            {
-              "name": "CapabilityDefinition",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.capability.identity",
-          "exports": [
-            {
-              "name": "CapabilityId",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.capability.metadata",
-          "exports": [
-            {
-              "name": "Confirmation",
-              "stability": "provisional"
-            },
-            {
-              "name": "Idempotency",
-              "stability": "provisional"
-            },
-            {
-              "name": "Risk",
-              "stability": "provisional"
-            },
-            {
-              "name": "StandardEffect",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.capability.registry",
-          "exports": [
-            {
-              "name": "CapabilityRegistry",
-              "stability": "provisional"
-            },
-            {
-              "name": "FrozenCapabilityRegistry",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.core.di",
+          "module": "agnara.di",
           "exports": [
             {
               "name": "DIContainer",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "DIRegistry",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "DependencyCycleError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "DependencyResolutionError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ProviderDefinition",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ProviderType",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "Scope",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "compile_dag",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "provider",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.errors",
-          "exports": [
-            {
-              "name": "AgnaraError",
-              "stability": "provisional"
-            },
-            {
-              "name": "DefinitionError",
-              "stability": "provisional"
-            },
-            {
-              "name": "DuplicateAppError",
-              "stability": "provisional"
-            },
-            {
-              "name": "DuplicateCapabilityError",
-              "stability": "provisional"
-            },
-            {
-              "name": "InteractionRequiredError",
-              "stability": "provisional"
-            },
-            {
-              "name": "InvocationError",
-              "stability": "provisional"
-            },
-            {
-              "name": "PolicyDeniedError",
-              "stability": "provisional"
-            },
-            {
-              "name": "RegistryError",
-              "stability": "provisional"
-            },
-            {
-              "name": "RegistryFrozenError",
-              "stability": "provisional"
-            },
-            {
-              "name": "SchemaError",
-              "stability": "provisional"
-            },
-            {
-              "name": "UnknownCapabilityError",
-              "stability": "provisional"
-            },
-            {
-              "name": "ValidationError",
-              "stability": "provisional"
+              "stability": "stable"
             }
           ]
         },
@@ -384,303 +220,131 @@
           "exports": [
             {
               "name": "CanonicalResult",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "CapabilityInvoker",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "CapabilityRuntime",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "CapabilityStream",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ExecutionContext",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ExecutionPlan",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "Failure",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "FailureCode",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "IdempotencyClaimed",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "IdempotencyCompleted",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "IdempotencyConflict",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "IdempotencyConflictError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "IdempotencyInProgress",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "IdempotencyInProgressError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "IdempotencyInvocation",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "IdempotencyReservation",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "IdempotencyResultCodec",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "IdempotencyScope",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "IdempotencyStorageError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "IdempotencyStore",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "InMemoryIdempotencyStore",
-              "stability": "provisional"
-            },
-            {
-              "name": "InteractionRequiredError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "Invocation",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "InvocationStartEvent",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "InvocationTerminalEvent",
-              "stability": "provisional"
-            },
-            {
-              "name": "PolicyDeniedError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "StreamInterrupted",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "StreamTerminal",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "Success",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "TelemetryHook",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "classify_failure",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "invoke",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "invoke_result",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "open_stream",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.execution.context",
-          "exports": [
-            {
-              "name": "ExecutionContext",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.execution.idempotency",
-          "exports": [
-            {
-              "name": "IdempotencyClaimed",
-              "stability": "provisional"
-            },
-            {
-              "name": "IdempotencyCompleted",
-              "stability": "provisional"
-            },
-            {
-              "name": "IdempotencyConflict",
-              "stability": "provisional"
-            },
-            {
-              "name": "IdempotencyConflictError",
-              "stability": "provisional"
-            },
-            {
-              "name": "IdempotencyInProgress",
-              "stability": "provisional"
-            },
-            {
-              "name": "IdempotencyInProgressError",
-              "stability": "provisional"
-            },
-            {
-              "name": "IdempotencyInvocation",
-              "stability": "provisional"
-            },
-            {
-              "name": "IdempotencyReservation",
-              "stability": "provisional"
-            },
-            {
-              "name": "IdempotencyResultCodec",
-              "stability": "provisional"
-            },
-            {
-              "name": "IdempotencyScope",
-              "stability": "provisional"
-            },
-            {
-              "name": "IdempotencyStorageError",
-              "stability": "provisional"
-            },
-            {
-              "name": "IdempotencyStore",
-              "stability": "provisional"
-            },
-            {
-              "name": "InMemoryIdempotencyStore",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.execution.invocation",
-          "exports": [
-            {
-              "name": "Invocation",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.execution.plan",
-          "exports": [
-            {
-              "name": "ExecutionPlan",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.execution.result",
-          "exports": [
-            {
-              "name": "CanonicalResult",
-              "stability": "provisional"
-            },
-            {
-              "name": "Failure",
-              "stability": "provisional"
-            },
-            {
-              "name": "FailureCode",
-              "stability": "provisional"
-            },
-            {
-              "name": "Success",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.execution.runtime",
-          "exports": [
-            {
-              "name": "CapabilityRuntime",
-              "stability": "provisional"
-            },
-            {
-              "name": "classify_failure",
-              "stability": "provisional"
-            },
-            {
-              "name": "invoke",
-              "stability": "provisional"
-            },
-            {
-              "name": "invoke_result",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.execution.streaming",
-          "exports": [
-            {
-              "name": "CapabilityStream",
-              "stability": "provisional"
-            },
-            {
-              "name": "StreamInterrupted",
-              "stability": "provisional"
-            },
-            {
-              "name": "StreamTerminal",
-              "stability": "provisional"
-            },
-            {
-              "name": "open_stream",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.execution.telemetry",
-          "exports": [
-            {
-              "name": "InvocationStartEvent",
-              "stability": "provisional"
-            },
-            {
-              "name": "InvocationTerminalEvent",
-              "stability": "provisional"
-            },
-            {
-              "name": "TelemetryHook",
-              "stability": "provisional"
+              "stability": "stable"
             }
           ]
         },
@@ -689,31 +353,31 @@
           "exports": [
             {
               "name": "CompiledExposure",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ExposureError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ExposureId",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "FrozenExposureRegistry",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "SurfaceCompilation",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "SurfaceId",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "compile_exposures",
-              "stability": "provisional"
+              "stability": "stable"
             }
           ]
         },
@@ -722,202 +386,95 @@
           "exports": [
             {
               "name": "INTROSPECTION_FORMAT",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "INTROSPECTION_VERSION",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "AllCapabilitiesVisible",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ApplicationDescriptor",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "BoundedContextDescriptor",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "CapabilityDescriptor",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "DependencyDescriptor",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "DiscoveryField",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "DiscoveryVisibility",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ExposureDescriptor",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "Hiding",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "InputDescriptor",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "IntrospectionError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "IntrospectionSnapshot",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "NoCapabilityVisible",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "PolicyDescriptor",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ProviderDescriptor",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ScopeVisible",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "TypeReference",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "VisibilityRule",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "describe_app",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "filter_snapshot",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "snapshot",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.introspection.builder",
-          "exports": [
-            {
-              "name": "describe_app",
-              "stability": "provisional"
-            },
-            {
-              "name": "snapshot",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.introspection.descriptors",
-          "exports": [
-            {
-              "name": "INTROSPECTION_FORMAT",
-              "stability": "provisional"
-            },
-            {
-              "name": "INTROSPECTION_VERSION",
-              "stability": "provisional"
-            },
-            {
-              "name": "ApplicationDescriptor",
-              "stability": "provisional"
-            },
-            {
-              "name": "BoundedContextDescriptor",
-              "stability": "provisional"
-            },
-            {
-              "name": "CapabilityDescriptor",
-              "stability": "provisional"
-            },
-            {
-              "name": "DependencyDescriptor",
-              "stability": "provisional"
-            },
-            {
-              "name": "ExposureDescriptor",
-              "stability": "provisional"
-            },
-            {
-              "name": "InputDescriptor",
-              "stability": "provisional"
-            },
-            {
-              "name": "IntrospectionError",
-              "stability": "provisional"
-            },
-            {
-              "name": "IntrospectionSnapshot",
-              "stability": "provisional"
-            },
-            {
-              "name": "PolicyDescriptor",
-              "stability": "provisional"
-            },
-            {
-              "name": "ProviderDescriptor",
-              "stability": "provisional"
-            },
-            {
-              "name": "TypeReference",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.introspection.visibility",
-          "exports": [
-            {
-              "name": "AllCapabilitiesVisible",
-              "stability": "provisional"
-            },
-            {
-              "name": "DiscoveryField",
-              "stability": "provisional"
-            },
-            {
-              "name": "DiscoveryVisibility",
-              "stability": "provisional"
-            },
-            {
-              "name": "Hiding",
-              "stability": "provisional"
-            },
-            {
-              "name": "NoCapabilityVisible",
-              "stability": "provisional"
-            },
-            {
-              "name": "ScopeVisible",
-              "stability": "provisional"
-            },
-            {
-              "name": "VisibilityRule",
-              "stability": "provisional"
-            },
-            {
-              "name": "filter_snapshot",
-              "stability": "provisional"
+              "stability": "stable"
             }
           ]
         },
@@ -925,136 +482,8 @@
           "module": "agnara.policy",
           "exports": [
             {
-              "name": "AnonymousPrincipal",
-              "stability": "provisional"
-            },
-            {
-              "name": "ConfirmationEvidence",
-              "stability": "provisional"
-            },
-            {
               "name": "ConfirmationPolicy",
-              "stability": "provisional"
-            },
-            {
-              "name": "ConfirmationVerdict",
-              "stability": "provisional"
-            },
-            {
-              "name": "ConfirmationVerifier",
-              "stability": "provisional"
-            },
-            {
-              "name": "InteractionKind",
-              "stability": "provisional"
-            },
-            {
-              "name": "InteractionRequest",
-              "stability": "provisional"
-            },
-            {
-              "name": "Policy",
-              "stability": "provisional"
-            },
-            {
-              "name": "PolicyFailure",
-              "stability": "provisional"
-            },
-            {
-              "name": "PolicyInteractionRequired",
-              "stability": "provisional"
-            },
-            {
-              "name": "PolicyResult",
-              "stability": "provisional"
-            },
-            {
-              "name": "PolicySuccess",
-              "stability": "provisional"
-            },
-            {
-              "name": "Principal",
-              "stability": "provisional"
-            },
-            {
-              "name": "ScopePolicy",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.policy.base",
-          "exports": [
-            {
-              "name": "InteractionKind",
-              "stability": "provisional"
-            },
-            {
-              "name": "InteractionRequest",
-              "stability": "provisional"
-            },
-            {
-              "name": "Policy",
-              "stability": "provisional"
-            },
-            {
-              "name": "PolicyFailure",
-              "stability": "provisional"
-            },
-            {
-              "name": "PolicyInteractionRequired",
-              "stability": "provisional"
-            },
-            {
-              "name": "PolicyResult",
-              "stability": "provisional"
-            },
-            {
-              "name": "PolicySuccess",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.policy.confirmation",
-          "exports": [
-            {
-              "name": "ConfirmationEvidence",
-              "stability": "provisional"
-            },
-            {
-              "name": "ConfirmationPolicy",
-              "stability": "provisional"
-            },
-            {
-              "name": "ConfirmationVerdict",
-              "stability": "provisional"
-            },
-            {
-              "name": "ConfirmationVerifier",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.policy.principal",
-          "exports": [
-            {
-              "name": "AnonymousPrincipal",
-              "stability": "provisional"
-            },
-            {
-              "name": "Principal",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.policy.scopes",
-          "exports": [
-            {
-              "name": "ScopePolicy",
-              "stability": "provisional"
+              "stability": "stable"
             }
           ]
         },
@@ -1063,149 +492,55 @@
           "exports": [
             {
               "name": "AnySchema",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "DataclassFieldSchema",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "DataclassSchema",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "DictionarySchema",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "EnumSchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "JsonSchema",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ListSchema",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "LiteralSchema",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "NoneSchema",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "PrimitiveSchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "SchemaAdapter",
-              "stability": "provisional"
-            },
-            {
-              "name": "StandardSchemaAdapter",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "TupleSchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "TypeSchema",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "UnionSchema",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "materialize_json",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "serialize_json",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.schema.port",
-          "exports": [
-            {
-              "name": "JsonSchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "SchemaAdapter",
-              "stability": "provisional"
-            },
-            {
-              "name": "TypeSchema",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara.schema.standard",
-          "exports": [
-            {
-              "name": "AnySchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "DataclassFieldSchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "DataclassSchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "DictionarySchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "EnumSchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "ListSchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "LiteralSchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "NoneSchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "PrimitiveSchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "StandardSchemaAdapter",
-              "stability": "provisional"
-            },
-            {
-              "name": "TupleSchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "UnionSchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "materialize_json",
-              "stability": "provisional"
-            },
-            {
-              "name": "serialize_json",
-              "stability": "provisional"
+              "stability": "stable"
             }
           ]
         }
@@ -1230,19 +565,19 @@
           "exports": [
             {
               "name": "EXIT_FAILED",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "EXIT_OK",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "EXIT_USAGE",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "main",
-              "stability": "provisional"
+              "stability": "stable"
             }
           ]
         }
@@ -1267,120 +602,59 @@
           "exports": [
             {
               "name": "Binding",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "BindingSource",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "DocumentationAssets",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "Http",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "HttpApplication",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "HttpDefinitionError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "HttpDocumentation",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "HttpExplorer",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "OpenApiInfo",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "OpenApiOperation",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "OpenApiSchema",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "ReDoc",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "Scalar",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "SwaggerUI",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara_http.composition",
-          "exports": [
-            {
-              "name": "Binding",
-              "stability": "provisional"
-            },
-            {
-              "name": "BindingSource",
-              "stability": "provisional"
-            },
-            {
-              "name": "DocumentationAssets",
-              "stability": "provisional"
-            },
-            {
-              "name": "Http",
-              "stability": "provisional"
-            },
-            {
-              "name": "HttpApplication",
-              "stability": "provisional"
-            },
-            {
-              "name": "HttpDefinitionError",
-              "stability": "provisional"
-            },
-            {
-              "name": "HttpDocumentation",
-              "stability": "provisional"
-            },
-            {
-              "name": "HttpExplorer",
-              "stability": "provisional"
-            },
-            {
-              "name": "OpenApiInfo",
-              "stability": "provisional"
-            },
-            {
-              "name": "OpenApiOperation",
-              "stability": "provisional"
-            },
-            {
-              "name": "OpenApiSchema",
-              "stability": "provisional"
-            },
-            {
-              "name": "ReDoc",
-              "stability": "provisional"
-            },
-            {
-              "name": "Scalar",
-              "stability": "provisional"
-            },
-            {
-              "name": "SwaggerUI",
-              "stability": "provisional"
+              "stability": "stable"
             }
           ]
         }
@@ -1395,203 +669,83 @@
           "exports": [
             {
               "name": "MCP_PROTOCOL_VERSION",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "MCP_PYTHON_SDK_VERSION",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "SUPPORTED_MCP_PROTOCOL_VERSIONS",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "FrozenMcpTools",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "Mcp",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "McpAuthenticatedIdentity",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "McpAuthorization",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "McpAuthorizationDefinitionError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "McpInteractionProjectionError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "McpInvocationDefinitionError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "McpPrincipalMapper",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "McpResultProjectionError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "McpToolDefinitionError",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "McpToolExposure",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "McpToolInvoker",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "build_mcp_discovery_server",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "build_mcp_server",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "project_mcp_interaction_required",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "project_mcp_result",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "project_mcp_tools",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara_mcp.authorization",
-          "exports": [
-            {
-              "name": "McpAuthenticatedIdentity",
-              "stability": "provisional"
-            },
-            {
-              "name": "McpAuthorization",
-              "stability": "provisional"
-            },
-            {
-              "name": "McpAuthorizationDefinitionError",
-              "stability": "provisional"
-            },
-            {
-              "name": "McpPrincipalMapper",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara_mcp.discovery",
-          "exports": [
-            {
-              "name": "build_mcp_discovery_server",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara_mcp.dispatch",
-          "exports": [
-            {
-              "name": "McpInvocationDefinitionError",
-              "stability": "provisional"
-            },
-            {
-              "name": "McpToolInvoker",
-              "stability": "provisional"
-            },
-            {
-              "name": "build_mcp_server",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara_mcp.interaction",
-          "exports": [
-            {
-              "name": "McpInteractionProjectionError",
-              "stability": "provisional"
-            },
-            {
-              "name": "project_mcp_interaction_required",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara_mcp.protocol",
-          "exports": [
-            {
-              "name": "MCP_PROTOCOL_VERSION",
-              "stability": "provisional"
-            },
-            {
-              "name": "MCP_PYTHON_SDK_VERSION",
-              "stability": "provisional"
-            },
-            {
-              "name": "SUPPORTED_MCP_PROTOCOL_VERSIONS",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara_mcp.result",
-          "exports": [
-            {
-              "name": "McpResultProjectionError",
-              "stability": "provisional"
-            },
-            {
-              "name": "project_mcp_result",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara_mcp.schema",
-          "exports": [
-            {
-              "name": "project_mcp_tools",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara_mcp.tools",
-          "exports": [
-            {
-              "name": "FrozenMcpTools",
-              "stability": "provisional"
-            },
-            {
-              "name": "Mcp",
-              "stability": "provisional"
-            },
-            {
-              "name": "McpToolDefinitionError",
-              "stability": "provisional"
-            },
-            {
-              "name": "McpToolExposure",
-              "stability": "provisional"
+              "stability": "stable"
             }
           ]
         }
@@ -1606,29 +760,11 @@
           "exports": [
             {
               "name": "OpenTelemetryMetricsHook",
-              "stability": "provisional"
+              "stability": "stable"
             },
             {
               "name": "OpenTelemetryTracingHook",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara_telemetry.metrics",
-          "exports": [
-            {
-              "name": "OpenTelemetryMetricsHook",
-              "stability": "provisional"
-            }
-          ]
-        },
-        {
-          "module": "agnara_telemetry.tracing",
-          "exports": [
-            {
-              "name": "OpenTelemetryTracingHook",
-              "stability": "provisional"
+              "stability": "stable"
             }
           ]
         }

@@ -1,16 +1,8 @@
-from .compiler import DependencyCycleError, DependencyResolutionError, compile_dag
-from .provider import ProviderDefinition, ProviderType, Scope, provider
-from .registry import DIRegistry
-from .resolver import DIContainer
+from .compiler import DependencyCycleError, DependencyResolutionError, compile_dag  # noqa: F401
+from .provider import ProviderDefinition, ProviderType, Scope, provider  # noqa: F401
+from .registry import DIRegistry  # noqa: F401
+from .resolver import DIContainer  # noqa: F401
 
-__all__ = [
-    "DIContainer",
-    "DIRegistry",
-    "DependencyCycleError",
-    "DependencyResolutionError",
-    "ProviderDefinition",
-    "ProviderType",
-    "Scope",
-    "compile_dag",
-    "provider",
-]
+# The implementation module is intentionally not a public import path.  The
+# stable consumer boundary is ``agnara.di``.
+__all__: list[str] = []

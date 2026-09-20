@@ -200,7 +200,7 @@ An app declares; a project mounts:
 
 ```python
 from agnara import Agnara, App
-from agnara.core.di import DIRegistry
+from agnara.di import DIRegistry
 
 payments = App(
     "payments",

@@ -39,9 +39,8 @@ from typing import Any
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from agnara import Agnara, App
-from agnara.capability import CapabilityRegistry
-from agnara.core.di import DIContainer, DIRegistry
+from agnara import Agnara, App, CapabilityRegistry, Principal
+from agnara.di import DIContainer, DIRegistry
 from agnara.execution import (
     CapabilityRuntime,
     ExecutionContext,
@@ -49,7 +48,6 @@ from agnara.execution import (
     Invocation,
     Success,
 )
-from agnara.policy import Principal
 
 #: A credential store stands in for whatever the host really uses.
 _TOKENS = {"token-alice": ("alice", {"orders:read"}), "token-bob": ("bob", set())}

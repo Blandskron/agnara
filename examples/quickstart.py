@@ -17,8 +17,8 @@ from __future__ import annotations
 
 import asyncio
 
-from agnara import Agnara, Confirmation, Risk, StandardEffect
-from agnara.core.di import DIContainer, DIRegistry, provider
+from agnara import Agnara, Confirmation, Principal, Risk, StandardEffect
+from agnara.di import DIContainer, DIRegistry, provider
 from agnara.execution import (
     ExecutionContext,
     ExecutionPlan,
@@ -27,7 +27,6 @@ from agnara.execution import (
     Success,
     invoke_result,
 )
-from agnara.policy import Principal
 
 
 class Ledger:

@@ -11,7 +11,7 @@ from agnara.capability import CapabilityId
 from agnara.execution import Failure, FailureCode
 from agnara.policy import InteractionKind
 
-__all__ = ["McpInteractionProjectionError", "project_mcp_interaction_required"]
+__all__: list[str] = []
 
 _DETAIL_KEYS: Final = frozenset({"kind", "title", "capability_id", "hints"})
 _REQUEST_KEY: Final = "confirmation"

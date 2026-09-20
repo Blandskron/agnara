@@ -51,8 +51,8 @@ PyPI projects still require their Pending Trusted Publishers before the tag.
 
 Every distribution's public surface is classified in
 `docs/public-api.json` and enforced in both directions by the release gate:
-337 classified exports across 49 modules, all `provisional`. Those entries are
-import paths rather than distinct symbols: 166 names are reachable at 337 paths,
+166 classified exports across 13 modules, all `stable`. Those entries are
+import paths rather than distinct symbols: 166 names are reachable at 166 canonical paths,
 because a name is classified once per module it can be imported from.
 `agnara-cli` dropped from 17
 public names to 4 in the baseline, because the other thirteen were implementation
@@ -65,7 +65,7 @@ reviewed documentation profile. `docs/HTTP_COMPOSITION.md` is the supported
 guide.
 
 It stays `EXPERIMENTAL` rather than becoming `IMPLEMENTED` because the public
-spelling is still provisional before 1.0, third-party provider extension and
+spelling is stable for 1.0, third-party provider extension and
 the authorized discovery endpoint remain intentionally internal, and the
 surface is newly expanded. The transport behaviour is settled; the spelling is
 not.

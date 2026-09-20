@@ -43,7 +43,7 @@ from agnara.capability.metadata import Confirmation, Risk
 from agnara.capability.registry import CapabilityRegistry
 from agnara.errors import DefinitionError
 
-__all__ = ["App", "AppDescriptor"]
+__all__: list[str] = []
 
 
 def _validated_module(module: str | None) -> str | None:

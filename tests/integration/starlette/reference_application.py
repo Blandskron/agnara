@@ -21,7 +21,7 @@ from starlette.routing import Route
 
 from agnara import Agnara, AnonymousPrincipal, App, Principal
 from agnara.capability import CapabilityId
-from agnara.core.di import DIContainer, DIRegistry
+from agnara.di import DIContainer, DIRegistry
 from agnara.execution import (
     CapabilityInvoker,
     CapabilityRuntime,

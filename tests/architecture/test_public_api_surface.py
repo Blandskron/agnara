@@ -123,6 +123,23 @@ def test_every_exported_name_actually_exists(module: str) -> None:
     assert not missing, f"{module} exports names it does not define: {missing}"
 
 
+@pytest.mark.parametrize(
+    ("module", "name"),
+    (
+        ("agnara", "JsonSchema"),
+        ("agnara.execution", "IdempotencyConflictError"),
+        ("agnara.introspection", "VisibilityRule"),
+        ("agnara_mcp", "McpPrincipalMapper"),
+        ("agnara_telemetry", "OpenTelemetryTracingHook"),
+    ),
+)
+def test_representative_pre_stable_names_import_from_their_canonical_modules(
+    module: str, name: str
+) -> None:
+    """Previously uncovered names remain direct public imports."""
+    assert hasattr(importlib.import_module(module), name)
+
+
 @pytest.mark.parametrize("module", MODULE_NAMES)
 def test_no_public_name_is_underscore_prefixed(module: str) -> None:
     """`__version__` is the one dunder a distribution may publish."""
@@ -136,13 +153,9 @@ def test_no_public_name_is_underscore_prefixed(module: str) -> None:
 
 
 @pytest.mark.parametrize("module", MODULE_NAMES)
-def test_alpha_makes_no_stable_api_claim(module: str) -> None:
-    """No symbol is `stable` merely because it is useful.
-
-    A module that exports nothing -- a reserved namespace -- makes no claim at
-    all, which is the honest classification for a package with no code.
-    """
-    assert {entry["stability"] for entry in exports_of(module)} <= {"provisional"}
+def test_every_governed_export_is_stable(module: str) -> None:
+    """The 1.0 surface contains only deliberate canonical commitments."""
+    assert {entry["stability"] for entry in exports_of(module)} <= {"stable"}
 
 
 def test_policy_defines_every_stability_term() -> None:
@@ -264,12 +277,7 @@ def test_the_owning_document_states_the_current_count() -> None:
     assert names in _numbers(_NAME_COUNT, text)
 
 
-def test_distinct_names_are_fewer_than_classified_paths() -> None:
-    """The two figures are different measurements, and 1.0 has to know which it promises.
-
-    A name reachable from three modules is classified three times. Promising
-    every classified path keeps three import spellings working for the whole
-    1.x series; promising the names leaves the alias paths free to move.
-    """
+def test_each_stable_name_has_one_canonical_import_path() -> None:
+    """Alias paths are not part of the 1.x compatibility commitment."""
     paths, _modules, names = _surface_totals()
-    assert names < paths, "if these ever match, the alias-path analysis needs redoing"
+    assert names == paths

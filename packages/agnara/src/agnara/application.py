@@ -33,7 +33,7 @@ from agnara.capability.metadata import Confirmation, Risk
 from agnara.capability.registry import CapabilityRegistry, FrozenCapabilityRegistry
 from agnara.errors import DefinitionError, DuplicateAppError, RegistryFrozenError
 
-__all__ = ["Agnara"]
+__all__: list[str] = []
 
 
 class Agnara:

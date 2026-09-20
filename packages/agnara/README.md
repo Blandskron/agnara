@@ -43,9 +43,8 @@ Requires CPython 3.14 or newer.
 ```python
 import asyncio
 
-from agnara import Agnara, Risk, StandardEffect
-from agnara.core.di import DIContainer, DIRegistry
-from agnara.policy import Principal
+from agnara import Agnara, Principal, Risk, StandardEffect
+from agnara.di import DIContainer, DIRegistry
 from agnara.execution import (
     ExecutionContext,
     ExecutionPlan,

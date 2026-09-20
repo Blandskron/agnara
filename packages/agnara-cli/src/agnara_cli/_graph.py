@@ -133,11 +133,11 @@ def run_graph(arguments: argparse.Namespace) -> str:
         lines.append(f"withheld relationship sources: {', '.join(withheld)}")
     lines.append("")
 
-    if not view.snapshot.apps:
+    if not view.snapshot.applications:
         lines.append("No capabilities are visible.")
         return "\n".join(lines)
 
-    for app in view.snapshot.apps:
+    for app in view.snapshot.applications:
         lines.extend(_app(app, view.visibility))
         lines.append("")
     while lines and not lines[-1]:

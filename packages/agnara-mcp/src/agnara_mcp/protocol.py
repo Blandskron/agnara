@@ -4,11 +4,7 @@ from __future__ import annotations
 
 from typing import Final
 
-__all__ = [
-    "MCP_PROTOCOL_VERSION",
-    "MCP_PYTHON_SDK_VERSION",
-    "SUPPORTED_MCP_PROTOCOL_VERSIONS",
-]
+__all__: list[str] = []
 
 
 MCP_PROTOCOL_VERSION: Final = "2026-07-28"

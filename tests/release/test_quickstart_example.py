@@ -47,9 +47,8 @@ def test_the_example_imports_only_public_agnara_api() -> None:
     agnara_modules = {name for name in modules if name.split(".")[0] == "agnara"}
     assert agnara_modules == {
         "agnara",
-        "agnara.core.di",
+        "agnara.di",
         "agnara.execution",
-        "agnara.policy",
     }
     assert not [name for name in agnara_modules if "._" in name]
 
@@ -96,7 +95,7 @@ def test_the_http_example_imports_only_public_api() -> None:
     modules = {first or second for first, second in imported}
     agnara_modules = {name for name in modules if name.split(".")[0].startswith("agnara")}
 
-    assert agnara_modules == {"agnara", "agnara.core.di", "agnara.exposure", "agnara_http"}
+    assert agnara_modules == {"agnara", "agnara.di", "agnara.exposure", "agnara_http"}
     assert not [name for name in agnara_modules if "._" in name]
 
 

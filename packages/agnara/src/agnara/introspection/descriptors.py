@@ -25,29 +25,15 @@ from agnara.capability.identity import CapabilityId
 from agnara.capability.metadata import Confirmation, Idempotency, Risk
 from agnara.errors import DefinitionError
 
-__all__ = [
-    "INTROSPECTION_FORMAT",
-    "INTROSPECTION_VERSION",
-    "ApplicationDescriptor",
-    "BoundedContextDescriptor",
-    "CapabilityDescriptor",
-    "DependencyDescriptor",
-    "ExposureDescriptor",
-    "InputDescriptor",
-    "IntrospectionError",
-    "IntrospectionSnapshot",
-    "PolicyDescriptor",
-    "ProviderDescriptor",
-    "TypeReference",
-]
+__all__: list[str] = []
 
 #: The snapshot's stable format marker. It names this contract so a consumer
 #: can refuse a document that merely looks similar.
 INTROSPECTION_FORMAT: Final = "agnara-introspection"
 
 #: The snapshot's own version, deliberately independent of the Agnara release
-#: version and of OpenAPI. ``"0"`` states that the contract is not yet stable.
-INTROSPECTION_VERSION: Final = "0"
+#: version and of OpenAPI. ``"1"`` is the first stable contract revision.
+INTROSPECTION_VERSION: Final = "1"
 
 
 class IntrospectionError(DefinitionError):
@@ -404,7 +390,7 @@ class IntrospectionSnapshot:
     leaving it unset rather than by inventing a name.
     """
 
-    apps: tuple[ApplicationDescriptor, ...] = ()
+    applications: tuple[ApplicationDescriptor, ...] = ()
     project: str | None = None
     format: str = INTROSPECTION_FORMAT
     version: str = INTROSPECTION_VERSION
@@ -414,13 +400,14 @@ class IntrospectionSnapshot:
     filtered: bool = False
 
     def __post_init__(self) -> None:
-        if not isinstance(self.apps, tuple) or any(
-            not isinstance(item, ApplicationDescriptor) for item in self.apps
+        if not isinstance(self.applications, tuple) or any(
+            not isinstance(item, ApplicationDescriptor) for item in self.applications
         ):
             raise IntrospectionError(
-                "introspection snapshot apps must be a tuple of ApplicationDescriptor values"
+                "introspection snapshot applications must be a tuple of "
+                "ApplicationDescriptor values"
             )
-        names = [app.name for app in self.apps]
+        names = [app.name for app in self.applications]
         if len(names) != len(set(names)):
             raise IntrospectionError("introspection snapshot repeats an app name")
         _optional_text(self.project, field="project")
@@ -434,7 +421,9 @@ class IntrospectionSnapshot:
     @property
     def transports(self) -> tuple[str, ...]:
         """Transports any app in this snapshot is exposed through."""
-        return tuple(dict.fromkeys(transport for app in self.apps for transport in app.transports))
+        return tuple(
+            dict.fromkeys(transport for app in self.applications for transport in app.transports)
+        )
 
     def json_data(self) -> dict[str, Any]:
         """Return the snapshot's stable JSON data form.
@@ -450,5 +439,5 @@ class IntrospectionSnapshot:
             "filtered": self.filtered,
             "project": self.project,
             "transports": list(self.transports),
-            "apps": [app.json_data() for app in self.apps],
+            "applications": [app.json_data() for app in self.applications],
         }

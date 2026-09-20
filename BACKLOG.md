@@ -121,13 +121,9 @@ order.
   `docs/releases/1.0-release-rehearsal.md`. FINAL RELEASE READY: NO.
 
 - [x] Freeze the 1.0 public surface and remove documentation drift (V1-32):
-  measured 337 classified entries across 49 modules, which are 166 distinct names
-  reachable at 337 import paths; 171 entries are aliases and 36 of 49 modules
-  contribute no canonical name. Fixed three stale counts and gated every stated
-  count against the manifest. Added the 1.x compatibility contract. The stable
-  classification itself remains the maintainer's decision and every export is
-  still provisional; the evidence and proposals are in
-  `docs/releases/1.0-api-classification.md`.
+  established the measurement and compatibility policy later finalized by
+  V1-31. The canonical surface is now 166 stable exports across 13 modules;
+  historical alias paths are absent from the contract.
 
 - [x] Calibrate performance budgets and enforce them (V1-30): the eleven critical
   paths were audited; `benchmarks/runtime_paths.py` now covers the seven that had
@@ -139,12 +135,15 @@ order.
   records to a flat 9us. HTTP SSE throughput and free-threaded builds remain
   unbudgeted and are recorded as open.
 
+- [x] Finalize the 1.0 public API (V1-31): classify 166 canonical names across
+  13 governed modules as stable, remove 171 duplicate leaf-module export paths,
+  move DI to `agnara.di`, and rename introspection snapshot `apps` to
+  `applications` with migration guidance and public-import evidence.
+
 ## Deferred decisions
 
-- [ ] D7 Decide whether `agnara.core.di` remains the public dependency
-  injection spelling before API stabilization.
-- [ ] D6 Rename the introspection snapshot field `.apps` to `applications`
-  only with an intentional snapshot-format migration.
+- [x] D7 Use `agnara.di` as the public dependency-injection spelling.
+- [x] D6 Rename the introspection snapshot field `.apps` to `applications`.
 - [ ] Configure an independent reviewer identity when one is available.
 
 No item in this backlog authorizes a publication before the `1.0.0` release

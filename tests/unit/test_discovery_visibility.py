@@ -77,11 +77,11 @@ def built() -> IntrospectionSnapshot:
 
 
 def visible_ids(document: IntrospectionSnapshot) -> list[str]:
-    return [capability.id for app in document.apps for capability in app.capabilities]
+    return [capability.id for app in document.applications for capability in app.capabilities]
 
 
 def only(document: IntrospectionSnapshot, identifier: str) -> CapabilityDescriptor:
-    for app in document.apps:
+    for app in document.applications:
         for capability in app.capabilities:
             if capability.id == identifier:
                 return capability
@@ -124,9 +124,9 @@ def test_a_surface_can_be_turned_off_without_removing_it() -> None:
         Principal("agent", scopes={"payments:write"}),
     )
 
-    assert document.apps == ()
+    assert document.applications == ()
     # An application name is itself a disclosure, so nothing survives.
-    assert document.json_data()["apps"] == []
+    assert document.json_data()["applications"] == []
     assert document.json_data()["project"] is None
     assert document.filtered is True
 
@@ -148,7 +148,7 @@ def test_identity_only_publishes_that_a_capability_exists_and_nothing_more() -> 
     assert refund.policies == ()
     assert refund.exposures == ()
     assert refund.transports == ()
-    assert document.apps[0].providers == ()
+    assert document.applications[0].providers == ()
 
 
 def test_agent_safe_publishes_what_a_caller_needs_and_no_implementation_detail() -> None:
@@ -167,7 +167,7 @@ def test_agent_safe_publishes_what_a_caller_needs_and_no_implementation_detail()
     # Implementation detail stays unpublished.
     assert refund.dependencies == ()
     assert refund.policies == ()
-    assert document.apps[0].providers == ()
+    assert document.applications[0].providers == ()
     assert json.loads(refund.exposures[0].detail) == {}
 
 
@@ -180,8 +180,8 @@ def test_unrestricted_publishes_every_field() -> None:
     assert [item.parameter for item in refund.dependencies] == ["ledger"]
     assert refund.dependencies[0].type.module == __name__
     assert json.loads(refund.exposures[0].detail) == {"method": "POST"}
-    assert [item.provides.name for item in document.apps[0].providers] == ["Ledger"]
-    assert document.apps[0].providers[0].requires == ()
+    assert [item.provides.name for item in document.applications[0].providers] == ["Ledger"]
+    assert document.applications[0].providers[0].requires == ()
 
 
 def test_type_modules_are_a_separate_decision_from_dependencies() -> None:
@@ -196,7 +196,7 @@ def test_type_modules_are_a_separate_decision_from_dependencies() -> None:
     assert [item.parameter for item in refund.dependencies] == ["ledger"]
     assert refund.dependencies[0].type.name == "Ledger"
     assert refund.dependencies[0].type.module is None
-    assert document.apps[0].providers[0].provides.module is None
+    assert document.applications[0].providers[0].provides.module is None
     assert __name__ not in json.dumps(document.json_data())
 
 
@@ -218,7 +218,7 @@ def test_hiding_exposures_also_hides_derived_transport_availability() -> None:
     # Transport availability *is* the exposure list in this model, so it
     # cannot describe a transport the viewer was never shown.
     assert document.transports == ()
-    assert document.apps[0].transports == ()
+    assert document.applications[0].transports == ()
 
 
 def test_an_unpublished_field_is_absent_rather_than_emptied_misleadingly() -> None:

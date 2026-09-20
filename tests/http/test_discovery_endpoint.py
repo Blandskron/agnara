@@ -210,7 +210,7 @@ def test_an_identified_viewer_receives_the_filtered_snapshot() -> None:
     assert headers[b"content-length"] == str(len(body)).encode("ascii")
     assert payload["format"] == "agnara-introspection"
     assert payload["filtered"] is True
-    assert [item["id"] for item in payload["apps"][0]["capabilities"]] == [
+    assert [item["id"] for item in payload["applications"][0]["capabilities"]] == [
         "billing.refund",
         "billing.health",
     ]
@@ -229,7 +229,9 @@ def test_the_document_is_filtered_for_the_requesting_viewer() -> None:
 
     def identifiers(body: bytes) -> list[str]:
         return [
-            capability["id"] for app in document(body)["apps"] for capability in app["capabilities"]
+            capability["id"]
+            for app in document(body)["applications"]
+            for capability in app["capabilities"]
         ]
 
     assert identifiers(scoped) == ["billing.refund", "billing.health"]
@@ -285,7 +287,9 @@ def test_anonymous_discovery_is_available_only_by_explicit_opt_in() -> None:
     assert b"www-authenticate" not in headers
     # An anonymous viewer holds no scope, so a scoped capability stays hidden.
     assert [
-        capability["id"] for app in document(body)["apps"] for capability in app["capabilities"]
+        capability["id"]
+        for app in document(body)["applications"]
+        for capability in app["capabilities"]
     ] == ["billing.health"]
 
 

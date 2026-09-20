@@ -20,7 +20,7 @@ from agnara.policy import ConfirmationVerifier, Policy, ScopePolicy
 from agnara.policy.confirmation import ConfirmationPolicy
 from agnara.schema import SchemaAdapter, StandardSchemaAdapter, TypeSchema
 
-__all__ = ["ExecutionPlan"]
+__all__: list[str] = []
 
 
 @frozen_slots_dataclass

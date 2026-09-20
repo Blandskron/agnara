@@ -22,7 +22,7 @@ from agnara.schema import (
 
 from .tools import FrozenMcpTools, McpToolDefinitionError, McpToolExposure
 
-__all__ = ["project_mcp_tools"]
+__all__: list[str] = []
 
 
 def _json_value(value: object, *, path: str) -> Any:

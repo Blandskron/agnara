@@ -34,16 +34,7 @@ from agnara.introspection.descriptors import (
 )
 from agnara.policy.principal import Principal
 
-__all__ = [
-    "AllCapabilitiesVisible",
-    "DiscoveryField",
-    "DiscoveryVisibility",
-    "Hiding",
-    "NoCapabilityVisible",
-    "ScopeVisible",
-    "VisibilityRule",
-    "filter_snapshot",
-]
+__all__: list[str] = []
 
 
 class DiscoveryField(StrEnum):
@@ -357,7 +348,7 @@ def filter_snapshot(
         )
 
     apps: list[ApplicationDescriptor] = []
-    for app in snapshot.apps:
+    for app in snapshot.applications:
         visible = tuple(
             _capability(capability, visibility)
             for capability in app.capabilities
@@ -374,7 +365,7 @@ def filter_snapshot(
             )
         )
     return IntrospectionSnapshot(
-        apps=tuple(apps),
+        applications=tuple(apps),
         project=snapshot.project if apps else None,
         format=snapshot.format,
         version=snapshot.version,

@@ -38,10 +38,7 @@ from agnara.errors import (
     UnknownCapabilityError,
 )
 
-__all__ = [
-    "CapabilityRegistry",
-    "FrozenCapabilityRegistry",
-]
+__all__: list[str] = []
 
 #: Anything that can name a capability in a lookup.
 CapabilityKey = CapabilityId | str
