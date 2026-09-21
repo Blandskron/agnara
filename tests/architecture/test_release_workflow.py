@@ -62,6 +62,10 @@ GITHUB_DEFAULT_ENV = frozenset(
 GATES_BEFORE_PUBLICATION = {
     "validate",
     "preconditions",
+    # SECURITY.md's locked runtime audit, run as a gate rather than left as a
+    # maintainer instruction (V1-37). `build` depends on it, so a release
+    # cannot reach the human approval step with the audit unperformed.
+    "dependency-audit",
     "build",
     "test-artifact",
     "publish-preflight",

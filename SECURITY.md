@@ -133,22 +133,77 @@ not that every alert is resolved. Review open alerts and their analyzed commit
 before release; record fixes or justified dispositions privately where the
 finding is exploitable. Do not close or suppress alerts merely to get green CI.
 
-For dependencies, re-run the locked runtime audit on the final candidate:
+The locked runtime audit is a release gate rather than an instruction. The
+`dependency-audit` job runs before anything is built, and `build` depends on
+it, so a release cannot reach the human approval step with the audit
+unperformed:
 
 ```powershell
 uv export --locked --all-packages --no-dev --no-emit-workspace `
   --no-hashes --format requirements.txt --output-file runtime-requirements.txt
 uvx --from pip-audit==2.10.1 pip-audit `
-  -r runtime-requirements.txt --format json --output pip-audit.json
+  -r runtime-requirements.txt --strict --format json --output pip-audit.json
 ```
 
-Run it from the exact release commit, after the version and changelog cut and
-before tagging. A zero-result audit is evidence only for the vulnerability
-database and lockfile observed at execution time, so it expires: dependency
-alerts on the default branch do not prove that an unreleased `develop`
-lockfile is clean. Record the result against the candidate SHA in
+It audits the locked *runtime* graph. The development group -- test, fixture
+and tooling packages -- is excluded because no consumer installs it; a
+vulnerability there is a contributor concern, not a shipped one.
+
+A zero-result audit is evidence only for the vulnerability database and
+lockfile observed at execution time, so it expires: dependency alerts on the
+default branch do not prove that an unreleased `develop` lockfile is clean.
+Record the result against the candidate SHA in
 `docs/releases/release-status.json`. Secret-scanning alerts must be handled in the private security UI;
 never copy credential values into Issues, PRs or build logs.
+
+### Artifact inventory and provenance
+
+Three mechanisms cover three different questions, and none of them answers
+another's:
+
+| Question | Mechanism | Where |
+| --- | --- | --- |
+| What is in the candidate? | CycloneDX 1.6 SBOM | `scripts/generate_sbom.py`, published as the `agnara-sbom` artifact |
+| Are these the bytes that were built? | SHA-256 digest chain | `SHA256SUMS`, re-checked by every job that touches the bundle |
+| Who built and published them? | PEP 740 attestations | `pypa/gh-action-pypi-publish` under the workflow's OIDC identity |
+
+The SBOM describes the seven built files with their real digests plus the
+locked runtime graph -- not the environment that happened to produce it, which
+is the usual way an SBOM becomes decorative. It is deterministic: the
+timestamp comes from the release commit through `SOURCE_DATE_EPOCH` and the
+serial number is derived from the document's content, so two SBOMs of
+identical inputs are byte-identical and a difference between them means
+something. `scripts/check_sbom.py` verifies the document against the built
+files independently of the generator.
+
+Signing is not implemented here and is not invented here. Attestations are
+produced by the ecosystem's own mechanism, keyless through Sigstore, using the
+short-lived OIDC identity the publishing job presents. Agnara holds no signing
+key, and no key or token belongs in this repository or in a build log.
+
+### Verifying Trusted Publishing at the real release
+
+Publication runs in protected environments, so parts of this can only be
+confirmed during an authorized release. Before approving one, and again after
+it completes:
+
+1. **Before dispatch.** `scripts/check_release_preconditions.py` refuses to
+   proceed unless the protected environment exists and the recorded Trusted
+   Publisher tuple matches the identity this workflow will present. The
+   `publish-preflight` job then reads the public index to confirm that earlier
+   phases are complete at this version and that this phase's projects carry no
+   file of it -- the state `skip-existing: true` would have concealed.
+2. **At the approval gate.** Confirm in the environment's own settings that
+   the required reviewers are the intended people, and that the job requesting
+   approval is the phase you meant to authorize.
+3. **After each phase.** The `verify-bootstrap-*` and `verify-published` jobs
+   read the index back. Additionally confirm on PyPI that each uploaded file
+   carries its attestation and that the publisher shown is this repository's
+   workflow, not a token.
+
+None of step 3 can be established by inspecting this repository. Until an
+authorized release runs, the live publisher configuration is `NEEDS CI` and is
+recorded that way rather than assumed.
 
 ## Documentation and discovery surfaces
 
