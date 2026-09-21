@@ -1,6 +1,7 @@
 # Backlog
 
-This file owns decomposed work ready to implement on the path to `1.0.0`.
+This file owns decomposed work on the path to `1.0.0` and explicitly blocked
+post-release work. Blocked items are not ready to implement.
 `ROADMAP.md` owns the destination and `docs/INITIATIVES.md` owns dependency
 order.
 
@@ -170,6 +171,28 @@ order.
   13 governed modules as stable, remove 171 duplicate leaf-module export paths,
   move DI to `agnara.di`, and rename introspection snapshot `apps` to
   `applications` with migration guidance and public-import evidence.
+
+## Post-1.0: Python 3.15 Readiness (blocked)
+
+All items below remain unstarted until the maintainer explicitly confirms
+stable publication of Agnara 1.0.0. The
+[canonical program](docs/research/python-315-readiness.md) owns activation,
+priorities, dependencies and acceptance criteria. This documentation work
+([#466](https://github.com/Blandskron/agnara/issues/466)) does not complete or
+unlock any item; none is a 1.0 release gate. Python >=3.14 remains the baseline.
+
+- [ ] P315-01 — CPython 3.15 conventional compatibility.
+- [ ] P315-02 — Independent CPython 3.15t core and ecosystem validation.
+- [ ] P315-03 — Free-threading concurrency audit.
+- [ ] P315-04 — Conventional 3.14 vs 3.15 benchmark baseline.
+- [ ] P315-05 — Conventional 3.15 vs free-threaded benchmark.
+- [ ] P315-06 — JIT experiment.
+- [ ] P315-07 — Profiling / Tachyon evidence.
+- [ ] P315-08 — Lazy imports research.
+- [ ] P315-09 — frozendict research.
+- [ ] P315-10 — Sentinel research.
+- [ ] P315-11 — Dependency compatibility matrix.
+- [ ] P315-12 — Official support declaration after evidence review.
 
 ## Deferred decisions
 

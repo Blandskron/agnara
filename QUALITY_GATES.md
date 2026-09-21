@@ -327,9 +327,18 @@ mechanism.
 
 ## Free-threading gate
 
-At least one CI lane should eventually run with CPython free-threaded 3.14t where the dependency ecosystem allows it.
+Free-threaded validation remains future work, not a new Agnara 1.0 gate.
+The former eventual 3.14t lane aspiration is now scoped by the post-1.0
+[Python 3.15 Readiness plan](docs/research/python-315-readiness.md): P315-02
+separates 3.15t core and ecosystem lanes, P315-03 requires a concurrency audit,
+and P315-12 defines independent support evidence. Implementation waits for
+the maintainer's explicit confirmation of stable Agnara 1.0.0 publication.
+This documentation enables no CI lane and preserves the Python >=3.14 baseline.
 
-Failures must not be hidden by globally re-enabling the GIL without documentation.
+Failures must not be hidden by re-enabling the GIL. A run whose dependencies
+enable it is not free-threaded evidence. The
+[support declaration gate](docs/research/python-315-readiness.md#p315-12--support-declaration)
+also keeps conventional 3.15 support separate from free-threaded maturity.
 
 ## Merge governance gate
 

@@ -1,6 +1,7 @@
 # Initiatives
 
-This document groups the work required for Agnara's first stable release.
+This document groups the work required for Agnara's first stable release and
+separately indexes programs blocked until after that release.
 `BACKLOG.md` owns executable work items; `docs/releases/RELEASE_PLAN.md` owns
 the gates that must pass before `1.0.0` can be authorized.
 
@@ -144,6 +145,19 @@ supported by the decision alone.
 Durable execution, workflow orchestration, plugins, multitenancy and new
 protocol projections remain research or post-release work. They must not be
 smuggled into the stable-release scope without an RFC and a backlog item.
+
+### Python 3.15 Readiness
+
+**Horizon:** post-1.0, Agnara 1.x
+
+**Status:** see the [canonical program](research/python-315-readiness.md).
+
+The program begins immediately after the maintainer explicitly confirms
+stable Agnara 1.0.0 publication, never as part of its release gates. Its
+[dependency order](research/python-315-readiness.md#work-packages-and-dependency-order)
+prioritizes conventional compatibility, isolated 3.15t core validation and
+the concurrency audit before evidence-based optimization research and support
+declarations. [BACKLOG](../BACKLOG.md) owns P315-01 through P315-12 task state.
 
 ## Prioritization
 
