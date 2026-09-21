@@ -59,6 +59,7 @@ Each level may cite the level above it. None should restate it.
 | How to run the official reference container | `docs/CONTAINERS.md` | cite; PyPI remains canonical |
 | Public API inventory and stability policy | `docs/PUBLIC_API.md` + `docs/public-api.json` | cite |
 | External standards studied | `docs/REFERENCE_RESEARCH.md` | cite |
+| Post-1.0 Python 3.15 activation, work-package scope and evidence criteria | [Python 3.15 Readiness](research/python-315-readiness.md) | cite; task state stays in BACKLOG, current claims in MATURITY |
 | Contribution and git process | `CONTRIBUTING.md`, `GIT_WORKFLOW.md` | cite |
 | Agent authorship and human review | ADR 0092, `AGENTS.md` | cite; do not rewrite historical ADRs/commits |
 

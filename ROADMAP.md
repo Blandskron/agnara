@@ -27,6 +27,25 @@ stabilizes, not by a pre-release cadence.
 - Public API: the supported surface and migration commitments are stable.
 - Documentation: applications can be built from supported documentation alone.
 
+## After the stable-release boundary: Python 3.15 Readiness
+
+```text
+Agnara 1.0: Python >=3.14, stable publication
+-------------------- release boundary --------------------
+Maintainer explicitly confirms Agnara 1.0.0 was published
+                         |
+                         v
+Python 3.15 Readiness: post-1.0 program begins immediately
+```
+
+The [canonical program](docs/research/python-315-readiness.md) defines the
+activation condition, compatibility and free-threading validation, profiling,
+benchmarks, and JIT/lazy-import/frozendict/sentinel research. It remains
+blocked until that explicit confirmation; no date, tag, merge or release
+candidate unlocks it. Python 3.15 does not belong to or block Agnara 1.0.
+The post-release goal is validated CPython 3.15 support during 2026, not a
+guarantee, while initially retaining Python >=3.14.
+
 ## Non-goals
 
 Agnara is not becoming an ORM, broker, scheduler, worker runtime, frontend
