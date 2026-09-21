@@ -45,3 +45,12 @@ Thumbs.db
 # not a control. The property lanes set database=None, so nothing here is
 # evidence: discovered failures are pinned as @example instead.
 .hypothesis/
+
+# Supply-chain evidence a release run produces inside the workspace, and that
+# SECURITY.md tells a maintainer to produce locally. Untracked, they would
+# make the `repository-clean` release gate report a dirty tree for doing
+# exactly what the release procedure asks. The reviewed copies are the CI
+# artifacts, not files in the checkout.
+/runtime-requirements.txt
+/pip-audit.json
+/sbom/

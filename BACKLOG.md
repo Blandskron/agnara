@@ -87,6 +87,13 @@ order.
     absence and minimal install in an isolated subprocess (`tests/integration/test_framework_absence.py`),
     removed stale references, and updated the I20 supported matrix in `docs/INTEROPERABILITY.md`.
 - [ ] Complete the security program evidence (I10).
+  - [x] Close the supply-chain evidence gaps (V1-37): added a deterministic
+    CycloneDX 1.6 SBOM for the built candidate with an independent verifier,
+    made the recorded artifact digests a gate at every job that touches the
+    bundle, and turned the locked dependency audit into a release gate. PEP
+    740 attestations remain the provenance mechanism; no signing key exists
+    here. Live Trusted Publisher configuration and minted attestations stay
+    `NEEDS CI` because only an authorized release can establish them.
   - [x] Establish the property-based and bounded-fuzz program (V1-36): added
     `tests/property/` covering the four targets `QUALITY_GATES.md` names plus
     identity/selector normalization and an end-to-end adversarial request

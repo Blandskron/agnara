@@ -94,6 +94,13 @@ Generated public reference and a deliberate stable classification decision.
 **Horizon:** `1.0.0`
 **Status:** `IN PROGRESS`
 
+V1-37 closed the supply-chain evidence gaps: a deterministic CycloneDX SBOM
+for the built candidate, the recorded artifact digests enforced at every job
+that handles the bundle, and the locked dependency audit promoted from a
+maintainer instruction to a release gate. Provenance remains PEP 740
+attestations; the live publisher configuration cannot be established without
+an authorized release and stays `NEEDS CI`.
+
 V1-36 added the property-based and bounded-fuzz lanes in `tests/property/`,
 which found and fixed two request-path defects (F-1, F-2) in HTTP method
 handling. The lanes are derandomized and bounded so CI stays reproducible;

@@ -20,6 +20,15 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Close the supply-chain evidence gaps for 1.0. The release build now
+  generates a deterministic CycloneDX 1.6 SBOM describing the seven built
+  distributions with their real digests plus the locked runtime graph, and
+  verifies it with a separate checker. The `SHA256SUMS` the build records is
+  re-verified by every job that acts on the bundle, including all seven PyPI
+  uploads -- previously it was written and never read back. The locked
+  dependency audit `SECURITY.md` has required since A7 is now a gate that
+  `build` depends on, rather than a maintainer instruction nothing ran.
+
 - Match HTTP request methods exactly, and never raise on one. Two defects
   found by the new property lanes: a method outside the RFC 9110 token
   grammar escaped the dispatcher as an uncaught error carrying the caller's
