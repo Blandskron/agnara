@@ -32,6 +32,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -56,6 +57,11 @@ _REQUIREMENT = re.compile(
     r"^(?P<name>[A-Za-z0-9._-]+)==(?P<version>[^\s;\\]+)(?:\s*;\s*(?P<marker>[^\\]+?))?\s*\\?$"
 )
 _HASH = re.compile(r"^\s*--hash=(?P<algorithm>[a-z0-9]+):(?P<value>[0-9a-f]+)\s*\\?$")
+
+#: SGR escape sequences. A colour-forcing CI environment -- GitHub Actions
+#: sets `FORCE_COLOR` -- wraps every exported line in these, which turns a
+#: comment into an unrecognized requirement. See `parse_requirements`.
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
 
 class SbomError(RuntimeError):
@@ -86,9 +92,16 @@ def export_locked_requirements(workspace: Path) -> str:
         "--all-packages",
         "--no-dev",
         "--no-emit-workspace",
+        # This output is parsed, not read. A CI runner that sets FORCE_COLOR
+        # -- GitHub Actions does -- otherwise wraps every line in ANSI escapes
+        # and the comment and requirement grammars below stop matching.
+        "--color",
+        "never",
         "--format",
         "requirements.txt",
     ]
+    environment = {**os.environ, "NO_COLOR": "1"}
+    environment.pop("FORCE_COLOR", None)
     try:
         completed = subprocess.run(
             command,
@@ -96,6 +109,7 @@ def export_locked_requirements(workspace: Path) -> str:
             capture_output=True,
             text=True,
             check=False,
+            env=environment,
         )
     except FileNotFoundError as error:  # pragma: no cover - environment defect
         raise SbomError("uv is not available; cannot resolve the locked graph") from error
@@ -114,11 +128,17 @@ def parse_requirements(exported: str) -> list[dict[str, Any]]:
     Markers are kept verbatim as a property rather than evaluated: which
     platform a dependency applies to is part of the description, and deciding
     it here would make the document specific to whichever runner produced it.
+
+    Escapes are stripped before matching even though the export is requested
+    without colour. Parsing is where a decorated line turns into a wrong
+    document or a hard failure, so it does not depend on the caller having
+    asked correctly.
     """
     components: list[dict[str, Any]] = []
     current: dict[str, Any] | None = None
 
-    for line in exported.splitlines():
+    for raw in exported.splitlines():
+        line = _ANSI.sub("", raw)
         if not line.strip() or line.lstrip().startswith("#"):
             continue
         hash_match = _HASH.match(line)
