@@ -179,7 +179,7 @@ def test_every_budgeted_metric_is_present_in_the_record() -> None:
         if metric == "startup_peak_bytes_per_capability":
             assert all("peak_bytes_per_capability" in entry for entry in record["startup"].values())
             continue
-        if metric == "startup_scaling_ratio":
+        if metric in {"registration_scaling_ratio", "startup_scaling_ratio"}:
             assert metric in record
             continue
         for scenario in specification:
@@ -195,3 +195,27 @@ def test_benchmark_rejects_non_positive_sampling_controls() -> None:
     )
     assert completed.returncode == 2
     assert "must be at least 1" in completed.stderr
+
+
+def test_benchmark_can_write_a_machine_readable_record(tmp_path: Path) -> None:
+    output = tmp_path / "runtime-paths.json"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "--iterations",
+            "2",
+            "--samples",
+            "1",
+            "--warmups",
+            "1",
+            "--output",
+            str(output),
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert completed.stdout == ""
+    assert json.loads(output.read_text(encoding="utf-8"))["benchmark"] == "agnara.runtime.paths"

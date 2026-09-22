@@ -25,9 +25,21 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BUDGETS = ROOT / "docs" / "performance" / "budgets.json"
+BUDGET_SCHEMA_VERSION = 2
 
 #: Metrics whose value is a bare number rather than a mapping of scenario names.
-SCALAR_METRICS = frozenset({"startup_scaling_ratio", "startup_peak_bytes_per_capability"})
+SCALAR_METRICS = frozenset(
+    {"registration_scaling_ratio", "startup_scaling_ratio", "startup_peak_bytes_per_capability"}
+)
+SUPPORTED_METRICS = frozenset(
+    {
+        "median_ratio_to_compiled_invoke",
+        "median_ratio_to_reference",
+        "registration_scaling_ratio",
+        "startup_scaling_ratio",
+        "startup_peak_bytes_per_capability",
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,6 +74,27 @@ def _load(path: Path) -> dict[str, object]:
     if not isinstance(loaded, dict):
         raise SystemExit(f"{path} must contain a JSON object")
     return loaded
+
+
+def _validate_budget_schema(budgets: dict[str, object]) -> None:
+    """Reject an unreviewed budget format or metric before it reaches CI."""
+    if budgets.get("schema_version") != BUDGET_SCHEMA_VERSION:
+        raise SystemExit(
+            f"unsupported budget schema version {budgets.get('schema_version')!r}; "
+            f"expected {BUDGET_SCHEMA_VERSION}"
+        )
+    benchmarks = budgets.get("benchmarks")
+    if not isinstance(benchmarks, dict) or not benchmarks:
+        raise SystemExit("budget file declares no benchmarks")
+    for name, specification in benchmarks.items():
+        if not isinstance(specification, dict):
+            raise SystemExit(f"budget for {name} must be an object")
+        metrics = specification.get("metrics")
+        if not isinstance(metrics, dict) or not metrics:
+            raise SystemExit(f"budget for {name} declares no metrics")
+        unknown = sorted(set(metrics) - SUPPORTED_METRICS)
+        if unknown:
+            raise SystemExit(f"budget for {name} declares unknown metrics: {', '.join(unknown)}")
 
 
 def _run_benchmark(command: Sequence[str]) -> dict[str, object]:
@@ -167,6 +200,7 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     budgets = _load(args.budgets)
+    _validate_budget_schema(budgets)
 
     benchmarks = budgets.get("benchmarks")
     if not isinstance(benchmarks, dict):

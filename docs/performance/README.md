@@ -5,6 +5,11 @@ enforced performance limits. `scripts/check_performance_budgets.py` reads it and
 fails when a measured value exceeds its limit. CI runs that gate in the
 `Performance budgets` job.
 
+The file is schema version 2. The checker refuses another version and unknown
+metric names, so a typo or a newly emitted benchmark field cannot silently
+become an unenforced budget. Adding a metric requires an intentional checker,
+test, calibration-record and reviewed-budget change.
+
 `PERFORMANCE.md` at the repository root owns the optimization strategy and the
 comparison benchmarks. This directory owns only the enforced limits.
 

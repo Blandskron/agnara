@@ -40,7 +40,7 @@ def _record_at_budget(scale: float) -> dict[str, Any]:
             record["startup"]["100"] = {
                 "peak_bytes_per_capability": specification["maximum"] * scale
             }
-        elif metric == "startup_scaling_ratio":
+        elif metric in {"registration_scaling_ratio", "startup_scaling_ratio"}:
             record[metric] = specification["maximum"] * scale
         else:
             record[metric] = {
@@ -80,7 +80,7 @@ def test_gate_fails_and_names_every_breached_metric(tmp_path: Path) -> None:
     assert completed.returncode == 1
     assert "performance budget exceeded" in completed.stderr
     for metric, specification in _metrics().items():
-        if metric in {"startup_scaling_ratio", "startup_peak_bytes_per_capability"}:
+        if metric in {"registration_scaling_ratio", "startup_scaling_ratio", "startup_peak_bytes_per_capability"}:
             assert metric in completed.stderr
             continue
         for scenario in specification:
@@ -136,10 +136,42 @@ def test_gate_rejects_a_record_missing_a_budgeted_metric(tmp_path: Path) -> None
     assert "nested_depth_three" in completed.stderr
 
 
+def test_gate_rejects_an_unknown_budget_metric(tmp_path: Path) -> None:
+    budgets = _budgets()
+    budgets["benchmarks"][BENCHMARK]["metrics"]["made_up_metric"] = {"maximum": 1.0}
+    path = tmp_path / "budgets.json"
+    path.write_text(json.dumps(budgets), encoding="utf-8")
+    completed = subprocess.run(
+        [sys.executable, str(SCRIPT), "--budgets", str(path), "--record", str(path)],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode != 0
+    assert "unknown metrics: made_up_metric" in completed.stderr
+
+
+def test_gate_rejects_an_unknown_budget_schema_version(tmp_path: Path) -> None:
+    budgets = _budgets()
+    budgets["schema_version"] = 999
+    path = tmp_path / "budgets.json"
+    path.write_text(json.dumps(budgets), encoding="utf-8")
+    completed = subprocess.run(
+        [sys.executable, str(SCRIPT), "--budgets", str(path), "--record", str(path)],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode != 0
+    assert "unsupported budget schema version" in completed.stderr
+
+
 def test_every_budget_records_the_value_it_was_calibrated_against() -> None:
     """A limit with no observed measurement behind it is a guess."""
     for metric, specification in _metrics().items():
-        if metric in {"startup_scaling_ratio", "startup_peak_bytes_per_capability"}:
+        if metric in {"registration_scaling_ratio", "startup_scaling_ratio", "startup_peak_bytes_per_capability"}:
             entries = {metric: specification}
         else:
             entries = specification
