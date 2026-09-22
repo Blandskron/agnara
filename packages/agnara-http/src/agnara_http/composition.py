@@ -4,9 +4,9 @@ This is the whole public surface of ``agnara-http``. Everything else in the
 package is an underscore-prefixed implementation detail, and the point of this
 module is that an application never has to reach for one.
 
-Seven names, because the package exported nothing until the exposure model
-beneath it was settled (ADR 0070) and a small contract is easier to keep than
-a wide one:
+Fourteen names, because the package exported nothing until the exposure model
+beneath it was settled (ADR 0070) and a governed contract is easier to keep
+than an accidental wide one:
 
 ``Http``
     Declare which capabilities one named HTTP surface exposes, and compile it.
@@ -19,6 +19,9 @@ a wide one:
     Document metadata, and the per-operation decision to publish at all.
 ``HttpDefinitionError``
     One composition mistake, raised at startup.
+``HttpDocumentation`` / ``OpenApiSchema`` / ``SwaggerUI`` / ``Scalar`` /
+``ReDoc`` / ``DocumentationAssets`` / ``HttpExplorer``
+    Explicit, independent documentation and Explorer composition selections.
 
 A worked example lives in ``docs/HTTP_COMPOSITION.md``; the short version::
 
@@ -33,9 +36,9 @@ A worked example lives in ``docs/HTTP_COMPOSITION.md``; the short version::
     http.post("/refunds", refund, Binding("payment_id", BindingSource.QUERY))
     asgi = http.compile(app.compile(), openapi=OpenApiInfo("Billing", "1.0"))
 
-Nothing here is stable syntax. Every name is ``provisional`` in
-``docs/PUBLIC_API.md``: these are the deliberate entry points, and the alpha
-line makes no compatibility promise about them.
+The fourteen values re-exported by ``agnara_http`` are stable syntax governed
+by ``docs/public-api.json``. This module itself is intentionally not a second
+public import path; applications import the values from ``agnara_http``.
 
 The public value types are translated into the adapter's internal ones rather
 than aliasing them. That is deliberate: it is what lets routing, binding and

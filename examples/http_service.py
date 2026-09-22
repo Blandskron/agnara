@@ -1,4 +1,4 @@
-"""Agnara 0.1.0a4 — serving capabilities over HTTP.
+"""Agnara 1.0 candidate — serving capabilities over HTTP.
 
 Runs against public API only. `docs/HTTP_COMPOSITION.md` is the guide this
 mirrors, including the limitations of this release.
@@ -9,8 +9,9 @@ It composes one HTTP surface, drives four requests through the compiled ASGI
 application without a server, prints the generated OpenAPI paths, and shows
 that the same capabilities feed the protocol-neutral exposure registry.
 
-`agnara-http` is publication-ready but not yet on PyPI, so this candidate must
-be installed from a locally built wheel. See ADR 0073 and issue #291.
+Install the synchronized candidate wheels or the published 1.0 package set.
+The stable public API is documented in `docs/PUBLIC_API.md`; the A8 migration
+guide records the changes before that contract freezes.
 
 To serve it for real, hand `asgi` to any ASGI server:
 
@@ -90,7 +91,7 @@ def health() -> str:
 
 @app.capability(description="Attach a note and a document to one order.")
 def attach(order_id: str, session: str, note: str, document: bytes) -> dict[str, Any]:
-    """A cookie, a form field and an upload: the 0.1.0a4 request surface."""
+    """A cookie, a form field and a bounded in-memory upload."""
     return {
         "order_id": order_id,
         "session": session,

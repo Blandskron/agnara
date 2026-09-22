@@ -261,7 +261,7 @@ own representation; core never stores a transport status code.
 
 ### 16A. Same-application nested invocation
 
-ADR 0093 adds a narrow, provisional composition boundary. Compile every
+ADR 0093 adds a narrow, stable composition boundary. Compile every
 complete-result target into one `CapabilityRuntime`; a handler that explicitly
 asks for `CapabilityInvoker` can invoke a target from that frozen snapshot:
 
@@ -443,7 +443,7 @@ parse a documentation HTML page to discover capabilities.
 
 ## 19A. Optional documentation interfaces
 
-ADR 0090 makes the reviewed, still-provisional composition explicit rather
+ADR 0090 makes the reviewed, stable composition explicit rather
 than using a boolean bag:
 
 ```python

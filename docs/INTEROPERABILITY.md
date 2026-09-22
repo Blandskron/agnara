@@ -350,7 +350,7 @@ roadmap.
 ## 7. Accepted host and embedding contract
 
 ADR 0094 accepts the minimal 1.0.0 architectural contract. It is one async,
-complete-result bridge over the existing **provisional** public runtime values,
+complete-result bridge over the existing **stable** public runtime values,
 not a framework facade or a claim that any named framework is supported.
 
 ```text

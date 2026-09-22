@@ -20,6 +20,12 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Add A8-to-1.0 migration guidance for governed imports, introspection,
+  authority and idempotency boundaries, same-snapshot composition, streaming,
+  host embedding and stable HTTP composition. Current examples and
+  authoritative maturity guidance now point to the 1.0 candidate contract
+  without rewriting the historical alpha release record.
+
 - Refresh the performance-methodology evidence for final 1.0 semantics. The
   runtime benchmark now records registry registration/freeze, the explicit
   embedding boundary and separate stream opening, pull and completion work;

@@ -5,11 +5,12 @@
   "previous_release": "0.1.0a8",
   "next_target": "1.0.1",
   "status": "IN_PROGRESS",
-  "assessed_on": "2026-09-21",
+  "assessed_on": "2026-09-22",
   "notes": [
     "A8 is retained solely as the verified publication baseline.",
     "The next release is 1.0.0; status is recomputed by scripts/check_release_readiness.py.",
-    "No 1.0.0 gate is satisfied without current reproducible evidence or human review."
+    "No 1.0.0 gate is satisfied without current reproducible evidence or human review.",
+    "V1-43 records A8-to-1.0 migration and local validation in docs/releases/1.0-migration-validation.md; clean-room, CI and maintainer gates remain NEEDS_REVIEW."
   ],
   "gates": [
     {"id": "python-baseline", "title": "Python baseline verified", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},

@@ -6,10 +6,10 @@ protocol the semantic source of truth.
 
 ## Current direction
 
-`0.1.0a8` is the verified publication baseline. Development now targets the
+`0.1.0a8` is the retained publication baseline. Development now targets the
 first product release, `1.0.0`; no further pre-release publication is planned.
-See [the roadmap](ROADMAP.md) and the
-[release plan](docs/releases/RELEASE_PLAN.md).
+See the [A8-to-1.0 migration guide](docs/MIGRATION_A8_TO_1_0.md),
+[roadmap](ROADMAP.md), and [release plan](docs/releases/RELEASE_PLAN.md).
 
 ## Design
 
