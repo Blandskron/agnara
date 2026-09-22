@@ -129,9 +129,10 @@ the final-candidate audit are still required.
 **Horizon:** `1.0.0`
 **Status:** `PARTIAL`
 
-Measured core budgets and a CI regression gate exist. The final-semantics
-coverage refresh is recorded; repeated calibration and maintainer review of
-new limits remain required.
+Fifteen measured core budgets and a CI regression gate exist. V1-40 recorded
+repeated final-semantics calibration and V1-41 adds a deterministic artificial
+failure proof to the required performance job. The current candidate's CI
+result and maintainer review of every limit remain required.
 
 ### I20 — Framework interoperability
 

@@ -31,6 +31,27 @@
         "benchmarks/runtime_paths.py",
         "--json"
       ],
+      "environment_profile": {
+        "environment": {
+          "implementation": "CPython",
+          "python_major_minor": "3.14",
+          "gil_enabled": true
+        },
+        "execution_dimensions": {
+          "command": "benchmarks/runtime_paths.py --json",
+          "concurrency": 1,
+          "handler_modes": [
+            "async"
+          ],
+          "payload": "one integer field (value=41)",
+          "schema_sizes": [
+            "one scalar input",
+            "no output schema"
+          ],
+          "serializer": "standard-library JSON only for idempotency result codec",
+          "server": "none (in-process core runtime)"
+        }
+      },
       "metrics": {
         "median_ratio_to_compiled_invoke": {
           "dependency_injection_one": {

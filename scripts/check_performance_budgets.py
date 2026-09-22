@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import subprocess
 import sys
 from collections.abc import Sequence
@@ -26,6 +27,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BUDGETS = ROOT / "docs" / "performance" / "budgets.json"
 BUDGET_SCHEMA_VERSION = 2
+RECORD_SCHEMA_VERSION = 2
 
 #: Metrics whose value is a bare number rather than a mapping of scenario names.
 SCALAR_METRICS = frozenset(
@@ -40,6 +42,7 @@ SUPPORTED_METRICS = frozenset(
         "startup_peak_bytes_per_capability",
     }
 )
+PROFILE_ENVIRONMENT_FIELDS = frozenset({"implementation", "python_major_minor", "gil_enabled"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,8 +62,9 @@ class Breach:
     def __str__(self) -> str:
         where = self.metric if self.scenario == "" else f"{self.metric}.{self.scenario}"
         return (
-            f"{self.benchmark}: {where} measured {self.measured:,.3f}, "
-            f"budget {self.maximum:,.3f} ({self.overage:.2f}x over)"
+            f"{self.benchmark}: {where} observed {self.measured:,.3f}, "
+            f"allowed threshold {self.maximum:,.3f}, "
+            f"overage +{self.measured - self.maximum:,.3f} ({self.overage:.2f}x limit)"
         )
 
 
@@ -95,6 +99,82 @@ def _validate_budget_schema(budgets: dict[str, object]) -> None:
         unknown = sorted(set(metrics) - SUPPORTED_METRICS)
         if unknown:
             raise SystemExit(f"budget for {name} declares unknown metrics: {', '.join(unknown)}")
+        _validate_profile_spec(name, specification.get("environment_profile"))
+
+
+def _validate_profile_spec(name: str, profile: object) -> None:
+    """Reject an incomplete or ambiguous execution profile in a budget file."""
+    if not isinstance(profile, dict):
+        raise SystemExit(f"budget for {name} declares no environment profile")
+    environment = profile.get("environment")
+    dimensions = profile.get("execution_dimensions")
+    if not isinstance(environment, dict) or set(environment) != PROFILE_ENVIRONMENT_FIELDS:
+        expected = ", ".join(sorted(PROFILE_ENVIRONMENT_FIELDS))
+        raise SystemExit(f"environment profile for {name} must declare exactly: {expected}")
+    if not isinstance(environment["implementation"], str):
+        raise SystemExit(f"environment profile for {name} has a malformed implementation")
+    if not isinstance(environment["python_major_minor"], str):
+        raise SystemExit(f"environment profile for {name} has a malformed python_major_minor")
+    if not isinstance(environment["gil_enabled"], bool):
+        raise SystemExit(f"environment profile for {name} has a malformed gil_enabled")
+    if not isinstance(dimensions, dict) or not dimensions:
+        raise SystemExit(f"environment profile for {name} declares no execution dimensions")
+
+
+def _validate_record_profile(
+    name: str, specification: dict[str, object], record: dict[str, object]
+) -> None:
+    """Fail closed when a result was recorded under another benchmark contract."""
+    profile = specification["environment_profile"]
+    if not isinstance(profile, dict):  # Guarded by _validate_budget_schema.
+        raise SystemExit(f"budget for {name} declares no environment profile")
+    expected_environment = profile.get("environment")
+    expected_dimensions = profile.get("execution_dimensions")
+    if not isinstance(expected_environment, dict) or not isinstance(expected_dimensions, dict):
+        raise SystemExit(f"budget for {name} declares a malformed environment profile")
+    environment = record.get("environment")
+    dimensions = record.get("execution_dimensions")
+    if not isinstance(environment, dict):
+        raise SystemExit(f"benchmark record for {name} has no environment object")
+    if not isinstance(dimensions, dict):
+        raise SystemExit(f"benchmark record for {name} has no execution_dimensions object")
+
+    for field in ("implementation", "gil_enabled"):
+        if environment.get(field) != expected_environment[field]:
+            raise SystemExit(
+                f"benchmark record for {name} environment-profile mismatch: "
+                f"{field} is {environment.get(field)!r}, expected {expected_environment[field]!r}"
+            )
+
+    python_version = environment.get("python_version")
+    if (
+        not isinstance(python_version, str)
+        or ".".join(python_version.split(".")[:2]) != expected_environment["python_major_minor"]
+    ):
+        raise SystemExit(
+            f"benchmark record for {name} environment-profile mismatch: python_version "
+            f"is {python_version!r}, expected {expected_environment['python_major_minor']!r}.x"
+        )
+
+    for field, expected in expected_dimensions.items():
+        if dimensions.get(field) != expected:
+            raise SystemExit(
+                f"benchmark record for {name} environment-profile mismatch: "
+                f"execution_dimensions.{field} is {dimensions.get(field)!r}, expected {expected!r}"
+            )
+
+
+def _number(value: object, description: str) -> float:
+    """Return a finite measurement or reject a malformed artifact deterministically."""
+    if isinstance(value, bool) or not isinstance(value, int | float | str):
+        raise SystemExit(f"{description} must be a finite number")
+    try:
+        number = float(value)
+    except TypeError, ValueError:
+        raise SystemExit(f"{description} must be a finite number") from None
+    if not math.isfinite(number):
+        raise SystemExit(f"{description} must be a finite number")
+    return number
 
 
 def _run_benchmark(command: Sequence[str]) -> dict[str, object]:
@@ -125,7 +205,13 @@ def _startup_peak(record: dict[str, object]) -> float:
     for entry in startup.values():
         if not isinstance(entry, dict):
             raise SystemExit("benchmark record has a malformed startup entry")
-        peaks.append(float(entry["peak_bytes_per_capability"]))
+        try:
+            value = entry["peak_bytes_per_capability"]
+        except KeyError:
+            raise SystemExit(
+                "benchmark record has a startup entry without peak_bytes_per_capability"
+            ) from None
+        peaks.append(_number(value, "benchmark startup peak_bytes_per_capability"))
     return max(peaks)
 
 
@@ -136,13 +222,13 @@ def _measured(record: dict[str, object], metric: str, scenario: str) -> float:
         value = record.get(metric)
         if value is None:
             raise SystemExit(f"benchmark record has no {metric}")
-        return float(value)  # ty: ignore[invalid-argument-type]
+        return _number(value, f"benchmark record {metric}")
     section = record.get(metric)
     if not isinstance(section, dict):
         raise SystemExit(f"benchmark record has no {metric} section")
     if scenario not in section:
         raise SystemExit(f"benchmark record has no {metric}.{scenario}")
-    return float(section[scenario])  # ty: ignore[invalid-argument-type]
+    return _number(section[scenario], f"benchmark record {metric}.{scenario}")
 
 
 def _limits(metric: str, specification: object) -> list[tuple[str, float]]:
@@ -150,12 +236,22 @@ def _limits(metric: str, specification: object) -> list[tuple[str, float]]:
     if not isinstance(specification, dict):
         raise SystemExit(f"budget for {metric} must be an object")
     if metric in SCALAR_METRICS:
-        return [("", float(specification["maximum"]))]  # ty: ignore[invalid-argument-type]
+        try:
+            maximum = specification["maximum"]
+        except KeyError:
+            raise SystemExit(f"budget for {metric} needs a maximum") from None
+        maximum_number = _number(maximum, f"budget for {metric}.maximum")
+        if maximum_number <= 0:
+            raise SystemExit(f"budget for {metric}.maximum must be greater than zero")
+        return [("", maximum_number)]
     limits = []
     for scenario, entry in specification.items():
         if not isinstance(entry, dict) or "maximum" not in entry:
             raise SystemExit(f"budget for {metric}.{scenario} needs a maximum")
-        limits.append((scenario, float(entry["maximum"])))  # ty: ignore[invalid-argument-type]
+        maximum = _number(entry["maximum"], f"budget for {metric}.{scenario}")
+        if maximum <= 0:
+            raise SystemExit(f"budget for {metric}.{scenario} must be greater than zero")
+        limits.append((scenario, maximum))
     return limits
 
 
@@ -173,9 +269,21 @@ def evaluate(budgets: dict[str, object], records: dict[str, dict[str, object]]) 
         recorded = record.get("benchmark")
         if recorded != name:
             raise SystemExit(f"record for {name} reports benchmark {recorded!r}")
+        if record.get("schema_version") != RECORD_SCHEMA_VERSION:
+            raise SystemExit(
+                f"benchmark record for {name} has unsupported schema version "
+                f"{record.get('schema_version')!r}; expected {RECORD_SCHEMA_VERSION}"
+            )
         metrics = specification.get("metrics")
         if not isinstance(metrics, dict) or not metrics:
             raise SystemExit(f"budget for {name} declares no metrics")
+        unbudgeted = sorted((set(record) & SUPPORTED_METRICS) - set(metrics))
+        if unbudgeted:
+            raise SystemExit(
+                f"benchmark record for {name} contains enforceable metrics without budgets: "
+                f"{', '.join(unbudgeted)}"
+            )
+        _validate_record_profile(name, specification, record)
         for metric, entry in metrics.items():
             for scenario, maximum in _limits(metric, entry):
                 measured = _measured(record, metric, scenario)
@@ -213,10 +321,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             name = record.get("benchmark")
             if not isinstance(name, str):
                 raise SystemExit(f"{path} does not name a benchmark")
+            if name in records:
+                raise SystemExit(f"more than one record supplied for {name}")
             records[name] = record
         missing = sorted(set(benchmarks) - set(records))
         if missing:
             raise SystemExit(f"no record supplied for: {', '.join(missing)}")
+        extra = sorted(set(records) - set(benchmarks))
+        if extra:
+            raise SystemExit(f"record supplied for an unbudgeted benchmark: {', '.join(extra)}")
     else:
         for name, specification in benchmarks.items():
             if not isinstance(specification, dict):

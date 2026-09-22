@@ -5,10 +5,14 @@ enforced performance limits. `scripts/check_performance_budgets.py` reads it and
 fails when a measured value exceeds its limit. CI runs that gate in the
 `Performance budgets` job.
 
-The file is schema version 2. The checker refuses another version and unknown
-metric names, so a typo or a newly emitted benchmark field cannot silently
-become an unenforced budget. Adding a metric requires an intentional checker,
-test, calibration-record and reviewed-budget change.
+The file is schema version 2. The checker refuses another version, unknown
+budget metric names, an unsupported record schema, duplicate or unbudgeted
+benchmark records, and any enforceable recorded metric without a budget. It
+also verifies the declared CPython/Python/GIL execution profile and every
+semantic execution dimension before comparing values. A typo, incomplete
+artifact, or result from a different benchmark contract therefore cannot
+silently become an unenforced pass. Adding a metric requires an intentional
+checker, test, calibration-record and reviewed-budget change.
 
 `PERFORMANCE.md` at the repository root owns the optimization strategy and the
 comparison benchmarks. This directory owns only the enforced limits.
@@ -31,11 +35,12 @@ calibration runs; dividing a ~10µs runtime path by it inherits that noise. The
 ratio to the bare handler is still recorded, as context for what the framework
 costs at all, with a deliberately coarse limit.
 
-Three preserved calibration records establish the existing limits. The prior
+Three preserved V1-40 calibration records establish the limits. The prior
 claim of six runs is not reproducible from the repository and is therefore not
-evidence. V1-40 must repeat current-semantic runs and publish their actual
-spread before it calibrates the observations V1-39 added. The same measurements
-expressed as absolute nanoseconds vary considerably more.
+evidence. The V1-40 records publish the current-semantic measurements and their
+declared dimensions before the embedding and registration/freeze observations
+became limits. The same measurements expressed as absolute nanoseconds vary
+considerably more.
 
 ## What is budgeted
 
@@ -49,8 +54,8 @@ expressed as absolute nanoseconds vary considerably more.
 The currently enforced streaming measure is per emitted unit over a complete
 lifecycle. V1-39 also records opening, per-item pull and normal completion as
 separate observations. Registration/freeze and the ADR 0094 embedding boundary
-are likewise observed until V1-40 has repeated current-semantic calibration.
-See `docs/benchmarks/coverage.md`.
+are likewise observed where no reviewed threshold exists. See
+`docs/benchmarks/coverage.md`.
 
 ## Running it
 
@@ -64,6 +69,12 @@ That runs the benchmarks and checks them. To check a record you already have:
 uv run python benchmarks/runtime_paths.py --json > runtime-paths.json
 uv run python scripts/check_performance_budgets.py --record runtime-paths.json
 ```
+
+The `Performance budgets` CI job first runs the deterministic synthetic
+fail/pass proof in `tests/benchmarks/test_performance_budget_gate.py`. That
+proof drives this same command-line checker with an over-budget artifact and
+asserts a non-zero exit, then validates an in-budget artifact. The job then
+records the real JSON artifact and runs the local command above against it.
 
 ## When the gate fails
 
@@ -84,10 +95,10 @@ CPython 3.14.4, Windows 11, x86-64, 8 CPUs, GIL enabled. Each existing limit
 sits at 1.6x the highest recorded value. The raw records are in
 `docs/benchmarks/data/`.
 
-V1-39 does not silently re-label those three records as a calibration of final
-semantics. V1-40 must collect repeated raw JSON records with the full declared
-environment and run dimensions, compute observed maxima and spread, then add
-limits deliberately.
+V1-39 did not silently re-label historical records as a calibration of final
+semantics. V1-40 collected repeated raw JSON records with the full declared
+environment and run dimensions, computed observed maxima and spread, then
+added limits deliberately.
 
 Every limit carries the `observed_maximum` it was calibrated against; a test
 enforces that a budget without calibration evidence, or without headroom over
