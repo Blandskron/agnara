@@ -182,8 +182,19 @@ order.
   release gates; record registration/freeze, the ADR 0094 embedding boundary and
   independent stream opening, per-item and completion observations with explicit
   runtime dimensions. Only three historical calibration records are preserved,
-  so V1-40 must collect repeated current-semantic raw records before it adds or
-  changes a threshold.
+  so V1-40 collected three repeated current-semantic raw records before adding
+  or changing a threshold.
+
+- [x] Calibrate final-semantics performance budgets (V1-40): preserve three
+  current-semantic raw records and deliberately calibrate the embedding and
+  registration/freeze limits. `docs/performance/budgets.json` now holds 15
+  limits, with observed maxima and headroom recorded for every limit.
+
+- [~] Prove the I14 performance regression gate fails and passes (V1-41): the
+  checker rejects malformed or mismatched artifacts and the required performance
+  CI job runs its deterministic artificial-regression proof before the real
+  benchmark. The branch's CI result remains required evidence before this item
+  can be marked complete.
 
 - [x] Finalize the 1.0 public API (V1-31): classify 166 canonical names across
   13 governed modules as stable, remove 171 duplicate leaf-module export paths,

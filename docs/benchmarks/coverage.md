@@ -6,7 +6,7 @@ number.
 
 | Benchmark | Engineering question | Timed boundary | Gate status |
 | --- | --- | --- | --- |
-| `runtime_paths.py` | Did final compiled core paths regress? | Registration/freeze and plan compilation at startup; warm core invocation and selected feature paths. | `docs/performance/budgets.json` gates the calibrated complete-invocation metrics. Stream phases, registration and embedding are recorded observations pending V1-40 calibration. |
+| `runtime_paths.py` | Did final compiled core paths regress? | Registration/freeze and plan compilation at startup; warm core invocation and selected feature paths. | `docs/performance/budgets.json` gates calibrated complete-invocation, embedding, registration/freeze, scaling and memory metrics. Independent stream-opening, per-item and completion observations remain evidence, not limits. |
 | `runtime_invocation.py` | What does the bare warm compiled invocation cost? | One direct handler, `invoke`, and `invoke_result` over a precompiled plan. | Context only; its direct-handler ratio is duplicated as a coarse guard in `runtime_paths.py`. |
 | `telemetry_overhead.py` | Does no-op telemetry remain guarded? | Precompiled invocation with and without registered hook work. | Context only; ADR 0058 owns the semantic guard. |
 | `http_frameworks.py` | How do identical in-process ASGI exchanges compare? | One warm ASGI request, compiled routing, binding, invocation and JSON response; no server or network. | Comparison research only. Never a release gate or framework claim. |
@@ -31,7 +31,9 @@ state.  HTTP routing/serialization and MCP dispatch use their own explicit
 in-process comparison boundaries; their outputs must not be used as competitor
 or server-throughput gates.
 
-V1-40 owns repeated calibration before adding limits for the new observations.
-V1-41 owns intentional CI regression fail/pass evidence.  A missing threshold
-is therefore visible as an observation, not silently treated as a passing
-budget.
+V1-40 added deliberate limits for the embedding and registration/freeze
+observations using three current-semantic raw records. V1-41 makes the required
+CI performance job run a deterministic artificial fail/pass proof before its
+machine-dependent record. The independent stream-phase observations still have
+no threshold, so they remain visible as observations rather than silently
+reading as passing budgets.

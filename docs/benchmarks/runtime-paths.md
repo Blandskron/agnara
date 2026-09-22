@@ -72,10 +72,10 @@ by doing the wrong thing. Every elapsed sample is retained alongside the summary
 
 ## Calibration record
 
-The checked-in calibration is three runs of 7 samples x 2,000 iterations and
-2 warmup batches on CPython 3.14.4, Windows 11, x86-64, 8 CPUs, GIL enabled.
-It predates the final-semantics observations above.  V1-40 must create a new,
-repeated calibration set before setting limits for them. Nanoseconds per
+The checked-in V1-40 calibration is three runs of 7 samples x 2,000 iterations
+and 2 warmup batches on CPython 3.14.4, Windows 11, x86-64, 8 CPUs, GIL
+enabled. It covers the final-semantics embedding and registration/freeze
+measurements as well as the existing complete-path values. Nanoseconds per
 operation, lower is better.
 
 | Scenario | ns/op | x `compiled_invoke` | x bare handler |

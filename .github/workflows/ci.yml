@@ -144,6 +144,12 @@ jobs:
       - name: Sync workspace
         run: uv sync --locked
 
+      # The checker is only useful if a real over-budget result is known to
+      # stop this required job. These deterministic subprocess tests exercise
+      # that failure path without running a second machine-dependent benchmark.
+      - name: Prove an artificial performance regression is rejected
+        run: uv run pytest tests/benchmarks/test_performance_budget_gate.py
+
       - name: Record the runtime paths benchmark
         run: uv run python benchmarks/runtime_paths.py --json > runtime-paths.json
 
