@@ -328,6 +328,18 @@ and embedded host bridges, nested capability invocation, execution identity,
 idempotency, streaming and SSE, schema/persistence seams, documentation UIs,
 supply-chain controls and telemetry.
 
+V1-38 independently re-audited candidate
+`94ac5763386d8e18a78cbecd07cab227c42e6054` on 2026-09-21. Static source
+review covered the supported core, HTTP/ASGI/SSE, MCP, embedding,
+idempotency/composition, telemetry and release-workflow boundaries. The
+focused authority, robustness and property regressions passed (87 tests), and
+the available GitHub readback returned no open CodeQL, Dependabot or secret
+scanning alert. No unresolved P0/P1 was found in the supported candidate
+scope. This is current audit evidence, not a release authorization: external
+CI, protected publisher state, artifacts and human review remain separate
+gates. The local repository-secret inventory's treatment of nonstandard local
+virtual environments is a non-blocking test-scope concern tracked as #469.
+
 It produced findings S-1 and S-2 above; the property and fuzz lanes later added F-1 and F-2. The following were probed directly and
 behaved correctly; they are recorded so a later reviewer knows they were tried
 rather than assumed:

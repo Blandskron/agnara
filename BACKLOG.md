@@ -87,7 +87,7 @@ order.
     harness across all host classes in `tests/conformance/test_host_harness.py`, proved framework
     absence and minimal install in an isolated subprocess (`tests/integration/test_framework_absence.py`),
     removed stale references, and updated the I20 supported matrix in `docs/INTEROPERABILITY.md`.
-- [ ] Complete the security program evidence (I10).
+- [x] Complete the security program evidence (I10).
   - [x] Close the supply-chain evidence gaps (V1-37): added a deterministic
     CycloneDX 1.6 SBOM for the built candidate with an independent verifier,
     made the recorded artifact digests a gate at every job that touches the
@@ -119,6 +119,16 @@ order.
     2026-09-20 GitHub alert readback and residual host/application boundaries.
     This is not I10 or release closure: final-candidate audit and maintainer
     review remain mandatory.
+  - [x] Audit the release-candidate security findings and close blockers
+    (V1-38, #468): the focused independent review of
+    `94ac5763386d8e18a78cbecd07cab227c42e6054` found no unresolved P0/P1 in
+    supported 1.0 scope. It rechecked authority, HTTP/ASGI, MCP, streaming,
+    idempotency, composition, telemetry and supply-chain/workflow boundaries;
+    the current GitHub readback returned no open CodeQL, Dependabot or secret
+    scanning alert. Focused security/property evidence passed (87 tests).
+    The release remains `NEEDS_REVIEW`/not ready until its independent human,
+    CI-only and protected-publication gates are satisfied. A non-blocking
+    local-secret-inventory test-scope follow-up is #469.
 - [x] Add schema-boundary conformance (V1-27): Pydantic and msgspec remain
   optional development fixtures. Their supported evidence is JSON-normalized
   nested dataclass-shaped data materialized and validated by the standard
