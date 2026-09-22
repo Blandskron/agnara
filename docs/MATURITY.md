@@ -177,7 +177,7 @@ not.
 | Packaging gate | `IMPLEMENTED` | Builds and inspects all seven wheels/sdists, then installs all seven wheels outside the workspace with first-party index access disabled. |
 | Release readiness program | `IMPLEMENTED` | Evidence expires against the commit it was recorded on. |
 | Benchmarks | `IMPLEMENTED` | Six benchmark programs are inventoried in `docs/benchmarks/coverage.md`. `runtime_paths.py` covers registration/freeze, compilation, DI, policies, identity, idempotency, composition, embedding and stream phases. |
-| Performance budgets | `PARTIAL` | `docs/performance/budgets.json` holds 13 calibrated core limits enforced by `scripts/check_performance_budgets.py`. V1-39 added final-semantics observations that require repeated calibration before becoming limits; the gate and any limits remain subject to maintainer approval. |
+| Performance budgets | `IMPLEMENTED` | `docs/performance/budgets.json` holds 13 calibrated core limits enforced by `scripts/check_performance_budgets.py`. V1-39 added final-semantics observations that require repeated calibration before becoming limits; the release gate and any new limits remain subject to maintainer approval. |
 | Property testing and fuzzing | `PLANNED` | None. |
 | Protocol conformance suites | `PLANNED` | MCP conformance is repository-authored; no upstream suite is run. |
 | Security scanning, SBOM, signing | `PLANNED` | None configured. `SECURITY.md` records this. |
