@@ -1053,7 +1053,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     )
     if args.output is not None:
-        args.output.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        args.output.write_text(
+            json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
     elif args.json:
         print(json.dumps(record, indent=2, sort_keys=True))
     else:
