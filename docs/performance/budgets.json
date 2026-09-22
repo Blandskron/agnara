@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "documentation": "docs/performance/README.md",
   "checked_by": "scripts/check_performance_budgets.py",
   "methodology": {
@@ -12,7 +12,7 @@
       "iterations_per_sample": 2000,
       "warmup_batches": 2,
       "garbage_collector_disabled_during_samples": true,
-      "observed_ratio_spread_across_runs": "preserved records are the three files in docs/benchmarks/data; V1-40 must recompute spreads for refreshed semantics",
+      "observed_ratio_spread_across_runs": "V1-40 current-semantic records: 1.07x-1.75x for complete-path ratios; 1.54x for startup scaling; 1.37x for registration scaling",
       "environment": {
         "implementation": "CPython",
         "python_version": "3.14.4",
@@ -23,7 +23,7 @@
         "gil_enabled": true
       }
     },
-    "headroom_policy": "Each existing limit sits at 1.6x the highest value in the three preserved calibration records, rounded up. V1-39 deliberately does not infer a threshold for its refreshed observations from this older set; V1-40 must collect repeated current-semantic runs and apply the same reviewed headroom policy. Limits are not a claim that Agnara is fast."
+    "headroom_policy": "Each limit is at least 1.6x the largest value in the three V1-40 current-semantic records, rounded upward where a new limit is introduced. Existing more-conservative ceilings remain unchanged. Limits are not a claim that Agnara is fast."
   },
   "benchmarks": {
     "agnara.runtime.paths": {
@@ -78,6 +78,11 @@
             "observed_maximum": 9.442,
             "note": "Three levels must stay near three times one level, not super-linear."
           },
+          "embedded_runtime_invoke": {
+            "maximum": 3.0,
+            "observed_maximum": 1.818,
+            "note": "ADR 0094's complete host-to-runtime boundary, including frozen-registry lookup and canonical result projection."
+          },
           "streaming_unit": {
             "maximum": 0.6,
             "observed_maximum": 0.317,
@@ -95,6 +100,11 @@
           "maximum": 3.5,
           "observed_maximum": 1.613,
           "note": "Compile cost per capability at 1,000 capabilities divided by the cost at 100. Catches compilation that stops being linear in the number of capabilities. The preserved calibration has three records; V1-40 will refresh its repeated-run variance before changing this limit. A genuinely quadratic regression shows up as roughly 10x."
+        },
+        "registration_scaling_ratio": {
+          "maximum": 1.6,
+          "observed_maximum": 0.988,
+          "note": "Registration plus freeze cost per capability at 1,000 capabilities divided by the cost at 100. Catches super-linear synchronized-registry growth independently of plan compilation."
         },
         "startup_peak_bytes_per_capability": {
           "maximum": 4096,

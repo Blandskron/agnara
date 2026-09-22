@@ -992,6 +992,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--samples", type=_positive_integer, default=7)
     parser.add_argument("--warmups", type=_positive_integer, default=2)
     parser.add_argument("--json", action="store_true", help="emit the complete JSON record")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="write the complete JSON record to this path instead of stdout",
+    )
     return parser
 
 
@@ -1018,7 +1023,8 @@ def _human_output(record: dict[str, object]) -> str:
         summary = result["summary_ns_per_operation"]
         if not isinstance(summary, dict):
             raise RuntimeError(f"invalid {name} benchmark summary")
-        suffix = "" if name == REFERENCE_SCENARIO else f" ({float(ratios[name]):.2f}x reference)"
+        ratio = ratios.get(name)
+        suffix = "" if ratio is None else f" ({float(ratio):.2f}x reference)"
         lines.append(f"{name}: {float(summary['median']):,.1f} ns/op{suffix}")
     startup = record["startup"]
     if not isinstance(startup, dict):
@@ -1046,7 +1052,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         )
     )
-    if args.json:
+    if args.output is not None:
+        args.output.write_text(
+            json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    elif args.json:
         print(json.dumps(record, indent=2, sort_keys=True))
     else:
         print(_human_output(record))
