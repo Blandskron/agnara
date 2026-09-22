@@ -33,7 +33,7 @@ release.
 | I8 — Capability composition | ADR 0093's same-compiled-application complete-result boundary is implemented with deterministic policy, confirmation, lifecycle and abuse evidence. | Release review and the separate decisions for delegation, streams and hosts/cross-app composition. | Keep the implemented boundary narrow; delegation, streams and host/cross-app work retain their separate decisions. |
 | I9 — Public API governance | The 1.0 inventory contains 166 stable canonical exports across 13 modules, with migration evidence. | Formal maintainer review of the 1.0 compatibility PR. | Keep aliases and implementation modules outside the governed surface. |
 | I10 — Security program | The current 1.0 threat-boundary analysis and abuse/failure evidence are recorded; it is not release authorization. | Human release review, final-candidate supply-chain readback/audit and any accepted disposition of residual deployment risk. | Keep host identity, durable stores, exporters and application policy explicitly outside framework claims; threat-model and supply-chain work constrain I3, I8 and I20. |
-| I14 — Performance program | Baselines exist, but no budgets or CI regression gate. | Reviewed methodology, calibrated budgets and a failing/pass CI proof. | Establish methodology in parallel; calibrate final thresholds after affected execution semantics settle. |
+| I14 — Performance program | A 13-metric core gate exists. V1-39 inventories its boundaries and adds final-semantics observations for registration, streaming phases and embedding. | Repeated calibration of the refreshed observations and intentional CI fail/pass evidence. | Keep comparative HTTP/MCP results separate from release budgets; calibrate only after the final semantic boundary is stable. |
 | I20 — Framework interoperability | RFC 0008 remains open; no embedding contract or conformance harness exists. | The approved host boundary plus standalone, hosted, embedded and side-by-side evidence. | Contract research can proceed; host implementations wait for the I3, I8 and I10 boundaries RFC 0008 identifies. |
 
 ## 1.0.0 initiatives
@@ -127,9 +127,11 @@ the final-candidate audit are still required.
 ### I14 — Performance program
 
 **Horizon:** `1.0.0`
-**Status:** `PLANNED`
+**Status:** `PARTIAL`
 
-Measured budgets and a CI regression gate.
+Measured core budgets and a CI regression gate exist. The final-semantics
+coverage refresh is recorded; repeated calibration and maintainer review of
+new limits remain required.
 
 ### I20 — Framework interoperability
 

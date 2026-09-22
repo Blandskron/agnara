@@ -177,6 +177,14 @@ order.
   records to a flat 9us. HTTP SSE throughput and free-threaded builds remain
   unbudgeted and are recorded as open.
 
+- [x] Refresh I14 benchmark methodology and coverage on final semantics (V1-39):
+  inventory the six benchmark programs and keep comparative HTTP/MCP work outside
+  release gates; record registration/freeze, the ADR 0094 embedding boundary and
+  independent stream opening, per-item and completion observations with explicit
+  runtime dimensions. Only three historical calibration records are preserved,
+  so V1-40 must collect repeated current-semantic raw records before it adds or
+  changes a threshold.
+
 - [x] Finalize the 1.0 public API (V1-31): classify 166 canonical names across
   13 governed modules as stable, remove 171 duplicate leaf-module export paths,
   move DI to `agnara.di`, and rename introspection snapshot `apps` to

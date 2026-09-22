@@ -47,23 +47,25 @@ from agnara.capability import (
     CapabilityRegistry,
     Idempotency,
 )
-from agnara.core.di import DIContainer, DIRegistry, Scope, provider
+from agnara.core.di import DIContainer, DIRegistry, ProviderDefinition, Scope, provider
 from agnara.execution import (
     CapabilityInvoker,
     CapabilityRuntime,
+    CapabilityStream,
     ExecutionContext,
     ExecutionPlan,
     IdempotencyInvocation,
     IdempotencyScope,
     InMemoryIdempotencyStore,
     Invocation,
+    StreamTerminal,
     Success,
     invoke,
     open_stream,
 )
 from agnara.policy import Policy, PolicyResult, PolicySuccess, Principal
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 BENCHMARK_NAME = "agnara.runtime.paths"
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -95,6 +97,10 @@ class Scenario:
     name: str
     run_batch: Callable[[int], Awaitable[object]]
     expected: object
+    measurement_scope: str = "complete invocation"
+    ratio_to_compiled_invoke: bool = True
+    prepare_batch: Callable[[int], Awaitable[None]] | None = None
+    cleanup_batch: Callable[[], Awaitable[None]] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -152,7 +158,7 @@ def _dependency_registry(count: int) -> tuple[DIRegistry, list[type]]:
     for index in range(count):
         dependency_type = type(f"Dependency{index}", (Dependency,), {"__slots__": ()})
 
-        def make(bound: type = dependency_type) -> object:
+        def make(bound: type = dependency_type) -> ProviderDefinition:
             @provider(scope=Scope.INVOCATION)
             async def supply() -> object:
                 return bound()
@@ -289,6 +295,35 @@ async def _nested_batch(
     return result
 
 
+def _embedded_runtime() -> tuple[CapabilityRuntime, DIContainer, CapabilityId]:
+    """Build the accepted host-to-runtime boundary from ADR 0094.
+
+    This is deliberately not a framework fixture.  A host owns routing and
+    calls this frozen runtime with plain invocation values, so this is the
+    common work every supported embedding mode must perform.
+    """
+    registry = DIRegistry()
+    definition = CapabilityDefinition(id=CapabilityId("benchmark", "embedded"), handler=_handler)
+    plan = ExecutionPlan.compile(definition, registry)
+    capabilities = CapabilityRegistry((definition,)).freeze()
+    container = DIContainer(registry)
+    return CapabilityRuntime(capabilities, (plan,), container), container, definition.id
+
+
+async def _embedded_batch(
+    runtime: CapabilityRuntime,
+    container: DIContainer,
+    capability_id: CapabilityId,
+    iterations: int,
+) -> object:
+    result: object = None
+    for _ in range(iterations):
+        result = await runtime.invoke_result(
+            ExecutionContext(Invocation(capability_id, {"value": 41}, {}), container)
+        )
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Idempotency
 # ---------------------------------------------------------------------------
@@ -366,7 +401,7 @@ def _stream_plan() -> tuple[ExecutionPlan, DIContainer]:
 
     async def emit() -> AsyncIterator[int]:
         for index in range(_STREAM_UNITS):
-            yield index
+            yield index + 1
 
     definition = CapabilityDefinition(
         id=CapabilityId("benchmark", "stream"),
@@ -386,6 +421,110 @@ async def _stream_batch(plan: ExecutionPlan, container: DIContainer, iterations:
     return total
 
 
+def _stream_stage_scenarios(
+    plan: ExecutionPlan, container: DIContainer
+) -> tuple[Scenario, Scenario, Scenario]:
+    """Measure opening, one pull, and normal completion independently.
+
+    Preparation and cleanup intentionally sit outside the timed region.  Each
+    region still performs the real stream operation and validates its semantic
+    effect, rather than timing an empty loop or an already-completed iterator.
+    """
+    opening: list[CapabilityStream] = []
+    pulling: list[CapabilityStream] = []
+    completing: list[CapabilityStream] = []
+
+    async def prepare_opening(iterations: int) -> None:
+        opening[:] = [
+            open_stream(plan, _context(plan, container, payload={})) for _ in range(iterations)
+        ]
+
+    async def open_batch(iterations: int) -> object:
+        for stream in opening:
+            await stream.__aenter__()
+            if stream.terminal is not None:
+                raise RuntimeError("stream opening unexpectedly reached a terminal state")
+        return len(opening)
+
+    async def close_opening() -> None:
+        for stream in opening:
+            await stream.aclose()
+        opening.clear()
+
+    async def prepare_pulling(iterations: int) -> None:
+        pulling[:] = [
+            open_stream(plan, _context(plan, container, payload={})) for _ in range(iterations)
+        ]
+        for stream in pulling:
+            await stream.__aenter__()
+
+    async def pull_batch(iterations: int) -> object:
+        total = 0
+        for stream in pulling:
+            total += await anext(stream)
+        return total
+
+    async def close_pulling() -> None:
+        for stream in pulling:
+            await stream.aclose()
+        pulling.clear()
+
+    async def prepare_completion(iterations: int) -> None:
+        completing[:] = [
+            open_stream(plan, _context(plan, container, payload={})) for _ in range(iterations)
+        ]
+        for stream in completing:
+            await stream.__aenter__()
+            async for _unit in stream:
+                pass
+
+    async def completion_batch(iterations: int) -> object:
+        completed = 0
+        for stream in completing:
+            if stream.terminal is not StreamTerminal.COMPLETED:
+                raise RuntimeError("stream did not complete during preparation")
+            try:
+                await anext(stream)
+            except StopAsyncIteration:
+                completed += 1
+        return completed
+
+    async def close_completing() -> None:
+        for stream in completing:
+            await stream.aclose()
+        completing.clear()
+
+    return (
+        Scenario(
+            "stream_open",
+            open_batch,
+            None,
+            "stream pre-output opening only",
+            False,
+            prepare_opening,
+            close_opening,
+        ),
+        Scenario(
+            "stream_per_item",
+            pull_batch,
+            None,
+            "one consumer pull from an already-open stream",
+            False,
+            prepare_pulling,
+            close_pulling,
+        ),
+        Scenario(
+            "stream_completion",
+            completion_batch,
+            None,
+            "normal terminal pull from an already-drained stream",
+            False,
+            prepare_completion,
+            close_completing,
+        ),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Measurement
 # ---------------------------------------------------------------------------
@@ -394,25 +533,40 @@ async def _stream_batch(plan: ExecutionPlan, container: DIContainer, iterations:
 async def _measure_scenario(
     scenario: Scenario, config: BenchmarkConfig, *, operations_per_iteration: int = 1
 ) -> dict[str, object]:
+    async def run_checked() -> object:
+        if scenario.prepare_batch is not None:
+            await scenario.prepare_batch(config.iterations)
+        try:
+            return await scenario.run_batch(config.iterations)
+        finally:
+            if scenario.cleanup_batch is not None:
+                await scenario.cleanup_batch()
+
     for _ in range(config.warmups):
-        result = await scenario.run_batch(config.iterations)
-        if result != scenario.expected:
-            raise RuntimeError(
-                f"{scenario.name} returned {result!r}; expected {scenario.expected!r}"
-            )
+        result = await run_checked()
+        expected = config.iterations if scenario.expected is None else scenario.expected
+        if result != expected:
+            raise RuntimeError(f"{scenario.name} returned {result!r}; expected {expected!r}")
 
     elapsed_samples: list[int] = []
     gc_was_enabled = gc.isenabled()
     try:
         gc.disable()
         for _ in range(config.samples):
+            if scenario.prepare_batch is not None:
+                await scenario.prepare_batch(config.iterations)
             started_ns = time.perf_counter_ns()
-            result = await scenario.run_batch(config.iterations)
-            elapsed_ns = time.perf_counter_ns() - started_ns
-            if result != scenario.expected:
-                raise RuntimeError(
-                    f"{scenario.name} returned {result!r}; expected {scenario.expected!r}"
-                )
+            try:
+                result = await scenario.run_batch(config.iterations)
+                elapsed_ns = time.perf_counter_ns() - started_ns
+                expected = config.iterations if scenario.expected is None else scenario.expected
+                if result != expected:
+                    raise RuntimeError(
+                        f"{scenario.name} returned {result!r}; expected {expected!r}"
+                    )
+            finally:
+                if scenario.cleanup_batch is not None:
+                    await scenario.cleanup_batch()
             elapsed_samples.append(elapsed_ns)
     finally:
         if gc_was_enabled:
@@ -421,6 +575,8 @@ async def _measure_scenario(
     divisor = config.iterations * operations_per_iteration
     ns_per_operation = [elapsed / divisor for elapsed in elapsed_samples]
     return {
+        "measurement_scope": scenario.measurement_scope,
+        "ratio_to_compiled_invoke": scenario.ratio_to_compiled_invoke,
         "elapsed_ns": elapsed_samples,
         "ns_per_operation": ns_per_operation,
         "operations_per_iteration": operations_per_iteration,
@@ -474,6 +630,52 @@ def _measure_startup(size: int, samples: int) -> dict[str, object]:
         "median_ns_per_capability": statistics.median(ns_per_capability),
         "peak_bytes_per_capability": peak / size,
     }
+
+
+def _measure_registration(size: int, samples: int) -> dict[str, object]:
+    """Register and freeze ``size`` definitions without compiling plans.
+
+    Registration and plan compilation are separate startup boundaries.  Keeping
+    them distinct means a regression in the synchronized registry cannot hide
+    behind schema/plan compilation work.
+    """
+    definitions = [
+        CapabilityDefinition(
+            id=CapabilityId("benchmark", f"registration_{index}"), handler=_handler
+        )
+        for index in range(size)
+    ]
+    elapsed_samples: list[int] = []
+    gc_was_enabled = gc.isenabled()
+    try:
+        gc.disable()
+        for _ in range(samples):
+            registry = CapabilityRegistry()
+            started_ns = time.perf_counter_ns()
+            for definition in definitions:
+                registry.register(definition)
+            frozen = registry.freeze()
+            elapsed_samples.append(time.perf_counter_ns() - started_ns)
+            if len(frozen) != size:
+                raise RuntimeError("registration produced the wrong capability count")
+    finally:
+        if gc_was_enabled:
+            gc.enable()
+
+    ns_per_capability = [elapsed / size for elapsed in elapsed_samples]
+    return {
+        "capabilities": size,
+        "elapsed_ns": elapsed_samples,
+        "ns_per_capability": ns_per_capability,
+        "median_ns_per_capability": statistics.median(ns_per_capability),
+    }
+
+
+def _number(value: object, *, field: str) -> float:
+    """Read a numeric value from a JSON-ready benchmark record defensively."""
+    if not isinstance(value, int | float):
+        raise RuntimeError(f"{field} is not numeric")
+    return float(value)
 
 
 def _git_metadata() -> dict[str, object]:
@@ -532,6 +734,10 @@ async def _scenarios() -> tuple[list[tuple[Scenario, int]], list[Callable[[], Aw
     stream_plan, stream_container = _stream_plan()
     nested_one, nested_one_container, nested_one_entry = _nested_runtime(1)
     nested_three, nested_three_container, nested_three_entry = _nested_runtime(3)
+    embedded_runtime, embedded_container, embedded_entry = _embedded_runtime()
+    stream_open, stream_per_item, stream_completion = _stream_stage_scenarios(
+        stream_plan, stream_container
+    )
 
     expected = 42
     scenarios: list[tuple[Scenario, int]] = [
@@ -618,6 +824,18 @@ async def _scenarios() -> tuple[list[tuple[Scenario, int]], list[Callable[[], Aw
             ),
             1,
         ),
+        (
+            Scenario(
+                "embedded_runtime_invoke",
+                lambda n: _embedded_batch(embedded_runtime, embedded_container, embedded_entry, n),
+                Success(expected),
+                "complete ADR 0094 host-to-runtime invocation",
+            ),
+            1,
+        ),
+        (stream_open, 1),
+        (stream_per_item, 1),
+        (stream_completion, 1),
     ]
 
     async def stream_batch(n: int) -> object:
@@ -641,8 +859,9 @@ async def _scenarios() -> tuple[list[tuple[Scenario, int]], list[Callable[[], Aw
         policy_three_container,
         idempotent_container,
         stream_container,
+        embedded_container,
     )
-    runtimes = (nested_one, nested_three)
+    runtimes = (nested_one, nested_three, embedded_runtime)
 
     async def teardown() -> None:
         for runtime in runtimes:
@@ -693,8 +912,9 @@ async def run_benchmark(config: BenchmarkConfig) -> dict[str, object]:
         return float(summary["median"])
 
     ratios: dict[str, float] = {}
+    scenario_by_name = {scenario.name: scenario for scenario, _operations in scenarios}
     for name in results:
-        if name == REFERENCE_SCENARIO:
+        if name == REFERENCE_SCENARIO or not scenario_by_name[name].ratio_to_compiled_invoke:
             continue
         ratios[name] = _median(name) / reference_median
 
@@ -709,12 +929,21 @@ async def run_benchmark(config: BenchmarkConfig) -> dict[str, object]:
         name: _median(name) / invoke_median
         for name in results
         if name not in (REFERENCE_SCENARIO, BASELINE_SCENARIO)
+        and scenario_by_name[name].ratio_to_compiled_invoke
     }
 
     startup = {str(size): _measure_startup(size, config.samples) for size in STARTUP_SIZES}
+    registration = {
+        str(size): _measure_registration(size, config.samples) for size in STARTUP_SIZES
+    }
     smallest, largest = (str(size) for size in STARTUP_SIZES)
-    scaling = float(startup[largest]["median_ns_per_capability"]) / float(
-        startup[smallest]["median_ns_per_capability"]
+    scaling = _number(
+        startup[largest]["median_ns_per_capability"], field="startup large median"
+    ) / _number(startup[smallest]["median_ns_per_capability"], field="startup small median")
+    registration_scaling = _number(
+        registration[largest]["median_ns_per_capability"], field="registration large median"
+    ) / _number(
+        registration[smallest]["median_ns_per_capability"], field="registration small median"
     )
 
     return {
@@ -723,6 +952,15 @@ async def run_benchmark(config: BenchmarkConfig) -> dict[str, object]:
         "recorded_at_utc": datetime.now(UTC).isoformat(),
         "git": _git_metadata(),
         "environment": _environment(),
+        "execution_dimensions": {
+            "server": "none (in-process core runtime)",
+            "serializer": "standard-library JSON only for idempotency result codec",
+            "payload": "one integer field (value=41)",
+            "concurrency": 1,
+            "handler_modes": ["async"],
+            "schema_sizes": ["one scalar input", "no output schema"],
+            "command": "benchmarks/runtime_paths.py --json",
+        },
         "config": {
             "iterations_per_sample": config.iterations,
             "samples": config.samples,
@@ -736,6 +974,8 @@ async def run_benchmark(config: BenchmarkConfig) -> dict[str, object]:
         "median_ratio_to_compiled_invoke": baseline_ratios,
         "startup": startup,
         "startup_scaling_ratio": scaling,
+        "registration": registration,
+        "registration_scaling_ratio": registration_scaling,
     }
 
 
@@ -790,7 +1030,8 @@ def _human_output(record: dict[str, object]) -> str:
             f"startup[{size}]: {float(entry['median_ns_per_capability']):,.1f} ns/capability, "
             f"{float(entry['peak_bytes_per_capability']):,.0f} bytes/capability"
         )
-    lines.append(f"startup scaling ratio: {float(record['startup_scaling_ratio']):.2f}x")
+    startup_scaling = _number(record["startup_scaling_ratio"], field="startup scaling")
+    lines.append(f"startup scaling ratio: {startup_scaling:.2f}x")
     return "\n".join(lines)
 
 

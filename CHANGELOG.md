@@ -20,6 +20,14 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Refresh the performance-methodology evidence for final 1.0 semantics. The
+  runtime benchmark now records registry registration/freeze, the explicit
+  embedding boundary and separate stream opening, pull and completion work;
+  each record declares its execution dimensions. Comparative HTTP and MCP
+  measurements are explicitly kept outside release budgets. The prior claim of
+  six calibration records was corrected to the three raw records actually
+  preserved; new limits require repeated current-semantic calibration.
+
 - Close the supply-chain evidence gaps for 1.0. The release build now
   generates a deterministic CycloneDX 1.6 SBOM describing the seven built
   distributions with their real digests plus the locked runtime graph, and

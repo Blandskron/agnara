@@ -26,10 +26,11 @@ calibration runs; dividing a ~10µs runtime path by it inherits that noise. The
 ratio to the bare handler is still recorded, as context for what the framework
 costs at all, with a deliberately coarse limit.
 
-Measured across six calibration runs, feature-overhead ratios varied by 1.07x
-to 1.42x. The widest spreads belong to the ratios nearest 1.0, where a small
-absolute difference is a large relative one. The same measurements expressed
-as absolute nanoseconds varied considerably more.
+Three preserved calibration records establish the existing limits. The prior
+claim of six runs is not reproducible from the repository and is therefore not
+evidence. V1-40 must repeat current-semantic runs and publish their actual
+spread before it calibrates the observations V1-39 added. The same measurements
+expressed as absolute nanoseconds vary considerably more.
 
 ## What is budgeted
 
@@ -40,8 +41,11 @@ as absolute nanoseconds varied considerably more.
 | `startup_scaling_ratio` | Compile cost per capability at 1,000 capabilities over the cost at 100. Catches compilation that stops being linear. |
 | `startup_peak_bytes_per_capability` | Peak compile memory. Allocation counts are deterministic across runs, so this limit is tighter than the timing ones. |
 
-Streaming is measured per emitted unit rather than per stream, so it is
-comparable with the per-invocation paths.
+The currently enforced streaming measure is per emitted unit over a complete
+lifecycle. V1-39 also records opening, per-item pull and normal completion as
+separate observations. Registration/freeze and the ADR 0094 embedding boundary
+are likewise observed until V1-40 has repeated current-semantic calibration.
+See `docs/benchmarks/coverage.md`.
 
 ## Running it
 
@@ -69,17 +73,16 @@ was ever meaningful.
 
 ## Calibration
 
-Limits were calibrated from six runs of 7 samples x 2,000 iterations with two
-warmup batches and the garbage collector disabled during sampling, on CPython
-3.14.4, Windows 11, x86-64, 8 CPUs, GIL enabled. Each limit sits at 1.6x the
-highest value seen across those runs, which clears the widest spread observed
-for any ratio metric.
-
-The first calibration used three runs, and three more runs then exceeded six of
-the recorded maxima while staying inside their limits. The recorded values and
-the limits were widened to match the larger sample rather than left to look
-tighter than the evidence supported. The raw records are in
+The preserved calibration is three runs of 7 samples x 2,000 iterations with
+two warmup batches and the garbage collector disabled during sampling, on
+CPython 3.14.4, Windows 11, x86-64, 8 CPUs, GIL enabled. Each existing limit
+sits at 1.6x the highest recorded value. The raw records are in
 `docs/benchmarks/data/`.
+
+V1-39 does not silently re-label those three records as a calibration of final
+semantics. V1-40 must collect repeated raw JSON records with the full declared
+environment and run dimensions, compute observed maxima and spread, then add
+limits deliberately.
 
 Every limit carries the `observed_maximum` it was calibrated against; a test
 enforces that a budget without calibration evidence, or without headroom over
