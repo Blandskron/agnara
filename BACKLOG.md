@@ -196,6 +196,12 @@ order.
   benchmark. The branch's CI result remains required evidence before this item
   can be marked complete.
 
+- [x] Exercise integrated installed-artifact dogfooding across standalone, host,
+  embedded and side-by-side modes (V1-42, #478): use public imports only in
+  compact external consumer applications, install the complete candidate wheel
+  set into a fresh Python 3.14 environment, and treat any application workaround
+  for framework semantics as a release finding.
+
 - [x] Finalize the 1.0 public API (V1-31): classify 166 canonical names across
   13 governed modules as stable, remove 171 duplicate leaf-module export paths,
   move DI to `agnara.di`, and rename introspection snapshot `apps` to
