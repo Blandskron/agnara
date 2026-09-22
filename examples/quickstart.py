@@ -1,16 +1,17 @@
-"""Agnara 0.1.0a3 quick start.
+"""Agnara 1.0 candidate quick start.
 
-Runs against the published `agnara` distribution using public API only:
+Runs against a synchronized candidate or published 1.0 `agnara` distribution
+using public API only:
 
-    pip install agnara==0.1.0a3
+    pip install agnara
     python quickstart.py
 
-It demonstrates core capability execution in `0.1.0a3`: capability declaration with
-security metadata, startup compilation and freezing, dependency injection,
+It demonstrates core capability execution: capability declaration with security
+metadata, startup compilation and freezing, dependency injection,
 schema-validated direct invocation, and canonical results.
 
-Transport adapters (HTTP, OpenAPI, MCP) live in sibling packages that are not
-published to PyPI by this release. See the release notes for the exact published scope.
+The public contract is governed by `docs/public-api.json`; use
+`docs/MIGRATION_A8_TO_1_0.md` when updating A8 source code.
 """
 
 from __future__ import annotations

@@ -202,6 +202,11 @@ order.
   set into a fresh Python 3.14 environment, and treat any application workaround
   for framework semantics as a release finding.
 
+- [~] Align A8-to-1.0 migration documentation, authoritative public API
+  wording and clean-room validation (V1-43, #480): retain historical A8
+  records, document every migration boundary with public examples, and record
+  which remaining release gates require CI or maintainer review.
+
 - [x] Finalize the 1.0 public API (V1-31): classify 166 canonical names across
   13 governed modules as stable, remove 171 duplicate leaf-module export paths,
   move DI to `agnara.di`, and rename introspection snapshot `apps` to

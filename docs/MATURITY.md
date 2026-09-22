@@ -59,16 +59,16 @@ public names to 4 in the baseline, because the other thirteen were implementatio
 helpers re-exported from underscore-prefixed modules and never documented,
 used or designed as an API (ADR 0076).
 
-`agnara-http` now declares fourteen `provisional` names that compose
+`agnara-http` declares fourteen stable names that compose
 capabilities, compile an ASGI 3 application, project OpenAPI and publish the
 reviewed documentation profile. `docs/HTTP_COMPOSITION.md` is the supported
 guide.
 
-It stays `EXPERIMENTAL` rather than becoming `IMPLEMENTED` because the public
-spelling is stable for 1.0, third-party provider extension and
-the authorized discovery endpoint remain intentionally internal, and the
-surface is newly expanded. The transport behaviour is settled; the spelling is
-not.
+It stays `EXPERIMENTAL` rather than becoming `IMPLEMENTED` because third-party
+provider extension and the authorized discovery endpoint remain intentionally
+internal, and the surface is newly expanded. The public spelling is stable for
+1.0; the experimental classification describes maturity, not an exception to
+the compatibility contract.
 
 ## Kernel — `agnara`
 
@@ -115,7 +115,7 @@ not.
 | Discovery endpoint | `IMPLEMENTED` | ADR 0049. |
 | Explorer | `IMPLEMENTED` | Read-only shell. ADR 0052. |
 | Exposure compilation | `IMPLEMENTED` | Public `Http.compile()` derives neutral records from the compiled route table. ADR 0070, ADR 0071. |
-| Public composition API | `IMPLEMENTED` | Seven provisional exports compose and compile an ASGI application through supported entry points. ADR 0071. |
+| Public composition API | `IMPLEMENTED` | Fourteen stable exports compose and compile an ASGI application through supported entry points. ADR 0071. |
 | Cookies, forms, multipart, uploads | `IMPLEMENTED` | Public binding sources with bounded in-memory bodies and multipart part count. ADR 0072. |
 | SSE streaming projection | `IMPLEMENTED` | ADR 0085. `Http.sse` is a GET-only, bounded projection with delayed response commitment, one message per unit, one explicit terminal event, no replay/keepalive policy, pull-based demand and owned disconnect cleanup. `tests/http/test_sse.py` supplies ASGI conformance evidence. |
 | WebSockets | `PLANNED` | The ASGI boundary handles no `websocket` scope, and WebSocket streaming still needs its own decision. |
@@ -159,7 +159,7 @@ not.
 | Testing utilities | `PLANNED` | No first-party harness; the repository tests the framework, not applications built on it. |
 | Plugin system | `RESEARCH` | No discovery, loading or trust model. |
 | Persistence, cache, queue and scheduler integrations | `RESEARCH` | No shipped port, adapter or runtime dependency. `tests/integration/persistence/` is an optional SQLAlchemy 2.0.54/SQLite fixture that proves host-owned `Session` and transaction decisions around the existing DI boundary; it does not make Agnara an ORM or claim PostgreSQL, async-session, migration, cache, queue or scheduler support. |
-| Framework embedding contract | `DESIGNED` | ADR 0094 accepts an explicit async complete-result host boundary over existing provisional runtime values: lifecycle/resource ownership, principal/context/error/telemetry bridges and one-event-loop reuse rules are defined. Version-pinned Starlette 1.6.0, FastAPI 0.141.1 and Django 6.1.1 fixtures exercise those provisional values without adding a framework dependency or support claim. |
+| Framework embedding contract | `DESIGNED` | ADR 0094 accepts an explicit async complete-result host boundary over existing stable runtime values: lifecycle/resource ownership, principal/context/error/telemetry bridges and one-event-loop reuse rules are defined. Version-pinned Starlette 1.6.0, FastAPI 0.141.1 and Django 6.1.1 fixtures exercise that boundary without adding a framework dependency or support claim. |
 | Side-by-side composition with an external framework | `EXPERIMENTAL` | `tests/integration/starlette/` exercises native and direct-runtime routes in one Starlette 1.6.0 lifespan. `tests/integration/fastapi/` adds FastAPI 0.141.1 native dependency/security, exception and middleware ownership, direct invocation, idempotency, composition, disconnect cancellation and explicitly coordinated mounted HTTP/SSE projection. Both are optional fixtures: neither claims integration support, automatic mounted-lifespan handling, OpenAPI merging nor release-gate closure. |
 | Host-diversity fixture | `EXPERIMENTAL` | `tests/integration/litestar/` exercises the same public embedding boundary in Litestar 2.24.0, including host-owned canonical-result/status serialization. It is selected conditional evidence, not Litestar or Flask support. |
 | Second shipped schema adapter | `RESEARCH` | Pydantic and msgspec remain `experiments/`; neither is packaged or supported. |

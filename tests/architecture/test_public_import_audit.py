@@ -56,6 +56,7 @@ EXEMPLARY = (
     "docs/CLI_SPEC.md",
     "docs/HTTP_COMPOSITION.md",
     "docs/INTEROPERABILITY.md",
+    "docs/MIGRATION_A8_TO_1_0.md",
     "docs/MCP_CONFORMANCE.md",
     "docs/PROJECT_MANIFEST.md",
     "docs/SCAFFOLDING.md",
