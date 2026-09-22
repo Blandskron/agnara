@@ -7,12 +7,12 @@
     "feature_overhead_baseline": "compiled_invoke",
     "feature_overhead_rationale": "A bare `await handler()` costs about 100ns, close enough to loop and timer overhead that it moved by 2x between calibration runs. Dividing a ~10us runtime path by it inherits that noise. compiled_invoke is the same order of magnitude as the paths being budgeted and moves with the same machine conditions.",
     "calibration": {
-      "runs": 6,
+      "runs": 3,
       "samples_per_run": 7,
       "iterations_per_sample": 2000,
       "warmup_batches": 2,
       "garbage_collector_disabled_during_samples": true,
-      "observed_ratio_spread_across_runs": "1.07x to 1.42x for feature-overhead ratios, 2.06x for startup_scaling_ratio",
+      "observed_ratio_spread_across_runs": "preserved records are the three files in docs/benchmarks/data; V1-40 must recompute spreads for refreshed semantics",
       "environment": {
         "implementation": "CPython",
         "python_version": "3.14.4",
@@ -23,7 +23,7 @@
         "gil_enabled": true
       }
     },
-    "headroom_policy": "Each limit sits at 1.6x the highest value seen across six calibration runs, rounded up. That clears the widest spread observed for any ratio metric (1.42x, for the ratios nearest 1.0, where a small absolute difference is a large relative one) while still catching a regression of roughly 1.6x or worse on a feature path. The limits are not a claim that Agnara is fast."
+    "headroom_policy": "Each existing limit sits at 1.6x the highest value in the three preserved calibration records, rounded up. V1-39 deliberately does not infer a threshold for its refreshed observations from this older set; V1-40 must collect repeated current-semantic runs and apply the same reviewed headroom policy. Limits are not a claim that Agnara is fast."
   },
   "benchmarks": {
     "agnara.runtime.paths": {
@@ -94,7 +94,7 @@
         "startup_scaling_ratio": {
           "maximum": 3.5,
           "observed_maximum": 1.613,
-          "note": "Compile cost per capability at 1,000 capabilities divided by the cost at 100. Catches compilation that stops being linear in the number of capabilities. Observed spread across six runs was 2.06x, the noisiest metric here, so the limit is deliberately loose: a genuinely quadratic regression shows up as roughly 10x."
+          "note": "Compile cost per capability at 1,000 capabilities divided by the cost at 100. Catches compilation that stops being linear in the number of capabilities. The preserved calibration has three records; V1-40 will refresh its repeated-run variance before changing this limit. A genuinely quadratic regression shows up as roughly 10x."
         },
         "startup_peak_bytes_per_capability": {
           "maximum": 4096,

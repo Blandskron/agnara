@@ -5,7 +5,8 @@
 `runtime-invocation.md` covers the bare compiled hot path. This benchmark covers
 what the 1.0.0 performance program has to protect: what a capability pays for
 dependency injection, policy evaluation, execution identity, idempotency, nested
-composition and streaming, plus compile/startup scaling and memory.
+composition, framework-neutral embedding and streaming, plus distinct
+registration/freeze and compile/startup scaling and memory.
 
 It is the measurement behind `docs/performance/budgets.json`. It is not a claim
 that one workstation's latency applies elsewhere, a competitor ranking, or a
@@ -29,6 +30,10 @@ returns `42`.
 | `idempotency_hit` | Replay of one stored result. |
 | `nested_depth_one` | One nested capability invocation through the runtime. |
 | `nested_depth_three` | A three-level nested chain. |
+| `embedded_runtime_invoke` | One ADR 0094 host-to-runtime `invoke_result` call through a frozen registry. |
+| `stream_open` | The pre-output opening phase only; setup and close are outside the timer. |
+| `stream_per_item` | One consumer pull from an already-open stream. |
+| `stream_completion` | The normal terminal pull after a stream was drained. |
 | `streaming_unit` | Per emitted unit of a 16-unit stream. |
 
 The policies deliberately allow: a denying policy short-circuits and would
@@ -39,12 +44,17 @@ user's provider costs.
 Unlike `runtime_invocation.py`, the execution context is constructed per
 invocation rather than reused, because that is what a real caller does.
 
-Streaming is reported per emitted unit rather than per stream, so it is
-comparable with the per-invocation scenarios.
+The three phase measurements are observations, not ratios: their preparation
+and cleanup are intentionally outside the timer so each measures its real
+operation rather than a full lifecycle. `streaming_unit` retains the complete
+lifecycle divided by units and is the calibrated, comparable release metric.
+The JSON record is schema version 2; version 1 consumers must not assume that
+the added observations are comparable release ratios.
 
 ## Startup
 
-Compile cost is measured for 100 and 1,000 capabilities and reported as
+Registration/freeze and plan compilation are each measured for 100 and 1,000
+capabilities. Compile cost is reported as
 nanoseconds and peak bytes per capability. The enforced signal is
 `startup_scaling_ratio`, the per-capability cost at 1,000 divided by the cost at
 100, which catches compilation that stops being linear in the number of
@@ -60,10 +70,13 @@ disabled during timed samples and restored afterwards. Correctness is checked
 after every untimed warmup and every timed batch, so a scenario cannot get fast
 by doing the wrong thing. Every elapsed sample is retained alongside the summary.
 
-## Recorded result
+## Calibration record
 
-7 samples x 2,000 iterations, 2 warmup batches. CPython 3.14.4, Windows 11,
-x86-64, 8 CPUs, GIL enabled. Nanoseconds per operation, lower is better.
+The checked-in calibration is three runs of 7 samples x 2,000 iterations and
+2 warmup batches on CPython 3.14.4, Windows 11, x86-64, 8 CPUs, GIL enabled.
+It predates the final-semantics observations above.  V1-40 must create a new,
+repeated calibration set before setting limits for them. Nanoseconds per
+operation, lower is better.
 
 | Scenario | ns/op | x `compiled_invoke` | x bare handler |
 | --- | ---: | ---: | ---: |
@@ -81,9 +94,9 @@ x86-64, 8 CPUs, GIL enabled. Nanoseconds per operation, lower is better.
 | `streaming_unit` (per unit) | 2,950 | 0.28 | 35.1 |
 
 Startup: 2,695 peak bytes per capability at 100 capabilities and 2,357 at 1,000,
-identical in every run; scaling ratio 0.78-1.61 across six runs.
+identical in every preserved run; scaling ratio 0.78-1.61 across three runs.
 
-The raw records for all six calibration runs are in `docs/benchmarks/data/`,
+The raw records for all three preserved calibration runs are in `docs/benchmarks/data/`,
 and `docs/performance/budgets.json` cites the maximum of each metric across
 them as the value its limit was calibrated against.
 
