@@ -150,7 +150,17 @@ def test_an_anonymous_endpoint_must_not_declare_a_challenge() -> None:
 
 @pytest.mark.parametrize(
     "cache_control",
-    ["public", "public, max-age=60", "private, s-maxage=60", "private, immutable"],
+    [
+        "public",
+        "public, max-age=60",
+        "private, s-maxage=60",
+        "private, immutable",
+        "max-age=60",
+        "no-cache, max-age=60",
+        'private="Set-Cookie", max-age=60',
+        'extension="one, private, two", max-age=60',
+        "no-store, must-understand, max-age=60",
+    ],
 )
 def test_a_shared_cacheable_document_is_refused_at_startup(cache_control: str) -> None:
     with pytest.raises(_DiscoveryDefinitionError, match="viewer-specific"):
@@ -256,6 +266,18 @@ def test_a_composer_may_relax_the_directive_but_not_share_the_document() -> None
 
     assert headers[b"cache-control"] == b"private, max-age=30"
     assert headers[b"vary"] == b"Authorization, X-Scopes"
+
+
+@pytest.mark.parametrize(
+    "cache_control",
+    ["no-store", "PRIVATE, max-age=30", 'private, extension="one, two", max-age=30'],
+)
+def test_safe_cache_directives_remain_configurable(cache_control: str) -> None:
+    served, _ = dispatcher(route(cache_control=cache_control))
+
+    _, headers, _ = request(served)
+
+    assert headers[b"cache-control"] == cache_control.encode("ascii")
 
 
 def test_an_unidentified_viewer_is_challenged() -> None:
