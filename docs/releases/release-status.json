@@ -12,7 +12,8 @@
     "No 1.0.0 gate is satisfied without current reproducible evidence or human review.",
     "V1-43 records A8-to-1.0 migration and local validation in docs/releases/1.0-migration-validation.md; clean-room, CI and maintainer gates remain NEEDS_REVIEW.",
     "V1-44 records a no-upload 1.0.0 artifact rehearsal in docs/releases/1.0-publication-rehearsal.md; protected publication, final release notes and maintainer review remain NEEDS_REVIEW.",
-    "V1-45 independently audited d67e9b2 and rebuilt its temporary 1.0.0 artifacts; the result is NOT_RELEASE_READY because final-cut documents and all manual/protected gates remain open."
+    "V1-45 independently audited d67e9b2 and rebuilt its temporary 1.0.0 artifacts; the result is NOT_RELEASE_READY because final-cut documents and all manual/protected gates remain open.",
+    "The 1.0.0 candidate cut (f4adabe on release/v1.0.0-finalization) commits the exact 1.0.0 identity, the dated changelog section, comparison links and docs/releases/v1.0.0.md; all automated gates pass locally. docs/releases/1.0-candidate-evidence.md records the evidence. Every manual gate remains NEEDS_REVIEW, and publication requires the three protected release.yml dispatches from main."
   ],
   "gates": [
     {"id": "python-baseline", "title": "Python baseline verified", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
