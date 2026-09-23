@@ -1238,53 +1238,25 @@ def test_the_command_rejects_an_unknown_phase() -> None:
         tool.main(["--version", VERSION, "--phase", "bootstrap-3"])
 
 
-def test_a_development_workspace_is_not_publishable_for_bootstrap_1() -> None:
-    """Development metadata must not be treated as a release candidate."""
+@pytest.mark.parametrize("phase", tool.PHASE_ORDER)
+def test_a_development_workspace_is_not_publishable_in_any_phase(
+    workspace: Path, phase: str
+) -> None:
+    """Development metadata must not be treated as a release candidate.
+
+    The synthetic workspace keeps this independent of the checkout's own
+    phase: `develop` carries `.dev0`, but a release branch and `main` carry
+    the exact release version, and the refusal must hold for both.
+    """
     code, problems, notes = tool.run(
-        WORKSPACE_ROOT,
-        _repository_version(),
+        workspace,
+        f"{VERSION}.dev0",
         dist_dir=None,
         tag=None,
         online=False,
         require_published=False,
         index=tool.DEFAULT_INDEX,
-        phase="bootstrap-1",
-    )
-
-    assert code == 1
-    assert any("not a publishable release version" in problem for problem in problems)
-    assert notes
-
-
-def test_a_development_workspace_is_not_publishable_for_bootstrap_2() -> None:
-    """Later phases use the same exact-release requirement."""
-    code, problems, notes = tool.run(
-        WORKSPACE_ROOT,
-        _repository_version(),
-        dist_dir=None,
-        tag=None,
-        online=False,
-        require_published=False,
-        index=tool.DEFAULT_INDEX,
-        phase="bootstrap-2",
-    )
-
-    assert code == 1
-    assert any("not a publishable release version" in problem for problem in problems)
-    assert notes
-
-
-def test_a_development_workspace_is_not_publishable_for_the_final_phase() -> None:
-    """The final phase cannot publish the workspace development identity."""
-    code, problems, notes = tool.run(
-        WORKSPACE_ROOT,
-        _repository_version(),
-        dist_dir=None,
-        tag=None,
-        online=False,
-        require_published=False,
-        index=tool.DEFAULT_INDEX,
-        phase="final",
+        phase=phase,
     )
 
     assert code == 1
