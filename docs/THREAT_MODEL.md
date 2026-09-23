@@ -338,7 +338,8 @@ scanning alert. No unresolved P0/P1 was found in the supported candidate
 scope. This is current audit evidence, not a release authorization: external
 CI, protected publisher state, artifacts and human review remain separate
 gates. The local repository-secret inventory's treatment of nonstandard local
-virtual environments is a non-blocking test-scope concern tracked as #469.
+virtual environments was a non-blocking test-scope concern, #469, fixed by
+PR #487 (`25241e5`): the inventory now covers reviewed files only.
 
 It produced findings S-1 and S-2 above; the property and fuzz lanes later added F-1 and F-2. The following were probed directly and
 behaved correctly; they are recorded so a later reviewer knows they were tried

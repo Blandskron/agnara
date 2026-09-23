@@ -13,12 +13,21 @@ reached PyPI and the other thirteen artifacts did not. It is superseded by
 were stopped by publication readiness after the tag existed, and A6 was
 rejected by PyPI on its first upload. Every first-party package in the
 workspace carries the synchronized version; through `0.1.0a4` only the
-`agnara` core distribution had ever been uploaded.
+`agnara` core distribution had ever been uploaded. `0.1.0a9` was prepared as a
+security-only hotfix for GHSA-j5rx-vm8v-f7p3 but was never tagged or
+published; its fix ships in `1.0.0`.
 
 ## [Unreleased]
 
-Work in this section contributes to the first stable `1.0.0` release. Entries
-describe user- and contributor-visible changes only.
+## [1.0.0] - 2026-09-22
+
+The first stable release. It stabilizes the capability runtime, 166 canonical
+public exports across 13 modules of the seven synchronized distributions, and
+the `1.x` compatibility contract in `docs/PUBLIC_API.md`. Applications
+upgrading from `0.1.0a8` should follow `docs/MIGRATION_A8_TO_1_0.md`. This
+release also remediates GHSA-j5rx-vm8v-f7p3 (CWE-532) for every version
+`<= 0.1.0a8`. The date records the release-candidate cut; the release exists
+only once the protected workflow has published and verified it.
 
 - Record the independent 1.0.0 Go/No-Go audit, clarify that the release
   precondition checker accepts the stable target, and align maturity claims
@@ -1336,7 +1345,8 @@ under `0.1.0a2` instead.
 [#257]: https://github.com/Blandskron/agnara/issues/257
 [#259]: https://github.com/Blandskron/agnara/issues/259
 [#261]: https://github.com/Blandskron/agnara/issues/261
-[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a8...develop
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v1.0.0...develop
+[1.0.0]: https://github.com/Blandskron/agnara/compare/v0.1.0a8...v1.0.0
 [0.1.0a8]: https://github.com/Blandskron/agnara/compare/v0.1.0a7...v0.1.0a8
 [0.1.0a7]: https://github.com/Blandskron/agnara/compare/v0.1.0a6...v0.1.0a7
 [0.1.0a6]: https://github.com/Blandskron/agnara/compare/v0.1.0a5...v0.1.0a6
