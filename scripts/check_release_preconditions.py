@@ -58,6 +58,7 @@ VERSION_PATTERN = re.compile(r"^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?
 RELEASE_EVENT = "workflow_dispatch"
 RELEASE_BRANCH_REF = "refs/heads/main"
 NETWORK_TIMEOUT = 30
+PHASE_ORDER = ("bootstrap-1", "bootstrap-2", "final")
 
 GitRunner = Callable[..., str]
 JsonFetcher = Callable[[str], dict[str, Any] | None]
@@ -198,6 +199,71 @@ def check_head_is_current_main(context: Context, git: GitRunner) -> list[str]:
     return problems
 
 
+def check_phase_candidate(
+    context: Context, version: str, phase: str, fetch: JsonFetcher
+) -> list[str]:
+    """Pin later dispatches to the successful first-phase build on GitHub."""
+    if phase not in PHASE_ORDER:
+        return [f"unknown release phase {phase!r}"]
+    if phase == PHASE_ORDER[0]:
+        return []
+    if not context.repository or not context.token or not context.sha:
+        return ["repository, GITHUB_TOKEN and GITHUB_SHA are required to pin release phases"]
+
+    problems: list[str] = []
+    for earlier in PHASE_ORDER[: PHASE_ORDER.index(phase)]:
+        name = f"agnara-release-candidate-{version}-{earlier}"
+        document = fetch(
+            f"{context.api_url}/repos/{context.repository}/actions/artifacts?name={name}&per_page=100"
+        )
+        if not isinstance(document, dict) or not isinstance(document.get("artifacts"), list):
+            problems.append(f"cannot read the {earlier} candidate artifact listing")
+            continue
+        artifacts = document["artifacts"]
+        if document.get("total_count") != len(artifacts):
+            problems.append(f"the {earlier} candidate artifact listing is incomplete")
+            continue
+        candidates: set[str] = set()
+        for artifact in artifacts:
+            if not isinstance(artifact, dict) or artifact.get("name") != name:
+                continue
+            if artifact.get("expired") is not False:
+                continue
+            origin = artifact.get("workflow_run")
+            if not isinstance(origin, dict) or not isinstance(origin.get("id"), int):
+                problems.append(f"the {earlier} candidate has no workflow run identity")
+                continue
+            run = fetch(f"{context.api_url}/repos/{context.repository}/actions/runs/{origin['id']}")
+            if not isinstance(run, dict) or not (
+                run.get("path")
+                in {
+                    ".github/workflows/release.yml@main",
+                    ".github/workflows/release.yml@refs/heads/main",
+                }
+                and run.get("event") == RELEASE_EVENT
+                and run.get("head_branch") == "main"
+                and run.get("conclusion") == "success"
+                and run.get("head_sha") == origin.get("head_sha")
+                and isinstance(run.get("head_sha"), str)
+                and re.fullmatch(r"[0-9a-f]{40}", run["head_sha"]) is not None
+                and run.get("id") == origin["id"]
+            ):
+                continue
+            candidates.add(run["head_sha"])
+        if len(candidates) != 1:
+            problems.append(
+                f"{earlier} has {len(candidates)} distinct successful candidate commits "
+                f"for {version}; expected exactly one retained candidate"
+            )
+        elif context.sha not in candidates:
+            candidate = next(iter(candidates))
+            problems.append(
+                f"{earlier} published from {candidate[:12]}, but this dispatch uses "
+                f"{context.sha[:12]}; all phases must use one commit"
+            )
+    return problems
+
+
 def check_tag_absent(version: str, git: GitRunner) -> list[str]:
     """No tag may exist for this version before the approved run creates it."""
     tag = f"v{version}"
@@ -272,6 +338,7 @@ def run(
     fetch: JsonFetcher,
     protected_environment: str | None,
     after_publication: bool = False,
+    phase: str | None = None,
 ) -> tuple[int, list[str], list[str]]:
     """Evaluate the preconditions for one moment of the release.
 
@@ -289,6 +356,8 @@ def run(
         else:
             problems.extend(check_head_is_current_main(context, git))
         problems.extend(check_tag_absent(version, git))
+        if phase is not None:
+            problems.extend(check_phase_candidate(context, version, phase, fetch))
     if protected_environment is not None:
         environment_problems, environment_notes = check_environment_protection(
             context, protected_environment, fetch
@@ -301,6 +370,7 @@ def run(
 def main(argv: list[str] | None = None, environ: Mapping[str, str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", required=True, help="the release version being dispatched")
+    parser.add_argument("--phase", choices=PHASE_ORDER, help="the phase being dispatched")
     parser.add_argument(
         "--require-protected-environment",
         metavar="NAME",
@@ -325,6 +395,7 @@ def main(argv: list[str] | None = None, environ: Mapping[str, str] | None = None
             fetch=make_fetcher(context),
             protected_environment=arguments.require_protected_environment,
             after_publication=arguments.after_publication,
+            phase=arguments.phase,
         )
     except Refusal as exc:
         print(f"::error::release preconditions could not be evaluated: {exc}")

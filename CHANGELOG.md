@@ -19,6 +19,8 @@ published; its fix ships in `1.0.0`.
 
 ## [Unreleased]
 
+- Pin every phased release dispatch to the successful first-phase candidate commit and compare published PyPI file SHA-256 values with the retained build before continuing publication.
+
 ## [1.0.0] - 2026-09-22
 
 The first stable release. It stabilizes the capability runtime, 166 canonical

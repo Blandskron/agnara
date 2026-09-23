@@ -100,6 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: read
     outputs:
       version: ${{ steps.resolve.outputs.version }}
     steps:
@@ -121,7 +122,8 @@ jobs:
         run: |
           set -euo pipefail
           uv run --no-project python scripts/check_release_preconditions.py \
-            --version "$RELEASE_VERSION" --require-protected-environment pypi
+            --version "$RELEASE_VERSION" --phase "$RELEASE_PHASE" \
+            --require-protected-environment pypi
 
       - name: The workspace is synchronized at exactly this version with a current lockfile
         run: |
@@ -277,6 +279,16 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
+      # The later dispatches use this version/phase-specific artifact to find
+      # the successful earlier run and pin themselves to its source commit.
+      - name: Retain the phase candidate identity
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: agnara-release-candidate-${{ inputs.version }}-${{ inputs.phase }}
+          path: hashes/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Upload the SBOM
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -409,13 +421,31 @@ jobs:
             --version "$RELEASE_VERSION" \
             --require-protected-environment pypi
 
+      - name: Download the built distributions for index comparison
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agnara-distributions
+          path: dist/
+
+      - name: Download their retained SHA-256 sums
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agnara-distribution-hashes
+          path: hashes/
+
+      - name: Verify the built distributions before comparing PyPI
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum --check --strict "$GITHUB_WORKSPACE/hashes/SHA256SUMS"
+
       - name: Registry state for this phase, publisher record and workflow identity
         run: |
           set -euo pipefail
           uv run --no-project python scripts/check_publication_readiness.py \
             --workspace "$GITHUB_WORKSPACE" \
             --version "$RELEASE_VERSION" \
-            --phase "$RELEASE_PHASE" --online --oidc-identity
+            --phase "$RELEASE_PHASE" --online --dist dist/ --oidc-identity
 
   # The human gate. Required reviewers on the `pypi` environment hold this job
   # until a person approves the run; `preconditions` has already refused to
@@ -739,13 +769,31 @@ jobs:
       - name: Set up Python
         run: uv python install "$BASELINE_PYTHON"
 
+      - name: Download the built distributions for index comparison
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agnara-distributions
+          path: dist/
+
+      - name: Download their retained SHA-256 sums
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agnara-distribution-hashes
+          path: hashes/
+
+      - name: Verify the built distributions before comparing PyPI
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum --check --strict "$GITHUB_WORKSPACE/hashes/SHA256SUMS"
+
       - name: Every distribution published so far is complete on the index
         run: |
           set -euo pipefail
           for attempt in 1 2 3 4 5 6; do
             if uv run --no-project python scripts/check_publication_readiness.py \
                  --workspace "$GITHUB_WORKSPACE" --version "$RELEASE_VERSION" \
-                 --phase "$RELEASE_PHASE" --online --require-published; then
+                 --phase "$RELEASE_PHASE" --online --dist dist/ --require-published; then
               exit 0
             fi
             echo "index not consistent yet; attempt $attempt of 6"
@@ -1042,13 +1090,31 @@ jobs:
       - name: Set up Python
         run: uv python install "$BASELINE_PYTHON"
 
+      - name: Download the built distributions for index comparison
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agnara-distributions
+          path: dist/
+
+      - name: Download their retained SHA-256 sums
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agnara-distribution-hashes
+          path: hashes/
+
+      - name: Verify the built distributions before comparing PyPI
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum --check --strict "$GITHUB_WORKSPACE/hashes/SHA256SUMS"
+
       - name: Every distribution published so far is complete on the index
         run: |
           set -euo pipefail
           for attempt in 1 2 3 4 5 6; do
             if uv run --no-project python scripts/check_publication_readiness.py \
                  --workspace "$GITHUB_WORKSPACE" --version "$RELEASE_VERSION" \
-                 --phase "$RELEASE_PHASE" --online --require-published; then
+                 --phase "$RELEASE_PHASE" --online --dist dist/ --require-published; then
               exit 0
             fi
             echo "index not consistent yet; attempt $attempt of 6"
@@ -1164,6 +1230,24 @@ jobs:
 
       # Completeness, not installability. `agnara 0.1.0a4` is installable and
       # has no sdist; this fails on exactly that, for each of the seven.
+      - name: Download the built distributions for index comparison
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agnara-distributions
+          path: dist/
+
+      - name: Download their retained SHA-256 sums
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agnara-distribution-hashes
+          path: hashes/
+
+      - name: Verify the built distributions before comparing PyPI
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum --check --strict "$GITHUB_WORKSPACE/hashes/SHA256SUMS"
+
       - name: Every distribution is complete on the index
         run: |
           set -euo pipefail
@@ -1171,7 +1255,7 @@ jobs:
           for attempt in 1 2 3 4 5 6; do
             if uv run --no-project python scripts/check_publication_readiness.py \
                  --workspace "$GITHUB_WORKSPACE" --version "$version" \
-                 --phase "$RELEASE_PHASE" --online --require-published; then
+                 --phase "$RELEASE_PHASE" --online --dist dist/ --require-published; then
               exit 0
             fi
             echo "index not consistent yet; attempt $attempt of 6"
