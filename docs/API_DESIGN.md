@@ -38,9 +38,10 @@ asgi = http.compile(app.compile(), openapi=OpenApiInfo("Users", "1.0"))
 
 `http` is a typed adapter surface selected by project composition, not a
 capability property. The exposure lifecycle is settled by ADR 0070 and this
-public composition syntax is implemented by ADR 0071. Its seven exports are
-stable in the 1.0 contract; implementation alone does not imply a new public
-commitment.
+public composition syntax is implemented by ADR 0071. Its fourteen exports
+are stable in the 1.0 contract at the `agnara_http` package root;
+`agnara_http.composition` is an implementation module, not a second supported
+import path. Implementation alone does not imply a new public commitment.
 
 ## 5. MCP exposure
 

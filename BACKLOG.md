@@ -202,10 +202,15 @@ order.
   set into a fresh Python 3.14 environment, and treat any application workaround
   for framework semantics as a release finding.
 
-- [~] Align A8-to-1.0 migration documentation, authoritative public API
+- [x] Align A8-to-1.0 migration documentation, authoritative public API
   wording and clean-room validation (V1-43, #480): retain historical A8
   records, document every migration boundary with public examples, and record
   which remaining release gates require CI or maintainer review.
+
+- [x] Rehearse 1.0 publication with immutable artifacts (V1-44, #482): build
+  and verify a one-time seven-distribution `1.0.0` bundle from a disposable
+  candidate worktree, bind its hashes and SBOM to the tested bytes, and record
+  the protected-workflow checks without publishing, tagging or approving it.
 
 - [x] Finalize the 1.0 public API (V1-31): classify 166 canonical names across
   13 governed modules as stable, remove 171 duplicate leaf-module export paths,

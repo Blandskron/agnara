@@ -20,6 +20,11 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Rehearse the protected 1.0 publication path from the current candidate in a
+  disposable worktree. The rehearsal verifies the complete seven-distribution
+  bundle, immutable hashes, CycloneDX SBOM and closed-index installation
+  without creating a tag, release, upload or protected-environment approval.
+
 - Add A8-to-1.0 migration guidance for governed imports, introspection,
   authority and idempotency boundaries, same-snapshot composition, streaming,
   host embedding and stable HTTP composition. Current examples and
