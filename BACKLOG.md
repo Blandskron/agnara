@@ -190,11 +190,12 @@ order.
   registration/freeze limits. `docs/performance/budgets.json` now holds 15
   limits, with observed maxima and headroom recorded for every limit.
 
-- [~] Prove the I14 performance regression gate fails and passes (V1-41): the
-  checker rejects malformed or mismatched artifacts and the required performance
-  CI job runs its deterministic artificial-regression proof before the real
-  benchmark. The branch's CI result remains required evidence before this item
-  can be marked complete.
+- [x] Prove the I14 performance regression gate fails and passes (V1-41, #475):
+  the checker rejects malformed or mismatched artifacts and the required
+  performance CI job runs its deterministic artificial-regression proof before
+  the real benchmark. The CI job passed on develop HEAD after merge (run
+  35801520894, "Performance budgets"), satisfying the required branch-CI
+  evidence.
 
 - [x] Exercise integrated installed-artifact dogfooding across standalone, host,
   embedded and side-by-side modes (V1-42, #478): use public imports only in
