@@ -120,7 +120,7 @@ def principal(scopes: frozenset[str]) -> Principal:
 
 def from_model(scopes: frozenset[str]) -> list[str]:
     document = filter_snapshot(built(), visibility(), principal(scopes)).json_data()
-    return [item["id"] for app in document["apps"] for item in app["capabilities"]]
+    return [item["id"] for app in document["applications"] for item in app["capabilities"]]
 
 
 def from_cli_json(project: Path, capsys: Any, scopes: frozenset[str]) -> dict[str, Any]:
@@ -220,7 +220,7 @@ async def _unreachable(scope: Any, receive: Any, send: Any) -> None:  # pragma: 
 
 
 def identifiers(document: dict[str, Any]) -> list[str]:
-    return [item["id"] for app in document["apps"] for item in app["capabilities"]]
+    return [item["id"] for app in document["applications"] for item in app["capabilities"]]
 
 
 @pytest.mark.parametrize("viewer", sorted(VIEWERS))
@@ -256,11 +256,11 @@ def test_every_surface_carries_the_snapshot_provenance(
 
     for document in (from_cli_json(project, capsys, scopes), from_http(scopes)):
         assert document["format"] == "agnara-introspection"
-        assert document["version"] == "0"
+        assert document["version"] == "1"
         assert document["filtered"] is True
 
     context = from_cli_command(project, capsys, scopes, "context")
-    assert "`agnara-introspection` version `0`" in context
+    assert "`agnara-introspection` version `1`" in context
 
 
 def test_no_surface_publishes_a_field_the_decision_withheld(
@@ -270,7 +270,7 @@ def test_no_surface_publishes_a_field_the_decision_withheld(
     scopes = VIEWERS["both"]
     encoded = from_cli_json(project, capsys, scopes)
 
-    for app in encoded["apps"]:
+    for app in encoded["applications"]:
         assert app["providers"] == []
         for capability in app["capabilities"]:
             assert capability["dependencies"] == []

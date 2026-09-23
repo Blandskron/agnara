@@ -51,21 +51,24 @@ PyPI projects still require their Pending Trusted Publishers before the tag.
 
 Every distribution's public surface is classified in
 `docs/public-api.json` and enforced in both directions by the release gate:
-324 exports across 49 modules, all `provisional`. `agnara-cli` dropped from 17
+166 classified exports across 13 modules, all `stable`. Those entries are
+import paths rather than distinct symbols: 166 names are reachable at 166 canonical paths,
+because a name is classified once per module it can be imported from.
+`agnara-cli` dropped from 17
 public names to 4 in the baseline, because the other thirteen were implementation
 helpers re-exported from underscore-prefixed modules and never documented,
 used or designed as an API (ADR 0076).
 
-`agnara-http` now declares fourteen `provisional` names that compose
+`agnara-http` declares fourteen stable names that compose
 capabilities, compile an ASGI 3 application, project OpenAPI and publish the
 reviewed documentation profile. `docs/HTTP_COMPOSITION.md` is the supported
 guide.
 
-It stays `EXPERIMENTAL` rather than becoming `IMPLEMENTED` because the public
-spelling is still provisional before 1.0, third-party provider extension and
-the authorized discovery endpoint remain intentionally internal, and the
-surface is newly expanded. The transport behaviour is settled; the spelling is
-not.
+It stays `EXPERIMENTAL` rather than becoming `IMPLEMENTED` because third-party
+provider extension and the authorized discovery endpoint remain intentionally
+internal, and the surface is newly expanded. The public spelling is stable for
+1.0; the experimental classification describes maturity, not an exception to
+the compatibility contract.
 
 ## Kernel — `agnara`
 
@@ -89,11 +92,11 @@ not.
 | Unified exposure model | `IMPLEMENTED` | `agnara.exposure`: neutral identity, per-surface adapter compilation, one frozen availability registry. ADR 0070, RFC 0006. Both shipped adapters go through it. |
 | Introspection snapshot | `IMPLEMENTED` | Versioned, frozen, no runtime objects reachable. ADR 0045. Exposures are derived from the frozen exposure registry. |
 | Discovery visibility | `IMPLEMENTED` | Per-field publication decisions. ADR 0046. |
-| Execution identity | `IMPLEMENTED` | ADR 0087, ADR 0088. Each `ExecutionContext` owns an opaque runtime-generated identity; `invoke_result`, `CapabilityStream` and lifecycle telemetry retain it while each actual handler attempt still receives a separate telemetry `invocation_id`. Caller metadata cannot choose it. HTTP returns only the generated identity in `agnara-execution-id`; HTTP/MCP request IDs are bounded untrusted correlation only, never execution selection, authority or idempotency proof. No store, replay or retry behavior exists. |
-| Idempotency | `IMPLEMENTED` as metadata and storage contract, `PLANNED` as runtime behaviour | ADR 0089 defines atomic capability/principal/key/fingerprint storage transitions and ships a bounded process-local reference store. The runtime and transports do not yet accept caller keys, deduplicate handler execution or replay results. |
+| Execution identity | `IMPLEMENTED` | ADRs 0087, 0088 and 0091. Each `ExecutionContext` owns an opaque runtime-generated identity; direct idempotency reuse adopts the claimed logical identity while each lifecycle invocation retains a fresh telemetry `invocation_id`. Caller metadata cannot choose it. HTTP returns only the generated identity in `agnara-execution-id`; HTTP/MCP request IDs are bounded untrusted correlation only, never execution selection, authority or idempotency proof. |
+| Idempotency | `IMPLEMENTED` for explicit direct complete-result invocation; `PLANNED` for adapter projections | ADRs 0089 and 0091 define atomic capability/principal/key/fingerprint transitions and an explicit `ExecutionContext` option. An `Idempotency.YES` direct capability claims before dependencies and handler work, reuses completed successes, abandons failures/cancellation, and fails closed on store or stale-codec errors. The reusable store conformance suite fixes TTL start and inclusive expiry semantics, deterministic races and bounded cleanup; the in-memory reference store remains process-local. HTTP/MCP accept no idempotency key or selector. |
 | Streaming results | `IMPLEMENTED` (kernel and HTTP SSE) | ADR 0084, ADR 0085, ADR 0086, RFC 0009. `open_stream` owns a declared async generator: pull-based demand with no kernel buffer, policy and input validation before the first unit, `StreamInterrupted` for failure after output, and an explicit `StreamTerminal`. `output=...` declares and validates each unit before delivery; omitted output is the intentional unconstrained `Any` contract. `Http.sse` projects it over HTTP with a delayed response start, one `message` event per unit, an explicit terminal event and owned disconnect handling; MCP, A2A, events and WebSockets do not project it. |
 | Audit trail | `PLANNED` | The word appears in docstrings; there is no audit system. |
-| Capability-to-capability composition | `RESEARCH` | No nested `ExecutionContext`, no propagation contract. |
+| Capability-to-capability composition | `IMPLEMENTED` for same-snapshot complete results | ADR 0093. `CapabilityRuntime` accepts one frozen capability snapshot and only its identity-matching compiled plans, then injects an invocation-scoped `CapabilityInvoker`; each child has fresh identity/context and its own policy, confirmation, validation and DI lifecycle. A child receives a detached direct actor and only a bounded correlation label: parent confirmation/idempotency, raw invocation metadata and delegation evidence do not cross. Deadline may only shorten, cancellation propagates through nested work, and direct/indirect recursion or depth exhaustion are refused before the next effect. A streaming target returns a canonical conflict before producer start; a streaming parent cannot receive an invoker. Delegation, stream and cross-app composition remain unsupported. |
 | Multi-tenancy | `RESEARCH` | No tenant concept anywhere in the kernel. |
 | Free-threaded Python | `RESEARCH` | Immutability after compile is designed for it; nothing is verified under a free-threaded build. |
 
@@ -112,7 +115,7 @@ not.
 | Discovery endpoint | `IMPLEMENTED` | ADR 0049. |
 | Explorer | `IMPLEMENTED` | Read-only shell. ADR 0052. |
 | Exposure compilation | `IMPLEMENTED` | Public `Http.compile()` derives neutral records from the compiled route table. ADR 0070, ADR 0071. |
-| Public composition API | `IMPLEMENTED` | Seven provisional exports compose and compile an ASGI application through supported entry points. ADR 0071. |
+| Public composition API | `IMPLEMENTED` | Fourteen stable exports compose and compile an ASGI application through supported entry points. ADR 0071. |
 | Cookies, forms, multipart, uploads | `IMPLEMENTED` | Public binding sources with bounded in-memory bodies and multipart part count. ADR 0072. |
 | SSE streaming projection | `IMPLEMENTED` | ADR 0085. `Http.sse` is a GET-only, bounded projection with delayed response commitment, one message per unit, one explicit terminal event, no replay/keepalive policy, pull-based demand and owned disconnect cleanup. `tests/http/test_sse.py` supplies ASGI conformance evidence. |
 | WebSockets | `PLANNED` | The ASGI boundary handles no `websocket` scope, and WebSocket streaming still needs its own decision. |
@@ -147,7 +150,7 @@ not.
 | CLI scaffolding | `IMPLEMENTED` | `project create`, `app create`, architectures, `--with`, profiles, aliases. |
 | CLI introspection | `IMPLEMENTED` | `apps`, `inspect`, `graph`, `schema openapi`, `context`. |
 | Project manifest | `IMPLEMENTED` | `agnara.toml`. ADR 0059. No schema version field yet. |
-| Telemetry bridges | `IMPLEMENTED` | OpenTelemetry metrics and spans. ADR 0054-0058. |
+| Telemetry bridges | `IMPLEMENTED` | Optional OpenTelemetry metrics and spans. `tests/integration/telemetry/` proves one FastAPI 0.141.1 host trace with nested capability spans, concurrent isolation, stream terminal closure and redaction using SDK 1.44.0 in-memory export. Host extraction, providers, exporters and shutdown remain application-owned; compilation, nested invocation and streaming are additionally proven in an interpreter where `opentelemetry` is unimportable. No network-exporter or framework-support claim follows. ADR 0054-0058. |
 | A2A | `PLANNED` | Namespace reserved. |
 | Events / AsyncAPI | `PLANNED` | Namespace reserved. |
 | Tasks and durable execution | `RESEARCH` | No package, no abstraction. |
@@ -155,9 +158,10 @@ not.
 | Realtime | `RESEARCH` | |
 | Testing utilities | `PLANNED` | No first-party harness; the repository tests the framework, not applications built on it. |
 | Plugin system | `RESEARCH` | No discovery, loading or trust model. |
-| Persistence, cache, queue and scheduler integrations | `RESEARCH` | No port, no adapter, no dependency. `docs/INTEROPERABILITY.md` records the intent; I20 owns the work. |
-| Framework embedding contract | `RESEARCH` | RFC 0008 states the questions. Nothing exists that an external host could call. |
-| Side-by-side composition with an external framework | `RESEARCH` | HTTP now has a public composition surface (ADR 0071); interoperability with an external framework still requires its own conformance evidence and belongs to `1.0.0`. |
+| Persistence, cache, queue and scheduler integrations | `RESEARCH` | No shipped port, adapter or runtime dependency. `tests/integration/persistence/` is an optional SQLAlchemy 2.0.54/SQLite fixture that proves host-owned `Session` and transaction decisions around the existing DI boundary; it does not make Agnara an ORM or claim PostgreSQL, async-session, migration, cache, queue or scheduler support. |
+| Framework embedding contract | `DESIGNED` | ADR 0094 accepts an explicit async complete-result host boundary over existing stable runtime values: lifecycle/resource ownership, principal/context/error/telemetry bridges and one-event-loop reuse rules are defined. Version-pinned Starlette 1.6.0, FastAPI 0.141.1 and Django 6.1.1 fixtures exercise that boundary without adding a framework dependency or support claim. |
+| Side-by-side composition with an external framework | `EXPERIMENTAL` | `tests/integration/starlette/` exercises native and direct-runtime routes in one Starlette 1.6.0 lifespan. `tests/integration/fastapi/` adds FastAPI 0.141.1 native dependency/security, exception and middleware ownership, direct invocation, idempotency, composition, disconnect cancellation and explicitly coordinated mounted HTTP/SSE projection. Both are optional fixtures: neither claims integration support, automatic mounted-lifespan handling, OpenAPI merging nor release-gate closure. |
+| Host-diversity fixture | `EXPERIMENTAL` | `tests/integration/litestar/` exercises the same public embedding boundary in Litestar 2.24.0, including host-owned canonical-result/status serialization. It is selected conditional evidence, not Litestar or Flask support. |
 | Second shipped schema adapter | `RESEARCH` | Pydantic and msgspec remain `experiments/`; neither is packaged or supported. |
 | Typed client generation | `RESEARCH` | |
 | Native acceleration | `DEFERRED` | ADR-level position: only after measured bottlenecks. |
@@ -172,10 +176,11 @@ not.
 | Cross-platform CI | `IMPLEMENTED` | Linux, macOS, Windows. |
 | Packaging gate | `IMPLEMENTED` | Builds and inspects all seven wheels/sdists, then installs all seven wheels outside the workspace with first-party index access disabled. |
 | Release readiness program | `IMPLEMENTED` | Evidence expires against the commit it was recorded on. |
-| Benchmarks | `IMPLEMENTED` (baseline only) | Four recorded baselines; no budgets, no regression gate. |
-| Property testing and fuzzing | `PLANNED` | None. |
-| Protocol conformance suites | `PLANNED` | MCP conformance is repository-authored; no upstream suite is run. |
-| Security scanning, SBOM, signing | `PLANNED` | None configured. `SECURITY.md` records this. |
+| Benchmarks | `IMPLEMENTED` | Six benchmark programs are inventoried in `docs/benchmarks/coverage.md`. `runtime_paths.py` covers registration/freeze, compilation, DI, policies, identity, idempotency, composition, embedding and stream phases. |
+| Performance budgets | `IMPLEMENTED` | `docs/performance/budgets.json` holds 15 calibrated core limits enforced by `scripts/check_performance_budgets.py`. V1-41 also makes the required performance job prove a synthetic over-budget artifact fails before it checks the machine-dependent record. The release gate and every limit remain subject to CI evidence and maintainer approval. |
+| Property testing and fuzzing | `IMPLEMENTED` | Bounded, derandomized property and fuzz regression lanes cover routing, schemas, dependency graphs, capability identity and idempotency; they are not continuous fuzzing or formal verification. |
+| Protocol conformance suites | `IMPLEMENTED` | The MCP adapter runs its version-pinned SDK/conformance coverage in CI. This is adapter-level evidence, not an upstream network-transport suite or a claim of complete protocol conformance. |
+| Security scanning, SBOM, signing | `IMPLEMENTED` | CI runs CodeQL; release builds create and verify deterministic CycloneDX SBOMs and artifact digests. Trusted Publishing and PEP 740 attestations remain actions of an authorized release, not evidence that one has occurred. |
 | Documentation consistency checks | `IMPLEMENTED` | This table is machine-checked where possible. |
 
 ## How to change this file

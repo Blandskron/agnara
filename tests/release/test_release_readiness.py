@@ -654,3 +654,73 @@ def test_every_automated_check_returns_a_known_status(gate_id: str) -> None:
         readiness.UNSATISFIED,
     }, status
     assert detail
+
+
+# ---------------------------------------------------------------------------
+# A gate's recorded evidence must not silently regress
+# ---------------------------------------------------------------------------
+
+#: (gate id, evidence file, marker in that file, phrase the detail must cite).
+#: Each row exists because the evidence landed in one pull request and the gate
+#: detail describing it landed in the same one. A later branch cut before that
+#: merge still carries the older detail, and a three-way merge can take the
+#: older side without reporting a conflict.
+EVIDENCE_LINKED_GATES = (
+    (
+        "security-program",
+        "docs/THREAT_MODEL.md",
+        "## 10. Adversarial review for 1.0.0",
+        "adversarial review",
+    ),
+    (
+        "performance-budgets",
+        "docs/performance/budgets.json",
+        '"benchmarks"',
+        "budgets.json",
+    ),
+    (
+        "stable-public-api",
+        "docs/releases/1.0-api-classification.md",
+        "# 1.0.0 public API classification",
+        "1.0-api-classification.md",
+    ),
+)
+
+
+@pytest.mark.parametrize(
+    ("gate_id", "evidence", "marker", "phrase"),
+    EVIDENCE_LINKED_GATES,
+    ids=[row[0] for row in EVIDENCE_LINKED_GATES],
+)
+def test_a_gate_detail_cannot_lose_the_evidence_that_exists(
+    gate_id: str, evidence: str, marker: str, phrase: str
+) -> None:
+    """Evidence in the tree must still be named by the gate that rests on it.
+
+    This exists because it happened. The security review added its finding to
+    `docs/THREAT_MODEL.md` and rewrote the `security-program` detail to cite it.
+    The next pull request had been branched before that merge, so its copy of
+    `release-status.json` still held the placeholder text, and merging it put
+    the placeholder back while the threat-model evidence stayed. No gate
+    noticed: the file was valid JSON, every schema check passed, and the only
+    thing lost was the sentence saying what had been reviewed.
+
+    Two documents disagreeing about whether a review happened is worse than
+    either being absent, because the readiness report quotes the gate.
+    """
+    evidence_path = WORKSPACE_ROOT / evidence
+    assert evidence_path.is_file(), f"{evidence} is missing"
+    if marker not in evidence_path.read_text(encoding="utf-8"):
+        pytest.skip(f"{evidence} does not yet contain {marker!r}")
+
+    detail = next(
+        gate["detail"]
+        for gate in json.loads(STATUS_PATH.read_text(encoding="utf-8"))["gates"]
+        if gate["id"] == gate_id
+    )
+
+    assert phrase.lower() in detail.lower(), (
+        f"{evidence} contains {marker!r}, but the {gate_id} gate detail does not mention "
+        f"{phrase!r}. Evidence exists that the gate no longer claims; a merge probably "
+        f"restored an older detail."
+    )

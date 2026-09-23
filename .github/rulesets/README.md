@@ -1,8 +1,10 @@
 # Branch and tag rulesets
 
-The JSON files here are the rulesets applied to `main`, `develop` and the
-`v*` release tags. They are version controlled so the enforced configuration
-is reviewable in the repository rather than only visible in GitHub settings.
+The JSON files here are the reviewed source definitions for `main`, `develop`
+and `v*` release tags. They are version controlled so the intended enforced
+configuration is reviewable in the repository rather than only visible in
+GitHub settings. ADR 0092 found no active GitHub rulesets; Blandskron imports
+or updates these definitions after approving the governance PR.
 
 `protect-release-tags.json` makes every `v*` tag immutable: it blocks update,
 force-update and deletion. It deliberately does **not** restrict creation. The
@@ -40,23 +42,46 @@ Both branches, identically:
 | Rule | Effect |
 |---|---|
 | `pull_request` | Direct pushes rejected; every change arrives through a PR |
-| `required_status_checks` | The aggregate `CI` check must pass before merge |
+| `required_status_checks` | The aggregate `CI` check must pass, on an up-to-date branch |
 | `required_review_thread_resolution` | Open review conversations block merge |
 | `non_fast_forward` | Force pushes rejected |
 | `deletion` | The branch cannot be deleted |
 
-## Why zero required approvals
+## Human approval is a commitment, not an enforced control
 
-`required_approving_review_count` is deliberately `0`.
+`required_approving_review_count` is `0`, and that is deliberate rather than an
+oversight. GitHub does not let a pull request author approve their own pull
+request, so on a repository with one human maintainer a required approval is
+not a stricter rule — it is a rule that can only be satisfied by having some
+other account approve the maintainer's own work. That would manufacture the
+review trail ADR 0092 exists to keep honest, which is worse than not enforcing
+it. `docs/releases/1.0-release-rehearsal.md` section 7 reached the same
+conclusion and this configuration follows it.
 
-GitHub does not permit a pull request author to approve their own pull
-request. While Agnara has a single agent identity, any non-zero value would
-make the repository impossible to merge into, which `GIT_WORKFLOW.md`
-forbids and ADR 0016 addresses directly: the repository must represent the
-real strength of its review process rather than fabricate one.
+What is enforced instead is everything that does not require a second person:
+no direct pushes, `CI` green, the branch up to date with its base
+(`strict_required_status_checks_policy`), every review conversation resolved,
+no force push, no deletion.
 
-Raise this to `1` when a second independent identity exists — see `BACKLOG.md`
-E0B.9. That is the single change needed to move from Mode B to Mode A.
+So the review half of `Issue → branch → PR → CI → review → approval → merge` is
+a commitment the maintainer keeps, recorded in the PR's review trail, not a
+control the platform applies. `GIT_WORKFLOW.md` says the same thing in the same
+words, on purpose: the previous version of this file claimed one approval was
+required while the workflow documentation described a rule nothing enforced,
+and a governance document that overstates its own enforcement is worse than one
+that admits the gap.
+
+`dismiss_stale_reviews_on_push` and `require_last_push_approval` stay `true` in
+these definitions. With no approval required they gate nothing today; they are
+kept so that adding a second maintainer or a review bot is a one-line change to
+`required_approving_review_count` rather than a redesign.
+
+These JSON files are the reviewed source definitions. Applying them is a
+maintainer action through Settings or the API — this repository change does not
+silently mutate GitHub settings. All three are now applied and active:
+`protect-release-tags`, and `protect-develop`/`protect-main` as of #455
+(2026-09-22), confirmed by reading the live configuration back and diffing it
+field by field against these files.
 
 ## Why no bypass actors
 

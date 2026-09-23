@@ -13,6 +13,7 @@ returns a canonical outcome and ``project_mcp_result`` maps it.
 from __future__ import annotations
 
 import asyncio
+import math
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -44,7 +45,7 @@ from .result import McpResultProjectionError, project_mcp_result
 from .schema import _resolve_plans, project_mcp_tools
 from .tools import FrozenMcpTools
 
-__all__ = ["McpInvocationDefinitionError", "McpToolInvoker", "build_mcp_server"]
+__all__: list[str] = []
 
 #: Longest client request id copied into invocation telemetry. A request id is
 #: caller-controlled, so an unbounded one must not reach every telemetry sink.
@@ -66,7 +67,12 @@ class _InvocationRoute:
 def _timeout_seconds(value: object) -> float | None:
     if value is None:
         return None
-    if isinstance(value, bool) or not isinstance(value, int | float) or value <= 0:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, int | float)
+        or not math.isfinite(value)
+        or value <= 0
+    ):
         raise McpInvocationDefinitionError(
             "MCP invocation timeout must be a positive number of seconds or None"
         )

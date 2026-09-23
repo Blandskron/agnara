@@ -293,7 +293,14 @@ Recorded so the next reader can check rather than assume.
 
 ## 9. Decision
 
-None yet. This RFC is the statement of the questions.
+ADR 0094 accepts the minimal host boundary: explicit async complete-result
+invocation through existing provisional runtime values; singular lifecycle and
+resource ownership; a value-only principal/context bridge; one-event-loop
+runtime ownership; and no global runtime lookup. It resolves Q1, Q3 through Q7,
+Q9 through Q14 to that extent.
 
-When answered, each answer becomes an ADR citing this record, and this file
-gains the list.
+This RFC remains the research record for concrete framework fixtures and for
+work explicitly outside ADR 0094: streaming projection, delegated authority,
+cross-application execution, synchronous convenience APIs and the eventual
+home/versioning of the conformance suite. Those questions cannot be used to
+weaken the accepted boundary or to claim framework support before evidence.

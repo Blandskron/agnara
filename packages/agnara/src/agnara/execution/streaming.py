@@ -42,12 +42,7 @@ from agnara.execution.result import Failure, FailureCode
 from agnara.execution.telemetry import InvocationStartEvent, InvocationTerminalEvent
 from agnara.schema import TypeSchema
 
-__all__ = [
-    "CapabilityStream",
-    "StreamInterrupted",
-    "StreamTerminal",
-    "open_stream",
-]
+__all__: list[str] = []
 
 
 class StreamTerminal(StrEnum):
@@ -134,10 +129,27 @@ def open_stream(
         raise InvocationError(
             f"capability {plan.definition.id} is not declared streaming; use invoke_result()"
         )
+    if plan.capability_invoker_parameters:
+        raise InvocationError(
+            f"streaming capability {plan.definition.id} cannot receive CapabilityInvoker; "
+            "nested composition has complete-result semantics"
+        )
     if context.invocation.capability_id != plan.definition.id:
         raise InvocationError(
             f"invocation targets {context.invocation.capability_id}, but the compiled plan is "
             f"for {plan.definition.id}"
+        )
+    if context.idempotency is not None:
+        # ADR 0089 keeps idempotency separate from streams: there is no stored
+        # success to reuse, because a stream's value is the sequence and its
+        # terminal, not one serializable result. Refusing here rather than
+        # ignoring the selector is the point. A caller that supplies one is
+        # asking for exactly-once effects, and accepting that instruction while
+        # silently discarding it would let the producer rerun on every attempt
+        # with nothing to say so.
+        raise InvocationError(
+            f"streaming capability {plan.definition.id} cannot receive IdempotencyInvocation; "
+            "idempotency result reuse has complete-result semantics"
         )
     return CapabilityStream(plan, context, input_materializer)
 

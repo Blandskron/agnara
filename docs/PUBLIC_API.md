@@ -1,262 +1,106 @@
 # Public API Stability
 
-This document owns compatibility expectations for Agnara's Python API.
-`docs/API_DESIGN.md` owns the intended shape and examples; the machine-readable
-[`public-api.json`](public-api.json) file owns the exact classified export list.
-The generated [API reference](API_REFERENCE.md) renders that list for readers;
-it does not define stability policy separately.
+This document owns Agnara's Python compatibility policy. The exact, ordered
+inventory is [`public-api.json`](public-api.json); the generated
+[API reference](API_REFERENCE.md) is a reader-facing projection of that
+inventory and does not create a second contract.
 
-## Stability vocabulary
+## 1.0 decision
 
-| Classification | Meaning |
-| --- | --- |
-| `stable` | Compatibility is promised under the stable release policy. Breaking changes require a major release. |
-| `provisional` | Intentionally public and expected to remain recognizable, but pre-1.0 feedback may require an incompatible change. |
-| `experimental` | Public only for evaluation. It may change or disappear in the next pre-1.0 release. |
-| `internal` | Unsupported implementation detail. Internal names are excluded from public manifests and `__all__`. |
+The 1.0 contract contains **166 stable exports across 13 modules**: 166
+distinct names at 166 canonical import paths. Leaf-module re-export aliases
+are no longer in `__all__` and are not supported public API.
 
-No API is classified `stable` before the `1.0.0` release. All 310 currently governed
-exports are `provisional`: they are deliberate public entry points, but the
-pre-stable work explicitly makes no compatibility promise. A stable classification
-requires an explicit `1.0.0` decision supported by release evidence; descriptive phrases
-such as "stable identifier" do not silently promote
-a Python symbol.
+`stable` means a name, its canonical import path, signature, and documented
+behaviour are compatible throughout the current major line. `provisional` and
+`experimental` remain vocabulary for a future deliberate classification, but
+neither occurs in the 1.0 inventory. `internal` names are outside the manifest
+and have no compatibility promise.
 
-Nothing is `experimental` today either. `agnara-http` is an `EXPERIMENTAL`
-*distribution* in `docs/MATURITY.md`, which is a statement about how settled
-the package is; its seven exports are still deliberate entry points rather than
-evaluation spikes, so they are `provisional` like everything else. Marking a
-symbol `experimental` is a decision to make in the change that introduces it,
-not a mood.
+## Canonical modules
 
-### Current provisional semantics
+| Distribution | Module | Stable exports |
+| --- | --- | ---: |
+| `agnara` | `agnara` | 41 |
+| `agnara` | `agnara.di` | 9 |
+| `agnara` | `agnara.execution` | 32 |
+| `agnara` | `agnara.exposure` | 7 |
+| `agnara` | `agnara.introspection` | 23 |
+| `agnara` | `agnara.policy` | 1 |
+| `agnara` | `agnara.schema` | 13 |
+| `agnara-a2a` | `agnara_a2a` | 0 |
+| `agnara-cli` | `agnara_cli` | 4 |
+| `agnara-events` | `agnara_events` | 0 |
+| `agnara-http` | `agnara_http` | 14 |
+| `agnara-mcp` | `agnara_mcp` | 20 |
+| `agnara-telemetry` | `agnara_telemetry` | 2 |
 
-`CapabilityDefinition.output` and the optional `output=` spelling on
-`Agnara.capability` and `App.capability` are additive semantics of existing
-provisional public classes and decorators. They describe and validate a
-successful complete result or each stream unit under ADR 0086; they add no new
-export and make no stable compatibility commitment before the explicit 1.0 API
-classification decision.
+Reserved `agnara_a2a` and `agnara_events` namespaces are deliberately
+classified with no exports. All other non-private implementation modules are
+internal unless their name is re-exported from this table's module through the
+manifest.
 
-`agnara.execution.classify_failure` is the one export added for an adapter
-rather than for an application. `open_stream` raises an ordinary exception for
-a pre-output failure (ADR 0084 D6), so an adapter that owns a streaming wire
-has to answer it with the same canonical failure `invoke_result` would have
-produced. Publishing the rule is what keeps a transport from re-deriving it and
-redacting one capability on one wire and not on another (ADR 0077). It is
-deliberately narrower than a general error-mapping hook: it takes an exception
-and a capability identifier, and returns a `Failure`.
+## Required migrations
 
-ADR 0087 evolves existing provisional execution values without adding a new
-export: `ExecutionContext.execution_id` is an opaque logical execution token;
-runtime `Success`/`Failure`, `CapabilityStream`, and lifecycle telemetry carry
-the same token.  It is deliberately distinct from caller `tracking_id` and
-telemetry `invocation_id`; a reused context retains its execution token while
-each handler attempt gets a fresh invocation token.  The runtime generates the
-token and rejects the reserved `Invocation.metadata["execution_id"]` channel
-before handler work; a caller-supplied idempotency key is not accepted until a
-future governed store can validate and scope it. The identity is absent from
-transport fields and frozen introspection. This is a provisional semantic
-extension, not an idempotency store, replay protocol, retry policy, or
-durable-execution promise.
+```python
+# Dependency injection
+from agnara.di import DIRegistry
 
-`Http.sse` is a method on the existing provisional `Http` builder. ADR 0090
-adds seven deliberate `agnara_http` documentation-composition exports; the
-provider extension protocol remains internal.
-
-ADR 0089 adds the provisional `agnara.execution.idempotency` storage port and
-its process-local reference implementation, re-exported from
-`agnara.execution`. `IdempotencyScope` requires an application to provide the
-validated capability, principal, key and canonical fingerprint boundary; the
-port atomically reserves, observes, completes or abandons that selector. It
-stores only bounded caller-serialized successful bytes and does not select
-transport keys, serialize values, cache failures, authorize a retry, or promise
-durability or multi-process coordination.
-
-## Governed surface
-
-The manifest governs **every shipped distribution**, not the kernel alone. An
-application consuming Agnara from outside this repository imports `agnara_http`
-and `agnara_mcp` as readily as `agnara`, so a governed core beside an
-ungoverned adapter is not a governed framework (ADR 0076).
-
-| Distribution | Import root | Governed modules | Classified exports | Entry point exports |
-| --- | --- | --- | --- | --- |
-| `agnara` | `agnara` | 32 | 248 | 41 |
-| `agnara-a2a` | `agnara_a2a` | 1 | 0 | 0 |
-| `agnara-cli` | `agnara_cli` | 1 | 4 | 4 |
-| `agnara-events` | `agnara_events` | 1 | 0 | 0 |
-| `agnara-http` | `agnara_http` | 2 | 28 | 14 |
-| `agnara-mcp` | `agnara_mcp` | 9 | 40 | 20 |
-| `agnara-telemetry` | `agnara_telemetry` | 3 | 4 | 2 |
-
-324 exports across 49 modules. A count is not a substitute for the list. The
-release gate compares each module's ordered export list against the manifest
-and also walks each distribution's source tree in the reverse direction, so
-adding a public package or leaf module without classifying it fails the gate.
-
-`agnara-http` and `agnara-mcp` re-export their leaf modules through the package
-entry point, so the same name is classified once per module it is reachable
-from; that is why a distribution's export total exceeds its entry-point count.
-
-### `agnara`
-
-| Module | Exports |
-| --- | --- |
-| `agnara` | 41 |
-| `agnara.app` | 2 |
-| `agnara.application` | 1 |
-| `agnara.capability` | 8 |
-| `agnara.capability.definition` | 1 |
-| `agnara.capability.identity` | 1 |
-| `agnara.capability.metadata` | 4 |
-| `agnara.capability.registry` | 2 |
-| `agnara.core.di` | 9 |
-| `agnara.errors` | 12 |
-| `agnara.execution` | 18 |
-| `agnara.execution.context` | 1 |
-| `agnara.execution.invocation` | 1 |
-| `agnara.execution.plan` | 1 |
-| `agnara.execution.result` | 4 |
-| `agnara.execution.runtime` | 2 |
-| `agnara.execution.streaming` | 4 |
-| `agnara.execution.telemetry` | 3 |
-| `agnara.exposure` | 7 |
-| `agnara.introspection` | 23 |
-| `agnara.introspection.builder` | 2 |
-| `agnara.introspection.descriptors` | 13 |
-| `agnara.introspection.visibility` | 8 |
-| `agnara.policy` | 14 |
-| `agnara.policy.base` | 7 |
-| `agnara.policy.confirmation` | 4 |
-| `agnara.policy.principal` | 2 |
-| `agnara.policy.scopes` | 1 |
-| `agnara.schema` | 17 |
-| `agnara.schema.port` | 3 |
-| `agnara.schema.standard` | 14 |
-
-Governing the subpackages is not a formality. The first three lines of the
-README and of `examples/quickstart.py` import from `agnara`, `agnara.core.di`
-and `agnara.execution`, so two thirds of the documented entry path lived
-outside the governed surface until these manifests existed.
-
-### `agnara-http`
-
-| Module | Exports |
-| --- | --- |
-| `agnara_http` | 14 |
-| `agnara_http.composition` | 14 |
-
-The package re-exports one module, so the two lists must not diverge.
-`docs/HTTP_COMPOSITION.md` is the supported guide. Built-in documentation UIs
-and Explorer are supported through ADR 0090; the third-party provider protocol
-and authorized discovery endpoint remain internal.
-
-### `agnara-mcp`
-
-| Module | Exports |
-| --- | --- |
-| `agnara_mcp` | 20 |
-| `agnara_mcp.authorization` | 4 |
-| `agnara_mcp.discovery` | 1 |
-| `agnara_mcp.dispatch` | 3 |
-| `agnara_mcp.interaction` | 2 |
-| `agnara_mcp.protocol` | 3 |
-| `agnara_mcp.result` | 2 |
-| `agnara_mcp.schema` | 1 |
-| `agnara_mcp.tools` | 4 |
-
-### `agnara-telemetry`
-
-| Module | Exports |
-| --- | --- |
-| `agnara_telemetry` | 2 |
-| `agnara_telemetry.metrics` | 1 |
-| `agnara_telemetry.tracing` | 1 |
-
-### `agnara-cli`
-
-| Module | Exports |
-| --- | --- |
-| `agnara_cli` | 4 |
-
-`agnara-cli` is consumed as the `agnara` command. `EXIT_OK`, `EXIT_FAILED`,
-`EXIT_USAGE` and `main` are what a caller needs to run that command in-process,
-and nothing else is a contract. Thirteen further names — manifest parsing,
-generation planning and target resolution — were re-exported from
-underscore-prefixed modules before the retained baseline without ever being documented,
-used or designed as an API; the baseline removes them (ADR 0076). Code that
-needs them is reading the CLI's implementation and should say so by importing
-the private module directly.
-
-### `agnara-a2a` and `agnara-events`
-
-| Module | Exports |
-| --- | --- |
-| `agnara_a2a` | 0 |
-| `agnara_events` | 0 |
-
-Both distributions hold a reserved namespace: they own a package boundary and a
-dependency direction, and export nothing. The empty surface is classified
-rather than merely absent, because an empty `__all__` is skipped by the reverse
-walk — without a manifest entry, a reserved namespace would be the one place a
-first export could appear ungoverned.
-
-### Where the boundary is
-
-The boundary decision is literal and reviewable: a non-private module with a
-non-empty literal `__all__` is public and must be classified. An internal
-module uses an underscore-prefixed path or declares no public exports. This
-keeps the source declaration, human policy, machine manifest and release gate
-in agreement instead of maintaining a second subjective module allowlist.
-
-The manifest resolves both package `__init__.py` files and leaf `.py` modules.
-It may only name real non-private modules inside the distribution that declares
-them; anything outside a workspace package, belonging to a sibling
-distribution, syntactically invalid, ambiguous or absent is refused rather than
-followed (ADR 0074, ADR 0076, Issue #289).
-
-## Auditing an application
-
-`scripts/check_public_imports.py` decides mechanically whether a tree consumes
-Agnara through the governed API only. It reads `public-api.json`, parses Python
-files and the Python shown in Markdown fences, and reports every import that
-names an unclassified module or pulls an unclassified name out of a classified
-one.
-
-```bash
-python scripts/check_public_imports.py path/to/an/application
+# Introspection snapshot
+for application in snapshot.applications:
+    print(application.name)
 ```
 
-It runs on trees outside this workspace on purpose, so an application built
-against Agnara can be audited with exactly the rule the repository holds its
-own examples to. A finding is a framework defect to fix or record, not an
-application detail to work around.
+`agnara.core.di` is an implementation namespace; import the nine supported DI
+types from `agnara.di`. `IntrospectionSnapshot.apps` and the top-level JSON
+field `apps` have been renamed to `applications`. The `apps` member of an
+`ApplicationDescriptor` still represents bounded contexts and is unchanged.
 
-Inside this repository the rule is enforced on `examples/`, `README.md` and the
-guides under `docs/`. `docs/adr/` and `docs/rfc/` are exempt because a decision
-record may quote a rejected or superseded spelling, and `tests/` and
-`benchmarks/` are exempt because exercising and measuring internals is what
-internals are for. The exemptions are listed with their reasons in
-`tests/architecture/test_public_import_audit.py`, so widening them is an edit
-rather than an omission.
+`ExecutionContext` narrows two previously unchecked inputs. `principal` must
+be a `Principal`; a duck-typed token, claims mapping or session object is now
+a `TypeError` at construction. `principal`, `confirmation_evidence` and
+`idempotency` are read-only after construction and raise `InvocationError` on
+assignment, because a nested child derives its authority from the parent's
+principal and a reassignable one is an amplification path. Supply authority
+through the constructor from the composition root that authenticated the
+caller. `state` and `tracking_id` remain mutable; neither is authority.
 
-## Change policy
+Both narrowings land before the 1.0 contract freezes. Under the 1.x rules
+below they would each require a major release, so they are deliberately taken
+now rather than after the promise exists.
 
-- Every public addition must enter the manifest with an explicit
-  classification in the same change.
-- Removing or renaming a provisional API before 1.0 requires a `Changed` or
-  `Removed` changelog entry and concrete migration guidance, as ADR 0021
-  already requires for pre-1.0 breaks.
-- Experimental APIs require a changelog entry when changed or removed;
-  migration guidance is provided when a replacement exists.
-- Stable APIs are deprecated before removal and may be removed only in a new
-  major release. The minimum supported deprecation window will be decided
-  before any symbol is promoted to stable.
-- Internal names carry no compatibility promise and must not be imported by
-  examples, generated projects or integration tests exercising public usage.
-- Security fixes may shorten a deprecation path, but the changelog must state
-  that exception without disclosing embargoed details.
+## Enforcement
 
-The manifest is a review gate, not an automatic stability promotion. Updating
-the snapshot makes a change explicit; it does not make that change compatible.
+The architecture tests compare each literal `__all__` to the manifest, ensure
+every listed value imports, and require every governed export to be stable.
+The installed-artifact gate imports every stable canonical value after wheels
+are installed outside the checkout.
+
+```bash
+python scripts/check_public_imports.py path/to/application
+python scripts/check_distributions.py --workspace . --require-installed
+```
+
+The first command also audits imports in Markdown Python examples. Repository
+examples and current guides must use only governed paths; ADR and RFC records
+may quote historical spellings.
+
+## 1.x compatibility contract
+
+Within 1.x, removing or moving a stable name, changing a signature
+incompatibly, narrowing accepted input, changing documented result or failure
+semantics, or changing a documented emitted schema incompatibly requires a new
+major release. A minor release may add a new name, optional parameter, optional
+output field, failure code for a previously unclassified condition, or telemetry
+attribute.
+
+A stable name deprecated in `1.n` may not be removed before `2.0`. A
+deprecation includes a changelog entry, replacement and migration guidance.
+Security repairs may shorten this path only when the changelog records why
+without exposing embargoed details.
+
+Adapters retain their own contracts: HTTP status/problem/SSE projections and
+MCP result projections must remain compatible inside their major line. A
+transport adapter must not weaken an `agnara` core commitment. Schema contracts
+cover documented accepted and required shapes, not incidental `repr`, exception
+message wording, dictionary order, or private implementation classes.

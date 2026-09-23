@@ -4,7 +4,7 @@ from opentelemetry.metrics import Meter
 
 from agnara.execution import InvocationStartEvent, InvocationTerminalEvent
 
-__all__ = ["OpenTelemetryMetricsHook"]
+__all__: list[str] = []
 
 _OUTCOMES = frozenset({"success", "failure", "timeout", "cancellation"})
 

@@ -33,7 +33,7 @@ from agnara.introspection.descriptors import (
     TypeReference,
 )
 
-__all__ = ["describe_app", "snapshot"]
+__all__: list[str] = []
 
 
 def _plans_by_id(plans: Iterable[ExecutionPlan]) -> dict[CapabilityId, ExecutionPlan]:
@@ -245,7 +245,7 @@ def describe_app(
 
 
 def snapshot(
-    apps: Iterable[ApplicationDescriptor],
+    applications: Iterable[ApplicationDescriptor],
     *,
     project: str | None = None,
 ) -> IntrospectionSnapshot:
@@ -254,11 +254,11 @@ def snapshot(
     Application order is the caller's, because it is the only order that
     carries meaning until a project descriptor exists to define one.
     """
-    described = tuple(apps)
+    described = tuple(applications)
     for app in described:
         if not isinstance(app, ApplicationDescriptor):
             raise IntrospectionError(
-                "introspection apps must contain ApplicationDescriptor values, "
+                "introspection applications must contain ApplicationDescriptor values, "
                 f"got {type(app).__name__}"
             )
-    return IntrospectionSnapshot(apps=described, project=project)
+    return IntrospectionSnapshot(applications=described, project=project)

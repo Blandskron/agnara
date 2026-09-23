@@ -24,7 +24,7 @@ from .authorization import McpAuthorization
 from .protocol import SUPPORTED_MCP_PROTOCOL_VERSIONS
 from .tools import McpToolDefinitionError
 
-__all__ = ["build_mcp_discovery_server"]
+__all__: list[str] = []
 
 type _CallToolHandler = Callable[
     [ServerRequestContext[Any], CallToolRequestParams],

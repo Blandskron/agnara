@@ -145,8 +145,8 @@ FORBIDDEN_IN_CORE: frozenset[str] = frozenset(
 
 #: Distributions no first-party Agnara package may declare as a dependency.
 #:
-#: ADR 0068 gives ecosystem interoperability to `0.1.0b1` and forbids every
-#: alpha from shipping a framework, database, broker, task runtime or
+#: ADR 0068 gives ecosystem interoperability to `1.0.0` and forbids every
+#: release from shipping a framework, database, broker, task runtime or
 #: template engine integration as a supported contract. A denylist
 #: over source imports would not catch that, because an integration arrives as
 #: a *declared dependency* first.

@@ -1,6 +1,6 @@
 """The schema port and Agnara's standard-library implementation of it."""
 
-from agnara.schema.port import JsonSchema, SchemaAdapter, TypeSchema
+from agnara.schema.port import JsonSchema, SchemaAdapter, TypeSchema  # noqa: F401
 from agnara.schema.standard import (
     AnySchema,
     DataclassFieldSchema,
@@ -11,12 +11,12 @@ from agnara.schema.standard import (
     LiteralSchema,
     NoneSchema,
     PrimitiveSchema,
-    StandardSchemaAdapter,
     TupleSchema,
     UnionSchema,
     materialize_json,
     serialize_json,
 )
+from agnara.schema.standard import StandardSchemaAdapter as StandardSchemaAdapter
 
 __all__ = [
     "AnySchema",
@@ -24,15 +24,11 @@ __all__ = [
     "DataclassSchema",
     "DictionarySchema",
     "EnumSchema",
-    "JsonSchema",
     "ListSchema",
     "LiteralSchema",
     "NoneSchema",
     "PrimitiveSchema",
-    "SchemaAdapter",
-    "StandardSchemaAdapter",
     "TupleSchema",
-    "TypeSchema",
     "UnionSchema",
     "materialize_json",
     "serialize_json",

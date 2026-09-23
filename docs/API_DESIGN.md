@@ -38,8 +38,10 @@ asgi = http.compile(app.compile(), openapi=OpenApiInfo("Users", "1.0"))
 
 `http` is a typed adapter surface selected by project composition, not a
 capability property. The exposure lifecycle is settled by ADR 0070 and this
-public composition syntax is implemented by ADR 0071. Its seven exports are
-`provisional` until `1.0.0`; implemented does not mean stable.
+public composition syntax is implemented by ADR 0071. Its fourteen exports
+are stable in the 1.0 contract at the `agnara_http` package root;
+`agnara_http.composition` is an implementation module, not a second supported
+import path. Implementation alone does not imply a new public commitment.
 
 ## 5. MCP exposure
 
@@ -258,6 +260,51 @@ transport cannot omit their enforcement. See ADR 0077 and
 `FailureCode` is protocol-neutral. An HTTP, MCP or A2A adapter maps it to its
 own representation; core never stores a transport status code.
 
+### 16A. Same-application nested invocation
+
+ADR 0093 adds a narrow, stable composition boundary. Compile every
+complete-result target into one `CapabilityRuntime`; a handler that explicitly
+asks for `CapabilityInvoker` can invoke a target from that frozen snapshot:
+
+```python
+from agnara import CapabilityId
+from agnara.di import DIContainer
+from agnara.execution import (
+    CapabilityInvoker,
+    CapabilityRuntime,
+    ExecutionContext,
+    Failure,
+    Invocation,
+    Success,
+)
+
+
+async def settle_invoice(invoice_id: str, invoker: CapabilityInvoker) -> str:
+    result = await invoker.invoke(CapabilityId.parse("billing.collect"), {"invoice_id": invoice_id})
+    match result:
+        case Success(receipt):
+            return receipt
+        case Failure(code, message):
+            return f"collection unavailable: {code}"
+
+
+container = DIContainer(dependencies)
+# The application's frozen registry proves these plans share one application.
+compiled_capabilities = app.compile()
+runtime = CapabilityRuntime(compiled_capabilities, [settle_plan, collect_plan], container)
+outcome = await runtime.invoke_result(
+    ExecutionContext(Invocation(settle_plan.definition.id, {"invoice_id": "inv_123"}, {}), container)
+)
+```
+
+The invoker returns the child's `CanonicalResult`; it does not call a Python
+handler directly. The child gets a fresh context, identity and invocation DI
+scope, re-evaluates its own policy and confirmation, receives no parent
+confirmation or idempotency configuration, and can only receive an earlier
+deadline. Stream targets, absent targets, recursive/depth-exceeding calls,
+delegation and cross-application composition are unsupported. Close the
+application-owned container through `await runtime.aclose()`.
+
 The implemented MCP result boundary is explicit composition:
 
 ```python
@@ -397,7 +444,7 @@ parse a documentation HTML page to discover capabilities.
 
 ## 19A. Optional documentation interfaces
 
-ADR 0090 makes the reviewed, still-provisional composition explicit rather
+ADR 0090 makes the reviewed, stable composition explicit rather
 than using a boolean bag:
 
 ```python

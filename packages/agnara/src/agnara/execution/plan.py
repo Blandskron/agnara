@@ -13,13 +13,14 @@ from agnara.capability.definition import CapabilityDefinition
 from agnara.capability.metadata import Confirmation
 from agnara.core.di import DIRegistry, compile_dag
 from agnara.errors import DefinitionError, SchemaError
+from agnara.execution._composition import CapabilityInvoker
 from agnara.execution.context import ExecutionContext
 from agnara.execution.telemetry import TelemetryHook
 from agnara.policy import ConfirmationVerifier, Policy, ScopePolicy
 from agnara.policy.confirmation import ConfirmationPolicy
 from agnara.schema import SchemaAdapter, StandardSchemaAdapter, TypeSchema
 
-__all__ = ["ExecutionPlan"]
+__all__: list[str] = []
 
 
 @frozen_slots_dataclass
@@ -38,6 +39,7 @@ class ExecutionPlan:
     policies: tuple[Policy, ...] = ()
     dependency_parameters: frozenset[str] = field(init=False)
     context_parameters: tuple[str, ...] = field(init=False)
+    capability_invoker_parameters: tuple[str, ...] = field(init=False)
     protected_parameters: frozenset[str] = field(init=False)
     input_schemas: Mapping[str, TypeSchema] = field(init=False)
     required_inputs: frozenset[str] = field(init=False)
@@ -99,18 +101,28 @@ class ExecutionPlan:
             for name, annotation in hints.items()
             if name != "return" and annotation is ExecutionContext
         )
+        capability_invoker_parameters = tuple(
+            name
+            for name, annotation in hints.items()
+            if name != "return" and annotation is CapabilityInvoker
+        )
         object.__setattr__(self, "dependency_parameters", dependency_parameters)
         object.__setattr__(self, "context_parameters", context_parameters)
+        object.__setattr__(self, "capability_invoker_parameters", capability_invoker_parameters)
         object.__setattr__(
             self,
             "protected_parameters",
-            dependency_parameters.union(context_parameters),
+            dependency_parameters.union(context_parameters, capability_invoker_parameters),
         )
 
         input_schemas: dict[str, TypeSchema] = {}
         required_inputs: set[str] = set()
         for name, parameter in signature.parameters.items():
-            if name in dependency_parameters or name in context_parameters:
+            if (
+                name in dependency_parameters
+                or name in context_parameters
+                or name in capability_invoker_parameters
+            ):
                 continue
             if parameter.kind in {
                 inspect.Parameter.POSITIONAL_ONLY,

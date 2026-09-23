@@ -1,0 +1,138 @@
+{
+  "schema_version": 2,
+  "documentation": "docs/performance/README.md",
+  "checked_by": "scripts/check_performance_budgets.py",
+  "methodology": {
+    "summary": "Budgets are ratios between two scenarios measured in the same process and the same run. An absolute nanosecond limit is not portable between a workstation and a shared CI runner, so it would fail on a busy machine instead of on a regression.",
+    "feature_overhead_baseline": "compiled_invoke",
+    "feature_overhead_rationale": "A bare `await handler()` costs about 100ns, close enough to loop and timer overhead that it moved by 2x between calibration runs. Dividing a ~10us runtime path by it inherits that noise. compiled_invoke is the same order of magnitude as the paths being budgeted and moves with the same machine conditions.",
+    "calibration": {
+      "runs": 3,
+      "samples_per_run": 7,
+      "iterations_per_sample": 2000,
+      "warmup_batches": 2,
+      "garbage_collector_disabled_during_samples": true,
+      "observed_ratio_spread_across_runs": "V1-40 current-semantic records: 1.07x-1.75x for complete-path ratios; 1.54x for startup scaling; 1.37x for registration scaling",
+      "environment": {
+        "implementation": "CPython",
+        "python_version": "3.14.4",
+        "platform": "Windows-11-10.0.26200-SP0",
+        "machine": "AMD64",
+        "processor": "Intel64 Family 6 Model 140 Stepping 1, GenuineIntel",
+        "cpu_count": 8,
+        "gil_enabled": true
+      }
+    },
+    "headroom_policy": "Each limit is at least 1.6x the largest value in the three V1-40 current-semantic records, rounded upward where a new limit is introduced. Existing more-conservative ceilings remain unchanged. Limits are not a claim that Agnara is fast."
+  },
+  "benchmarks": {
+    "agnara.runtime.paths": {
+      "command": [
+        "benchmarks/runtime_paths.py",
+        "--json"
+      ],
+      "environment_profile": {
+        "environment": {
+          "implementation": "CPython",
+          "python_major_minor": "3.14",
+          "gil_enabled": true
+        },
+        "execution_dimensions": {
+          "command": "benchmarks/runtime_paths.py --json",
+          "concurrency": 1,
+          "handler_modes": [
+            "async"
+          ],
+          "payload": "one integer field (value=41)",
+          "schema_sizes": [
+            "one scalar input",
+            "no output schema"
+          ],
+          "serializer": "standard-library JSON only for idempotency result codec",
+          "server": "none (in-process core runtime)"
+        }
+      },
+      "metrics": {
+        "median_ratio_to_compiled_invoke": {
+          "dependency_injection_one": {
+            "maximum": 2.6,
+            "observed_maximum": 1.604,
+            "note": "Cost of resolving one invocation-scoped dependency."
+          },
+          "dependency_injection_ten": {
+            "maximum": 4.1,
+            "observed_maximum": 2.555,
+            "note": "Ten dependencies must stay well below ten times one dependency."
+          },
+          "policy_evaluation_one": {
+            "maximum": 2.1,
+            "observed_maximum": 1.275,
+            "note": "One always-allow policy. Evaluation is the measured path; a denying policy would short-circuit."
+          },
+          "policy_evaluation_three": {
+            "maximum": 2.5,
+            "observed_maximum": 1.542,
+            "note": "Policy evaluation must stay close to linear and cheap."
+          },
+          "execution_identity": {
+            "maximum": 1.8,
+            "observed_maximum": 1.068,
+            "note": "Carrying a principal and a correlation id must stay near free."
+          },
+          "idempotency_hit": {
+            "maximum": 3.3,
+            "observed_maximum": 2.042,
+            "note": "Replaying a stored result."
+          },
+          "idempotency_miss": {
+            "maximum": 6.5,
+            "observed_maximum": 4.009,
+            "note": "Claim plus complete against the store. This is the metric that exposed the O(n^2) in-memory store sweep."
+          },
+          "nested_depth_one": {
+            "maximum": 7.0,
+            "observed_maximum": 4.314,
+            "note": "One nested capability invocation through the runtime."
+          },
+          "nested_depth_three": {
+            "maximum": 15.2,
+            "observed_maximum": 9.442,
+            "note": "Three levels must stay near three times one level, not super-linear."
+          },
+          "embedded_runtime_invoke": {
+            "maximum": 3.0,
+            "observed_maximum": 1.818,
+            "note": "ADR 0094's complete host-to-runtime boundary, including frozen-registry lookup and canonical result projection."
+          },
+          "streaming_unit": {
+            "maximum": 0.6,
+            "observed_maximum": 0.317,
+            "note": "Per emitted unit, so a stream unit must stay cheaper than a whole complete-result invocation."
+          }
+        },
+        "median_ratio_to_reference": {
+          "compiled_invoke": {
+            "maximum": 200.0,
+            "observed_maximum": 125.5,
+            "note": "What the framework costs over a bare awaited handler. Deliberately coarse: the bare handler is the noisiest measurement here, so this guards against the runtime roughly doubling, not against small drift."
+          }
+        },
+        "startup_scaling_ratio": {
+          "maximum": 3.5,
+          "observed_maximum": 1.613,
+          "note": "Compile cost per capability at 1,000 capabilities divided by the cost at 100. Catches compilation that stops being linear in the number of capabilities. The preserved calibration has three records; V1-40 will refresh its repeated-run variance before changing this limit. A genuinely quadratic regression shows up as roughly 10x."
+        },
+        "registration_scaling_ratio": {
+          "maximum": 1.6,
+          "observed_maximum": 0.988,
+          "note": "Registration plus freeze cost per capability at 1,000 capabilities divided by the cost at 100. Catches super-linear synchronized-registry growth independently of plan compilation."
+        },
+        "startup_peak_bytes_per_capability": {
+          "maximum": 4096,
+          "observed_maximum": 2695,
+          "note": "Peak compile memory per capability. Allocation counts are deterministic across runs, so this limit can be tighter than the timing limits."
+        }
+      }
+    }
+  }
+}

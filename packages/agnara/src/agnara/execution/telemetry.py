@@ -7,11 +7,7 @@ from typing import Protocol, runtime_checkable
 from agnara._frozen import frozen_slots_dataclass
 from agnara.capability.identity import CapabilityId
 
-__all__ = [
-    "InvocationStartEvent",
-    "InvocationTerminalEvent",
-    "TelemetryHook",
-]
+__all__: list[str] = []
 
 
 @frozen_slots_dataclass
@@ -26,6 +22,7 @@ class InvocationStartEvent:
     tracking_id: str | None
     invocation_id: str
     execution_id: str | None = None
+    parent_execution_id: str | None = None
 
 
 @frozen_slots_dataclass
@@ -50,6 +47,7 @@ class InvocationTerminalEvent:
     invocation_id: str
     units: int | None = None
     execution_id: str | None = None
+    parent_execution_id: str | None = None
 
 
 @runtime_checkable

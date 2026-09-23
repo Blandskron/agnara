@@ -101,9 +101,9 @@ def test_the_adapter_declares_the_documented_surface() -> None:
     assert declared == PUBLIC_SURFACE
 
 
-def test_the_composition_module_declares_the_same_surface() -> None:
-    """The package re-exports one module, so the two must not diverge."""
-    assert literal_all(http_root() / "composition.py") == PUBLIC_SURFACE
+def test_the_composition_module_is_not_a_second_public_path() -> None:
+    """The package root is the one stable HTTP composition import path."""
+    assert literal_all(http_root() / "composition.py") is None
 
 
 def test_no_public_name_is_underscore_prefixed() -> None:

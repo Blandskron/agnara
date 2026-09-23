@@ -13,13 +13,13 @@ execution kernel: the capability model, registry, execution context,
 dependency graph, policies, execution planning and canonical errors. It
 depends on nothing but the standard library.
 
-## Status: publication baseline
+## Status: 1.0 candidate
 
-The retained A8 publication establishes the public application and exposure
-boundaries alongside the synchronized adapter set. The project is working
-toward its first stable public release, `1.0.0`; do not infer production
-readiness, protocol conformance, benchmark leadership or security guarantees
-without the release evidence.
+The retained A8 publication establishes the historical publication baseline.
+The project is working toward its first stable public release, `1.0.0`; do
+not infer production readiness, protocol conformance, benchmark leadership or
+security guarantees without the release evidence. For source migrations, see
+the repository's `docs/MIGRATION_A8_TO_1_0.md`.
 
 Which versions are on PyPI is answered by the project page rather than by this
 file. `CHANGELOG.md` records what each version contains.
@@ -30,10 +30,12 @@ file. `CHANGELOG.md` records what each version contains.
 pip install agnara
 ```
 
-Pin explicitly when a build must not move:
+Pin an actually published version when a build must not move. For the 1.0
+candidate, install the synchronized wheels built by the release workflow;
+do not use A8 as the 1.0 compatibility target.
 
 ```bash
-pip install "agnara==0.1.0a8"
+pip install "agnara==<published-version>"
 ```
 
 Requires CPython 3.14 or newer.
@@ -43,9 +45,8 @@ Requires CPython 3.14 or newer.
 ```python
 import asyncio
 
-from agnara import Agnara, Risk, StandardEffect
-from agnara.core.di import DIContainer, DIRegistry
-from agnara.policy import Principal
+from agnara import Agnara, Principal, Risk, StandardEffect
+from agnara.di import DIContainer, DIRegistry
 from agnara.execution import (
     ExecutionContext,
     ExecutionPlan,

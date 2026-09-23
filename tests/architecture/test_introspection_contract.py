@@ -87,7 +87,7 @@ def test_the_snapshot_declares_its_own_format_and_version() -> None:
     assert introspection.INTROSPECTION_FORMAT == "agnara-introspection"
     # Versioned independently of the Agnara release and of OpenAPI. Changing
     # this is a contract decision, not a release side effect.
-    assert introspection.INTROSPECTION_VERSION == "0"
+    assert introspection.INTROSPECTION_VERSION == "1"
     snapshot = introspection.IntrospectionSnapshot()
     assert snapshot.json_data()["format"] == introspection.INTROSPECTION_FORMAT
     assert snapshot.json_data()["version"] == introspection.INTROSPECTION_VERSION

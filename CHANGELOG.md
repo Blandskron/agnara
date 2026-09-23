@@ -13,12 +13,178 @@ reached PyPI and the other thirteen artifacts did not. It is superseded by
 were stopped by publication readiness after the tag existed, and A6 was
 rejected by PyPI on its first upload. Every first-party package in the
 workspace carries the synchronized version; through `0.1.0a4` only the
-`agnara` core distribution had ever been uploaded.
+`agnara` core distribution had ever been uploaded. `0.1.0a9` was prepared as a
+security-only hotfix for GHSA-j5rx-vm8v-f7p3 but was never tagged or
+published; its fix ships in `1.0.0`.
 
 ## [Unreleased]
 
-Work in this section contributes to the first stable `1.0.0` release. Entries
-describe user- and contributor-visible changes only.
+## [1.0.0] - 2026-09-22
+
+The first stable release. It stabilizes the capability runtime, 166 canonical
+public exports across 13 modules of the seven synchronized distributions, and
+the `1.x` compatibility contract in `docs/PUBLIC_API.md`. Applications
+upgrading from `0.1.0a8` should follow `docs/MIGRATION_A8_TO_1_0.md`. This
+release also remediates GHSA-j5rx-vm8v-f7p3 (CWE-532) for every version
+`<= 0.1.0a8`. The date records the release-candidate cut; the release exists
+only once the protected workflow has published and verified it.
+
+- Record the independent 1.0.0 Go/No-Go audit, clarify that the release
+  precondition checker accepts the stable target, and align maturity claims
+  with the implemented property, conformance, CodeQL and SBOM controls.
+
+- Rehearse the protected 1.0 publication path from the current candidate in a
+  disposable worktree. The rehearsal verifies the complete seven-distribution
+  bundle, immutable hashes, CycloneDX SBOM and closed-index installation
+  without creating a tag, release, upload or protected-environment approval.
+
+- Add A8-to-1.0 migration guidance for governed imports, introspection,
+  authority and idempotency boundaries, same-snapshot composition, streaming,
+  host embedding and stable HTTP composition. Current examples and
+  authoritative maturity guidance now point to the 1.0 candidate contract
+  without rewriting the historical alpha release record.
+
+- Refresh the performance-methodology evidence for final 1.0 semantics. The
+  runtime benchmark now records registry registration/freeze, the explicit
+  embedding boundary and separate stream opening, pull and completion work;
+  each record declares its execution dimensions. Comparative HTTP and MCP
+  measurements are explicitly kept outside release budgets. The prior claim of
+  six calibration records was corrected to the three raw records actually
+  preserved; new limits require repeated current-semantic calibration.
+
+- Close the supply-chain evidence gaps for 1.0. The release build now
+  generates a deterministic CycloneDX 1.6 SBOM describing the seven built
+  distributions with their real digests plus the locked runtime graph, and
+  verifies it with a separate checker. The `SHA256SUMS` the build records is
+  re-verified by every job that acts on the bundle, including all seven PyPI
+  uploads -- previously it was written and never read back. The locked
+  dependency audit `SECURITY.md` has required since A7 is now a gate that
+  `build` depends on, rather than a maintainer instruction nothing ran.
+
+- Match HTTP request methods exactly, and never raise on one. Two defects
+  found by the new property lanes: a method outside the RFC 9110 token
+  grammar escaped the dispatcher as an uncaught error carrying the caller's
+  own bytes (F-1), and request methods were uppercased before lookup, so
+  `post` reached a route registered as `POST` (F-2). RFC 9110 section 9.1
+  makes the method token case-sensitive, and `post` is a well-formed token a
+  compliant server passes through, so a proxy rule written against the real
+  method name could be bypassed by changing its case. Case folding is now
+  confined to registration, where `http.post(...)` and `"POST"` still name one
+  route. An unroutable method is answered as unmatched.
+
+- Add `tests/property/`: Hypothesis-backed property and bounded-fuzz lanes for
+  router matching, schema round trips, dependency DAGs, capability identity
+  and idempotency selector normalization, plus an end-to-end lane that drives
+  arbitrary ASGI requests. The lanes are derandomized and explicitly bounded
+  so they stay reproducible and cannot hold CI open; they are a regression
+  net rather than a continuous fuzzing campaign.
+
+- Fix an authority-amplification path in nested composition. A running
+  capability could reassign `ExecutionContext.principal`, and a nested child
+  derives its authority from that attribute, so a handler could hand a child
+  scopes the authenticated caller never held. The verified authority inputs
+  (`principal`, `confirmation_evidence`, `idempotency`) are now fixed for the
+  lifetime of an execution and raise `InvocationError` on assignment.
+  `ExecutionContext` also now requires `principal` to be a `Principal`: a raw
+  token, claims mapping or session object that merely looks like one is
+  refused, which keeps credential material outside the kernel. No supported
+  code assigned these attributes, so this narrows accepted input before the
+  1.0 contract freezes rather than breaking a released promise.
+
+- Finalize the 1.0 Python API: 166 canonical names are now stable, while 171
+  duplicate leaf-module re-exports are no longer public. Import DI from
+  `agnara.di` instead of `agnara.core.di`; read snapshot applications through
+  `IntrospectionSnapshot.applications` and serialized `applications` instead
+  of `apps`.
+
+- Audit framework interoperability and close the 1.0 supported matrix: verified
+  lifecycle and context isolation under concurrent adversarial conditions across
+  all host fixtures (Starlette 1.6.0, FastAPI 0.141.1, Django 6.1.1, Litestar
+  2.24.0), executed the shared conformance harness across all host classes,
+  verified framework absence and minimal installation in an isolated subprocess
+  (zero pollution from external web/ORM/schema/telemetry dependencies), eliminated
+  stale references, and updated the I20 supported matrix in `docs/INTEROPERABILITY.md`.
+
+- Pin every third-party GitHub Action to a commit SHA in every workflow.
+  `agent-coordination.yml` used `actions/checkout@v7` and
+  `actions/setup-python@v7`, two floating major tags, and escaped the existing
+  rules because those read `ci.yml` and `release.yml` only. A new gate requires a
+  40-character SHA plus a version comment across all workflows.
+
+- Add `examples/telemetry.py` and `examples/fastapi_embedding.py`. Telemetry and
+  host embedding had no runnable example in the public documentation, so wiring
+  either one meant reading the test suite.
+
+- Restore the `security-program` gate evidence in
+  `docs/releases/release-status.json`, which a merge had silently reverted to its
+  placeholder, and add a test linking each gate to the evidence file it rests on.
+
+- Define and enforce the `1.x` compatibility contract in `docs/PUBLIC_API.md`.
+  The inventory is 166 stable canonical exports across 13 modules; installed
+  artifacts import every supported name as part of the publication gate.
+
+- Fix quadratic behaviour in `InMemoryIdempotencyStore`. Every `claim`,
+  `lookup`, `complete` and `abandon` swept and copied the whole record table to
+  discard expired entries, so each operation was linear in the number of stored
+  records and a busy process paid quadratic cost overall. Expiry is now resolved
+  for the record being touched and the full sweep runs only when capacity is
+  exhausted. One claim plus complete measured 473us against 4,000 stored records
+  before and a flat 9us after, and is about 2x cheaper even on an empty store.
+  Observable expiry and capacity semantics are unchanged.
+
+- Add enforced performance budgets. `docs/performance/budgets.json` holds 13
+  calibrated limits covering dependency injection, policy evaluation, execution
+  identity, idempotency, nested invocation, streaming, compile scaling and
+  compile memory; `scripts/check_performance_budgets.py` enforces them in CI.
+  Budgets are ratios between scenarios measured in the same run rather than
+  absolute latency, so a slow runner does not by itself fail the gate.
+
+- Add shared-host OpenTelemetry conformance with FastAPI 0.141.1 and the
+  in-memory OpenTelemetry SDK 1.44.0 exporter. Capability spans join an
+  application-owned host trace, preserve nested execution relationships and
+  redact payloads, credentials, claims and idempotent results; a fresh-interpreter
+  check proves the kernel still runs with `opentelemetry` unimportable. Streaming
+  terminals now normalize `completed`, `interrupted`, `cancelled` and
+  `timed_out` to the adapter's closed success/failure/cancellation/timeout
+  outcome vocabulary; an abandoned stream remains `unknown`.
+
+- Add a separate, CI-gated `develop` container publication workflow for the
+  mutable `ghcr.io/blandskron/agnara:edge` and
+  `docker.io/blandskron/agnara:edge` images. It smoke-tests before registry
+  login, publishes one multi-architecture Buildx manifest with SBOM and
+  provenance, records its digest and never creates a release or moves `latest`.
+
+- Define and test the composition/streaming boundary: `CapabilityInvoker`
+  refuses a streaming child with a canonical conflict, and a streaming parent
+  cannot receive an invoker. Direct-runtime conformance also proves parent
+  idempotency cannot select a child namespace and adversarial indirect cycles
+  or depth exhaustion stop before the next effect.
+
+- Harden nested composition's direct-actor boundary: a child receives a
+  detached actor input and, at most, a 128-character correlation label. Raw
+  invocation metadata, confirmation, idempotency and unimplemented delegation
+  state do not cross the boundary; nested deadline/cancellation and telemetry
+  tree evidence now covers two child levels.
+
+- Add provisional same-compiled-application nested capability invocation under
+  ADR 0093. `CapabilityRuntime` supplies a handler-only `CapabilityInvoker`
+  that runs a complete-result child through its compiled plan with fresh
+  context/identity, independent policy, confirmation, validation and DI
+  scope. It preserves cancellation and only shortens deadlines; it refuses
+  inherited confirmation/idempotency, stream, absent, recursive and
+  depth-exceeding targets. Delegation and cross-application composition remain
+  unsupported.
+
+- Add deterministic ADR 0089 store-conformance evidence for exact TTL
+  expiration, stale reservations, bounded capacity, concurrent claims and
+  fail-closed runtime storage behavior.
+
+- Harden the CI container smoke test by running the reference image with all
+  Linux capabilities dropped and privilege escalation disabled.
+
+- Add the official GHCR executable reference runtime at
+  `ghcr.io/blandskron/agnara`, with non-root execution, container smoke tests,
+  multi-architecture release publication, SBOM and provenance attestations.
 
 - Add the provisional, transport-neutral `agnara.execution` idempotency
   storage contract under ADR 0089. It atomically reserves a key scoped by
@@ -27,6 +193,15 @@ describe user- and contributor-visible changes only.
   reference store. It does not select transport keys, serialize handler
   values, cache failures, authorize retries, or promise durability or
   multi-process coordination.
+
+- Add the provisional ADR 0091 direct-runtime idempotency boundary. An
+  `Idempotency.YES` capability can explicitly bind a validated
+  capability/principal/key/fingerprint scope, store, TTLs and successful-result
+  codec through `ExecutionContext`; completed duplicates reuse the stored
+  success without running dependencies or handler effects again. Conflicts and
+  in-progress claims are canonical conflicts, storage errors fail closed, and
+  failures/cancellation are not cached. HTTP and MCP still accept no
+  idempotency selector.
 
 - Add integrated HTTP documentation composition (ADR 0090):
   `HttpDocumentation()` serves generated OpenAPI 3.2 at `/openapi.json` and
@@ -84,6 +259,30 @@ describe user- and contributor-visible changes only.
   async generator handler that was never declared streaming at compile time.
 - Add `InvocationTerminalEvent.units`: the unit count for a streaming
   invocation, `None` for a complete-result one.
+
+- Fix two defects in the release workflow's container publication that would
+  each have failed the `1.0.0` image after the tag and the GitHub Release
+  already existed. The GHCR tag interpolated `github.repository_owner`, which
+  preserves the account's case, so buildx would have refused
+  `ghcr.io/Blandskron/agnara` exactly as it refused every edge publish; and
+  the smoke-test build read `OCI_CREATED` and `OCI_VERSION` from an `env:`
+  block written under the *following* step, so the gate exercised an image
+  built with both empty. Two tests assert the properties rather than the
+  spellings.
+
+- Install the reference image's runtime dependencies from a hash-pinned
+  export under `pip --require-hashes`, so an official image contains the
+  artifacts `uv.lock` resolved rather than whatever the index serves for those
+  versions at build time. The hand-appended `uvicorn` pin is gone: it is
+  already in the resolved closure, and a second unhashed pin would be a weaker
+  statement about the same package.
+
+- Validate the correlation header in `examples/fastapi_embedding.py` before it
+  becomes a `tracking_id`. The runtime keeps the value opaque and never treats
+  it as a selector, but bounding it belongs to whoever owns the transport --
+  Agnara's HTTP adapter when Agnara owns it, the host when the host embeds the
+  runtime. The example forwarded the raw header, which is the wrong thing to
+  copy.
 
 ## [0.1.0a8] - 2026-09-09
 
@@ -1146,7 +1345,8 @@ under `0.1.0a2` instead.
 [#257]: https://github.com/Blandskron/agnara/issues/257
 [#259]: https://github.com/Blandskron/agnara/issues/259
 [#261]: https://github.com/Blandskron/agnara/issues/261
-[Unreleased]: https://github.com/Blandskron/agnara/compare/v0.1.0a8...develop
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v1.0.0...develop
+[1.0.0]: https://github.com/Blandskron/agnara/compare/v0.1.0a8...v1.0.0
 [0.1.0a8]: https://github.com/Blandskron/agnara/compare/v0.1.0a7...v0.1.0a8
 [0.1.0a7]: https://github.com/Blandskron/agnara/compare/v0.1.0a6...v0.1.0a7
 [0.1.0a6]: https://github.com/Blandskron/agnara/compare/v0.1.0a5...v0.1.0a6

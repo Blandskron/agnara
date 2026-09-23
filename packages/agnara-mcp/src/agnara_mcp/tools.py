@@ -12,12 +12,7 @@ from typing import Any
 from agnara import Agnara, CapabilityDefinition, DefinitionError, UnknownCapabilityError
 from agnara.exposure import CompiledExposure, SurfaceCompilation, SurfaceId
 
-__all__ = [
-    "FrozenMcpTools",
-    "Mcp",
-    "McpToolDefinitionError",
-    "McpToolExposure",
-]
+__all__: list[str] = []
 
 _TOOL_NAME = re.compile(r"[A-Za-z0-9_.-]{1,128}\Z")
 

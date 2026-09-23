@@ -12,7 +12,7 @@ from agnara.policy.base import PolicyFailure, PolicyResult, PolicySuccess
 if TYPE_CHECKING:
     from agnara.execution.context import ExecutionContext
 
-__all__ = ["ScopePolicy"]
+__all__: list[str] = []
 
 
 def _normalize_scopes(values: Iterable[str], field_name: str) -> frozenset[str]:

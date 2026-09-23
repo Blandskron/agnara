@@ -265,10 +265,10 @@ def _render_index(
     body.extend(_withheld(visibility))
     transports = ", ".join(snapshot.transports) if snapshot.transports else "none published"
     body.append(f"<p>Transport availability: {escape(transports)}</p>")
-    if not snapshot.apps:
+    if not snapshot.applications:
         body.append("<p>No capabilities are visible to you.</p>")
         return _document(title, body)
-    for app in snapshot.apps:
+    for app in snapshot.applications:
         body.extend(_app_section(base_path, app))
     return _document(title, body)
 
@@ -405,7 +405,7 @@ def _render_app(
     name: str,
 ) -> bytes | None:
     """Render one application, or ``None`` when this viewer has no such page."""
-    for app in snapshot.apps:
+    for app in snapshot.applications:
         if app.name != name:
             continue
         title = f"Application {app.name}"
@@ -446,7 +446,7 @@ def _render_capability(
     capability_id: str,
 ) -> bytes | None:
     """Render one capability, or ``None`` when this viewer has no such page."""
-    for app in snapshot.apps:
+    for app in snapshot.applications:
         for capability in app.capabilities:
             if capability.id == capability_id:
                 return _document(

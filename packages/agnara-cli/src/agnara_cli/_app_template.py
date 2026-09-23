@@ -292,7 +292,7 @@ Call it from the project composition root::
 from __future__ import annotations
 
 from agnara import Agnara, App
-from agnara.core.di import DIRegistry, provider
+from agnara.di import DIRegistry, provider
 
 from .adapters.outbound.memory import InMemoryRecordRepository
 from .application.capabilities import get_record, list_records

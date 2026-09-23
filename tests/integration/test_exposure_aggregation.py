@@ -234,7 +234,7 @@ def described(
     document = snapshot([describe_app(app, plans(app), exposures=exposures)]).json_data()
     return {
         capability["id"]: capability["exposures"]
-        for capability in document["apps"][0]["capabilities"]
+        for capability in document["applications"][0]["capabilities"]
     }
 
 
@@ -329,7 +329,7 @@ def test_hiding_a_capability_from_a_viewer_leaves_availability_untouched(
         DiscoveryVisibility(ScopeVisible(), (DiscoveryField.EXPOSURES,)),
         Principal("reader", scopes={"billing:read"}),
     )
-    visible = {capability.id for capability in reader.apps[0].capabilities}
+    visible = {capability.id for capability in reader.applications[0].capabilities}
 
     assert "billing.refund" not in visible
     assert "billing.statement" in visible
@@ -349,7 +349,9 @@ def test_filtering_one_viewer_does_not_change_what_another_sees(app: Agnara) -> 
         Principal("writer", scopes={"billing:read", "billing:write"}),
     )
 
-    refund = next(item for item in writer.apps[0].capabilities if item.id == "billing.refund")
+    refund = next(
+        item for item in writer.applications[0].capabilities if item.id == "billing.refund"
+    )
     assert [exposure.name for exposure in refund.exposures] == [
         "POST /refunds",
         "billing.refund",
@@ -372,7 +374,7 @@ def test_a_viewer_without_detail_does_not_learn_the_deployment_topology(
             AnonymousPrincipal(),
         )
         capability = next(
-            item for item in filtered.apps[0].capabilities if item.id == "billing.refund"
+            item for item in filtered.applications[0].capabilities if item.id == "billing.refund"
         )
         return capability.exposures
 

@@ -186,13 +186,13 @@ authorization to claim support.
 
 | Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
-| Starlette | yes | yes | yes | CRITICAL | yes | The clean-room ASGI proof. Mounting, ASGI composition, request context, response mapping, middleware, lifespan and error boundaries, without FastAPI-specific behaviour confusing the result. |
-| FastAPI | yes | yes | yes | CRITICAL | yes | The highest-value adoption path. Progressive adoption inside an existing FastAPI application is the priority scenario, not a bonus. |
-| Django | partial | yes | yes | CRITICAL | yes | The host direction covers Django *infrastructure* — ORM, auth, templates — not Django's routing or process model. Agnara never replaces the ORM, Admin, Auth or Templates; it cooperates with them. |
+| Starlette | yes | yes | yes | CRITICAL | local fixture | Starlette 1.6.0 is the version-pinned clean-room fixture in `tests/integration/starlette/`: native and direct-runtime routes share one host lifespan; it exercises principal fail-closed mapping, composition, idempotency reuse, canonical failure/stream refusal and disconnect cancellation. Adversarial context isolation, lifecycle integrity (idempotent shutdown, zero DI leakage of host Request objects) and cross-host harness conformance are verified. This is conformance evidence, not a framework support claim. |
+| FastAPI | yes | yes | yes | CRITICAL | local fixture | FastAPI 0.141.1 is the version-pinned clean-room fixture in `tests/integration/fastapi/`: native routes, a dependency-verified actor and host exception/middleware layers remain host-owned while a direct route uses the ADR 0094 complete-result bridge. A separately mounted `HttpApplication` proves complete and SSE projection with explicitly coordinated ASGI child lifespan. FastAPI and Agnara OpenAPI documents remain separate; no route-table, middleware or OpenAPI merge is claimed. Adversarial context isolation (concurrent unauthenticated/tampered requests, fail-closed 403, zero host Request/Response DI leakage) and shared harness conformance are verified. This is conformance evidence, not framework support. |
+| Django | partial | yes | yes | CRITICAL | local fixture | Django 6.1.1 is a version-pinned async-view fixture in `tests/integration/django/`: the host retains its request, auth and ORM/transaction ownership, maps one verified actor to `Principal`, and exercises canonical outcomes, composition, idempotency and explicit runtime cleanup. Adversarial context isolation (concurrent untrusted requests, fail-closed 403, zero HttpRequest/HttpResponse in DI, idempotent close) and shared harness conformance are verified. Sync/WSGI reuse of a live runtime is not covered; no Django plugin, ORM injection or support claim follows. |
 | Django REST Framework | no | yes | yes | HIGH | no | Embedding into existing DRF APIs. Hosting DRF is meaningless: DRF is a view layer inside Django. |
 | Django Ninja | no | yes | yes | MEDIUM | no | Secondary confirmation that the Django embedding contract is not DRF-shaped. |
 | Flask | no | yes | research | HIGH | no | Embedding and the migration path matter. Hosting Flask does not: Agnara's HTTP boundary is ASGI (ADR 0041), and a WSGI host bridge belongs on the Flask side. Agnara must not adopt WSGI semantics in the core. |
-| Litestar | yes | yes | yes | HIGH | conditional | The fourth web gate is satisfied by Flask **or** Litestar. Validates ASGI, DI coexistence, lifecycle, routing, serialization, middleware and embedding. |
+| Litestar | yes | yes | yes | HIGH | local fixture | Litestar 2.24.0 is the selected conditional host-diversity fixture in `tests/integration/litestar/`. It retains host-owned routing and result/status mapping while exercising the public embedding boundary, fail-closed principal mapping, composition, idempotency, adversarial context isolation (zero Request leakage in DI, fail-closed auth) and safe double close, conforming to the shared host harness. This is evidence only; Flask remains unimplemented and neither framework is supported. |
 | Falcon | no | yes | research | MEDIUM | no | Kept only while it produces new evidence about WSGI/ASGI independence. |
 | aiohttp | no | yes | research | MEDIUM | no | Low-level async interoperability outside the ASGI ecosystem. |
 | Sanic, Quart | no | research | research | LOW | no | Research. They block `1.0.0` only if they reveal an architectural problem the others hid. |
@@ -205,9 +205,9 @@ application already has.
 
 | Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
-| SQLite | yes | n/a | n/a | CRITICAL | yes | The baseline that needs no external infrastructure. Capability → provider → repository → SQLite, validating connection lifecycle, transactions, rollback, invocation scope, cleanup and testability. |
-| PostgreSQL | yes | n/a | n/a | CRITICAL | yes | Pooling, transaction scope, concurrent execution, async where it applies, rollback, failure handling, startup and shutdown, resource cleanup. |
-| SQLAlchemy | yes | no | n/a | CRITICAL | yes | The primary persistence integration, over both SQLite and PostgreSQL. Engine lifecycle, `Session`, `AsyncSession`, DI scopes, unit of work, commit, rollback, nested execution, teardown. Agnara reimplements none of these. |
+| SQLite | yes | n/a | n/a | CRITICAL | local fixture | `tests/integration/persistence/test_sqlalchemy_sqlite.py` uses SQLite with SQLAlchemy 2.0.54. The application-owned provider supplies a store, while the host retains `Session`, commit and rollback ownership; success, validation/policy refusal, handler failure, cancellation, nested invocation and parallel-session isolation are asserted. It is evidence only, not an ORM feature. |
+| PostgreSQL | yes | n/a | n/a | CRITICAL | NOT RUN (conditional) | Pooling, transaction scope, concurrent execution, async where it applies, rollback, failure handling, startup and shutdown remain supported-if-evidence work. V1-28 and Task 30 do not start a PostgreSQL service because the scope lock does not make it a required 1.0.0 blocker; PostgreSQL is NOT RUN (conditional). |
+| SQLAlchemy | yes | no | n/a | CRITICAL | local SQLite fixture | SQLAlchemy 2.0.54 is an optional development-only fixture, not a package dependency. It proves the primary persistence boundary over SQLite only: the host owns engine and `Session` lifecycle, unit of work and transaction decision; Agnara reimplements none of them. `AsyncSession`, PostgreSQL and Alembic remain unverified. |
 | psycopg | yes | no | n/a | HIGH | no | PostgreSQL without an ORM, proving the persistence port is not SQLAlchemy-shaped. |
 | asyncpg | yes | no | n/a | MEDIUM | no | Async database provider validation. |
 | Alembic | coexist | n/a | yes | HIGH | no | Migrations must coexist with an Agnara application unchanged. Agnara never gets its own migration system. |
@@ -222,8 +222,8 @@ baseline and ships today.
 | Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
 | `dataclasses` | yes | n/a | n/a | BASELINE | yes | Already `IMPLEMENTED`. Nothing may make it the second-class path. |
-| Pydantic | yes | n/a | n/a | CRITICAL | yes | A formal `SchemaAdapter`: input models, output models, nesting, the validation boundary, JSON Schema, error translation, serialization. Never a kernel dependency. |
-| msgspec | yes | n/a | n/a | HIGH | yes, if ready | The evidence that `SchemaAdapter` was not designed around Pydantic. Whether the port needs a second *shipped* adapter is its own open question in `docs/INITIATIVES.md`. |
+| Pydantic | yes | n/a | n/a | CRITICAL | local fixture | `tests/integration/schema/` validates a deliberately narrow JSON-normalized nested/optional/collection subset against the standard adapter. Pydantic remains optional; no shipped adapter, full compatibility or output-schema publication is claimed. |
+| msgspec | yes | n/a | n/a | HIGH | local fixture | The same fixture converts the shared subset through msgspec before standard-adapter materialization. It proves the port is not Pydantic-shaped, not whole-library compatibility or a second shipped adapter. |
 
 ### Presentation
 
@@ -268,7 +268,7 @@ them.
 
 | Technology | Agnara as host | Agnara embedded | Side-by-side | Priority | 1.0.0 evidence | Notes |
 | --- | :---: | :---: | :---: | --- | :---: | --- |
-| OpenTelemetry | yes | yes | yes | CRITICAL | yes | Bridges exist (ADR 0054 through ADR 0058); `1.0.0` validates them end to end — traces, spans, metrics, propagation, invocation and execution identity across HTTP, workers, databases and errors. The SDK never enters `agnara`. |
+| OpenTelemetry | yes | yes | yes | CRITICAL | local fixture | `tests/integration/telemetry/test_opentelemetry_shared_host.py` uses FastAPI 0.141.1 plus the in-memory OpenTelemetry SDK 1.44.0 exporter. The host owns extraction, its SERVER span, provider and shutdown; Agnara contributes exactly one nested capability span tree through its optional bridge. The fixture proves parallel context isolation, stream completion/late failure/cancellation closure, redaction, and that the kernel still compiles, invokes and streams when `opentelemetry` cannot be imported at all. It does not claim network-exporter, worker or database instrumentation support. The SDK never enters `agnara`. |
 | Sentry | yes | yes | yes | MEDIUM | no | Through an adapter or integration layer. Never an official dependency. |
 
 ### Agent and protocol interoperability
@@ -340,44 +340,61 @@ scenario. A successful isolated fixture proves only its stated mode, not a
 broader support promise.
 
 Every classification marked **DEFER AFTER 1.0** has a named owner: streaming
-wire extensions remain under RFC 0009 and I2; embedding-related framework
-research remains under RFC 0008 and I20; A2A and Events remain their reserved
+wire extensions remain under RFC 0009 and I2; the accepted host boundary is
+ADR 0094 while framework-fixture research remains I20; A2A and Events remain their reserved
 adapter boundaries in `docs/TARGET_ARCHITECTURE.md`; durable execution remains
 G5 in that same target architecture; and GraphQL/gRPC require their own RFC.
 They are excluded from the 1.0 support claim, not deleted from the architectural
 roadmap.
 
-## 7. The framework embedding contract
+## 7. Accepted host and embedding contract
 
-The minimum an external host needs in order to invoke Agnara. It must be small,
-framework-neutral and stable enough that FastAPI, Django, Flask, Litestar and
-Starlette all use the same one.
+ADR 0094 accepts the minimal 1.0.0 architectural contract. It is one async,
+complete-result bridge over the existing **stable** public runtime values,
+not a framework facade or a claim that any named framework is supported.
 
 ```text
-Host framework
-     │
-     │  1. obtain the compiled application / runtime
-     │  2. look up a capability by id
-     │  3. create an invocation
-     │  4. provide context
-     │  5. propagate principal
-     │  6. pass a deadline
-     │  7. execute
-     │  8. receive a canonical result
-     │  9. map errors into host terms
-     │ 10. observe telemetry
-     ↓
-Agnara runtime
+host-owned route/task
+  -> explicit CapabilityRuntime handle
+  -> Invocation + ExecutionContext (plain values only)
+  -> await invoke_result()
+  -> canonical Success / Failure
+  -> host-owned result and error mapping
 ```
 
-Each step is a question RFC 0008 has to answer, not an API this document
-invents. Two constraints are already fixed by existing decisions and are not
-open:
+At startup, application code freezes one Agnara application, compiles its
+ExecutionPlan values, creates one matching DIContainer, and constructs a
+CapabilityRuntime. The adapter keeps that handle explicitly. It never finds
+one through a global, ambient request state or private module. Each call uses
+the same container and normal compiled path; CancelledError propagates.
 
-- the host never hands a request, session or connection object to a capability
-  (invariants 4 and 5, ADR 0026);
-- the result the host receives is canonical and the host maps it, rather than
-  Agnara producing a host-shaped result (invariant 7, ADR 0022).
+The bridge carries a capability id, schema-bound plain input, optional opaque
+correlation label, non-extendable absolute deadline and application-mapped
+Principal. It never carries raw request/response/session, ORM transaction,
+connection, host user, middleware/task state, telemetry object, credential or
+host exception into metadata, context state, handler parameters or DI bindings.
+An application-defined port may encapsulate host infrastructure outside the
+kernel; its cleanup stays with its declared owner.
+
+The four modes differ only in who owns the outer lifespan and routing:
+
+| Mode | Outer owner | Required boundary |
+| --- | --- | --- |
+| Standalone | Agnara composition root | Compile and invoke with core alone. |
+| Agnara host | Agnara composition root | Reach external infrastructure through application-defined ports. |
+| Embedded Agnara | External host | Invoke the explicit runtime handle from a host route or task. |
+| Side-by-side | External host | Keep native routes and the runtime handle in one lifespan without duplicated ownership. |
+
+A frozen registry and plans can be shared. A live DIContainer and runtime are
+owned by one event loop: concurrent tasks on it are permitted, cross-loop or
+cross-thread calls are not. The owner drains calls before awaiting
+runtime.aclose(); the runtime creates no detached work and closing one runtime
+never closes a different application.
+
+The public spelling is stable after I9's explicit 1.0.0
+classification. Sync entry points, streaming hosts, delegated authority,
+cross-application execution, framework-specific convenience APIs and automatic
+retry are out of scope. Idempotency is never authorization to retry.
 
 ## 8. The infrastructure adapter contract
 
@@ -451,6 +468,37 @@ evidence that the contract is missing something.
 
 The suite's own home — `agnara-testing` (I12), a repository test tier, or a
 separate conformance repository — is an open question in RFC 0008.
+
+### 9.1 Shared host harness and adversarial isolation audit (Task 30 / I20)
+
+Task 30 closes the I20 interoperability audit across all supported host classes
+using the common harness in `tests/conformance/test_host_harness.py` and
+adversarial context isolation tests across every host fixture:
+
+1. **Shared host conformance harness**: `tests/conformance/test_host_harness.py`
+   tests a parameterized suite against `HostFixture` implementations for
+   Standalone, Starlette (1.6.0), FastAPI (0.141.1), Django (6.1.1), and
+   Litestar (2.24.0). Every host demonstrates deterministic context creation,
+   dependency resolution, policy enforcement, result translation, and clean
+   resource disposal.
+2. **Adversarial context isolation & lifecycle integrity**: Each host fixture
+   includes explicit adversarial tests (`test_adversarial_context_isolation_and_lifecycle_integrity`):
+   - **Concurrent request isolation**: Authenticated and unauthenticated or
+     malicious requests execute concurrently; security policies fail closed
+     (HTTP 403) for untrusted callers without polluting or delaying legitimate
+     invocations or leaking idempotency keys.
+   - **DI container hygiene**: Verifies that raw host objects (`Request`,
+     `Response`, `HttpRequest`, `HttpResponse`, etc.) are never bound into or
+     leaked via Agnara's dependency injection container.
+   - **Lifecycle idempotency**: Verifies that multiple sequential calls to
+     host shutdown/close methods are safe and idempotent, with zero resource
+     leaks or exceptions.
+3. **Framework absence & minimal install**: `tests/integration/test_framework_absence.py`
+   verifies that Agnara core and `agnara-http` function in an isolated clean
+   subprocess where `starlette`, `fastapi`, `django`, `litestar`, `sqlalchemy`,
+   `pydantic`, `msgspec`, and `opentelemetry.sdk` are strictly blocked. Agnara
+   compiles, executes complete invocations, streams SSE, and processes HTTP
+   requests without importing any third-party framework or polluting `sys.modules`.
 
 ## 10. Side-by-side composition
 
@@ -536,6 +584,28 @@ Starlette begins the host scenarios deliberately. It is the smallest ASGI host
 that can exercise the contract, so a defect it finds is a contract defect rather
 than FastAPI's interpretation of it.
 
+The first version-pinned scenario is `tests/integration/starlette/`. It uses
+only the public stable runtime values chosen by ADR 0094 and Starlette
+1.6.0 as an optional fixture dependency. It proves a native route and an
+embedded Agnara route can share one external-host lifespan without a global or
+a second container. It deliberately refuses a streaming capability at the
+complete-result bridge; HTTP SSE remains the separate Agnara HTTP projection.
+The fixture's clean-room process installs built wheels outside the workspace,
+first imports `agnara` without Starlette present, then installs Starlette and
+executes the host bridge. One fixture is not a support or release decision.
+
+`tests/integration/fastapi/` repeats the direct public bridge against FastAPI
+0.141.1 without rewriting native routes or passing FastAPI values into a
+capability. Its fixed security dependency maps only its verified actor to an
+Agnara `Principal`; unknown input fails closed. The fixture also mounts a
+separately compiled public `HttpApplication` to exercise complete HTTP and
+SSE projection. FastAPI does not automatically run mounted application
+lifespans, so the host explicitly owns and joins the child ASGI lifespan in
+this fixture. That is evidence of a bounded composition technique, not a
+promise of automatic lifecycle integration. FastAPI's generated OpenAPI and
+the mounted application's `openapi()` remain separate; the fixture does not
+merge specifications, mutate route tables or adapt middleware semantics.
+
 ## 14. Historical reference strategy
 
 No historical reference application is created for any of these integrations
@@ -570,6 +640,6 @@ agnara-django-interoperability    agnara-schema-interoperability
 - `docs/INITIATIVES.md` — I20, and the order this work happens in
 - `docs/releases/RELEASE_PLAN.md` — the `1.0.0` gates
 - `docs/rfc/0008-framework-embedding-and-ecosystem-composition.md` — the open
-  design questions
+  research record and deferred fixture questions
 - `docs/adr/0068-interoperability-release-ownership.md` — why this belongs to
   `1.0.0`

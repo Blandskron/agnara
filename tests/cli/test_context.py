@@ -110,7 +110,7 @@ def test_the_document_carries_its_format_and_version(
 ) -> None:
     _, out, _ = run(project, capsys=capsys)
 
-    assert "`agnara-introspection` version `0`" in out
+    assert "`agnara-introspection` version `1`" in out
 
 
 def test_a_withheld_field_is_named_rather_than_asserted_as_a_default(

@@ -101,7 +101,33 @@ Do not assume free-threading improves async HTTP workloads automatically.
 
 Every abstraction added to core should have measurable overhead.
 
-Maintain a regression dashboard once benchmark noise is understood.
+The enforced limits live in `docs/performance/budgets.json` and are checked
+by `scripts/check_performance_budgets.py`, which CI runs in the `Performance
+budgets` job. `docs/performance/README.md` explains why every budget is a
+ratio between two scenarios measured in the same run rather than an absolute
+latency, and what to do when the gate fails.
+
+The measurement behind those limits is `benchmarks/runtime_paths.py`,
+recorded in `docs/benchmarks/runtime-paths.md`. It covers the paths the
+comparison benchmarks above do not: dependency injection, policy evaluation,
+execution identity, idempotency, nested composition, streaming, compile
+scaling and compile memory.
+
+A budget is a reviewed decision. Widening one to clear a red run destroys the
+only evidence that it was ever meaningful.
+
+## Post-1.0 runtime comparison roadmap
+
+The [Python 3.15 runtime benchmark matrix](docs/research/python-315-readiness.md#runtime-benchmark-matrix)
+extends this methodology as a future plan: conventional 3.14 versus 3.15,
+separate 3.15 free-threaded measurements, and JIT experiments only for eligible
+CPython builds. It defines paired-run controls and required workload coverage;
+the combined free-threaded/JIT case is conditional on upstream support.
+
+All new measurements and experiment implementation are blocked by the
+program's explicit maintainer-confirmation trigger after stable Agnara 1.0.0
+publication. No benchmark is executed by this planning change, no current
+budget changes, and no speedup or support claim follows from the matrix.
 
 ## Rust policy
 

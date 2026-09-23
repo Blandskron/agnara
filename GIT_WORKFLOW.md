@@ -44,42 +44,33 @@ Different artifacts own different concerns:
 
 Do not use one artifact as an accidental replacement for all others.
 
-## AI-agent attribution policy
+## Agent authorship and human review
 
-Git authorship, implementation roles and review roles are related but not
-interchangeable.
+ADR 0092 governs current work. Git authorship, implementation and review are
+related but not interchangeable. When an agent materially implements a commit,
+the agent is its primary author and uses the exact registered `git_name` and
+`email` from `.github/ai-agent-identities.toml`. Do not infer an identity from
+a model/provider label, invent an email, or credit an agent that did not
+participate.
 
-For human-directed work, keep the human as primary commit author. Add
-`Co-authored-by: Name <email>` for an agent only when the agent materially
-authored the change and the exact identity is both authorized for Agnara and
-verifiably linked to its GitHub user/bot account. A plausible model/provider
-name or email is not evidence. Do not add a different agent without evidence
-that it actually participated.
+Blandskron is repository owner, maintainer, architecture/governance decision
+maker, formal reviewer and merge authority. For agent-written commits he is
+not the author or a co-author by default. His normal contribution is a formal
+GitHub Pull Request review. Do not add automatic `Co-authored-by` trailers;
+when several agents materially author separate portions, prefer separate,
+accurately authored commits.
 
-A fully autonomous bot with a verified, authorized GitHub identity may be the
-primary author. Do not impersonate a human and do not repeat a primary author
-as a co-author.
+The implementing agent opens or prepares a PR to `develop`, requests review
+from `Blandskron`, and leaves it unmerged. Self-review and conversation
+comments are supplementary evidence only: they never substitute for GitHub's
+formal `Approve`, `Request changes`, or `Comment` review flow. Do not create
+empty commits/PRs, fabricate reviews or manipulate history for statistics.
 
-Review-only participation belongs in the PR review/comment trail, not normally
-in a co-author trailer. An agent that also makes a material implementation
-change may be credited for that work under the same verification rule.
-
-When an agent is not GitHub-verifiable, omit the trailer and document in the
-Issue or PR:
-
-```text
-Agent
-Role
-Contribution
-Identity verified for GitHub attribution: no
-Co-authored-by trailers included: none
-Non-verifiable agents documented
-```
-
-Git history remains the accepted authorship record; PR artifacts explain roles
-and limitations. Do not maintain a duplicate AI-contributors ledger. Do not
-rewrite published history to retrofit this policy. See
-`docs/adr/0019-ai-agent-attribution.md`.
+If the available GitHub client cannot create the PR as the agent's own
+App/bot identity, record that limitation in the PR without falsifying its
+creator or commit author. Historical commits and ADR 0019 remain historical
+evidence and are not rewritten. Do not maintain a duplicate contributors
+ledger.
 
 ## Branch model
 
@@ -301,24 +292,20 @@ Commit messages should explain coherent changes, not narrate every file.
 
 ### 7. Verify attribution
 
-Identify the actual contributors and roles before committing. After commit,
-inspect the primary author, complete message and parsed trailers:
+Identify the actual implementing agent and its registered identity before
+committing. After commit, inspect the author and complete message:
 
 ```bash
-git show -s --format=full HEAD
-git show -s --format=%B HEAD | git interpret-trailers --parse
+git log -1 --format=fuller
+git log -1 --format=%B
 ```
 
 Look up agent identities in `.github/ai-agent-identities.toml`. Use the exact
-registered `git_name` and `email` only for an agent that materially authored
-the change. Multiple participating agents receive independent trailers. The
-registry must never be wired to an unconditional hook: identity eligibility
-does not establish participation.
-
-Confirm that every trailer is material, authorized and GitHub-verifiable;
-that non-verifiable agents are prepared for PR/Issue documentation; and that
-no primary author is duplicated. Preserve legitimate existing trailers when
-amending, rebasing or deliberately recreating a commit.
+registered identity only for an agent that materially authored the change. The
+author must be that agent, not Blandskron; no automatic co-author trailer is
+added. Confirm that Blandskron is absent from author/co-author metadata unless
+he materially implemented part of that exact commit and explicitly requested
+credit. The registry never establishes participation by itself.
 
 ### 8. Push
 
@@ -345,7 +332,8 @@ Performance impact
 Documentation
 Breaking changes
 Changelog decision
-AI / Agent contribution (optional for human-only work)
+Authorship
+Formal maintainer review
 Checklist
 ```
 
@@ -364,7 +352,7 @@ default, so the keyword creates the link and nothing more.
 
 Close the Issue explicitly after merging. See step 12.
 
-### 10. Review gate
+### 10. Formal maintainer review gate
 
 Review the complete diff, not only the final commit.
 
@@ -377,35 +365,21 @@ gh pr checks <number>
 
 Resolve all actionable review comments and failed checks.
 
-### 11. Merge
+The implementation agent requests review from `Blandskron`. A normal PR
+conversation comment, including a self-review comment, is not a formal review.
+The maintainer uses GitHub's **Files changed → Review changes → Approve /
+Request changes / Comment** flow. The agent addresses requested changes in a
+new commit authored by the same verified agent, then waits for another formal
+review. Agents do not approve or merge their own PRs.
 
-Normal task PRs should prefer squash merge to keep `develop` history concise:
+### 11. Maintainer merge
 
-```bash
-gh pr merge <number> --squash --delete-branch
-```
-
-Use auto-merge when configured and all required gates are objective:
-
-```bash
-gh pr merge <number> --squash --delete-branch --auto
-```
-
-Never bypass failing required checks merely to continue.
-
-Before squash merge, inspect the proposed final subject/body. GitHub is not
-assumed to preserve trailers from branch commits. If legitimate trailers
-exist, pass an explicit reviewed squash message and place each trailer after a
-blank line at the end:
-
-```bash
-gh pr merge <number> --squash --delete-branch \
-  --subject "<conventional subject>" \
-  --body-file /tmp/reviewed-squash-message.md
-```
-
-Do not copy unverified trailers forward. Do not omit a verified legitimate
-trailer merely because the branch is being squashed.
+Only Blandskron merges an agent-authored PR after his formal review and all
+required CI. Before merging, verify the result will preserve the verified
+agent implementation author. A merge commit preserves the branch commit;
+squash is allowed only when the resulting GitHub author metadata is verified
+to remain the implementing agent. Never use a merge method that silently turns
+the maintainer into the implementation author, and never bypass failing checks.
 
 ### 12. Synchronize after merge
 
@@ -433,72 +407,23 @@ Then select the next Issue.
 
 GitHub does not permit a Pull Request author to approve their own PR.
 
-Agnara supports two autonomous modes.
+Every agent-authored PR requires a formal GitHub review by Blandskron. The PR
+requests him as reviewer; he evaluates the Issue, architecture, diff, tests,
+CI, security, compatibility, documentation and performance implications, then
+uses `Approve`, `Request changes`, or `Comment`. Required CI never replaces
+that human decision.
 
-### Mode A — Dual-agent review (preferred)
-
-Use distinct GitHub identities:
-
-```text
-Implementation Agent
-Reviewer Agent
-```
-
-Flow:
-
-```text
-Implementation Agent
-→ branch
-→ code
-→ tests
-→ PR
-
-Reviewer Agent
-→ inspect Issue
-→ inspect architecture
-→ inspect diff
-→ run/inspect checks
-→ APPROVE or REQUEST CHANGES
-
-Implementation Agent
-→ address feedback
-
-Reviewer Agent
-→ re-review
-
-→ merge when rules pass
-```
-
-The reviewer must not approve merely because checks are green.
-
-Review must consider:
-
-- correctness;
-- architecture boundaries;
-- tests;
-- security;
-- concurrency;
-- public API;
-- documentation;
-- backward compatibility;
-- performance implications.
-
-### Mode B — Single-agent autonomous operation
-
-If only one GitHub identity is available:
-
-- the agent still MUST create a PR;
-- the agent performs a fresh independent self-review pass;
-- it may leave a review comment summarizing findings;
-- it MUST NOT pretend to provide a GitHub approval;
-- repository rules should require PR + status checks but zero mandatory peer approvals;
-- auto-merge may occur only after all objective required checks pass and all conversations are resolved.
-
-Once a second independent agent identity exists, migrate to Mode A and require at least one independent approval.
+A self-review or conversation comment may identify defects and is encouraged,
+but it is not a formal review and does not satisfy the review this policy
+requires — which the platform does not enforce, so nothing but discipline
+stands behind it. The
+implementation agent fixes requested changes, using its verified agent author
+identity, and waits for re-review. An agent never fabricates a review, approves
+its own PR or merges it.
 
 ## Self-review protocol
 
-Before any autonomous merge, the agent must switch mental role from implementer to reviewer and re-evaluate from the Issue and diff.
+Before requesting human review, the agent re-evaluates the Issue and diff.
 
 Review questions:
 
@@ -519,7 +444,7 @@ Are performance claims evidenced?
 
 If review finds a defect:
 
-1. do not merge;
+1. do not request merge;
 2. document the finding on the PR;
 3. correct it on the same branch if in scope;
 4. rerun gates;
@@ -531,7 +456,7 @@ At the beginning of every work cycle:
 
 - inspect open PRs before taking new work;
 - if a PR has requested changes, address it before starting another unrelated Issue;
-- if a PR is green and mergeable, complete its review/merge flow;
+- if a PR is green and awaits Blandskron's review, leave it ready for that review;
 - if blocked by external conditions, document the blocker and continue with the next independent Issue.
 
 Do not accumulate abandoned agent PRs.
@@ -685,17 +610,23 @@ After resolution:
 
 ## Branch protection / rulesets
 
-`main` and `develop` are protected by active rulesets. The exact definitions
-live in `.github/rulesets/` so the enforced configuration is reviewable here
-and not only in GitHub settings. `.github/rulesets/protect-release-tags.json`
-additionally makes every `v*` tag immutable (no update, no force-update, no
-deletion) without restricting creation, because the approved release workflow
-run is the only thing that creates one (ADR 0082).
+The reviewed source definitions for `main` and `develop` live in
+`.github/rulesets/` so the intended enforced configuration is reviewable here
+and not only in GitHub settings. Blandskron applies these reviewed definitions
+after the governance PR is approved.
 
-Both branches enforce:
+`protect-release-tags` is applied and active: a `v*` tag cannot be moved,
+force-updated or deleted, and creation is deliberately not restricted because
+the approved release workflow run is the only thing that creates one
+(ADR 0082). The two branch definitions are not yet applied, so the live
+rulesets still carry the pre-review configuration.
+
+Once applied, both branches enforce:
 
 - Pull Request required, so direct pushes are rejected;
 - the aggregate `CI` status check must pass before merge;
+- the branch must be up to date with its base before merge
+  (`strict_required_status_checks_policy`);
 - review conversations must be resolved;
 - force pushes rejected;
 - branch deletion blocked;
@@ -714,26 +645,44 @@ git push --force origin main:develop
   - Cannot force-push to this branch
 ```
 
-### Required approvals are zero, deliberately
+### Human approval is a commitment, not an enforced control
 
-`required_approving_review_count` is `0`.
+`required_approving_review_count` is `0`, and that is a decision rather than an
+oversight. GitHub does not let a pull request author approve their own pull
+request, so on a repository with one human maintainer a required approval is
+not a stricter rule — it is a rule that can only be satisfied by having some
+other account approve the maintainer's own work. Manufacturing that review
+trail would defeat ADR 0092, which exists to keep authorship and review
+honest rather than merely present.
 
-GitHub does not permit a Pull Request author to approve their own Pull
-Request. While Agnara runs on a single agent identity, any non-zero value
-would make the repository impossible to merge into. Raise it to `1` when an
-independent reviewer identity exists (`BACKLOG.md` E0B.9); that single change
-moves the repository from Mode B to Mode A.
+So the `review → approval` half of the rule above is a commitment Blandskron
+keeps, evidenced by the formal review on each pull request, and not something
+the platform enforces. Stating that plainly is the point: the earlier version
+of this section claimed one approval was required while nothing enforced it,
+and a governance document that overstates its own enforcement is worse than one
+that admits the gap. `docs/releases/1.0-release-rehearsal.md` section 7 reached
+this conclusion and these definitions follow it.
 
-Zero required approvals is not the same as no review. Merge still requires a
-green `CI`, resolved conversations, and the documented self-review pass.
+Everything that does not need a second person **is** enforced: no direct
+pushes, `CI` green, the branch up to date with its base, every review
+conversation resolved, no force push, no deletion. Agents still request review
+from Blandskron and still leave the PR unmerged; none of that changes.
+
+If a second maintainer or a review bot ever exists, raising
+`required_approving_review_count` to `1` makes the documented rule real, and
+the definitions already carry `dismiss_stale_reviews_on_push` and
+`require_last_push_approval` so that becomes a one-line change. Until then
+those two parameters gate nothing.
+
+The reviewed definitions in `.github/rulesets/` must be imported or updated by
+the maintainer after this PR is approved. This policy does not silently change
+GitHub settings.
 
 ### No bypass actors
 
 `bypass_actors` is empty, so no one pushes past the rules silently. An admin
 can still edit or disable a ruleset in settings for a genuine emergency,
 which is visible and auditable in a way a per-push bypass is not.
-
-Never configure a required approval rule that makes a single-agent repository impossible to merge autonomously.
 
 Never weaken branch protections simply to bypass a failing PR.
 
@@ -782,13 +731,8 @@ An authorized Agnara agent may autonomously:
 - create commits;
 - push short-lived branches;
 - create PRs;
-- review PRs authored by another identity;
-- request changes;
-- approve PRs authored by another identity;
-- enable auto-merge when gates are satisfied;
-- merge eligible PRs;
-- delete merged short-lived branches;
-- create release/hotfix branches;
+- leave preliminary review comments or request changes;
+- create release/hotfix branches when separately authorized;
 - update backlog/documentation;
 - create ADRs/RFCs;
 - open follow-up Issues.
@@ -796,6 +740,8 @@ An authorized Agnara agent may autonomously:
 It must not:
 
 - approve its own PR;
+- substitute an agent review for Blandskron's required formal review;
+- merge an agent-authored PR;
 - fabricate review;
 - bypass required checks;
 - force-push protected branches;

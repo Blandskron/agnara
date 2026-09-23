@@ -30,6 +30,12 @@ dev = [
     # E6.10 comparison fixtures only. These must never enter a distributable
     # Agnara package or be confused with an HTTP implementation dependency.
     "fastapi==0.141.1",
+    # V1-36 property-based and bounded-fuzz lanes only. Test-time tooling: it
+    # is never a runtime dependency of any distributable Agnara package.
+    "hypothesis>=6.131,<7",
+    # V1-25 conformance fixture only. Django remains outside every Agnara
+    # distribution and the fixture records the exact tested host version.
+    "Django==6.1.1",
     "litestar==2.24.0",
     "starlette==1.6.0",
     # Third-party schema adapters remain experiments until E2.7 compares
@@ -45,6 +51,8 @@ dev = [
     "pyyaml>=6,<7",
     "pytest>=8.4",
     "ruff>=0.14",
+    # V1-28 SQLite persistence fixture only; never a core dependency.
+    "SQLAlchemy==2.0.54",
     "ty>=0.0.1a1",
 ]
 

@@ -76,7 +76,7 @@ def test_core_does_not_import_forbidden_dependencies() -> None:
 
 @pytest.mark.parametrize("distribution", sorted(DISTRIBUTIONS))
 def test_no_distribution_declares_an_ecosystem_integration(distribution: str) -> None:
-    """ADR 0068: ecosystem interoperability belongs to `0.1.0b1`.
+    """ADR 0068: ecosystem interoperability belongs to `1.0.0`.
 
     A framework integration does not arrive as an import. It arrives as a line
     in a ``pyproject.toml``, and by the time anything imports it the decision
@@ -94,7 +94,7 @@ def test_no_distribution_declares_an_ecosystem_integration(distribution: str) ->
     )
     assert not offenders, (
         f"{distribution} declares an ecosystem integration as a dependency: {offenders}. "
-        "ADR 0068 gives these to 0.1.0b1, behind a port and an optional "
+        "ADR 0068 gives these to 1.0.0, behind a port and an optional "
         "dependency group. Removing an entry from ECOSYSTEM_INTEGRATIONS is a "
         "release decision recorded in an ADR, not a test fix."
     )

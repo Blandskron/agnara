@@ -56,10 +56,12 @@ Each level may cite the level above it. None should restate it.
 | Manifest format | `docs/PROJECT_MANIFEST.md` | cite |
 | Public API shape and intent | `docs/API_DESIGN.md` | cite |
 | How to serve capabilities over HTTP | `docs/HTTP_COMPOSITION.md` | cite; never restate a limitation |
+| How to run the official reference container | `docs/CONTAINERS.md` | cite; PyPI remains canonical |
 | Public API inventory and stability policy | `docs/PUBLIC_API.md` + `docs/public-api.json` | cite |
 | External standards studied | `docs/REFERENCE_RESEARCH.md` | cite |
+| Post-1.0 Python 3.15 activation, work-package scope and evidence criteria | [Python 3.15 Readiness](research/python-315-readiness.md) | cite; task state stays in BACKLOG, current claims in MATURITY |
 | Contribution and git process | `CONTRIBUTING.md`, `GIT_WORKFLOW.md` | cite |
-| Agent operating rules | `AGENTS.md` | cite |
+| Agent authorship and human review | ADR 0092, `AGENTS.md` | cite; do not rewrite historical ADRs/commits |
 
 ## Rules
 
@@ -107,7 +109,9 @@ this that a machine can check:
 - every status token used is in the declared vocabulary;
 - every canonical document this map names exists;
 - every ADR and RFC referenced by the planning documents exists;
-- no planning document references a file that has been deleted.
+- no planning document references a file that has been deleted;
+- `docs/adr/README.md` names exactly the records that declare themselves
+  `Accepted`, in both directions.
 
 `tests/architecture/test_repository_encoding.py` additionally rejects the
 text-corruption modes that a lossy Windows write has twice introduced into

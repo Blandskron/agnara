@@ -11,6 +11,7 @@ they fail loudly if a gate is renamed or removed.
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 import pytest
 
@@ -138,3 +139,67 @@ def test_security_analysis_is_bounded_and_cannot_skip_the_required_gate(workflow
     assert "contains(needs.*.result, 'skipped')" in workflow_text
     for action in ("init", "analyze"):
         assert re.search(rf"github/codeql-action/{action}@[0-9a-f]{{40}}", security)
+
+
+# ---------------------------------------------------------------------------
+# Every workflow, not just this one
+# ---------------------------------------------------------------------------
+
+WORKFLOW_DIRECTORY = WORKSPACE_ROOT / ".github" / "workflows"
+
+#: A third-party action reference: `owner/repo[/path]@ref`. A local reusable
+#: workflow (`./.github/workflows/ci.yml`) has no `@` and is this repository's
+#: own reviewed content, so it is not a supply-chain reference.
+_USES = re.compile(r"^\s*-?\s*uses:\s*(?P<action>[^\s#]+)", re.MULTILINE)
+
+
+def _workflow_files() -> list[Path]:
+    return sorted(WORKFLOW_DIRECTORY.glob("*.yml")) + sorted(WORKFLOW_DIRECTORY.glob("*.yaml"))
+
+
+def test_there_is_a_workflow_to_check() -> None:
+    """A silently empty glob would make the rule below vacuous."""
+    assert _workflow_files()
+
+
+@pytest.mark.parametrize("workflow", _workflow_files(), ids=lambda path: path.name)
+def test_every_workflow_pins_third_party_actions_to_a_commit_sha(workflow: Path) -> None:
+    """A version tag is mutable, and this rule was only enforced on two files.
+
+    `test_ci_actions_are_pinned_to_exact_versions` reads `ci.yml`, and the
+    release suite reads `release.yml`. `agent-coordination.yml` was covered by
+    neither and used `actions/checkout@v7` and `actions/setup-python@v7`: two
+    floating major tags, re-pointable by whoever controls those repositories,
+    executing on every push to `develop` and `main` and on every pull request.
+
+    The older rule also accepted any reference with two dots, so `@v7.0.1`
+    would have satisfied it. A tag can be moved whatever it is called, so this
+    requires the 40-character commit SHA the rest of the repository already
+    uses.
+    """
+    text = workflow.read_text(encoding="utf-8")
+    offenders = []
+    for match in _USES.finditer(text):
+        action = match.group("action")
+        if action.startswith("./"):
+            continue
+        _, separator, reference = action.partition("@")
+        if not separator or not re.fullmatch(r"[0-9a-f]{40}", reference):
+            offenders.append(action)
+
+    assert not offenders, (
+        f"{workflow.name} references actions that are not pinned to a commit SHA: {offenders}"
+    )
+
+
+@pytest.mark.parametrize("workflow", _workflow_files(), ids=lambda path: path.name)
+def test_every_workflow_names_the_version_behind_each_pin(workflow: Path) -> None:
+    """A bare SHA is unreviewable; the trailing comment is what makes it legible."""
+    text = workflow.read_text(encoding="utf-8")
+    unlabelled = [
+        line.strip()
+        for line in text.splitlines()
+        if re.search(r"uses:\s*[^\s#]+@[0-9a-f]{40}\s*$", line)
+    ]
+
+    assert not unlabelled, f"{workflow.name} pins without naming the version: {unlabelled}"

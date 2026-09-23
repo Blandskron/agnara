@@ -30,6 +30,18 @@ for the protected registry authorization, publishes the synchronized artifacts,
 verifies index visibility, and only then creates the immutable tag and GitHub
 release. See ADR 0082.
 
+A version is published in three dispatches of `Release to PyPI`, in order,
+each with the same `version` input and each approved separately in the `pypi`
+environment (ADR 0083):
+
+1. `phase: bootstrap-1` publishes `agnara-a2a`, `agnara-cli`, `agnara-events`.
+2. `phase: bootstrap-2` publishes `agnara-http`, `agnara-mcp`,
+   `agnara-telemetry`.
+3. `phase: final` publishes `agnara`, verifies all seven on PyPI, creates the
+   tag and the GitHub Release, then publishes the reference container image.
+
+Start a phase only after the previous run's verification job has passed.
+
 Never create or push a release tag by hand. Never retry by overwriting a
 published version. A failed run is investigated and corrected through an Issue
 and PR before a new authorized attempt.

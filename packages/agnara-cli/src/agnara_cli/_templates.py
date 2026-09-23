@@ -114,7 +114,7 @@ Add capabilities with ``agnara app create``, or declare one here with
 from __future__ import annotations
 
 from agnara import Agnara
-from agnara.core.di import DIRegistry
+from agnara.di import DIRegistry
 
 from {name}.settings import Settings
 

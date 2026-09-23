@@ -33,8 +33,9 @@ compatibility promise. If you find yourself needing one, that is a missing
 public API and worth an issue — it is exactly the kind of finding the baseline exists to
 surface.
 
-All seven are `provisional`: deliberate entry points, with no compatibility
-promise before `1.0.0`.
+All fourteen names are stable public API for the 1.x line. Their canonical
+import path is `agnara_http`; `agnara_http.composition` remains an
+implementation module, not a second supported import path.
 
 ## A complete application
 
@@ -43,7 +44,7 @@ import asyncio
 from typing import Any
 
 from agnara import Agnara
-from agnara.core.di import DIRegistry, Scope, provider
+from agnara.di import DIRegistry, Scope, provider
 from agnara_http import (
     Binding,
     BindingSource,
@@ -475,6 +476,14 @@ machine-readable discriminator.
 | --- | --- | --- |
 | No route matches | 404 | `not_found` |
 | Route matches, method does not | 405 | — (`Allow` header) |
+
+A request method is matched exactly. RFC 9110 section 9.1 makes the method
+token case-sensitive, so `post` is not `POST` and reaches no route registered
+under the latter. Authoring stays forgiving in the other direction:
+`http.post(...)` and an explicit `"POST"` register one route, because case
+folding belongs to declaration rather than to dispatch. A request method
+outside the RFC 9110 token grammar is unroutable, answered like any other
+unmatched target rather than raised.
 | Query, header or body cannot be decoded | 400 | `invalid_input` (`details.location`) |
 | Value fails its compiled schema | 400 | `invalid_input` (`details.path`) |
 | Body exceeds the limit | 413 | `content_too_large` |
@@ -549,7 +558,7 @@ deferred request feature rather than leaving it implicit.
 | --- | --- |
 | Multiple files, repeated form fields | Both need a collection binding, which ADR 0026 deferred deliberately and which decides how a list arrives through *every* transport. Use distinct part names. |
 | Client filename, per-part content type | Both need a public upload value type, and that is a core-visible schema shape MCP and introspection project too. Ask for a filename as a form field if you need one. |
-| Streaming request bodies, large uploads | Needs the streaming model, I2, `0.1.0a9`. Until then an upload is bounded `bytes`. |
+| Streaming request bodies, large uploads | Not part of the 1.0 request contract. An upload remains bounded `bytes`; a future input-streaming design needs its own cross-surface decision. |
 | **WebSocket**s, SSE replay and `Last-Event-ID` | I2, after `1.0.0`. The ASGI boundary handles no `websocket` scope, and resumption waits for the operational identity I3 must decide. Streaming *responses* are implemented: see `Http.sse` above. |
 | CORS, compression, trusted hosts, proxy header trust | Put them in the reverse proxy or ASGI server in front of the application, or wrap the `HttpApplication` in any third-party ASGI middleware — it is an ASGI 3 callable, so they compose. |
 | Static files | A web server or CDN. Agnara serves capabilities. |
@@ -575,6 +584,6 @@ built wheel. ADR 0073 and
 [issue #291](https://github.com/Blandskron/agnara/issues/291) make the tagged
 workflow ready to publish the synchronized set; they do not perform a release.
 
-**No compatibility promise.** Every name here is `provisional`. The path to `1.0.0`
-may change any of them; `docs/PUBLIC_API.md` records the policy and ADR 0021
-requires a changelog entry and migration guidance for a break.
+**Compatibility promise.** Every supported name here is `stable`. The 1.x
+contract preserves those names; `docs/PUBLIC_API.md` records the policy and ADR
+0021 requires a changelog entry and migration guidance for a future break.

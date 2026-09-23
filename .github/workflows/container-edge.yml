@@ -1,0 +1,195 @@
+name: Publish Container Edge
+
+# `edge` is deliberately a moving development tag, never a PyPI release or a
+# version identity. The guarded workflow is separate from `release.yml` so a
+# stable release cannot accidentally gain this publication authority.
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+
+# A newer develop commit supersedes an in-flight edge build. This prevents two
+# runs from racing to assign the moving tag to different commits.
+concurrency:
+  group: container-edge
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  preconditions:
+    name: Refuse sources other than develop
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Verify the source ref before any registry access
+        env:
+          ACTUAL_REF: ${{ github.ref }}
+          EXPECTED_REF: refs/heads/develop
+        run: |
+          set -euo pipefail
+
+          if [[ "$ACTUAL_REF" != "$EXPECTED_REF" ]]; then
+            echo "::error::Container edge can publish only from refs/heads/develop; received $ACTUAL_REF."
+            exit 1
+          fi
+
+          echo "Publishing the develop edge for $GITHUB_SHA."
+
+  # Reuse the protected quality gate rather than treating a successful Docker
+  # build as evidence that the framework is fit to publish.
+  validate:
+    name: Validate quality gates
+    needs: preconditions
+    permissions:
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Build, verify and publish edge image
+    needs: [preconditions, validate]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Checkout exact develop commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      # GHCR/Docker repository paths must be lowercase.
+      # GitHub currently exposes the repository owner as "Blandskron",
+      # so normalize it before constructing the GHCR image name.
+      - name: Prepare container metadata
+        id: metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          GHCR_OWNER="$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
+          OCI_CREATED="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+          echo "ghcr_owner=$GHCR_OWNER" >> "$GITHUB_OUTPUT"
+          echo "oci_created=$OCI_CREATED" >> "$GITHUB_OUTPUT"
+
+          echo "GHCR image: ghcr.io/${GHCR_OWNER}/agnara:edge"
+          echo "Docker Hub image: docker.io/blandskron/agnara:edge"
+          echo "OCI created: $OCI_CREATED"
+
+      # Build and exercise the image before a credential is accepted by either
+      # registry. This is intentionally a normal single-platform build: the
+      # following Buildx invocation is the publication build.
+      - name: Build edge image for smoke test
+        env:
+          OCI_CREATED: ${{ steps.metadata.outputs.oci_created }}
+        run: |
+          set -euo pipefail
+
+          docker build \
+            --platform linux/amd64 \
+            --tag agnara:edge-smoke \
+            --build-arg OCI_CREATED="$OCI_CREATED" \
+            --build-arg OCI_REVISION="$GITHUB_SHA" \
+            --build-arg OCI_VERSION="edge" \
+            .
+
+      - name: Smoke test edge image before registry login
+        run: python scripts/container_smoke.py agnara:edge-smoke
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.6.0
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.0.0
+
+      # Fail with a clear message instead of letting docker/login-action fail
+      # with the less specific "Username and password required".
+      - name: Verify Docker Hub credentials
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$DOCKERHUB_USERNAME" ]]; then
+            echo "::error::Repository secret DOCKERHUB_USERNAME is not configured."
+            exit 1
+          fi
+
+          if [[ -z "$DOCKERHUB_TOKEN" ]]; then
+            echo "::error::Repository secret DOCKERHUB_TOKEN is not configured."
+            exit 1
+          fi
+
+          echo "Docker Hub credentials are configured."
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build, publish and attest the edge image
+        id: publish
+        uses: docker/build-push-action@0a97817b6ade9f46837855d676c4cca3a2471fc9 # v4.0.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+
+          tags: |
+            ghcr.io/${{ steps.metadata.outputs.ghcr_owner }}/agnara:edge
+            docker.io/blandskron/agnara:edge
+
+          build-args: |
+            OCI_CREATED=${{ steps.metadata.outputs.oci_created }}
+            OCI_REVISION=${{ github.sha }}
+            OCI_VERSION=edge
+
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=edge
+            org.opencontainers.image.created=${{ steps.metadata.outputs.oci_created }}
+
+          sbom: true
+          provenance: mode=max
+
+      - name: Record the published immutable digest
+        env:
+          IMAGE_DIGEST: ${{ steps.publish.outputs.digest }}
+          GHCR_OWNER: ${{ steps.metadata.outputs.ghcr_owner }}
+        run: |
+          set -euo pipefail
+
+          echo "Published ghcr.io/${GHCR_OWNER}/agnara:edge"
+          echo "Published docker.io/blandskron/agnara:edge"
+          echo "Digest: $IMAGE_DIGEST"
+
+      - name: Pull both registries and smoke test Docker Hub
+        env:
+          GHCR_OWNER: ${{ steps.metadata.outputs.ghcr_owner }}
+        run: |
+          set -euo pipefail
+
+          docker pull "ghcr.io/${GHCR_OWNER}/agnara:edge"
+          docker pull "docker.io/blandskron/agnara:edge"
+
+          python scripts/container_smoke.py docker.io/blandskron/agnara:edge

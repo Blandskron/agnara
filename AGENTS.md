@@ -216,7 +216,12 @@ Add package-specific commands when useful.
 
 ## Git
 
-Do not push unless the human explicitly asks for a push.
+Blandskron grants agents standing authorization to create Issues, branches,
+commits, pushes and Pull Requests required by an assigned repository task.
+Do not ask again for confirmation of those ordinary Git/GitHub workflow
+operations. This authorization does not permit an agent to approve or merge
+its own PR, bypass protections, publish packages, create release tags or
+GitHub Releases, or modify protected-branch governance.
 
 When asked to prepare a final commit, first verify the entire documented quality gate appropriate to the current stage.
 
@@ -229,29 +234,39 @@ Read `docs/adr/0021-synchronized-pre-one-releases-and-changelog.md` before
 changing package versions, changelog release headings or Git tags. Never
 publish the `0.0.0` development sentinel.
 
-## AI Agent Git Attribution
+## Authoría de agentes y revisión humana
 
-El desarrollador humano permanece como Author y Committer principal.
+Lee ADR 0092 y `.github/ai-agent-identities.toml` antes de crear un commit.
+Cuando un agente implementa materialmente un cambio, el agente es el autor
+primario del commit: usa exactamente su `git_name` y `email` registrados. No
+uses a Blandskron como `Author` ni como `Co-authored-by` para trabajo escrito
+por el agente. No inventes identidades, no atribuyas trabajo a otro agente y
+no agregues trailers por defecto.
 
-Todo agente de IA que participe materialmente en cambios incluidos en un commit debe agregarse mediante un trailer estándar:
+Las identidades actualmente registradas incluyen `Codex <codex@openai.com>`,
+`Claude <noreply@anthropic.com>` y
+`gemini-cli <218195315+gemini-cli@users.noreply.github.com>`; consulta el
+registro, no esta lista, como fuente exacta antes de cada commit.
 
-Co-authored-by:
+Antes de `push`, verifica la authoría y el mensaje:
 
-Solo deben incluirse agentes que hayan participado realmente en el cambio.
-Pueden existir múltiples agentes:
+```bash
+git log -1 --format=fuller
+git log -1 --format=%B
+```
 
-Co-authored-by: Codex <codex@openai.com>
-Co-authored-by: Claude <noreply@anthropic.com>
+Confirma que el autor es la identidad exacta del agente, y que Blandskron no
+aparece como autor ni coautor salvo que haya implementado materialmente ese
+commit y solicitado crédito explícito. Si participaron varios agentes, prefiere
+commits separados con la identidad de quien hizo cada parte; no conviertas una
+revisión en coautoría.
 
-Cada agente debe utilizar su identidad correspondiente (ver `.github/ai-agent-identities.toml`).
-Nunca inventar direcciones de correo.
-Nunca utilizar la identidad de otro agente.
-Si la identidad oficial/verificable de un agente es desconocida, debe investigarse antes de agregarla.
-
-### Reglas Específicas
-- **Gemini**: Utiliza estrictamente `Co-authored-by: gemini-cli <218195315+gemini-cli@users.noreply.github.com>`. No uses `antigravity@google.com`, `gemini@google.com` ni seudónimos como `antigravity[bot]`: el ID numérico `218195315` es lo que vincula la identidad con el sistema noreply de GitHub.
-- **Codex**: Utiliza estrictamente `Co-authored-by: Codex <codex@openai.com>`. No uses variantes como noreply ni identidades inventadas, salvo nueva disposición de GitHub.
-- **Claude**: Utiliza estrictamente `Co-authored-by: Claude <noreply@anthropic.com>`. No incluyas la versión del modelo en el nombre: la identidad registrada es estable y no cambia con cada release.
+El agente abre o prepara un PR a `develop`, solicita revisión formal a
+`Blandskron` y lo deja sin fusionar. Un comentario o self-review no reemplaza
+la revisión formal de GitHub (`Approve`, `Request changes` o `Comment`).
+Blandskron es owner, maintainer, revisor, decisor de arquitectura/gobernanza y
+autoridad de merge; su revisión, no la authoría del commit, representa su
+contribución habitual al trabajo del agente.
 
 ## Stop conditions
 
@@ -344,16 +359,10 @@ Normal task branches start from `develop` and target `develop`.
 
 `main` receives releases/hotfixes through PRs.
 
-Agents may autonomously create Issues, branches, commits, PRs, reviews and merges when repository permissions permit.
+Agents may autonomously create Issues, branches, commits and PRs when repository permissions permit. They must request formal review from Blandskron and leave agent-authored PRs unmerged; only the maintainer merges after review and required CI.
 
-An agent MUST NOT approve its own Pull Request.
-
-If only one GitHub identity is available, perform a mandatory documented self-review and rely on objective required checks rather than fabricating approval.
-
-If an independent reviewer identity is available, prefer dual-agent review.
+An agent MUST NOT approve or merge its own Pull Request. Self-review is supplementary evidence, never a substitute for formal maintainer review.
 
 Never weaken repository protections to bypass failing work.
 
 Never push normal feature work directly to protected branches.
-
-

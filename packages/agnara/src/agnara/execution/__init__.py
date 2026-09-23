@@ -1,12 +1,17 @@
-from agnara.errors import InteractionRequiredError, PolicyDeniedError
+from agnara.errors import InteractionRequiredError, PolicyDeniedError  # noqa: F401
 
+from ._composition import CapabilityInvoker
 from .context import ExecutionContext
 from .idempotency import (
     IdempotencyClaimed,
     IdempotencyCompleted,
     IdempotencyConflict,
+    IdempotencyConflictError,
     IdempotencyInProgress,
+    IdempotencyInProgressError,
+    IdempotencyInvocation,
     IdempotencyReservation,
+    IdempotencyResultCodec,
     IdempotencyScope,
     IdempotencyStorageError,
     IdempotencyStore,
@@ -15,12 +20,14 @@ from .idempotency import (
 from .invocation import Invocation
 from .plan import ExecutionPlan
 from .result import CanonicalResult, Failure, FailureCode, Success
-from .runtime import classify_failure, invoke, invoke_result
+from .runtime import CapabilityRuntime, classify_failure, invoke, invoke_result
 from .streaming import CapabilityStream, StreamInterrupted, StreamTerminal, open_stream
 from .telemetry import InvocationStartEvent, InvocationTerminalEvent, TelemetryHook
 
 __all__ = [
     "CanonicalResult",
+    "CapabilityInvoker",
+    "CapabilityRuntime",
     "CapabilityStream",
     "ExecutionContext",
     "ExecutionPlan",
@@ -29,17 +36,19 @@ __all__ = [
     "IdempotencyClaimed",
     "IdempotencyCompleted",
     "IdempotencyConflict",
+    "IdempotencyConflictError",
     "IdempotencyInProgress",
+    "IdempotencyInProgressError",
+    "IdempotencyInvocation",
     "IdempotencyReservation",
+    "IdempotencyResultCodec",
     "IdempotencyScope",
     "IdempotencyStorageError",
     "IdempotencyStore",
     "InMemoryIdempotencyStore",
-    "InteractionRequiredError",
     "Invocation",
     "InvocationStartEvent",
     "InvocationTerminalEvent",
-    "PolicyDeniedError",
     "StreamInterrupted",
     "StreamTerminal",
     "Success",

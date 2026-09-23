@@ -18,8 +18,8 @@ tagged, because each of those moments is a different state of the repository:
 * the checked-out commit is the current HEAD of ``main`` on the remote -- a
   release cut from a ``main`` that moved while the gates ran is a different
   release;
-* the requested version is a publishable v0.x version and no tag ``v<version>``
-  exists yet, anywhere;
+* the requested version is a publishable PEP 440 release version and no tag
+  ``v<version>`` exists yet, anywhere;
 * the environment that holds the human gate really has one: required
   reviewers, and a deployment branch policy that keeps every other branch out.
   Without the reviewers the "approval" is automatic, and automatic approval
@@ -161,7 +161,7 @@ def check_dispatch(context: Context) -> list[str]:
 
 def check_version(version: str) -> list[str]:
     if VERSION_PATTERN.fullmatch(version) is None:
-        return [f"{version!r} is not a publishable v0.x release version"]
+        return [f"{version!r} is not a publishable release version"]
     return []
 
 

@@ -219,12 +219,12 @@ Responsibilities:
 
 `agnara-http` may depend on an ASGI utility library only after an ADR demonstrates why direct ASGI is insufficient.
 
-The adapter's public surface is the composition API in
-`agnara_http.composition`: seven names that declare exposures, compile an
-immutable ASGI 3 application and project OpenAPI (ADR 0071). Every other
-module is underscore-prefixed. The documentation UI providers, the Explorer
-and the authorized discovery endpoint are implemented but not reachable from
-that surface, because no product path renders a provider into a served route;
+The adapter's public surface is the fourteen-name composition API at the
+`agnara_http` package root. It declares exposures, compiles an immutable ASGI
+3 application, projects OpenAPI, and selects the reviewed built-in
+documentation and Explorer surfaces. `agnara_http.composition` is an
+implementation module, not a second supported import path. Third-party
+provider extension and the authorized discovery endpoint remain internal;
 `docs/MATURITY.md` records their real status and
 `docs/HTTP_COMPOSITION.md` states the limitation.
 
@@ -316,7 +316,7 @@ The current split:
 | `agnara-mcp` | public | MCP's tool and authorization shapes follow the protocol, not our design |
 | `agnara-telemetry` | public | two hook classes over an OpenTelemetry contract |
 | `agnara-cli` | public | supports the `agnara` console script |
-| `agnara-http` | public, provisional | seven composition exports implemented under ADR 0071; see `docs/HTTP_COMPOSITION.md` |
+| `agnara-http` | public, stable | fourteen governed composition exports; see `docs/PUBLIC_API.md` and `docs/HTTP_COMPOSITION.md` |
 | `agnara-a2a`, `agnara-events` | none yet | reserved namespaces holding a package boundary; adapters are Post-v0.1 |
 
 HTTP application examples and consumer tests use the public composition API.

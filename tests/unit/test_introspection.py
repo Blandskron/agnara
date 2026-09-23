@@ -218,7 +218,7 @@ def test_the_snapshot_is_versioned_and_deterministic() -> None:
     second = snapshot([described()], project="billing")
 
     assert first.format == INTROSPECTION_FORMAT == "agnara-introspection"
-    assert first.version == INTROSPECTION_VERSION == "0"
+    assert first.version == INTROSPECTION_VERSION == "1"
     assert first == second
     assert json.dumps(first.json_data(), sort_keys=True) == json.dumps(
         second.json_data(), sort_keys=True
@@ -226,7 +226,7 @@ def test_the_snapshot_is_versioned_and_deterministic() -> None:
     document = first.json_data()
     assert document["project"] == "billing"
     assert document["transports"] == ["http", "mcp"]
-    assert [app["name"] for app in document["apps"]] == ["payments"]
+    assert [app["name"] for app in document["applications"]] == ["payments"]
 
 
 def test_a_standalone_application_says_so_instead_of_inventing_a_project() -> None:
@@ -236,7 +236,9 @@ def test_a_standalone_application_says_so_instead_of_inventing_a_project() -> No
 def test_json_data_reproduces_every_descriptor_field() -> None:
     document = snapshot([described()]).json_data()
     refund = next(
-        item for item in document["apps"][0]["capabilities"] if item["id"] == "payments.refund"
+        item
+        for item in document["applications"][0]["capabilities"]
+        if item["id"] == "payments.refund"
     )
 
     assert set(refund) == {
@@ -354,7 +356,7 @@ def test_a_snapshot_rejects_repeated_apps_and_an_app_rejects_repeated_capabiliti
     app = described()
 
     with pytest.raises(IntrospectionError, match="repeats an app name"):
-        IntrospectionSnapshot(apps=(app, app))
+        IntrospectionSnapshot(applications=(app, app))
     with pytest.raises(IntrospectionError, match="repeats a capability id"):
         ApplicationDescriptor("payments", (app.capabilities[0], app.capabilities[0]))
 
@@ -363,7 +365,7 @@ def test_descriptors_reject_values_of_the_wrong_type() -> None:
     with pytest.raises(IntrospectionError):
         ApplicationDescriptor("payments", ("not a descriptor",))  # type: ignore
     with pytest.raises(IntrospectionError):
-        IntrospectionSnapshot(apps=("not a descriptor",))  # type: ignore
+        IntrospectionSnapshot(applications=("not a descriptor",))  # type: ignore
     with pytest.raises(IntrospectionError):
         InputDescriptor("value", "yes", "{}")  # type: ignore
     with pytest.raises(IntrospectionError):
@@ -485,14 +487,14 @@ class TestMountedAppVisibility:
 
         filtered = filter_snapshot(self.snapshot_of(), visibility, AnonymousPrincipal())
 
-        assert [app.name for app in filtered.apps[0].apps] == ["payments"]
+        assert [app.name for app in filtered.applications[0].apps] == ["payments"]
 
     def test_the_contexts_are_withheld_when_the_field_is_not(self) -> None:
         visibility = DiscoveryVisibility(AllCapabilitiesVisible(), [DiscoveryField.DESCRIPTION])
 
         filtered = filter_snapshot(self.snapshot_of(), visibility, AnonymousPrincipal())
 
-        assert filtered.apps[0].apps == ()
+        assert filtered.applications[0].apps == ()
 
     def test_withholding_the_contexts_leaves_the_capabilities(self) -> None:
         """One decision, not several: hiding contexts must not hide behaviour."""
@@ -500,6 +502,6 @@ class TestMountedAppVisibility:
 
         filtered = filter_snapshot(self.snapshot_of(), visibility, AnonymousPrincipal())
 
-        assert [capability.id for capability in filtered.apps[0].capabilities] == [
+        assert [capability.id for capability in filtered.applications[0].capabilities] == [
             "payments.refund"
         ]

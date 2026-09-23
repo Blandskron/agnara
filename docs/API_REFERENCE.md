@@ -20,411 +20,162 @@ Use `--check` in automation to verify that this projection has not drifted.
 
 | Name | Stability |
 | --- | --- |
-| `Agnara` | `provisional` |
-| `AgnaraError` | `provisional` |
-| `AnonymousPrincipal` | `provisional` |
-| `App` | `provisional` |
-| `AppDescriptor` | `provisional` |
-| `CapabilityDefinition` | `provisional` |
-| `CapabilityId` | `provisional` |
-| `CapabilityRegistry` | `provisional` |
-| `Confirmation` | `provisional` |
-| `ConfirmationEvidence` | `provisional` |
-| `ConfirmationVerdict` | `provisional` |
-| `ConfirmationVerifier` | `provisional` |
-| `DefinitionError` | `provisional` |
-| `DuplicateAppError` | `provisional` |
-| `DuplicateCapabilityError` | `provisional` |
-| `FrozenCapabilityRegistry` | `provisional` |
-| `Idempotency` | `provisional` |
-| `InteractionKind` | `provisional` |
-| `InteractionRequest` | `provisional` |
-| `InteractionRequiredError` | `provisional` |
-| `InvocationError` | `provisional` |
-| `JsonSchema` | `provisional` |
-| `Policy` | `provisional` |
-| `PolicyDeniedError` | `provisional` |
-| `PolicyFailure` | `provisional` |
-| `PolicyInteractionRequired` | `provisional` |
-| `PolicyResult` | `provisional` |
-| `PolicySuccess` | `provisional` |
-| `Principal` | `provisional` |
-| `RegistryError` | `provisional` |
-| `RegistryFrozenError` | `provisional` |
-| `Risk` | `provisional` |
-| `SchemaAdapter` | `provisional` |
-| `SchemaError` | `provisional` |
-| `ScopePolicy` | `provisional` |
-| `StandardEffect` | `provisional` |
-| `StandardSchemaAdapter` | `provisional` |
-| `TypeSchema` | `provisional` |
-| `UnknownCapabilityError` | `provisional` |
-| `ValidationError` | `provisional` |
-| `__version__` | `provisional` |
+| `Agnara` | `stable` |
+| `AgnaraError` | `stable` |
+| `AnonymousPrincipal` | `stable` |
+| `App` | `stable` |
+| `AppDescriptor` | `stable` |
+| `CapabilityDefinition` | `stable` |
+| `CapabilityId` | `stable` |
+| `CapabilityRegistry` | `stable` |
+| `Confirmation` | `stable` |
+| `ConfirmationEvidence` | `stable` |
+| `ConfirmationVerdict` | `stable` |
+| `ConfirmationVerifier` | `stable` |
+| `DefinitionError` | `stable` |
+| `DuplicateAppError` | `stable` |
+| `DuplicateCapabilityError` | `stable` |
+| `FrozenCapabilityRegistry` | `stable` |
+| `Idempotency` | `stable` |
+| `InteractionKind` | `stable` |
+| `InteractionRequest` | `stable` |
+| `InteractionRequiredError` | `stable` |
+| `InvocationError` | `stable` |
+| `JsonSchema` | `stable` |
+| `Policy` | `stable` |
+| `PolicyDeniedError` | `stable` |
+| `PolicyFailure` | `stable` |
+| `PolicyInteractionRequired` | `stable` |
+| `PolicyResult` | `stable` |
+| `PolicySuccess` | `stable` |
+| `Principal` | `stable` |
+| `RegistryError` | `stable` |
+| `RegistryFrozenError` | `stable` |
+| `Risk` | `stable` |
+| `SchemaAdapter` | `stable` |
+| `SchemaError` | `stable` |
+| `ScopePolicy` | `stable` |
+| `StandardEffect` | `stable` |
+| `StandardSchemaAdapter` | `stable` |
+| `TypeSchema` | `stable` |
+| `UnknownCapabilityError` | `stable` |
+| `ValidationError` | `stable` |
+| `__version__` | `stable` |
 
-### `agnara.app`
-
-| Name | Stability |
-| --- | --- |
-| `App` | `provisional` |
-| `AppDescriptor` | `provisional` |
-
-### `agnara.application`
+### `agnara.di`
 
 | Name | Stability |
 | --- | --- |
-| `Agnara` | `provisional` |
-
-### `agnara.capability`
-
-| Name | Stability |
-| --- | --- |
-| `CapabilityDefinition` | `provisional` |
-| `CapabilityId` | `provisional` |
-| `CapabilityRegistry` | `provisional` |
-| `Confirmation` | `provisional` |
-| `FrozenCapabilityRegistry` | `provisional` |
-| `Idempotency` | `provisional` |
-| `Risk` | `provisional` |
-| `StandardEffect` | `provisional` |
-
-### `agnara.capability.definition`
-
-| Name | Stability |
-| --- | --- |
-| `CapabilityDefinition` | `provisional` |
-
-### `agnara.capability.identity`
-
-| Name | Stability |
-| --- | --- |
-| `CapabilityId` | `provisional` |
-
-### `agnara.capability.metadata`
-
-| Name | Stability |
-| --- | --- |
-| `Confirmation` | `provisional` |
-| `Idempotency` | `provisional` |
-| `Risk` | `provisional` |
-| `StandardEffect` | `provisional` |
-
-### `agnara.capability.registry`
-
-| Name | Stability |
-| --- | --- |
-| `CapabilityRegistry` | `provisional` |
-| `FrozenCapabilityRegistry` | `provisional` |
-
-### `agnara.core.di`
-
-| Name | Stability |
-| --- | --- |
-| `DIContainer` | `provisional` |
-| `DIRegistry` | `provisional` |
-| `DependencyCycleError` | `provisional` |
-| `DependencyResolutionError` | `provisional` |
-| `ProviderDefinition` | `provisional` |
-| `ProviderType` | `provisional` |
-| `Scope` | `provisional` |
-| `compile_dag` | `provisional` |
-| `provider` | `provisional` |
-
-### `agnara.errors`
-
-| Name | Stability |
-| --- | --- |
-| `AgnaraError` | `provisional` |
-| `DefinitionError` | `provisional` |
-| `DuplicateAppError` | `provisional` |
-| `DuplicateCapabilityError` | `provisional` |
-| `InteractionRequiredError` | `provisional` |
-| `InvocationError` | `provisional` |
-| `PolicyDeniedError` | `provisional` |
-| `RegistryError` | `provisional` |
-| `RegistryFrozenError` | `provisional` |
-| `SchemaError` | `provisional` |
-| `UnknownCapabilityError` | `provisional` |
-| `ValidationError` | `provisional` |
+| `DIContainer` | `stable` |
+| `DIRegistry` | `stable` |
+| `DependencyCycleError` | `stable` |
+| `DependencyResolutionError` | `stable` |
+| `ProviderDefinition` | `stable` |
+| `ProviderType` | `stable` |
+| `Scope` | `stable` |
+| `compile_dag` | `stable` |
+| `provider` | `stable` |
 
 ### `agnara.execution`
 
 | Name | Stability |
 | --- | --- |
-| `CanonicalResult` | `provisional` |
-| `CapabilityStream` | `provisional` |
-| `ExecutionContext` | `provisional` |
-| `ExecutionPlan` | `provisional` |
-| `Failure` | `provisional` |
-| `FailureCode` | `provisional` |
-| `IdempotencyClaimed` | `provisional` |
-| `IdempotencyCompleted` | `provisional` |
-| `IdempotencyConflict` | `provisional` |
-| `IdempotencyInProgress` | `provisional` |
-| `IdempotencyReservation` | `provisional` |
-| `IdempotencyScope` | `provisional` |
-| `IdempotencyStorageError` | `provisional` |
-| `IdempotencyStore` | `provisional` |
-| `InMemoryIdempotencyStore` | `provisional` |
-| `InteractionRequiredError` | `provisional` |
-| `Invocation` | `provisional` |
-| `InvocationStartEvent` | `provisional` |
-| `InvocationTerminalEvent` | `provisional` |
-| `PolicyDeniedError` | `provisional` |
-| `StreamInterrupted` | `provisional` |
-| `StreamTerminal` | `provisional` |
-| `Success` | `provisional` |
-| `TelemetryHook` | `provisional` |
-| `classify_failure` | `provisional` |
-| `invoke` | `provisional` |
-| `invoke_result` | `provisional` |
-| `open_stream` | `provisional` |
-
-### `agnara.execution.context`
-
-| Name | Stability |
-| --- | --- |
-| `ExecutionContext` | `provisional` |
-
-### `agnara.execution.idempotency`
-
-| Name | Stability |
-| --- | --- |
-| `IdempotencyClaimed` | `provisional` |
-| `IdempotencyCompleted` | `provisional` |
-| `IdempotencyConflict` | `provisional` |
-| `IdempotencyInProgress` | `provisional` |
-| `IdempotencyReservation` | `provisional` |
-| `IdempotencyScope` | `provisional` |
-| `IdempotencyStorageError` | `provisional` |
-| `IdempotencyStore` | `provisional` |
-| `InMemoryIdempotencyStore` | `provisional` |
-
-### `agnara.execution.invocation`
-
-| Name | Stability |
-| --- | --- |
-| `Invocation` | `provisional` |
-
-### `agnara.execution.plan`
-
-| Name | Stability |
-| --- | --- |
-| `ExecutionPlan` | `provisional` |
-
-### `agnara.execution.result`
-
-| Name | Stability |
-| --- | --- |
-| `CanonicalResult` | `provisional` |
-| `Failure` | `provisional` |
-| `FailureCode` | `provisional` |
-| `Success` | `provisional` |
-
-### `agnara.execution.runtime`
-
-| Name | Stability |
-| --- | --- |
-| `classify_failure` | `provisional` |
-| `invoke` | `provisional` |
-| `invoke_result` | `provisional` |
-
-### `agnara.execution.streaming`
-
-| Name | Stability |
-| --- | --- |
-| `CapabilityStream` | `provisional` |
-| `StreamInterrupted` | `provisional` |
-| `StreamTerminal` | `provisional` |
-| `open_stream` | `provisional` |
-
-### `agnara.execution.telemetry`
-
-| Name | Stability |
-| --- | --- |
-| `InvocationStartEvent` | `provisional` |
-| `InvocationTerminalEvent` | `provisional` |
-| `TelemetryHook` | `provisional` |
+| `CanonicalResult` | `stable` |
+| `CapabilityInvoker` | `stable` |
+| `CapabilityRuntime` | `stable` |
+| `CapabilityStream` | `stable` |
+| `ExecutionContext` | `stable` |
+| `ExecutionPlan` | `stable` |
+| `Failure` | `stable` |
+| `FailureCode` | `stable` |
+| `IdempotencyClaimed` | `stable` |
+| `IdempotencyCompleted` | `stable` |
+| `IdempotencyConflict` | `stable` |
+| `IdempotencyConflictError` | `stable` |
+| `IdempotencyInProgress` | `stable` |
+| `IdempotencyInProgressError` | `stable` |
+| `IdempotencyInvocation` | `stable` |
+| `IdempotencyReservation` | `stable` |
+| `IdempotencyResultCodec` | `stable` |
+| `IdempotencyScope` | `stable` |
+| `IdempotencyStorageError` | `stable` |
+| `IdempotencyStore` | `stable` |
+| `InMemoryIdempotencyStore` | `stable` |
+| `Invocation` | `stable` |
+| `InvocationStartEvent` | `stable` |
+| `InvocationTerminalEvent` | `stable` |
+| `StreamInterrupted` | `stable` |
+| `StreamTerminal` | `stable` |
+| `Success` | `stable` |
+| `TelemetryHook` | `stable` |
+| `classify_failure` | `stable` |
+| `invoke` | `stable` |
+| `invoke_result` | `stable` |
+| `open_stream` | `stable` |
 
 ### `agnara.exposure`
 
 | Name | Stability |
 | --- | --- |
-| `CompiledExposure` | `provisional` |
-| `ExposureError` | `provisional` |
-| `ExposureId` | `provisional` |
-| `FrozenExposureRegistry` | `provisional` |
-| `SurfaceCompilation` | `provisional` |
-| `SurfaceId` | `provisional` |
-| `compile_exposures` | `provisional` |
+| `CompiledExposure` | `stable` |
+| `ExposureError` | `stable` |
+| `ExposureId` | `stable` |
+| `FrozenExposureRegistry` | `stable` |
+| `SurfaceCompilation` | `stable` |
+| `SurfaceId` | `stable` |
+| `compile_exposures` | `stable` |
 
 ### `agnara.introspection`
 
 | Name | Stability |
 | --- | --- |
-| `INTROSPECTION_FORMAT` | `provisional` |
-| `INTROSPECTION_VERSION` | `provisional` |
-| `AllCapabilitiesVisible` | `provisional` |
-| `ApplicationDescriptor` | `provisional` |
-| `BoundedContextDescriptor` | `provisional` |
-| `CapabilityDescriptor` | `provisional` |
-| `DependencyDescriptor` | `provisional` |
-| `DiscoveryField` | `provisional` |
-| `DiscoveryVisibility` | `provisional` |
-| `ExposureDescriptor` | `provisional` |
-| `Hiding` | `provisional` |
-| `InputDescriptor` | `provisional` |
-| `IntrospectionError` | `provisional` |
-| `IntrospectionSnapshot` | `provisional` |
-| `NoCapabilityVisible` | `provisional` |
-| `PolicyDescriptor` | `provisional` |
-| `ProviderDescriptor` | `provisional` |
-| `ScopeVisible` | `provisional` |
-| `TypeReference` | `provisional` |
-| `VisibilityRule` | `provisional` |
-| `describe_app` | `provisional` |
-| `filter_snapshot` | `provisional` |
-| `snapshot` | `provisional` |
-
-### `agnara.introspection.builder`
-
-| Name | Stability |
-| --- | --- |
-| `describe_app` | `provisional` |
-| `snapshot` | `provisional` |
-
-### `agnara.introspection.descriptors`
-
-| Name | Stability |
-| --- | --- |
-| `INTROSPECTION_FORMAT` | `provisional` |
-| `INTROSPECTION_VERSION` | `provisional` |
-| `ApplicationDescriptor` | `provisional` |
-| `BoundedContextDescriptor` | `provisional` |
-| `CapabilityDescriptor` | `provisional` |
-| `DependencyDescriptor` | `provisional` |
-| `ExposureDescriptor` | `provisional` |
-| `InputDescriptor` | `provisional` |
-| `IntrospectionError` | `provisional` |
-| `IntrospectionSnapshot` | `provisional` |
-| `PolicyDescriptor` | `provisional` |
-| `ProviderDescriptor` | `provisional` |
-| `TypeReference` | `provisional` |
-
-### `agnara.introspection.visibility`
-
-| Name | Stability |
-| --- | --- |
-| `AllCapabilitiesVisible` | `provisional` |
-| `DiscoveryField` | `provisional` |
-| `DiscoveryVisibility` | `provisional` |
-| `Hiding` | `provisional` |
-| `NoCapabilityVisible` | `provisional` |
-| `ScopeVisible` | `provisional` |
-| `VisibilityRule` | `provisional` |
-| `filter_snapshot` | `provisional` |
+| `INTROSPECTION_FORMAT` | `stable` |
+| `INTROSPECTION_VERSION` | `stable` |
+| `AllCapabilitiesVisible` | `stable` |
+| `ApplicationDescriptor` | `stable` |
+| `BoundedContextDescriptor` | `stable` |
+| `CapabilityDescriptor` | `stable` |
+| `DependencyDescriptor` | `stable` |
+| `DiscoveryField` | `stable` |
+| `DiscoveryVisibility` | `stable` |
+| `ExposureDescriptor` | `stable` |
+| `Hiding` | `stable` |
+| `InputDescriptor` | `stable` |
+| `IntrospectionError` | `stable` |
+| `IntrospectionSnapshot` | `stable` |
+| `NoCapabilityVisible` | `stable` |
+| `PolicyDescriptor` | `stable` |
+| `ProviderDescriptor` | `stable` |
+| `ScopeVisible` | `stable` |
+| `TypeReference` | `stable` |
+| `VisibilityRule` | `stable` |
+| `describe_app` | `stable` |
+| `filter_snapshot` | `stable` |
+| `snapshot` | `stable` |
 
 ### `agnara.policy`
 
 | Name | Stability |
 | --- | --- |
-| `AnonymousPrincipal` | `provisional` |
-| `ConfirmationEvidence` | `provisional` |
-| `ConfirmationPolicy` | `provisional` |
-| `ConfirmationVerdict` | `provisional` |
-| `ConfirmationVerifier` | `provisional` |
-| `InteractionKind` | `provisional` |
-| `InteractionRequest` | `provisional` |
-| `Policy` | `provisional` |
-| `PolicyFailure` | `provisional` |
-| `PolicyInteractionRequired` | `provisional` |
-| `PolicyResult` | `provisional` |
-| `PolicySuccess` | `provisional` |
-| `Principal` | `provisional` |
-| `ScopePolicy` | `provisional` |
-
-### `agnara.policy.base`
-
-| Name | Stability |
-| --- | --- |
-| `InteractionKind` | `provisional` |
-| `InteractionRequest` | `provisional` |
-| `Policy` | `provisional` |
-| `PolicyFailure` | `provisional` |
-| `PolicyInteractionRequired` | `provisional` |
-| `PolicyResult` | `provisional` |
-| `PolicySuccess` | `provisional` |
-
-### `agnara.policy.confirmation`
-
-| Name | Stability |
-| --- | --- |
-| `ConfirmationEvidence` | `provisional` |
-| `ConfirmationPolicy` | `provisional` |
-| `ConfirmationVerdict` | `provisional` |
-| `ConfirmationVerifier` | `provisional` |
-
-### `agnara.policy.principal`
-
-| Name | Stability |
-| --- | --- |
-| `AnonymousPrincipal` | `provisional` |
-| `Principal` | `provisional` |
-
-### `agnara.policy.scopes`
-
-| Name | Stability |
-| --- | --- |
-| `ScopePolicy` | `provisional` |
+| `ConfirmationPolicy` | `stable` |
 
 ### `agnara.schema`
 
 | Name | Stability |
 | --- | --- |
-| `AnySchema` | `provisional` |
-| `DataclassFieldSchema` | `provisional` |
-| `DataclassSchema` | `provisional` |
-| `DictionarySchema` | `provisional` |
-| `EnumSchema` | `provisional` |
-| `JsonSchema` | `provisional` |
-| `ListSchema` | `provisional` |
-| `LiteralSchema` | `provisional` |
-| `NoneSchema` | `provisional` |
-| `PrimitiveSchema` | `provisional` |
-| `SchemaAdapter` | `provisional` |
-| `StandardSchemaAdapter` | `provisional` |
-| `TupleSchema` | `provisional` |
-| `TypeSchema` | `provisional` |
-| `UnionSchema` | `provisional` |
-| `materialize_json` | `provisional` |
-| `serialize_json` | `provisional` |
-
-### `agnara.schema.port`
-
-| Name | Stability |
-| --- | --- |
-| `JsonSchema` | `provisional` |
-| `SchemaAdapter` | `provisional` |
-| `TypeSchema` | `provisional` |
-
-### `agnara.schema.standard`
-
-| Name | Stability |
-| --- | --- |
-| `AnySchema` | `provisional` |
-| `DataclassFieldSchema` | `provisional` |
-| `DataclassSchema` | `provisional` |
-| `DictionarySchema` | `provisional` |
-| `EnumSchema` | `provisional` |
-| `ListSchema` | `provisional` |
-| `LiteralSchema` | `provisional` |
-| `NoneSchema` | `provisional` |
-| `PrimitiveSchema` | `provisional` |
-| `StandardSchemaAdapter` | `provisional` |
-| `TupleSchema` | `provisional` |
-| `UnionSchema` | `provisional` |
-| `materialize_json` | `provisional` |
-| `serialize_json` | `provisional` |
+| `AnySchema` | `stable` |
+| `DataclassFieldSchema` | `stable` |
+| `DataclassSchema` | `stable` |
+| `DictionarySchema` | `stable` |
+| `EnumSchema` | `stable` |
+| `ListSchema` | `stable` |
+| `LiteralSchema` | `stable` |
+| `NoneSchema` | `stable` |
+| `PrimitiveSchema` | `stable` |
+| `TupleSchema` | `stable` |
+| `UnionSchema` | `stable` |
+| `materialize_json` | `stable` |
+| `serialize_json` | `stable` |
 
 
 ## `agnara-a2a`
@@ -440,10 +191,10 @@ This module currently exports no public names.
 
 | Name | Stability |
 | --- | --- |
-| `EXIT_FAILED` | `provisional` |
-| `EXIT_OK` | `provisional` |
-| `EXIT_USAGE` | `provisional` |
-| `main` | `provisional` |
+| `EXIT_FAILED` | `stable` |
+| `EXIT_OK` | `stable` |
+| `EXIT_USAGE` | `stable` |
+| `main` | `stable` |
 
 
 ## `agnara-events`
@@ -459,39 +210,20 @@ This module currently exports no public names.
 
 | Name | Stability |
 | --- | --- |
-| `Binding` | `provisional` |
-| `BindingSource` | `provisional` |
-| `DocumentationAssets` | `provisional` |
-| `Http` | `provisional` |
-| `HttpApplication` | `provisional` |
-| `HttpDefinitionError` | `provisional` |
-| `HttpDocumentation` | `provisional` |
-| `HttpExplorer` | `provisional` |
-| `OpenApiInfo` | `provisional` |
-| `OpenApiOperation` | `provisional` |
-| `OpenApiSchema` | `provisional` |
-| `ReDoc` | `provisional` |
-| `Scalar` | `provisional` |
-| `SwaggerUI` | `provisional` |
-
-### `agnara_http.composition`
-
-| Name | Stability |
-| --- | --- |
-| `Binding` | `provisional` |
-| `BindingSource` | `provisional` |
-| `DocumentationAssets` | `provisional` |
-| `Http` | `provisional` |
-| `HttpApplication` | `provisional` |
-| `HttpDefinitionError` | `provisional` |
-| `HttpDocumentation` | `provisional` |
-| `HttpExplorer` | `provisional` |
-| `OpenApiInfo` | `provisional` |
-| `OpenApiOperation` | `provisional` |
-| `OpenApiSchema` | `provisional` |
-| `ReDoc` | `provisional` |
-| `Scalar` | `provisional` |
-| `SwaggerUI` | `provisional` |
+| `Binding` | `stable` |
+| `BindingSource` | `stable` |
+| `DocumentationAssets` | `stable` |
+| `Http` | `stable` |
+| `HttpApplication` | `stable` |
+| `HttpDefinitionError` | `stable` |
+| `HttpDocumentation` | `stable` |
+| `HttpExplorer` | `stable` |
+| `OpenApiInfo` | `stable` |
+| `OpenApiOperation` | `stable` |
+| `OpenApiSchema` | `stable` |
+| `ReDoc` | `stable` |
+| `Scalar` | `stable` |
+| `SwaggerUI` | `stable` |
 
 
 ## `agnara-mcp`
@@ -500,86 +232,26 @@ This module currently exports no public names.
 
 | Name | Stability |
 | --- | --- |
-| `MCP_PROTOCOL_VERSION` | `provisional` |
-| `MCP_PYTHON_SDK_VERSION` | `provisional` |
-| `SUPPORTED_MCP_PROTOCOL_VERSIONS` | `provisional` |
-| `FrozenMcpTools` | `provisional` |
-| `Mcp` | `provisional` |
-| `McpAuthenticatedIdentity` | `provisional` |
-| `McpAuthorization` | `provisional` |
-| `McpAuthorizationDefinitionError` | `provisional` |
-| `McpInteractionProjectionError` | `provisional` |
-| `McpInvocationDefinitionError` | `provisional` |
-| `McpPrincipalMapper` | `provisional` |
-| `McpResultProjectionError` | `provisional` |
-| `McpToolDefinitionError` | `provisional` |
-| `McpToolExposure` | `provisional` |
-| `McpToolInvoker` | `provisional` |
-| `build_mcp_discovery_server` | `provisional` |
-| `build_mcp_server` | `provisional` |
-| `project_mcp_interaction_required` | `provisional` |
-| `project_mcp_result` | `provisional` |
-| `project_mcp_tools` | `provisional` |
-
-### `agnara_mcp.authorization`
-
-| Name | Stability |
-| --- | --- |
-| `McpAuthenticatedIdentity` | `provisional` |
-| `McpAuthorization` | `provisional` |
-| `McpAuthorizationDefinitionError` | `provisional` |
-| `McpPrincipalMapper` | `provisional` |
-
-### `agnara_mcp.discovery`
-
-| Name | Stability |
-| --- | --- |
-| `build_mcp_discovery_server` | `provisional` |
-
-### `agnara_mcp.dispatch`
-
-| Name | Stability |
-| --- | --- |
-| `McpInvocationDefinitionError` | `provisional` |
-| `McpToolInvoker` | `provisional` |
-| `build_mcp_server` | `provisional` |
-
-### `agnara_mcp.interaction`
-
-| Name | Stability |
-| --- | --- |
-| `McpInteractionProjectionError` | `provisional` |
-| `project_mcp_interaction_required` | `provisional` |
-
-### `agnara_mcp.protocol`
-
-| Name | Stability |
-| --- | --- |
-| `MCP_PROTOCOL_VERSION` | `provisional` |
-| `MCP_PYTHON_SDK_VERSION` | `provisional` |
-| `SUPPORTED_MCP_PROTOCOL_VERSIONS` | `provisional` |
-
-### `agnara_mcp.result`
-
-| Name | Stability |
-| --- | --- |
-| `McpResultProjectionError` | `provisional` |
-| `project_mcp_result` | `provisional` |
-
-### `agnara_mcp.schema`
-
-| Name | Stability |
-| --- | --- |
-| `project_mcp_tools` | `provisional` |
-
-### `agnara_mcp.tools`
-
-| Name | Stability |
-| --- | --- |
-| `FrozenMcpTools` | `provisional` |
-| `Mcp` | `provisional` |
-| `McpToolDefinitionError` | `provisional` |
-| `McpToolExposure` | `provisional` |
+| `MCP_PROTOCOL_VERSION` | `stable` |
+| `MCP_PYTHON_SDK_VERSION` | `stable` |
+| `SUPPORTED_MCP_PROTOCOL_VERSIONS` | `stable` |
+| `FrozenMcpTools` | `stable` |
+| `Mcp` | `stable` |
+| `McpAuthenticatedIdentity` | `stable` |
+| `McpAuthorization` | `stable` |
+| `McpAuthorizationDefinitionError` | `stable` |
+| `McpInteractionProjectionError` | `stable` |
+| `McpInvocationDefinitionError` | `stable` |
+| `McpPrincipalMapper` | `stable` |
+| `McpResultProjectionError` | `stable` |
+| `McpToolDefinitionError` | `stable` |
+| `McpToolExposure` | `stable` |
+| `McpToolInvoker` | `stable` |
+| `build_mcp_discovery_server` | `stable` |
+| `build_mcp_server` | `stable` |
+| `project_mcp_interaction_required` | `stable` |
+| `project_mcp_result` | `stable` |
+| `project_mcp_tools` | `stable` |
 
 
 ## `agnara-telemetry`
@@ -588,17 +260,5 @@ This module currently exports no public names.
 
 | Name | Stability |
 | --- | --- |
-| `OpenTelemetryMetricsHook` | `provisional` |
-| `OpenTelemetryTracingHook` | `provisional` |
-
-### `agnara_telemetry.metrics`
-
-| Name | Stability |
-| --- | --- |
-| `OpenTelemetryMetricsHook` | `provisional` |
-
-### `agnara_telemetry.tracing`
-
-| Name | Stability |
-| --- | --- |
-| `OpenTelemetryTracingHook` | `provisional` |
+| `OpenTelemetryMetricsHook` | `stable` |
+| `OpenTelemetryTracingHook` | `stable` |

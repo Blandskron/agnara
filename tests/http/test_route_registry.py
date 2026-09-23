@@ -154,15 +154,27 @@ class TestFreezing:
 
 
 class TestMatching:
-    def test_matches_root_and_normalizes_lookup_method(self) -> None:
-        frozen = _RouteRegistry[str]()
-        route = frozen.register("GET", "/", "root")
-        match = frozen.freeze().match("get", "/")
+    def test_matches_root_and_normalizes_the_authored_method(self) -> None:
+        """Registration folds case; a request does not.
 
+        This test previously asserted that `match("get", "/")` found the `GET`
+        route. RFC 9110 section 9.1 makes the method token case-sensitive, and
+        `get` is a perfectly well-formed token that a compliant server passes
+        through unchanged, so folding it let a request reach a route its real
+        method names differently. See F-2 in `docs/THREAT_MODEL.md`.
+        """
+        registry = _RouteRegistry[str]()
+        route = registry.register("get", "/", "root")
+        frozen = registry.freeze()
+
+        assert route.method == "GET"
+        match = frozen.match("GET", "/")
         assert match is not None
         assert match.route is route
         assert match.route.target == "root"
         assert match.path_parameters == {}
+
+        assert frozen.match("get", "/") is None
 
     def test_captures_multiple_path_parameters(self) -> None:
         registry = _RouteRegistry[str]()

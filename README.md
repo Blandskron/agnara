@@ -6,10 +6,10 @@ protocol the semantic source of truth.
 
 ## Current direction
 
-`0.1.0a8` is the verified publication baseline. Development now targets the
+`0.1.0a8` is the retained publication baseline. Development now targets the
 first product release, `1.0.0`; no further pre-release publication is planned.
-See [the roadmap](ROADMAP.md) and the
-[release plan](docs/releases/RELEASE_PLAN.md).
+See the [A8-to-1.0 migration guide](docs/MIGRATION_A8_TO_1_0.md),
+[roadmap](ROADMAP.md), and [release plan](docs/releases/RELEASE_PLAN.md).
 
 ## Design
 
@@ -28,9 +28,9 @@ public surface is listed in [docs/API_REFERENCE.md](docs/API_REFERENCE.md).
 import asyncio
 
 from agnara import Agnara, Risk, StandardEffect
-from agnara.core.di import DIContainer, DIRegistry, provider
+from agnara.di import DIContainer, DIRegistry, provider
 from agnara.execution import ExecutionContext, ExecutionPlan, Invocation, invoke_result
-from agnara.policy import Principal
+from agnara import Principal
 
 
 class Ledger:
@@ -88,3 +88,9 @@ uv run pytest
 Publication is a reviewed dispatch from `main`. The workflow verifies the
 complete distribution set before it creates a tag; see
 [docs/MAINTAINERS_RELEASE.md](docs/MAINTAINERS_RELEASE.md).
+
+The official executable reference runtime is published separately to GHCR and
+Docker Hub; PyPI remains the canonical Python distribution. Release version
+tags are immutable, while `:edge` is a mutable, unsupported image built only
+from `develop`. See
+[docs/CONTAINERS.md](docs/CONTAINERS.md) for verified pull, run and digest-pinning commands.

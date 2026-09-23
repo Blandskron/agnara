@@ -13,6 +13,7 @@ the kernel-last upload order and post-publication completeness.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from typing import Any
 
@@ -24,6 +25,7 @@ WORKFLOW = WORKSPACE_ROOT / ".github" / "workflows" / "release.yml"
 STATUS = WORKSPACE_ROOT / "docs" / "releases" / "release-status.json"
 
 TAG_JOB = "tag"
+CONTAINER_JOB = "container"
 GATE_JOB = "publish"
 PHASE_UPLOADS = {
     "bootstrap-1": ["publish-a2a", "publish-cli", "publish-events"],
@@ -36,9 +38,34 @@ PHASE_VERIFICATION = {
     "final": "verify-published",
 }
 UPLOAD_JOBS = [job for jobs in PHASE_UPLOADS.values() for job in jobs]
+#: Variables GitHub defines for every step, which a `run` body may therefore
+#: read without its own step declaring them. `GITHUB_RUN_STARTED_AT` is
+#: deliberately absent: `github.run_started_at` is a context property with no
+#: default environment variable behind it, so a step that wants it has to say so.
+GITHUB_DEFAULT_ENV = frozenset(
+    {
+        "GITHUB_ACTOR",
+        "GITHUB_ENV",
+        "GITHUB_OUTPUT",
+        "GITHUB_REF",
+        "GITHUB_REPOSITORY",
+        "GITHUB_REPOSITORY_OWNER",
+        "GITHUB_RUN_ATTEMPT",
+        "GITHUB_RUN_ID",
+        "GITHUB_RUN_NUMBER",
+        "GITHUB_SHA",
+        "GITHUB_WORKSPACE",
+        "RUNNER_OS",
+        "RUNNER_TEMP",
+    }
+)
 GATES_BEFORE_PUBLICATION = {
     "validate",
     "preconditions",
+    # SECURITY.md's locked runtime audit, run as a gate rather than left as a
+    # maintainer instruction (V1-37). `build` depends on it, so a release
+    # cannot reach the human approval step with the audit unperformed.
+    "dependency-audit",
     "build",
     "test-artifact",
     "publish-preflight",
@@ -262,6 +289,7 @@ def test_the_final_phase_publishes_only_the_kernel_then_verifies_tags_and_announ
         "verify-published",
         TAG_JOB,
         "github-release",
+        CONTAINER_JOB,
     }
     assert not running & set(PHASE_UPLOADS["bootstrap-1"] + PHASE_UPLOADS["bootstrap-2"])
 
@@ -570,6 +598,58 @@ def test_release_actions_are_pinned_to_exact_versions() -> None:
     for action in actions:
         _, _, version = action.partition("@")
         assert version.count(".") >= 2 or len(version) == 40, action
+
+
+def test_every_container_step_declares_the_variables_its_own_run_body_reads() -> None:
+    """`env:` belongs to the step it is written under, not to the step before it.
+
+    The smoke-test build read `$GITHUB_RUN_STARTED_AT` and `$RELEASE_VERSION`
+    while both were declared on the *following* step, so the image the release
+    gate exercised was built with an empty created-at and an empty version.
+    Nothing failed: an empty `--build-arg` is a legal build argument, so the
+    gate passed on an artefact that did not carry the identity the published
+    artefact would carry.
+
+    This asserts the property rather than those two names -- a `run` body may
+    read only what its own step declares, what it assigns itself, or what
+    GitHub defines for every step.
+    """
+    for step in _jobs()[CONTAINER_JOB]["steps"]:
+        body = step.get("run")
+        if not body:
+            continue
+        assigned = set(re.findall(r"^\s*([A-Z][A-Z0-9_]*)=", body, re.M))
+        declared = set(step.get("env") or {}) | assigned | GITHUB_DEFAULT_ENV
+        read = set(re.findall(r"\$\{?([A-Z][A-Z0-9_]*)\}?", body))
+        assert read <= declared, (step.get("name"), sorted(read - declared))
+
+
+def test_the_published_ghcr_tag_cannot_carry_the_owner_accounts_case() -> None:
+    """A container repository name must be lowercase.
+
+    `github.repository_owner` preserves the account's case, so interpolating it
+    directly names `ghcr.io/Blandskron/agnara:...` and buildx refuses the tag
+    before any push. `container-edge.yml` already failed every edge publish
+    that way; the release path carried the same raw value, and would have hit
+    it only after the tag and the GitHub Release already existed -- the one
+    point in this workflow where a failure is not free.
+
+    The property is asserted, not one spelling, so the raw value cannot come
+    back. The tag is matched whole rather than by prefix and suffix: a
+    substring check on something URL-shaped is the pattern CodeQL flags as
+    bypassable, and the full match says what is actually required anyway.
+    """
+    build = next(step for step in _jobs()[CONTAINER_JOB]["steps"] if step.get("id") == "publish")
+
+    tags = build["with"]["tags"].splitlines()
+    assert len(tags) == 2
+    ghcr_tag, dockerhub_tag = tags
+    version = "${{ needs.preconditions.outputs.version }}"
+    assert dockerhub_tag == f"docker.io/blandskron/agnara:{version}"
+    assert re.fullmatch(r"ghcr\.io/\$\{\{[^}]+\}\}/agnara:\$\{\{[^}]+\}\}", ghcr_tag), ghcr_tag
+    assert "github.repository_owner" not in ghcr_tag, (
+        "the raw owner preserves case; a container repository name must be lowercase"
+    )
 
 
 def test_reusable_quality_gate_can_upload_security_results_without_publication_rights() -> None:

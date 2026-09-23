@@ -137,6 +137,11 @@ def test_a_dispatch_from_the_current_head_of_main_for_an_untagged_version_is_acc
     assert any("restricts which branches" in note for note in notes)
 
 
+def test_the_stable_1_0_0_target_is_a_publishable_release_version() -> None:
+    """The release checker must not retain the A8-only v0.x wording/rule."""
+    assert tool.check_version("1.0.0") == []
+
+
 # ---------------------------------------------------------------------------
 # How the run was started
 # ---------------------------------------------------------------------------

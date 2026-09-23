@@ -22,9 +22,9 @@
       "type": "pull_request",
       "parameters": {
         "required_approving_review_count": 0,
-        "dismiss_stale_reviews_on_push": false,
+        "dismiss_stale_reviews_on_push": true,
         "require_code_owner_review": false,
-        "require_last_push_approval": false,
+        "require_last_push_approval": true,
         "required_review_thread_resolution": true,
         "allowed_merge_methods": [
           "squash",
@@ -35,7 +35,7 @@
     {
       "type": "required_status_checks",
       "parameters": {
-        "strict_required_status_checks_policy": false,
+        "strict_required_status_checks_policy": true,
         "do_not_enforce_on_create": false,
         "required_status_checks": [
           {
