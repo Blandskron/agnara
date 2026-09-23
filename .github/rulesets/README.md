@@ -78,9 +78,10 @@ kept so that adding a second maintainer or a review bot is a one-line change to
 
 These JSON files are the reviewed source definitions. Applying them is a
 maintainer action through Settings or the API — this repository change does not
-silently mutate GitHub settings. `protect-release-tags` is applied and active;
-the two branch definitions above are not yet applied, and the live rulesets
-still carry the pre-review configuration.
+silently mutate GitHub settings. All three are now applied and active:
+`protect-release-tags`, and `protect-develop`/`protect-main` as of #455
+(2026-09-22), confirmed by reading the live configuration back and diffing it
+field by field against these files.
 
 ## Why no bypass actors
 
