@@ -455,6 +455,14 @@ may see. The JSON discovery endpoint and third-party documentation providers
 remain internal. `openapi_path` remains the legacy schema-only spelling and
 cannot be combined with `documentation`.
 
+Explorer pages are viewer-specific. Their default `Cache-Control` is
+`private, no-store`. A custom `cache_control` must include an unqualified
+`private` or `no-store` directive; `max-age` alone, field-qualified
+`private="..."`, and `must-understand` cannot protect the whole page from
+shared caches. `private, max-age=60` remains available for browser-local
+caching. Keep the default `no-store` when a browser might switch identities,
+such as through cookies, because its local cache can outlive that switch.
+
 The request surface projects truthfully. A cookie is `in: cookie`. Form fields
 and uploads are properties of one `requestBody` object with
 `additionalProperties: false` — they are a body, not parameters — an upload is

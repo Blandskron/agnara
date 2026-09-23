@@ -193,6 +193,8 @@ def test_the_explorer_shares_the_discovery_authorization_rules_at_compile_time()
         _compile_explorer(route(challenge=None), empty)
     with pytest.raises(_DiscoveryDefinitionError, match="viewer-specific"):
         _compile_explorer(route(cache_control="public, max-age=60"), empty)
+    with pytest.raises(_DiscoveryDefinitionError, match="viewer-specific"):
+        _compile_explorer(route(cache_control="max-age=60"), empty)
     with pytest.raises(_DiscoveryDefinitionError, match="never answers 401"):
         _compile_explorer(route(allow_anonymous=True, challenge="Bearer"), empty)
 

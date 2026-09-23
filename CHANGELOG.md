@@ -19,6 +19,9 @@ published; its fix ships in `1.0.0`.
 
 ## [Unreleased]
 
+- Require a whole-response private or no-store cache directive for
+  viewer-specific Explorer and discovery output, preventing shared caches
+  from replaying one viewer's filtered metadata to another.
 - Reject directly constructed execution plans that omit declared scope,
   application, or confirmation policies, preventing direct and MCP calls from
   bypassing capability authorization.
