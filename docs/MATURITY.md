@@ -178,9 +178,9 @@ the compatibility contract.
 | Release readiness program | `IMPLEMENTED` | Evidence expires against the commit it was recorded on. |
 | Benchmarks | `IMPLEMENTED` | Six benchmark programs are inventoried in `docs/benchmarks/coverage.md`. `runtime_paths.py` covers registration/freeze, compilation, DI, policies, identity, idempotency, composition, embedding and stream phases. |
 | Performance budgets | `IMPLEMENTED` | `docs/performance/budgets.json` holds 15 calibrated core limits enforced by `scripts/check_performance_budgets.py`. V1-41 also makes the required performance job prove a synthetic over-budget artifact fails before it checks the machine-dependent record. The release gate and every limit remain subject to CI evidence and maintainer approval. |
-| Property testing and fuzzing | `PLANNED` | None. |
-| Protocol conformance suites | `PLANNED` | MCP conformance is repository-authored; no upstream suite is run. |
-| Security scanning, SBOM, signing | `PLANNED` | None configured. `SECURITY.md` records this. |
+| Property testing and fuzzing | `IMPLEMENTED` | Bounded, derandomized property and fuzz regression lanes cover routing, schemas, dependency graphs, capability identity and idempotency; they are not continuous fuzzing or formal verification. |
+| Protocol conformance suites | `IMPLEMENTED` | The MCP adapter runs its version-pinned SDK/conformance coverage in CI. This is adapter-level evidence, not an upstream network-transport suite or a claim of complete protocol conformance. |
+| Security scanning, SBOM, signing | `IMPLEMENTED` | CI runs CodeQL; release builds create and verify deterministic CycloneDX SBOMs and artifact digests. Trusted Publishing and PEP 740 attestations remain actions of an authorized release, not evidence that one has occurred. |
 | Documentation consistency checks | `IMPLEMENTED` | This table is machine-checked where possible. |
 
 ## How to change this file

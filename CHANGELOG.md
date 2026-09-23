@@ -20,6 +20,10 @@ workspace carries the synchronized version; through `0.1.0a4` only the
 Work in this section contributes to the first stable `1.0.0` release. Entries
 describe user- and contributor-visible changes only.
 
+- Record the independent 1.0.0 Go/No-Go audit, clarify that the release
+  precondition checker accepts the stable target, and align maturity claims
+  with the implemented property, conformance, CodeQL and SBOM controls.
+
 - Rehearse the protected 1.0 publication path from the current candidate in a
   disposable worktree. The rehearsal verifies the complete seven-distribution
   bundle, immutable hashes, CycloneDX SBOM and closed-index installation
