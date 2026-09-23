@@ -167,6 +167,14 @@ that returns `PolicyInteractionRequired`. Dynamic
 produce effects before reaching it. A `confirmation="policy"` declaration
 without an explicit policy is rejected during plan compilation (ADR 0024).
 
+`ExecutionPlan.compile()` is the normal plan constructor. A directly
+constructed plan is also checked at construction: its policy sequence must
+start with the declared scope check and explicit application policies, in
+that order, and end with a matching confirmation check when confirmation is
+required. Missing declarations raise `DefinitionError` before the plan can be
+invoked or exposed through an adapter. Direct plans without security
+declarations remain valid.
+
 ## 14. Deadline-aware handler
 
 ```python

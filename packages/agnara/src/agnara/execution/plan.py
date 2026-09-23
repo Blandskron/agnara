@@ -55,6 +55,49 @@ class ExecutionPlan:
                 f"target_deps must be a mapping, got {type(self.target_deps).__name__}"
             )
 
+        # Every invocation boundary consumes this tuple as the complete policy
+        # pipeline. Check it here so directly constructed and copied plans
+        # cannot omit declarations that compile() normally supplies.
+        try:
+            policies = tuple(self.policies)
+        except TypeError as error:
+            raise DefinitionError("plan policies must be an iterable of Policy values") from error
+        for policy in policies:
+            if not isinstance(policy, Policy):
+                raise DefinitionError(f"plan policy {policy!r} must implement the Policy protocol")
+        object.__setattr__(self, "policies", policies)
+
+        position = 0
+        if self.definition.scopes:
+            if (
+                not policies
+                or type(policies[0]) is not ScopePolicy
+                or policies[0].required_scopes != self.definition.scopes
+            ):
+                raise DefinitionError(
+                    f"capability {self.definition.id} plan is missing its declared scope policy"
+                )
+            position = 1
+        for declared in self.definition.policies:
+            if position >= len(policies) or policies[position] is not declared:
+                raise DefinitionError(
+                    f"capability {self.definition.id} plan is missing a declared application policy"
+                )
+            position += 1
+        if self.definition.confirmation is Confirmation.POLICY and not self.definition.policies:
+            raise DefinitionError(
+                f"capability {self.definition.id} declares policy confirmation "
+                "but has no explicit policies"
+            )
+        if self.definition.confirmation is Confirmation.REQUIRED and (
+            position >= len(policies)
+            or type(policies[-1]) is not ConfirmationPolicy
+            or policies[-1].capability_id != self.definition.id
+        ):
+            raise DefinitionError(
+                f"capability {self.definition.id} plan is missing its required confirmation policy"
+            )
+
         _check_streaming_shape(self.definition)
 
         immutable_deps = {

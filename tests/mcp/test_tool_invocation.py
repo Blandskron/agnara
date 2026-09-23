@@ -26,7 +26,7 @@ from mcp_types import (
     TextContent,
 )
 
-from agnara import Agnara, CapabilityId, Confirmation
+from agnara import Agnara, CapabilityId, Confirmation, DefinitionError, ScopePolicy
 from agnara.core.di import DIContainer, DIRegistry, Scope, provider
 from agnara.execution import (
     ExecutionContext,
@@ -354,6 +354,36 @@ def test_declared_scopes_deny_an_unauthorized_call_before_any_effect() -> None:
     assert result.is_error is True
     assert payload(result)["code"] == "forbidden"
     assert journal.calls == []
+
+
+def test_mcp_cannot_accept_a_direct_plan_missing_declared_authorization() -> None:
+    app = Agnara("direct")
+    calls: list[str] = []
+
+    @app.capability(scopes={"records:read"})
+    def restricted() -> str:
+        calls.append("restricted")
+        return "private"
+
+    mcp = Mcp(app)
+    mcp.tool(restricted)
+    exposures = mcp.compile()
+    definition = app.capabilities[CapabilityId("direct", "restricted")]
+
+    with pytest.raises(DefinitionError, match="declared scope policy"):
+        ExecutionPlan(definition=definition, target_deps={})
+
+    plan = ExecutionPlan(
+        definition=definition,
+        target_deps={},
+        policies=(ScopePolicy(definition.scopes),),
+    )
+    invoker = McpToolInvoker(exposures, [plan], DIContainer(DIRegistry()))
+    result = call(invoker, "direct.restricted")
+
+    assert result.is_error is True
+    assert payload(result)["code"] == "forbidden"
+    assert calls == []
 
 
 def test_runtime_owned_parameters_cannot_be_supplied_by_a_caller() -> None:
