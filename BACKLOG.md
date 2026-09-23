@@ -212,6 +212,11 @@ order.
   candidate worktree, bind its hashes and SBOM to the tested bytes, and record
   the protected-workflow checks without publishing, tagging or approving it.
 
+- [x] Perform the independent 1.0.0 Go/No-Go audit (V1-45, #484): evaluate
+  `d67e9b2` against every mandatory gate, rebuild and install its temporary
+  seven-distribution candidate, and record `NOT_RELEASE_READY` while final
+  cut documents, protected publication and human review remain pending.
+
 - [x] Finalize the 1.0 public API (V1-31): classify 166 canonical names across
   13 governed modules as stable, remove 171 duplicate leaf-module export paths,
   move DI to `agnara.di`, and rename introspection snapshot `apps` to
