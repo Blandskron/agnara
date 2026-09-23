@@ -60,7 +60,7 @@ from agnara_http._problem import (
     _TransportFailure,
 )
 from agnara_http._response import _send_response, _SerializedResponse
-from agnara_http._routing import _FrozenRouteRegistry, _normalize_method, _parse_template
+from agnara_http._routing import _FrozenRouteRegistry, _parse_template, _request_method
 
 type _Scope = dict[str, Any]
 type _Message = dict[str, Any]
@@ -491,9 +491,9 @@ class _ExplorerDispatcher:
             await self._fallback(scope, receive, send)
             return
 
-        normalized = _normalize_method(method)
-        head = normalized == "HEAD"
-        if normalized not in {"GET", "HEAD"}:
+        request_method = _request_method(method)
+        head = request_method == "HEAD"
+        if request_method not in {"GET", "HEAD"}:
             await self._send_error(self._method_not_allowed(path), send)
             return
 

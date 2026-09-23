@@ -426,8 +426,10 @@ make a viewer render. The extension protocol for third-party providers remains
 internal for 1.0.
 
 The selected page, schema and every local asset reserve routes through the same
-startup collision boundary as capabilities. They support GET/HEAD and return
-405 with `Allow: GET, HEAD` otherwise. Under an ASGI mount (`root_path="/api"`)
+startup collision boundary as capabilities. They support exact `GET`/`HEAD`
+request methods and return 405 with `Allow: GET, HEAD` otherwise. This also
+applies to Explorer and viewer-specific discovery; lowercase or malformed
+method tokens never publish their content. Under an ASGI mount (`root_path="/api"`)
 the page and initializer use `/api/...` URLs automatically.
 
 ## Explorer

@@ -370,7 +370,9 @@ def test_a_head_request_returns_the_headers_without_a_body() -> None:
     assert get_body
 
 
-@pytest.mark.parametrize("method", ["POST", "PUT", "DELETE", "PATCH"])
+@pytest.mark.parametrize(
+    "method", ["POST", "PUT", "DELETE", "PATCH", "get", "head", "Get", "HeAd", "GET SCHEMA"]
+)
 def test_another_method_is_refused_with_allow(method: str) -> None:
     served, _ = dispatcher()
 

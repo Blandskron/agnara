@@ -31,8 +31,8 @@ from agnara_http._problem import (
 from agnara_http._response import _send_response, _SerializedResponse
 from agnara_http._routing import (
     _FrozenRouteRegistry,
-    _normalize_method,
     _parse_template,
+    _request_method,
     _RouteRegistry,
 )
 
@@ -232,17 +232,17 @@ class _SurfaceDispatcher:
         method = scope.get("method")
         if not isinstance(method, str):
             raise TypeError("ASGI scope 'method' must be a string")
-        normalized_method = _normalize_method(method)
+        request_method = _request_method(method)
         path = _routed_path(scope)
         match = self._routes.match("GET", path)
         if match is None:
             await self._fallback(scope, receive, send)
             return
-        if normalized_method in {"GET", "HEAD"}:
+        if request_method in {"GET", "HEAD"}:
             await _send_response(
                 match.route.target.response,
                 send,
-                head=normalized_method == "HEAD",
+                head=request_method == "HEAD",
             )
             return
         response = _serialize_transport_failure(
