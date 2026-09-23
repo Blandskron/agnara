@@ -15,6 +15,7 @@ argued with stops being read.
 from __future__ import annotations
 
 import re
+import shutil
 from pathlib import Path
 
 REPOSITORY = Path(__file__).resolve().parents[2]
@@ -33,6 +34,14 @@ SKIPPED_DIRECTORIES = frozenset(
         "node_modules",
     }
 )
+
+#: Prefixes for directories that are always local, untracked task state, even
+#: when suffixed with a per-task label (``.venv-audit-468``,
+#: ``.uv-cache-v1-45``). ``.gitignore`` only lists the bare names above, and a
+#: worker that names its isolated environment after the issue it is auditing
+#: previously leaked into the scan because neither name is ever a reviewed
+#: source directory.
+SKIPPED_DIRECTORY_PREFIXES = (".venv-", ".uv-cache-")
 
 #: Vendored documentation assets ship third-party example credential syntax and
 #: carry their own hash and license gate, exactly as ``QUALITY_GATES.md`` and
@@ -66,7 +75,10 @@ def reviewed_files() -> list[Path]:
         if not path.is_file():
             continue
         relative = path.relative_to(REPOSITORY).as_posix()
-        if any(part in SKIPPED_DIRECTORIES for part in path.parts):
+        if any(
+            part in SKIPPED_DIRECTORIES or part.startswith(SKIPPED_DIRECTORY_PREFIXES)
+            for part in path.parts
+        ):
             continue
         if relative.startswith(".artifacts") or relative.startswith(".release-validation"):
             continue
@@ -117,6 +129,26 @@ def test_the_scan_actually_reaches_the_repository() -> None:
     assert "docs/THREAT_MODEL.md" in found
     assert "packages/agnara-http/src/agnara_http/composition.py" in found
     assert len(found) > 200
+
+
+def test_a_nonstandard_local_environment_directory_is_ignored() -> None:
+    """A per-task isolated environment must not affect the scan.
+
+    A worker auditing an issue sometimes names its throwaway virtual
+    environment or uv cache after the issue it is working, e.g.
+    ``.venv-audit-468`` or ``.uv-cache-v1-45``. ``.gitignore`` only lists the
+    bare ``.venv``/``.uv-cache`` names, so such a directory is untracked local
+    state, not a reviewed source directory, and must not affect findings even
+    though its name does not appear in ``SKIPPED_DIRECTORIES``.
+    """
+    stray = REPOSITORY / ".venv-audit-999" / "lib" / "leak"
+    stray.mkdir(parents=True)
+    (stray / "leak.txt").write_bytes(b"AKIA" + b"ABCDEFGHIJKLMNOP")
+    try:
+        found = {path.relative_to(REPOSITORY).as_posix() for path in reviewed_files()}
+        assert not any(part.startswith(".venv-audit-999") for part in found)
+    finally:
+        shutil.rmtree(REPOSITORY / ".venv-audit-999")
 
 
 def test_a_planted_credential_would_be_caught(tmp_path: Path) -> None:
