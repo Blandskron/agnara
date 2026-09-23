@@ -19,6 +19,9 @@ published; its fix ships in `1.0.0`.
 
 ## [Unreleased]
 
+- Reject directly constructed execution plans that omit declared scope,
+  application, or confirmation policies, preventing direct and MCP calls from
+  bypassing capability authorization.
 - Pin every phased release dispatch to the successful first-phase candidate commit and compare published PyPI file SHA-256 values with the retained build before continuing publication.
 
 ## [1.0.0] - 2026-09-22
