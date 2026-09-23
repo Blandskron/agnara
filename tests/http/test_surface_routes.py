@@ -324,15 +324,15 @@ def test_head_keeps_get_headers_and_sends_no_body() -> None:
     assert dict(head_events[0]["headers"])[b"content-length"] == b"7"
 
 
-def test_method_tokens_are_normalized_for_a_surface() -> None:
-    served, _ = dispatcher(surface(body=b"schema"))
-    assert request(served, "get", "/openapi.json")[1]["body"] == b"schema"
+@pytest.mark.parametrize("method", ["get", "head", "Get", "HeAd", "GET SCHEMA"])
+def test_only_exact_get_and_head_serve_a_surface(method: str) -> None:
+    served, fallback = dispatcher(surface(body=b"schema"))
+    events = request(served, method, "/openapi.json")
 
-
-def test_an_invalid_method_token_is_refused_consistently() -> None:
-    served, _ = dispatcher(surface())
-    with pytest.raises(ValueError, match="invalid HTTP method token"):
-        request(served, "GET SCHEMA", "/openapi.json")
+    assert events[0]["status"] == 405
+    assert dict(events[0]["headers"])[b"allow"] == b"GET, HEAD"
+    assert b"schema" not in events[1]["body"]
+    assert fallback.calls == []
 
 
 def test_other_methods_receive_405_with_get_and_head_allowed() -> None:

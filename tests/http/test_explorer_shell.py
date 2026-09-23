@@ -401,11 +401,14 @@ def test_application_controlled_text_cannot_inject_markup(path: str) -> None:
     assert "&lt;script&gt;alert(&#x27;x&#x27;)&lt;/script&gt;" in body
 
 
-@pytest.mark.parametrize("method", ["POST", "PUT", "DELETE", "PATCH"])
-def test_another_method_is_refused_with_allow(method: str) -> None:
+@pytest.mark.parametrize(
+    "method", ["POST", "PUT", "DELETE", "PATCH", "get", "head", "Get", "HeAd", "GET SCHEMA"]
+)
+@pytest.mark.parametrize("path", [BASE, f"{BASE}/billing.refund"])
+def test_another_method_is_refused_with_allow(method: str, path: str) -> None:
     served, _ = dispatcher()
 
-    status, headers, _ = request(served, BASE, method)
+    status, headers, _ = request(served, path, method)
 
     assert status == 405
     assert headers[b"allow"] == b"GET, HEAD"

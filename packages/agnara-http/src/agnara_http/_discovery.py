@@ -43,7 +43,7 @@ from agnara_http._problem import (
     _TransportFailure,
 )
 from agnara_http._response import _send_response, _SerializedResponse
-from agnara_http._routing import _FrozenRouteRegistry, _normalize_method, _parse_template
+from agnara_http._routing import _FrozenRouteRegistry, _parse_template, _request_method
 
 type _Scope = dict[str, Any]
 type _Message = dict[str, Any]
@@ -295,17 +295,17 @@ class _DiscoveryDispatcher:
             await self._fallback(scope, receive, send)
             return
 
-        normalized = _normalize_method(method)
-        if normalized not in {"GET", "HEAD"}:
+        request_method = _request_method(method)
+        if request_method not in {"GET", "HEAD"}:
             await _send_response(self._method_not_allowed(path), send)
             return
 
         principal = _principal_or_failure(self._route, scope)
         if principal is None:
-            await _send_response(self._unauthenticated(path), send, head=normalized == "HEAD")
+            await _send_response(self._unauthenticated(path), send, head=request_method == "HEAD")
             return
         if isinstance(principal, _ResolverFailed):
-            await _send_response(self._internal(), send, head=normalized == "HEAD")
+            await _send_response(self._internal(), send, head=request_method == "HEAD")
             return
 
         document = filter_snapshot(self._route.snapshot, self._route.visibility, principal)
@@ -324,7 +324,7 @@ class _DiscoveryDispatcher:
             ),
             body,
         )
-        await _send_response(response, send, head=normalized == "HEAD")
+        await _send_response(response, send, head=request_method == "HEAD")
 
     def _method_not_allowed(self, path: str) -> _SerializedResponse:
         return _serialize_transport_failure(

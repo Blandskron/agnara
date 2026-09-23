@@ -98,7 +98,7 @@ from agnara_http._redoc import _ReDocProvider
 from agnara_http._response import _send_response, _SerializedResponse
 from agnara_http._routing import (
     _FrozenRouteRegistry,
-    _normalize_method,
+    _request_method,
     _RouteDefinitionError,
     _RouteRegistryFrozenError,
 )
@@ -573,8 +573,8 @@ class _DocumentationDispatcher:
             await self._fallback(scope, receive, send)
             return
         route, asset_name = matched
-        normalized = _normalize_method(method)
-        if normalized not in {"GET", "HEAD"}:
+        request_method = _request_method(method)
+        if request_method not in {"GET", "HEAD"}:
             response = _serialize_transport_failure(
                 _TransportFailure.METHOD_NOT_ALLOWED,
                 "the target does not accept this method",
@@ -610,7 +610,7 @@ class _DocumentationDispatcher:
                 ),
                 asset.body,
             )
-        await _send_response(response, send, head=normalized == "HEAD")
+        await _send_response(response, send, head=request_method == "HEAD")
 
     def _match(self, path: str) -> tuple[_DocumentationRoute, str | None] | None:
         for route in self._routes:

@@ -19,6 +19,9 @@ published; its fix ships in `1.0.0`.
 
 ## [Unreleased]
 
+- Match incoming publication methods case-sensitively so lowercase or malformed
+  requests cannot reach GET-only schema, documentation, discovery, or Explorer
+  content.
 - Require a whole-response private or no-store cache directive for
   viewer-specific Explorer and discovery output, preventing shared caches
   from replaying one viewer's filtered metadata to another.
