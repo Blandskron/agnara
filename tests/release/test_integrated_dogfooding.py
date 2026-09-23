@@ -5,12 +5,16 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import tomllib
 from pathlib import Path
 
 from tests.architecture.boundaries import WORKSPACE_ROOT
 
 REFERENCE_APPS = WORKSPACE_ROOT / "tests" / "reference_apps"
 UV = shutil.which("uv")
+CANDIDATE_VERSION = tomllib.loads(
+    (WORKSPACE_ROOT / "packages" / "agnara" / "pyproject.toml").read_text(encoding="utf-8")
+)["project"]["version"]
 
 
 def _python(environment: Path) -> Path:
@@ -101,7 +105,7 @@ def test_reference_apps_run_from_fresh_installed_artifacts(tmp_path: Path) -> No
             str(WORKSPACE_ROOT),
             "--require-installed",
             "--expected-version",
-            "1.0.0.dev0",
+            CANDIDATE_VERSION,
         ],
         cwd=tmp_path,
         environment=env,

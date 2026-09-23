@@ -127,8 +127,8 @@ order.
     the current GitHub readback returned no open CodeQL, Dependabot or secret
     scanning alert. Focused security/property evidence passed (87 tests).
     The release remains `NEEDS_REVIEW`/not ready until its independent human,
-    CI-only and protected-publication gates are satisfied. A non-blocking
-    local-secret-inventory test-scope follow-up is #469.
+    CI-only and protected-publication gates are satisfied. The non-blocking
+    local-secret-inventory test-scope follow-up #469 was fixed by PR #487.
 - [x] Add schema-boundary conformance (V1-27): Pydantic and msgspec remain
   optional development fixtures. Their supported evidence is JSON-normalized
   nested dataclass-shaped data materialized and validated by the standard
