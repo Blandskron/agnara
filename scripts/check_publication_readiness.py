@@ -68,6 +68,7 @@ Standard library only.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -680,6 +681,7 @@ def check_index(
     require_published: bool,
     recorded_kinds: Mapping[str, str] | None = None,
     phase: str | None = None,
+    dist_dir: Path | None = None,
 ) -> tuple[list[str], list[str]]:
     """Compare the index against what this release intends to put there.
 
@@ -733,7 +735,14 @@ def check_index(
                 )
             continue
 
-        files = [file["filename"] for file in document.get("releases", {}).get(version, [])]
+        release_files = document.get("releases", {}).get(version, [])
+        if not isinstance(release_files, list) or any(
+            not isinstance(file, dict) or not isinstance(file.get("filename"), str)
+            for file in release_files
+        ):
+            problems.append(f"{name} {version}: malformed file listing on {safe_index}")
+            continue
+        files = [file["filename"] for file in release_files]
         if must_be_complete:
             stem = distribution.artifact_stem
             wanted = {f"{stem}-{version}-py3-none-any.whl", f"{stem}-{version}.tar.gz"}
@@ -742,6 +751,24 @@ def check_index(
                 problems.append(f"{name} {version} is incomplete on {safe_index}; missing {absent}")
             else:
                 notes.append(f"{name} {version}: wheel and sdist present")
+            if dist_dir is not None:
+                if len(files) != len(wanted) or set(files) != wanted:
+                    problems.append(
+                        f"{name} {version} has an unexpected artifact set on {safe_index}"
+                    )
+                for file in release_files:
+                    filename = file["filename"]
+                    if filename not in wanted:
+                        continue
+                    digests = file.get("digests")
+                    digest = digests.get("sha256") if isinstance(digests, dict) else None
+                    if not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+                        problems.append(f"{name} {filename}: no valid PyPI SHA-256 digest")
+                        continue
+                    with (dist_dir / filename).open("rb") as artifact:
+                        actual = hashlib.file_digest(artifact, "sha256").hexdigest()
+                    if digest != actual:
+                        problems.append(f"{name} {filename}: PyPI SHA-256 differs from this build")
         elif files:
             problems.append(
                 f"{name} {version} already has {len(files)} file(s) on {safe_index}: "
@@ -816,8 +843,14 @@ def run(
         problems.append("project/environment requires --oidc-identity")
 
     if dist_dir is not None:
-        problems.extend(check_artifact_set(manifest, dist_dir, version))
+        artifact_problems = check_artifact_set(manifest, dist_dir, version)
+        problems.extend(artifact_problems)
         notes.append(f"artifact set checked in {dist_dir}")
+    else:
+        artifact_problems = []
+
+    if online and phase is not None and not artifact_problems and dist_dir is None:
+        problems.append("phased online release checks require --dist for SHA-256 comparison")
 
     if online:
         index_problems, index_notes = check_index(
@@ -827,6 +860,7 @@ def run(
             require_published=require_published,
             recorded_kinds=publisher_kinds(workspace),
             phase=phase,
+            dist_dir=dist_dir if not artifact_problems else None,
         )
         problems.extend(index_problems)
         notes.extend(index_notes)

@@ -214,6 +214,121 @@ def test_a_missing_dispatch_commit_is_refused(checkout: Path) -> None:
     assert any("GITHUB_SHA is not set" in problem for problem in problems)
 
 
+def _candidate_fetch(sha: str, *, version: str = VERSION, phase: str = "bootstrap-1") -> Any:
+    name = f"agnara-release-candidate-{version}-{phase}"
+
+    def fetch(url: str) -> dict[str, Any]:
+        if "/actions/artifacts?" in url:
+            return {
+                "total_count": 1,
+                "artifacts": [
+                    {
+                        "name": name,
+                        "expired": False,
+                        "workflow_run": {"id": 17, "head_sha": sha},
+                    }
+                ],
+            }
+        if "/actions/runs/17" in url:
+            return {
+                "id": 17,
+                "path": ".github/workflows/release.yml@main",
+                "event": "workflow_dispatch",
+                "head_branch": "main",
+                "head_sha": sha,
+                "conclusion": "success",
+            }
+        return _protected()
+
+    return fetch
+
+
+def test_later_phase_accepts_the_first_phase_candidate(checkout: Path) -> None:
+    context = _context(checkout)
+    code, problems, _ = tool.run(
+        VERSION,
+        context=context,
+        git=tool.make_git(checkout),
+        fetch=_candidate_fetch(context.sha),
+        protected_environment="pypi",
+        phase="bootstrap-2",
+    )
+    assert (code, problems) == (0, [])
+
+
+def test_later_phase_refuses_a_new_main_commit_for_the_same_version(checkout: Path) -> None:
+    first_sha = _git(checkout, "rev-parse", "HEAD")
+    _git(checkout, "commit", "--allow-empty", "-m", "same version, changed main")
+    _git(checkout, "push", "origin", "main")
+    context = _context(checkout)
+    code, problems, _ = tool.run(
+        VERSION,
+        context=context,
+        git=tool.make_git(checkout),
+        fetch=_candidate_fetch(first_sha),
+        protected_environment="pypi",
+        phase="bootstrap-2",
+    )
+    assert code == 1
+    assert any("all phases must use one commit" in problem for problem in problems)
+
+
+def test_later_phase_refuses_missing_candidate_evidence(checkout: Path) -> None:
+    context = _context(checkout)
+
+    def fetch(url: str) -> dict[str, Any]:
+        return {"total_count": 0, "artifacts": []} if "/actions/artifacts?" in url else _protected()
+
+    code, problems, _ = tool.run(
+        VERSION,
+        context=context,
+        git=tool.make_git(checkout),
+        fetch=fetch,
+        protected_environment="pypi",
+        phase="bootstrap-2",
+    )
+    assert code == 1
+    assert any("expected exactly one retained candidate" in problem for problem in problems)
+
+
+def test_final_phase_checks_both_earlier_candidate_commits(checkout: Path) -> None:
+    context = _context(checkout)
+    other_sha = "a" * 40
+
+    def fetch(url: str) -> dict[str, Any]:
+        if "/actions/artifacts?" in url:
+            second = "bootstrap-2" in url
+            phase = "bootstrap-2" if second else "bootstrap-1"
+            return {
+                "total_count": 1,
+                "artifacts": [
+                    {
+                        "name": f"agnara-release-candidate-{VERSION}-{phase}",
+                        "expired": False,
+                        "workflow_run": {
+                            "id": 18 if second else 17,
+                            "head_sha": other_sha if second else context.sha,
+                        },
+                    }
+                ],
+            }
+        if "/actions/runs/" in url:
+            second = url.endswith("18")
+            return {
+                "id": 18 if second else 17,
+                "path": ".github/workflows/release.yml@main",
+                "event": "workflow_dispatch",
+                "head_branch": "main",
+                "head_sha": other_sha if second else context.sha,
+                "conclusion": "success",
+            }
+        return _protected()
+
+    problems = tool.check_phase_candidate(context, VERSION, "final", fetch)
+    assert len(problems) == 1
+    assert "bootstrap-2 published from" in problems[0]
+
+
 # ---------------------------------------------------------------------------
 # The tag must not exist yet, anywhere
 # ---------------------------------------------------------------------------

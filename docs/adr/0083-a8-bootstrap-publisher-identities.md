@@ -79,6 +79,16 @@ verification in any phase leaves no tag, because the tag job runs only in
 `final` and depends on `verify-published`. The three pending slots freed by
 `bootstrap-1` are what allow the `bootstrap-2` publishers to be created.
 
+Later dispatches must use the same `main` commit as the successful
+`bootstrap-1` run for the version. Each build retains a version- and
+phase-specific Actions candidate artifact. The precondition gate reads the
+successful earlier workflow runs behind those artifacts and refuses a missing,
+expired, ambiguous or different commit. Before approval and after each phase's
+uploads, online readiness compares PyPI's SHA-256 for every published wheel and
+sdist against the current run's hash-checked build. This keeps the final tag,
+GitHub bundle and immutable PyPI files tied to one candidate; artifact
+retention limits the time in which later phases can proceed.
+
 Schema 3 of `publication.json` records the common owner/repository/workflow
 and an exact `publisher_environment` per canonical project. Prior confirmation
 of `pypi` cannot certify a bootstrap identity. All seven remain `UNVERIFIED`

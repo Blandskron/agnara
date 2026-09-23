@@ -14,6 +14,7 @@ failure and asserts the script reports it.
 
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import io
 import json
@@ -1120,6 +1121,53 @@ def test_bootstrap_2_accepts_a_complete_bootstrap_1_without_re_reading_its_publi
 
     assert problems == []
     assert sum("wheel and sdist present" in note for note in notes) == 3
+
+
+def test_earlier_phase_pypi_files_must_match_the_current_build(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    index = _index_after(*BOOTSTRAP_1)
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    for name in BOOTSTRAP_1:
+        files = index[name]["releases"][VERSION]
+        for file in files:
+            contents = f"{name}/{file['filename']}".encode()
+            (dist / file["filename"]).write_bytes(contents)
+            file["digests"] = {"sha256": hashlib.sha256(contents).hexdigest()}
+    _stub_index(monkeypatch, index)
+
+    problems, _ = tool.check_index(
+        MANIFEST,
+        VERSION,
+        index=tool.DEFAULT_INDEX,
+        require_published=False,
+        phase="bootstrap-2",
+        dist_dir=dist,
+    )
+    assert problems == []
+
+    index[BOOTSTRAP_1[0]]["releases"][VERSION][0]["digests"]["sha256"] = "0" * 64
+    problems, _ = tool.check_index(
+        MANIFEST,
+        VERSION,
+        index=tool.DEFAULT_INDEX,
+        require_published=False,
+        phase="bootstrap-2",
+        dist_dir=dist,
+    )
+    assert any("PyPI SHA-256 differs from this build" in problem for problem in problems)
+
+    index[BOOTSTRAP_1[0]]["releases"][VERSION][0].pop("digests")
+    problems, _ = tool.check_index(
+        MANIFEST,
+        VERSION,
+        index=tool.DEFAULT_INDEX,
+        require_published=False,
+        phase="bootstrap-2",
+        dist_dir=dist,
+    )
+    assert any("no valid PyPI SHA-256 digest" in problem for problem in problems)
 
 
 def test_a_phase_refuses_files_that_already_exist_for_its_own_or_a_later_project(
