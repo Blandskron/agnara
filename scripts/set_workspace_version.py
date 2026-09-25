@@ -7,9 +7,9 @@ lockfile cannot be refreshed.
 
 Examples::
 
-    python scripts/set_workspace_version.py development 0.1.0a4
-    python scripts/set_workspace_version.py release 0.1.0a4
-    python scripts/set_workspace_version.py development 0.1.0a4 --check
+    python scripts/set_workspace_version.py development 1.0.4
+    python scripts/set_workspace_version.py release 1.0.3
+    python scripts/set_workspace_version.py development 1.0.4 --check
 
 Only the standard library is imported so the command remains usable while the
 development environment itself is being repaired.

@@ -27,6 +27,19 @@ DOCS = (
     + sorted((WORKSPACE_ROOT / "docs").rglob("*.md"))
     + sorted((WORKSPACE_ROOT / "packages").glob("*/README.md"))
 )
+RELEASE_TOOLING = [
+    WORKSPACE_ROOT / name
+    for name in (
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml",
+        "scripts/check_public_imports.py",
+        "scripts/check_publication_readiness.py",
+        "scripts/check_release_preconditions.py",
+        "scripts/check_release_readiness.py",
+        "scripts/distributions.py",
+        "scripts/set_workspace_version.py",
+    )
+]
 SUPERSEDED = re.compile(
     r"\b0\.1\.0a[2-9]\b|\bA[2-9]\b|\b1\.0\.[012]\b|\bV1-\d+\b|"
     r"RELEASE_PLAN\.md|MIGRATION_A8_TO_1_0\.md|"
@@ -38,7 +51,7 @@ MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 
 def test_live_documentation_has_no_superseded_release_claims() -> None:
     stale: list[str] = []
-    for document in DOCS:
+    for document in [*DOCS, *RELEASE_TOOLING]:
         if document.name == "CHANGELOG.md":
             continue  # The compare URL legitimately starts at the last published tag.
         for number, line in enumerate(document.read_text(encoding="utf-8").splitlines(), 1):

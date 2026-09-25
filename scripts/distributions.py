@@ -6,9 +6,7 @@ spelled out independently in `scripts/check_distributions.py`,
 `scripts/check_release_readiness.py`, `tests/architecture/boundaries.py`, the
 workspace root `pyproject.toml` and twice inside `.github/workflows/`. Six
 copies of a list is six chances for a release to disagree with itself about
-what it is publishing, and the `0.1.0a4` incident was exactly a disagreement
-about a distribution name -- between this repository and PyPI rather than
-between two files here, but the class of failure is the same.
+what it is publishing.
 
 Used as a module by the other release scripts, and as a command by the
 workflows so a shell step never has to retype a name or a count::
@@ -18,7 +16,7 @@ workflows so a shell step never has to retype a name or a count::
     python scripts/distributions.py --count
     python scripts/distributions.py --third-party
     python scripts/distributions.py --publication-order
-    python scripts/distributions.py --pinned 0.1.0a7
+    python scripts/distributions.py --pinned 1.0.3
 
 Standard library only, like the rest of the repository's release tooling.
 """
@@ -64,7 +62,7 @@ class Distribution:
         """The filename stem `uv build` writes, per PEP 427 and PEP 625.
 
         A canonical project name is dash-separated; a built artifact
-        normalizes the dash to an underscore. `agnara_a2a-0.1.0a7.tar.gz` is
+        normalizes the dash to an underscore. `agnara_a2a-1.0.3.tar.gz` is
         therefore the correct filename for the project `agnara-a2a`, not a
         typo, and nothing in the release should "fix" it.
         """
@@ -125,7 +123,7 @@ class Manifest:
         or not anyone chooses it. Publishing `agnara` last makes the partial
         state fail closed: an adapter pins its kernel exactly, so a sibling
         published without its kernel resolves to nothing and installs for
-        nobody. The reverse order -- what `0.1.0a4` did -- leaves the kernel
+        nobody. The reverse order leaves the kernel
         advertising a version whose adapters do not exist, which installs
         cleanly and is wrong. See ADR 0079.
         """
