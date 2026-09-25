@@ -39,27 +39,27 @@ created only after it (ADR 0082). This script keeps the registry facts honest;
 Modes, which compose::
 
     # offline: the repository's own publish-readiness
-    python scripts/check_publication_readiness.py --version 0.1.0a8
+    python scripts/check_publication_readiness.py --version <version>
 
     # plus the built artifact set
-    python scripts/check_publication_readiness.py --version 0.1.0a8 --dist dist/
+    python scripts/check_publication_readiness.py --version <version> --dist dist/
 
     # plus the registry, before publishing: nothing of this version exists yet
-    python scripts/check_publication_readiness.py --version 0.1.0a8 --online
+    python scripts/check_publication_readiness.py --version <version> --online
 
     # inside GitHub Actions: the recorded tuple is this run's OIDC identity
-    python scripts/check_publication_readiness.py --version 0.1.0a8 --oidc-identity
+    python scripts/check_publication_readiness.py --version <version> --oidc-identity
 
     # after publishing: all seven are complete, wheel and sdist
-    python scripts/check_publication_readiness.py --version 0.1.0a8 \\
+    python scripts/check_publication_readiness.py --version <version> \\
         --online --require-published
 
     # one bootstrap phase at a time (PyPI allows three pending publishers):
     # readbacks are required only for the phase's projects, earlier phases
     # must already be complete on the index, later ones untouched
-    python scripts/check_publication_readiness.py --version 0.1.0a8 \\
+    python scripts/check_publication_readiness.py --version <version> \\
         --phase bootstrap-1 --online
-    python scripts/check_publication_readiness.py --version 0.1.0a8 \\
+    python scripts/check_publication_readiness.py --version <version> \\
         --phase bootstrap-1 --online --require-published
 
 Standard library only.

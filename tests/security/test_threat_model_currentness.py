@@ -1,4 +1,4 @@
-"""Keep the historical 1.0 threat model scoped and visible to maintainers."""
+"""Keep the release threat model aligned with the implemented 1.0 boundaries."""
 
 from pathlib import Path
 
@@ -7,11 +7,10 @@ SECURITY = WORKSPACE_ROOT / "SECURITY.md"
 THREAT_MODEL = WORKSPACE_ROOT / "docs" / "THREAT_MODEL.md"
 
 
-def test_security_entrypoint_names_the_historical_candidate_scope() -> None:
+def test_security_entrypoint_names_the_current_candidate_scope() -> None:
     text = SECURITY.read_text(encoding="utf-8")
 
-    assert "records the 1.0.0 candidate threat-boundary analysis" in text
-    assert "Revalidate it against the next release candidate" in text
+    assert "current threat-boundary analysis for the\n`1.0.0` candidate" in text
     assert "not a production-security\ncertification" in text
     assert "general HTTP\nauthentication product" in text
 

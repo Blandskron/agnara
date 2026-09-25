@@ -19,9 +19,39 @@ published; its fix ships in `1.0.0`.
 
 ## [Unreleased]
 
-- Reorganize current 1.x documentation around the implemented API and move
-  completed A1–A8/1.0 planning out of the agent onboarding path; document the
-  provisional universal application platform roadmap separately.
+## [1.0.2] - 2026-09-25
+
+Recovery release for the seven synchronized distributions. `1.0.1` is an
+incomplete publication: only `agnara-a2a`, `agnara-cli` and `agnara-events`
+reached PyPI, and no `v1.0.1` tag or GitHub Release was created. Users should
+upgrade all installed Agnara distributions from `1.0.0` to `1.0.2` together.
+
+### Security
+
+- Enforce declared scope, application and confirmation policies on directly
+  constructed plans, including direct and MCP invocation.
+- Redact missing scope labels from caller-facing authorization denials.
+- Mark viewer-specific Explorer and discovery responses private or no-store
+  across the whole response.
+- Match GET-only publication routes case-sensitively.
+
+### Fixed
+
+- Accept the bare `release.yml` path returned by GitHub Actions for a successful
+  earlier phase while still requiring one retained candidate, a main-branch
+  dispatch, successful conclusion and exact candidate commit.
+- Remove a historical alpha version from the release workflow input prompt;
+  every dispatch uses its selected synchronized version.
+
+## [1.0.1] - 2026-09-24 (incomplete publication)
+
+This candidate was only partially uploaded and is not a complete synchronized
+release. The entries below record its intended content, now carried by
+`1.0.2`. Do not install or recommend `1.0.1`. The logging issue tracked by
+GHSA-j5rx-vm8v-f7p3 was already fixed in `1.0.0`.
+
+### Security
+
 - Redact missing scope labels from caller-facing authorization denials in direct,
   HTTP, and MCP calls while retaining opt-in operator diagnostics.
 - Match incoming publication methods case-sensitively so lowercase or malformed
@@ -33,7 +63,14 @@ published; its fix ships in `1.0.0`.
 - Reject directly constructed execution plans that omit declared scope,
   application, or confirmation policies, preventing direct and MCP calls from
   bypassing capability authorization.
-- Pin every phased release dispatch to the successful first-phase candidate commit and compare published PyPI file SHA-256 values with the retained build before continuing publication.
+
+### Fixed
+
+- Pin every phased release dispatch to the successful first-phase candidate
+  commit and compare published PyPI file SHA-256 values with the retained build
+  before continuing publication.
+- Refresh release tracking and the maintainer guide for synchronized patch
+  releases.
 
 ## [1.0.0] - 2026-09-22
 
@@ -1361,7 +1398,9 @@ under `0.1.0a2` instead.
 [#257]: https://github.com/Blandskron/agnara/issues/257
 [#259]: https://github.com/Blandskron/agnara/issues/259
 [#261]: https://github.com/Blandskron/agnara/issues/261
-[Unreleased]: https://github.com/Blandskron/agnara/compare/v1.0.0...develop
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v1.0.2...develop
+[1.0.2]: https://github.com/Blandskron/agnara/compare/v1.0.0...v1.0.2
+[1.0.1]: https://github.com/Blandskron/agnara/compare/v1.0.0...dafc4fb09816a158d21824644805abaacea9f000
 [1.0.0]: https://github.com/Blandskron/agnara/compare/v0.1.0a8...v1.0.0
 [0.1.0a8]: https://github.com/Blandskron/agnara/compare/v0.1.0a7...v0.1.0a8
 [0.1.0a7]: https://github.com/Blandskron/agnara/compare/v0.1.0a6...v0.1.0a7

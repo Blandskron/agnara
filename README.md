@@ -4,14 +4,12 @@ Agnara is a Python capability runtime. Applications define a capability once
 and expose it through transport adapters without making HTTP, MCP or another
 protocol the semantic source of truth.
 
-## Current product
+## Current direction
 
-The stable 1.x baseline is [v1.0.0](docs/releases/v1.0.0.md). The checkout's
-package version and [changelog](CHANGELOG.md) identify later candidates;
-publication status comes from GitHub Releases and the package indexes.
-The kernel, HTTP and MCP adapters, CLI and telemetry bridge are implemented.
-`agnara-a2a` and `agnara-events` are reserved distributions without runtimes.
-See [subsystem maturity](docs/MATURITY.md) for supported surfaces and limits.
+`1.0.0` is the published stable baseline. `1.0.1` was an incomplete
+publication and should not be installed. The synchronized `1.0.2` recovery is
+described in its [release notes](docs/releases/v1.0.2.md),
+[roadmap](ROADMAP.md), and [maintainer release guide](docs/MAINTAINERS_RELEASE.md).
 
 ## Design
 
@@ -20,10 +18,8 @@ See [subsystem maturity](docs/MATURITY.md) for supported surfaces and limits.
 - Reflection and dependency graphs compile before invocation.
 - Policies, schemas, errors and telemetry use protocol-neutral contracts.
 
-Read [VISION.md](VISION.md) for the product direction,
-[ARCHITECTURE.md](ARCHITECTURE.md) for current invariants,
-[ROADMAP.md](ROADMAP.md) for future programs and [BACKLOG.md](BACKLOG.md) for
-open work. [PRINCIPLES.md](PRINCIPLES.md) governs decisions. The supported
+Read [VISION.md](VISION.md), [PRINCIPLES.md](PRINCIPLES.md) and
+[ARCHITECTURE.md](ARCHITECTURE.md) for the governing model. The supported
 public surface is listed in [docs/API_REFERENCE.md](docs/API_REFERENCE.md).
 
 ## Quick start

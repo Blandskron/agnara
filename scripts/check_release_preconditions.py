@@ -27,7 +27,7 @@ tagged, because each of those moments is a different state of the repository:
 
 Usage::
 
-    python scripts/check_release_preconditions.py --version 0.1.0a8 \\
+    python scripts/check_release_preconditions.py --version <version> \\
         --require-protected-environment pypi
 
 Standard library only. Diagnostics name commits, refs, versions and rule
@@ -52,7 +52,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 
-#: PEP 440 restricted to what ADR 0021 permits during v0.x.
+#: PEP 440 release versions permitted by ADR 0021.
 VERSION_PATTERN = re.compile(r"^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:(?:a|b|rc)\d+)?$")
 
 RELEASE_EVENT = "workflow_dispatch"
@@ -237,6 +237,7 @@ def check_phase_candidate(
             if not isinstance(run, dict) or not (
                 run.get("path")
                 in {
+                    ".github/workflows/release.yml",
                     ".github/workflows/release.yml@main",
                     ".github/workflows/release.yml@refs/heads/main",
                 }

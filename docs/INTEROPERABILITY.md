@@ -1,11 +1,5 @@
 # Interoperability and Composition
 
-> **HISTORICAL-EVIDENCE.** This records the 1.0 integration scope and its
-> point-in-time evidence. Requirements phrased as future 1.0 gates below are
-> not open release tasks. For current support claims use
-> [MATURITY.md](MATURITY.md); for future direction use
-> [ROADMAP.md](../ROADMAP.md).
-
 How Agnara relates to the rest of the Python ecosystem, and what `1.0.0` has
 to demonstrate before that relationship can be called a contract.
 

@@ -8,11 +8,9 @@ If you are an agent and were just told "Lee AGENTS.md y comienza" or similar:
 3. Use `python scripts/agent.py claim <issue> <worker_id>` to take ownership.
 4. If working locally with other agents, use `git worktree` (see protocol doc).
 
-## Mission and source of truth
+## Mission
 
-Maintain Agnara 1.x as a Python 3.14-native, capability-first, transport-neutral runtime for humans, services and AI agents. The longer-term Universal Application Platform is a [vision](VISION.md), not an implemented API. The core stays small; independent adapters implement protocol and infrastructure concerns.
-
-Start with [README.md](README.md). [ARCHITECTURE.md](ARCHITECTURE.md) owns current boundaries, [docs/MATURITY.md](docs/MATURITY.md) records implemented surfaces, [docs/API_REFERENCE.md](docs/API_REFERENCE.md) records supported imports, [ROADMAP.md](ROADMAP.md) owns future programs and [BACKLOG.md](BACKLOG.md) contains open work. [docs/DOCUMENTATION_MAP.md](docs/DOCUMENTATION_MAP.md) classifies historical evidence. Verify claims against code and tests. A1–A8 and 1.0.0 construction plans are historical.
+Build Agnara as a Python 3.14-native, capability-first, transport-neutral framework for modern services consumed by humans, applications and AI agents.
 
 You have broad permission to create, modify, move and delete repository files required by the documented roadmap, but architectural constraints in this file are mandatory.
 
@@ -23,7 +21,7 @@ Before implementing:
 1. `VISION.md`
 2. `PRINCIPLES.md`
 3. `ARCHITECTURE.md`
-4. `docs/MATURITY.md` and the relevant supported API guide; `docs/API_DESIGN.md` contains historical design examples, not an API guarantee
+4. `docs/API_DESIGN.md`
 5. `BACKLOG.md`
 6. `QUALITY_GATES.md`
 
