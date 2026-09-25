@@ -1,119 +1,46 @@
 # Vision
 
-## Mission
+## Today: a universal capability runtime
 
-Build a Python framework that is native to the software world of 2026 and beyond: typed, capability-centric, agent-aware, protocol-neutral, observable, secure, modular, and fast by architecture.
+Agnara lets an application define a capability once and invoke or expose it
+through independent adapters. Its Python 1.x kernel compiles declarations,
+dependency graphs, policies, schemas and execution plans before invocation.
+HTTP and MCP are supported projections; direct invocation, introspection, a
+CLI and optional telemetry bridges are present. [Maturity](docs/MATURITY.md)
+records the exact implementation and limits.
 
-## Product statement
+The central concept is **Capability**: what an application can do. An exposure
+describes how a caller reaches it. A route, tool or future task must not become
+the semantic source of truth.
 
-Agnara is a **universal capability runtime for Python**.
+## Tomorrow: a universal application platform
 
-Developers define application capabilities once. Agnara compiles those declarations into executable plans and projects them into one or more transports such as HTTP, MCP, A2A, event systems, task systems, CLI, or internal invocation.
+**Agnara — Universal Application Platform for the Agentic Era** is the long-term
+product direction. Humans and coding agents should learn one coherent Agnara
+model to build, inspect, modify and operate applications, whether they are
+modular monoliths, services, APIs, agent systems or eventually distributed
+systems. This is a research and design horizon, not a claim that those runtimes
+ship today or a promise of a `2.0.0` release.
 
-## The problem
+> Agnara owns the contract, not necessarily the implementation.
 
-The dominant web-framework abstraction is the route:
+The kernel stays small, stable, capability-first, protocol-neutral and light
+on dependencies. Independent platform packages may eventually define contracts
+for data, durable tasks, events, workflows, identity, interfaces and
+deployment. A database driver, broker, frontend renderer or model provider
+could implement a contract without becoming a core dependency. Each contract
+needs an accepted design and evidence before it becomes a supported API.
 
-```text
-method + path → handler
-```
+An application domain should not depend unnecessarily on deployment topology.
+A capability may eventually move from local invocation to a process, service or
+distributed deployment without rewriting its business meaning. Agnara does
+not currently provide automatic remote invocation.
 
-That abstraction is excellent for HTTP, but the modern application boundary is broader.
+## North-star questions
 
-A single business operation may need to be:
+1. Can a coding agent build, inspect, modify and operate this part of an
+   application while reasoning primarily in Agnara concepts?
+2. Does the design preserve a small, stable, protocol-neutral core?
 
-- an HTTP endpoint for a frontend;
-- an MCP tool for an AI assistant;
-- an A2A skill for another agent;
-- a task for asynchronous execution;
-- an event consumer or producer;
-- an internal strongly typed call;
-- a CLI command;
-- a human-approved operation.
-
-Reimplementing the same operation for each protocol creates duplicated validation, policy, error semantics, telemetry, tests, documentation, and drift.
-
-## Agnara's answer
-
-The first-class abstraction is:
-
-```text
-Capability
-```
-
-A Capability describes what the application can do.
-
-A Transport describes how a caller reaches that capability.
-
-An Execution Plan describes how the capability is safely and efficiently invoked.
-
-## What success looks like
-
-Agnara succeeds when a developer can define an operation once and obtain:
-
-- type-aware validation;
-- dependency resolution;
-- policy enforcement;
-- consistent errors;
-- observability;
-- direct test invocation;
-- HTTP exposure;
-- OpenAPI documentation;
-- MCP exposure;
-- agent-readable metadata;
-
-without the business function depending on any of those protocols.
-
-## Long-term direction
-
-Agnara should become a small and stable core surrounded by independent protocol and infrastructure adapters.
-
-The core should age slowly.
-
-Adapters should evolve rapidly.
-
-That distinction is essential because MCP, A2A, OpenAPI, AsyncAPI, observability conventions, servers, schema libraries, and AI ecosystems will continue changing.
-
-## What Agnara must never become
-
-Agnara must not become a monolith that attempts to own every layer of an application.
-
-Agnara should orchestrate contracts and execution, not absorb unrelated concerns.
-
-## North-star test
-
-Every major design decision should answer:
-
-> Does this make a business capability more portable across protocols without coupling the domain to framework infrastructure?
-
-If the answer is no, the feature probably belongs outside the core.
-
-## Developer experience vision
-
-Agnara should feel as productive for modular application construction as Django, while being architected for a different software era.
-
-The intended workflow is:
-
-```text
-create project
-→ add bounded-context apps
-→ define capabilities
-→ attach protocol exposures
-→ compile one project graph
-```
-
-A developer should be able to grow from:
-
-```bash
-agnara app create health --architecture minimal
-```
-
-to:
-
-```bash
-agnara app create payments --with http,mcp,tasks
-```
-
-without changing the conceptual model.
-
-Scaffolding is therefore part of the product architecture, not an afterthought.
+A proposal must satisfy both. [Architecture](ARCHITECTURE.md) defines current
+invariants; [roadmap](ROADMAP.md) defines the provisional future sequence.

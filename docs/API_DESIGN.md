@@ -1,5 +1,11 @@
 # Golden API Design Examples
 
+> **DESIGN HISTORY.** Some examples here predate the stable 1.x public API and
+> are illustrative rather than executable guidance. Use
+> [API_REFERENCE.md](API_REFERENCE.md), [PUBLIC_API.md](PUBLIC_API.md) and the
+> maintained guides for supported spelling. Check code and tests before
+> promoting an example into a new contract.
+
 These examples define desired developer experience before implementation.
 
 The implementation must not be allowed to dictate the public API accidentally.

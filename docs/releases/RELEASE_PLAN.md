@@ -1,5 +1,10 @@
 # Agnara Release Plan
 
+> **HISTORICAL-EVIDENCE.** This is the completed 1.0.0 release plan, not a
+> current release checklist. Retained for gate and audit provenance. For the
+> next release use [MAINTAINERS_RELEASE.md](../MAINTAINERS_RELEASE.md), the
+> selected version's tracking issue and current CI evidence.
+
 ## Baseline and target
 
 `0.1.0a8` is the sole retained publication baseline. It proved the reviewed,

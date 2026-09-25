@@ -1,5 +1,11 @@
 # Target Architecture
 
+> **HISTORICAL-EVIDENCE.** This is the pre-1.0 target and gap analysis. Several
+> gaps below were resolved before 1.0.0; its phase/status labels are not
+> current. Use [ARCHITECTURE.md](../ARCHITECTURE.md) for current boundaries,
+> [MATURITY.md](MATURITY.md) for implemented behavior and
+> [ROADMAP.md](../ROADMAP.md) for the next strategic horizon.
+
 This document describes where Agnara is going. Nothing here is a claim about
 what exists — `docs/MATURITY.md` owns that, and every gap named below is
 recorded there with a status.
