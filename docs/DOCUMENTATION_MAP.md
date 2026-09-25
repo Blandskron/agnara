@@ -1,50 +1,122 @@
 # Documentation Map
 
-## Canonical reading path
+Which document owns which kind of truth, and what every other document should
+do instead of repeating it.
+
+This exists because the same decision was being maintained in several files.
+`ROADMAP.md`, `BACKLOG.md` and `docs/releases/RELEASE_PLAN.md` all described
+future work in three different vocabularies, and nothing said which one was
+right when they disagreed.
+
+## The hierarchy
 
 ```text
-README.md → VISION.md → ARCHITECTURE.md → ROADMAP.md → BACKLOG.md
+VISION            why Agnara exists
+   ↓
+PRINCIPLES        the rules a decision must not break
+   ↓
+ARCHITECTURE      how the system is structured today
+   ↓
+RFC / ADR         individual decisions: open, then settled
+   ↓
+TARGET ARCH       where the structure is going
+   ↓
+INITIATIVES       what to build, in dependency order
+   ↓
+INTEROPERABILITY  how Agnara relates to the ecosystem it will not replace
+   ↓
+BACKLOG           decomposed items, close enough to implement
+   ↓
+RELEASE PLAN      what a given release must satisfy
 ```
 
-The [README](../README.md) introduces the current product. The
-[vision](../VISION.md) explains its long-term purpose. The
-[architecture](../ARCHITECTURE.md) defines current invariants and package
-boundaries. The [roadmap](../ROADMAP.md) owns provisional future programs. The
-[backlog](../BACKLOG.md) contains only work still open.
+Each level may cite the level above it. None should restate it.
 
-## Other current references
+## Ownership
 
-| Question | Owner |
-| --- | --- |
-| Which subsystem is actually implemented? | `docs/MATURITY.md` |
-| Which imports are supported and stable? | `docs/PUBLIC_API.md`, `docs/public-api.json`, `docs/API_REFERENCE.md` |
-| Which rule constrains a design? | `PRINCIPLES.md`, `AGENTS.md` |
-| How is quality measured? | `QUALITY_GATES.md` |
-| How are vulnerabilities and releases handled? | `SECURITY.md`, `docs/MAINTAINERS_RELEASE.md` |
-| How do CLI, project scaffolding and HTTP composition work? | `docs/CLI_SPEC.md`, `docs/SCAFFOLDING.md`, `docs/HTTP_COMPOSITION.md` |
-| What is the Python 3.15 compatibility program? | `docs/research/python-315-readiness.md` |
+| Truth | Owner | Everyone else |
+| --- | --- | --- |
+| Why the project exists | `VISION.md` | cite |
+| Non-negotiable rules | `PRINCIPLES.md` | cite |
+| Current structure, boundaries, dependency direction | `ARCHITECTURE.md` | cite |
+| **What exists, per subsystem** | `docs/MATURITY.md` | cite; never restate a status |
+| One settled decision | the ADR | cite by number |
+| One open design question | the RFC | cite by number |
+| Long-term structure and gaps | `docs/TARGET_ARCHITECTURE.md` | cite |
+| **Interoperability contract and integration matrix** | `docs/INTEROPERABILITY.md` | cite; never restate a priority or a gate |
+| What to build and in what order | `docs/INITIATIVES.md` | cite by initiative id |
+| Decomposed, ready work | `BACKLOG.md` | cite by item id |
+| Release gates and evidence | `docs/releases/RELEASE_PLAN.md` + `release-status.json` | cite |
+| What a release actually contained | `docs/releases/v*.md`, `CHANGELOG.md` | never edit retroactively |
+| Quality gate definitions | `QUALITY_GATES.md` | cite |
+| Performance method and results | `PERFORMANCE.md`, `docs/benchmarks/` | cite |
+| Security posture and gaps | `SECURITY.md` | cite |
+| CLI surface | `docs/CLI_SPEC.md` | cite |
+| Generated project layout | `docs/SCAFFOLDING.md` | cite |
+| Manifest format | `docs/PROJECT_MANIFEST.md` | cite |
+| Public API shape and intent | `docs/API_DESIGN.md` | cite |
+| How to serve capabilities over HTTP | `docs/HTTP_COMPOSITION.md` | cite; never restate a limitation |
+| How to run the official reference container | `docs/CONTAINERS.md` | cite; PyPI remains canonical |
+| Public API inventory and stability policy | `docs/PUBLIC_API.md` + `docs/public-api.json` | cite |
+| External standards studied | `docs/REFERENCE_RESEARCH.md` | cite |
+| Post-1.0 Python 3.15 activation, work-package scope and evidence criteria | [Python 3.15 Readiness](research/python-315-readiness.md) | cite; task state stays in BACKLOG, current claims in MATURITY |
+| Contribution and git process | `CONTRIBUTING.md`, `GIT_WORKFLOW.md` | cite |
+| Agent authorship and human review | ADR 0092, `AGENTS.md` | cite; do not rewrite historical ADRs/commits |
 
-The supported API reference and maturity table should be checked against code
-and tests when edited. `docs/API_DESIGN.md` contains design examples; use
-`docs/API_REFERENCE.md` for the supported public spelling.
+## Rules
 
-## Historical evidence, not active plans
+**A status is stated once.** If a subsystem's maturity appears in two files,
+one of them is going to be wrong. `docs/MATURITY.md` is the one that is right.
 
-| Record | Why it remains |
-| --- | --- |
-| `docs/adr/` and `docs/rfc/` | Architectural decision and design provenance; individual examples may predate current APIs. |
-| `docs/releases/`, `CHANGELOG.md`, `docs/MIGRATION_A8_TO_1_0.md` | Published release, security, migration and audit evidence. Pre-1.0 targets in these files are historical. |
-| `docs/INITIATIVES.md`, `docs/TARGET_ARCHITECTURE.md` | Historical 1.0 construction plans. Current future work is in `ROADMAP.md`. |
-| `docs/THREAT_MODEL.md`, `docs/INTEROPERABILITY.md` | Point-in-time 1.0 security and integration evidence. Revalidate before making a new release claim. |
-| `experiments/` | Unshipped research, not product integrations. |
+**A roadmap does not contain a backlog.** `ROADMAP.md` states horizons and
+points at initiatives. It does not list tasks.
 
-Do not turn a completed planning checkbox or an old release gate into a new
-task without checking the current code and tests. ADRs/RFCs justify decisions;
-they do not supersede the current API or roadmap. Keep historical evidence
-reachable while removing it from the active onboarding path.
+**A matrix is not a gate.** `docs/INTEROPERABILITY.md` records which
+integrations matter and in which direction. Which of them a release cannot
+close without is `docs/releases/RELEASE_PLAN.md`, and the matrix points at it
+rather than repeating it.
+
+**An ADR records a decision that was made.** Not a speculation. Open questions
+belong in an RFC until they are answered, and an RFC that has been answered
+says so and names the ADR.
+
+**Release history is immutable, and it is not stored here.** A published
+release is preserved by its Git tag, its GitHub Release and its PyPI
+distribution. The working tree keeps only the release being prepared and, while
+it is still useful to an upgrader, the one before it. A release document is
+never corrected to match a later reality; it is removed once its only remaining
+value is historical.
+
+**Completed planning leaves the planning documents.** `ROADMAP.md`,
+`docs/INITIATIVES.md` and `BACKLOG.md` describe work that is still open. When
+an item ships, it does not become a `[x]` entry that accumulates -- it leaves,
+and whatever durable requirement it carried moves to the document that owns
+that kind of truth. `docs/MATURITY.md` is where shipped work becomes visible
+again.
+
+**Prefer a citation to a copy.** A reader who follows a link to one accurate
+paragraph is better served than one who reads four paragraphs that used to
+agree.
 
 ## Automated checks
 
-`tests/architecture/test_documentation_consistency.py` verifies package and
-public-name counts, status vocabulary, cited paths and decision records.
-`tests/architecture/test_repository_encoding.py` guards UTF-8 text integrity.
+`tests/architecture/test_documentation_consistency.py` enforces the parts of
+this that a machine can check:
+
+- every package listed in `docs/MATURITY.md` exists, and vice versa;
+- the public-name counts in the maturity table match the packages, and the
+  exact top-level core exports match their stability manifest;
+- every status token used is in the declared vocabulary;
+- every canonical document this map names exists;
+- every ADR and RFC referenced by the planning documents exists;
+- no planning document references a file that has been deleted;
+- `docs/adr/README.md` names exactly the records that declare themselves
+  `Accepted`, in both directions.
+
+`tests/architecture/test_repository_encoding.py` additionally rejects the
+text-corruption modes that a lossy Windows write has twice introduced into
+this repository's documentation: replaced characters, cp1252 mojibake, a
+byte-order mark and a stray control byte.
+
+Everything else is a human judgement, and this file is where the judgement is
+recorded so the next reader does not have to reconstruct it.

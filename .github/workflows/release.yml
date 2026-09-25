@@ -44,7 +44,7 @@ on:
     inputs:
       version:
         description: >-
-          Release version to publish from the current HEAD of main, e.g. 0.1.0a8.
+          Synchronized release version to publish from the current HEAD of main.
           Must equal the synchronized workspace version.
         required: true
         type: string

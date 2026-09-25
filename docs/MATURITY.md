@@ -36,17 +36,18 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 | Package | Status | Published to PyPI | Public names | Notes |
 | --- | --- | --- | --- | --- |
 | `agnara` | `IMPLEMENTED` | yes | 41 | The kernel. Standard library only. |
-| `agnara-http` | `IMPLEMENTED` | yes | 14 | Stable public HTTP composition includes generated OpenAPI, built-in documentation UIs and authorized Explorer; third-party providers and discovery stay internal. |
-| `agnara-mcp` | `IMPLEMENTED` | yes | 20 | Tool projection; see the MCP table. |
-| `agnara-cli` | `IMPLEMENTED` | yes | 4 | Scaffolding, introspection and `agnara` script. |
-| `agnara-telemetry` | `IMPLEMENTED` | yes | 2 | Optional OpenTelemetry metrics and tracing hooks. |
-| `agnara-a2a` | `PLANNED` | yes | 0 | Reserved namespace; no A2A implementation. |
-| `agnara-events` | `PLANNED` | yes | 0 | Reserved namespace; no event implementation. |
+| `agnara-http` | `EXPERIMENTAL` | no | 14 | Public HTTP composition includes generated OpenAPI, built-in documentation UIs and authorized Explorer; third-party providers and discovery stay internal. |
+| `agnara-mcp` | `IMPLEMENTED` | no | 20 | Publication-ready tool projection; see the MCP table. |
+| `agnara-cli` | `IMPLEMENTED` | no | 4 | Publication-ready scaffolding, introspection and `agnara` script. |
+| `agnara-telemetry` | `IMPLEMENTED` | no | 2 | Publication-ready OpenTelemetry metrics and tracing hooks. |
+| `agnara-a2a` | `PLANNED` | no | 0 | Publication-ready reserved namespace; no implementation. |
+| `agnara-events` | `PLANNED` | no | 0 | Publication-ready reserved namespace; no implementation. |
 
-All seven distributions have `1.0.0` artifacts on PyPI, verified against the
-seven project version endpoints on 2026-09-25. Packaging a reserved namespace
-does not implement its protocol. ADR 0021 keeps versions synchronized and
-ADR 0073 fixes the publication boundary.
+Only `agnara` is published. All seven distributions are versioned, buildable,
+installable from their artifacts and ready for the tag workflow to publish as
+one reviewed set; ADR 0021 keeps every version synchronized and ADR 0073 fixes
+the publication boundary. Publication-ready is not published: the six new
+PyPI projects still require their Pending Trusted Publishers before the tag.
 
 Every distribution's public surface is classified in
 `docs/public-api.json` and enforced in both directions by the release gate:
@@ -63,9 +64,11 @@ capabilities, compile an ASGI 3 application, project OpenAPI and publish the
 reviewed documentation profile. `docs/HTTP_COMPOSITION.md` is the supported
 guide.
 
-The fourteen public names are stable for 1.x. Third-party provider extension
-and the authorized discovery endpoint remain internal; their presence does not
-make them supported application APIs.
+It stays `EXPERIMENTAL` rather than becoming `IMPLEMENTED` because third-party
+provider extension and the authorized discovery endpoint remain intentionally
+internal, and the surface is newly expanded. The public spelling is stable for
+1.0; the experimental classification describes maturity, not an exception to
+the compatibility contract.
 
 ## Kernel — `agnara`
 

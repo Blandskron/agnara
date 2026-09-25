@@ -16,9 +16,8 @@ Do not request vulnerability details through public issues.
 
 ## Threat model
 
-`docs/THREAT_MODEL.md` records the 1.0.0 candidate threat-boundary analysis.
-Revalidate it against the next release candidate. It covers direct capability
-execution, HTTP/ASGI and SSE,
+`docs/THREAT_MODEL.md` is the current threat-boundary analysis for the
+`1.0.0` candidate. It covers direct capability execution, HTTP/ASGI and SSE,
 MCP, embedded and side-by-side hosts, schema and persistence seams,
 idempotency, nested composition, telemetry, the local CLI and release
 publication. It separates controls proved by this repository from deployment
