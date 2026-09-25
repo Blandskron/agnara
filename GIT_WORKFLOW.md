@@ -136,7 +136,7 @@ security
 Special branches:
 
 ```text
-release/v0.1.0
+release/v1.0.3
 hotfix/123-critical-auth-bypass
 ```
 
@@ -483,70 +483,33 @@ Never approve based only on the PR description.
 
 ## Release flow
 
-Read `docs/adr/0021-synchronized-pre-one-releases-and-changelog.md` before
-preparing a release. Agnara uses one synchronized PEP 440 version for every
-first-party package during v0.x. `0.0.0` is an unreleased-development sentinel
-and must not be published.
+Read `docs/adr/0095-synchronized-releases-and-curated-changelog.md` and
+`docs/MAINTAINERS_RELEASE.md` before preparing a release. All seven first-party
+packages use one synchronized PEP 440 version and exact adapter-to-core pins.
+The `0.0.0` development sentinel is never published.
 
-Release branch starts from `develop`:
+Start a release preparation branch from reviewed `develop`. The tracking Issue
+records the selected version and acceptance gates. On the branch:
 
-```bash
-git switch develop
-git pull --ff-only origin develop
-git switch -c release/v0.1.0a1
-```
+1. Run `python scripts/set_workspace_version.py release <version>` and its
+   `--check` mode; review the seven versions, exact pins and `uv.lock`.
+2. Move the current changelog entries into a dated target section, refresh
+   comparison links and write `docs/releases/v<version>.md`.
+3. Run full CI, public API, documentation, package build, installed-artifact,
+   security, supply-chain and release-consistency gates.
+4. Open a PR to `main` for maintainer review and merge through protections.
+   Ordinary development PRs still target `develop`.
 
-Release branch may contain only release preparation:
+After merge, verify that `main` contains the exact reviewed target. Dispatch
+`release.yml` from `main` with the same version in its `bootstrap-1`,
+`bootstrap-2` and `final` phases. Each phase validates the same retained source
+commit and requires protected publication approval. The final phase verifies
+all seven PyPI projects before creating the immutable tag and GitHub Release,
+then publishes the reference container. Do not create or move a tag manually.
 
-- version;
-- changelog;
-- release notes;
-- final compatibility fixes;
-- packaging metadata.
-
-No unrelated feature work.
-
-The release tracking Issue records the selected version and acceptance gates.
-On the branch:
-
-1. run `python scripts/set_workspace_version.py release <version>` to update
-   every project version, all exact adapter-to-core pins, and `uv.lock` as one
-   validated operation;
-2. run `python scripts/set_workspace_version.py release <version> --check`;
-3. move current `[Unreleased]` entries in `CHANGELOG.md` to
-   `[version] — YYYY-MM-DD`;
-4. create a fresh empty `[Unreleased]` section and update comparison links;
-5. prepare release notes from that versioned changelog section;
-6. run the full quality suite, synchronized-version check, package builds and
-   install/import smoke tests.
-
-Create PR:
-
-```text
-release/v0.1.0a1 → main
-```
-
-Prefer a merge strategy that preserves the release relationship rather than squashing the entire release history blindly.
-
-Before merge, inspect the final commit relationship and attribution. After
-merge:
-
-1. confirm the accepted `main` commit contains the reviewed version and
-   changelog;
-2. dispatch the `Release to PyPI` workflow from `main` with that version. Do
-   **not** create or push a tag by hand: after every gate has passed and a
-   reviewer has approved the run in the `pypi` environment, the run publishes
-   the packages through Trusted Publishing and verifies the index, and only
-   then creates the one annotated `v<version>` tag on that exact commit; that
-   tag is never moved or reused, and it never exists for a failed publication
-   (ADR 0082);
-3. the same run creates the GitHub Release from `docs/releases/v<version>.md`
-   for that tag;
-4. propagate any release-only commits back into `develop` through a PR;
-5. delete the release branch.
-
-Do not mark E0B.12 complete merely because this process is documented. That
-item requires evidence from an actually exercised release and hotfix flow.
+Propagate release-only changes back to `develop` by PR. Record publication and
+artifact evidence in the tracking Issue. Do not equate a prepared checklist
+with completed publication.
 
 ## Hotfix flow
 
@@ -660,8 +623,7 @@ keeps, evidenced by the formal review on each pull request, and not something
 the platform enforces. Stating that plainly is the point: the earlier version
 of this section claimed one approval was required while nothing enforced it,
 and a governance document that overstates its own enforcement is worse than one
-that admits the gap. `docs/releases/1.0-release-rehearsal.md` section 7 reached
-this conclusion and these definitions follow it.
+that admits the gap. The governance rule is explicit about this platform limitation.
 
 Everything that does not need a second person **is** enforced: no direct
 pushes, `CI` green, the branch up to date with its base, every review

@@ -127,7 +127,7 @@ task, buffer or cancellation shield is introduced.
 - A capability has one transport-neutral output contract for complete results
   and stream units.
 - Existing capabilities remain compatible as `output=Any`; an explicit output
-  is additive public syntax while all APIs remain provisional before 1.0.
+  is additive public syntax within the current stable 1.x contract.
 - The prior unvalidated-unit limitation is closed: `Any` is an intentional,
   visible unconstrained contract, while an explicit output is checked on every
   emitted unit.

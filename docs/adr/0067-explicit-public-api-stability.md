@@ -24,8 +24,8 @@ would contradict that release scope.
 `agnara` module. It records each export exactly once, in `__all__` order, with
 one of `stable`, `provisional`, `experimental` or `internal`.
 
-The 41 current exports are `provisional`. They are intentional public entry
-points, but none receives a stable compatibility promise before `1.0.0`.
+The current governed public exports are `stable` in `docs/public-api.json`.
+This record defines the classification mechanism; the manifest owns the exact inventory.
 Internal names do not belong in `__all__` or the manifest; the `internal`
 classification is defined so reviews share one vocabulary, not to legitimize
 an accidental export.
@@ -45,7 +45,7 @@ blocking the first exact contract on a larger audit.
   gate until its classification is reviewed.
 - Snapshot changes are visible but do not prove compatibility or promote an
   API to stable.
-- Pre-1.0 incompatible changes retain ADR 0021's changelog and migration
+- Incompatible changes require ADR 0095's changelog and migration
   requirements.
 - I9 remains open for eventual stability promotion.
 
@@ -83,5 +83,4 @@ particular, whether `agnara.core.di` is the right public spelling for
 dependency injection is a design question, and `core` appearing in the first
 import of the README is a real one — but a rename does not belong inside a
 governance change that exists to make the current surface visible. And nothing
-is promoted to `stable`, which still requires the `1.0.0`
-gates.
+is promoted to `stable` without review and conformance evidence.

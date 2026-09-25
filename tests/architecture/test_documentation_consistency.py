@@ -270,7 +270,7 @@ def test_the_record_index_names_every_accepted_decision() -> None:
     # Only the enumeration itself. The same paragraph cites ADR 0001 and
     # ADR 0005 as examples of *Proposed* records that govern shipped code, so
     # reading every citation on the page would assert the opposite of the claim.
-    sentence = re.search(r"does explicitly say `Accepted`:(.+?)\.", read(index), re.S)
+    sentence = re.search(r"explicitly declare `Accepted`:(.+?)\.", read(index), re.S)
     assert sentence is not None, (
         "docs/adr/README.md no longer enumerates the accepted records; "
         "this check reads that sentence"

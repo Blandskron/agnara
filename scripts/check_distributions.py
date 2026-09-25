@@ -626,7 +626,7 @@ def check_metadata(
 
     distinct = set(versions.values())
     if len(distinct) > 1:
-        # ADR 0021 keeps every pre-one version synchronized.
+        # ADR 0095 keeps every first-party version synchronized.
         detail = ", ".join(f"{name}=={version}" for name, version in sorted(versions.items()))
         problems.append(f"installed versions are not synchronized: {detail}")
     if expected_version is not None:

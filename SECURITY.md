@@ -17,13 +17,13 @@ Do not request vulnerability details through public issues.
 ## Threat model
 
 `docs/THREAT_MODEL.md` is the current threat-boundary analysis for the
-`1.0.0` candidate. It covers direct capability execution, HTTP/ASGI and SSE,
+stable 1.x framework. It covers direct capability execution, HTTP/ASGI and SSE,
 MCP, embedded and side-by-side hosts, schema and persistence seams,
 idempotency, nested composition, telemetry, the local CLI and release
 publication. It separates controls proved by this repository from deployment
 and application responsibilities.
 
-It is evidence for the I10 release gate, not a production-security
+It is evidence for security review, not a production-security
 certification. Read its residual risks and unverified deployment assumptions
 before citing it. In particular, Agnara does not provide a general HTTP
 authentication product, a durable idempotency store, a telemetry exporter or
@@ -121,8 +121,8 @@ All protocol adapters should pin or bound critical protocol dependencies and rec
 GitHub secret scanning, push protection, Dependabot alerts and Dependabot
 security updates are enabled for this repository. Read back repository
 settings during release preflight; their state is external to Git history.
-`docs/releases/release-status.json` names the optional controls that remain
-unavailable or disabled. Dependency update PRs follow the normal review and required-check
+`docs/releases/release-status.json` records target-specific gate evidence.
+Dependency update PRs follow the normal review and required-check
 workflow and are never automatically merged by this configuration.
 
 Required CI analyzes Python and GitHub Actions using SHA-pinned CodeQL
@@ -152,7 +152,7 @@ vulnerability there is a contributor concern, not a shipped one.
 A zero-result audit is evidence only for the vulnerability database and
 lockfile observed at execution time, so it expires: dependency alerts on the
 default branch do not prove that an unreleased `develop` lockfile is clean.
-Record the result against the candidate SHA in
+Record the result against the reviewed commit SHA in
 `docs/releases/release-status.json`. Secret-scanning alerts must be handled in the private security UI;
 never copy credential values into Issues, PRs or build logs.
 
@@ -163,7 +163,7 @@ another's:
 
 | Question | Mechanism | Where |
 | --- | --- | --- |
-| What is in the candidate? | CycloneDX 1.6 SBOM | `scripts/generate_sbom.py`, published as the `agnara-sbom` artifact |
+| What is in the release? | CycloneDX 1.6 SBOM | `scripts/generate_sbom.py`, published as the `agnara-sbom` artifact |
 | Are these the bytes that were built? | SHA-256 digest chain | `SHA256SUMS`, re-checked by every job that touches the bundle |
 | Who built and published them? | PEP 740 attestations | `pypa/gh-action-pypi-publish` under the workflow's OIDC identity |
 
@@ -201,9 +201,9 @@ it completes:
    carries its attestation and that the publisher shown is this repository's
    workflow, not a token.
 
-None of step 3 can be established by inspecting this repository. Until an
-authorized release runs, the live publisher configuration is `NEEDS CI` and is
-recorded that way rather than assumed.
+None of step 3 can be established by inspecting this repository. For each
+target, mark publication evidence pending until its authorized run and index
+readback actually occur.
 
 ## Documentation and discovery surfaces
 

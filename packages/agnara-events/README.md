@@ -1,14 +1,16 @@
 # agnara-events
 
-Reserved namespace for future event exposure abstractions and AsyncAPI projection.
+`agnara-events` reserves the official event-adapter namespace. It has no
+public exports, broker integration, event runtime or AsyncAPI projection.
+Installing it does not enable event publication.
 
-This baseline package deliberately has no public API or event runtime. It is
-built and versioned with the synchronized workspace set to reserve the official
-package boundary, not to claim broker or AsyncAPI support.
+```bash
+pip install "agnara-events==1.0.3"
+```
 
-- Import package: `agnara_events`
-- Depends on: the exact synchronized `agnara` version
-- Must not import: sibling adapter packages
+The import package is `agnara_events`; its `__all__` is empty. It pins the
+exact synchronized `agnara==1.0.3` kernel and does not depend on sibling
+adapters. There is no usage API beyond importing the reserved namespace.
 
-See `ARCHITECTURE.md` sections 3 and 4 for the package boundaries and the
-allowed dependency graph.
+See the [public API policy](../../docs/PUBLIC_API.md) and
+[maturity matrix](../../docs/MATURITY.md).

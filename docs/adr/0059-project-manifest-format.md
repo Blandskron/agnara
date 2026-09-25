@@ -72,9 +72,8 @@ nothing. A file an agent is expected to edit safely cannot have silent
 no-ops.
 
 The cost is stated rather than hidden: a manifest written for a newer Agnara is
-rejected by an older one instead of degrading. That is the intended trade while
-the format is pre-1.0, and it should be revisited before 1.0, when an
-additive-compatible reader may matter more than typo detection.
+rejected by an older one instead of degrading. That is the intended trade while the format remains strict. A future compatibility revision may
+prioritize additive-compatible readers over typo detection.
 
 ### A path may not leave the project
 
@@ -120,7 +119,7 @@ work that will consume the same reader rather than parse the file again.
 ## Alternatives considered
 
 **Put the manifest in `pyproject.toml`.** `docs/PROJECT_MANIFEST.md` already
-argues against it and asks for the decision to be revisited before 1.0 if
+argues against it and asks for the decision to be revisited if
 ecosystem experience favours it. Nothing here changes that; this ADR
 implements the proposed file rather than reopening the question.
 

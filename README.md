@@ -4,14 +4,23 @@ Agnara is a Python capability runtime. Applications define a capability once
 and expose it through transport adapters without making HTTP, MCP or another
 protocol the semantic source of truth.
 
-## Current direction
+## Why Agnara
 
-`1.0.0` is the published stable baseline. `1.0.1` was an incomplete
-publication and should not be installed. The synchronized `1.0.2` recovery is
-described in its [release notes](docs/releases/v1.0.2.md),
-[roadmap](ROADMAP.md), and [maintainer release guide](docs/MAINTAINERS_RELEASE.md).
+Agnara lets one application capability serve direct Python callers and explicit
+transport exposures without putting protocol objects in the business model.
+The execution kernel uses only the Python standard library and requires Python
+3.14 or newer. The seven official distributions share one version; this tree
+prepares the 1.0.3 documentation and packaging baseline.
 
-## Design
+```bash
+pip install "agnara==1.0.3"
+```
+
+Install `agnara-http`, `agnara-mcp`, `agnara-cli` or `agnara-telemetry` at the
+same version when an application uses those surfaces. `agnara-a2a` and
+`agnara-events` reserve package names and expose no runtime API.
+
+## Capability-first model
 
 - Capabilities are application behaviour; routes and tools are exposures.
 - The kernel is transport-neutral and uses only the Python standard library.
@@ -20,7 +29,8 @@ described in its [release notes](docs/releases/v1.0.2.md),
 
 Read [VISION.md](VISION.md), [PRINCIPLES.md](PRINCIPLES.md) and
 [ARCHITECTURE.md](ARCHITECTURE.md) for the governing model. The supported
-public surface is listed in [docs/API_REFERENCE.md](docs/API_REFERENCE.md).
+imports and compatibility rules are in [PUBLIC_API.md](docs/PUBLIC_API.md) and
+the generated [API reference](docs/API_REFERENCE.md).
 
 ## Quick start
 
@@ -75,6 +85,42 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
+The plan evaluates declared scopes before invoking the handler. The principal
+comes from the application or host that authenticated the caller. Risk and
+effect metadata describe the capability; they do not grant authorization.
+
+## Surfaces and limits
+
+| Distribution | Current role |
+| --- | --- |
+| `agnara` | Capability registry, compiled plans, DI, policy, canonical outcomes, streaming, direct idempotency and introspection. |
+| `agnara-http` | ASGI HTTP, OpenAPI, documentation UIs, filtered discovery, Explorer and SSE. |
+| `agnara-mcp` | Version-pinned MCP tool projection, authorization and invocation for the documented subset. |
+| `agnara-cli` | Project/app scaffolding, inspection, graph, context and OpenAPI export commands. |
+| `agnara-telemetry` | Explicit OpenTelemetry metrics and tracing hooks; the application owns its SDK and exporter. |
+| `agnara-a2a`, `agnara-events` | Reserved namespaces with no public runtime API. |
+
+Compiled snapshots and policies remain transport neutral. Streaming is pull
+based in the kernel and has an HTTP SSE projection; it is not projected by the
+MCP or reserved packages. Idempotency is explicit for direct complete-result
+calls and is not an HTTP or MCP request-key feature. Confirmation requires an
+application verifier. Introspection applies visibility rules before exporting
+data; hiding an operation in a browser UI is not authorization.
+
+Agnara can run standalone, inside a host framework, or beside host routes.
+The host keeps ownership of authentication, routing, persistence and lifecycle.
+See [interoperability](docs/INTEROPERABILITY.md), [security](SECURITY.md) and
+the [threat model](docs/THREAT_MODEL.md) for evidence and limits.
+
+## Operations and documentation
+
+The [CLI and scaffolding guide](docs/CLI_SPEC.md) covers generated projects.
+The [container guide](docs/CONTAINERS.md) covers the reference runtime and
+digest pinning. [Documentation map](docs/DOCUMENTATION_MAP.md) identifies the
+owner of each current contract. Public API stability is governed by
+`docs/public-api.json`; the [quality gates](QUALITY_GATES.md) and
+[contribution guide](CONTRIBUTING.md) describe verification and review.
+
 ## Development
 
 ```bash
@@ -89,8 +135,11 @@ Publication is a reviewed dispatch from `main`. The workflow verifies the
 complete distribution set before it creates a tag; see
 [docs/MAINTAINERS_RELEASE.md](docs/MAINTAINERS_RELEASE.md).
 
-The official executable reference runtime is published separately to GHCR and
-Docker Hub; PyPI remains the canonical Python distribution. Release version
-tags are immutable, while `:edge` is a mutable, unsupported image built only
-from `develop`. See
-[docs/CONTAINERS.md](docs/CONTAINERS.md) for verified pull, run and digest-pinning commands.
+The reference container is published to GHCR and Docker Hub separately from
+the Python distributions. PyPI is the Python package index; immutable release
+tags and the mutable `:edge` image have different purposes. See the container
+guide before pinning a deployment.
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE).

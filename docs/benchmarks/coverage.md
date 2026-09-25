@@ -31,9 +31,7 @@ state.  HTTP routing/serialization and MCP dispatch use their own explicit
 in-process comparison boundaries; their outputs must not be used as competitor
 or server-throughput gates.
 
-V1-40 added deliberate limits for the embedding and registration/freeze
-observations using three current-semantic raw records. V1-41 makes the required
-CI performance job run a deterministic artificial fail/pass proof before its
-machine-dependent record. The independent stream-phase observations still have
-no threshold, so they remain visible as observations rather than silently
-reading as passing budgets.
+The current schema-2 calibration records support reviewed embedding and
+registration/freeze limits. CI runs a deterministic artificial fail/pass proof
+before the machine-dependent record. Independent stream-phase observations
+remain ungated measurements.

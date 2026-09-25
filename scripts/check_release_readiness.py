@@ -36,7 +36,7 @@ import distributions
 
 ROOT = Path(__file__).resolve().parents[1]
 STATUS_PATH = ROOT / "docs" / "releases" / "release-status.json"
-PLAN_PATH = ROOT / "docs" / "releases" / "RELEASE_PLAN.md"
+PLAN_PATH = ROOT / "docs" / "releases" / "RELEASE_CHECKLIST.md"
 CHANGELOG_PATH = ROOT / "CHANGELOG.md"
 PACKAGES_DIR = ROOT / "packages"
 PUBLIC_API_PATH = ROOT / "docs" / "public-api.json"
@@ -308,7 +308,6 @@ def check_changelog() -> tuple[str, str]:
         # section. Historical releases must not satisfy a new target.
         document = load_status()
         target = document["current_target"]
-        previous = document["previous_release"]
         versions = package_versions()
         if not versions or set(versions.values()) != {target}:
             return UNSATISFIED, "empty [Unreleased] requires packages at the target version"
@@ -331,11 +330,14 @@ def check_changelog() -> tuple[str, str]:
         if not entries:
             return UNSATISFIED, "the target changelog section has no entries"
         compare = "https://github.com/Blandskron/agnara/compare/"
-        required_links = (
-            f"[Unreleased]: {compare}v{target}...develop",
-            f"[{target}]: {compare}v{previous}...v{target}",
+        lines = text.splitlines()
+        target_link = re.compile(
+            rf"^\[{re.escape(target)}\]: {re.escape(compare)}"
+            rf"v[^\s]+\.\.\.v{re.escape(target)}$"
         )
-        if not all(link in text.splitlines() for link in required_links):
+        if f"[Unreleased]: {compare}v{target}...develop" not in lines or not any(
+            target_link.fullmatch(line) for line in lines
+        ):
             return UNSATISFIED, "target and Unreleased comparison links must match the release"
         return SATISFIED, f"[{target}] carries {entries} entries with release comparison links"
     return SATISFIED, f"[Unreleased] carries {entries} entries"

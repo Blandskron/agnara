@@ -52,7 +52,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 
-#: PEP 440 release versions permitted by ADR 0021.
+#: PEP 440 release versions permitted by ADR 0095.
 VERSION_PATTERN = re.compile(r"^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:(?:a|b|rc)\d+)?$")
 
 RELEASE_EVENT = "workflow_dispatch"

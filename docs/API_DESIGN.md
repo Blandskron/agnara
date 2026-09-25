@@ -338,7 +338,7 @@ server = build_mcp_server(
     plans,
     di_container,
     name="billing",
-    version="1.0.0",
+    version="2026.1",
     authorization=authorization,
     timeout=30,
 )
@@ -458,7 +458,7 @@ than using a boolean bag:
 ```python
 asgi = http.compile(
     app.compile(),
-    openapi=OpenApiInfo("Shop API", "1.0.0"),
+    openapi=OpenApiInfo("Shop API", "2026.1"),
     documentation=HttpDocumentation(),
 )
 ```

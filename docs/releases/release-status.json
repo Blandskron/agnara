@@ -1,32 +1,128 @@
 {
   "schema_version": 1,
-  "publication_baseline": "1.0.0",
-  "current_target": "1.0.2",
-  "previous_release": "1.0.0",
-  "next_target": "1.0.3",
+  "current_target": "1.0.3",
   "status": "IN_PROGRESS",
   "assessed_on": "2026-09-25",
   "notes": [
-    "1.0.0 is the verified public baseline; GHSA-j5rx-vm8v-f7p3 is fixed there.",
-    "Issue #509 tracks recovery as 1.0.2 after the 1.0.1 bootstrap-1 run published three distributions but bootstrap-2 rejected its candidate.",
-    "1.0.1 is an incomplete publication with no release tag; do not reuse or recommend that synchronized version.",
-    "The 1.0.2 candidate must pass current CI, maintainer review and three protected release.yml dispatches from one accepted main commit."
+    "1.0.3 changes documentation, synchronized versions and package metadata; runtime AST and docs/public-api.json match the develop baseline.",
+    "Local full pytest, explicit browser lane, seven-artifact build, metadata validation and clean Python 3.14 wheel install passed.",
+    "The measured performance budget gate exceeded three ratios on an idle local Windows rerun; CI evidence and maintainer review remain pending.",
+    "The accepted candidate SHA, protected publication and index verification can only be recorded after review and dispatch."
   ],
   "gates": [
-    {"id": "python-baseline", "title": "Python baseline verified", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
-    {"id": "changelog-accurate", "title": "Changelog supports the selected target", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
-    {"id": "version-consistency", "title": "Workspace version identity is synchronized", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
-    {"id": "repository-clean", "title": "Release commit has a clean working tree", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
-    {"id": "release-commit-identified", "title": "Release commit is identified", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
-    {"id": "license-metadata", "title": "License metadata is complete", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
-    {"id": "public-api-distinguished", "title": "Public API is distinguished", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
-    {"id": "publication-prerequisites", "title": "Reviewed publication set is publishable", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
-    {"id": "execution-semantics", "title": "Execution semantics are complete", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The 1.0.0 execution baseline is published. Directly constructed plans enforce declared policies. The local 1.0.2 full suite passed (3656 tests, 36 skipped); candidate CI and maintainer review remain pending."},
-    {"id": "performance-budgets", "title": "Performance budgets are enforced", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The 15 calibrated performance budgets in docs/performance/budgets.json are unchanged from 1.0.0. The 1.0.2 CI performance lane and maintainer review are pending."},
-    {"id": "interoperability", "title": "Interoperability conformance is demonstrated", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "Version-pinned host fixtures established the published 1.0.0 interoperability baseline. The carried security fixes touch core, HTTP and MCP boundaries; 1.0.2 conformance CI and maintainer review are pending."},
-    {"id": "security-program", "title": "Security program is reviewed", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The 1.0.0 adversarial review is recorded in docs/THREAT_MODEL.md. The 1.0.2 candidate carries four post-1.0.0 security fixes: direct plan authorization, scope denial redaction, viewer-specific cache control and HTTP method matching. The local full suite and locked-runtime pip-audit passed with no known vulnerabilities; candidate CI and maintainer disposition remain required."},
-    {"id": "stable-public-api", "title": "Public API is ready for stability", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The 1.0.2 patch adds no public API exports. The 166-name 1.0.0 inventory in docs/releases/1.0-api-classification.md remains the baseline; import and compatibility CI plus maintainer review are pending."},
-    {"id": "clean-room-documentation", "title": "Documentation reproduces supported applications", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The 1.0.2 release notes describe the upgrade and partial 1.0.1 publication. All seven 1.0.2 wheels installed in a fresh Python 3.14 environment without first-party index access, with import and CLI smoke checks passing; CI and maintainer review are pending."},
-    {"id": "publication-rehearsal", "title": "Publication workflow is rehearsed", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The candidate checker accepts GitHub's bare workflow path while retaining exact commit pinning. All fourteen 1.0.2 artifacts built and validated, seven wheels installed cleanly, SBOM verified, and online bootstrap-1 readiness passed with no 1.0.2 files on PyPI. Candidate CI, protected-environment approval, PyPI verification and maintainer review remain pending."}
-  ]
+    {
+      "id": "python-baseline",
+      "title": "Python baseline verified",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "UNSATISFIED"
+    },
+    {
+      "id": "changelog-accurate",
+      "title": "Changelog supports the selected target",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "UNSATISFIED"
+    },
+    {
+      "id": "version-consistency",
+      "title": "Workspace version identity is synchronized",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "UNSATISFIED"
+    },
+    {
+      "id": "repository-clean",
+      "title": "Release commit has a clean working tree",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "UNSATISFIED"
+    },
+    {
+      "id": "release-commit-identified",
+      "title": "Release commit is identified",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "UNSATISFIED"
+    },
+    {
+      "id": "license-metadata",
+      "title": "License metadata is complete",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "UNSATISFIED"
+    },
+    {
+      "id": "public-api-distinguished",
+      "title": "Public API is distinguished",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "UNSATISFIED"
+    },
+    {
+      "id": "publication-prerequisites",
+      "title": "Reviewed publication set is publishable",
+      "kind": "automated",
+      "mandatory": true,
+      "status": "UNSATISFIED"
+    },
+    {
+      "id": "execution-semantics",
+      "title": "Execution semantics are complete",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "Full pytest passed (3656 passed, 36 skipped); runtime AST matches the develop baseline. Maintainer review of 1.0.3 remains pending."
+    },
+    {
+      "id": "performance-budgets",
+      "title": "Performance budgets are enforced",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "docs/performance/budgets.json remains numerically unchanged. Local Windows measurement exceeded three ratios on repeat; the CI performance job and maintainer review are required."
+    },
+    {
+      "id": "interoperability",
+      "title": "Interoperability conformance is demonstrated",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "docs/INTEROPERABILITY.md names version-pinned host fixtures; full pytest and 32 explicit browser tests passed. Maintainer review remains pending."
+    },
+    {
+      "id": "security-program",
+      "title": "Security program is reviewed",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "docs/THREAT_MODEL.md names current adversarial review and residual risks; the full security test lane passed within pytest. Maintainer review remains pending."
+    },
+    {
+      "id": "stable-public-api",
+      "title": "Public API is ready for stability",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "docs/PUBLIC_API.md and docs/public-api.json classify 166 exports across 13 modules. The manifest and runtime AST are unchanged. Maintainer review remains pending."
+    },
+    {
+      "id": "clean-room-documentation",
+      "title": "Documentation reproduces supported applications",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "Seven wheels and seven sdists validated; all wheels installed in a fresh Python 3.14 environment with the first-party index closed, and imports and CLI smoke passed. Maintainer review remains pending."
+    },
+    {
+      "id": "publication-rehearsal",
+      "title": "Publication workflow is rehearsed",
+      "kind": "manual",
+      "mandatory": true,
+      "status": "NEEDS_REVIEW",
+      "detail": "The 1.0.3 protected publication has not been dispatched; approval and index verification remain pending."
+    }
+  ],
+  "source_baseline_sha": "ebd83592f2e3a0f073fbfa20382b84f605877bed",
+  "candidate_sha": null
 }

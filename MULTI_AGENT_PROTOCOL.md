@@ -1,5 +1,9 @@
 # Agnara Multi-Agent Coordination Protocol
 
+Current repository documentation describes the current framework. Historical release reconstruction must use Git history, tags or GitHub Releases and must not be inferred from active documentation.
+
+Never revive superseded release documentation into current context unless the task explicitly requires historical research.
+
 Agnara is built to be developed by a *swarm* of autonomous agents and human developers simultaneously. To ensure that everyone can work without stepping on each other's toes, we use a deterministic, GitHub-backed coordination protocol.
 
 ## 1. The Execution Ledger

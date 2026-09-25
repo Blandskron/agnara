@@ -1,8 +1,8 @@
 # Python 3.15 Readiness
 
-**Horizon:** post-1.0, Agnara 1.x
+**Horizon:** future Agnara 1.x research
 
-**Status:** `PLANNED / BLOCKED BY AGNARA 1.0 RELEASE`
+**Status:** `PLANNED`
 
 **Planning issue:** [#466](https://github.com/Blandskron/agnara/issues/466)
 
@@ -12,44 +12,26 @@ task state; [INITIATIVES](../INITIATIVES.md) indexes the program;
 [MATURITY](../MATURITY.md) owns claims about what exists today. Planning an
 experiment is not a decision to adopt its subject.
 
-## Release boundary and activation
+## Research boundary and activation
 
-Agnara 1.0 retains **Python >=3.14**. Python 3.15 is neither a requirement nor
-a blocker for that release. This pre-release documentation is outside the
-implementation scope of Agnara 1.0.
+Agnara currently requires **Python >=3.14**. Python 3.15 support is not claimed
+by the current package metadata or CI. This document is a research plan, not
+an implementation authorization or a release gate.
 
-**No Python 3.15 implementation, migration, CI or experimentation begins until
-the maintainer explicitly confirms that Agnara 1.0.0 was published as a stable
-release.** A date, tag, merge, release candidate or completion of this planning
-issue cannot substitute for that confirmation.
+Activation requires a separately reviewed issue and maintainer decision that
+sets scope, owners and validation resources. At that point, create executable
+issues from P315-01 through P315-12 as needed, preserving their dependencies
+and acceptance criteria. Until activation, no 3.15 runtime, dependency,
+packaging, API or workflow changes are part of this program.
 
-Activation procedure, only after the confirmation:
-
-1. Record the maintainer's confirmation verbatim, its durable issue/comment
-   link and the stable publication evidence in the program activation record.
-2. Change the program status here to active and link that record from the
-   backlog. Do not infer authorization from a release tag alone.
-3. Create executable issues from P315-01 through P315-12 as needed, preserving
-   their dependencies and acceptance criteria. Claim work through the existing
-   coordination protocol; begin the P0 work immediately.
-
-**Activation record: absent; confirmation not received.** Until it exists,
-all P315 work packages remain unstarted. Only documentation/planning is
-authorized: no runtime or experimental code, tests, dependencies, packaging,
-public API, CI/workflows, release automation, executable benchmarks, JIT
-activation, lazy imports, frozendict migration or sentinel migration changes.
-Do not install or run 3.15/3.15t experiments as part of this planning change.
-
-After activation, the objective is validated CPython 3.15 support during 2026.
-This is a goal, not a guarantee or a date-based trigger. The intended Agnara 1.x
-position, **only after the support gate passes**, is a Python >=3.14 baseline
+The intended Agnara 1.x position, **only after the support gate passes**, is a Python >=3.14 baseline
 with conventional CPython 3.14 and 3.15 validated; 3.15 free-threading has its
 own evidence and maturity decision. Raising the minimum requires a later ADR
 and supporting evidence. Initial compatibility with 3.14 is mandatory.
 
 ## Work packages and dependency order
 
-Priorities express post-activation order, not GitHub label requirements.
+Priorities express research order, not GitHub label requirements.
 Every package depends on activation. P315-11 can collect dependency evidence
 alongside P0 work; its closure is required for ecosystem conclusions, not for
 starting isolated core validation. Conventional support does not wait for

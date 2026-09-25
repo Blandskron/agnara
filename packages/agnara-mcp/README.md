@@ -2,6 +2,15 @@
 
 Model Context Protocol exposure adapter. Owns MCP server projection, tool discovery, invocation dispatch, schema mapping and MCP authorization integration.
 
+```bash
+pip install "agnara-mcp==1.0.3"
+```
+
+The governed exports are listed in the
+[API reference](../../docs/API_REFERENCE.md). The application supplies the
+principal mapper and owns host authentication; the adapter does not authorize
+a tool merely because it appears in discovery.
+
 This distribution is built and versioned with the synchronized workspace
 set. Which versions exist on an index is answered by its PyPI project page,
 not by this file: a README ships inside the artifact and cannot describe
@@ -16,7 +25,7 @@ allowed dependency graph.
 
 ## Protocol baseline
 
-The first adapter line targets exactly MCP `2026-07-28` through the official
+The adapter targets exactly MCP `2026-07-28` through the official
 Python SDK `mcp==2.1.1`. The public constants are:
 
 ```python
@@ -27,11 +36,11 @@ assert SUPPORTED_MCP_PROTOCOL_VERSIONS == ("2026-07-28",)
 ```
 
 This pin establishes the protocol boundary; it is not a claim that the
-unfinished E7 adapter already implements every MCP feature. Tool projection,
+adapter implements every MCP feature. Tool projection,
 schema mapping, discovery, the request-scoped authorization bridge, canonical
 result and interaction-required projection, and `tools/call` dispatch are
 implemented. MRTR resumption and Tasks behavior remain separate backlog work,
-and invocation is not yet benchmarked. Bounded
+and invocation are implemented. Bounded
 official SDK compatibility evidence is recorded in
 [`docs/MCP_CONFORMANCE.md`](../../docs/MCP_CONFORMANCE.md); it covers the
 implemented surfaces and does not claim complete MCP conformance.
@@ -138,7 +147,7 @@ authorization = McpAuthorization(tools, map_mcp_identity)
 server = build_mcp_discovery_server(
     projected,
     name="users",
-    version="1.0.0",
+    version="2026.1",
     instructions="Use these tools only with an authorized caller.",
     authorization=authorization,
 )
@@ -179,7 +188,7 @@ server = build_mcp_server(
     plans,
     DIContainer(registry),
     name="users",
-    version="1.0.0",
+    version="2026.1",
     authorization=authorization,
     timeout=30,
 )

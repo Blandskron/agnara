@@ -10,9 +10,9 @@ Published images use the release version without the leading `v` and are pushed
 to both GHCR and Docker Hub:
 
 ```bash
-docker pull ghcr.io/blandskron/agnara:1.0.0
-docker pull docker.io/blandskron/agnara:1.0.0
-docker run --rm -p 8000:8000 ghcr.io/blandskron/agnara:1.0.0
+docker pull ghcr.io/blandskron/agnara:1.0.3
+docker pull docker.io/blandskron/agnara:1.0.3
+docker run --rm -p 8000:8000 ghcr.io/blandskron/agnara:1.0.3
 ```
 
 The verified reference service exposes `GET /health`, `GET /orders/{order_id}`
@@ -22,11 +22,11 @@ as the unprivileged `agnara` user.
 For reproducibility, pin the digest recorded by the release workflow:
 
 ```bash
-docker pull ghcr.io/blandskron/agnara:1.0.0@sha256:<digest>
+docker pull ghcr.io/blandskron/agnara:1.0.3@sha256:<digest>
 ```
 
-Version tags are immutable release identities. Alpha or development commits do
-not receive `latest`.
+These commands apply after the 1.0.3 image is published. Version tags are
+immutable release identities. Development commits do not receive `latest`.
 
 ## Development edge
 

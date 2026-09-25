@@ -42,7 +42,7 @@ def _load_checker() -> Any:
 readiness = _load_checker()
 
 STATUS_PATH = WORKSPACE_ROOT / "docs" / "releases" / "release-status.json"
-PLAN_PATH = WORKSPACE_ROOT / "docs" / "releases" / "RELEASE_PLAN.md"
+PLAN_PATH = WORKSPACE_ROOT / "docs" / "releases" / "RELEASE_CHECKLIST.md"
 
 KINDS = {readiness.AUTOMATED, readiness.EVIDENCE, readiness.MANUAL}
 STATES = {
@@ -669,7 +669,7 @@ EVIDENCE_LINKED_GATES = (
     (
         "security-program",
         "docs/THREAT_MODEL.md",
-        "## 10. Adversarial review for 1.0.0",
+        "## 10. Current adversarial regression evidence",
         "adversarial review",
     ),
     (
@@ -680,9 +680,9 @@ EVIDENCE_LINKED_GATES = (
     ),
     (
         "stable-public-api",
-        "docs/releases/1.0-api-classification.md",
-        "# 1.0.0 public API classification",
-        "1.0-api-classification.md",
+        "docs/PUBLIC_API.md",
+        "## Current 1.x public API stability contract",
+        "PUBLIC_API.md",
     ),
 )
 

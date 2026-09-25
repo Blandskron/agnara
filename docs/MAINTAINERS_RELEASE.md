@@ -1,69 +1,43 @@
 # Maintainer Release Guide
 
-## Release posture
+This guide describes the reusable synchronized publication process. The
+[release checklist](releases/RELEASE_CHECKLIST.md) records the target-specific
+work; [quality gates](../QUALITY_GATES.md) define required verification.
 
-`1.0.0` is the published stable baseline. The selected target is recorded in
-`docs/releases/release-status.json`; its release issue and quality gates must
-be reviewed before publication. Historical alpha releases remain documented
-in `CHANGELOG.md`.
+## Prepare and review
 
-The `1.0.1` attempt is incomplete: bootstrap-1 uploaded three distributions,
-but no tag or complete seven-distribution release exists. The selected recovery
-target is `1.0.2` (Issue #509). Do not retry or recommend `1.0.1`. All three
-`1.0.2` dispatches must use the same accepted `main` commit and the `1.0.2`
-version input; the workflow's old alpha example was removed from its prompt.
+1. Select one target version and create an Issue. Work from reviewed
+   `develop` on a release branch. Record the target in
+   `docs/releases/release-status.json`.
+2. Use `scripts/set_workspace_version.py release <version>` to align all seven
+   distributions, exact `agnara` pins and the lockfile. Check the resulting
+   metadata and package descriptions.
+3. Move the target changes from `[Unreleased]` to a dated changelog entry and
+   write `docs/releases/v<version>.md`.
+4. Run the full CI, public API, documentation, package build, installed-artifact,
+   security and supply-chain gates. Review the exact source commit.
+5. Merge the approved release PR to `main` through repository protections.
+   Do not create a tag manually.
 
-Do not create a release merely to produce another version. A release represents
-a tested, reviewable product increment.
+## Publish the accepted commit
 
-## Preparing a synchronized release
+Dispatch `release.yml` from the unchanged `main` commit with the same
+`version` input in three separate phases. Each waits for the protected
+`pypi` environment approval and verifies the prior phase's immutable
+artifact set before continuing:
 
-1. Confirm the release issue and `docs/releases/release-status.json` identify
-   every required gate and its current evidence. Resolve pending gates before
-   merging the release PR.
-2. Start the release branch from the reviewed `develop` tip. Restrict it to
-   release preparation and final compatibility fixes.
-3. Run `python scripts/set_workspace_version.py release <version>`, then its
-   check-only mode. Do not edit synchronized versions manually.
-4. Move user-visible `[Unreleased]` items into the dated target changelog
-   section and write `docs/releases/v<version>.md` from that record.
-5. Run the full quality, package-build and clean-install gates.
-6. Merge the reviewed release PR to `main`.
+1. `bootstrap-1`: `agnara-a2a`, `agnara-cli`, `agnara-events`.
+2. `bootstrap-2`: `agnara-http`, `agnara-mcp`, `agnara-telemetry`.
+3. `final`: `agnara`, verification of all seven PyPI projects, immutable tag
+   and GitHub Release, then reference-container publication.
 
-## Publication
+Build and validate all fourteen artifacts from the same accepted commit.
+Inspect package metadata and index readback. A failed phase requires
+investigation; never overwrite a published version or bypass a protected gate.
 
-Dispatch the repository publication workflow from the accepted `main` commit.
-The workflow is the only publisher: it validates the selected version, waits
-for the protected registry authorization, publishes the synchronized artifacts,
-verifies index visibility, and only then creates the immutable tag and GitHub
-release. See ADR 0082.
+## Reconcile
 
-A version is published in three dispatches of `Release to PyPI`, in order,
-each with the same `version` input and each approved separately in the `pypi`
-environment (ADR 0083):
-
-1. `phase: bootstrap-1` publishes `agnara-a2a`, `agnara-cli`, `agnara-events`.
-2. `phase: bootstrap-2` publishes `agnara-http`, `agnara-mcp`,
-   `agnara-telemetry`.
-3. `phase: final` publishes `agnara`, verifies all seven on PyPI, creates the
-   tag and the GitHub Release, then publishes the reference container image.
-
-Start a phase only after the previous run's verification job has passed.
-
-Never create or push a release tag by hand. Never retry by overwriting a
-published version. A failed run is investigated and corrected through an Issue
-and PR before a new authorized attempt.
-
-## After publication
-
-Propagate release-only changes back to `develop` through a PR. Then select the
-next target and transition `develop` to its `.dev0` identity with the version
-tool. Record the release evidence in the issue and close it only after the
-propagation is merged.
-
-## Emergency fixes
-
-An urgent production defect starts from `main` on a documented hotfix branch.
-It still requires an Issue, review, tests, synchronized version selection,
-publication authorization and propagation to `develop`. A hotfix is not a
-shortcut around those controls.
+Record published evidence in the Issue. Propagate release-only changes back to
+`develop` by PR, then select the next development target through the version
+tool. An urgent fix follows the same review, validation, protected publication
+and propagation controls. `main` receives no ordinary feature work.

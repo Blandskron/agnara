@@ -207,7 +207,7 @@ published document.
 - `Mcp` has two compile entry points. `compile()` returns the tool table the
   SDK projection consumes; `compile_surface()` returns it with records.
   Keeping both avoids a breaking change to a published adapter's public API
-  before `1.0.0`, at the cost of one extra method until RFC 0006 phase 3.
+  while the adapter contract evolved; the current stable methods are governed by the public API manifest.
 - `describe_app` accepts two exposure shapes, and the weaker one is still
   legal.
 - Aggregation is a separate call a composition root must remember. Nothing
@@ -255,8 +255,7 @@ behaviour changes for an application that does not use the new model.
 One deliberate break, in an internal path: `Mcp.__repr__` now includes the
 surface name, because `Mcp('users', 0 tools, open)` could no longer identify
 which of two servers it described. A repr is a diagnostic rather than a
-contract, and the retained baseline scopes the public API as
-changeable; the repository's own test was updated in the same change.
+contract, and the diagnostic representation remains outside the public API contract; the repository's own test was updated in the same change.
 
 `Mcp(app)` keeps its signature; `surface` is keyword-only with a `"default"`
 value. `Mcp.compile()`, `FrozenMcpTools`, `describe_app`, `_compile_exposures`
@@ -268,5 +267,4 @@ RFC 0006 phase 3 — the public composition API in Task 03. That change settles
 the public spelling of `Http(...)` and MCP composition, may retire the
 `describe_app` mapping form and the second `Mcp` compile entry point, and
 should remove the "surface" collision inside `agnara-http`. Promoting any of
-these seven names to `stable` remains a separate decision gated by
-`1.0.0`.
+these names to `stable` is reflected in the current public API manifest.

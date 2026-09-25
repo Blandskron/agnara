@@ -1,41 +1,30 @@
-# ADR 0068 — Interoperability Ownership for 1.0
+# ADR 0068 — Interoperability evidence ownership
 
 - Status: Accepted
 - Date: 2026-09-11
 
 ## Context
 
-The retained A8 publication is a baseline, not a release train. Agnara now
-works toward one real public release: `1.0.0`. Interoperability must therefore
-be delivered as a coherent release outcome rather than as an optional adapter
-exercise or a sequence of preview milestones.
-
-The release owns the evidence that the same compiled capability model can be
-consumed through the supported transport adapters without moving transport
-semantics into core.
+Agnara's capability model is transport-neutral. HTTP, MCP and host
+compositions must project the same compiled capability semantics without
+moving protocol authority into core. A published interoperability claim needs
+reproducible evidence for the scope it names.
 
 ## Decision
 
-`1.0.0` owns interoperability as a release gate. Its scope is deliberately
-bounded:
+The release review owns interoperability evidence. Validate discovery,
+invocation, errors, schema projection and authorization at each supported
+surface through public adapter APIs. Keep protocol SDKs outside core.
+Distinguish a supported contract from a version-pinned fixture and from
+research in `docs/INTEROPERABILITY.md`.
 
-- prove capability discovery, invocation, errors and schema projection across
-  the supported HTTP, MCP and A2A surfaces;
-- preserve the protocol-neutral core boundary;
-- test integrations through public adapter APIs, not private implementation
-  details;
-- record reproducible conformance evidence before release approval.
-
-Streaming, execution identity and performance remain separate release gates.
-Their work may share tests or implementation seams with interoperability, but
-none may be declared complete merely because another gate passed.
+A new protocol or framework integration needs its own reviewed contract and
+conformance evidence before a support claim is made. Streaming, execution
+identity and performance have separate gates; passing one does not close
+another.
 
 ## Consequences
 
-The roadmap and backlog may prioritize interoperability work independently,
-but a `1.0.0` release cannot be authorized until its conformance evidence is
-available. New protocols or framework integrations remain out of scope unless
-they are accepted through their own design process.
-
-This keeps the release promise legible: Agnara supports the adapters it ships,
-and each adapter is verified as a projection of the same capability model.
+The exact current surface and limitations live in `docs/MATURITY.md` and
+`docs/INTEROPERABILITY.md`. Release approval checks evidence for the selected
+commit, rather than relying on an old milestone label.
