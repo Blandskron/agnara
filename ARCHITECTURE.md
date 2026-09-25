@@ -1,5 +1,18 @@
 # Architecture
 
+This document defines current 1.x boundaries. [Subsystem maturity](docs/MATURITY.md)
+records what is implemented; [the roadmap](ROADMAP.md) owns future programs.
+Examples here are illustrative unless they match the
+[public API reference](docs/API_REFERENCE.md).
+
+The platform design rule is: **Agnara owns the contract, not necessarily the
+implementation.** The `agnara` kernel owns capability semantics, execution,
+DI, schema and policy ports, identity, composition, lifecycle and
+introspection. Protocols and optional integrations live in independent
+packages. Future data, task, event, UI or infrastructure contracts require a
+separate accepted design; none is a reason to import a database, broker,
+frontend framework or model SDK into core.
+
 ## 1. Architectural style
 
 Agnara uses a hexagonal / ports-and-adapters architecture around a capability execution kernel.
@@ -261,7 +274,7 @@ Prefer official protocol SDK use at the adapter boundary over reimplementing the
 
 ### `agnara-a2a`
 
-Responsibilities:
+Reserved namespace only. Possible future responsibilities, subject to design:
 
 - Agent Card / skill projection;
 - A2A tasks;
@@ -271,7 +284,7 @@ Responsibilities:
 
 ### `agnara-events`
 
-Responsibilities:
+Reserved namespace only. Possible future responsibilities, subject to design:
 
 - event capability abstractions;
 - AsyncAPI projection;
@@ -539,7 +552,7 @@ Conceptual machine-readable shape:
 {
   "format": "agnara-introspection",
   "version": "0",
-  "apps": [
+  "applications": [
     {
       "id": "payments",
       "capabilities": [
@@ -549,7 +562,7 @@ Conceptual machine-readable shape:
           "risk": "high",
           "confirmation": "policy",
           "idempotency": "no",
-          "exposures": ["http", "mcp", "a2a"]
+          "exposures": ["http", "mcp"]
         }
       ]
     }

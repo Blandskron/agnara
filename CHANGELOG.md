@@ -19,6 +19,9 @@ published; its fix ships in `1.0.0`.
 
 ## [Unreleased]
 
+- Reorganize current 1.x documentation around the implemented API and move
+  completed A1–A8/1.0 planning out of the agent onboarding path; document the
+  provisional universal application platform roadmap separately.
 - Redact missing scope labels from caller-facing authorization denials in direct,
   HTTP, and MCP calls while retaining opt-in operator diagnostics.
 - Match incoming publication methods case-sensitively so lowercase or malformed

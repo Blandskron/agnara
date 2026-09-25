@@ -2,21 +2,21 @@
 
 **Horizon:** post-1.0, Agnara 1.x
 
-**Status:** `PLANNED / BLOCKED BY AGNARA 1.0 RELEASE`
+**Status:** `PLANNED / AWAITING EXPLICIT MAINTAINER ACTIVATION RECORD`
 
 **Planning issue:** [#466](https://github.com/Blandskron/agnara/issues/466)
 
 This is the canonical program specification: activation, work-package scope,
 acceptance evidence and runtime comparisons. [BACKLOG](../../BACKLOG.md) owns
-task state; [INITIATIVES](../INITIATIVES.md) indexes the program;
+task state; [INITIATIVES](../INITIATIVES.md) is historical 1.0 planning;
 [MATURITY](../MATURITY.md) owns claims about what exists today. Planning an
 experiment is not a decision to adopt its subject.
 
 ## Release boundary and activation
 
 Agnara 1.0 retains **Python >=3.14**. Python 3.15 is neither a requirement nor
-a blocker for that release. This pre-release documentation is outside the
-implementation scope of Agnara 1.0.
+a blocker for that release. The 1.0.0 GitHub Release was published on
+2026-09-23; the separate activation record required below is still absent.
 
 **No Python 3.15 implementation, migration, CI or experimentation begins until
 the maintainer explicitly confirms that Agnara 1.0.0 was published as a stable

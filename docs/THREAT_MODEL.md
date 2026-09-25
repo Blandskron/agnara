@@ -1,5 +1,9 @@
 # Threat Model — 1.0 Candidate
 
+> **HISTORICAL-EVIDENCE.** This analysis belongs to the 1.0.0 candidate. Its
+> verified claims and residual risks must be rechecked against a later
+> candidate; [SECURITY.md](../SECURITY.md) owns current reporting guidance.
+
 What an attacker can reach in the `1.0.0` candidate, what Agnara itself
 refuses, and what it deliberately leaves to the application or deployment.
 It covers direct capability execution; the ASGI/HTTP and SSE projection; MCP;

@@ -1,4 +1,10 @@
-# Initiatives
+# Initiatives — historical 1.0 construction plan
+
+> **HISTORICAL-EVIDENCE.** This plan records the path to the published 1.0.0
+> release. Its `IN PROGRESS` and `PARTIAL` labels describe that period; they
+> are not current task status. Use [ROADMAP.md](../ROADMAP.md) for future
+> programs, [BACKLOG.md](../BACKLOG.md) for open work and
+> [MATURITY.md](MATURITY.md) for implemented behavior.
 
 This document groups the work required for Agnara's first stable release and
 separately indexes programs blocked until after that release.
