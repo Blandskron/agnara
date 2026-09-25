@@ -214,7 +214,13 @@ def test_a_missing_dispatch_commit_is_refused(checkout: Path) -> None:
     assert any("GITHUB_SHA is not set" in problem for problem in problems)
 
 
-def _candidate_fetch(sha: str, *, version: str = VERSION, phase: str = "bootstrap-1") -> Any:
+def _candidate_fetch(
+    sha: str,
+    *,
+    version: str = VERSION,
+    phase: str = "bootstrap-1",
+    workflow_path: str = ".github/workflows/release.yml@main",
+) -> Any:
     name = f"agnara-release-candidate-{version}-{phase}"
 
     def fetch(url: str) -> dict[str, Any]:
@@ -232,7 +238,7 @@ def _candidate_fetch(sha: str, *, version: str = VERSION, phase: str = "bootstra
         if "/actions/runs/17" in url:
             return {
                 "id": 17,
-                "path": ".github/workflows/release.yml@main",
+                "path": workflow_path,
                 "event": "workflow_dispatch",
                 "head_branch": "main",
                 "head_sha": sha,
@@ -243,17 +249,35 @@ def _candidate_fetch(sha: str, *, version: str = VERSION, phase: str = "bootstra
     return fetch
 
 
-def test_later_phase_accepts_the_first_phase_candidate(checkout: Path) -> None:
+@pytest.mark.parametrize(
+    "workflow_path",
+    (".github/workflows/release.yml", ".github/workflows/release.yml@main"),
+)
+def test_later_phase_accepts_the_first_phase_candidate(checkout: Path, workflow_path: str) -> None:
     context = _context(checkout)
     code, problems, _ = tool.run(
         VERSION,
         context=context,
         git=tool.make_git(checkout),
-        fetch=_candidate_fetch(context.sha),
+        fetch=_candidate_fetch(context.sha, workflow_path=workflow_path),
         protected_environment="pypi",
         phase="bootstrap-2",
     )
     assert (code, problems) == (0, [])
+
+
+def test_later_phase_refuses_an_unrelated_workflow_candidate(checkout: Path) -> None:
+    context = _context(checkout)
+    code, problems, _ = tool.run(
+        VERSION,
+        context=context,
+        git=tool.make_git(checkout),
+        fetch=_candidate_fetch(context.sha, workflow_path=".github/workflows/other.yml"),
+        protected_environment="pypi",
+        phase="bootstrap-2",
+    )
+    assert code == 1
+    assert any("expected exactly one retained candidate" in problem for problem in problems)
 
 
 def test_later_phase_refuses_a_new_main_commit_for_the_same_version(checkout: Path) -> None:

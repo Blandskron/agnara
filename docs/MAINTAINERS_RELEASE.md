@@ -7,6 +7,12 @@
 be reviewed before publication. Historical alpha releases remain documented
 in `CHANGELOG.md`.
 
+The `1.0.1` attempt is incomplete: bootstrap-1 uploaded three distributions,
+but no tag or complete seven-distribution release exists. The selected recovery
+target is `1.0.2` (Issue #509). Do not retry or recommend `1.0.1`. All three
+`1.0.2` dispatches must use the same accepted `main` commit and the `1.0.2`
+version input; the workflow's old alpha example was removed from its prompt.
+
 Do not create a release merely to produce another version. A release represents
 a tested, reviewable product increment.
 
