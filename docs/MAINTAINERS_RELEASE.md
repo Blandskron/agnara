@@ -2,23 +2,25 @@
 
 ## Release posture
 
-`0.1.0a8` is the retained publication baseline. It is not a recurring preview
-cadence. The next authorized public release is `1.0.0`, after its documented
-quality gates pass.
+`1.0.0` is the published stable baseline. The selected target is recorded in
+`docs/releases/release-status.json`; its release issue and quality gates must
+be reviewed before publication. Historical alpha releases remain documented
+in `CHANGELOG.md`.
 
 Do not create a release merely to produce another version. A release represents
 a tested, reviewable product increment.
 
-## Preparing 1.0.0
+## Preparing a synchronized release
 
-1. Confirm the release issue and `docs/releases/release-status.json` list every
-   required gate as satisfied with reproducible evidence.
+1. Confirm the release issue and `docs/releases/release-status.json` identify
+   every required gate and its current evidence. Resolve pending gates before
+   merging the release PR.
 2. Start the release branch from the reviewed `develop` tip. Restrict it to
    release preparation and final compatibility fixes.
-3. Run `python scripts/set_workspace_version.py release 1.0.0`, then its
+3. Run `python scripts/set_workspace_version.py release <version>`, then its
    check-only mode. Do not edit synchronized versions manually.
-4. Move user-visible `[Unreleased]` items into the dated `1.0.0` changelog
-   section and write `docs/releases/v1.0.0.md` from that record.
+4. Move user-visible `[Unreleased]` items into the dated target changelog
+   section and write `docs/releases/v<version>.md` from that record.
 5. Run the full quality, package-build and clean-install gates.
 6. Merge the reviewed release PR to `main`.
 
