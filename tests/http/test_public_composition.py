@@ -414,6 +414,8 @@ def test_a_policy_denial_maps_to_403(app: Agnara, dependencies: DIRegistry) -> N
     assert headers[b"content-type"] == b"application/problem+json"
     problem = json.loads(payload)
     assert problem["code"] == "forbidden"
+    assert problem["detail"] == "required scopes not granted"
+    assert b"shop:admin" not in payload
     assert problem["title"] == "Forbidden"
 
 

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from dataclasses import FrozenInstanceError
 
 import pytest
@@ -43,17 +44,31 @@ def test_scope_policy_allows_when_all_required_scopes_are_granted(required) -> N
     assert evaluate(ScopePolicy(required), principal) == PolicySuccess()
 
 
-def test_scope_policy_denies_missing_scopes_deterministically() -> None:
+def test_scope_policy_denies_missing_scopes_without_exposing_labels(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     principal = Principal("user_123", scopes={"users:read"})
 
-    assert evaluate(ScopePolicy({"users:write", "admin:read"}), principal) == PolicyFailure(
-        reason="missing required scopes: admin:read, users:write"
-    )
+    with caplog.at_level(logging.DEBUG, logger="agnara.policy.scopes"):
+        assert evaluate(ScopePolicy({"users:write", "admin:read"}), principal) == PolicyFailure(
+            reason="required scopes not granted"
+        )
+    assert "('admin:read', 'users:write')" in caplog.text
+    assert "users:read" not in caplog.text
+
+
+def test_scope_diagnostic_escapes_control_characters(caplog: pytest.LogCaptureFixture) -> None:
+    with caplog.at_level(logging.DEBUG, logger="agnara.policy.scopes"):
+        assert evaluate(ScopePolicy({"secret\nforged"})) == PolicyFailure(
+            reason="required scopes not granted"
+        )
+    assert r"secret\nforged" in caplog.text
+    assert "secret\nforged" not in caplog.text
 
 
 def test_scope_policy_fails_closed_for_anonymous_principal() -> None:
     assert evaluate(ScopePolicy({"users:read"})) == PolicyFailure(
-        reason="missing required scopes: users:read"
+        reason="required scopes not granted"
     )
 
 

@@ -504,6 +504,11 @@ unmatched target rather than raised.
 | Deadline exceeded | 504 | `timeout` |
 | Handler raised | 500 | `internal_failure` (message redacted) |
 
+The built-in scope policy returns `required scopes not granted` for a missing
+grant. It does not include scope labels in HTTP or MCP errors. Operators can
+enable the `agnara.policy.scopes` DEBUG logger to see escaped missing labels
+and the capability identifier; other policy messages remain caller-facing.
+
 Decoded JSON is materialized after policy and before strict validation. This
 is why a nested dataclass error uses canonical `details.path` beginning with
 the capability input name rather than transport `details.location`. Direct

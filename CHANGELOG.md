@@ -19,6 +19,8 @@ published; its fix ships in `1.0.0`.
 
 ## [Unreleased]
 
+- Redact missing scope labels from caller-facing authorization denials in direct,
+  HTTP, and MCP calls while retaining opt-in operator diagnostics.
 - Match incoming publication methods case-sensitively so lowercase or malformed
   requests cannot reach GET-only schema, documentation, discovery, or Explorer
   content.

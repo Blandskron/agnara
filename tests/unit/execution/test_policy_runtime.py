@@ -142,6 +142,7 @@ def test_direct_plan_with_declared_scope_checks_authority_before_effects() -> No
         denied = await invoke_result(plan, context_for(plan))
         assert isinstance(denied, Failure)
         assert denied.code is FailureCode.FORBIDDEN
+        assert denied.message == "required scopes not granted"
         assert calls == 0
 
         granted = ExecutionContext(

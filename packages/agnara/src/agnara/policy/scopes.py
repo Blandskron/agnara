@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
@@ -13,6 +14,8 @@ if TYPE_CHECKING:
     from agnara.execution.context import ExecutionContext
 
 __all__: list[str] = []
+
+LOGGER = logging.getLogger("agnara.policy.scopes")
 
 
 def _normalize_scopes(values: Iterable[str], field_name: str) -> frozenset[str]:
@@ -48,5 +51,12 @@ class ScopePolicy:
         granted_scopes = getattr(principal, "scopes", frozenset())
         missing = sorted(self.required_scopes.difference(granted_scopes))
         if missing:
-            return PolicyFailure(reason=f"missing required scopes: {', '.join(missing)}")
+            # PolicyFailure.reason reaches direct callers and HTTP/MCP clients.
+            # Keep scope labels only in an operator-enabled diagnostic channel.
+            LOGGER.debug(
+                "capability %r denied; missing required scopes: %r",
+                context.invocation.capability_id,
+                tuple(missing),
+            )
+            return PolicyFailure(reason="required scopes not granted")
         return PolicySuccess()
