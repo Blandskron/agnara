@@ -37,7 +37,7 @@ claimed.
 | Concern | Common enforcement | Surface note |
 | --- | --- | --- |
 | allowed principal | `ScopePolicy` compares the context principal's granted scopes | direct and authenticated MCP can supply an identified principal |
-| denied/anonymous principal | denial is canonical `forbidden` before input diagnostics or effects | HTTP a4 dispatch is anonymous, so a scoped capability fails closed |
+| denied/anonymous principal | denial is canonical `forbidden` before input diagnostics or effects | Native HTTP dispatch is anonymous, so a scoped capability fails closed |
 | declared scopes | compiled once as the first plan policy | discovery filtering is visibility only and never replaces invocation policy |
 | application business rule | explicit capability policies run after the declared-scope guard, in declaration order | a business rule is not framework authorization metadata |
 | confirmation | `required` compiles a verifier-backed policy; missing evidence is `interaction_required`, invalid evidence is `forbidden` | HTTP maps 428; MCP maps one-way input-required and trusts no submitted boolean |

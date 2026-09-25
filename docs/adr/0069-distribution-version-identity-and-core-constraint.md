@@ -3,13 +3,13 @@
 - Status: Accepted
 - Date: 2026-09-11
 - Tracking: GitHub Issue #280
-- Amends: ADR 0021
+- Related: ADR 0095
 
 ## Context
 
 An adapter built from `develop` must not resolve an unrelated published core.
-All first-party projects form one tested workspace and the next public target
-is `1.0.0`.
+All first-party projects form one tested workspace and currently share
+the selected 1.0.3 target.
 
 ## Decision
 
@@ -44,5 +44,5 @@ matching core artifacts until compatibility ranges are supported by evidence.
 
 ## Revisit when
 
-Revisit after `1.0.0` only if cross-version compatibility is explicitly tested
+Revisit only if cross-version compatibility is explicitly tested
 and a bounded range would accurately describe that evidence.

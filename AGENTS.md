@@ -1,5 +1,9 @@
 # AGENTS.md â Instructions for Coding Agents
 
+Current repository documentation describes the current framework. Historical release reconstruction must use Git history, tags or GitHub Releases and must not be inferred from active documentation.
+
+Never revive superseded release documentation into current context unless the task explicitly requires historical research.
+
 ## Bootstrap (START HERE)
 
 If you are an agent and were just told "Lee AGENTS.md y comienza" or similar:
@@ -230,7 +234,7 @@ For every PR, decide explicitly whether the change needs an entry under
 security, dependency, migration and contributor-workflow changes require one.
 Explain justified omissions in the PR.
 
-Read `docs/adr/0021-synchronized-pre-one-releases-and-changelog.md` before
+Read `docs/adr/0095-synchronized-releases-and-curated-changelog.md` before
 changing package versions, changelog release headings or Git tags. Never
 publish the `0.0.0` development sentinel.
 

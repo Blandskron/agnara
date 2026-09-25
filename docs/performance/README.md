@@ -35,12 +35,10 @@ calibration runs; dividing a ~10µs runtime path by it inherits that noise. The
 ratio to the bare handler is still recorded, as context for what the framework
 costs at all, with a deliberately coarse limit.
 
-Three preserved V1-40 calibration records establish the limits. The prior
-claim of six runs is not reproducible from the repository and is therefore not
-evidence. The V1-40 records publish the current-semantic measurements and their
-declared dimensions before the embedding and registration/freeze observations
-became limits. The same measurements expressed as absolute nanoseconds vary
-considerably more.
+Three checked-in schema-2 calibration records establish the current limits.
+They include declared environment and semantic dimensions for the embedding,
+registration/freeze and invocation paths. Absolute nanoseconds vary more
+across machines, so the ratios and reviewed headroom are the enforced signal.
 
 ## What is budgeted
 
@@ -52,7 +50,7 @@ considerably more.
 | `startup_peak_bytes_per_capability` | Peak compile memory. Allocation counts are deterministic across runs, so this limit is tighter than the timing ones. |
 
 The currently enforced streaming measure is per emitted unit over a complete
-lifecycle. V1-39 also records opening, per-item pull and normal completion as
+lifecycle. The benchmark also records opening, per-item pull and normal completion as
 separate observations. Registration/freeze and the ADR 0094 embedding boundary
 are likewise observed where no reviewed threshold exists. See
 `docs/benchmarks/coverage.md`.
@@ -95,10 +93,10 @@ CPython 3.14.4, Windows 11, x86-64, 8 CPUs, GIL enabled. Each existing limit
 sits at 1.6x the highest recorded value. The raw records are in
 `docs/benchmarks/data/`.
 
-V1-39 did not silently re-label historical records as a calibration of final
-semantics. V1-40 collected repeated raw JSON records with the full declared
-environment and run dimensions, computed observed maxima and spread, then
-added limits deliberately.
+The three raw JSON records in `docs/benchmarks/data/` retain their full
+execution profile and metric dimensions. Budgets were set from the maximum
+observed value with reviewed headroom; no historical task identifier is needed
+to interpret the current gate.
 
 Every limit carries the `observed_maximum` it was calibrated against; a test
 enforces that a budget without calibration evidence, or without headroom over

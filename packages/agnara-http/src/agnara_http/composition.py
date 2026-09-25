@@ -169,7 +169,7 @@ class HttpDefinitionError(DefinitionError):
     sibling adapter. All of these abort startup, and nothing catches them
     selectively in production; the message names the specific problem and
     `__cause__` keeps the adapter's own diagnostic. A finer hierarchy is a
-    change this alpha should not promise before an application asks for one.
+    change that requires a demonstrated application need and compatibility review.
 
     A `DefinitionError`, so `except AgnaraError` already covers it and an
     application need not learn a second error root (ADR 0005).
@@ -723,9 +723,9 @@ class HttpApplication:
 
         uvicorn.run(asgi)  # or: hypercorn, granian, daphne
 
-    Being ASGI is a boundary, not an integration. Agnara speaks ASGI 3 and
-    nothing here promises support for a specific framework; that is
-    `1.0.0` (ADR 0068).
+    Agnara speaks ASGI 3. Framework-neutral embedding follows ADR 0094;
+    specific host fixtures have bounded conformance claims in the
+    interoperability guide.
 
     Compiled routes and plans are immutable. The owned DI container and
     lifespan belong to one application's event loop, not multiple worker loops.

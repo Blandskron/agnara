@@ -3,7 +3,7 @@
 ## Purpose
 
 `runtime-invocation.md` covers the bare compiled hot path. This benchmark covers
-what the 1.0.0 performance program has to protect: what a capability pays for
+what the current performance gate protects: what a capability pays for
 dependency injection, policy evaluation, execution identity, idempotency, nested
 composition, framework-neutral embedding and streaming, plus distinct
 registration/freeze and compile/startup scaling and memory.
@@ -72,7 +72,7 @@ by doing the wrong thing. Every elapsed sample is retained alongside the summary
 
 ## Calibration record
 
-The checked-in V1-40 calibration is three runs of 7 samples x 2,000 iterations
+The checked-in current calibration is three runs of 7 samples x 2,000 iterations
 and 2 warmup batches on CPython 3.14.4, Windows 11, x86-64, 8 CPUs, GIL
 enabled. It covers the final-semantics embedding and registration/freeze
 measurements as well as the existing complete-path values. Nanoseconds per

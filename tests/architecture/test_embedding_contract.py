@@ -44,7 +44,7 @@ def test_embedding_contract_is_accepted_but_does_not_claim_host_support() -> Non
 def test_contract_uses_existing_stable_public_surface_without_new_exports() -> None:
     public_api = _text(PUBLIC_API)
 
-    assert "The 1.0 contract contains" in public_api
+    assert "The current 1.x contract contains" in public_api
     assert {"Agnara"} <= _exports("agnara")
     assert {"DIContainer", "DIRegistry"} <= _exports("agnara.di")
     assert {
@@ -85,11 +85,11 @@ def test_four_modes_share_one_value_only_contract_example() -> None:
     assert "Idempotency is never authorization to retry." in contract
 
 
-def test_status_records_design_evidence_without_closing_interoperability() -> None:
+def test_status_records_implemented_embedding_without_closing_interoperability() -> None:
     status = json.loads(_text(RELEASE_STATUS))
     interoperability = next(gate for gate in status["gates"] if gate["id"] == "interoperability")
 
     assert "Framework embedding contract" in _text(MATURITY)
-    assert "DESIGNED" in _text(MATURITY)
+    assert "`IMPLEMENTED`" in _text(MATURITY)
     assert interoperability["status"] == "NEEDS_REVIEW"
-    assert "Version-pinned host fixtures" in interoperability["detail"]
+    assert "INTEROPERABILITY.md" in interoperability["detail"]

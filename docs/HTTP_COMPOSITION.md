@@ -99,7 +99,7 @@ http.post(
 asgi = http.compile(
     app.compile(),
     dependencies=dependencies,
-    openapi=OpenApiInfo("Shop API", "1.0.0"),
+    openapi=OpenApiInfo("Shop API", "2026.1"),
     documentation=HttpDocumentation(),
 )
 ```
@@ -110,9 +110,9 @@ asgi = http.compile(
 uvicorn app:asgi
 ```
 
-Being ASGI is a boundary, not an integration. Agnara speaks ASGI 3; supported
-integration with a specific framework — FastAPI, Django, Starlette — belongs to
-`1.0.0` and is not promised here (ADR 0068).
+Agnara speaks ASGI 3. The framework-neutral embedding contract is ADR 0094;
+version-pinned host fixtures validate selected FastAPI, Django, Starlette and
+Litestar compositions. `docs/INTEROPERABILITY.md` states their exact scope.
 
 ## Who owns what
 
@@ -573,8 +573,8 @@ deferred request feature rather than leaving it implicit.
 | --- | --- |
 | Multiple files, repeated form fields | Both need a collection binding, which ADR 0026 deferred deliberately and which decides how a list arrives through *every* transport. Use distinct part names. |
 | Client filename, per-part content type | Both need a public upload value type, and that is a core-visible schema shape MCP and introspection project too. Ask for a filename as a form field if you need one. |
-| Streaming request bodies, large uploads | Not part of the 1.0 request contract. An upload remains bounded `bytes`; a future input-streaming design needs its own cross-surface decision. |
-| **WebSocket**s, SSE replay and `Last-Event-ID` | I2, after `1.0.0`. The ASGI boundary handles no `websocket` scope, and resumption waits for the operational identity I3 must decide. Streaming *responses* are implemented: see `Http.sse` above. |
+| Streaming request bodies, large uploads | Not part of the current request contract. An upload remains bounded `bytes`; a future input-streaming design needs its own cross-surface decision. |
+| **WebSocket**s, SSE replay and `Last-Event-ID` | Not implemented. The ASGI boundary handles no `websocket` scope, and resumption waits for the operational identity I3 must decide. Streaming *responses* are implemented: see `Http.sse` above. |
 | CORS, compression, trusted hosts, proxy header trust | Put them in the reverse proxy or ASGI server in front of the application, or wrap the `HttpApplication` in any third-party ASGI middleware — it is an ASGI 3 callable, so they compose. |
 | Static files | A web server or CDN. Agnara serves capabilities. |
 | Middleware / interceptor hook | Deliberately absent. `docs/INITIATIVES.md` states why: "middleware in most frameworks is where transport types leak into application code, and Agnara must not reproduce that". Wrapping from outside, at the ASGI layer, keeps transport concerns where they belong. |
@@ -590,15 +590,12 @@ conversion (ADR 0075, [issue #296](https://github.com/Blandskron/agnara/issues/2
 
 **No authentication.** Every HTTP invocation runs as the anonymous principal,
 so a capability carrying a `ScopePolicy` always answers `403`. Nothing here can
-produce a `401`. Authentication integration is part of the security program
-(I10, `1.0.0`).
+produce a `401`. Host authentication mapping remains application-owned; see `SECURITY.md`.
 
-**Publication-ready, not published.** Only the `agnara` core distribution is
-uploaded today, so `agnara-http` must currently be installed from a locally
-built wheel. ADR 0073 and
-[issue #291](https://github.com/Blandskron/agnara/issues/291) make the tagged
-workflow ready to publish the synchronized set; they do not perform a release.
+**Distribution.** `agnara-http` is part of the synchronized published
+seven-distribution set. Install the exact target version alongside the kernel;
+see `docs/releases/RELEASE_CHECKLIST.md` for current publication state.
 
 **Compatibility promise.** Every supported name here is `stable`. The 1.x
 contract preserves those names; `docs/PUBLIC_API.md` records the policy and ADR
-0021 requires a changelog entry and migration guidance for a future break.
+0095 requires a changelog entry and migration guidance for a future break.

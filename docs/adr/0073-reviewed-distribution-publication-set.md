@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-09-11
-- Release target: `1.0.0`
+- Scope: every synchronized release
 
 ## Context
 
@@ -12,13 +12,13 @@ core or with a missing documented package.
 
 ## Decision
 
-The `1.0.0` release gate reviews and publishes the complete first-party
+Each release gate reviews and publishes the complete first-party
 distribution set together. The set, expected versions, registry state and
 verification evidence are recorded in `docs/releases/publication.json`; the
 workflow validates that record before it publishes.
 
-The retained A8 publication demonstrates the workflow baseline. It is not a
-template for partial release attempts. A failed publication is handled through
+The workflow requires complete publication. A partial upload is not a
+valid release outcome. A failed publication is handled through
 an Issue and a reviewed correction, never by silently reusing a version or
 retagging a different commit.
 

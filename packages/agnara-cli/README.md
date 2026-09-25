@@ -2,12 +2,20 @@
 
 Project introspection and scaffolding CLI. Owns project/app generators, templates and diagnostics.
 
+```bash
+pip install "agnara-cli==1.0.3"
+agnara --help
+```
+
 This distribution is built and versioned with the synchronized workspace
 set. Which versions exist on an index is answered by its PyPI project page,
 not by this file: a README ships inside the artifact and cannot describe
 the state of a publication that happens after it is built.
 
 It installs the `agnara` console script.
+The governed Python exports are listed in
+[`docs/API_REFERENCE.md`](../../docs/API_REFERENCE.md); generated projects use
+the governed kernel imports. Importing a project target executes that module.
 
 - Import package: `agnara_cli`
 - Depends on: the exact synchronized `agnara` version

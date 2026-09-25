@@ -54,7 +54,7 @@ because building a distribution and being able to use it are different claims:
 ```bash
 uv build --all-packages --out-dir dist/
 python scripts/check_distributions.py --workspace "$PWD" --dist dist/ \
-    --expected-version <candidate-version>
+    --expected-version <target-version>
 uv venv --python 3.14 <external>/.venv
 uv pip install --python <external>/.venv/bin/python \
     "mcp==2.1.1" "opentelemetry-api>=1.44,<2"
@@ -62,7 +62,7 @@ uv pip install --python <external>/.venv/bin/python \
     --no-index --find-links dist/ dist/*.whl
 <external>/.venv/bin/python -I scripts/check_distributions.py \
     --workspace "$PWD" --require-installed \
-    --expected-version <candidate-version>
+    --expected-version <target-version>
 ```
 
 Every wheel is installed into one environment. Adapter-owned third-party
@@ -305,9 +305,9 @@ The aggregate waits for both analyses and rejects failed, cancelled or skipped
 required jobs. SARIF upload permission is scoped to the analysis job and
 explicitly passed by the reusable release-validation caller. Check completion
 is not an alert disposition: release review must also inspect open code-scanning,
-Dependabot and secret-scanning alerts for the candidate (see `SECURITY.md`).
+Dependabot and secret-scanning alerts for the reviewed commit (see `SECURITY.md`).
 
-Before any release beyond experimental alpha:
+For every release:
 
 - threat model;
 - dependency audit;
@@ -327,13 +327,11 @@ mechanism.
 
 ## Free-threading gate
 
-Free-threaded validation remains future work, not a new Agnara 1.0 gate.
-The former eventual 3.14t lane aspiration is now scoped by the post-1.0
-[Python 3.15 Readiness plan](docs/research/python-315-readiness.md): P315-02
-separates 3.15t core and ecosystem lanes, P315-03 requires a concurrency audit,
-and P315-12 defines independent support evidence. Implementation waits for
-the maintainer's explicit confirmation of stable Agnara 1.0.0 publication.
-This documentation enables no CI lane and preserves the Python >=3.14 baseline.
+Free-threaded validation remains research, not a current support claim.
+The [Python 3.15 research plan](docs/research/python-315-readiness.md)
+separates conventional interpreter compatibility, free-threaded core checks
+and ecosystem checks. No new CI lane or Python support declaration follows
+from documenting that plan; the required baseline remains Python >=3.14.
 
 Failures must not be hidden by re-enabling the GIL. A run whose dependencies
 enable it is not free-threaded evidence. The
@@ -390,22 +388,17 @@ creates it by hand):
   exact reviewed `main` commit, only after all seven distributions are on
   PyPI and verified complete.
 
-Documentation of this checklist is not evidence that release or hotfix
-automation has run. Record actual commands, artifacts, hashes and GitHub links
-before completing E0B.12.
+Documentation of this checklist is not evidence that publication ran. Record
+actual commands, artifacts, hashes and GitHub links for each target.
 
 ## Release readiness program
 
-`docs/releases/RELEASE_PLAN.md` defines the path from the retained
-`0.1.0a8` publication baseline to `1.0.0`, and
-`scripts/check_release_readiness.py` measures how far the current state has
-come.
+`docs/releases/RELEASE_CHECKLIST.md` records the current target's work, and
+`scripts/check_release_readiness.py` evaluates its recorded gate state.
 
-That program **supplements** this document and never relaxes it. Where the two
-differ, this document wins. In particular the security gates above keep their
-own scope: the readiness tool reports the observed state of each item and
-refuses to decide whether a given release is still inside the
-"beyond experimental alpha" exemption.
+The target checklist supplements this permanent policy and never relaxes it.
+The readiness tool reports observed evidence; it cannot grant a security or
+maintainer approval on its own.
 
 A readiness percentage is informational. A release is ready only when every
 mandatory gate is satisfied, and satisfied means evidence exists — recorded

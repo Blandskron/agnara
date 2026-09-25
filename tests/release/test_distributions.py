@@ -237,7 +237,7 @@ def test_normalized_exact_core_pin_passes(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 def test_unsynchronized_versions_fail(monkeypatch: pytest.MonkeyPatch) -> None:
-    """ADR 0021 keeps every pre-one version identical across the seven packages."""
+    """ADR 0095 keeps every first-party version identical across the seven packages."""
     found, _ = checker.discover(WORKSPACE_ROOT)
     real = checker.importlib.metadata.version
 

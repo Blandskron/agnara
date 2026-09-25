@@ -67,7 +67,7 @@ Tests, internal refactors or editorial corrections may omit an entry when they
 do not change an observable contract. Select the corresponding PR-template
 option and explain why; do not add noise merely to tick a box.
 
-Release maintainers follow ADR 0021 and `GIT_WORKFLOW.md`. All first-party
+Release maintainers follow ADR 0095 and `GIT_WORKFLOW.md`. All first-party
 package versions remain synchronized during v0.x, and `0.0.0` must not be
 published.
 

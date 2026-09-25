@@ -18,7 +18,7 @@ exported leaf name; two were genuinely private helpers.
 ## Decision
 
 Every non-private module in the core distribution that declares a non-empty
-literal `__all__` is a provisional public entry point before `1.0.0`.
+literal `__all__` is classified by the current public API manifest.
 The manifest classifies both package and leaf modules, and the automated gate
 walks source in the reverse direction so a new exported module cannot escape
 classification.
@@ -41,12 +41,12 @@ framework contract merely because an application imported it.
 
 ## Consequences
 
-- All 218 exports across 30 core modules are classified `provisional`.
-- Deep imports from a governed leaf are supported before `1.0.0`.
+- The current public inventory is classified in `docs/public-api.json`.
+- Only canonical paths in the current manifest carry the stable compatibility promise.
 - Adding a public package or leaf module without updating the manifest fails
   both the readiness checker and its architecture tests.
 - No internal helper is promoted to satisfy an accidental external import.
-- `1.0.0` work still decides whether any provisional spelling becomes stable.
+- Stability changes require a reviewed manifest update and conformance evidence.
 
 ## Threat analysis
 

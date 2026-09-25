@@ -12,7 +12,7 @@
       "iterations_per_sample": 2000,
       "warmup_batches": 2,
       "garbage_collector_disabled_during_samples": true,
-      "observed_ratio_spread_across_runs": "V1-40 current-semantic records: 1.07x-1.75x for complete-path ratios; 1.54x for startup scaling; 1.37x for registration scaling",
+      "observed_ratio_spread_across_runs": "Current schema-2 calibration records: 1.07x-1.75x for complete-path ratios; 1.54x for startup scaling; 1.37x for registration scaling",
       "environment": {
         "implementation": "CPython",
         "python_version": "3.14.4",
@@ -23,7 +23,7 @@
         "gil_enabled": true
       }
     },
-    "headroom_policy": "Each limit is at least 1.6x the largest value in the three V1-40 current-semantic records, rounded upward where a new limit is introduced. Existing more-conservative ceilings remain unchanged. Limits are not a claim that Agnara is fast."
+    "headroom_policy": "Each limit is at least 1.6x the largest value in the three current schema-2 calibration records, rounded upward where a new limit is introduced. Existing more-conservative ceilings remain unchanged. Limits are not a claim that Agnara is fast."
   },
   "benchmarks": {
     "agnara.runtime.paths": {
@@ -120,7 +120,7 @@
         "startup_scaling_ratio": {
           "maximum": 3.5,
           "observed_maximum": 1.613,
-          "note": "Compile cost per capability at 1,000 capabilities divided by the cost at 100. Catches compilation that stops being linear in the number of capabilities. The preserved calibration has three records; V1-40 will refresh its repeated-run variance before changing this limit. A genuinely quadratic regression shows up as roughly 10x."
+          "note": "Compile cost per capability at 1,000 capabilities divided by the cost at 100. Catches compilation that stops being linear in the number of capabilities. The preserved calibration has three records; A future budget change requires repeated current-semantic measurements. A genuinely quadratic regression shows up as roughly 10x."
         },
         "registration_scaling_ratio": {
           "maximum": 1.6,

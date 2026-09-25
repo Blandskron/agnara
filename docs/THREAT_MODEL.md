@@ -1,6 +1,6 @@
-# Threat Model — 1.0 Candidate
+# Threat Model — Current 1.x
 
-What an attacker can reach in the `1.0.0` candidate, what Agnara itself
+What an attacker can reach in the current 1.x framework, what Agnara itself
 refuses, and what it deliberately leaves to the application or deployment.
 It covers direct capability execution; the ASGI/HTTP and SSE projection; MCP;
 nested composition and idempotency; embedded and side-by-side hosts; schema,
@@ -10,7 +10,7 @@ This is source-and-test-backed release evidence, not a production-security
 certification. There is no penetration test, fuzzing corpus, load test,
 cryptographic review or audit of an application's deployment. Every
 "verified" claim below names repository evidence; everything else is written
-as an assumption, residual risk or post-1.0 decision on purpose.
+as an assumption, residual risk or future decision on purpose.
 
 `SECURITY.md` owns the reporting channel and the project's security posture.
 This document owns the analysis.
@@ -173,41 +173,30 @@ file route exists for a traversal to reach.
 is refused as malformed rather than expanded. There is no decompression bomb
 because there is no decompression.
 
-## 5. Findings from this audit
+## 5. Current protocol protections
 
-| ID | Severity | Status |
-| --- | --- | --- |
-| H-1 | P1 | Fixed. A JSON body nested beyond the decoder's stack raised `RecursionError` out of the dispatcher. 80 KB — well inside the 1 MiB default — was enough, from an unauthenticated client, before any capability ran. The dispatcher sent nothing and the ASGI server decided what the client and the operator's log received, bypassing the reviewed problem mapping and its redaction. A platform-independent ceiling now rejects nesting beyond 128 levels with a 400 before decoding or capability execution, naming the reason without echoing the body. |
-| H-2 | P1 | Fixed. The same class at the other end: a value nested deeper than the interpreter can walk raised `RecursionError` out of response serialization, reachable by a capability that echoes an accepted-but-deep body. Now the existing last-resort redacted 500. |
-| H-3 | P1 | Fixed by [#312](https://github.com/Blandskron/agnara/pull/312). Declared scopes compile into the common execution plan, so HTTP and MCP enforce the same policy before materialization, validation or effects. Anonymous HTTP calls to scoped capabilities now fail closed. |
-| H-4 | P2 | Fixed. `_read_body` bounded total bytes but not the number of events. An empty chunk moves `max_body_bytes` no closer to its limit, so a client sending them with `more_body` set held a worker open indefinitely and grew a list without bound. Empty events are now capped. |
-| H-5 | P3 | Fixed. `request_timeout` was documented as a per-request deadline. It starts after binding, so it bounds execution and not how long a client may take to send a body. The documentation now says which. |
-| H-6 | P3 | Fixed. Unexpected capability exceptions were redacted on the wire but logged with `exc_info`, so exception-carried credentials, dependency values or payload fragments could reach the application's default log sink. The runtime now logs only the capability identifier; a regression test proves that exception text and traceback are absent. |
-| S-2 | P2 | Fixed. `ExecutionContext.principal` was an ordinary mutable attribute, and nested composition derives a child's authority from it. A capability that received its `ExecutionContext` could therefore assign a principal of its choosing and invoke a child with scopes the authenticated caller never held — privilege amplification reachable by an ordinary handler bug, not only by malicious code. The verified authority inputs (`principal`, `confirmation_evidence`, `idempotency`) are now fixed for the lifetime of an execution and refuse assignment; the attempt fails closed as a redacted canonical failure and the child never runs. The same repair validates the principal's type, so a duck-typed token or session object can no longer stand in for a verified identity. |
-| F-1 | P2 | Fixed. A request method outside the RFC 9110 token grammar raised `_RouteDefinitionError` out of `_FrozenRouteRegistry.match`, and the dispatcher passes `scope["method"]` to it unchanged. The dispatcher therefore sent nothing, so the ASGI server -- not Agnara -- decided what the client and the operator's log received, bypassing the reviewed problem mapping and its redaction, and the exception message echoed the caller's own bytes. `_request_segments` already made exactly this split for attacker-controlled *paths*; the method side was missing. A request method is now accepted or answered as unmatched, never raised, while an authored one is still a definition error. Found by the property lane in `tests/property/test_routing.py`. |
-| F-2 | P2 | Fixed. Request methods were uppercased before lookup, so `post` matched a route registered as `POST`. RFC 9110 section 9.1 makes the method token case-sensitive, and `post` is a well-formed token that a compliant server passes through unchanged, so this was reachable in production rather than only through a lenient server. A proxy, gateway or WAF rule written against the real method name -- deny `POST /admin` -- could be bypassed by changing its case. The dispatcher's own `method == "HEAD"` check was already case-sensitive, so the two disagreed. Uppercasing is now confined to registration, where it is the convenience that lets `http.post(...)` and `"POST"` name one route. |
-| S-1 | P2 | Fixed. A streaming invocation silently discarded an `IdempotencyInvocation`. The refusal existed in `_execute_with_idempotency`, but its only caller is the complete-result path, which rejects a streaming plan several frames earlier, so the guard could never fire; `open_stream` consulted `context.idempotency` nowhere. A caller asking for exactly-once effects got the producer rerun on every attempt, with the store never consulted and nothing reported. `open_stream` now refuses the selector before the producer can start. |
+Declared scopes compile into the common execution plan. Direct, HTTP and MCP
+invocations use that plan, so authorization runs before dependency construction
+or handler effects. Native HTTP has no general authentication mapper: it
+constructs an anonymous principal and a scoped capability fails closed.
+An embedding host may supply a verified `Principal` through its own bridge.
 
-### H-3 — declared scopes are enforced transport-neutrally
+HTTP request decoding enforces body and nesting limits, bounds empty receive
+events, matches method tokens case-sensitively and returns reviewed errors
+without reflecting submitted body values. Response serialization has a
+redacted last-resort failure. `request_timeout` bounds execution after
+binding; slow client uploads require ASGI server or proxy controls. Unexpected
+handler exceptions are redacted on the wire and their text and traceback are
+omitted from default runtime logs.
 
-[#312](https://github.com/Blandskron/agnara/pull/312) resolved the asymmetry.
-`@app.capability(scopes={"records:read"})` now compiles a core `ScopePolicy`
-into the common `ExecutionPlan`. Every transport invokes that plan, and the
-policy runs before transport materialization, validation, dependencies and
-handler effects. Neither HTTP nor MCP adds its own interpretation.
+Discovery visibility is evaluated before serialization. Viewer-specific
+Explorer responses are private or no-store. Discovery never authorizes later
+invocation: the current principal and policy are checked again.
 
-`tests/security/test_trust_boundaries.py` proves an anonymous HTTP call is
-forbidden without executing the handler and that MCP refuses the same scoped
-capability. The broader cross-surface ordering is fixed by
-`tests/conformance/test_a4_schema_policy_failure_consistency.py`.
-
-The native HTTP surface still constructs an anonymous principal and has no
-general authentication or principal-mapping contract. Consequently, a declared
-scope fails closed there rather than being silently ignored. An embedded host
-may map a verified identity through the value-only ADR 0094 bridge, but that is
-the host application's security boundary, not an HTTP adapter feature. The
-framework does not infer authority from headers, cookies, query parameters or
-capability arguments.
+Regression evidence includes `tests/security/test_trust_boundaries.py`,
+`tests/security/test_authority_boundary.py`,
+`tests/security/test_http_protocol_robustness.py`,
+`tests/property/test_routing.py` and `tests/http/test_explorer_security.py`.
 
 ## 6. Delegated assumptions
 
@@ -237,9 +226,9 @@ anything Agnara does.
 ## 7. Agent-specific threats
 
 `SECURITY.md` lists the agent threats the project intends to model. Their
-current candidate status:
+current status:
 
-| Threat | candidate status |
+| Threat | Current status |
 | --- | --- |
 | Confused deputy, over-broad delegated authority | Addressed at the implemented boundary, with a dedicated regression suite in `tests/security/test_authority_boundary.py`. A caller that may invoke a privileged parent gains nothing the parent can lend: the child re-evaluates the caller's own actor. The verified authority inputs are immutable for the execution, so a handler cannot escalate its own children, and a credential-shaped object is refused as a principal. Declared scopes run before effects. ADR 0093's implemented same-snapshot nested boundary re-evaluates child policy/confirmation and refuses ambient context, scope union, inherited confirmation and raw delegation evidence. The child receives a detached direct actor plus at most a bounded correlation label; parent state, idempotency and raw invocation metadata do not cross. Delegation is deliberately unimplemented. MCP maps a verified SDK token through an application mapper; native HTTP remains anonymous and fails closed for scoped capabilities. |
 | Tool name and schema spoofing | Addressed. Names and schemas come from one frozen startup snapshot; discovery and invocation cannot disagree. |
@@ -273,7 +262,7 @@ security review.
 ## 8. CLI and reserved distribution boundaries
 
 All seven distributions, including `agnara-cli`, `agnara-a2a` and
-`agnara-events`, belong to the reviewed candidate publication set (ADR 0073).
+`agnara-events`, belong to the reviewed synchronized distribution set (ADR 0073).
 The latter two expose empty `__all__` lists and implement no protocol runtime;
 their current security evidence is package-boundary, archive and installed
 metadata validation, not A2A or event-protocol conformance.
@@ -302,14 +291,10 @@ transport request path, not to this developer tool or application handlers.
 
 ## 9. Repository security controls
 
-The Cycle 3 follow-up in Issue #326 enables GitHub secret scanning, push
-protection and Dependabot alerts/security updates. On 2026-09-20, a GitHub API
-readback for the repository reported Dependabot security updates, secret
-scanning and push protection enabled, and returned zero open Dependabot and
-secret-scanning alerts. This is a point-in-time observation, not proof that a
-future candidate or every historical revision is clean. Non-provider-pattern
-scanning and secret validity checks were reported disabled. These limitations
-remain visible in the release closure record.
+Repository settings include secret scanning, push protection and Dependabot
+security updates. These are external settings and must be read back for each
+release; a prior observation cannot establish the current alert state.
+Provider-pattern scanning does not prove that every credential format is absent.
 
 Required CI includes CodeQL for Python and GitHub Actions, with immutable
 action references and security-result upload permission limited to that job.
@@ -321,56 +306,31 @@ The locked runtime dependency audit recorded in the release closure is
 separate evidence; it does not cover development tools or future advisory
 database updates.
 
-## 10. Adversarial review for 1.0.0
+## 10. Current adversarial regression evidence
 
-A second adversarial pass covered authorization and principal handling, direct
-and embedded host bridges, nested capability invocation, execution identity,
-idempotency, streaming and SSE, schema/persistence seams, documentation UIs,
-supply-chain controls and telemetry.
+The security, conformance and property lanes exercise authority isolation,
+direct and embedded invocation, nested calls, idempotency, streaming/SSE,
+schema and persistence seams, documentation publication, telemetry and
+supply-chain controls. The following are specific reproducible checks:
 
-V1-38 independently re-audited candidate
-`94ac5763386d8e18a78cbecd07cab227c42e6054` on 2026-09-21. Static source
-review covered the supported core, HTTP/ASGI/SSE, MCP, embedding,
-idempotency/composition, telemetry and release-workflow boundaries. The
-focused authority, robustness and property regressions passed (87 tests), and
-the available GitHub readback returned no open CodeQL, Dependabot or secret
-scanning alert. No unresolved P0/P1 was found in the supported candidate
-scope. This is current audit evidence, not a release authorization: external
-CI, protected publisher state, artifacts and human review remain separate
-gates. The local repository-secret inventory's treatment of nonstandard local
-virtual environments was a non-blocking test-scope concern, #469, fixed by
-PR #487 (`25241e5`): the inventory now covers reviewed files only.
-
-It produced findings S-1 and S-2 above; the property and fuzz lanes later added F-1 and F-2. The following were probed directly and
-behaved correctly; they are recorded so a later reviewer knows they were tried
-rather than assumed:
-
-| Probe | Result |
+| Boundary | Evidence |
 | --- | --- |
-| A stored idempotent result read back by a different principal using the same key | Refused. The selector binds capability, principal and key, and the two principals received their own results. |
-| An idempotency scope naming a different capability than the compiled plan | Refused before the claim, as a redacted canonical failure. |
-| A nested child inheriting the parent's idempotency selector | Does not happen; the child's execution adds no store record. |
-| Caller metadata attempting to select a runtime execution identity | Refused before policy or effects; the runtime generates the execution identity. |
-| A caller invoking a privileged parent whose child needs a scope it lacks | Refused at the child boundary; the privileged effect never ran and the parent still returned a canonical result. |
-| A handler reassigning `context.principal` before invoking a child | Refused. This was a real finding (S-2); the authority inputs are now immutable and the attempt fails closed as a redacted canonical failure. |
-| A verified-token object passed where a principal belongs | Refused at construction, although it was duck-type compatible with scope evaluation. |
-| Forged `scopes`, `scp`, `roles` or `permissions` entries in principal metadata | Inert. Only granted scopes authorize. |
-| Invocation metadata asserting `subject`, `on_behalf_of`, `act_as` or `delegation` | Inert. No subject or delegation surface exists to read. |
-| A discovery snapshot filtered for a privileged viewer, replayed by an unprivileged one | Discloses descriptions only; authorization is re-decided from the invoking principal. |
-| A request method outside the RFC 9110 token grammar | Refused as unmatched. This was a real finding (F-1); it previously raised out of the dispatcher carrying the caller's bytes. |
-| The same method in a different case, against a proxy rule written for the real one | Unmatched. This was a real finding (F-2); `post` previously reached a `POST` route. |
-| A problem document reflecting the body it refused | Does not happen within the generated corpus: a refusal at or above 400 never contains the submitted marker. |
-| A host fixture passing raw request/session/transaction state into the kernel | Out of contract: the value-only bridge fixtures retain those objects and lifecycle ownership in the host. |
-| An idempotency selector on a capability not declared `Idempotency.YES` | Refused, fail-closed, as a redacted canonical failure. |
-| A stream unit containing SSE frame separators | Cannot inject a frame: every unit goes through the same JSON value rule, so separators are escaped. Covered by `tests/http/test_sse.py`. |
-| Unbounded buffering or a slow SSE consumer | Structurally prevented: the pump performs one pull per completed send with no queue between them, so ASGI send demand is the producer's demand. |
-| A telemetry hook receiving payload, principal, result or exception text | Refused by the adapter's fixed attribute allowlist; exporter routing and retention remain application-owned. |
-| GitHub Actions pinned to mutable references, or default write permissions | Enforced by `tests/architecture/test_ci_workflow.py` and `test_release_workflow.py`. |
+| Scoped direct, HTTP and MCP calls cannot skip compiled policy | `tests/security/test_trust_boundaries.py`, `tests/security/test_authority_boundary.py` |
+| A child cannot inherit or amplify its parent's authority, confirmation or idempotency selector | `tests/unit/execution/test_nested_composition.py` |
+| `CapabilityRuntime` keeps private immutable ancestry per child and refuses repeated identities before effects | `tests/unit/execution/test_nested_composition.py` |
+| Caller metadata cannot choose runtime execution identity | `tests/unit/execution/test_execution_identity.py` |
+| A streaming invocation refuses an idempotency selector | `tests/security/test_trust_boundaries.py` |
+| Method case and malformed request input cannot bypass routing or redaction | `tests/property/test_routing.py`, `tests/security/test_http_protocol_robustness.py` |
+| Slow SSE consumers apply pull backpressure and disconnect closes owned work | `tests/http/test_sse.py` |
+| Host fixtures retain identity, lifespan and transaction ownership | `tests/conformance/test_host_harness.py`, `tests/integration/persistence/test_sqlalchemy_sqlite.py` |
+| Telemetry omits payloads, claims and exception text | `tests/integration/telemetry/test_opentelemetry_shared_host.py` |
+| Release artifact inventory, digest chain and pinned workflows are checked | `tests/release/test_supply_chain.py`, `tests/architecture/test_release_workflow.py` |
 
-The probes are not a substitute for the limits in section 11. In particular,
-none of them is a concurrency or load test.
+These checks describe their test corpus; they are not proof that every
+application or deployment is secure. Review current CI and private security
+alerts for each release.
 
-## 11. What this audit did not do
+## 11. Limits and residual risks
 
 The property and fuzz lanes in `tests/property/` are deliberately bounded and
 derandomized so they can run in the ordinary CI matrix: a few hundred examples
