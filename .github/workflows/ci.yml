@@ -122,7 +122,7 @@ jobs:
       - name: Pytest
         run: uv run pytest
 
-  # V1-30: enforce docs/performance/budgets.json. Budgets are ratios between two
+  # Enforce docs/performance/budgets.json. Budgets are ratios between two
   # scenarios measured in the same process and run, so a shared runner being slow
   # does not by itself fail this lane; only Agnara's own cost moving relative to
   # the interpreter underneath it does. One fixed runner keeps the comparison

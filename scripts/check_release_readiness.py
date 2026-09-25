@@ -238,10 +238,8 @@ def check_version_consistency() -> tuple[str, str]:
 def check_publication_prerequisites() -> tuple[str, str]:
     """Whether this target could actually be *published*, not merely built.
 
-    `0.1.0a4` satisfied every other automated gate in this file and still left
-    six of seven distributions unpublished, because nothing here knew the
-    difference between code that is ready and a release that is ready. The
-    difference is owned by `scripts/check_publication_readiness.py` and
+    The publication conditions are owned by
+    `scripts/check_publication_readiness.py` and
     measured here: the reviewed set, synchronized versions, exact core pins,
     the lockfile, release notes, the dated changelog section, and the recorded
     confirmation that each PyPI Trusted Publisher exists for this exact target.
