@@ -1,11 +1,6 @@
 """Refuse to start, approve or tag a release unless its preconditions hold.
 
-Four release attempts, ``0.1.0a4`` to ``0.1.0a7``, each burned a version. The
-mechanism was the same every time: the annotated tag was the *trigger* of the
-release workflow, so it existed before any gate had run, and a gate that
-failed afterwards left an immutable tag naming a release that never happened.
-
-ADR 0082 turns that round. A release is a ``workflow_dispatch`` run from
+A release is a ``workflow_dispatch`` run from
 ``main``; the tag is created by that run only after every gate has passed, a
 human has approved it in the protected ``pypi`` environment, all seven
 distributions are on PyPI and the index has confirmed them complete. This

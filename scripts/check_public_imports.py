@@ -1,7 +1,7 @@
 """Audit source files for imports that leave Agnara's governed public API.
 
-This is the mechanical answer to the `0.1.0a4` question "can Agnara be consumed
-as a framework from outside this repository?". An application that has to reach
+This checks whether Agnara can be consumed as a framework from outside this
+repository. An application that has to reach
 into `agnara_http._dispatch` is not consuming a framework; it is patching one.
 Rather than trusting a reviewer to notice, this script decides it from
 `docs/public-api.json`: an import is supported when the module it names is
@@ -11,7 +11,7 @@ It is deliberately usable on trees outside this workspace::
 
     python scripts/check_public_imports.py path/to/an/application
 
-so the reference applications built for `0.1.0a4` can be audited with the same
+so external applications can be audited with the same
 rule the repository holds its own examples to, and a finding is a framework
 defect to fix rather than an application detail to hide.
 

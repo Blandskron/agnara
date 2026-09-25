@@ -1,11 +1,8 @@
 """Decide whether the *publication* of a release may proceed.
 
 `scripts/check_release_readiness.py` answers a different question: is the code
-mature enough to close this release. `0.1.0a4` proved that a green answer to
-that question is not an answer to this one. Every quality gate passed, the
-artifacts were built and validated, the tag was correct -- and the upload still
-half-failed, because six of the seven PyPI projects did not exist and nothing
-in the repository was responsible for knowing that.
+mature enough to close this release. This script verifies the additional
+conditions needed to publish the complete reviewed distribution set.
 
 So the two claims are now separate and separately checked:
 
@@ -28,10 +25,7 @@ is not the identity `release.yml` presents, or a confirmation signed by an
 automation identity. That file is a reviewed diff, which is what a paragraph
 in a release note was not.
 
-What this file deliberately no longer holds is the per-release human
-authorization. `0.1.0a7` was tagged while the record said `UNVERIFIED`, which
-burned the version without publishing anything: a JSON field cannot stop a
-tag that already exists. The authorization is now the approval of the
+Per-release human authorization is the approval of the
 protected `pypi` GitHub environment inside the release run, and the tag is
 created only after it (ADR 0082). This script keeps the registry facts honest;
 `scripts/check_release_preconditions.py` keeps the approval real.
@@ -114,7 +108,7 @@ AUTOMATION_IDENTITY = re.compile(
 
 #: The common Trusted Publisher fields every Agnara project must carry. A publisher
 #: that differs in any field is a different identity to PyPI, and the upload
-#: fails the way `0.1.0a4` failed.
+#: fails even when the repository's local metadata is correct.
 REQUIRED_PUBLISHER = {
     "provider": "github",
     "owner": "Blandskron",
@@ -135,8 +129,8 @@ BOOTSTRAP_ENVIRONMENTS = {
 }
 
 #: PyPI allows at most three Pending Trusted Publishers at a time per account,
-#: so the six new projects cannot all be pending at once. A8 is therefore
-#: published in phases: each phase uploads only its projects, verifies what
+#: so new projects cannot all be pending at once. Publication proceeds in
+#: phases: each phase uploads only its projects, verifies what
 #: exists so far, and only the last one -- the kernel -- earns the tag. The
 #: order is the publication order of ADR 0079: siblings first, `agnara` last.
 PHASES: dict[str, tuple[str, ...]] = {
@@ -448,9 +442,8 @@ def check_publisher_record(
 ) -> list[str]:
     """A human must have read each Trusted Publisher back from PyPI, recently.
 
-    This is the gate `0.1.0a4` did not have. The information is external to
-    the repository and cannot be derived from it, so the repository's job is
-    not to guess it but to refuse to proceed without a recorded, reviewed,
+    This information is external to the repository and cannot be derived
+    from it, so the repository refuses to proceed without a recorded, reviewed,
     dated readback -- one made after the last time PyPI proved a readback
     wrong, by a person rather than by the pipeline, and consistent with what
     the record itself says about each project.
@@ -691,7 +684,7 @@ def check_index(
     exists: a pending publisher on an existing project, or an active one on a
     project that is not there, is a readback of the wrong page. Afterwards,
     every one of the seven must carry both a wheel and an sdist, which is
-    precisely what `0.1.0a4` failed to do even for the one project it reached.
+    the completeness requirement for the reviewed publication set.
 
     With a ``phase``, "nothing may exist" applies to the projects this phase
     and later phases upload, while the projects of earlier phases must
