@@ -1,16 +1,16 @@
 {
   "schema_version": 1,
-  "publication_baseline": "0.1.0a8",
-  "current_target": "1.0.1",
+  "publication_baseline": "1.0.0",
+  "current_target": "1.0.2",
   "previous_release": "1.0.0",
-  "next_target": "1.0.2",
+  "next_target": "1.0.3",
   "status": "IN_PROGRESS",
-  "assessed_on": "2026-09-24",
+  "assessed_on": "2026-09-25",
   "notes": [
     "1.0.0 is the verified public baseline; GHSA-j5rx-vm8v-f7p3 is fixed there.",
-    "Issue #504 tracks the 1.0.1 security patch release from the reviewed develop tip.",
-    "The manual gate details below combine the published 1.0.0 baseline with local 1.0.1 evidence; candidate CI and maintainer review remain pending.",
-    "1.0.1 publication requires a reviewed PR to main and the three protected release.yml dispatches after merge."
+    "Issue #509 tracks recovery as 1.0.2 after the 1.0.1 bootstrap-1 run published three distributions but bootstrap-2 rejected its candidate.",
+    "1.0.1 is an incomplete publication with no release tag; do not reuse or recommend that synchronized version.",
+    "The 1.0.2 candidate must pass current CI, maintainer review and three protected release.yml dispatches from one accepted main commit."
   ],
   "gates": [
     {"id": "python-baseline", "title": "Python baseline verified", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
@@ -21,12 +21,12 @@
     {"id": "license-metadata", "title": "License metadata is complete", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
     {"id": "public-api-distinguished", "title": "Public API is distinguished", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
     {"id": "publication-prerequisites", "title": "Reviewed publication set is publishable", "kind": "automated", "mandatory": true, "status": "UNSATISFIED"},
-    {"id": "execution-semantics", "title": "Execution semantics are complete", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The 1.0.0 execution baseline is published. Directly constructed plans now enforce declared policies. The 1.0.1 local focused gate passed (170 tests), and the full suite passed (3654 tests, 36 skipped); CI and maintainer review remain pending."},
-    {"id": "performance-budgets", "title": "Performance budgets are enforced", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The 15 calibrated performance budgets in docs/performance/budgets.json are unchanged from 1.0.0. The 1.0.1 CI performance lane and maintainer review are pending."},
-    {"id": "interoperability", "title": "Interoperability conformance is demonstrated", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "Version-pinned host fixtures established the published 1.0.0 interoperability baseline. The 1.0.1 changes touch core, HTTP and MCP boundaries; conformance CI and maintainer review are pending."},
-    {"id": "security-program", "title": "Security program is reviewed", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The 1.0.0 adversarial review is recorded in docs/THREAT_MODEL.md. The 1.0.1 candidate includes four post-1.0.0 security fixes: direct plan authorization, scope denial redaction, viewer-specific cache control and HTTP method matching. Local security and full-suite tests passed. A 2026-09-24 GitHub readback found zero open CodeQL, Dependabot and secret-scanning alerts; candidate CI and maintainer disposition remain required."},
-    {"id": "stable-public-api", "title": "Public API is ready for stability", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The 1.0.1 patch adds no public API exports. The 166-name 1.0.0 inventory in docs/releases/1.0-api-classification.md remains the baseline; import and compatibility CI plus maintainer review are pending."},
-    {"id": "clean-room-documentation", "title": "Documentation reproduces supported applications", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The 1.0.1 release notes describe the upgrade and security changes. All seven candidate wheels were installed and checked in a fresh Python 3.14 environment, and the documented-consumer suite passed locally; CI and maintainer review are pending."},
-    {"id": "publication-rehearsal", "title": "Publication workflow is rehearsed", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The phased publication hash and candidate pinning fix is included. Fourteen 1.0.1 artifacts were built and validated, the seven wheels installed in a clean environment, and offline publication readiness passed locally. CI, protected-environment approval, PyPI verification and maintainer review are pending. Historical 1.0.0 evidence is in docs/releases/1.0-candidate-evidence.md."}
+    {"id": "execution-semantics", "title": "Execution semantics are complete", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The 1.0.0 execution baseline is published. Directly constructed plans enforce declared policies. The local 1.0.2 full suite passed (3656 tests, 36 skipped); candidate CI and maintainer review remain pending."},
+    {"id": "performance-budgets", "title": "Performance budgets are enforced", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The 15 calibrated performance budgets in docs/performance/budgets.json are unchanged from 1.0.0. The 1.0.2 CI performance lane and maintainer review are pending."},
+    {"id": "interoperability", "title": "Interoperability conformance is demonstrated", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "Version-pinned host fixtures established the published 1.0.0 interoperability baseline. The carried security fixes touch core, HTTP and MCP boundaries; 1.0.2 conformance CI and maintainer review are pending."},
+    {"id": "security-program", "title": "Security program is reviewed", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The 1.0.0 adversarial review is recorded in docs/THREAT_MODEL.md. The 1.0.2 candidate carries four post-1.0.0 security fixes: direct plan authorization, scope denial redaction, viewer-specific cache control and HTTP method matching. The local full suite and locked-runtime pip-audit passed with no known vulnerabilities; candidate CI and maintainer disposition remain required."},
+    {"id": "stable-public-api", "title": "Public API is ready for stability", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The 1.0.2 patch adds no public API exports. The 166-name 1.0.0 inventory in docs/releases/1.0-api-classification.md remains the baseline; import and compatibility CI plus maintainer review are pending."},
+    {"id": "clean-room-documentation", "title": "Documentation reproduces supported applications", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The 1.0.2 release notes describe the upgrade and partial 1.0.1 publication. All seven 1.0.2 wheels installed in a fresh Python 3.14 environment without first-party index access, with import and CLI smoke checks passing; CI and maintainer review are pending."},
+    {"id": "publication-rehearsal", "title": "Publication workflow is rehearsed", "kind": "manual", "mandatory": true, "status": "NEEDS_REVIEW", "detail": "The candidate checker accepts GitHub's bare workflow path while retaining exact commit pinning. All fourteen 1.0.2 artifacts built and validated, seven wheels installed cleanly, SBOM verified, and online bootstrap-1 readiness passed with no 1.0.2 files on PyPI. Candidate CI, protected-environment approval, PyPI verification and maintainer review remain pending."}
   ]
 }

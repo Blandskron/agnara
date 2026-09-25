@@ -1,5 +1,11 @@
 # Agnara Release Plan
 
+> The completed 1.0.0 product gate is retained below as historical evidence.
+> The selected 1.0.2 recovery target is tracked by Issue #509,
+> `docs/releases/release-status.json`, `docs/releases/v1.0.2.md` and the
+> current release workflow. The 1.0.1 attempt was incomplete; do not treat it
+> as the previous synchronized release.
+
 ## Current patch target
 
 `1.0.0` is the published stable baseline. The current target is **`1.0.1`**,
