@@ -3,7 +3,7 @@ from collections.abc import AsyncIterator
 
 import pytest
 
-from agnara import InteractionRequiredError, PolicyDeniedError
+from agnara import DefinitionError, InteractionRequiredError, PolicyDeniedError
 from agnara.capability import CapabilityDefinition, CapabilityId, Confirmation
 from agnara.core.di import DIContainer, DIRegistry, provider
 from agnara.execution import (
@@ -12,6 +12,7 @@ from agnara.execution import (
     Failure,
     FailureCode,
     Invocation,
+    Success,
     invoke,
     invoke_result,
 )
@@ -23,7 +24,9 @@ from agnara.policy import (
     PolicyResult,
     PolicySuccess,
     Principal,
+    ScopePolicy,
 )
+from agnara.policy.confirmation import ConfirmationPolicy
 
 
 class ConfigurableVerifier:
@@ -102,6 +105,91 @@ def test_canonical_invocation_maps_interaction_request() -> None:
                 "hints": (),
             },
         )
+
+    asyncio.run(run_test())
+
+
+def test_direct_plan_cannot_skip_declared_scopes() -> None:
+    definition = CapabilityDefinition(
+        id=CapabilityId("payments", "refund"),
+        handler=lambda: None,
+        scopes=frozenset({"payments:refund"}),
+    )
+    with pytest.raises(DefinitionError, match="declared scope policy"):
+        ExecutionPlan(definition=definition, target_deps={})
+
+
+def test_direct_plan_with_declared_scope_checks_authority_before_effects() -> None:
+    async def run_test() -> None:
+        calls = 0
+
+        def refund() -> str:
+            nonlocal calls
+            calls += 1
+            return "refunded"
+
+        definition = CapabilityDefinition(
+            id=CapabilityId("payments", "refund"),
+            handler=refund,
+            scopes=frozenset({"payments:refund"}),
+        )
+        plan = ExecutionPlan(
+            definition=definition,
+            target_deps={},
+            policies=(ScopePolicy(definition.scopes),),
+        )
+
+        denied = await invoke_result(plan, context_for(plan))
+        assert isinstance(denied, Failure)
+        assert denied.code is FailureCode.FORBIDDEN
+        assert denied.message == "required scopes not granted"
+        assert calls == 0
+
+        granted = ExecutionContext(
+            Invocation(definition.id, {}, {}),
+            DIContainer(DIRegistry()),
+            principal=Principal("user_123", scopes={"payments:refund"}),
+        )
+        assert await invoke_result(plan, granted) == Success("refunded")
+        assert calls == 1
+
+    asyncio.run(run_test())
+
+
+def test_direct_plan_with_required_confirmation_checks_evidence_before_effects() -> None:
+    async def run_test() -> None:
+        calls = 0
+
+        def refund() -> str:
+            nonlocal calls
+            calls += 1
+            return "refunded"
+
+        definition = CapabilityDefinition(
+            id=CapabilityId("payments", "refund"),
+            handler=refund,
+            confirmation=Confirmation.REQUIRED,
+        )
+        plan = ExecutionPlan(
+            definition=definition,
+            target_deps={},
+            policies=(
+                ConfirmationPolicy(
+                    definition.id,
+                    ConfigurableVerifier(ConfirmationVerdict.VALID),
+                ),
+            ),
+        )
+
+        missing = await invoke_result(plan, context_for(plan))
+        assert isinstance(missing, Failure)
+        assert missing.code is FailureCode.INTERACTION_REQUIRED
+        assert calls == 0
+        assert await invoke_result(
+            plan,
+            context_for(plan, evidence=ConfirmationEvidence("approval-reference")),
+        ) == Success("refunded")
+        assert calls == 1
 
     asyncio.run(run_test())
 

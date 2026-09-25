@@ -396,7 +396,11 @@ def test_an_undiscoverable_mcp_tool_is_still_refused_when_called_by_name() -> No
 
     assert isinstance(result, CallToolResult)
     assert result.is_error is True
-    assert json.loads(text(result))["code"] == "forbidden"
+    assert json.loads(text(result)) == {
+        "code": "forbidden",
+        "message": "required scopes not granted",
+    }
+    assert "records:read" not in text(result)
     assert calls == []
 
 

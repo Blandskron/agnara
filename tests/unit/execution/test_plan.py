@@ -1,6 +1,6 @@
 import asyncio
 from collections.abc import Callable
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, replace
 from typing import Any
 
 import pytest
@@ -21,6 +21,7 @@ from agnara.policy import (
     ConfirmationVerdict,
     PolicyFailure,
     PolicyResult,
+    ScopePolicy,
 )
 from agnara.policy.confirmation import ConfirmationPolicy
 from agnara.schema import PrimitiveSchema, TypeSchema
@@ -320,6 +321,80 @@ def test_plan_compiles_explicit_policies_in_declaration_order() -> None:
     )
 
     assert ExecutionPlan.compile(capability, DIRegistry()).policies == (first, second)
+
+
+def test_direct_plan_requires_declared_application_policies_in_order() -> None:
+    first = DenyPolicy()
+    second = DenyPolicy()
+    capability = CapabilityDefinition(
+        id=CapabilityId("payments", "refund"),
+        handler=lambda: None,
+        scopes=frozenset({"payments:write"}),
+        policies=(first, second),
+    )
+
+    with pytest.raises(DefinitionError, match="declared scope policy"):
+        ExecutionPlan(definition=capability, target_deps={}, policies=(first, second))
+    with pytest.raises(DefinitionError, match="declared scope policy"):
+        ExecutionPlan(
+            definition=capability,
+            target_deps={},
+            policies=(ScopePolicy({"payments:read"}), first, second),
+        )
+    with pytest.raises(DefinitionError, match="declared application policy"):
+        ExecutionPlan(
+            definition=capability,
+            target_deps={},
+            policies=(ScopePolicy(capability.scopes), second, first),
+        )
+
+    plan = ExecutionPlan(
+        definition=capability,
+        target_deps={},
+        policies=[ScopePolicy(capability.scopes), first, second],  # ty: ignore[invalid-argument-type]
+    )
+    assert isinstance(plan.policies, tuple)
+    assert plan.policies[1:] == (first, second)
+    with pytest.raises(DefinitionError, match="declared scope policy"):
+        replace(plan, policies=())
+
+
+def test_direct_plan_requires_confirmation_policy_for_its_capability() -> None:
+    capability = CapabilityDefinition(
+        id=CapabilityId("payments", "refund"),
+        handler=lambda: None,
+        confirmation=Confirmation.REQUIRED,
+    )
+
+    with pytest.raises(DefinitionError, match="required confirmation policy"):
+        ExecutionPlan(definition=capability, target_deps={})
+    with pytest.raises(DefinitionError, match="required confirmation policy"):
+        ExecutionPlan(
+            definition=capability,
+            target_deps={},
+            policies=(ConfirmationPolicy(CapabilityId("payments", "other"), ValidVerifier()),),
+        )
+
+    gate = ConfirmationPolicy(capability.id, ValidVerifier())
+    assert ExecutionPlan(definition=capability, target_deps={}, policies=(gate,)).policies == (
+        gate,
+    )
+
+
+def test_direct_plan_rejects_policy_confirmation_without_declared_policy() -> None:
+    capability = CapabilityDefinition(
+        id=CapabilityId("payments", "refund"),
+        handler=lambda: None,
+        scopes=frozenset({"payments:write"}),
+        confirmation=Confirmation.POLICY,
+    )
+
+    with pytest.raises(DefinitionError, match="has no explicit policies"):
+        ExecutionPlan(
+            definition=capability,
+            target_deps={},
+            policies=(ScopePolicy(capability.scopes),),
+        )
 
 
 def test_required_confirmation_appends_gate_after_explicit_policies() -> None:

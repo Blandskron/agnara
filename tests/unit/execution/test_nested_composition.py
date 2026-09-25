@@ -247,7 +247,7 @@ def test_child_policy_validation_and_confirmation_are_independent() -> None:
             context(OUTER, container, evidence=ConfirmationEvidence("parent-only"))
         )
         assert outcome == Success(FailureCode.FORBIDDEN.value)
-        assert seen == [Failure(FailureCode.FORBIDDEN, "missing required scopes: child:invoke")]
+        assert seen == [Failure(FailureCode.FORBIDDEN, "required scopes not granted")]
         assert calls == 0
         await runtime.aclose()
 

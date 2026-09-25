@@ -426,8 +426,10 @@ make a viewer render. The extension protocol for third-party providers remains
 internal for 1.0.
 
 The selected page, schema and every local asset reserve routes through the same
-startup collision boundary as capabilities. They support GET/HEAD and return
-405 with `Allow: GET, HEAD` otherwise. Under an ASGI mount (`root_path="/api"`)
+startup collision boundary as capabilities. They support exact `GET`/`HEAD`
+request methods and return 405 with `Allow: GET, HEAD` otherwise. This also
+applies to Explorer and viewer-specific discovery; lowercase or malformed
+method tokens never publish their content. Under an ASGI mount (`root_path="/api"`)
 the page and initializer use `/api/...` URLs automatically.
 
 ## Explorer
@@ -454,6 +456,14 @@ asgi = http.compile(app.compile(), explorer=explorer)
 may see. The JSON discovery endpoint and third-party documentation providers
 remain internal. `openapi_path` remains the legacy schema-only spelling and
 cannot be combined with `documentation`.
+
+Explorer pages are viewer-specific. Their default `Cache-Control` is
+`private, no-store`. A custom `cache_control` must include an unqualified
+`private` or `no-store` directive; `max-age` alone, field-qualified
+`private="..."`, and `must-understand` cannot protect the whole page from
+shared caches. `private, max-age=60` remains available for browser-local
+caching. Keep the default `no-store` when a browser might switch identities,
+such as through cookies, because its local cache can outlive that switch.
 
 The request surface projects truthfully. A cookie is `in: cookie`. Form fields
 and uploads are properties of one `requestBody` object with
@@ -493,6 +503,11 @@ unmatched target rather than raised.
 | A policy denies the invocation | 403 | `forbidden` |
 | Deadline exceeded | 504 | `timeout` |
 | Handler raised | 500 | `internal_failure` (message redacted) |
+
+The built-in scope policy returns `required scopes not granted` for a missing
+grant. It does not include scope labels in HTTP or MCP errors. Operators can
+enable the `agnara.policy.scopes` DEBUG logger to see escaped missing labels
+and the capability identifier; other policy messages remain caller-facing.
 
 Decoded JSON is materialized after policy and before strict validation. This
 is why a nested dataclass error uses canonical `details.path` beginning with

@@ -220,7 +220,9 @@ def test_scope_policy_precedes_business_policy_materialization_and_handler() -> 
     )
     assert http_status == 403
     assert http_failure["code"] == "forbidden"
+    assert http_failure["detail"] == "required scopes not granted"
     assert _mcp_payload(mcp_failure)["code"] == "forbidden"
+    assert _mcp_payload(mcp_failure)["message"] == "required scopes not granted"
     assert _MATERIALIZATION_EFFECTS == []
 
     denied = asyncio.run(
@@ -232,6 +234,7 @@ def test_scope_policy_precedes_business_policy_materialization_and_handler() -> 
     )
     assert isinstance(denied, Failure)
     assert denied.code is FailureCode.FORBIDDEN
+    assert denied.message == "required scopes not granted"
     assert _MATERIALIZATION_EFFECTS == []
 
     allowed_scope = asyncio.run(

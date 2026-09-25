@@ -36,7 +36,7 @@ from agnara.execution import (
     invoke_result,
     open_stream,
 )
-from agnara.policy import PolicyFailure, PolicyResult
+from agnara.policy import PolicyFailure, PolicyResult, ScopePolicy
 
 CAPABILITY = CapabilityId("reports", "rows")
 
@@ -554,6 +554,30 @@ def test_policy_denial_happens_before_the_producer_starts() -> None:
             async with open_stream(plan, context):
                 pass  # pragma: no cover - entering is what raises
 
+        assert started is False
+        await context.di_container.aclose()
+
+    asyncio.run(run_test())
+
+
+def test_scope_denial_does_not_expose_missing_label_when_opening_a_stream() -> None:
+    started = False
+
+    async def rows() -> AsyncIterator[int]:
+        nonlocal started
+        started = True
+        yield 1
+
+    async def run_test() -> None:
+        registry = DIRegistry()
+        plan = plan_for(rows, registry, policies=(ScopePolicy({"private:rows"}),))
+        context = context_for(plan, registry)
+
+        with pytest.raises(PolicyDeniedError, match="required scopes not granted") as denied:
+            async with open_stream(plan, context):
+                pass
+
+        assert "private:rows" not in str(denied.value)
         assert started is False
         await context.di_container.aclose()
 

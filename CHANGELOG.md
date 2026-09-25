@@ -19,6 +19,34 @@ published; its fix ships in `1.0.0`.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-24
+
+Security patch for the seven synchronized Agnara distributions. Upgrade from
+`1.0.0` to `1.0.1` to receive the fixes below. The logging issue tracked by
+GHSA-j5rx-vm8v-f7p3 was already fixed in `1.0.0`.
+
+### Security
+
+- Redact missing scope labels from caller-facing authorization denials in direct,
+  HTTP, and MCP calls while retaining opt-in operator diagnostics.
+- Match incoming publication methods case-sensitively so lowercase or malformed
+  requests cannot reach GET-only schema, documentation, discovery, or Explorer
+  content.
+- Require a whole-response private or no-store cache directive for
+  viewer-specific Explorer and discovery output, preventing shared caches
+  from replaying one viewer's filtered metadata to another.
+- Reject directly constructed execution plans that omit declared scope,
+  application, or confirmation policies, preventing direct and MCP calls from
+  bypassing capability authorization.
+
+### Fixed
+
+- Pin every phased release dispatch to the successful first-phase candidate
+  commit and compare published PyPI file SHA-256 values with the retained build
+  before continuing publication.
+- Refresh release tracking and the maintainer guide for synchronized patch
+  releases.
+
 ## [1.0.0] - 2026-09-22
 
 The first stable release. It stabilizes the capability runtime, 166 canonical
@@ -1345,7 +1373,8 @@ under `0.1.0a2` instead.
 [#257]: https://github.com/Blandskron/agnara/issues/257
 [#259]: https://github.com/Blandskron/agnara/issues/259
 [#261]: https://github.com/Blandskron/agnara/issues/261
-[Unreleased]: https://github.com/Blandskron/agnara/compare/v1.0.0...develop
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v1.0.1...develop
+[1.0.1]: https://github.com/Blandskron/agnara/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Blandskron/agnara/compare/v0.1.0a8...v1.0.0
 [0.1.0a8]: https://github.com/Blandskron/agnara/compare/v0.1.0a7...v0.1.0a8
 [0.1.0a7]: https://github.com/Blandskron/agnara/compare/v0.1.0a6...v0.1.0a7

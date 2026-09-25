@@ -381,7 +381,10 @@ def test_no_job_outside_publication_can_authenticate_to_a_registry(
     """Every gate before the human approval runs without any credential."""
     for name in ("preconditions", "dependency-audit", "build", "test-artifact"):
         permissions = workflow["jobs"][name].get("permissions")
-        assert permissions == {"contents": "read"}, f"{name}: {permissions}"
+        expected = {"contents": "read"}
+        if name == "preconditions":
+            expected["actions"] = "read"  # inspect the earlier phase's successful run
+        assert permissions == expected, f"{name}: {permissions}"
 
 
 def test_every_pypi_upload_produces_a_pep_740_attestation(workflow_text: str) -> None:

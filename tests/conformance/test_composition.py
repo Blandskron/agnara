@@ -169,7 +169,7 @@ def test_nested_idempotency_never_reuses_a_parent_selector_as_a_child_selector()
         # A fresh outer selector executes the child again, where the child's
         # own policy still decides authority before its effects.
         denied = await runtime.invoke_result(context("outer-three", frozenset({"outer:invoke"})))
-        assert denied == Failure(FailureCode.FORBIDDEN, "missing required scopes: child:invoke")
+        assert denied == Failure(FailureCode.FORBIDDEN, "required scopes not granted")
         assert effects == 2
         await runtime.aclose()
 

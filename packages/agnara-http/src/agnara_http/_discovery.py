@@ -11,9 +11,9 @@ Authorization is required, not optional. The endpoint takes a principal
 resolver, and an unidentified viewer gets ``401`` unless the composer opted
 into anonymous discovery in so many words.
 
-A filtered document must never be reused across viewers. A ``public`` cache
-directive is refused at startup, and ``Vary`` is always sent, so a shared
-cache cannot hand one viewer's document to another.
+A filtered document must never be reused across viewers. Every configured
+cache directive needs an unqualified ``private`` or ``no-store`` gate, because
+the principal may come from a cookie or another source outside ``Vary``.
 
 Failure is closed. A resolver that raises produces a redacted ``500``: no
 partially filtered document, and no traceback reaching the client.
@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -42,7 +43,7 @@ from agnara_http._problem import (
     _TransportFailure,
 )
 from agnara_http._response import _send_response, _SerializedResponse
-from agnara_http._routing import _FrozenRouteRegistry, _normalize_method, _parse_template
+from agnara_http._routing import _FrozenRouteRegistry, _parse_template, _request_method
 
 type _Scope = dict[str, Any]
 type _Message = dict[str, Any]
@@ -60,9 +61,12 @@ _DEFAULT_CACHE_CONTROL = "private, no-store"
 #: is the header that stays correct if a composer later relaxes the directive.
 _DEFAULT_VARY: tuple[str, ...] = ("Authorization",)
 
-#: Cache directives that would let one viewer's filtered document be served to
-#: another. Refused at startup rather than at request time.
-_FORBIDDEN_CACHE_DIRECTIVES = frozenset({"public", "s-maxage", "immutable"})
+#: ``must-understand`` can override ``no-store`` for a cache that knows the
+#: response status (RFC 9111 §5.2.2.3). Refuse it along with directives that
+#: explicitly permit shared reuse of a viewer-specific document.
+_FORBIDDEN_CACHE_DIRECTIVES = frozenset({"public", "s-maxage", "immutable", "must-understand"})
+_CACHE_TOKEN = re.compile(r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+\Z")
+_CACHE_QUOTED = re.compile(r'"(?:[\x20-\x21\x23-\x5B\x5D-\x7E]|\\[\x20-\x7E])*"\Z')
 
 
 class _DiscoveryDefinitionError(ValueError):
@@ -156,13 +160,54 @@ def _validate_cache_control(value: object) -> None:
     _text(value, field="cache_control")
     assert isinstance(value, str)
     _ascii_header(value, field="cache_control")
-    directives = {part.strip().split("=", 1)[0].lower() for part in value.split(",")}
-    forbidden = sorted(directives & _FORBIDDEN_CACHE_DIRECTIVES)
+    directives = _cache_directives(value)
+    forbidden = sorted({name for name, _ in directives} & _FORBIDDEN_CACHE_DIRECTIVES)
     if forbidden:
         raise _DiscoveryDefinitionError(
             "a discovery document is viewer-specific, so it must not be shared-cacheable: "
             f"remove {', '.join(forbidden)}"
         )
+    if not any(
+        name in {"private", "no-store"} and argument is None for name, argument in directives
+    ):
+        raise _DiscoveryDefinitionError(
+            "a discovery document is viewer-specific, so cache_control must contain "
+            "an unqualified private or no-store directive"
+        )
+
+
+def _cache_directives(value: str) -> tuple[tuple[str, str | None], ...]:
+    """Split only at top-level commas, so quoted extension text grants nothing."""
+    parts: list[str] = []
+    start = 0
+    quoted = False
+    escaped = False
+    for index, character in enumerate(value):
+        if escaped:
+            escaped = False
+        elif quoted and character == "\\":
+            escaped = True
+        elif character == '"':
+            quoted = not quoted
+        elif character == "," and not quoted:
+            parts.append(value[start:index].strip())
+            start = index + 1
+    if quoted or escaped:
+        raise _DiscoveryDefinitionError("discovery cache_control has an unterminated quote")
+    parts.append(value[start:].strip())
+
+    directives: list[tuple[str, str | None]] = []
+    for part in parts:
+        name, separator, raw_argument = part.partition("=")
+        name = name.strip()
+        argument = raw_argument.strip() if separator else None
+        if not _CACHE_TOKEN.fullmatch(name) or (
+            argument is not None
+            and not (_CACHE_TOKEN.fullmatch(argument) or _CACHE_QUOTED.fullmatch(argument))
+        ):
+            raise _DiscoveryDefinitionError("discovery cache_control has an invalid directive")
+        directives.append((name.lower(), argument))
+    return tuple(directives)
 
 
 @dataclass(frozen=True, slots=True)
@@ -250,17 +295,17 @@ class _DiscoveryDispatcher:
             await self._fallback(scope, receive, send)
             return
 
-        normalized = _normalize_method(method)
-        if normalized not in {"GET", "HEAD"}:
+        request_method = _request_method(method)
+        if request_method not in {"GET", "HEAD"}:
             await _send_response(self._method_not_allowed(path), send)
             return
 
         principal = _principal_or_failure(self._route, scope)
         if principal is None:
-            await _send_response(self._unauthenticated(path), send, head=normalized == "HEAD")
+            await _send_response(self._unauthenticated(path), send, head=request_method == "HEAD")
             return
         if isinstance(principal, _ResolverFailed):
-            await _send_response(self._internal(), send, head=normalized == "HEAD")
+            await _send_response(self._internal(), send, head=request_method == "HEAD")
             return
 
         document = filter_snapshot(self._route.snapshot, self._route.visibility, principal)
@@ -279,7 +324,7 @@ class _DiscoveryDispatcher:
             ),
             body,
         )
-        await _send_response(response, send, head=normalized == "HEAD")
+        await _send_response(response, send, head=request_method == "HEAD")
 
     def _method_not_allowed(self, path: str) -> _SerializedResponse:
         return _serialize_transport_failure(

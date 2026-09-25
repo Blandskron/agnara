@@ -219,12 +219,25 @@ def test_preconditions_guard_the_branch_the_head_the_tag_the_phase_and_the_human
     body = _job("preconditions", "build")
 
     assert "scripts/check_release_preconditions.py" in body
+    assert '--version "$RELEASE_VERSION" --phase "$RELEASE_PHASE"' in body
     assert "--require-protected-environment pypi" in body
     assert 'set_workspace_version.py release "$RELEASE_VERSION" --check' in body
     assert "uv lock --check" in body
     assert "check_publication_readiness.py" in body
     assert '--phase "$RELEASE_PHASE" --oidc-identity' in body
     assert "fetch-depth: 0" in body
+    assert _jobs()["preconditions"]["permissions"]["actions"] == "read"
+
+
+def test_every_online_phase_check_compares_retained_build_hashes_to_pypi() -> None:
+    build = _job("build", "test-artifact")
+    assert "agnara-release-candidate-${{ inputs.version }}-${{ inputs.phase }}" in build
+    for name in ("publish-preflight", *PHASE_VERIFICATION.values()):
+        body = _job(name, _following(name))
+        assert "name: agnara-distributions" in body, name
+        assert "name: agnara-distribution-hashes" in body, name
+        assert 'sha256sum --check --strict "$GITHUB_WORKSPACE/hashes/SHA256SUMS"' in body, name
+        assert "--online --dist dist/" in body, name
 
 
 def test_preconditions_are_rechecked_before_the_human_gate_and_after_it() -> None:
@@ -297,7 +310,7 @@ def test_the_final_phase_publishes_only_the_kernel_then_verifies_tags_and_announ
 def test_every_phase_verifies_its_publication_with_the_phase_aware_check() -> None:
     for phase, verification in PHASE_VERIFICATION.items():
         body = _job(verification, _following(verification))
-        assert '--phase "$RELEASE_PHASE" --online --require-published' in body, phase
+        assert '--phase "$RELEASE_PHASE" --online --dist dist/ --require-published' in body, phase
         assert _needs(_jobs()[verification]) == {"preconditions", PHASE_UPLOADS[phase][-1]}
     # A bootstrap phase cannot install: the adapters pin a kernel that is not
     # on the index yet. Only the final verification installs the published set.
@@ -375,7 +388,7 @@ def test_verification_happens_before_the_tag() -> None:
 
     assert "verify-published" in _needs(jobs[TAG_JOB])
     assert "publish-core" in _needs(jobs["verify-published"])
-    assert "--online --require-published" in _job("verify-published", TAG_JOB)
+    assert "--online --dist dist/ --require-published" in _job("verify-published", TAG_JOB)
     assert TAG_JOB not in _transitive_needs("verify-published")
 
 
@@ -491,14 +504,22 @@ def test_publish_readiness_is_checked_at_every_state_of_the_release() -> None:
     for job, until, expected in (
         ("preconditions", "build", '--phase "$RELEASE_PHASE" --oidc-identity'),
         ("build", "test-artifact", '--phase "$RELEASE_PHASE" --dist dist/'),
-        ("publish-preflight", GATE_JOB, '--phase "$RELEASE_PHASE" --online --oidc-identity'),
+        (
+            "publish-preflight",
+            GATE_JOB,
+            '--phase "$RELEASE_PHASE" --online --dist dist/ --oidc-identity',
+        ),
         ("publish-a2a", "publish-cli", '--phase "$RELEASE_PHASE" --dist dist/ --oidc-identity'),
         (
             "verify-bootstrap-1",
             "publish-http",
-            '--phase "$RELEASE_PHASE" --online --require-published',
+            '--phase "$RELEASE_PHASE" --online --dist dist/ --require-published',
         ),
-        ("verify-published", TAG_JOB, '--phase "$RELEASE_PHASE" --online --require-published'),
+        (
+            "verify-published",
+            TAG_JOB,
+            '--phase "$RELEASE_PHASE" --online --dist dist/ --require-published',
+        ),
     ):
         body = _job(job, until)
         assert "scripts/check_publication_readiness.py" in body, job
@@ -534,7 +555,7 @@ def test_post_release_verification_covers_every_distribution() -> None:
     """
     verification = _job("verify-published", TAG_JOB)
 
-    assert "--online --require-published" in verification
+    assert "--online --dist dist/ --require-published" in verification
     assert 'manifest --pinned "$version"' in verification
     assert 'uv pip install --python "$RELEASE_PYTHON" "${pinned[@]}"' in verification
     assert "manifest --import-names" in verification

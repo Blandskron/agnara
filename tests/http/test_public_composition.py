@@ -414,6 +414,8 @@ def test_a_policy_denial_maps_to_403(app: Agnara, dependencies: DIRegistry) -> N
     assert headers[b"content-type"] == b"application/problem+json"
     problem = json.loads(payload)
     assert problem["code"] == "forbidden"
+    assert problem["detail"] == "required scopes not granted"
+    assert b"shop:admin" not in payload
     assert problem["title"] == "Forbidden"
 
 
@@ -580,6 +582,24 @@ def test_documentation_routes_have_static_surface_semantics(
     assert head_body == b""
     assert post_status == 405
     assert post_headers[b"allow"] == b"GET, HEAD"
+
+
+@pytest.mark.parametrize("method", ["get", "head", "Get", "HeAd", "GET SCHEMA"])
+@pytest.mark.parametrize("path", ["/docs", "/docs/assets/swagger-initializer.js"])
+def test_documentation_rejects_non_exact_request_methods(
+    app: Agnara, dependencies: DIRegistry, method: str, path: str
+) -> None:
+    asgi = compose(
+        app,
+        dependencies,
+        openapi=OpenApiInfo("Shop API", "1.0.0"),
+        documentation=HttpDocumentation(),
+    )
+
+    status, headers, _ = request(asgi, method, path)
+
+    assert status == 405
+    assert headers[b"allow"] == b"GET, HEAD"
 
 
 def test_documentation_mount_prefix_is_applied_to_page_and_initializer_urls(

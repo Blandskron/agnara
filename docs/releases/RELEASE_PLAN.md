@@ -1,20 +1,33 @@
 # Agnara Release Plan
 
-## Baseline and target
+## Current patch target
+
+`1.0.0` is the published stable baseline. The current target is **`1.0.1`**,
+tracked in [Issue #504](https://github.com/Blandskron/agnara/issues/504).
+It delivers the four security fixes merged after `v1.0.0` and the phased
+publication integrity fix. All seven distributions move together. The
+release branch is reviewed against `main`, then the protected publication
+workflow and maintainer approval control each upload phase.
+
+`docs/releases/release-status.json` records the current gate state. The
+historical 1.0.0 plan below supplies baseline evidence; current candidate CI
+and maintainer review remain required for `1.0.1`.
+
+## Historical 1.0.0 baseline and target
 
 `0.1.0a8` is the sole retained publication baseline. It proved the reviewed,
 dispatch-driven seven-distribution publication path; it is not the compatibility
 or product contract this project will publish next.
 
-The next and first planned product release is **`1.0.0`**. There will be no
-additional interim publication cadence. Development
-continues on `develop` until the stable gates below have evidence.
+The first planned product release was **`1.0.0`**. There was no additional
+interim publication cadence. Development continued on `develop` until the
+stable gates below had evidence.
 
 ## Release thesis
 
-`1.0.0` proves that Agnara's capability runtime and its documented public
-surface are stable enough for production adoption. It must not be cut merely
-because a subsystem milestone is complete.
+`1.0.0` established the initial stable capability runtime and documented public
+surface. The release was not cut merely because a subsystem milestone was
+complete.
 
 The work leading to it includes streaming semantics, execution identity and
 operational idempotency; performance budgets enforced in CI; interoperability
@@ -24,7 +37,7 @@ repeatable publication of all seven distributions.
 ## Gates
 
 All existing quality, security, packaging and review requirements remain in
-force. The `1.0.0` release additionally requires evidence for each item below.
+force. The `1.0.0` release required evidence for each item below.
 
 | Gate | Evidence |
 | --- | --- |

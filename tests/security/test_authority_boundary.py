@@ -128,9 +128,7 @@ def test_a_privileged_parent_cannot_lend_its_authority_to_a_child() -> None:
 
         # The parent still completes: refusing the child is a result, not a crash.
         assert outcome == Success("report-without-transfer")
-        assert child_outcome == [
-            Failure(FailureCode.FORBIDDEN, f"missing required scopes: {TREASURY}")
-        ]
+        assert child_outcome == [Failure(FailureCode.FORBIDDEN, "required scopes not granted")]
         # The privileged effect never happened.
         assert transfers == []
         await runtime.aclose()
@@ -268,7 +266,7 @@ def test_forged_principal_metadata_is_never_read_as_authority() -> None:
 
         outcome = await runtime.invoke_result(context(TRANSFER, container, forged))
 
-        assert outcome == Failure(FailureCode.FORBIDDEN, f"missing required scopes: {TREASURY}")
+        assert outcome == Failure(FailureCode.FORBIDDEN, "required scopes not granted")
         assert transfers == []
         await runtime.aclose()
 
@@ -314,7 +312,7 @@ def test_an_actor_cannot_assert_a_subject_through_invocation_metadata() -> None:
             )
         )
 
-        assert outcome == Failure(FailureCode.FORBIDDEN, f"missing required scopes: {TREASURY}")
+        assert outcome == Failure(FailureCode.FORBIDDEN, "required scopes not granted")
         assert transfers == []
         assert seen == []
         # The kernel exposes no subject or delegation surface to read at all.
@@ -372,7 +370,7 @@ def test_a_cached_discovery_snapshot_never_authorizes_a_later_invocation() -> No
         # it: authorization is re-decided from the invoking principal.
         assert privileged.filtered is True
         outcome = await runtime.invoke_result(context(TRANSFER, container, analyst))
-        assert outcome == Failure(FailureCode.FORBIDDEN, f"missing required scopes: {TREASURY}")
+        assert outcome == Failure(FailureCode.FORBIDDEN, "required scopes not granted")
         assert transfers == []
 
         # And discovery is not a gate either: the holder of the scope may call
@@ -594,7 +592,7 @@ def test_an_anonymous_caller_is_a_real_identity_with_no_grants() -> None:
         assert anonymous.principal.scopes == frozenset()
 
         assert await runtime.invoke_result(anonymous) == Failure(
-            FailureCode.FORBIDDEN, f"missing required scopes: {TREASURY}"
+            FailureCode.FORBIDDEN, "required scopes not granted"
         )
         assert transfers == []
 
