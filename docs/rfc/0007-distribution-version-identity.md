@@ -11,7 +11,7 @@ package correctness issue, not a transport concern.
 
 ## Decision
 
-The workspace has one selected target, currently `1.0.0`. `develop` uses the
+The workspace has one selected target, currently `1.0.3`. `develop` uses the
 distinct `<target>.dev0` identity; release preparation uses the exact target.
 Every adapter declares an exact requirement on the matching core version.
 

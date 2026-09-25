@@ -1,4 +1,4 @@
-# ADR 0072 — HTTP Request Surface Scope for `0.1.0a4`
+# ADR 0072 — HTTP Request Surface Scope
 
 - Status: Proposed
 - Date: 2026-09-07
@@ -10,26 +10,20 @@
 ## Context
 
 ADR 0026 gave the adapter path, query, header and one JSON body binding, and
-recorded that "forms, multipart, files, streaming application inputs, cookies,
-and content negotiation require separate reviewed work". `docs/INITIATIVES.md`
-I7 names the `0.1.0a4` half: cookies, forms, multipart and file uploads, "the
-gaps that stop `agnara-http` being usable for ordinary applications", then
-separately CORS, compression, static files, proxy headers, trusted hosts and a
-cross-cutting extension point.
+recorded that forms, multipart, files, streaming application inputs, cookies
+and content negotiation require separate reviewed work. The current adapter
+supports cookies, forms, multipart and bounded file uploads.
+CORS, compression, static files, proxy headers, trusted hosts and a generic
+cross-cutting extension point remain outside the capability layer.
 
-ADR 0071 made the adapter consumable. An application can declare routes and
-serve them through public API, and cannot read a session cookie, accept an
-HTML form post or receive a file. That gap is what this decision closes, and
-it is also where a web framework starts growing features without end. So the
-first half of this record is a classification, and the second is the smallest
-implementation that satisfies it.
+ADR 0071 defines public composition. This decision bounds the request binding
+surface and identifies features that remain outside the capability layer.
 
 ## Decision — the classification
 
-Every I7 subfeature the planning documents mention, classified. Nothing here
-is left implicit.
+Every request feature is classified; limitations remain explicit.
 
-### Required for `0.1.0a4`, and implemented
+### Implemented request bindings
 
 | Feature | Shape |
 | --- | --- |
@@ -53,8 +47,8 @@ is left implicit.
 | Feature | Reason |
 | --- | --- |
 | **Multiple files, and repeated form fields** | Both need a collection binding. ADR 0026 rejected repeated scalar values deliberately and said "collection bindings require a later explicit design". That design is not HTTP-local: it decides how a list arrives through *every* transport. |
-| **Client filename and per-part content type** | Both need a public upload value type carrying filename, content type and content. A value type is a core-visible schema shape — MCP and introspection project it too — so its design is not the HTTP adapter's to make alone. And the filename is attacker-controlled: every safe use generates a name anyway, so a4 exposes none. |
-| **Streaming and large uploads** | An upload is bounded `bytes`. Streaming request bodies need the streaming model, which is I2 and belongs to `0.1.0a9` (ADR 0068, ADR 0081, ADR 0082). |
+| **Client filename and per-part content type** | Both need a public upload value type carrying filename, content type and content. A value type is a core-visible schema shape — MCP and introspection project it too — so its design is not the HTTP adapter's to make alone. And the filename is attacker-controlled: every safe use generates a name anyway, so the current API exposes none. |
+| **Streaming and large uploads** | An upload is bounded `bytes`. Streaming request bodies need the streaming model, and require a separate design (ADR 0084). |
 | **CORS, compression, static files, proxy headers, trusted hosts** | These are ASGI-layer or reverse-proxy concerns and none of them needs a capability. See "Where these belong instead" below. |
 | **Generic middleware / interceptor hook** | `docs/INITIATIVES.md` states the reason and this decision keeps it: "middleware in most frameworks is where transport types leak into application code, and Agnara must not reproduce that". Adding a hook now, before the extension model (I13) and the embedding contract (RFC 0008), would fix the wrong shape permanently. |
 | **Sessions, authentication** | Not request binding. Authentication is the security program, I10. |
@@ -69,7 +63,7 @@ is left implicit.
 
 ### Where these belong instead
 
-An application that needs a deferred cross-cutting feature in `0.1.0a4` puts
+An application that needs a deferred cross-cutting feature puts
 it where it already lives, outside Agnara:
 
 - **CORS, compression, trusted hosts, proxy header trust** — the reverse proxy
@@ -81,7 +75,7 @@ it where it already lives, outside Agnara:
   exactly what `BindingSource.COOKIE` makes possible.
 
 This is not a promise that Agnara will never own them. It is a statement that
-`0.1.0a4` owns none of them, and that wrapping an ASGI application is already
+the capability layer owns none of them, and that wrapping an ASGI application is already
 the supported answer.
 
 ## Decision — the implementation
@@ -234,7 +228,7 @@ being usable, and a bounded in-memory upload answers the common case honestly.
 Deferring would have left the largest gap open while claiming I7 complete.
 
 **Ship an `UploadedFile` value type with filename and content type.**
-Rejected for a4. It is a core-visible schema shape that MCP and introspection
+Rejected for the current request binding contract. It is a core-visible schema shape that MCP and introspection
 also project, and `DataclassSchema.json_schema()` would describe a file as an
 object with a bytes field — misleading everywhere except HTTP, where the
 projection would have to special-case it. Issue #296 shows what happens when a
@@ -260,6 +254,6 @@ middleware already wraps it, from outside, where transport concerns belong.
 
 The collection binding RFC lands — repeated form fields and multiple files
 become expressible together, and this record's largest deferral closes. Also
-at `0.1.0a9`, when I2 decides streaming: a streamed request body would replace
-the bounded-`bytes` upload contract rather than extend it, and that is a
-breaking change this alpha is allowed to make.
+in a separate request-streaming decision: a streamed request body would replace
+the bounded-`bytes` upload contract rather than extend it, so it requires a
+separate compatibility decision.

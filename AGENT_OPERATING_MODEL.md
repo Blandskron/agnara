@@ -1,5 +1,9 @@
 # Agent Operating Model
 
+Current repository documentation describes the current framework. Historical release reconstruction must use Git history, tags or GitHub Releases and must not be inferred from active documentation.
+
+Never revive superseded release documentation into current context unless the task explicitly requires historical research.
+
 ## Principle
 
 Agnara is developed **agents-first and human-friendly**.

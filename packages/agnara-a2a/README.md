@@ -1,14 +1,17 @@
 # agnara-a2a
 
-Reserved namespace for the future Agent-to-Agent exposure adapter.
+`agnara-a2a` reserves the official Agent-to-Agent adapter namespace. It has no
+public exports, Agent Card, task handling, streaming or A2A runtime. Installing
+it does not enable an A2A endpoint.
 
-This baseline package deliberately has no public API or A2A runtime. It is built and
-versioned with the synchronized workspace set to reserve the official package
-boundary, not to claim Agent Card, skill, task, streaming or protocol support.
+```bash
+pip install "agnara-a2a==1.0.3"
+```
 
-- Import package: `agnara_a2a`
-- Depends on: the exact synchronized `agnara` version
-- Must not import: sibling adapter packages
+The import package is `agnara_a2a`; its `__all__` is empty. It pins the exact
+synchronized `agnara==1.0.3` kernel and does not depend on sibling adapters.
+There is no usage API beyond importing the reserved namespace. Protocol work
+requires a separate reviewed contract and implementation.
 
-See `ARCHITECTURE.md` sections 3 and 4 for the package boundaries and the
-allowed dependency graph.
+See the [public API policy](../../docs/PUBLIC_API.md) and
+[maturity matrix](../../docs/MATURITY.md).

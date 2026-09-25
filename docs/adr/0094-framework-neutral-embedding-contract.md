@@ -130,9 +130,9 @@ only the outer host harness; it does not import a host package into core tests.
   bridge without a framework import in core.
 - This contract is enough to test ownership, mapping, cancellation, principal
   handling and cleanup; it does not claim concrete framework support.
-- I9 still decides whether the named provisional symbols become stable for
-  1.0.0. Version-pinned framework fixtures and a maintainer support decision
-  remain necessary before the release interoperability gate can close.
+- The named public symbols are classified stable in `docs/public-api.json`.
+  Version-pinned framework fixtures provide bounded integration evidence;
+  broader support claims still require a maintainer decision.
 
 ## Alternatives rejected
 
@@ -163,6 +163,5 @@ all four modes, the absence of a new public export and the existing
 framework-dependency boundary. It is contract evidence only: no concrete
 framework fixture is exercised.
 
-Revisit when a fixture cannot express a needed boundary, when I9 classifies the
-public symbols for 1.0.0, or before adding streaming, delegation,
+Revisit when a fixture cannot express a needed boundary, when a public symbol changes, or before adding streaming, delegation,
 cross-application execution or a synchronous entry point.

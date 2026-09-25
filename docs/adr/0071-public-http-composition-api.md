@@ -39,8 +39,7 @@ Two mandatory baseline gates are blocked on this and nothing else:
 | `OpenApiOperation` | The per-operation decision to publish, and its metadata. |
 | `HttpDefinitionError` | One composition mistake, at startup. |
 
-All `provisional`. Nothing is `stable`; ADR 0067 reserves that for a decision
-the `1.0.0` release gates.
+The current stable names and paths are classified in `docs/public-api.json`.
 
 Not exposed: `_RouteRegistry`, `_HTTPBindingPlan`, `_HTTPDispatcher`,
 `_SurfaceDispatcher`, `_ASGIBoundary`, `_DocumentationProvider`,
@@ -249,8 +248,8 @@ review this task is not.
 
 I7 lands cookies, forms, multipart and uploads — `BindingSource` gains members
 and this ADR should be checked for whether `Binding` still reads well. Also at
-`1.0.0`, when the embedding contract (RFC 0008) needs to say what an external
-host calls: `HttpApplication` is the obvious answer and has not been designed
+a later embedding review: ADR 0094 now defines the host-to-runtime boundary;
+`HttpApplication` is one ASGI composition option
 against that question yet.
 
 Promotion of any of these seven names to `stable` is a separate decision.

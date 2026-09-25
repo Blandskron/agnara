@@ -1,7 +1,7 @@
 """A decision record's number must identify exactly one document.
 
 ADRs and RFCs are cited by number across the documentation ("RFC 0004",
-"ADR 0021"). Two files sharing a number make every such citation ambiguous,
+"ADR 0095"). Two files sharing a number make every such citation ambiguous,
 and the ambiguity is invisible until a reader follows one. RFC 0004 was
 duplicated between the dependency-injection RFC (#45) and the
 protocol-neutral delegation RFC (#102) until the latter became RFC 0005.

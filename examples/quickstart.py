@@ -1,7 +1,6 @@
-"""Agnara 1.0 candidate quick start.
+"""Agnara current 1.x quick start.
 
-Runs against a synchronized candidate or published 1.0 `agnara` distribution
-using public API only:
+Runs against the published `agnara` distribution using public API only:
 
     pip install agnara
     python quickstart.py
@@ -10,8 +9,7 @@ It demonstrates core capability execution: capability declaration with security
 metadata, startup compilation and freezing, dependency injection,
 schema-validated direct invocation, and canonical results.
 
-The public contract is governed by `docs/public-api.json`; use
-`docs/MIGRATION_A8_TO_1_0.md` when updating A8 source code.
+The public contract is governed by `docs/public-api.json`.
 """
 
 from __future__ import annotations

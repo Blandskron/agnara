@@ -123,107 +123,48 @@ the failure vocabulary, cancellation semantics, and the identity of a
 capability. Opening any of these would let an extension change what a
 capability means, which is the one thing adapters must never do.
 
-## 4. Gap analysis
+## 4. Current boundaries and open work
 
-The systems the thesis requires and Agnara does not have. Ordered by how much
-of the rest depends on them, not by size.
+The shipped runtime already has a unified exposure model (ADR 0070), a
+classified stable public API (`docs/PUBLIC_API.md`), declared streaming output
+with HTTP SSE (ADR 0084–0086), execution identity, direct complete-result
+idempotency, and bounded same-snapshot nested composition (ADR 0093).
+Framework-neutral embedding is implemented through ADR 0094; version-pinned
+host fixtures validate selected integrations. These contracts remain distinct
+from their future extensions.
 
-### G1 — Unified exposure model (resolved for the baseline)
+### Streaming and protocol projections
 
-ADR 0070 now gives HTTP and MCP one neutral compiled availability model, and
-ADR 0071 builds the public HTTP composition API on it. A third adapter can
-contribute a compiled surface without changing the kernel. Streaming and
-future protocol-specific behavior remain separate gaps rather than reasons to
-reopen this model.
+The core owns pull demand, cancellation, cleanup, per-unit validation and
+terminal outcomes. HTTP SSE projects this contract. WebSockets, MCP progress,
+A2A streaming, event consumption, request-body streaming and replay are not
+supported without separate design and conformance evidence.
 
-*Former blockers removed:* public adapter composition and protocol-neutral
-exposure introspection. Stability remains a later explicit decision.
+### Durable execution and persistence
 
-### G2 — Streaming projections
+In-memory idempotency is process-local. There is no durable task scheduler,
+retry service or automatic effect recovery. Applications own their storage,
+transactions and any durable idempotency implementation.
 
-The kernel now owns the stream lifetime and item contract (ADR 0084, ADR 0086):
-declared async generators, explicit per-unit output schemas, pull-based demand,
-cancellation, cleanup and post-output failure.
-Adding wire projections independently would still produce incompatible
-cancellation, backpressure and partial-failure semantics, so each projection
-must preserve that contract rather than redefining it. HTTP SSE is implemented
-against it and adds no stream vocabulary to core. ADR 0085 defines its bounded
-projection, with ASGI conformance evidence for delayed commitment, terminal
-reporting, backpressure and disconnect cleanup.
+### Delegation and cross-application composition
 
-*Blocks:* WebSockets, MCP progress, A2A streaming, event consumption and task
-progress.
+Nested invocation rechecks the caller's authority and enforces depth limits.
+Delegation of additional authority and cross-application composition are
+refused. RFC 0005 and RFC 0008 contain the remaining design questions.
 
-### G3 — Execution identity and idempotency behaviour
+### Ecosystem support
 
-Idempotency is declared and published but the runtime does nothing with it.
-Deduplication, replay and safe retry all need an execution identity that
-outlives a single invocation.
+Standalone, hosted, embedded and side-by-side modes share a value-only
+contract. Starlette, FastAPI, Django, Litestar, SQLAlchemy/SQLite and
+OpenTelemetry fixtures provide bounded evidence; broader framework support
+needs reviewed versioned conformance. `docs/INTEROPERABILITY.md` owns the
+current matrix.
 
-*Blocks:* durable tasks, event delivery semantics, safe automatic retry,
-resilience integrations.
+### Other research
 
-### G4 — Capability composition
-
-A capability cannot call another capability with propagated principal,
-deadline, cancellation, transaction and telemetry context. Applications will
-work around this with direct function calls, which silently bypasses policy.
-
-*Blocks:* workflows, sagas, any non-trivial application architecture.
-
-### G5 — Durable execution
-
-No task abstraction. Deferred, scheduled, long-running, retryable and
-human-gated execution have no home, and every one of them needs G3.
-
-### G6 — Audit
-
-Telemetry answers "what happened, how fast". Audit answers "who was allowed to
-do what, and on whose authority". Agnara has the second question's inputs —
-principal, policy decision, effects, confirmation — and no system that records
-them.
-
-### G7 — Application testing
-
-The repository tests the framework. It offers nothing to someone testing an
-application built on it: no harness, no dependency overrides, no fake
-principals, no policy or telemetry assertions.
-
-*Blocks:* adoption more than architecture, but a framework that is hard to
-test against will be used badly.
-
-### G8 — Plugin and extension model
-
-No discovery, loading, lifecycle, versioning or trust model. Defining it after
-an ecosystem exists means defining it under compatibility constraints.
-
-### G9 — Multi-tenancy
-
-No tenant concept. Retrofitting one through DI, policies, caches, task queues
-and telemetry is far harder than designing the propagation now.
-
-### G10 — Public API stabilization
-
-All 166 governed exports across 13 modules are 166 distinct names at 166
-canonical import paths and are deliberately classified
-`stable` (docs/PUBLIC_API.md). The 1.0 decision made the
-evidence-backed stable-or-deprecated compatibility decision; classification is
-complete, stability is not implicit.
-
-### G11 — Ecosystem interoperability
-
-Agnara can be run and cannot be embedded. No contract says what an external
-host must do to invoke a capability, and none says who owns lifecycle,
-routing, dependency containers, context, principal, errors and telemetry when
-two runtimes share a process.
-
-The consequence is not a missing feature; it is that every application that
-already exists must choose between adopting Agnara wholesale and not adopting
-it. `docs/INTEROPERABILITY.md` states the contract this gap has to close and
-RFC 0008 states the open questions.
-
-*Blocks:* embedding, side-by-side composition, progressive adoption, and
-`1.0.0` (ADR 0068).
+An application testing harness, audit persistence, plugin discovery,
+multi-tenancy and Python 3.15 support require separate decisions. No current
+release claim depends on implementing them.
 
 ## 5. Package roadmap
 

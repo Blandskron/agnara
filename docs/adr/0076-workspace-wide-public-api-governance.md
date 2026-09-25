@@ -93,7 +93,7 @@ compatibility promise, and pre-stable work makes none.
   classified, in the same way a new core module already did.
 - `agnara-cli` consumers importing one of the thirteen removed names break.
   The changelog records the removal and the private module each name lives in,
-  per ADR 0021; Task 12's migration guide carries the same list.
+  per ADR 0095; The current canonical module paths are listed in `docs/PUBLIC_API.md`.
 - The HTTP-specific surface test in
   `tests/architecture/test_public_http_surface.py` keeps its hand-written tuple
   and its stricter rule that no public name may originate in a private module.
@@ -101,8 +101,7 @@ compatibility promise, and pre-stable work makes none.
   mechanism.
 - `docs/MATURITY.md` keeps its per-distribution counts. A count is a summary of
   the manifest, not a substitute for it.
-- I9 becomes `IMPLEMENTED` for classification and stays open for stability
-  promotion, which the `1.0.0` release gates own.
+- The current stable classification is governed by `docs/public-api.json`.
 
 ## Alternatives considered
 
@@ -120,8 +119,7 @@ by a tuple in a test while the core was governed by a manifest, and it is why
 **Leave `agnara-cli` at 17 names and classify them.** Rejected. Classification
 records a deliberate decision, and there was none: the names were reachable
 because `__init__` imported them, not because anyone offered them. Classifying
-them would turn an accident into a commitment and make the a4 dogfooding
-examples that follow harder to keep honest.
+them would turn an accident into a commitment and make public consumer examples harder to keep honest.
 
 **Extend the private-import rule of ADR 0071 to every distribution — no public
 name may originate in a private module.** Rejected as the general rule.

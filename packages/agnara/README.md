@@ -1,4 +1,4 @@
-# agnara
+# Agnara
 
 > **Capability-native Python for the agentic era.**
 
@@ -13,16 +13,13 @@ execution kernel: the capability model, registry, execution context,
 dependency graph, policies, execution planning and canonical errors. It
 depends on nothing but the standard library.
 
-## Status: 1.0 candidate
+## Stable 1.x kernel
 
-The retained A8 publication establishes the historical publication baseline.
-The project is working toward its first stable public release, `1.0.0`; do
-not infer production readiness, protocol conformance, benchmark leadership or
-security guarantees without the release evidence. For source migrations, see
-the repository's `docs/MIGRATION_A8_TO_1_0.md`.
-
-Which versions are on PyPI is answered by the project page rather than by this
-file. `CHANGELOG.md` records what each version contains.
+This 1.0.3 distribution follows Agnara's stable 1.x public API contract.
+The source tree prepares the package; consult PyPI for publication status.
+The kernel remains standard-library-only. HTTP, MCP, CLI and telemetry live in
+separate, synchronized distributions; the A2A and events packages currently
+reserve namespaces without runtime APIs.
 
 ## Install
 
@@ -30,12 +27,10 @@ file. `CHANGELOG.md` records what each version contains.
 pip install agnara
 ```
 
-Pin an actually published version when a build must not move. For the 1.0
-candidate, install the synchronized wheels built by the release workflow;
-do not use A8 as the 1.0 compatibility target.
+For reproducible installations after publication, pin the synchronized version:
 
 ```bash
-pip install "agnara==<published-version>"
+pip install "agnara==1.0.3"
 ```
 
 Requires CPython 3.14 or newer.
@@ -94,7 +89,7 @@ The declared function is returned unchanged, so it stays directly callable and
 directly testable. Registration is a side effect on the application, not a
 transformation of the function.
 
-## What this release includes
+## Kernel capabilities
 
 - capability declaration and a deterministic, freezable registry;
 - stable capability identity, plus effect, risk, idempotency and confirmation

@@ -1,6 +1,15 @@
 # agnara-telemetry
 
 Explicit OpenTelemetry metrics and span bridges for Agnara's execution hooks.
+Install the synchronized distribution with:
+
+```bash
+pip install "agnara-telemetry==1.0.3"
+```
+
+The two governed Python exports are listed in the
+[API reference](../../docs/API_REFERENCE.md). The kernel does not install an
+OpenTelemetry SDK or exporter; applications own those lifecycles.
 This distribution is built and versioned with the synchronized workspace
 set. Which versions exist on an index is answered by its PyPI project page,
 not by this file: a README ships inside the artifact and cannot describe

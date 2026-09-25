@@ -19,7 +19,7 @@
       "tags/v3.14.4:23116f9",
       "Apr  7 2026 14:10:54"
     ],
-    "python_executable": "C:\\Users\\BlandskronNotebook\\Documents\\frameworkforblandskron\\.venv\\Scripts\\python.exe",
+    "python_executable": "C:\\Users\\BlandskronNotebook\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
     "python_version": "3.14.4",
     "timer": {
       "adjustable": false,
@@ -28,422 +28,629 @@
       "resolution_seconds": 1e-07
     }
   },
+  "execution_dimensions": {
+    "command": "benchmarks/runtime_paths.py --json",
+    "concurrency": 1,
+    "handler_modes": [
+      "async"
+    ],
+    "payload": "one integer field (value=41)",
+    "schema_sizes": [
+      "one scalar input",
+      "no output schema"
+    ],
+    "serializer": "standard-library JSON only for idempotency result codec",
+    "server": "none (in-process core runtime)"
+  },
   "git": {
-    "commit": "b8301776906a90f59c59c585c8b77712145ded25",
+    "commit": "5ef83408b9c57c4f8122f86f67d7dff1c5979146",
     "dirty": true
   },
   "median_ratio_to_compiled_invoke": {
-    "dependency_injection_one": 1.3826286570016897,
-    "dependency_injection_ten": 2.5552041615558547,
-    "execution_identity": 0.9408475820316157,
-    "idempotency_hit": 2.020093497076369,
-    "idempotency_miss": 3.977620799897538,
-    "nested_depth_one": 4.106270412461022,
-    "nested_depth_three": 9.009679755272142,
-    "policy_evaluation_one": 1.1326249624386089,
-    "policy_evaluation_three": 1.219053108112768,
-    "streaming_unit": 0.276061140092906
+    "dependency_injection_one": 1.2371342979157371,
+    "dependency_injection_ten": 2.2412433339707225,
+    "embedded_runtime_invoke": 1.2983661588798945,
+    "execution_identity": 0.9043533686022053,
+    "idempotency_hit": 1.7693968173029935,
+    "idempotency_miss": 3.199961756644783,
+    "nested_depth_one": 3.2835957252427392,
+    "nested_depth_three": 7.649508147959293,
+    "policy_evaluation_one": 1.0444302802388084,
+    "policy_evaluation_three": 1.0623409182654513,
+    "streaming_unit": 0.229315390825844
   },
   "median_ratio_to_reference": {
-    "compiled_invoke": 120.2612559241706,
-    "dependency_injection_one": 166.2766587677725,
-    "dependency_injection_ten": 307.2920616113744,
-    "execution_identity": 113.14751184834122,
-    "idempotency_hit": 242.938981042654,
-    "idempotency_miss": 478.353672985782,
-    "nested_depth_one": 493.8252369668246,
-    "nested_depth_three": 1083.5154028436018,
-    "policy_evaluation_one": 136.21090047393366,
-    "policy_evaluation_three": 146.60485781990522,
-    "streaming_unit": 33.19945941943128
+    "compiled_invoke": 130.74166666666667,
+    "dependency_injection_one": 161.745,
+    "dependency_injection_ten": 293.0238888888889,
+    "embedded_runtime_invoke": 169.75055555555554,
+    "execution_identity": 118.23666666666666,
+    "idempotency_hit": 231.33388888888888,
+    "idempotency_miss": 418.36833333333334,
+    "nested_depth_one": 429.3027777777778,
+    "nested_depth_three": 1000.1094444444445,
+    "policy_evaluation_one": 136.55055555555555,
+    "policy_evaluation_three": 138.89222222222222,
+    "streaming_unit": 29.981076388888887
   },
-  "recorded_at_utc": "2026-09-16T03:16:27.000855+00:00",
-  "results": {
-    "compiled_invoke": {
-      "elapsed_ns": [
-        19992200,
-        20300100,
-        23326900,
-        20945400,
-        20681000,
-        19545000,
-        19807000
-      ],
-      "ns_per_operation": [
-        9996.1,
-        10150.05,
-        11663.45,
-        10472.7,
-        10340.5,
-        9772.5,
-        9903.5
-      ],
-      "operations_per_iteration": 1,
-      "summary_ns_per_operation": {
-        "maximum": 11663.45,
-        "mean": 10328.4,
-        "median": 10150.05,
-        "minimum": 9772.5,
-        "stdev": 637.0667462414492
-      }
-    },
-    "dependency_injection_one": {
-      "elapsed_ns": [
-        27577600,
-        28004400,
-        28067500,
-        28344400,
-        27368500,
-        28653400,
-        28765700
-      ],
-      "ns_per_operation": [
-        13788.8,
-        14002.2,
-        14033.75,
-        14172.2,
-        13684.25,
-        14326.7,
-        14382.85
-      ],
-      "operations_per_iteration": 1,
-      "summary_ns_per_operation": {
-        "maximum": 14382.85,
-        "mean": 14055.82142857143,
-        "median": 14033.75,
-        "minimum": 13684.25,
-        "stdev": 260.31872588736144
-      }
-    },
-    "dependency_injection_ten": {
-      "elapsed_ns": [
-        46687200,
-        51870900,
-        53924100,
-        64438400,
-        46701400,
-        49401000,
-        59193400
-      ],
-      "ns_per_operation": [
-        23343.6,
-        25935.45,
-        26962.05,
-        32219.2,
-        23350.7,
-        24700.5,
-        29596.7
-      ],
-      "operations_per_iteration": 1,
-      "summary_ns_per_operation": {
-        "maximum": 32219.2,
-        "mean": 26586.885714285716,
-        "median": 25935.45,
-        "minimum": 23343.6,
-        "stdev": 3314.0437093167475
-      }
-    },
-    "direct_async_handler": {
-      "elapsed_ns": [
-        172900,
-        260400,
-        193700,
-        167900,
-        168800,
-        167600,
-        167800
-      ],
-      "ns_per_operation": [
-        86.45,
-        130.2,
-        96.85,
-        83.95,
-        84.4,
-        83.8,
-        83.9
-      ],
-      "operations_per_iteration": 1,
-      "summary_ns_per_operation": {
-        "maximum": 130.2,
-        "mean": 92.79285714285713,
-        "median": 84.4,
-        "minimum": 83.8,
-        "stdev": 17.149232941335605
-      }
-    },
-    "execution_identity": {
-      "elapsed_ns": [
-        19080200,
-        20049100,
-        19198200,
-        20873800,
-        18986300,
-        19099300,
-        19058700
-      ],
-      "ns_per_operation": [
-        9540.1,
-        10024.55,
-        9599.1,
-        10436.9,
-        9493.15,
-        9549.65,
-        9529.35
-      ],
-      "operations_per_iteration": 1,
-      "summary_ns_per_operation": {
-        "maximum": 10436.9,
-        "mean": 9738.971428571429,
-        "median": 9549.65,
-        "minimum": 9493.15,
-        "stdev": 357.76742778088703
-      }
-    },
-    "idempotency_hit": {
-      "elapsed_ns": [
-        41008100,
-        45403400,
-        48608100,
-        40188800,
-        38032300,
-        41972900,
-        36804100
-      ],
-      "ns_per_operation": [
-        20504.05,
-        22701.7,
-        24304.05,
-        20094.4,
-        19016.15,
-        20986.45,
-        18402.05
-      ],
-      "operations_per_iteration": 1,
-      "summary_ns_per_operation": {
-        "maximum": 24304.05,
-        "mean": 20858.407142857144,
-        "median": 20504.05,
-        "minimum": 18402.05,
-        "stdev": 2058.4563764361087
-      }
-    },
-    "idempotency_miss": {
-      "elapsed_ns": [
-        70816200,
-        80746100,
-        76883700,
-        72751100,
-        84820900,
-        99101100,
-        81942100
-      ],
-      "ns_per_operation": [
-        35408.1,
-        40373.05,
-        38441.85,
-        36375.55,
-        42410.45,
-        49550.55,
-        40971.05
-      ],
-      "operations_per_iteration": 1,
-      "summary_ns_per_operation": {
-        "maximum": 49550.55,
-        "mean": 40504.37142857142,
-        "median": 40373.05,
-        "minimum": 35408.1,
-        "stdev": 4707.700429071603
-      }
-    },
-    "nested_depth_one": {
-      "elapsed_ns": [
-        64797800,
-        83357700,
-        91143100,
-        82947700,
-        106733400,
-        79435000,
-        90298200
-      ],
-      "ns_per_operation": [
-        32398.9,
-        41678.85,
-        45571.55,
-        41473.85,
-        53366.7,
-        39717.5,
-        45149.1
-      ],
-      "operations_per_iteration": 1,
-      "summary_ns_per_operation": {
-        "maximum": 53366.7,
-        "mean": 42765.20714285714,
-        "median": 41678.85,
-        "minimum": 32398.9,
-        "stdev": 6397.223016110751
-      }
-    },
-    "nested_depth_three": {
-      "elapsed_ns": [
-        166671700,
-        167790100,
-        185121900,
-        182977600,
-        173954100,
-        195426700,
-        182897400
-      ],
-      "ns_per_operation": [
-        83335.85,
-        83895.05,
-        92560.95,
-        91488.8,
-        86977.05,
-        97713.35,
-        91448.7
-      ],
-      "operations_per_iteration": 1,
-      "summary_ns_per_operation": {
-        "maximum": 97713.35,
-        "mean": 89631.39285714286,
-        "median": 91448.7,
-        "minimum": 83335.85,
-        "stdev": 5167.8159168411885
-      }
-    },
-    "policy_evaluation_one": {
-      "elapsed_ns": [
-        22538700,
-        29248500,
-        22691300,
-        31408200,
-        23634900,
-        22413300,
-        22992400
-      ],
-      "ns_per_operation": [
-        11269.35,
-        14624.25,
-        11345.65,
-        15704.1,
-        11817.45,
-        11206.65,
-        11496.2
-      ],
-      "operations_per_iteration": 1,
-      "summary_ns_per_operation": {
-        "maximum": 15704.1,
-        "mean": 12494.807142857142,
-        "median": 11496.2,
-        "minimum": 11206.65,
-        "stdev": 1860.6348657623496
-      }
-    },
-    "policy_evaluation_three": {
-      "elapsed_ns": [
-        24400100,
-        24307400,
-        26911100,
-        28391000,
-        24746900,
-        24387100,
-        24915500
-      ],
-      "ns_per_operation": [
-        12200.05,
-        12153.7,
-        13455.55,
-        14195.5,
-        12373.45,
-        12193.55,
-        12457.75
-      ],
-      "operations_per_iteration": 1,
-      "summary_ns_per_operation": {
-        "maximum": 14195.5,
-        "mean": 12718.507142857143,
-        "median": 12373.45,
-        "minimum": 12153.7,
-        "stdev": 793.2195694491801
-      }
-    },
-    "streaming_unit": {
-      "elapsed_ns": [
-        110508100,
-        87638800,
-        100438400,
-        117435400,
-        83147500,
-        88650400,
-        89665100
-      ],
-      "ns_per_operation": [
-        3453.378125,
-        2738.7125,
-        3138.7,
-        3669.85625,
-        2598.359375,
-        2770.325,
-        2802.034375
-      ],
-      "operations_per_iteration": 16,
-      "summary_ns_per_operation": {
-        "maximum": 3669.85625,
-        "mean": 3024.480803571428,
-        "median": 2802.034375,
-        "minimum": 2598.359375,
-        "stdev": 406.3719530391952
-      }
-    }
-  },
-  "schema_version": 1,
-  "startup": {
+  "recorded_at_utc": "2026-09-22T01:47:39.918971+00:00",
+  "registration": {
     "100": {
       "capabilities": 100,
       "elapsed_ns": [
-        7334700,
-        6753500,
-        6781400,
-        6568100,
-        7042100,
-        6723800,
-        7451900
+        90300,
+        69400,
+        65300,
+        63900,
+        63400,
+        63300,
+        63300
       ],
-      "median_ns_per_capability": 67814.0,
+      "median_ns_per_capability": 639.0,
       "ns_per_capability": [
-        73347.0,
-        67535.0,
-        67814.0,
-        65681.0,
-        70421.0,
-        67238.0,
-        74519.0
-      ],
-      "peak_bytes_per_capability": 2694.74
+        903.0,
+        694.0,
+        653.0,
+        639.0,
+        634.0,
+        633.0,
+        633.0
+      ]
     },
     "1000": {
       "capabilities": 1000,
       "elapsed_ns": [
-        126569800,
-        87527800,
-        119865000,
-        109402700,
-        105317400,
-        92621900,
-        109785900
+        546600,
+        464800,
+        483700,
+        458200,
+        462200,
+        456100,
+        457300
       ],
-      "median_ns_per_capability": 109402.7,
+      "median_ns_per_capability": 462.2,
       "ns_per_capability": [
-        126569.8,
-        87527.8,
-        119865.0,
-        109402.7,
-        105317.4,
-        92621.9,
-        109785.9
-      ],
-      "peak_bytes_per_capability": 2357.41
+        546.6,
+        464.8,
+        483.7,
+        458.2,
+        462.2,
+        456.1,
+        457.3
+      ]
     }
   },
-  "startup_scaling_ratio": 1.6132760197009466
+  "registration_scaling_ratio": 0.7233176838810641,
+  "results": {
+    "compiled_invoke": {
+      "elapsed_ns": [
+        25505500,
+        31948600,
+        20849000,
+        21073400,
+        23533500,
+        29821400,
+        21910400
+      ],
+      "measurement_scope": "complete invocation",
+      "ns_per_operation": [
+        12752.75,
+        15974.3,
+        10424.5,
+        10536.7,
+        11766.75,
+        14910.7,
+        10955.2
+      ],
+      "operations_per_iteration": 1,
+      "ratio_to_compiled_invoke": true,
+      "summary_ns_per_operation": {
+        "maximum": 15974.3,
+        "mean": 12474.414285714285,
+        "median": 11766.75,
+        "minimum": 10424.5,
+        "stdev": 2199.5395307340814
+      }
+    },
+    "dependency_injection_one": {
+      "elapsed_ns": [
+        30122300,
+        28192400,
+        28547600,
+        28844000,
+        29114100,
+        29351400,
+        30341300
+      ],
+      "measurement_scope": "complete invocation",
+      "ns_per_operation": [
+        15061.15,
+        14096.2,
+        14273.8,
+        14422.0,
+        14557.05,
+        14675.7,
+        15170.65
+      ],
+      "operations_per_iteration": 1,
+      "ratio_to_compiled_invoke": true,
+      "summary_ns_per_operation": {
+        "maximum": 15170.65,
+        "mean": 14608.078571428572,
+        "median": 14557.05,
+        "minimum": 14096.2,
+        "stdev": 395.247596300031
+      }
+    },
+    "dependency_injection_ten": {
+      "elapsed_ns": [
+        50761300,
+        49664900,
+        57350800,
+        53495000,
+        53516000,
+        48016500,
+        52744300
+      ],
+      "measurement_scope": "complete invocation",
+      "ns_per_operation": [
+        25380.65,
+        24832.45,
+        28675.4,
+        26747.5,
+        26758.0,
+        24008.25,
+        26372.15
+      ],
+      "operations_per_iteration": 1,
+      "ratio_to_compiled_invoke": true,
+      "summary_ns_per_operation": {
+        "maximum": 28675.4,
+        "mean": 26110.62857142857,
+        "median": 26372.15,
+        "minimum": 24008.25,
+        "stdev": 1530.6722790049757
+      }
+    },
+    "direct_async_handler": {
+      "elapsed_ns": [
+        184000,
+        258600,
+        180000,
+        179000,
+        179500,
+        179700,
+        189500
+      ],
+      "measurement_scope": "complete invocation",
+      "ns_per_operation": [
+        92.0,
+        129.3,
+        90.0,
+        89.5,
+        89.75,
+        89.85,
+        94.75
+      ],
+      "operations_per_iteration": 1,
+      "ratio_to_compiled_invoke": true,
+      "summary_ns_per_operation": {
+        "maximum": 129.3,
+        "mean": 96.45,
+        "median": 90.0,
+        "minimum": 89.5,
+        "stdev": 14.606904759964268
+      }
+    },
+    "embedded_runtime_invoke": {
+      "elapsed_ns": [
+        27636200,
+        26652200,
+        33823600,
+        30555100,
+        41633400,
+        27485300,
+        35079700
+      ],
+      "measurement_scope": "complete ADR 0094 host-to-runtime invocation",
+      "ns_per_operation": [
+        13818.1,
+        13326.1,
+        16911.8,
+        15277.55,
+        20816.7,
+        13742.65,
+        17539.85
+      ],
+      "operations_per_iteration": 1,
+      "ratio_to_compiled_invoke": true,
+      "summary_ns_per_operation": {
+        "maximum": 20816.7,
+        "mean": 15918.964285714286,
+        "median": 15277.55,
+        "minimum": 13326.1,
+        "stdev": 2704.475934710563
+      }
+    },
+    "execution_identity": {
+      "elapsed_ns": [
+        20897400,
+        20518800,
+        23459600,
+        31346800,
+        28718500,
+        21282600,
+        20776100
+      ],
+      "measurement_scope": "complete invocation",
+      "ns_per_operation": [
+        10448.7,
+        10259.4,
+        11729.8,
+        15673.4,
+        14359.25,
+        10641.3,
+        10388.05
+      ],
+      "operations_per_iteration": 1,
+      "ratio_to_compiled_invoke": true,
+      "summary_ns_per_operation": {
+        "maximum": 15673.4,
+        "mean": 11928.557142857142,
+        "median": 10641.3,
+        "minimum": 10259.4,
+        "stdev": 2197.6455633299493
+      }
+    },
+    "idempotency_hit": {
+      "elapsed_ns": [
+        42951900,
+        41488500,
+        41514900,
+        42686600,
+        41640100,
+        39971600,
+        43152900
+      ],
+      "measurement_scope": "complete invocation",
+      "ns_per_operation": [
+        21475.95,
+        20744.25,
+        20757.45,
+        21343.3,
+        20820.05,
+        19985.8,
+        21576.45
+      ],
+      "operations_per_iteration": 1,
+      "ratio_to_compiled_invoke": true,
+      "summary_ns_per_operation": {
+        "maximum": 21576.45,
+        "mean": 20957.60714285714,
+        "median": 20820.05,
+        "minimum": 19985.8,
+        "stdev": 555.1756512046225
+      }
+    },
+    "idempotency_miss": {
+      "elapsed_ns": [
+        74118100,
+        77898800,
+        74953300,
+        75306300,
+        77111000,
+        74911700,
+        76777000
+      ],
+      "measurement_scope": "complete invocation",
+      "ns_per_operation": [
+        37059.05,
+        38949.4,
+        37476.65,
+        37653.15,
+        38555.5,
+        37455.85,
+        38388.5
+      ],
+      "operations_per_iteration": 1,
+      "ratio_to_compiled_invoke": true,
+      "summary_ns_per_operation": {
+        "maximum": 38949.4,
+        "mean": 37934.014285714286,
+        "median": 37653.15,
+        "minimum": 37059.05,
+        "stdev": 695.9502291317756
+      }
+    },
+    "nested_depth_one": {
+      "elapsed_ns": [
+        69309300,
+        77274500,
+        79767000,
+        98090000,
+        83260000,
+        68736200,
+        70467300
+      ],
+      "measurement_scope": "complete invocation",
+      "ns_per_operation": [
+        34654.65,
+        38637.25,
+        39883.5,
+        49045.0,
+        41630.0,
+        34368.1,
+        35233.65
+      ],
+      "operations_per_iteration": 1,
+      "ratio_to_compiled_invoke": true,
+      "summary_ns_per_operation": {
+        "maximum": 49045.0,
+        "mean": 39064.59285714286,
+        "median": 38637.25,
+        "minimum": 34368.1,
+        "stdev": 5215.74276760819
+      }
+    },
+    "nested_depth_three": {
+      "elapsed_ns": [
+        180019700,
+        188809800,
+        179393000,
+        196396400,
+        167214200,
+        178847400,
+        201608300
+      ],
+      "measurement_scope": "complete invocation",
+      "ns_per_operation": [
+        90009.85,
+        94404.9,
+        89696.5,
+        98198.2,
+        83607.1,
+        89423.7,
+        100804.15
+      ],
+      "operations_per_iteration": 1,
+      "ratio_to_compiled_invoke": true,
+      "summary_ns_per_operation": {
+        "maximum": 100804.15,
+        "mean": 92306.34285714287,
+        "median": 90009.85,
+        "minimum": 83607.1,
+        "stdev": 5879.374459670328
+      }
+    },
+    "policy_evaluation_one": {
+      "elapsed_ns": [
+        26197000,
+        24481500,
+        24579100,
+        25131100,
+        23986200,
+        24051000,
+        25047400
+      ],
+      "measurement_scope": "complete invocation",
+      "ns_per_operation": [
+        13098.5,
+        12240.75,
+        12289.55,
+        12565.55,
+        11993.1,
+        12025.5,
+        12523.7
+      ],
+      "operations_per_iteration": 1,
+      "ratio_to_compiled_invoke": true,
+      "summary_ns_per_operation": {
+        "maximum": 13098.5,
+        "mean": 12390.949999999999,
+        "median": 12289.55,
+        "minimum": 11993.1,
+        "stdev": 381.53528670360225
+      }
+    },
+    "policy_evaluation_three": {
+      "elapsed_ns": [
+        24623200,
+        24162300,
+        27294700,
+        24893100,
+        25000600,
+        29138100,
+        25338700
+      ],
+      "measurement_scope": "complete invocation",
+      "ns_per_operation": [
+        12311.6,
+        12081.15,
+        13647.35,
+        12446.55,
+        12500.3,
+        14569.05,
+        12669.35
+      ],
+      "operations_per_iteration": 1,
+      "ratio_to_compiled_invoke": true,
+      "summary_ns_per_operation": {
+        "maximum": 14569.05,
+        "mean": 12889.335714285715,
+        "median": 12500.3,
+        "minimum": 12081.15,
+        "stdev": 892.4470230375422
+      }
+    },
+    "stream_completion": {
+      "elapsed_ns": [
+        1388400,
+        1008700,
+        1119400,
+        1833800,
+        1039900,
+        1148500,
+        1173900
+      ],
+      "measurement_scope": "normal terminal pull from an already-drained stream",
+      "ns_per_operation": [
+        694.2,
+        504.35,
+        559.7,
+        916.9,
+        519.95,
+        574.25,
+        586.95
+      ],
+      "operations_per_iteration": 1,
+      "ratio_to_compiled_invoke": false,
+      "summary_ns_per_operation": {
+        "maximum": 916.9,
+        "mean": 622.3285714285714,
+        "median": 574.25,
+        "minimum": 504.35,
+        "stdev": 143.65680995907937
+      }
+    },
+    "stream_open": {
+      "elapsed_ns": [
+        16005600,
+        20218900,
+        18332400,
+        20431400,
+        22173900,
+        14061900,
+        11539200
+      ],
+      "measurement_scope": "stream pre-output opening only",
+      "ns_per_operation": [
+        8002.8,
+        10109.45,
+        9166.2,
+        10215.7,
+        11086.95,
+        7030.95,
+        5769.6
+      ],
+      "operations_per_iteration": 1,
+      "ratio_to_compiled_invoke": false,
+      "summary_ns_per_operation": {
+        "maximum": 11086.95,
+        "mean": 8768.807142857144,
+        "median": 9166.2,
+        "minimum": 5769.6,
+        "stdev": 1915.9282988124783
+      }
+    },
+    "stream_per_item": {
+      "elapsed_ns": [
+        4671700,
+        2986900,
+        3756300,
+        4406000,
+        3061700,
+        3933100,
+        4899400
+      ],
+      "measurement_scope": "one consumer pull from an already-open stream",
+      "ns_per_operation": [
+        2335.85,
+        1493.45,
+        1878.15,
+        2203.0,
+        1530.85,
+        1966.55,
+        2449.7
+      ],
+      "operations_per_iteration": 1,
+      "ratio_to_compiled_invoke": false,
+      "summary_ns_per_operation": {
+        "maximum": 2449.7,
+        "mean": 1979.6499999999999,
+        "median": 1966.55,
+        "minimum": 1493.45,
+        "stdev": 375.4988692836948
+      }
+    },
+    "streaming_unit": {
+      "elapsed_ns": [
+        86345500,
+        86249000,
+        86587000,
+        97672200,
+        85023800,
+        106975200,
+        81872700
+      ],
+      "measurement_scope": "complete invocation",
+      "ns_per_operation": [
+        2698.296875,
+        2695.28125,
+        2705.84375,
+        3052.25625,
+        2656.99375,
+        3342.975,
+        2558.521875
+      ],
+      "operations_per_iteration": 16,
+      "ratio_to_compiled_invoke": true,
+      "summary_ns_per_operation": {
+        "maximum": 3342.975,
+        "mean": 2815.738392857143,
+        "median": 2698.296875,
+        "minimum": 2558.521875,
+        "stdev": 278.58529551526067
+      }
+    }
+  },
+  "schema_version": 2,
+  "startup": {
+    "100": {
+      "capabilities": 100,
+      "elapsed_ns": [
+        7539300,
+        11235800,
+        6980400,
+        8033500,
+        10878000,
+        12505500,
+        8352200
+      ],
+      "median_ns_per_capability": 83522.0,
+      "ns_per_capability": [
+        75393.0,
+        112358.0,
+        69804.0,
+        80335.0,
+        108780.0,
+        125055.0,
+        83522.0
+      ],
+      "peak_bytes_per_capability": 2589.7
+    },
+    "1000": {
+      "capabilities": 1000,
+      "elapsed_ns": [
+        82039400,
+        91060600,
+        98790000,
+        90793500,
+        82286100,
+        92742200,
+        76732600
+      ],
+      "median_ns_per_capability": 90793.5,
+      "ns_per_capability": [
+        82039.4,
+        91060.6,
+        98790.0,
+        90793.5,
+        82286.1,
+        92742.2,
+        76732.6
+      ],
+      "peak_bytes_per_capability": 1964.642
+    }
+  },
+  "startup_scaling_ratio": 1.0870608941356767
 }

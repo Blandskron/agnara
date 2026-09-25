@@ -123,7 +123,7 @@ REQUIRED_PUBLISHER = {
 }
 
 AUTHORIZATION_ENVIRONMENT = "pypi"
-# Bootstrap only. Pending publishers cannot share an external identity (ADR 0083).
+# Bootstrap only. Pending publishers cannot share an external identity (ADR 0082).
 BOOTSTRAP_ENVIRONMENTS = {
     "agnara": "pypi-core",
     "agnara-a2a": "pypi-a2a",

@@ -1,4 +1,4 @@
-"""Agnara 1.0 candidate — serving capabilities over HTTP.
+"""Agnara current 1.x — serving capabilities over HTTP.
 
 Runs against public API only. `docs/HTTP_COMPOSITION.md` is the guide this
 mirrors, including the limitations of this release.
@@ -9,9 +9,8 @@ It composes one HTTP surface, drives four requests through the compiled ASGI
 application without a server, prints the generated OpenAPI paths, and shows
 that the same capabilities feed the protocol-neutral exposure registry.
 
-Install the synchronized candidate wheels or the published 1.0 package set.
-The stable public API is documented in `docs/PUBLIC_API.md`; the A8 migration
-guide records the changes before that contract freezes.
+Install synchronized 1.x packages. The stable public API is documented in
+`docs/PUBLIC_API.md`.
 
 To serve it for real, hand `asgi` to any ASGI server:
 
@@ -138,7 +137,7 @@ capabilities = app.compile()
 asgi = http.compile(
     capabilities,
     dependencies=dependencies,
-    openapi=OpenApiInfo("Shop API", "1.0.0", summary="Orders, over HTTP."),
+    openapi=OpenApiInfo("Shop API", "2026.1", summary="Orders, over HTTP."),
     openapi_path="/openapi.json",
     request_timeout=5.0,
 )

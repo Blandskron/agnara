@@ -1,53 +1,28 @@
 # Roadmap
 
-## Publication baseline
+Agnara's current foundation is the Python 3.14 capability runtime with explicit
+HTTP, MCP, CLI and telemetry distributions. The [maturity matrix](docs/MATURITY.md)
+records what is implemented and where the boundaries stop.
 
-`0.1.0a8` is the sole retained publication baseline. It validates the reviewed
-seven-distribution publication workflow. It is not a compatibility promise and
-does not define the future product scope.
+The canonical current-state source is `docs/MATURITY.md`.
 
-## One destination: 1.0.0
+## Direction
 
-The next planned release is `1.0.0`. The project will not create another interim
-publication. Work is selected by the architecture it
-stabilizes, not by a pre-release cadence.
+1. **Ecosystem validation.** Keep the existing standalone, hosted, embedded and
+   side-by-side conformance lanes current as host libraries evolve.
+2. **Learning and reference ecosystem.** Improve runnable guides and reference
+   applications against the governed public API.
+3. **Interoperability expansion.** Investigate new hosts, stores and protocol
+   projections only after a contract, tests and an owner are defined.
+4. **Python runtime research.** Evaluate Python 3.15 and free-threaded execution
+   as separate evidence programs before changing support claims.
+5. **Framework evolution.** Preserve the transport-neutral kernel while
+   considering narrowly scoped capabilities through RFCs and reviewed issues.
 
-`docs/releases/RELEASE_PLAN.md` defines the evidence required to publish 1.0.0;
-`docs/INITIATIVES.md` defines dependency order; `BACKLOG.md` holds ready work.
+A2A and events remain reserved namespaces. They do not imply protocol support.
+GraphQL, gRPC, durable execution and broader MCP features are research or
+separate future decisions, not current commitments. See
+[initiatives](docs/INITIATIVES.md), [backlog](BACKLOG.md) and
+[interoperability](docs/INTEROPERABILITY.md).
 
-## Required product outcomes
-
-- Execution semantics: streaming, execution identity and operational
-  idempotency are designed, implemented and tested.
-- Performance: compiled paths have budgets and CI detects regressions.
-- Interoperability: Agnara works standalone, as a host, embedded and
-  side-by-side without coupling the kernel to a framework.
-- Security: the threat model, supply-chain controls and security invariants
-  have current evidence.
-- Public API: the supported surface and migration commitments are stable.
-- Documentation: applications can be built from supported documentation alone.
-
-## After the stable-release boundary: Python 3.15 Readiness
-
-```text
-Agnara 1.0: Python >=3.14, stable publication
--------------------- release boundary --------------------
-Maintainer explicitly confirms Agnara 1.0.0 was published
-                         |
-                         v
-Python 3.15 Readiness: post-1.0 program begins immediately
-```
-
-The [canonical program](docs/research/python-315-readiness.md) defines the
-activation condition, compatibility and free-threading validation, profiling,
-benchmarks, and JIT/lazy-import/frozendict/sentinel research. It remains
-blocked until that explicit confirmation; no date, tag, merge or release
-candidate unlocks it. Python 3.15 does not belong to or block Agnara 1.0.
-The post-release goal is validated CPython 3.15 support during 2026, not a
-guarantee, while initially retaining Python >=3.14.
-
-## Non-goals
-
-Agnara is not becoming an ORM, broker, scheduler, worker runtime, frontend
-framework, admin UI or LLM framework. The kernel remains capability-first,
-transport-neutral and small; adapters evolve around it.
+No delivery date or release cadence is implied by this roadmap.

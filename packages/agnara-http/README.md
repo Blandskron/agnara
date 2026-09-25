@@ -2,6 +2,16 @@
 
 HTTP/ASGI exposure adapter. Owns routing, request decoding, response encoding, RFC 9457 mapping, OpenAPI generation and the authorized discovery endpoint.
 
+```bash
+pip install "agnara-http==1.0.3"
+```
+
+Import the public composition API from `agnara_http` and compile against a
+frozen Agnara application. The fourteen governed exports are listed in the
+[API reference](../../docs/API_REFERENCE.md). This distribution pins the exact
+1.0.3 kernel; deployment authentication, reverse proxy and ASGI server remain
+application responsibilities.
+
 ## Status
 
 The current public surface exposes the fourteen-name composition API described
@@ -128,7 +138,7 @@ coarse remote-assets gate with exact resource declarations and an exact-origin
 deployment allowlist; see ADRs 0033 and 0040.
 
 E6.13 adds one internal compiled route layer for already-produced HTTP
-surfaces. A schema, documentation page or future Explorer shell supplies a
+surfaces. A schema, documentation page or Explorer shell supplies a
 stable logical name, an explicit static path, its media type, complete bytes
 and optional safe headers; the layer does not know how any artifact was
 generated. Compilation sorts declarations, rejects duplicate names and paths,

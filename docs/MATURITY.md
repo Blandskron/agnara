@@ -36,39 +36,33 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 | Package | Status | Published to PyPI | Public names | Notes |
 | --- | --- | --- | --- | --- |
 | `agnara` | `IMPLEMENTED` | yes | 41 | The kernel. Standard library only. |
-| `agnara-http` | `EXPERIMENTAL` | no | 14 | Public HTTP composition includes generated OpenAPI, built-in documentation UIs and authorized Explorer; third-party providers and discovery stay internal. |
-| `agnara-mcp` | `IMPLEMENTED` | no | 20 | Publication-ready tool projection; see the MCP table. |
-| `agnara-cli` | `IMPLEMENTED` | no | 4 | Publication-ready scaffolding, introspection and `agnara` script. |
-| `agnara-telemetry` | `IMPLEMENTED` | no | 2 | Publication-ready OpenTelemetry metrics and tracing hooks. |
-| `agnara-a2a` | `PLANNED` | no | 0 | Publication-ready reserved namespace; no implementation. |
-| `agnara-events` | `PLANNED` | no | 0 | Publication-ready reserved namespace; no implementation. |
+| `agnara-http` | `IMPLEMENTED` | yes | 14 | Public HTTP composition, OpenAPI, documentation UIs and filtered Explorer. Third-party provider extension remains internal. |
+| `agnara-mcp` | `IMPLEMENTED` | yes | 20 | Version-pinned tool projection and invocation; see the MCP table. |
+| `agnara-cli` | `IMPLEMENTED` | yes | 4 | Scaffolding, introspection and the `agnara` script. |
+| `agnara-telemetry` | `IMPLEMENTED` | yes | 2 | Explicit OpenTelemetry metrics and tracing hooks. |
+| `agnara-a2a` | `PLANNED` | yes | 0 | Published reserved namespace; no A2A runtime. |
+| `agnara-events` | `PLANNED` | yes | 0 | Published reserved namespace; no event runtime. |
 
-Only `agnara` is published. All seven distributions are versioned, buildable,
-installable from their artifacts and ready for the tag workflow to publish as
-one reviewed set; ADR 0021 keeps every version synchronized and ADR 0073 fixes
-the publication boundary. Publication-ready is not published: the six new
-PyPI projects still require their Pending Trusted Publishers before the tag.
+All seven distributions have a published synchronized set. The 1.0.3 source
+tree prepares their next synchronized metadata; publication of that target
+requires the protected release workflow. Published reserved namespaces do not
+imply an implemented A2A or event adapter.
 
 Every distribution's public surface is classified in
 `docs/public-api.json` and enforced in both directions by the release gate:
 166 classified exports across 13 modules, all `stable`. Those entries are
 import paths rather than distinct symbols: 166 names are reachable at 166 canonical paths,
 because a name is classified once per module it can be imported from.
-`agnara-cli` dropped from 17
-public names to 4 in the baseline, because the other thirteen were implementation
-helpers re-exported from underscore-prefixed modules and never documented,
-used or designed as an API (ADR 0076).
+`agnara-cli` has four governed names; implementation helpers are not public
+imports (ADR 0076).
 
 `agnara-http` declares fourteen stable names that compose
 capabilities, compile an ASGI 3 application, project OpenAPI and publish the
 reviewed documentation profile. `docs/HTTP_COMPOSITION.md` is the supported
 guide.
 
-It stays `EXPERIMENTAL` rather than becoming `IMPLEMENTED` because third-party
-provider extension and the authorized discovery endpoint remain intentionally
-internal, and the surface is newly expanded. The public spelling is stable for
-1.0; the experimental classification describes maturity, not an exception to
-the compatibility contract.
+Third-party provider extension and the discovery endpoint remain internal.
+The fourteen public exports follow the 1.x compatibility contract.
 
 ## Kernel — `agnara`
 
@@ -159,7 +153,7 @@ the compatibility contract.
 | Testing utilities | `PLANNED` | No first-party harness; the repository tests the framework, not applications built on it. |
 | Plugin system | `RESEARCH` | No discovery, loading or trust model. |
 | Persistence, cache, queue and scheduler integrations | `RESEARCH` | No shipped port, adapter or runtime dependency. `tests/integration/persistence/` is an optional SQLAlchemy 2.0.54/SQLite fixture that proves host-owned `Session` and transaction decisions around the existing DI boundary; it does not make Agnara an ORM or claim PostgreSQL, async-session, migration, cache, queue or scheduler support. |
-| Framework embedding contract | `DESIGNED` | ADR 0094 accepts an explicit async complete-result host boundary over existing stable runtime values: lifecycle/resource ownership, principal/context/error/telemetry bridges and one-event-loop reuse rules are defined. Version-pinned Starlette 1.6.0, FastAPI 0.141.1 and Django 6.1.1 fixtures exercise that boundary without adding a framework dependency or support claim. |
+| Framework embedding contract | `IMPLEMENTED` | ADR 0094's async complete-result boundary uses the shipped runtime. Version-pinned Starlette, FastAPI, Django and Litestar fixtures exercise it without adding a framework dependency or broad support claim. |
 | Side-by-side composition with an external framework | `EXPERIMENTAL` | `tests/integration/starlette/` exercises native and direct-runtime routes in one Starlette 1.6.0 lifespan. `tests/integration/fastapi/` adds FastAPI 0.141.1 native dependency/security, exception and middleware ownership, direct invocation, idempotency, composition, disconnect cancellation and explicitly coordinated mounted HTTP/SSE projection. Both are optional fixtures: neither claims integration support, automatic mounted-lifespan handling, OpenAPI merging nor release-gate closure. |
 | Host-diversity fixture | `EXPERIMENTAL` | `tests/integration/litestar/` exercises the same public embedding boundary in Litestar 2.24.0, including host-owned canonical-result/status serialization. It is selected conditional evidence, not Litestar or Flask support. |
 | Second shipped schema adapter | `RESEARCH` | Pydantic and msgspec remain `experiments/`; neither is packaged or supported. |
@@ -177,7 +171,7 @@ the compatibility contract.
 | Packaging gate | `IMPLEMENTED` | Builds and inspects all seven wheels/sdists, then installs all seven wheels outside the workspace with first-party index access disabled. |
 | Release readiness program | `IMPLEMENTED` | Evidence expires against the commit it was recorded on. |
 | Benchmarks | `IMPLEMENTED` | Six benchmark programs are inventoried in `docs/benchmarks/coverage.md`. `runtime_paths.py` covers registration/freeze, compilation, DI, policies, identity, idempotency, composition, embedding and stream phases. |
-| Performance budgets | `IMPLEMENTED` | `docs/performance/budgets.json` holds 15 calibrated core limits enforced by `scripts/check_performance_budgets.py`. V1-41 also makes the required performance job prove a synthetic over-budget artifact fails before it checks the machine-dependent record. The release gate and every limit remain subject to CI evidence and maintainer approval. |
+| Performance budgets | `IMPLEMENTED` | `docs/performance/budgets.json` holds 15 calibrated core limits enforced by `scripts/check_performance_budgets.py`. CI first proves a synthetic over-budget artifact fails. Each release still needs current CI evidence and review. |
 | Property testing and fuzzing | `IMPLEMENTED` | Bounded, derandomized property and fuzz regression lanes cover routing, schemas, dependency graphs, capability identity and idempotency; they are not continuous fuzzing or formal verification. |
 | Protocol conformance suites | `IMPLEMENTED` | The MCP adapter runs its version-pinned SDK/conformance coverage in CI. This is adapter-level evidence, not an upstream network-transport suite or a claim of complete protocol conformance. |
 | Security scanning, SBOM, signing | `IMPLEMENTED` | CI runs CodeQL; release builds create and verify deterministic CycloneDX SBOMs and artifact digests. Trusted Publishing and PEP 740 attestations remain actions of an authorized release, not evidence that one has occurred. |

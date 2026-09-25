@@ -434,7 +434,7 @@ ADR 0070 records the decisions and the reasoning. In summary:
 
 5. **The compatibility window for provisional `Mcp`, `FrozenMcpTools` and
    direct `describe_app(..., exposures=...)`.** All three keep working
-   through the retained baseline. `Mcp` gains a keyword-only `surface` and a
+   under the current stable contract. `Mcp` gains a keyword-only `surface` and a
    `compile_surface()` beside the existing `compile()`; `describe_app` accepts
    the frozen registry as the supported shape and the mapping as the legacy
    one. Phase 3 below retires the legacy paths, with migration examples,

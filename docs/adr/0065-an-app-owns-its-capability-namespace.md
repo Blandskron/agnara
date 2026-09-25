@@ -107,7 +107,7 @@ mounting does not close registration early.
 - Two apps from the same scaffold compose. The defect above is closed, and
   `test_two_apps_may_declare_the_same_name` is the regression.
 - Generated capability ids change from `<project>.<name>` to
-  `<app>.<name>`. Nothing in the retained baseline depends on the old form:
+  `<app>.<name>`. The current capability namespace uses the app form:
   publishes only the core, whose `Agnara.capability` is untouched, and app
   scaffolding arrived after it.
 - Two apps that share a *name* still collide, and should: that is a duplicated
