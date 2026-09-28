@@ -5,6 +5,11 @@ full history are available through Git tags and GitHub Releases.
 
 ## [Unreleased]
 
+### Added
+
+- Runnable nested capability invocation guide demonstrating independent parent
+  and child authorization through the governed public API.
+
 ## [1.0.3] - 2026-09-25
 
 ### Changed
