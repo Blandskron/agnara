@@ -6,12 +6,12 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#518](https://github.com/Blandskron/agnara/issues/518): add a runnable
-  public-API nested invocation guide with parent/child authorization tests.
-  Acceptance: standalone example, linked guide and required quality gates pass.
-  Implementation is ready for review; the full local gate also encounters the
-  pre-existing release-state inconsistency tracked in
-  [#519](https://github.com/Blandskron/agnara/issues/519).
+- [~] [#519](https://github.com/Blandskron/agnara/issues/519): reconcile the
+  published 1.0.3 record with the protected workflow, tag and release, then
+  make the existing-tag gate and readiness report describe that state.
+
+The runnable nested invocation guide from #518 was merged by PR #520 and its
+Issue closed after the required CI passed.
 
 The documentation baseline from #512 was integrated by PR #513; release
 tooling prose from #515 was integrated by PR #516. Publication is separate

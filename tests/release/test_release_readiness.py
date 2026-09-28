@@ -614,8 +614,60 @@ def test_json_output_is_machine_readable(capsys: pytest.CaptureFixture[str]) -> 
 
     payload = json.loads(capsys.readouterr().out)
     assert payload["current_target"] == document()["current_target"]
-    assert isinstance(payload["readiness_percent"], int)
-    assert len(payload["gates"]) == len(gates())
+    if document().get("status") == readiness.PUBLISHED:
+        assert payload["status"] == readiness.PUBLISHED
+        assert payload["published_evidence"] == document()["published_evidence"]
+        assert "readiness_percent" not in payload
+        assert "gates" not in payload
+    else:
+        assert isinstance(payload["readiness_percent"], int)
+        assert len(payload["gates"]) == len(gates())
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("previous_release", None, "previous_release"),
+        ("candidate_sha", None, "candidate_sha"),
+        ("published_evidence", None, "published_evidence"),
+    ],
+)
+def test_published_status_requires_complete_evidence(field, value, message) -> None:
+    published = document().copy()
+    published["status"] = readiness.PUBLISHED
+    published[field] = value
+
+    with pytest.raises(readiness.StatusError, match=message):
+        readiness.published_evidence(published)
+
+
+def test_published_release_is_reported_without_granting_readiness(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    commit = "a" * 40
+    url = "https://github.com/Blandskron/agnara/"
+    published = {
+        "current_target": "1.2.3",
+        "previous_release": "1.2.3",
+        "status": readiness.PUBLISHED,
+        "candidate_sha": commit,
+        "published_evidence": {
+            "commit": commit,
+            "tag": "v1.2.3",
+            "bootstrap_1_run": url + "actions/runs/1",
+            "bootstrap_2_run": url + "actions/runs/2",
+            "final_run": url + "actions/runs/3",
+            "release_url": url + "releases/tag/v1.2.3",
+        },
+    }
+    monkeypatch.setattr(readiness, "load_status", lambda: published)
+
+    assert readiness.main(["--require-ready"]) == 1
+    output = capsys.readouterr().out
+    assert "Status: PUBLISHED" in output
+    assert "No new release target is selected." in output
+    assert "RELEASE READY" not in output
 
 
 def test_a_missing_status_file_is_reported_rather_than_raised(
