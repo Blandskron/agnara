@@ -114,6 +114,9 @@ the [threat model](docs/THREAT_MODEL.md) for evidence and limits.
 
 ## Operations and documentation
 
+The [nested invocation guide](docs/NESTED_INVOCATION.md) provides a runnable
+example of calling another capability while enforcing each capability's scopes.
+
 The [CLI and scaffolding guide](docs/CLI_SPEC.md) covers generated projects.
 The [container guide](docs/CONTAINERS.md) covers the reference runtime and
 digest pinning. [Documentation map](docs/DOCUMENTATION_MAP.md) identifies the

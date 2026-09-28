@@ -6,9 +6,16 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#512](https://github.com/Blandskron/agnara/issues/512): establish the
-  1.0.3 documentation and synchronized package metadata baseline. Acceptance:
-  no runtime or public API change; current docs, links and packaging checks pass.
+- [~] [#518](https://github.com/Blandskron/agnara/issues/518): add a runnable
+  public-API nested invocation guide with parent/child authorization tests.
+  Acceptance: standalone example, linked guide and required quality gates pass.
+  Implementation is ready for review; the full local gate also encounters the
+  pre-existing release-state inconsistency tracked in
+  [#519](https://github.com/Blandskron/agnara/issues/519).
+
+The documentation baseline from #512 was integrated by PR #513; release
+tooling prose from #515 was integrated by PR #516. Publication is separate
+from these completed development tasks.
 
 ## Future work requiring a scoped Issue and review
 
