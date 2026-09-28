@@ -6,9 +6,12 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#519](https://github.com/Blandskron/agnara/issues/519): reconcile the
-  published 1.0.3 record with the protected workflow, tag and release, then
-  make the existing-tag gate and readiness report describe that state.
+- [~] [#522](https://github.com/Blandskron/agnara/issues/522): publish a
+  runnable direct-idempotency guide through the governed public API. Acceptance:
+  documented authority boundaries, executable example and quality gates pass.
+
+The published 1.0.3 record from #519 was merged by PR #521; the Issue closed
+after required CI passed.
 
 The runnable nested invocation guide from #518 was merged by PR #520 and its
 Issue closed after the required CI passed.
