@@ -11,6 +11,8 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 ## USAGE
 
 - [Core quick start](../packages/agnara/README.md)
+- [Direct idempotency guide](DIRECT_IDEMPOTENCY.md)
+- [Nested invocation guide](NESTED_INVOCATION.md)
 - [HTTP composition guide](HTTP_COMPOSITION.md)
 - [Container reference runtime](CONTAINERS.md)
 

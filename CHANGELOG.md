@@ -9,6 +9,8 @@ full history are available through Git tags and GitHub Releases.
 
 - Runnable nested capability invocation guide demonstrating independent parent
   and child authorization through the governed public API.
+- Runnable direct idempotency guide covering success reuse, request conflicts
+  and policy re-evaluation through the governed public API.
 
 ### Changed
 
