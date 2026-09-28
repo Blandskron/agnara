@@ -66,6 +66,7 @@ NEEDS_REVIEW = "NEEDS_REVIEW"
 IN_PROGRESS = "IN_PROGRESS"
 RELEASE_READY = "RELEASE_READY"
 BLOCKED = "BLOCKED"
+PUBLISHED = "PUBLISHED"
 
 AUTOMATED = "automated"
 EVIDENCE = "evidence"
@@ -688,6 +689,40 @@ def load_status() -> dict[str, Any]:
     return document
 
 
+def published_evidence(document: dict[str, Any]) -> dict[str, Any] | None:
+    """Return the recorded publication only when it identifies a complete release.
+
+    A published baseline is no longer a candidate for readiness evaluation.
+    The evidence is recorded after the protected workflow, not inferred from
+    local tags, which ordinary CI checkouts do not fetch.
+    """
+    if document.get("status") != PUBLISHED:
+        return None
+    target = document.get("current_target")
+    evidence = document.get("published_evidence")
+    if not isinstance(target, str) or document.get("previous_release") != target:
+        raise StatusError("published release must identify current_target as previous_release")
+    if not isinstance(evidence, dict):
+        raise StatusError("published release requires published_evidence")
+    commit = evidence.get("commit")
+    if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise StatusError("published release requires a full commit SHA")
+    if document.get("candidate_sha") != commit:
+        raise StatusError("published commit must match candidate_sha")
+    if evidence.get("tag") != f"v{target}":
+        raise StatusError("published tag must match current_target")
+    run_url = re.compile(r"https://github\.com/Blandskron/agnara/actions/runs/[1-9][0-9]*")
+    for field in ("bootstrap_1_run", "bootstrap_2_run", "final_run"):
+        value = evidence.get(field)
+        if not isinstance(value, str) or not run_url.fullmatch(value):
+            raise StatusError(f"published release requires a GitHub Actions {field}")
+    if evidence.get("release_url") != (
+        f"https://github.com/Blandskron/agnara/releases/tag/v{target}"
+    ):
+        raise StatusError("published release URL must match the tag")
+    return evidence
+
+
 def evaluate(document: dict[str, Any]) -> list[Result]:
     current_commit = head_commit()
     results: list[Result] = []
@@ -858,6 +893,29 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         document = load_status()
+        publication = published_evidence(document)
+        if publication is not None:
+            if arguments.json:
+                print(
+                    json.dumps(
+                        {
+                            "current_target": document["current_target"],
+                            "status": PUBLISHED,
+                            "published_evidence": publication,
+                        },
+                        indent=2,
+                        sort_keys=True,
+                    )
+                )
+            else:
+                print(
+                    "AGNARA RELEASE READINESS\n"
+                    f"Target: {document['current_target']}\n"
+                    "Status: PUBLISHED\n"
+                    f"Commit: {publication['commit']}\n"
+                    "No new release target is selected.\n"
+                )
+            return 1 if arguments.require_ready else 0
         results = evaluate(document)
     except StatusError as error:
         print(f"release-status.json is inconsistent: {error}", file=sys.stderr)
