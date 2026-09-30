@@ -6,10 +6,14 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#528](https://github.com/Blandskron/agnara/issues/528): complete the
-  action updates in PR #525 through `develop`. Acceptance: verified release
-  pins and version comments, future version updates target `develop`, and
-  quality gates pass.
+- [~] [#529](https://github.com/Blandskron/agnara/issues/529): classify
+  out-of-range JSON integer-to-float inputs as `invalid_input`. Acceptance:
+  nested paths and union fallback preserved, HTTP/MCP agree, and quality gates
+  pass.
+
+The action updates from #528 were merged by PR #525 and its Issue closed after
+the required CI passed. Dependabot's new target configuration takes effect
+when it is promoted to `main` through the reviewed workflow.
 
 The edge publication guard from #526 was merged by PR #527 and its Issue
 closed after the required CI passed.

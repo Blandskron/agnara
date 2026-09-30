@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import string
 from dataclasses import dataclass
+from math import isfinite
 from typing import Any
 
 import pytest
@@ -30,6 +31,19 @@ from agnara.errors import SchemaError, ValidationError
 from agnara.schema import StandardSchemaAdapter, materialize_json, serialize_json
 
 ADAPTER = StandardSchemaAdapter()
+
+
+@given(value=st.integers(min_value=-(10**400), max_value=10**400))
+@example(value=10**400)
+@example(value=-(10**400))
+def test_json_integer_to_float_is_total(value: int) -> None:
+    schema = ADAPTER.compile(float)
+    try:
+        result = schema.validate(materialize_json(schema, value))
+    except ValidationError:
+        return
+    assert type(result) is float
+    assert isfinite(result)
 
 
 @dataclass(frozen=True)

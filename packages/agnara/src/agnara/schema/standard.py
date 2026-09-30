@@ -578,7 +578,10 @@ def materialize_json(schema: TypeSchema, value: object) -> Any:
         # JSON has one number type. A wire value ``3`` satisfies the published
         # ``{"type": "number"}`` schema, so a JSON transport owes the handler
         # the float it declared; ``bool`` is excluded by the exact type check.
-        return float(value)
+        try:
+            return float(value)
+        except OverflowError as error:
+            raise ValidationError("integer is outside the float range") from error
 
     if isinstance(schema, UnionSchema):
         for choice in schema.choices:

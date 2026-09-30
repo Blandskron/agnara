@@ -111,6 +111,45 @@ def _mcp_payload(result: CallToolResult) -> dict[str, Any]:
     return cast(dict[str, Any], json.loads(block.text))
 
 
+@pytest.mark.parametrize("value", [10**400, -(10**400)], ids=["positive", "negative"])
+def test_out_of_range_json_float_is_invalid_input_on_every_json_surface(value: int) -> None:
+    app = Agnara("numbers")
+    calls: list[float] = []
+
+    @app.capability
+    def accept(factor: float) -> float:
+        calls.append(factor)
+        return factor
+
+    definition = app.capabilities["numbers.accept"]
+    plan = ExecutionPlan.compile(definition, DIRegistry())
+    direct = asyncio.run(
+        invoke_result(plan, _context(plan, {"factor": value}), input_materializer=materialize_json)
+    )
+    assert isinstance(direct, Failure)
+    assert direct.code is FailureCode.INVALID_INPUT
+    assert direct.details["path"] == ("factor",)
+
+    http = Http()
+    http.post("/numbers", accept, Binding("factor", BindingSource.BODY))
+    status, http_failure = _request(http.compile(app.compile()), value, path="/numbers")
+    assert status == 400
+    assert http_failure["code"] == "invalid_input"
+    assert http_failure["details"]["path"] == ["factor"]
+
+    mcp = Mcp(app)
+    mcp.tool(accept)
+    result = _mcp_call(
+        McpToolInvoker(mcp.compile(), [plan], DIContainer(DIRegistry())),
+        "numbers.accept",
+        {"factor": value},
+    )
+    assert result.is_error is True
+    assert _mcp_payload(result)["code"] == "invalid_input"
+    assert _mcp_payload(result)["message"] == "integer is outside the float range"
+    assert calls == []
+
+
 def test_supported_schema_graph_is_one_semantic_contract_on_all_surfaces() -> None:
     app = Agnara("contracts")
 
