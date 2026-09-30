@@ -6,9 +6,13 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#526](https://github.com/Blandskron/agnara/issues/526): accept immutable
-  Docker action updates in the edge publication guard. Acceptance: updated
-  full commit pins pass, invalid references fail and quality gates pass.
+- [~] [#528](https://github.com/Blandskron/agnara/issues/528): complete the
+  action updates in PR #525 through `develop`. Acceptance: verified release
+  pins and version comments, future version updates target `develop`, and
+  quality gates pass.
+
+The edge publication guard from #526 was merged by PR #527 and its Issue
+closed after the required CI passed.
 
 The runnable direct-idempotency guide from #522 was merged by PR #523 and its
 Issue closed after the required CI passed.

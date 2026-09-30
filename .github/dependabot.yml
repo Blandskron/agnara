@@ -10,6 +10,11 @@ version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
+    # GitHub reads this configuration from the default branch, so the target
+    # takes effect when the reviewed configuration is promoted to main.
+    # Routine version updates follow the integration branch. Security updates
+    # continue to use GitHub's default-branch behavior independently.
+    target-branch: develop
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
