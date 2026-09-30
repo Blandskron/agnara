@@ -2,7 +2,7 @@
 
 This is the semantic matrix for direct runtime, HTTP/OpenAPI and MCP.
 It records equivalence, not byte identity. Executable evidence lives in
-`tests/conformance/test_a4_schema_policy_failure_consistency.py`; adapter suites
+`tests/conformance/test_schema_policy_failure_consistency.py`; adapter suites
 retain their protocol-specific cases.
 
 ## Schemas
@@ -25,6 +25,12 @@ Materialization occurs after policy and before validation. Direct calls omit
 the helper: a dictionary is not silently accepted where Python declared a
 dataclass. Custom schema implementations receive decoded JSON unchanged and
 retain their own validation/coercion behavior.
+
+JSON integers supplied to a `float` contract widen only within Python's float
+range. An out-of-range integer is `invalid_input`, with the ordinary nested
+field/index path, before dependency construction or handler execution. A union
+with an `int` member can still accept that integer through its matching branch.
+Direct Python invocation retains exact-type validation.
 
 Binary values are not a general JSON shape. HTTP upload/scalar bindings have
 the bounded behavior documented in `HTTP_COMPOSITION.md`. MCP rejects a tool

@@ -5,6 +5,12 @@ full history are available through Git tags and GitHub Releases.
 
 ## [Unreleased]
 
+### Fixed
+
+- Classify out-of-range JSON integer-to-float inputs as validation failures
+  instead of internal errors; preserve nested field paths and integer union
+  alternatives across HTTP and MCP.
+
 ### Added
 
 - Runnable nested capability invocation guide demonstrating independent parent

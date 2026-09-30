@@ -406,6 +406,26 @@ class TestSerializeJson:
 
 
 class TestMaterializeNumbers:
+    @pytest.mark.parametrize("value", [10**400, -(10**400)], ids=["positive", "negative"])
+    def test_out_of_range_integer_is_a_validation_error(self, value: int) -> None:
+        schema = StandardSchemaAdapter().compile(float)
+        with pytest.raises(ValidationError, match="outside the float range"):
+            materialize_json(schema, value)
+
+    @pytest.mark.parametrize("value", [10**400, -(10**400)], ids=["positive", "negative"])
+    def test_out_of_range_integer_preserves_nested_error_path(self, value: int) -> None:
+        schema = StandardSchemaAdapter().compile(list[dict[str, float]])
+        with pytest.raises(ValidationError) as caught:
+            materialize_json(schema, [{"factor": value}])
+        assert caught.value.path == (0, "factor")
+
+    @pytest.mark.parametrize("value", [10**400, -(10**400)], ids=["positive", "negative"])
+    def test_union_can_fall_back_to_an_integer_member(self, value: int) -> None:
+        schema = StandardSchemaAdapter().compile(float | int)
+        result = schema.validate(materialize_json(schema, value))
+        assert type(result) is int
+        assert result == value
+
     def test_a_json_integer_materializes_as_the_declared_float(self) -> None:
         schema = StandardSchemaAdapter().compile(float)
         assert materialize_json(schema, 3) == 3.0
