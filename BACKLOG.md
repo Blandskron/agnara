@@ -6,9 +6,12 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#522](https://github.com/Blandskron/agnara/issues/522): publish a
-  runnable direct-idempotency guide through the governed public API. Acceptance:
-  documented authority boundaries, executable example and quality gates pass.
+- [~] [#526](https://github.com/Blandskron/agnara/issues/526): accept immutable
+  Docker action updates in the edge publication guard. Acceptance: updated
+  full commit pins pass, invalid references fail and quality gates pass.
+
+The runnable direct-idempotency guide from #522 was merged by PR #523 and its
+Issue closed after the required CI passed.
 
 The published 1.0.3 record from #519 was merged by PR #521; the Issue closed
 after required CI passed.
