@@ -14,6 +14,8 @@ full history are available through Git tags and GitHub Releases.
 
 ### Changed
 
+- Update CodeQL, uv setup and Docker build actions to verified release pins;
+  route routine Dependabot action updates through `develop`.
 - Edge publication checks accept immutable Docker action updates while retaining
   the required action identity, full commit pin and publication safeguards.
 - Release readiness reports the verified published 1.0.3 baseline and refuses
