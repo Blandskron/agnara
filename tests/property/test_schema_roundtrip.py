@@ -21,7 +21,7 @@ import string
 from dataclasses import dataclass
 from enum import Enum
 from math import isfinite
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 from hypothesis import example, given
@@ -65,6 +65,34 @@ def test_enum_materialization_agrees_with_published_json_schema(
     else:
         assert expected
         assert type(result) is enum_type
+
+
+@pytest.mark.parametrize(
+    "annotation",
+    [Literal[1], Literal[0, 1, 2], Literal[True, False], Literal[1, True, "one", None]],
+)
+@given(
+    value=st.one_of(
+        st.booleans(),
+        st.integers(-3, 3),
+        st.floats(-3, 3, allow_nan=False),
+        st.sampled_from(["one", "1", None]),
+    )
+)
+@example(value=True)
+@example(value=1.0)
+@example(value=2.0)
+def test_literal_materialization_agrees_with_published_json_schema(
+    annotation: Any, value: object
+) -> None:
+    schema = ADAPTER.compile(annotation)
+    expected = Draft202012Validator(schema.json_schema()).is_valid(value)
+    try:
+        schema.validate(materialize_json(schema, value))
+    except ValidationError:
+        assert not expected
+    else:
+        assert expected
 
 
 @given(value=st.integers(min_value=-(10**400), max_value=10**400))

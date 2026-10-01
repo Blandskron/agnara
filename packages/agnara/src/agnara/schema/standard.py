@@ -568,6 +568,17 @@ def materialize_json(schema: TypeSchema, value: object) -> Any:
                 raise error.at(index) from error
         return tuple(materialized_tuple)
 
+    if isinstance(schema, LiteralSchema) and type(value) in (int, float):
+        # Preserve already-valid Python representations before considering
+        # JSON's numeric equivalence. Use a declared value, never a lossy cast.
+        for declared in schema.values:
+            if type(value) is type(declared) and value == declared:
+                return value
+        for declared in schema.values:
+            if type(declared) in (int, float) and value == declared:
+                return declared
+        return value
+
     if isinstance(schema, EnumSchema):
         # JSON booleans are not numbers, even though Python equates True and
         # 1. Match declared values before calling Enum, so _missing_ cannot
