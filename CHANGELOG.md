@@ -7,6 +7,8 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Accept equivalent JSON numbers for numeric Literal inputs across HTTP and
+  MCP while preserving exact direct Python validation and boolean separation.
 - Align JSON enum inputs with their published values: separate booleans from
   numbers and prevent `_missing_` hooks from accepting undeclared wire values.
 - Classify out-of-range JSON integer-to-float inputs as validation failures

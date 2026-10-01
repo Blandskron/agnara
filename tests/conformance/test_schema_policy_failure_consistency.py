@@ -77,6 +77,50 @@ def test_boolean_json_cannot_select_a_numeric_enum_on_http_or_mcp(value: bool) -
     assert calls == []
 
 
+@pytest.mark.parametrize(
+    ("value", "expected"), [(1.0, 1), (2.0, 2), (True, None), (3.0, None), ("1", None)]
+)
+def test_numeric_literal_inputs_agree_on_http_and_mcp(value: object, expected: int | None) -> None:
+    app = Agnara("literal_contract")
+    calls: list[int] = []
+
+    @app.capability
+    def accept(choice: Literal[1, 2]) -> dict[str, int]:
+        assert type(choice) is int
+        calls.append(choice)
+        return {"choice": choice}
+
+    plan = ExecutionPlan.compile(app.capabilities["literal_contract.accept"], DIRegistry())
+    direct = asyncio.run(invoke_result(plan, _context(plan, {"choice": value})))
+    assert isinstance(direct, Failure)
+    assert direct.code is FailureCode.INVALID_INPUT
+    assert calls == []
+
+    http = Http()
+    http.post("/choice", accept, Binding("choice", BindingSource.BODY))
+    status, payload = _request(http.compile(app.compile()), value, path="/choice")
+    mcp = Mcp(app)
+    mcp.tool(accept)
+    result = _mcp_call(
+        McpToolInvoker(mcp.compile(), [plan], DIContainer(DIRegistry())),
+        "literal_contract.accept",
+        {"choice": value},
+    )
+    if expected is None:
+        assert status == 400
+        assert payload["code"] == "invalid_input"
+        assert payload["details"]["path"] == ["choice"]
+        assert result.is_error is True
+        assert _mcp_payload(result)["code"] == "invalid_input"
+        assert calls == []
+    else:
+        assert status == 200
+        assert payload == {"choice": expected}
+        assert result.is_error is False
+        assert result.structured_content == {"result": {"choice": expected}}
+        assert calls == [expected, expected]
+
+
 @dataclass(frozen=True)
 class Profile:
     tier: Tier

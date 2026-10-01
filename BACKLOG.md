@@ -6,10 +6,13 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#531](https://github.com/Blandskron/agnara/issues/531): align JSON enum
-  materialization with declared values. Acceptance: boolean/number distinction,
-  unknown-value refusal, numeric equivalence, HTTP/MCP conformance and quality
-  gates pass.
+- [~] [#533](https://github.com/Blandskron/agnara/issues/533): materialize
+  equivalent JSON numeric Literal values. Acceptance: exact Python validation
+  retained, boolean/number separation, nested paths, HTTP/MCP conformance and
+  quality gates pass.
+
+The enum input contract fix from #531 was merged by PR #532 and its Issue
+closed after the required CI passed.
 
 The float input range fix from #529 was merged by PR #530 and its Issue closed
 after the required CI passed.
