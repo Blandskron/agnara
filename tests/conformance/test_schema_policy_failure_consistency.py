@@ -41,6 +41,42 @@ class Tier(Enum):
     PRO = "pro"
 
 
+class _NumberChoice(Enum):
+    ZERO = 0
+    ONE = 1
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_boolean_json_cannot_select_a_numeric_enum_on_http_or_mcp(value: bool) -> None:
+    app = Agnara("enum_contract")
+    calls: list[_NumberChoice] = []
+
+    @app.capability
+    def accept(choice: _NumberChoice) -> str:
+        calls.append(choice)
+        return choice.name
+
+    definition = app.capabilities["enum_contract.accept"]
+    plan = ExecutionPlan.compile(definition, DIRegistry())
+    http = Http()
+    http.post("/choice", accept, Binding("choice", BindingSource.BODY))
+    status, failure = _request(http.compile(app.compile()), value, path="/choice")
+    assert status == 400
+    assert failure["code"] == "invalid_input"
+    assert failure["details"]["path"] == ["choice"]
+
+    mcp = Mcp(app)
+    mcp.tool(accept)
+    result = _mcp_call(
+        McpToolInvoker(mcp.compile(), [plan], DIContainer(DIRegistry())),
+        "enum_contract.accept",
+        {"choice": value},
+    )
+    assert result.is_error is True
+    assert _mcp_payload(result)["code"] == "invalid_input"
+    assert calls == []
+
+
 @dataclass(frozen=True)
 class Profile:
     tier: Tier

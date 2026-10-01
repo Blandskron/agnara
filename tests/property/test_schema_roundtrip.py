@@ -19,18 +19,52 @@ from __future__ import annotations
 
 import string
 from dataclasses import dataclass
+from enum import Enum
 from math import isfinite
 from typing import Any
 
 import pytest
 from hypothesis import example, given
 from hypothesis import strategies as st
+from jsonschema import Draft202012Validator
 
 from agnara.core.di import DIRegistry, provider
 from agnara.errors import SchemaError, ValidationError
 from agnara.schema import StandardSchemaAdapter, materialize_json, serialize_json
 
 ADAPTER = StandardSchemaAdapter()
+
+
+class _NumericChoice(Enum):
+    ZERO = 0
+    ONE = 1
+    HALF = 0.5
+
+
+class _BooleanChoice(Enum):
+    NO = False
+    YES = True
+
+
+@pytest.mark.parametrize("enum_type", [_NumericChoice, _BooleanChoice])
+@given(
+    value=st.one_of(st.booleans(), st.integers(-3, 3), st.floats(-3, 3, allow_nan=False), st.none())
+)
+@example(value=True)
+@example(value=1)
+@example(value=1.0)
+def test_enum_materialization_agrees_with_published_json_schema(
+    enum_type: type[Enum], value: object
+) -> None:
+    schema = ADAPTER.compile(enum_type)
+    expected = Draft202012Validator(schema.json_schema()).is_valid(value)
+    try:
+        result = schema.validate(materialize_json(schema, value))
+    except ValidationError:
+        assert not expected
+    else:
+        assert expected
+        assert type(result) is enum_type
 
 
 @given(value=st.integers(min_value=-(10**400), max_value=10**400))
