@@ -405,6 +405,62 @@ class TestSerializeJson:
             serialize_json([deep])
 
 
+class TestMaterializeEnums:
+    @pytest.mark.parametrize("value", [True, False])
+    def test_booleans_do_not_materialize_as_numeric_members(self, value: bool) -> None:
+        class Number(Enum):
+            ZERO = 0
+            ONE = 1
+
+        schema = StandardSchemaAdapter().compile(Number)
+        with pytest.raises(ValidationError):
+            schema.validate(materialize_json(schema, value))
+
+    @pytest.mark.parametrize("value", [0, 1, 0.0, 1.0])
+    def test_numbers_do_not_materialize_as_boolean_members(self, value: int | float) -> None:
+        class Flag(Enum):
+            NO = False
+            YES = True
+
+        schema = StandardSchemaAdapter().compile(Flag)
+        with pytest.raises(ValidationError):
+            schema.validate(materialize_json(schema, value))
+
+    @pytest.mark.parametrize("value", [1, 1.0])
+    def test_equivalent_json_numbers_still_select_the_declared_member(
+        self, value: int | float
+    ) -> None:
+        schema = StandardSchemaAdapter().compile(Priority)
+        assert schema.validate(materialize_json(schema, value)) is Priority.LOW
+        assert materialize_json(schema, Priority.LOW) is Priority.LOW
+
+    def test_unknown_values_do_not_call_missing_hooks(self) -> None:
+        calls: list[object] = []
+
+        class Status(Enum):
+            ACTIVE = "active"
+
+            @classmethod
+            def _missing_(cls, value: object) -> Status:
+                calls.append(value)
+                return cls.ACTIVE
+
+        schema = StandardSchemaAdapter().compile(Status)
+        with pytest.raises(ValidationError):
+            schema.validate(materialize_json(schema, "unknown"))
+        assert calls == []
+
+    def test_invalid_enum_branch_falls_back_to_boolean_union_member(self) -> None:
+        schema = StandardSchemaAdapter().compile(Priority | bool)
+        assert schema.validate(materialize_json(schema, True)) is True
+
+    def test_invalid_nested_enum_retains_its_path(self) -> None:
+        schema = StandardSchemaAdapter().compile(list[dict[str, Priority]])
+        with pytest.raises(ValidationError) as caught:
+            schema.validate(materialize_json(schema, [{"priority": True}]))
+        assert caught.value.path == (0, "priority")
+
+
 class TestMaterializeNumbers:
     @pytest.mark.parametrize("value", [10**400, -(10**400)], ids=["positive", "negative"])
     def test_out_of_range_integer_is_a_validation_error(self, value: int) -> None:

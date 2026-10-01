@@ -569,10 +569,15 @@ def materialize_json(schema: TypeSchema, value: object) -> Any:
         return tuple(materialized_tuple)
 
     if isinstance(schema, EnumSchema):
-        try:
-            return schema.enum_type(value)
-        except TypeError, ValueError:
-            return value
+        # JSON booleans are not numbers, even though Python equates True and
+        # 1. Match declared values before calling Enum, so _missing_ cannot
+        # expand the published wire contract. JSON numbers share equality.
+        for declared in schema.values:
+            same_type = type(value) is type(declared)
+            both_numbers = type(value) in (int, float) and type(declared) in (int, float)
+            if (same_type or both_numbers) and value == declared:
+                return schema.enum_type(declared)
+        return value
 
     if isinstance(schema, PrimitiveSchema) and schema.python_type is float and type(value) is int:
         # JSON has one number type. A wire value ``3`` satisfies the published

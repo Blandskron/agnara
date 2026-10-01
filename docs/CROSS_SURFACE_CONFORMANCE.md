@@ -32,6 +32,12 @@ field/index path, before dependency construction or handler execution. A union
 with an `int` member can still accept that integer through its matching branch.
 Direct Python invocation retains exact-type validation.
 
+Enum materialization matches only the declared JSON values. Booleans cannot
+select numeric members, and numbers cannot select boolean members. Equivalent
+JSON numbers such as `1` and `1.0` select the same declared member. Unknown wire
+values are not passed to `Enum._missing_`; applications can still use that hook
+when constructing enum instances explicitly before direct invocation.
+
 Binary values are not a general JSON shape. HTTP upload/scalar bindings have
 the bounded behavior documented in `HTTP_COMPOSITION.md`. MCP rejects a tool
 whose standard schema graph contains `bytes` at startup instead of publishing

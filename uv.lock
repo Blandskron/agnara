@@ -25,6 +25,7 @@ dev = [
     { name = "django", specifier = "==6.1.1" },
     { name = "fastapi", specifier = "==0.141.1" },
     { name = "hypothesis", specifier = ">=6.131,<7" },
+    { name = "jsonschema", specifier = ">=4.26,<5" },
     { name = "litestar", specifier = "==2.24.0" },
     { name = "msgspec", specifier = ">=0.21,<0.22" },
     { name = "opentelemetry-sdk", specifier = "==1.44.0" },

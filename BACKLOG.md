@@ -6,10 +6,13 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#529](https://github.com/Blandskron/agnara/issues/529): classify
-  out-of-range JSON integer-to-float inputs as `invalid_input`. Acceptance:
-  nested paths and union fallback preserved, HTTP/MCP agree, and quality gates
-  pass.
+- [~] [#531](https://github.com/Blandskron/agnara/issues/531): align JSON enum
+  materialization with declared values. Acceptance: boolean/number distinction,
+  unknown-value refusal, numeric equivalence, HTTP/MCP conformance and quality
+  gates pass.
+
+The float input range fix from #529 was merged by PR #530 and its Issue closed
+after the required CI passed.
 
 The action updates from #528 were merged by PR #525 and its Issue closed after
 the required CI passed. Dependabot's new target configuration takes effect
