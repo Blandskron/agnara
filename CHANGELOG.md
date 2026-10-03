@@ -17,6 +17,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Runnable MCP tool guide using the official in-process client for discovery,
+  invocation, scope denial, redacted errors and owned dependency cleanup.
+
 - Runnable confirmation guide showing verifier-backed evidence, exact binding,
   expiry, single-use consumption and authorization before effects.
 

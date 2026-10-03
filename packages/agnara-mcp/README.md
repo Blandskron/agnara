@@ -40,7 +40,7 @@ adapter implements every MCP feature. Tool projection,
 schema mapping, discovery, the request-scoped authorization bridge, canonical
 result and interaction-required projection, and `tools/call` dispatch are
 implemented. MRTR resumption and Tasks behavior remain separate backlog work,
-and invocation are implemented. Bounded
+with no resumable invocation path. Bounded
 official SDK compatibility evidence is recorded in
 [`docs/MCP_CONFORMANCE.md`](../../docs/MCP_CONFORMANCE.md); it covers the
 implemented surfaces and does not claim complete MCP conformance.
@@ -49,6 +49,9 @@ explicit compatibility tests for them, even though the SDK can serve older
 clients.
 
 ## Tool exposures
+
+The [runnable MCP tools guide](../../docs/MCP_TOOLS.md) connects the official
+in-process client and demonstrates invocation, error boundaries and cleanup.
 
 Declare tool exposure separately from capability semantics:
 
@@ -121,9 +124,10 @@ instead of acquiring a second set. `project_mcp_tools` and `build_mcp_server`
 both require a plan for every compiled exposure and raise
 `McpToolDefinitionError` naming the tool when one is missing.
 
-`outputSchema` is intentionally absent for now. Agnara will publish it only
-after the core runtime compiles and validates output annotations; declaring an
-unenforced response contract would make client validation unreliable.
+`outputSchema` is intentionally absent. The core already compiles and validates
+explicit `output=...` declarations (ADR 0086), but MCP output-schema publication
+has not been adopted. Runtime validation does not implicitly create that
+protocol contract.
 
 ## Discovery
 

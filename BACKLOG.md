@@ -6,10 +6,13 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#539](https://github.com/Blandskron/agnara/issues/539): add a runnable
-  verifier-backed confirmation guide. Acceptance: explicit actor/capability/input
-  binding, missing/invalid/expired/replayed evidence, scope-before-verification,
-  single-use concurrency, redaction, cleanup and required quality gates pass.
+- [~] [#541](https://github.com/Blandskron/agnara/issues/541): add a runnable
+  official-client MCP tools guide. Acceptance: public imports, pinned discovery,
+  invocation/defaults, rejected caller inputs and scope denial before effects,
+  protocol/tool error distinction, redaction, cleanup and required CI pass.
+
+The confirmation guide from #539 was merged by PR #540 and its Issue closed
+after the required CI passed.
 
 The HTTP SSE lifecycle guide from #537 was merged by PR #538 and its Issue
 closed after the required CI passed.
