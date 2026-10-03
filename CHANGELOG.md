@@ -17,6 +17,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Runnable introspection guide showing compiled exposure discovery, per-viewer
+  publication before serialization and independent invocation authorization.
+
 - Runnable MCP tool guide using the official in-process client for discovery,
   invocation, scope denial, redacted errors and owned dependency cleanup.
 

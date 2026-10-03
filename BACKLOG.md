@@ -6,10 +6,18 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#541](https://github.com/Blandskron/agnara/issues/541): add a runnable
-  official-client MCP tools guide. Acceptance: public imports, pinned discovery,
-  invocation/defaults, rejected caller inputs and scope denial before effects,
-  protocol/tool error distinction, redaction, cleanup and required CI pass.
+- [~] [#543](https://github.com/Blandskron/agnara/issues/543): add a runnable
+  filtered introspection guide. Acceptance: compiled exposure truth, per-viewer
+  model filtering before serialization, explicit field publication, independent
+  invocation authorization, zero discovery effects, cleanup and required CI pass.
+
+- [~] [#544](https://github.com/Blandskron/agnara/issues/544): correct the valid
+  routing-template property strategy to exclude Python keywords. Discovered
+  during #543 validation; the same PR includes this test-only gate repair and
+  retains the `/{return}` rejection regression. No runtime behavior changes.
+
+The official-client MCP tools guide from #541 was merged by PR #542 and its
+Issue closed after the required CI passed.
 
 The confirmation guide from #539 was merged by PR #540 and its Issue closed
 after the required CI passed.

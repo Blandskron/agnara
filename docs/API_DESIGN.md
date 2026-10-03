@@ -75,9 +75,9 @@ a governed type and the composition root should not become a god object
 The exposure model and both implemented adapter builders are public today.
 `Mcp.compile_surface()` produces an MCP `SurfaceCompilation`; `Http.compile()`
 composes the HTTP surface with a compiled capability registry and returns the
-ASGI application, while `Http.compile_surface()` exposes the shared
-cross-adapter compilation boundary. ADR 0071 records the HTTP decision and
-`docs/HTTP_COMPOSITION.md` is the supported application guide.
+ASGI application, whose `exposures` property supplies its `SurfaceCompilation`
+to the shared cross-adapter compilation boundary. ADR 0071 records the HTTP
+decision and `docs/HTTP_COMPOSITION.md` is the supported application guide.
 
 ## 6. A2A exposure
 
@@ -408,7 +408,7 @@ document = snapshot(
             exposures={"users.get_user": [ExposureDescriptor.of("http", "GET /users/{id}")]},
         )
     ]
-).json_data()
+)
 ```
 
 The explicit mapping remains a supported transitional API. ADR 0070 implements
@@ -435,6 +435,11 @@ the published field set decides what is said about each one, and it has no
 default. `identity_only`, `agent_safe` and `unrestricted` are named starting
 points. Hiding is discovery-only: a hidden capability stays registered and
 stays invocable by anyone the policy layer allows. See ADR 0046.
+
+Keep `document` as an `IntrospectionSnapshot` until filtering; call
+`json_data()` only on the resulting published model. The
+[runnable introspection guide](INTROSPECTION.md) uses compiled HTTP and MCP
+exposures and demonstrates separate views and invocation authorization.
 
 ## 18. OpenAPI projection
 
