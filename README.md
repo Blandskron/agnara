@@ -9,8 +9,9 @@ protocol the semantic source of truth.
 Agnara lets one application capability serve direct Python callers and explicit
 transport exposures without putting protocol objects in the business model.
 The execution kernel uses only the Python standard library and requires Python
-3.14 or newer. The seven official distributions share one version; this tree
-prepares the 1.0.3 documentation and packaging baseline.
+3.14 or newer. The seven official distributions share one version. The
+published baseline is 1.0.3; subsequent development changes are recorded under
+`CHANGELOG.md` `[Unreleased]`.
 
 ```bash
 pip install "agnara==1.0.3"

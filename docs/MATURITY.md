@@ -43,9 +43,11 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 | `agnara-a2a` | `PLANNED` | yes | 0 | Published reserved namespace; no A2A runtime. |
 | `agnara-events` | `PLANNED` | yes | 0 | Published reserved namespace; no event runtime. |
 
-All seven distributions have a published synchronized set. The 1.0.3 source
-tree prepares their next synchronized metadata; publication of that target
-requires the protected release workflow. Published reserved namespaces do not
+All seven distributions have a published synchronized 1.0.3 set. This table
+describes the current repository, including subsequent changes under
+`CHANGELOG.md` `[Unreleased]`; it is not an inventory of a historical wheel.
+Historical release reconstruction uses Git tags or GitHub Releases. No next
+publication target has been selected. Published reserved namespaces do not
 imply an implemented A2A or event adapter.
 
 Every distribution's public surface is classified in

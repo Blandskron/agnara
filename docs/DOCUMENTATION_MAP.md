@@ -27,6 +27,7 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 
 - [Compatibility policy](PUBLIC_API.md)
 - [Generated API reference](API_REFERENCE.md)
+- [Current design contracts and labeled future sketches](API_DESIGN.md)
 - [Exact manifest](public-api.json)
 
 ## SECURITY

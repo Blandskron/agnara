@@ -85,7 +85,7 @@ discovery            IMPLEMENTED
 invocation           IMPLEMENTED
 authorization        IMPLEMENTED
 execution            IMPLEMENTED
-streaming / result   PARTIAL       complete results and kernel streams; no transport stream projection
+streaming / result   IMPLEMENTED   complete results, kernel streams and HTTP SSE; other projections deferred
 telemetry            IMPLEMENTED
 audit                MISSING
 cleanup              IMPLEMENTED   (DI teardown, invocation scope)
@@ -114,9 +114,10 @@ tests; the ones that do not are named in `docs/INITIATIVES.md`.
 
 ### Extension points
 
-Phases an application may extend: schema adapters, dependency providers,
-policies, telemetry hooks, exposures, documentation providers, visibility
-rules.
+Current application extension boundaries include schema adapters, dependency
+providers, policies, telemetry hooks, exposures and visibility rules.
+Documentation composition selects the built-in providers; the third-party
+provider extension protocol remains internal for 1.x.
 
 Phases the runtime owns and must not open: compilation order, freeze,
 the failure vocabulary, cancellation semantics, and the identity of a
@@ -202,7 +203,7 @@ middleware or server/proxy policy.
 
 **MCP** — tools are projected; resources and prompts need a decision about
 whether a capability maps to them coherently at all, rather than an
-implementation. Progress and sessions depend on G2.
+implementation. Progress and sessions need separate reviewed contracts.
 
 **A2A** — should be a projection over the same task and streaming primitives
 as everything else. If A2A needs its own execution engine, the capability
