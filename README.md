@@ -126,6 +126,8 @@ through the official client, with scope denial and resource cleanup.
 The [HTTP SSE guide](docs/HTTP_SSE.md) demonstrates typed events, failure
 boundaries and resource cleanup with a server-free ASGI example.
 
+The [introspection guide](docs/INTROSPECTION.md) demonstrates per-viewer
+discovery publication and independent invocation authorization.
 The [CLI and scaffolding guide](docs/CLI_SPEC.md) covers generated projects.
 The [container guide](docs/CONTAINERS.md) covers the reference runtime and
 digest pinning. [Documentation map](docs/DOCUMENTATION_MAP.md) identifies the

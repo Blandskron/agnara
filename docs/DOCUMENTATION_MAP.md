@@ -17,6 +17,7 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 - [HTTP composition guide](HTTP_COMPOSITION.md)
 - [Runnable HTTP SSE lifecycle guide](HTTP_SSE.md)
 - [Runnable official-client MCP tools guide](MCP_TOOLS.md)
+- [Runnable filtered introspection guide](INTROSPECTION.md)
 - [Container reference runtime](CONTAINERS.md)
 
 ## ARCHITECTURE
