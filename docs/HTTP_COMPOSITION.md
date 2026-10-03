@@ -278,6 +278,9 @@ alone accepts either encoding. The OpenAPI document advertises exactly that.
 
 ## Streaming with server-sent events
 
+The [runnable SSE guide](HTTP_SSE.md) demonstrates completion, pre-output
+failures, late failures, scope denial and disconnect cleanup without a server.
+
 A capability declared `streaming=True` yields units instead of returning one
 value, so it has no complete JSON representation and an ordinary `get` refuses
 it. `Http.sse` is the one supported projection (ADR 0085):

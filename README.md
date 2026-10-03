@@ -119,6 +119,8 @@ The [nested invocation guide](docs/NESTED_INVOCATION.md) provides a runnable
 example of calling another capability while enforcing each capability's scopes.
 The [direct idempotency guide](docs/DIRECT_IDEMPOTENCY.md) demonstrates explicit
 success reuse, conflicts and per-principal authorization.
+The [HTTP SSE guide](docs/HTTP_SSE.md) demonstrates typed events, failure
+boundaries and resource cleanup with a server-free ASGI example.
 
 The [CLI and scaffolding guide](docs/CLI_SPEC.md) covers generated projects.
 The [container guide](docs/CONTAINERS.md) covers the reference runtime and

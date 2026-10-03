@@ -17,6 +17,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Runnable HTTP SSE guide demonstrating terminal outcomes, anonymous scope
+  denial, redacted failures and owned producer/dependency cleanup.
+
 - Runnable nested capability invocation guide demonstrating independent parent
   and child authorization through the governed public API.
 - Runnable direct idempotency guide covering success reuse, request conflicts
