@@ -14,6 +14,7 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 - [Direct idempotency guide](DIRECT_IDEMPOTENCY.md)
 - [Nested invocation guide](NESTED_INVOCATION.md)
 - [HTTP composition guide](HTTP_COMPOSITION.md)
+- [Runnable HTTP SSE lifecycle guide](HTTP_SSE.md)
 - [Container reference runtime](CONTAINERS.md)
 
 ## ARCHITECTURE
