@@ -16,6 +16,7 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 - [Nested invocation guide](NESTED_INVOCATION.md)
 - [HTTP composition guide](HTTP_COMPOSITION.md)
 - [Runnable HTTP SSE lifecycle guide](HTTP_SSE.md)
+- [Runnable official-client MCP tools guide](MCP_TOOLS.md)
 - [Container reference runtime](CONTAINERS.md)
 
 ## ARCHITECTURE

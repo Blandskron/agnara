@@ -18,6 +18,10 @@ uv sync --locked
 uv run pytest tests/mcp tests/architecture
 ```
 
+The [runnable MCP tools guide](MCP_TOOLS.md) exercises the same official-client
+boundary as an application example, with additional regressions in
+`tests/docs/test_mcp_tools_example.py`.
+
 The normal CI pytest matrix collects these tests on Windows, Linux and macOS.
 The suite requires neither network services nor credentials at execution time.
 Dependency installation still requires the locked packages to be available.
@@ -42,7 +46,7 @@ server dispatch instead of being rejected by a typed client constructor.
 | Surface | Executable evidence | Limit |
 | --- | --- | --- |
 | Discovery | `test_sdk_conformance.py`, `test_discovery.py`: pinned revision, tools-only advertisement, server identity, private zero-TTL results | No legacy compatibility claim |
-| Tool definitions | `test_schema_mapping.py`, `test_tool_projection.py`, `test_sdk_conformance.py`, cross-surface conformance: compiled inputs, closed schemas, stable names, invocable dataclass/enum/tuple JSON shapes, and startup rejection of unrepresentable `bytes` graphs | Output validation is absent; no binary input extension |
+| Tool definitions | `test_schema_mapping.py`, `test_tool_projection.py`, `test_sdk_conformance.py`, cross-surface conformance: compiled inputs, closed schemas, stable names, invocable dataclass/enum/tuple JSON shapes, and startup rejection of unrepresentable `bytes` graphs | No MCP outputSchema publication; explicit core output contracts are validated; no binary input extension |
 | Pagination errors | `test_sdk_conformance.py`: empty/unissued cursors and malformed numeric/list cursors return `INVALID_PARAMS`; discovery still works afterward | Complete startup snapshot, no pagination implementation |
 | Authorization isolation | `test_sdk_conformance.py`: concurrent anonymous, unscoped and scoped tasks share one client; private lists change with each request identity and remain detached | SDK verified identity context is supplied by the test; OAuth verification is not tested |
 | Authorization failures | `test_authorization.py`: immutable credential-free mapper input, fail-closed mapper errors and scope filtering | Discovery visibility does not authorize invocation |
@@ -63,7 +67,7 @@ test. Each task resets its authentication ContextVar in `finally`.
 ## Explicit exclusions
 
 Network transport conformance, OAuth token verification, complete protocol
-certification, legacy revisions, output contracts, MRTR resumption,
+certification, legacy revisions, MCP output-schema publication, MRTR resumption,
 confirmation verification over MCP, Tasks, notifications, progress, streaming
 and performance remain outside this suite's support claim. Tool invocation is
 now implemented and tested in process; it is not benchmarked (E7.9) and
