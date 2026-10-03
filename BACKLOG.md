@@ -6,10 +6,13 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#537](https://github.com/Blandskron/agnara/issues/537): add a runnable
-  HTTP SSE lifecycle guide. Acceptance: governed public imports, typed events
-  and terminal counts, denial/invalid-input before effects, redacted failures,
-  deterministic disconnect cleanup and required quality gates pass.
+- [~] [#539](https://github.com/Blandskron/agnara/issues/539): add a runnable
+  verifier-backed confirmation guide. Acceptance: explicit actor/capability/input
+  binding, missing/invalid/expired/replayed evidence, scope-before-verification,
+  single-use concurrency, redaction, cleanup and required quality gates pass.
+
+The HTTP SSE lifecycle guide from #537 was merged by PR #538 and its Issue
+closed after the required CI passed.
 
 The current-contract documentation from #507 was merged by PR #536 and its
 Issue closed after the required CI passed.

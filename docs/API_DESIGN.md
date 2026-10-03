@@ -175,7 +175,9 @@ async def approve_transfer(command: Transfer) -> Receipt:
 application-provided `ConfirmationVerifier`. Evidence is passed explicitly as
 `ConfirmationEvidence` on the invocation context; arbitrary invocation
 metadata is never treated as approval. Missing evidence produces an immutable
-interaction request, while invalid evidence is denied.
+interaction request, while invalid evidence is denied. The
+[runnable confirmation guide](CONFIRMATION.md) demonstrates exact evidence
+binding, expiry, single-use consumption and independent scope enforcement.
 
 Conditional interaction is expressed by an explicit pre-handler `Policy`
 that returns `PolicyInteractionRequired`. Dynamic

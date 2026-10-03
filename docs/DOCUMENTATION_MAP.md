@@ -12,6 +12,7 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 
 - [Core quick start](../packages/agnara/README.md)
 - [Direct idempotency guide](DIRECT_IDEMPOTENCY.md)
+- [Verifier-backed confirmation guide](CONFIRMATION.md)
 - [Nested invocation guide](NESTED_INVOCATION.md)
 - [HTTP composition guide](HTTP_COMPOSITION.md)
 - [Runnable HTTP SSE lifecycle guide](HTTP_SSE.md)
