@@ -17,6 +17,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Runnable confirmation guide showing verifier-backed evidence, exact binding,
+  expiry, single-use consumption and authorization before effects.
+
 - Runnable HTTP SSE guide demonstrating terminal outcomes, anonymous scope
   denial, redacted failures and owned producer/dependency cleanup.
 
