@@ -1,8 +1,12 @@
-# Golden API Design Examples
+# API Design: Current Contracts and Future Sketches
 
-These examples define desired developer experience before implementation.
+The current 1.x API is classified in `docs/public-api.json`. The
+[API reference](API_REFERENCE.md) and runnable guides describe supported
+imports and calls. This document also retains explicitly labeled future
+sketches to guide design; those sketches are not application syntax.
 
 The implementation must not be allowed to dictate the public API accidentally.
+New syntax needs a reviewed decision before joining the governed contract.
 
 ## 1. Smallest application
 
@@ -77,6 +81,8 @@ cross-adapter compilation boundary. ADR 0071 records the HTTP decision and
 
 ## 6. A2A exposure
 
+**Future sketch.** The published A2A namespace has no runtime API.
+
 ```python
 a2a.skill(get_user)
 ```
@@ -87,6 +93,8 @@ its protocol semantics.
 
 ## 7. Same capability, multiple surfaces
 
+HTTP and MCP exposures are implemented. The A2A line below is a future sketch.
+
 ```python
 http.get("/users/{user_id}", get_user)
 mcp.tool(get_user)
@@ -94,6 +102,10 @@ a2a.skill(get_user)
 ```
 
 ## 8. Dependency injection
+
+**Future sketch.** `Inject[T]` is not a public type. Current handlers annotate
+the dependency type directly, and the application explicitly binds that type
+in a `DIRegistry`; see the [core quick start](../packages/agnara/README.md).
 
 ```python
 @app.capability
@@ -105,6 +117,10 @@ async def get_user(
 ```
 
 ## 9. Invocation-scoped dependency
+
+**Future sketch.** `Agnara` has no `provider` decorator. Current providers use
+`agnara.di.provider` with `Scope.INVOCATION` and an explicit `DIRegistry` binding.
+Only `SINGLETON` and `INVOCATION` scopes are implemented.
 
 ```python
 @app.provider(scope="invocation")
@@ -177,13 +193,16 @@ declarations remain valid.
 
 ## 14. Deadline-aware handler
 
+**Future sketch.** `timeout` is not a capability-decorator argument. Current
+deadlines are supplied explicitly on `Invocation` and enforced by the runtime.
+
 ```python
 @app.capability(timeout=5.0)
 async def lookup(...) -> Result:
     ...
 ```
 
-Runtime cancellation must propagate.
+Runtime cancellation propagates without translation to a canonical failure.
 
 ## 15. Streaming
 
@@ -223,11 +242,16 @@ no longer honest, and a later failure raises `StreamInterrupted` instead,
 carrying a redacted canonical `Failure` and the number of units already
 emitted. Cancellation is neither: it propagates untouched.
 
-The kernel contract is ADR 0084. Every transport projection of it -- SSE,
-WebSockets, MCP progress, A2A task events -- is still open in RFC 0009, so no
-adapter exposes streamed capabilities yet.
+The kernel contract is ADR 0084. HTTP SSE is implemented through `Http.sse`
+(ADRs 0085 and 0086); see the [HTTP guide](HTTP_COMPOSITION.md). WebSockets,
+MCP progress and A2A task events still require separate decisions and evidence.
 
 ## 16. Direct invocation
+
+**Future sketch.** `Agnara` owns declaration and compilation and has no
+`invoke` method. The supported invocation boundary is the explicitly compiled
+`ExecutionPlan` with `invoke_result(plan, context)`, shown below. Applications
+inspect its canonical outcome; see the [core quick start](../packages/agnara/README.md).
 
 ```python
 result = await app.invoke(
@@ -237,9 +261,9 @@ result = await app.invoke(
 )
 ```
 
-Direct invocation keeps ordinary Python semantics: it returns the handler
-value and raises exceptions. Transport adapters use the canonical boundary so
-all protocols observe the same success/failure meaning:
+The lower-level plan invocation preserves Python values and exceptions.
+`invoke_result` projects runtime outcomes into canonical success/failure
+meaning, for direct consumers as well as transport adapters:
 
 ```python
 from agnara.execution import Failure, Success, invoke_result
@@ -353,6 +377,9 @@ attempts are protocol errors; everything else is a tool result. See ADR 0044.
 
 ## 17. Capability introspection
 
+The registry lookup is implemented. `definition.exposures` below is a future
+sketch: current exposure availability belongs to the frozen exposure registry.
+
 ```python
 definition = app.capabilities["users.get_user"]
 print(definition.effects)
@@ -409,6 +436,10 @@ stays invocable by anyone the policy layer allows. See ADR 0046.
 
 ## 18. OpenAPI projection
 
+**Future sketch.** `Agnara.use` and `Http(openapi=True)` are not public syntax.
+Current applications use `Http.compile(..., openapi=OpenApiInfo(...))`, as in
+section 19A and the [HTTP guide](HTTP_COMPOSITION.md).
+
 ```python
 http = app.use(Http(openapi=True))
 ```
@@ -431,11 +462,14 @@ exposures. Capabilities without an HTTP exposure do not appear as invented
 OpenAPI operations.
 
 `Http(openapi=True)` remains a golden-design sketch. It is not stable syntax.
-The implementation must review typed schema/documentation configuration,
-route collision handling and independent enable/disable controls before
-freezing the API.
+Typed schema/documentation configuration, route collision checks and
+independent enable/disable controls are implemented by the governed composition
+API described in section 19A. The boolean convenience remains unimplemented.
 
 ## 19. Agent-readable metadata
+
+**Future sketch.** `Agnara.describe` is not implemented. Current tooling uses
+the snapshot and explicit visibility filtering shown in section 17.
 
 ```python
 manifest = app.describe(format="agnara")
@@ -492,6 +526,10 @@ snapshot. The third-party provider protocol remains internal for 1.0.
 
 ## 20. Testing without a server
 
+**Future sketch.** This repeats the proposed `app.invoke` convenience. Current
+application tests invoke a compiled plan with `invoke_result` and an explicit
+context; no first-party application test harness is shipped.
+
 ```python
 async def test_get_user(app, context):
     result = await app.invoke(
@@ -546,6 +584,10 @@ Both create the same runtime app type.
 
 ## 25. Add a transport later
 
+**Future sketch.** `app expose` is not an implemented command. Existing
+scaffolding selects adapter skeletons when creating an app; reserved adapter
+skeletons do not implement their protocols.
+
 ```bash
 agnara app expose payments a2a
 ```
@@ -554,6 +596,8 @@ No domain/application file should require modification merely to install the ada
 
 ## 26. Generate a capability
 
+**Future sketch.** `capability create` is not an implemented command.
+
 ```bash
 agnara capability create payments refund
 ```
@@ -561,10 +605,11 @@ agnara capability create payments refund
 ## 27. Inspect an app
 
 ```bash
-agnara inspect payments
+agnara inspect commerce.bootstrap:app --path src --dependencies dependencies
 ```
 
-Example conceptual output:
+The command loads the explicitly named application object. The output below
+is a conceptual sketch, not the exact CLI format or evidence of Tasks support:
 
 ```text
 App: payments
@@ -587,7 +632,7 @@ Dependencies
 ## 28. Machine-readable inspection
 
 ```bash
-agnara inspect payments --json
+agnara inspect commerce.bootstrap:app --path src --dependencies dependencies --json
 ```
 
 This is a first-class requirement for agents and automation.
@@ -599,12 +644,13 @@ the same filtered snapshot, not a separately discovered model.
 ## 29. Export generated OpenAPI
 
 ```bash
-agnara schema openapi
+agnara schema openapi commerce.bootstrap:document
 ```
 
-The command exports the same deterministic projection served by the HTTP
-schema endpoint and must support non-interactive file/stdout use. Exact output
-flags and exit codes remain pending CLI review.
+The command exports the serialized bytes or mapping supplied by the named
+application attribute, or by its zero-argument callable. The application explicitly defines the exported attribute and owns
+OpenAPI generation; the CLI does not infer routes or import the HTTP adapter.
+Its implemented options and exit codes are documented in [CLI_SPEC.md](CLI_SPEC.md).
 
 `agnara docs` is not yet accepted. Add it only if it provides framework-specific
 development value beyond `agnara dev`; it must not become a second source of

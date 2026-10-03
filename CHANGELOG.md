@@ -24,6 +24,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Changed
 
+- Distinguish current API contracts from future convenience sketches and align
+  architecture guidance with implemented HTTP SSE and provider boundaries.
+
 - Update CodeQL, uv setup and Docker build actions to verified release pins;
   route routine Dependabot action updates through `develop`.
 - Edge publication checks accept immutable Docker action updates while retaining

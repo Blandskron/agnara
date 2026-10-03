@@ -6,10 +6,13 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#533](https://github.com/Blandskron/agnara/issues/533): materialize
-  equivalent JSON numeric Literal values. Acceptance: exact Python validation
-  retained, boolean/number separation, nested paths, HTTP/MCP conformance and
-  quality gates pass.
+- [~] [#507](https://github.com/Blandskron/agnara/issues/507): finish separating
+  current 1.x contracts from future API sketches. Acceptance: supported syntax
+  checked against code, future conveniences labeled explicitly, SSE and provider
+  boundaries consistent, local links and required quality gates pass.
+
+The JSON numeric Literal fix from #533 was merged by PR #534 and its Issue
+closed after the required CI passed.
 
 The enum input contract fix from #531 was merged by PR #532 and its Issue
 closed after the required CI passed.
