@@ -1,5 +1,19 @@
 # Contributing
 
+## Community and accessibility
+
+Participation follows the [Code of Conduct](CODE_OF_CONDUCT.md). Conduct
+concerns can be reported privately to
+[contacto@blandskron.com](mailto:contacto@blandskron.com).
+
+Read the [Accessibility Statement](ACCESSIBILITY.md) for current evidence,
+limitations and reporting options. Documentation and UI contributions should
+use clear headings and descriptive links, provide text alternatives and keep
+interactive features usable with a keyboard. For UI changes, run the relevant
+browser checks in [QUALITY_GATES.md](QUALITY_GATES.md), describe any manual
+checks performed and identify untested assistive-technology combinations.
+Do not claim conformance beyond the recorded evidence.
+
 ## Before coding
 
 Read:

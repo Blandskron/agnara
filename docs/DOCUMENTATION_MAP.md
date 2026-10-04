@@ -70,6 +70,8 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 
 ## CONTRIBUTING
 
+- [Code of Conduct](../CODE_OF_CONDUCT.md)
+- [Accessibility Statement](../ACCESSIBILITY.md)
 - [Contributor guide](../CONTRIBUTING.md)
 - [Git workflow](../GIT_WORKFLOW.md)
 - [Agent instructions](../AGENTS.md)
