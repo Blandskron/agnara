@@ -6,11 +6,14 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#552](https://github.com/Blandskron/agnara/issues/552): add a runnable
-  schema input and output contracts guide. Acceptance: strict direct Python
-  values, explicit JSON conversion, nested validation paths, enum/default
-  handling, authorization before conversion, declared output redaction,
-  unconstrained return annotations, public imports and required CI pass.
+- [~] [#554](https://github.com/Blandskron/agnara/issues/554): align the Litestar
+  interoperability fixture with its host lifespan. Acceptance: runtime creation,
+  invocation and generator cleanup on one host loop, invocation isolation,
+  denial before acquisition, exceptional client-exit cleanup, retained native
+  and embedded behavior, architecture checks and required CI pass.
+
+The schema contracts guide from #552 was merged by PR #553; its Issue closed
+after required CI passed.
 
 The dependency lifecycle guide from #550 was merged by PR #551; its Issue
 closed after required CI passed.
