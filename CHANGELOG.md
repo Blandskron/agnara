@@ -17,6 +17,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Runnable schema contracts guide showing strict Python input, explicit JSON
+  conversion, nested validation and declared output enforcement.
+
 - Runnable dependency injection guide showing explicit bindings, singleton
   and invocation reuse, diamond resolution and owned resource teardown.
 

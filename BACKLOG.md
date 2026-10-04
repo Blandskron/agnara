@@ -6,11 +6,14 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#550](https://github.com/Blandskron/agnara/issues/550): add a runnable
-  dependency injection lifecycle guide. Acceptance: explicit bindings,
-  singleton reuse, invocation isolation and diamond reuse, reverse resource
-  teardown, denial/validation before acquisition, public imports,
-  outside-checkout execution and required CI pass.
+- [~] [#552](https://github.com/Blandskron/agnara/issues/552): add a runnable
+  schema input and output contracts guide. Acceptance: strict direct Python
+  values, explicit JSON conversion, nested validation paths, enum/default
+  handling, authorization before conversion, declared output redaction,
+  unconstrained return annotations, public imports and required CI pass.
+
+The dependency lifecycle guide from #550 was merged by PR #551; its Issue
+closed after required CI passed.
 
 The telemetry guide from #548 was merged by PR #549; its Issue closed after
 required CI passed.

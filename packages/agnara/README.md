@@ -96,6 +96,7 @@ transformation of the function.
   metadata;
 - a schema port with a standard-library adapter and compiled per-parameter
   input validation;
+  see the [runnable schema contracts guide](../../docs/SCHEMA_CONTRACTS.md);
 - dependency injection with compile-time graph validation and scoped
   resolution;
   see the [runnable dependency lifecycle guide](../../docs/DEPENDENCIES.md);
