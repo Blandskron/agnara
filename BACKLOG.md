@@ -6,15 +6,14 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#543](https://github.com/Blandskron/agnara/issues/543): add a runnable
-  filtered introspection guide. Acceptance: compiled exposure truth, per-viewer
-  model filtering before serialization, explicit field publication, independent
-  invocation authorization, zero discovery effects, cleanup and required CI pass.
+- [~] [#546](https://github.com/Blandskron/agnara/issues/546): add a runnable
+  direct invocation deadline and cancellation guide. Acceptance: absolute
+  monotonic deadlines, canonical timeout, propagated caller cancellation,
+  scope denial before effects, owned tasks and resource cleanup, public imports,
+  outside-checkout execution and required CI pass.
 
-- [~] [#544](https://github.com/Blandskron/agnara/issues/544): correct the valid
-  routing-template property strategy to exclude Python keywords. Discovered
-  during #543 validation; the same PR includes this test-only gate repair and
-  retains the `/{return}` rejection regression. No runtime behavior changes.
+The filtered introspection guide from #543 and routing property fixture repair
+from #544 were merged by PR #545; both Issues closed after required CI passed.
 
 The official-client MCP tools guide from #541 was merged by PR #542 and its
 Issue closed after the required CI passed.

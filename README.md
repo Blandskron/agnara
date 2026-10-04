@@ -115,6 +115,8 @@ the [threat model](docs/THREAT_MODEL.md) for evidence and limits.
 
 ## Operations and documentation
 
+The [deadline and cancellation guide](docs/DEADLINES.md) demonstrates monotonic
+budgets, cancellation propagation and owned resource cleanup.
 The [nested invocation guide](docs/NESTED_INVOCATION.md) provides a runnable
 example of calling another capability while enforcing each capability's scopes.
 The [direct idempotency guide](docs/DIRECT_IDEMPOTENCY.md) demonstrates explicit
