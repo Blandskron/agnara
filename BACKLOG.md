@@ -6,11 +6,17 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#546](https://github.com/Blandskron/agnara/issues/546): add a runnable
-  direct invocation deadline and cancellation guide. Acceptance: absolute
-  monotonic deadlines, canonical timeout, propagated caller cancellation,
-  scope denial before effects, owned tasks and resource cleanup, public imports,
+- [~] [#550](https://github.com/Blandskron/agnara/issues/550): add a runnable
+  dependency injection lifecycle guide. Acceptance: explicit bindings,
+  singleton reuse, invocation isolation and diamond reuse, reverse resource
+  teardown, denial/validation before acquisition, public imports,
   outside-checkout execution and required CI pass.
+
+The telemetry guide from #548 is prepared in PR #549 with required CI green
+and awaits formal maintainer review and integration.
+
+The deadline and cancellation guide from #546 was merged by PR #547; its Issue
+closed after required CI passed.
 
 The filtered introspection guide from #543 and routing property fixture repair
 from #544 were merged by PR #545; both Issues closed after required CI passed.

@@ -98,6 +98,7 @@ transformation of the function.
   input validation;
 - dependency injection with compile-time graph validation and scoped
   resolution;
+  see the [runnable dependency lifecycle guide](../../docs/DEPENDENCIES.md);
 - execution plans, direct invocation and optional monotonic deadlines;
   see the [runnable deadline and cancellation guide](../../docs/DEADLINES.md);
 - protocol-neutral policies, principals and scope evaluation;

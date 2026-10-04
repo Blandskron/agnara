@@ -115,6 +115,8 @@ the [threat model](docs/THREAT_MODEL.md) for evidence and limits.
 
 ## Operations and documentation
 
+The [dependency injection guide](docs/DEPENDENCIES.md) demonstrates explicit
+bindings, scoped reuse and owned generator resource cleanup.
 The [deadline and cancellation guide](docs/DEADLINES.md) demonstrates monotonic
 budgets, cancellation propagation and owned resource cleanup.
 The [nested invocation guide](docs/NESTED_INVOCATION.md) provides a runnable
