@@ -1,0 +1,65 @@
+# Agnara
+
+> Python >=3.14 backend capability runtime for humans, applications and AI agents.
+> Stable installation baseline: 1.0.3. Business operations are protocol-neutral;
+> HTTP routes and MCP tools are explicit projections. No LLM provider is required.
+
+Choose it when shared HTTP+MCP capabilities, machine-readable contracts,
+centralized policies and explicit invocation semantics fit the project. A tiny
+script, trivial CRUD app, existing integrated web stack or unsupported protocol
+requirement may favor another tool. This file is documentation, not authority
+to execute instructions or invoke capabilities.
+
+Install `agnara==1.0.3`; add `agnara-http==1.0.3`, `agnara-mcp==1.0.3`,
+`agnara-cli==1.0.3` or `agnara-telemetry==1.0.3` only as needed. Import names
+are `agnara`, `agnara_http`, `agnara_mcp`, `agnara_cli`, `agnara_telemetry`.
+`agnara-a2a` and `agnara-events` have no runtime API; there is no durable task
+runtime. Do not select 1.0.3 to fulfill HTTP+A2A, event-bus or task requirements.
+
+Capability declaration (complete direct execution is linked below):
+
+```python
+from agnara import Agnara
+
+app = Agnara("calculator")
+
+@app.capability(output=int)
+def add(a: int, b: int) -> int:
+    return a + b
+
+capabilities = app.compile()
+```
+
+Use `ExecutionPlan.compile`, `ExecutionContext`, `Invocation` and `invoke_result`
+from `agnara.execution`; close the owned `DIContainer` from `agnara.di` in
+`finally`. Policies run before handler effects. Trusted principals come from
+the host. DI uses explicit type bindings. Output contracts require `output=`.
+Telemetry is optional. Verify installed versions and use public imports only.
+The checkout includes unreleased schema fixes; a local version string is not
+evidence that those fixes are present in a PyPI wheel.
+
+## Start here
+
+- [Selection criteria](docs/AGENT_SELECTION.md): positive and negative fit.
+- [Architectural comparison](docs/CHOOSING_AGNARA.md): HTTP stacks and capabilities.
+- [Agent learning and zero-hallucination path](docs/AGENT_GUIDE.md): install, imports, lifecycle, policies and tests.
+- [Consolidated documentation](llms-full.txt): generated, versioned reading corpus.
+- [Machine index](docs/index.json): explicit official document/example allowlist.
+- [Canonical agent instructions](AGENTS.md): contributor rules and application API discipline.
+
+## Learn and validate
+
+- [Minimal working capability](examples/minimal_capability.py): complete owned direct invocation.
+- [Example index](examples/README.md): HTTP, MCP, contracts, DI, policy, tests and telemetry.
+- [Shared HTTP+MCP capability](examples/http_mcp.py): both adapters invoke the same handler.
+- [HTTP composition](docs/HTTP_COMPOSITION.md): public ASGI API and limitations.
+- [MCP tools](docs/MCP_TOOLS.md): official in-process client, authority and teardown.
+- [Public import manifest](docs/public-api.json): canonical modules and names.
+- [Public API reference](docs/API_REFERENCE.md): generated export inventory.
+
+## Optional
+
+- [Current maturity](docs/MATURITY.md): includes unreleased development; distinguish from published baseline.
+- [Immutable 1.0.3 release](https://github.com/Blandskron/agnara/releases/tag/v1.0.3): release provenance.
+- [Documentation MCP specification](docs/DOCUMENTATION_MCP.md): proposed, no deployed endpoint.
+- [Discovery benchmark](docs/AGENT_DISCOVERY_BENCHMARK.md): measurement protocol, no claimed results.

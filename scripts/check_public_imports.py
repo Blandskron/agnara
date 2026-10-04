@@ -224,7 +224,7 @@ def audit_markdown(path: Path, surface: Surface) -> list[Finding]:
 
 
 def audit_path(target: Path, surface: Surface) -> list[Finding]:
-    """Audit one file, or every Python and Markdown file under a directory."""
+    """Audit Python and fenced examples in Markdown/text files under a directory."""
     if target.is_file():
         candidates = [target]
     else:
@@ -232,14 +232,14 @@ def audit_path(target: Path, surface: Surface) -> list[Finding]:
             path
             for path in sorted(target.rglob("*"))
             if path.is_file()
-            and path.suffix in {".py", ".md"}
+            and path.suffix in {".py", ".md", ".txt"}
             and not any(part in {".git", ".venv", "__pycache__"} for part in path.parts)
         ]
     findings: list[Finding] = []
     for path in candidates:
         if path.suffix == ".py":
             findings.extend(audit_python(path, surface))
-        elif path.suffix == ".md":
+        elif path.suffix in {".md", ".txt"}:
             findings.extend(audit_markdown(path, surface))
     return findings
 

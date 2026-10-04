@@ -67,19 +67,23 @@ async def main() -> None:
     dependencies = DIRegistry()
     plan = ExecutionPlan.compile(capabilities["billing.refund"], dependencies)
 
-    outcome = await invoke_result(
-        plan,
-        ExecutionContext(
-            Invocation(
-                capability_id=plan.definition.id,
-                payload={"payment_id": "pay_123", "amount_cents": 2500},
-                metadata={},
+    container = DIContainer(dependencies)
+    try:
+        outcome = await invoke_result(
+            plan,
+            ExecutionContext(
+                Invocation(
+                    capability_id=plan.definition.id,
+                    payload={"payment_id": "pay_123", "amount_cents": 2500},
+                    metadata={},
+                ),
+                container,
+                principal=Principal("quickstart", scopes={"billing:write"}),
             ),
-            DIContainer(dependencies),
-            principal=Principal("quickstart", scopes={"billing:write"}),
-        ),
-    )
-    print(outcome)
+        )
+        print(outcome)
+    finally:
+        await container.aclose()
 
 
 asyncio.run(main())

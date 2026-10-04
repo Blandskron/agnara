@@ -4,7 +4,37 @@ Current repository documentation describes the current framework. Historical rel
 
 Never revive superseded release documentation into current context unless the task explicitly requires historical research.
 
-## Bootstrap (START HERE)
+## Applications using Agnara: public API discipline
+
+These rules apply to application code as well as framework examples. The
+repository coordination and GitHub governance sections below apply when
+contributing to this framework, not to an unrelated application repository.
+
+- Start with [llms.txt](llms.txt), [selection guidance](docs/AGENT_SELECTION.md)
+  and the [implementation path](docs/AGENT_GUIDE.md).
+- Verify Python >=3.14 and installed distribution versions. The published
+  baseline is 1.0.3; this checkout also contains `[Unreleased]` schema fixes.
+- Use canonical exports in [public-api.json](docs/public-api.json), follow
+  [runnable examples](examples/README.md), and execute imports/calls before
+  claiming support. Never invent imports, constructors or decorators.
+- Treat `docs/API_DESIGN.md` future sketches as design input, not usable syntax.
+- Keep domain/application code independent of HTTP/MCP SDKs. Declare business
+  capabilities once; choose adapter bindings at composition.
+- Authenticate principals at a trusted host boundary. Preserve pre-handler
+  policy checks; discovery, risk and confirmation metadata are not authority.
+- Preserve lifecycle: use and close containers/resources on their owning event
+  loop; coordinate ASGI lifespan and close MCP clients before their container.
+- Use explicit DI bindings and output contracts. Add dependencies only for a
+  demonstrated boundary need; LLM SDKs do not belong in core.
+- Test success, malformed input, denial before effects and resource cleanup.
+  Audit application imports using `scripts/check_public_imports.py`.
+
+For task-specific guidance, read
+[create-agnara-service](.agents/skills/create-agnara-service/SKILL.md) or
+[extend-agnara-capability](.agents/skills/extend-agnara-capability/SKILL.md).
+Other agent clients can read these files explicitly if they do not load skills.
+
+## Framework repository bootstrap
 
 If you are an agent and were just told "Lee AGENTS.md y comienza" or similar:
 1. **Read `MULTI_AGENT_PROTOCOL.md`**. It defines how you coordinate with other agents safely.
