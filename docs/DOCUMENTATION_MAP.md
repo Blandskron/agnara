@@ -11,6 +11,7 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 ## USAGE
 
 - [Core quick start](../packages/agnara/README.md)
+- [Runnable schema input and output contracts guide](SCHEMA_CONTRACTS.md)
 - [Runnable dependency lifecycle guide](DEPENDENCIES.md)
 - [Runnable invocation telemetry guide](TELEMETRY.md)
 - [Runnable deadline and cancellation guide](DEADLINES.md)

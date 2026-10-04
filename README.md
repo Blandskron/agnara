@@ -115,6 +115,8 @@ the [threat model](docs/THREAT_MODEL.md) for evidence and limits.
 
 ## Operations and documentation
 
+The [schema contracts guide](docs/SCHEMA_CONTRACTS.md) demonstrates strict
+Python input, explicit JSON conversion and declared output validation.
 The [dependency injection guide](docs/DEPENDENCIES.md) demonstrates explicit
 bindings, scoped reuse and owned generator resource cleanup.
 The [invocation telemetry guide](docs/TELEMETRY.md) demonstrates paired events,
