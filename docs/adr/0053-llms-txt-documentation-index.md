@@ -52,6 +52,14 @@ restriction is added.
 
 ## Conditions for a future implementation
 
+Repository-build follow-up: the maintainer's scoped Issue #558 introduces
+checked-in `llms.txt`, an explicit versioned `docs/index.json` and a tested,
+deterministic `llms-full.txt` documentation build. It does not add a runtime
+route, change `agnara context` or deploy a site. The hosted-site prerequisites
+below remain requirements for a later deployment; they do not block the
+explicitly requested local repository artifacts. Source ownership and limits
+are documented in [agent discovery architecture](../AGENT_DISCOVERY.md).
+
 Start a separate executable Issue when there is a deployed documentation site,
 an owned versioned page manifest, and a named consumer that can be tested.
 That Issue must specify the base URL, path, supported proposal revision,

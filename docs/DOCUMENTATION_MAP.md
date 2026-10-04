@@ -10,6 +10,16 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 
 ## USAGE
 
+- [Short agent index](../llms.txt) and [generated full corpus](../llms-full.txt)
+- [Versioned machine-readable index](index.json)
+- [Agent selection](AGENT_SELECTION.md) and [architecture comparison](CHOOSING_AGNARA.md)
+- [Agent implementation and zero-hallucination path](AGENT_GUIDE.md)
+- [Runnable example index](../examples/README.md)
+- [Discovery architecture and source ownership](AGENT_DISCOVERY.md)
+- [Documentation MCP specification](DOCUMENTATION_MCP.md)
+- [Agent discovery benchmark](AGENT_DISCOVERY_BENCHMARK.md)
+- [Starter proposals](AGENT_STARTERS.md)
+
 - [Core quick start](../packages/agnara/README.md)
 - [Runnable schema input and output contracts guide](SCHEMA_CONTRACTS.md)
 - [Runnable dependency lifecycle guide](DEPENDENCIES.md)

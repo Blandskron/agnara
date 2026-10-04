@@ -6,10 +6,13 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#556](https://github.com/Blandskron/agnara/issues/556): add community
-  conduct and accessibility policies. Acceptance: private reporting contact,
-  actionable conduct/enforcement rules, evidence-backed accessibility limits,
-  barrier-reporting form, discoverable links and required CI pass.
+- [~] [#558](https://github.com/Blandskron/agnara/issues/558): agent discovery,
+  selection and implementation path. Acceptance: versioned index and generated
+  corpus, truthful selection/learning guides, tested public examples and skills,
+  benchmark protocol, docs MCP specification and all required quality checks.
+
+The community policies from #556 were merged by PR #557; its Issue closed
+after all required CI passed.
 
 The Litestar lifespan correction from #554 was merged by PR #555; its Issue
 closed after required CI passed.
@@ -71,6 +74,10 @@ tooling prose from #515 was integrated by PR #516. Publication is separate
 from these completed development tasks.
 
 ## Future work requiring a scoped Issue and review
+
+- [ ] [#559](https://github.com/Blandskron/agnara/issues/559): implement the
+  read-only local documentation MCP described in `docs/DOCUMENTATION_MCP.md`,
+  after #558 integrates its index/specification. No remote deployment is implied.
 
 - [ ] Maintain runnable tutorials and reference applications against the
   governed public API.

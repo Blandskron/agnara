@@ -21,6 +21,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Agent discovery and selection guides, versioned documentation index and
+  deterministic full reading corpus, public HTTP+MCP example, compact workflows
+  and reproducible benchmark design; distinguish published 1.0.3 from unreleased
+  fixes and reserved protocol namespaces in documentation and source metadata.
+
 - Community Code of Conduct, Accessibility Statement and a dedicated barrier
   reporting form, with public evidence and private contact options.
 

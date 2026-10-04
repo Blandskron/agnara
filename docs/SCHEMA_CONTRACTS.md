@@ -1,5 +1,10 @@
 # Python input contracts and explicit JSON boundaries
 
+Version boundary: this guide includes JSON enum and numeric validation fixes
+recorded under `CHANGELOG.md` `[Unreleased]`. Those edge-case corrections are
+not present in published 1.0.3. For a baseline dataclass example, use
+[http_service.py](../examples/http_service.py). Public imports are unchanged.
+
 Run the complete standard-library example from a synchronized checkout:
 
 ```bash
