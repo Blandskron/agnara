@@ -1,7 +1,7 @@
 [project]
 name = "agnara"
 version = "1.0.3"
-description = "Capability-first, transport-neutral execution kernel for Agnara."
+description = "Python backend capability framework for applications and AI agents, with transport-neutral contracts and policies."
 readme = "README.md"
 requires-python = ">=3.14"
 authors = [{name = "Agnara Maintainers", email = "maintainers@agnara.dev"}]

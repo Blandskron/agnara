@@ -1,7 +1,7 @@
 [project]
 name = "agnara-a2a"
 version = "1.0.3"
-description = "Agent-to-Agent exposure adapter for Agnara capabilities."
+description = "Reserved A2A namespace for Agnara; no public runtime API is implemented."
 readme = "README.md"
 requires-python = ">=3.14"
 authors = [{name = "Agnara Maintainers", email = "maintainers@agnara.dev"}]
