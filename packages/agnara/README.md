@@ -99,6 +99,7 @@ transformation of the function.
 - dependency injection with compile-time graph validation and scoped
   resolution;
 - execution plans, direct invocation and optional monotonic deadlines;
+  see the [runnable deadline and cancellation guide](../../docs/DEADLINES.md);
 - protocol-neutral policies, principals and scope evaluation;
 - canonical `Success` / `Failure` outcomes with stable failure codes;
 - protocol-neutral introspection snapshots and explicit discovery visibility;

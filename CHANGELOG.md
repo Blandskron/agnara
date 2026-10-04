@@ -17,6 +17,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Runnable direct invocation guide demonstrating monotonic deadlines, caller
+  cancellation, scope denial and owned task/dependency cleanup.
+
 - Runnable introspection guide showing compiled exposure discovery, per-viewer
   publication before serialization and independent invocation authorization.
 
