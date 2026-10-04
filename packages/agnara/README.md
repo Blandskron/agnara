@@ -104,7 +104,8 @@ transformation of the function.
 - canonical `Success` / `Failure` outcomes with stable failure codes;
 - protocol-neutral introspection snapshots and explicit discovery visibility;
   see the [runnable filtering guide](../../docs/INTROSPECTION.md);
-- structured execution telemetry hooks with per-invocation identity.
+- structured execution telemetry hooks with per-invocation identity;
+  see the [runnable telemetry guide](../../docs/TELEMETRY.md).
 
 ## What it does not include
 

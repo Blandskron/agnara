@@ -17,6 +17,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Runnable invocation telemetry guide showing event pairing, correlation
+  identity, lifecycle outcomes and observer fault isolation.
+
 - Runnable direct invocation guide demonstrating monotonic deadlines, caller
   cancellation, scope denial and owned task/dependency cleanup.
 
