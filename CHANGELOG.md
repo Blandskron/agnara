@@ -17,6 +17,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Runnable dependency injection guide showing explicit bindings, singleton
+  and invocation reuse, diamond resolution and owned resource teardown.
+
 - Runnable invocation telemetry guide showing event pairing, correlation
   identity, lifecycle outcomes and observer fault isolation.
 

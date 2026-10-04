@@ -6,11 +6,14 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#548](https://github.com/Blandskron/agnara/issues/548): add a runnable
-  invocation telemetry guide. Acceptance: paired events for success, denial,
-  invalid input, failure, timeout and cancellation; attempt identity versus
-  correlation; ordinary observer fault isolation; safe event fields, explicit
-  lifecycle ownership, public imports and required CI pass.
+- [~] [#550](https://github.com/Blandskron/agnara/issues/550): add a runnable
+  dependency injection lifecycle guide. Acceptance: explicit bindings,
+  singleton reuse, invocation isolation and diamond reuse, reverse resource
+  teardown, denial/validation before acquisition, public imports,
+  outside-checkout execution and required CI pass.
+
+The telemetry guide from #548 was merged by PR #549; its Issue closed after
+required CI passed.
 
 The deadline and cancellation guide from #546 was merged by PR #547; its Issue
 closed after required CI passed.
