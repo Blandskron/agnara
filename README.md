@@ -145,6 +145,10 @@ owner of each current contract. Public API stability is governed by
 
 ## Development
 
+Read the [Code of Conduct](CODE_OF_CONDUCT.md) and
+[Accessibility Statement](ACCESSIBILITY.md) for community expectations,
+known accessibility limits and public or private reporting options.
+
 ```bash
 uv sync
 uv run ruff check .

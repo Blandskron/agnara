@@ -6,11 +6,13 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#554](https://github.com/Blandskron/agnara/issues/554): align the Litestar
-  interoperability fixture with its host lifespan. Acceptance: runtime creation,
-  invocation and generator cleanup on one host loop, invocation isolation,
-  denial before acquisition, exceptional client-exit cleanup, retained native
-  and embedded behavior, architecture checks and required CI pass.
+- [~] [#556](https://github.com/Blandskron/agnara/issues/556): add community
+  conduct and accessibility policies. Acceptance: private reporting contact,
+  actionable conduct/enforcement rules, evidence-backed accessibility limits,
+  barrier-reporting form, discoverable links and required CI pass.
+
+The Litestar lifespan correction from #554 was merged by PR #555; its Issue
+closed after required CI passed.
 
 The schema contracts guide from #552 was merged by PR #553; its Issue closed
 after required CI passed.

@@ -21,6 +21,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Community Code of Conduct, Accessibility Statement and a dedicated barrier
+  reporting form, with public evidence and private contact options.
+
 - Runnable schema contracts guide showing strict Python input, explicit JSON
   conversion, nested validation and declared output enforcement.
 
