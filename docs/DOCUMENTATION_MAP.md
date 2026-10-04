@@ -11,6 +11,7 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 ## USAGE
 
 - [Core quick start](../packages/agnara/README.md)
+- [Runnable invocation telemetry guide](TELEMETRY.md)
 - [Runnable deadline and cancellation guide](DEADLINES.md)
 - [Direct idempotency guide](DIRECT_IDEMPOTENCY.md)
 - [Verifier-backed confirmation guide](CONFIRMATION.md)
