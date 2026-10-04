@@ -7,6 +7,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Keep the Litestar interoperability fixture's runtime construction, invocation
+  and resource shutdown on the host lifespan's event loop, with cleanup checks
+  for handler failures and exceptional test-client exits.
+
 - Accept equivalent JSON numbers for numeric Literal inputs across HTTP and
   MCP while preserving exact direct Python validation and boolean separation.
 - Align JSON enum inputs with their published values: separate booleans from
