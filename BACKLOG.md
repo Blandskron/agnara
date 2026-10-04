@@ -12,8 +12,8 @@ completed work remains available through Git history and closed Issues. The
   teardown, denial/validation before acquisition, public imports,
   outside-checkout execution and required CI pass.
 
-The telemetry guide from #548 is prepared in PR #549 with required CI green
-and awaits formal maintainer review and integration.
+The telemetry guide from #548 was merged by PR #549; its Issue closed after
+required CI passed.
 
 The deadline and cancellation guide from #546 was merged by PR #547; its Issue
 closed after required CI passed.
