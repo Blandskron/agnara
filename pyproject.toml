@@ -123,7 +123,7 @@ root = [
 ]
 
 [tool.ty.src]
-include = ["packages", "examples", "experiments", "tests"]
+include = ["packages", "examples", "experiments", "tests", "tools"]
 
 # --------------------------------------------------------------------------
 # pytest (E0.6)
