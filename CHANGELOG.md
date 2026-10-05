@@ -21,6 +21,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Local read-only documentation MCP tooling with five bounded tools, pinned
+  snapshot hashes, deterministic lexical search and official-client stdio tests.
+  Setup selects an explicit documentation commit; no hosted endpoint is added.
+
 - Agent discovery and selection guides, versioned documentation index and
   deterministic full reading corpus, public HTTP+MCP example, compact workflows
   and reproducible benchmark design; distinguish published 1.0.3 from unreleased

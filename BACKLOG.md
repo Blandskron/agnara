@@ -6,10 +6,12 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#558](https://github.com/Blandskron/agnara/issues/558): agent discovery,
-  selection and implementation path. Acceptance: versioned index and generated
-  corpus, truthful selection/learning guides, tested public examples and skills,
-  benchmark protocol, docs MCP specification and all required quality checks.
+- [~] [#559](https://github.com/Blandskron/agnara/issues/559): read-only local
+  documentation MCP. Acceptance: frozen hashed corpus, five bounded tools,
+  official-client stdio exchanges, adversarial contracts and required gates.
+
+The discovery, selection and implementation path from #558 was merged by
+PR #560; its Issue closed after all required CI passed.
 
 The community policies from #556 were merged by PR #557; its Issue closed
 after all required CI passed.
@@ -74,10 +76,6 @@ tooling prose from #515 was integrated by PR #516. Publication is separate
 from these completed development tasks.
 
 ## Future work requiring a scoped Issue and review
-
-- [ ] [#559](https://github.com/Blandskron/agnara/issues/559): implement the
-  read-only local documentation MCP described in `docs/DOCUMENTATION_MCP.md`,
-  after #558 integrates its index/specification. No remote deployment is implied.
 
 - [ ] Maintain runnable tutorials and reference applications against the
   governed public API.

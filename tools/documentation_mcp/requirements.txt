@@ -1,0 +1,3 @@
+# Repository tooling only. No first-party package dependency changes.
+mcp==2.1.1
+mcp-types==2.1.1
