@@ -5,6 +5,8 @@
   "base_url": "https://github.com/Blandskron/agnara/blob/develop/",
   "note": "Current canonical documentation teaching the 1.0.3 API. This is not a historical wheel inventory. Current-repository entries include unreleased fixes. Consumers must preserve version, stability and provenance fields.",
   "documents": [
+    {"id":"embedding","title":"FastAPI embedding guide","path":"docs/FASTAPI_EMBEDDING.md","topic":"interoperability","package":"agnara","version":"1.0.3","description":"Explicit host-owned identity, complete-result invocation and same-loop runtime cleanup.","audience":["coding-agents","developers"],"stability":"guidance"},
+    {"id":"embedding-example","title":"FastAPI embedding example","path":"examples/fastapi_embedding.py","topic":"interoperability","package":"agnara","version":"1.0.3","description":"Native host routes invoke the public runtime; optional pinned FastAPI fixture.","audience":["coding-agents","developers"],"stability":"guidance"},
     {"id":"learning","title":"Agent implementation guide","path":"docs/AGENT_GUIDE.md","topic":"implementation","package":"agnara","version":"1.0.3","description":"Public API learning path and resource ownership.","audience":["coding-agents","developers"],"stability":"stable-api"},
     {"id":"selection","title":"Agent selection","path":"docs/AGENT_SELECTION.md","topic":"selection","package":"agnara","version":"1.0.3","description":"When to choose and reject Agnara.","audience":["coding-agents","architects"],"stability":"stable-api"},
     {"id":"comparison","title":"Choosing a service architecture","path":"docs/CHOOSING_AGNARA.md","topic":"selection","package":"agnara","version":"1.0.3","description":"Honest conceptual comparison with web frameworks.","audience":["coding-agents","architects"],"stability":"guidance"},
@@ -51,7 +53,7 @@
     {"title":"Security model","heading":"Security model","additional":[]},
     {"title":"Lifecycle","heading":"Lifecycle","additional":[]},
     {"title":"Testing","heading":"Testing","additional":[]},
-    {"title":"Examples","heading":"Examples","additional":["examples","shared-example"]},
+    {"title":"Examples","heading":"Examples","additional":["examples","shared-example","embedding"]},
     {"title":"Recommended architecture","heading":"Recommended architecture","additional":[]},
     {"title":"Selection guidance","heading":"Selection guidance","additional":["selection","comparison"]},
     {"title":"Limitations","heading":"Limitations","additional":[]},

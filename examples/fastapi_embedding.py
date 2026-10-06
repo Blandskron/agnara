@@ -39,7 +39,7 @@ from typing import Any
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from agnara import Agnara, App, CapabilityRegistry, Principal
+from agnara import Agnara, App, Principal
 from agnara.di import DIContainer, DIRegistry
 from agnara.execution import (
     CapabilityRuntime,
@@ -70,7 +70,7 @@ class Embedded:
 def build_application() -> App:
     app = App("orders")
 
-    @app.capability(scopes={"orders:read"})
+    @app.capability(scopes={"orders:read"}, output=dict[str, str])
     def summary(order_id: str) -> dict[str, str]:
         return {"order": order_id, "status": "shipped"}
 
@@ -85,10 +85,9 @@ def compile_embedded() -> Embedded:
     registry = DIRegistry()
     plans = [ExecutionPlan.compile(definition, registry) for definition in capabilities.values()]
     container = DIContainer(registry)
-    frozen = CapabilityRegistry(plan.definition for plan in plans).freeze()
 
     return Embedded(
-        runtime=CapabilityRuntime(frozen, plans, container),
+        runtime=CapabilityRuntime(capabilities, plans, container),
         container=container,
         plans={str(plan.definition.id): plan for plan in plans},
     )
@@ -145,8 +144,8 @@ def build_host() -> FastAPI:
         try:
             yield
         finally:
-            if embedded.container is not None:
-                await embedded.container.aclose()
+            if embedded.runtime is not None:
+                await embedded.runtime.aclose()
             embedded.runtime = embedded.container = None
 
     host = FastAPI(lifespan=lifespan)

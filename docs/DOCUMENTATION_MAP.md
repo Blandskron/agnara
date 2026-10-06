@@ -63,6 +63,7 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 ## INTEROPERABILITY
 
 - [Supported modes and validated fixtures](INTEROPERABILITY.md)
+- [Runnable FastAPI embedding guide](FASTAPI_EMBEDDING.md)
 
 ## CLI
 

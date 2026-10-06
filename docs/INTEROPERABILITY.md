@@ -35,6 +35,11 @@ msgspec experiments are not packaged schema adapters.
 
 ## Validated integration evidence
 
+The [FastAPI embedding guide](FASTAPI_EMBEDDING.md) walks through the
+[runnable example](../examples/fastapi_embedding.py), with example-level
+tests for host authentication, policy refusal, concurrent context isolation
+and runtime shutdown on the host loop.
+
 These are executable repository fixtures, with pinned optional dependencies.
 They validate the narrow contract shown, not a general support promise for
 every feature or version of the host product.
