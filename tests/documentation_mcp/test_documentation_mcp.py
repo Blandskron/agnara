@@ -572,11 +572,19 @@ def test_real_stdio_initialize_list_call_and_clean_shutdown(root: Path) -> None:
 
 def test_actual_repository_corpus_and_governed_api() -> None:
     corpus = freeze(ROOT)
-    assert len(corpus.documents) == 29
+    assert len(corpus.documents) == 31
     assert corpus.documents["embedding"].path == "docs/FASTAPI_EMBEDDING.md"
     assert corpus.documents["embedding-example"].path == "examples/fastapi_embedding.py"
     assert len(corpus.modules) == 13
     service = DocumentationService(corpus)
+    persistence = body(
+        run(service.call("read_doc", {"version": "1.0.3", "document_id": "persistence"}))
+    )
+    assert persistence["content"]["text"].startswith("# Application-owned SQLite persistence")
+    persistence_example = body(
+        run(service.call("get_example", {"version": "1.0.3", "example_id": "persistence-example"}))
+    )
+    assert "Host-owned SQLite transactions" in persistence_example["content"]["text"]
     guide = body(run(service.call("read_doc", {"version": "1.0.3", "document_id": "embedding"})))
     assert guide["content"]["text"].startswith("# Embed Agnara in FastAPI")
     example = body(

@@ -12,6 +12,7 @@ repository, run `uv sync` then `uv run python examples/<file>.py`.
 | Official-client MCP service | [mcp_tools.py](mcp_tools.py) | [test](../tests/docs/test_mcp_tools_example.py), [guide](../docs/MCP_TOOLS.md) |
 | Same capability invoked over HTTP + MCP | [http_mcp.py](http_mcp.py) | [test](../tests/docs/test_http_mcp_example.py) |
 | Runtime embedded inside native FastAPI routes | [fastapi_embedding.py](fastapi_embedding.py) | [test](../tests/docs/test_fastapi_embedding_example.py), [guide](../docs/FASTAPI_EMBEDDING.md); optional pinned host fixture |
+| Application-owned SQLAlchemy/SQLite transactions | [sqlite_persistence.py](sqlite_persistence.py) | [test](../tests/docs/test_sqlite_persistence_example.py), [guide](../docs/SQLITE_PERSISTENCE.md); optional pinned infrastructure fixture |
 | Schemas/contracts | [schema_contracts.py](schema_contracts.py) | [test](../tests/docs/test_schema_contracts_example.py), [guide](../docs/SCHEMA_CONTRACTS.md); enum/numeric edge cases target unreleased fixes |
 | Dependency providers and teardown | [dependencies.py](dependencies.py) | [test](../tests/docs/test_dependencies_example.py), [guide](../docs/DEPENDENCIES.md) |
 | Verifier-backed confirmation policy | [confirmation.py](confirmation.py) | [test](../tests/docs/test_confirmation_example.py), [guide](../docs/CONFIRMATION.md) |
