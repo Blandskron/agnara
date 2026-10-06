@@ -21,6 +21,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Runnable SQLAlchemy/SQLite persistence guide with an application ledger port,
+  explicit host commit/rollback over canonical outcomes, cancellation and
+  ordered runtime/session/engine cleanup tests.
+
 - Runnable FastAPI embedding guide with host-owned identity and response
   mapping, policy denial before handler work, concurrent context isolation
   and same-loop runtime cleanup evidence.

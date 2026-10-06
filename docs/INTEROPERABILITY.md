@@ -35,6 +35,13 @@ msgspec experiments are not packaged schema adapters.
 
 ## Validated integration evidence
 
+The [SQLite persistence guide](SQLITE_PERSISTENCE.md) demonstrates an
+application ledger port, explicit commit/rollback decisions over canonical
+outcomes and cancellation, and session/engine cleanup. Its
+[runnable example](../examples/sqlite_persistence.py) uses a small sequential
+synchronous SQLite fixture; it does not introduce an ORM adapter or concurrent
+session-sharing contract.
+
 The [FastAPI embedding guide](FASTAPI_EMBEDDING.md) walks through the
 [runnable example](../examples/fastapi_embedding.py), with example-level
 tests for host authentication, policy refusal, concurrent context isolation
