@@ -6,9 +6,12 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#559](https://github.com/Blandskron/agnara/issues/559): read-only local
-  documentation MCP. Acceptance: frozen hashed corpus, five bounded tools,
-  official-client stdio exchanges, adversarial contracts and required gates.
+- [~] [#562](https://github.com/Blandskron/agnara/issues/562): runnable FastAPI
+  embedding guide. Acceptance: host authority, denial before handler effects,
+  concurrent context isolation, same-loop runtime cleanup and required gates.
+
+The read-only local documentation MCP from #559 was merged by PR #561; its
+Issue closed after all required CI passed.
 
 The discovery, selection and implementation path from #558 was merged by
 PR #560; its Issue closed after all required CI passed.

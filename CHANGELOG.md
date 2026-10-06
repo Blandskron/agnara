@@ -21,6 +21,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Runnable FastAPI embedding guide with host-owned identity and response
+  mapping, policy denial before handler work, concurrent context isolation
+  and same-loop runtime cleanup evidence.
+
 - Local read-only documentation MCP tooling with five bounded tools, pinned
   snapshot hashes, deterministic lexical search and official-client stdio tests.
   Setup selects an explicit documentation commit; no hosted endpoint is added.

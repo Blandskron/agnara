@@ -572,9 +572,17 @@ def test_real_stdio_initialize_list_call_and_clean_shutdown(root: Path) -> None:
 
 def test_actual_repository_corpus_and_governed_api() -> None:
     corpus = freeze(ROOT)
-    assert len(corpus.documents) == 27
+    assert len(corpus.documents) == 29
+    assert corpus.documents["embedding"].path == "docs/FASTAPI_EMBEDDING.md"
+    assert corpus.documents["embedding-example"].path == "examples/fastapi_embedding.py"
     assert len(corpus.modules) == 13
     service = DocumentationService(corpus)
+    guide = body(run(service.call("read_doc", {"version": "1.0.3", "document_id": "embedding"})))
+    assert guide["content"]["text"].startswith("# Embed Agnara in FastAPI")
+    example = body(
+        run(service.call("get_example", {"version": "1.0.3", "example_id": "embedding-example"}))
+    )
+    assert "FastAPI application" in example["content"]["text"]
     assert body(
         run(
             service.call(
