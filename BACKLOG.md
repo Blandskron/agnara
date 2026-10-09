@@ -6,10 +6,18 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [x] [#565](https://github.com/Blandskron/agnara/issues/565): persistence
-  fixtures use one owning event loop and verify ordered cleanup on normal and
-  exceptional exits. Transaction and authority assertions pass; implementation
-  awaits formal maintainer review and merge.
+- [x] [#569](https://github.com/Blandskron/agnara/issues/569): installed-wheel
+  FastAPI/Starlette consumers construct runtime on the host lifespan loop and
+  verify cleanup on normal and exceptional exits. Import/HTTP assertions and
+  local gates pass; implementation awaits formal maintainer review and merge.
+
+The persistence loop correction from #565 was merged by PR #568; its Issue
+closed after all required CI passed. The recorded review identity remains
+subject to governance Issue #524.
+
+Dependabot PR #567 was closed as redundant: its action pins already match
+the updates integrated by #525. The reviewed `develop` target configuration
+still awaits normal maintainer-controlled promotion to the default branch.
 
 The SQLite persistence guide from #564 was merged by PR #566; its Issue closed
 after all required CI passed.
