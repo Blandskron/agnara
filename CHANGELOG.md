@@ -7,6 +7,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Construct installed-wheel FastAPI and Starlette fixtures' runtime on the host
+  lifespan loop, with resource cleanup checks on normal and exceptional exits.
+
 - Keep SQLite persistence fixtures' runtime construction, invocation and
   shutdown on one owning event loop, with ordered resource/session cleanup
   evidence for cancellation and exceptional host exits.
