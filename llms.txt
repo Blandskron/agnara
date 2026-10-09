@@ -55,6 +55,7 @@ evidence that those fixes are present in a PyPI wheel.
 - [HTTP composition](docs/HTTP_COMPOSITION.md): public ASGI API and limitations.
 - [MCP tools](docs/MCP_TOOLS.md): official in-process client, authority and teardown.
 - [FastAPI embedding](docs/FASTAPI_EMBEDDING.md): explicit host identity, runtime invocation and lifecycle.
+- [Starlette embedding](docs/STARLETTE_EMBEDDING.md): native routes, input/outcome mapping and owned resources.
 - [SQLite persistence](docs/SQLITE_PERSISTENCE.md): application ports, explicit transactions and cancellation cleanup.
 - [Public import manifest](docs/public-api.json): canonical modules and names.
 - [Public API reference](docs/API_REFERENCE.md): generated export inventory.

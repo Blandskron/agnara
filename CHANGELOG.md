@@ -28,6 +28,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Runnable Starlette embedding guide with explicit host authentication, native
+  routes, canonical input/outcome mapping and owned resource cleanup evidence.
+
 - Runnable SQLAlchemy/SQLite persistence guide with an application ledger port,
   explicit host commit/rollback over canonical outcomes, cancellation and
   ordered runtime/session/engine cleanup tests.
