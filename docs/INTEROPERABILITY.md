@@ -35,6 +35,12 @@ msgspec experiments are not packaged schema adapters.
 
 ## Validated integration evidence
 
+The [Starlette embedding guide](STARLETTE_EMBEDDING.md) and its
+[runnable example](../examples/starlette_embedding.py) demonstrate native host
+authentication, input/outcome mapping and same-loop resource ownership. Tests
+exercise concurrent context isolation, cancellation and exceptional host exit;
+this remains an optional pinned fixture rather than a general support tier.
+
 The [SQLite persistence guide](SQLITE_PERSISTENCE.md) demonstrates an
 application ledger port, explicit commit/rollback decisions over canonical
 outcomes and cancellation, and session/engine cleanup. Its

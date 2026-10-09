@@ -572,11 +572,25 @@ def test_real_stdio_initialize_list_call_and_clean_shutdown(root: Path) -> None:
 
 def test_actual_repository_corpus_and_governed_api() -> None:
     corpus = freeze(ROOT)
-    assert len(corpus.documents) == 31
+    assert len(corpus.documents) == 33
+    assert corpus.documents["starlette-embedding"].path == "docs/STARLETTE_EMBEDDING.md"
+    assert corpus.documents["starlette-embedding-example"].path == "examples/starlette_embedding.py"
     assert corpus.documents["embedding"].path == "docs/FASTAPI_EMBEDDING.md"
     assert corpus.documents["embedding-example"].path == "examples/fastapi_embedding.py"
     assert len(corpus.modules) == 13
     service = DocumentationService(corpus)
+    starlette = body(
+        run(service.call("read_doc", {"version": "1.0.3", "document_id": "starlette-embedding"}))
+    )
+    assert starlette["content"]["text"].startswith("# Embed Agnara in Starlette")
+    starlette_example = body(
+        run(
+            service.call(
+                "get_example", {"version": "1.0.3", "example_id": "starlette-embedding-example"}
+            )
+        )
+    )
+    assert "Native Starlette routes" in starlette_example["content"]["text"]
     persistence = body(
         run(service.call("read_doc", {"version": "1.0.3", "document_id": "persistence"}))
     )

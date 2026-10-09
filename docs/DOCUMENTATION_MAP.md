@@ -64,6 +64,7 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 
 - [Supported modes and validated fixtures](INTEROPERABILITY.md)
 - [Runnable FastAPI embedding guide](FASTAPI_EMBEDDING.md)
+- [Runnable Starlette embedding guide](STARLETTE_EMBEDDING.md)
 - [Runnable SQLite transaction ownership guide](SQLITE_PERSISTENCE.md)
 
 ## CLI
