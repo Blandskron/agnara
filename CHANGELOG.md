@@ -7,6 +7,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Keep SQLite persistence fixtures' runtime construction, invocation and
+  shutdown on one owning event loop, with ordered resource/session cleanup
+  evidence for cancellation and exceptional host exits.
+
 - Keep the Litestar interoperability fixture's runtime construction, invocation
   and resource shutdown on the host lifespan's event loop, with cleanup checks
   for handler failures and exceptional test-client exits.
