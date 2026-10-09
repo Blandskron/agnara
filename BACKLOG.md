@@ -6,9 +6,13 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#564](https://github.com/Blandskron/agnara/issues/564): runnable SQLite
-  persistence guide. Acceptance: application port, explicit host commit/rollback,
-  refusal before writes, cancellation and owned resource cleanup.
+- [x] [#565](https://github.com/Blandskron/agnara/issues/565): persistence
+  fixtures use one owning event loop and verify ordered cleanup on normal and
+  exceptional exits. Transaction and authority assertions pass; implementation
+  awaits formal maintainer review and merge.
+
+The SQLite persistence guide from #564 was merged by PR #566; its Issue closed
+after all required CI passed.
 
 The FastAPI embedding guide from #562 was merged by PR #563; its Issue closed
 after all required CI passed.
@@ -82,10 +86,6 @@ tooling prose from #515 was integrated by PR #516. Publication is separate
 from these completed development tasks.
 
 ## Future work requiring a scoped Issue and review
-
-- [ ] [#565](https://github.com/Blandskron/agnara/issues/565): align the existing
-  persistence fixtures' construction, invocation and shutdown with one owning
-  event loop while preserving their transaction and authority assertions.
 
 - [ ] Maintain runnable tutorials and reference applications against the
   governed public API.
