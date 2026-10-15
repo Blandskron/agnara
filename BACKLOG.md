@@ -6,9 +6,12 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#581](https://github.com/Blandskron/agnara/issues/581): correct installed-wheel
-  side-by-side child lifespan and prove owning-loop resource cleanup.
-  Local gates pass (3,923 tests); required CI and formal review are pending.
+- [~] [#583](https://github.com/Blandskron/agnara/issues/583): execute the Starlette,
+  Litestar and Django host guides against isolated installed candidate wheels.
+  Local gates pass (3,933 tests); required CI and formal review are pending.
+
+The side-by-side lifecycle correction from #581 was merged by PR #582 as
+16b4114 after formal approval and all 15 checks passed; Issue closed.
 
 The Django async-view guide from #579 was merged by PR #580 as 3ca16fb after
 formal approval and all 15 checks passed; Issue closed.
