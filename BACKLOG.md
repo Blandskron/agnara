@@ -6,10 +6,14 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
+- [~] [#574](https://github.com/Blandskron/agnara/issues/574): port the remaining
+  October action updates to develop with verified immutable pins. Local quality
+  gates pass (3,871 tests); required CI and formal maintainer review are pending.
+
 - [x] [#571](https://github.com/Blandskron/agnara/issues/571): runnable Starlette
   embedding guide with host identity, input/outcome mapping and owned resources.
-  Concurrency/cancellation/exceptional-exit tests and local gates pass;
-  implementation awaits formal maintainer review and merge.
+  Concurrency/cancellation/exceptional-exit tests and all required CI passed;
+  merged by PR #572 as 8d030ca and Issue closed.
 
 The installed-wheel host correction from #569 was merged by PR #570; its Issue
 closed after all required CI passed. Review identity remains covered by #524.
