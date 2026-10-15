@@ -1,13 +1,12 @@
 {
   "schema_version": 1,
-  "current_target": "1.0.3",
+  "current_target": "1.0.1",
   "status": "IN_PROGRESS",
-  "assessed_on": "2026-09-25",
+  "assessed_on": "2026-10-15",
   "notes": [
-    "1.0.3 changes documentation, synchronized versions and package metadata; runtime AST and docs/public-api.json match the develop baseline.",
-    "Local full pytest, explicit browser lane, seven-artifact build, metadata validation and clean Python 3.14 wheel install passed.",
-    "The measured performance budget gate exceeded three ratios on an idle local Windows rerun; CI evidence and maintainer review remain pending.",
-    "The accepted candidate SHA, protected publication and index verification can only be recorded after review and dispatch."
+    "1.0.0 is the published baseline; this target curates five post-1.0.0 security/release fixes for a synchronized 1.0.1 cut.",
+    "The five fixes are: direct-plan policy enforcement, scope-denial redaction, viewer-specific cache control, HTTP method case matching, and phased-release candidate hash/commit pinning.",
+    "Local repository checks can be recorded on this branch; maintainer review, protected-environment approval and publication verification remain pending."
   ],
   "gates": [
     {
@@ -72,7 +71,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "Full pytest passed (3656 passed, 36 skipped); runtime AST matches the develop baseline. Maintainer review of 1.0.3 remains pending."
+      "detail": "Execution and public API behavior are expected to remain unchanged for 1.0.1; focused release checks are tracked on this candidate while maintainer review remains pending."
     },
     {
       "id": "performance-budgets",
@@ -96,7 +95,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "docs/THREAT_MODEL.md names current adversarial review and residual risks; the full security test lane passed within pytest. Maintainer review remains pending."
+      "detail": "The 1.0.1 candidate carries four post-1.0.0 security fixes (direct-plan policy enforcement, scope-denial redaction, viewer-specific cache control, and case-sensitive publication method matching). Maintainer review remains pending."
     },
     {
       "id": "stable-public-api",
@@ -120,7 +119,7 @@
       "kind": "manual",
       "mandatory": true,
       "status": "NEEDS_REVIEW",
-      "detail": "The 1.0.3 protected publication has not been dispatched; approval and index verification remain pending."
+      "detail": "Protected three-phase publication for 1.0.1 has not yet been dispatched; environment approval and post-publication index/tag/release verification remain pending."
     }
   ],
   "source_baseline_sha": "ebd83592f2e3a0f073fbfa20382b84f605877bed",

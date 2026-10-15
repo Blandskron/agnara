@@ -41,7 +41,7 @@ RELEASE_TOOLING = [
     )
 ]
 SUPERSEDED = re.compile(
-    r"\b0\.1\.0a[2-9]\b|\bA[2-9]\b|\b1\.0\.[012]\b|\bV1-\d+\b|"
+    r"\b0\.1\.0a[2-9]\b|\bA[2-9]\b|\b1\.0\.[02]\b|\bV1-\d+\b|"
     r"RELEASE_PLAN\.md|MIGRATION_A8_TO_1_0\.md|"
     r"publication recovery|retained baseline|working toward (?:its )?first stable",
     re.IGNORECASE,
@@ -81,6 +81,7 @@ def test_only_current_release_document_set_remains() -> None:
     expected = {
         "README.md",
         "RELEASE_CHECKLIST.md",
+        "v1.0.1.md",
         "v1.0.3.md",
         "release-status.json",
         "publication.json",

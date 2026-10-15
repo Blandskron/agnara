@@ -2,8 +2,8 @@
 
 The current release preparation documents are:
 
-- [1.0.3 checklist](RELEASE_CHECKLIST.md)
-- [1.0.3 notes](v1.0.3.md)
+- [1.0.1 checklist](RELEASE_CHECKLIST.md)
+- [1.0.1 notes](v1.0.1.md)
 - [Readiness state](release-status.json)
 - [Trusted Publisher configuration](publication.json)
 

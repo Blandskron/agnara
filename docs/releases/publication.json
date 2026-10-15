@@ -17,7 +17,7 @@
   "last_registry_failure": null,
   "notes": [
     "Trusted Publisher configuration is recorded separately from target publication.",
-    "Protected authorization and index verification for 1.0.3 have not occurred."
+    "Protected authorization and index verification for 1.0.1 have not occurred."
   ],
   "projects": [
     {
@@ -91,7 +91,7 @@
       "verified_on": "2026-09-09"
     }
   ],
-  "current_target": "1.0.3",
+  "current_target": "1.0.1",
   "candidate_sha": null,
   "target_publication_state": "PENDING"
 }
