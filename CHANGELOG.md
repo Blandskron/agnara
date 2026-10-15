@@ -7,6 +7,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Drive the mounted Agnara HTTP child's lifespan in the installed-wheel
+  side-by-side FastAPI fixture, with same-loop singleton cleanup evidence on
+  normal and exceptional host exit and cancellation/failure regression tests.
+
 - Construct installed-wheel FastAPI and Starlette fixtures' runtime on the host
   lifespan loop, with resource cleanup checks on normal and exceptional exits.
 

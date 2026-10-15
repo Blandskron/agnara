@@ -89,6 +89,17 @@ side-by-side FastAPI consumers under isolated Python mode. This is reproducible
 artifact evidence for the reviewed source commit, not a framework plugin or a durable
 store claim.
 
+The installed-wheel side-by-side FastAPI consumer compiles its live HTTP child
+inside the host lifespan and explicitly exchanges ASGI startup/shutdown
+messages through an owned task group with bounded handshake waits.
+[FastAPI does not drive mounted-child lifespan automatically](https://fastapi.tiangolo.com/advanced/events/#sub-applications).
+The fixture verifies the child's actual lifecycle callbacks and singleton
+resource reuse, then resource closure before child stop and host stop on one
+loop, for normal and exceptional host exits. Its local tests additionally
+exercise cancellation after draining HTTP calls, failed handshakes and a silent
+startup timeout without orphan tasks. This remains fixture wiring, not a
+generic host adapter, automatic drainage or merged OpenAPI contract.
+
 The Litestar fixture constructs its runtime and container inside the host's
 lifespan, invokes them on that loop and closes them at lifespan exit. Generator
 resource probes verify singleton reuse, invocation isolation and cleanup on
