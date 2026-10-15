@@ -572,13 +572,25 @@ def test_real_stdio_initialize_list_call_and_clean_shutdown(root: Path) -> None:
 
 def test_actual_repository_corpus_and_governed_api() -> None:
     corpus = freeze(ROOT)
-    assert len(corpus.documents) == 35
+    assert len(corpus.documents) == 37
     assert corpus.documents["starlette-embedding"].path == "docs/STARLETTE_EMBEDDING.md"
     assert corpus.documents["starlette-embedding-example"].path == "examples/starlette_embedding.py"
     assert corpus.documents["embedding"].path == "docs/FASTAPI_EMBEDDING.md"
     assert corpus.documents["embedding-example"].path == "examples/fastapi_embedding.py"
     assert len(corpus.modules) == 13
     service = DocumentationService(corpus)
+    django = body(
+        run(service.call("read_doc", {"version": "1.0.3", "document_id": "django-embedding"}))
+    )
+    assert django["content"]["text"].startswith("# Agnara in Django async views")
+    django_example = body(
+        run(
+            service.call(
+                "get_example", {"version": "1.0.3", "example_id": "django-embedding-example"}
+            )
+        )
+    )
+    assert "Django async views" in django_example["content"]["text"]
     litestar = body(
         run(service.call("read_doc", {"version": "1.0.3", "document_id": "litestar-embedding"}))
     )

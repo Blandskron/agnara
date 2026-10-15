@@ -66,6 +66,7 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 - [Runnable FastAPI embedding guide](FASTAPI_EMBEDDING.md)
 - [Runnable Starlette embedding guide](STARLETTE_EMBEDDING.md)
 - [Runnable Litestar embedding guide](LITESTAR_EMBEDDING.md)
+- [Runnable Django async-view guide](DJANGO_EMBEDDING.md)
 - [Runnable SQLite transaction ownership guide](SQLITE_PERSISTENCE.md)
 
 ## CLI
