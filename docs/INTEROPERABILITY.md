@@ -35,6 +35,12 @@ msgspec experiments are not packaged schema adapters.
 
 ## Validated integration evidence
 
+The [Litestar embedding guide](LITESTAR_EMBEDDING.md) and its
+[runnable example](../examples/litestar_embedding.py) demonstrate native host
+identity, explicit JSON/outcome mapping and same-loop resource ownership.
+Tests cover concurrent context isolation, propagated cancellation and
+exceptional lifespan exit; this is optional pinned fixture evidence.
+
 The [Starlette embedding guide](STARLETTE_EMBEDDING.md) and its
 [runnable example](../examples/starlette_embedding.py) demonstrate native host
 authentication, input/outcome mapping and same-loop resource ownership. Tests
