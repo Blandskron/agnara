@@ -6,9 +6,12 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#579](https://github.com/Blandskron/agnara/issues/579): runnable Django
-  async-view guide with explicit application-owned lifecycle and request-factory
-  evidence. Local gates pass (3,916 tests); required CI and formal review pending.
+- [~] [#581](https://github.com/Blandskron/agnara/issues/581): correct installed-wheel
+  side-by-side child lifespan and prove owning-loop resource cleanup.
+  Local gates pass (3,923 tests); required CI and formal review are pending.
+
+The Django async-view guide from #579 was merged by PR #580 as 3ca16fb after
+formal approval and all 15 checks passed; Issue closed.
 
 The Litestar embedding guide from #576 was merged by PR #578 as 76408a8 after
 formal approval and all 15 checks passed; Issue closed.
