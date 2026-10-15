@@ -32,6 +32,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Run the Starlette, Litestar and Django host-guide examples against isolated
+  installed candidate wheels, verifying JSON outcomes, authorized effects and
+  ordered cleanup with negative validation proofs.
+
 - Runnable Django async-view guide with explicit application-owned lifecycle,
   host identity/outcome mapping and request-factory cleanup evidence.
 

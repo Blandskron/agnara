@@ -85,9 +85,21 @@ every feature or version of the host product.
 `tests/release/test_integrated_dogfooding.py` builds all seven wheels, installs
 them in a fresh Python 3.14 environment with first-party index access closed,
 checks public imports, and runs standalone, SQLite host, embedded FastAPI and
-side-by-side FastAPI consumers under isolated Python mode. This is reproducible
-artifact evidence for the reviewed source commit, not a framework plugin or a durable
-store claim.
+side-by-side FastAPI consumers under isolated Python mode. It also copies the
+exact runnable Starlette, Litestar and Django host-guide programs into the
+external consumer directory and executes them with that environment's Python
+`-I`. Existing optional host fixture versions are pinned in that environment;
+they remain outside distributable dependencies.
+
+The host-guide gate checks parsed JSON outcomes for authorized calls, policy
+denial, missing/unknown credentials, malformed/invalid input and native health,
+then verifies only the authorized order was recorded and audit/runtime cleanup
+occurred in order. Negative tests prove missing/duplicate cases, incorrect
+statuses/bodies, extra effects and broken cleanup fail the gate. This is
+candidate-wheel evidence tied to the reviewed source commit, not a claim that
+new guide behavior was tested against the already-published PyPI artifacts.
+It adds no framework plugin, network-server, production-authentication or
+durable-store support claim.
 
 The installed-wheel side-by-side FastAPI consumer compiles its live HTTP child
 inside the host lifespan and explicitly exchanges ASGI startup/shutdown
