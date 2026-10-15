@@ -6,9 +6,12 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#574](https://github.com/Blandskron/agnara/issues/574): port the remaining
-  October action updates to develop with verified immutable pins. Local quality
-  gates pass (3,871 tests); required CI and formal maintainer review are pending.
+- [~] [#576](https://github.com/Blandskron/agnara/issues/576): runnable Litestar
+  embedding guide with native host mapping and owned resource lifecycle.
+  Local gates pass (3,892 tests); required CI and formal review are pending.
+
+The action updates from #574 were merged by PR #575 as 99eb619 after all 15
+checks passed; Issue closed. Dependabot PR #573 was closed as superseded.
 
 - [x] [#571](https://github.com/Blandskron/agnara/issues/571): runnable Starlette
   embedding guide with host identity, input/outcome mapping and owned resources.

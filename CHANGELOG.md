@@ -28,6 +28,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Runnable Litestar embedding guide with native host authentication, explicit
+  canonical outcome mapping and same-loop resource cleanup evidence.
+
 - Runnable Starlette embedding guide with explicit host authentication, native
   routes, canonical input/outcome mapping and owned resource cleanup evidence.
 
