@@ -220,8 +220,10 @@ def _candidate_fetch(
     version: str = VERSION,
     phase: str = "bootstrap-1",
     workflow_path: str = ".github/workflows/release.yml@main",
+    run_head_sha: str | None = None,
 ) -> Any:
     name = f"agnara-release-candidate-{version}-{phase}"
+    workflow_sha = run_head_sha if run_head_sha is not None else sha
 
     def fetch(url: str) -> dict[str, Any]:
         if "/actions/artifacts?" in url:
@@ -241,7 +243,7 @@ def _candidate_fetch(
                 "path": workflow_path,
                 "event": "workflow_dispatch",
                 "head_branch": "main",
-                "head_sha": sha,
+                "head_sha": workflow_sha,
                 "conclusion": "success",
             }
         return _protected()
@@ -273,6 +275,20 @@ def test_later_phase_refuses_an_unrelated_workflow_candidate(checkout: Path) -> 
         context=context,
         git=tool.make_git(checkout),
         fetch=_candidate_fetch(context.sha, workflow_path=".github/workflows/other.yml"),
+        protected_environment="pypi",
+        phase="bootstrap-2",
+    )
+    assert code == 1
+    assert any("expected exactly one retained candidate" in problem for problem in problems)
+
+
+def test_later_phase_refuses_a_candidate_with_a_mismatched_run_sha(checkout: Path) -> None:
+    context = _context(checkout)
+    code, problems, _ = tool.run(
+        VERSION,
+        context=context,
+        git=tool.make_git(checkout),
+        fetch=_candidate_fetch(context.sha, run_head_sha="a" * 40),
         protected_environment="pypi",
         phase="bootstrap-2",
     )

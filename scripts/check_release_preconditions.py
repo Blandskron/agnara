@@ -54,6 +54,11 @@ RELEASE_EVENT = "workflow_dispatch"
 RELEASE_BRANCH_REF = "refs/heads/main"
 NETWORK_TIMEOUT = 30
 PHASE_ORDER = ("bootstrap-1", "bootstrap-2", "final")
+RELEASE_WORKFLOW_PATHS = {
+    ".github/workflows/release.yml",
+    ".github/workflows/release.yml@main",
+    ".github/workflows/release.yml@refs/heads/main",
+}
 
 GitRunner = Callable[..., str]
 JsonFetcher = Callable[[str], dict[str, Any] | None]
@@ -230,12 +235,7 @@ def check_phase_candidate(
                 continue
             run = fetch(f"{context.api_url}/repos/{context.repository}/actions/runs/{origin['id']}")
             if not isinstance(run, dict) or not (
-                run.get("path")
-                in {
-                    ".github/workflows/release.yml",
-                    ".github/workflows/release.yml@main",
-                    ".github/workflows/release.yml@refs/heads/main",
-                }
+                run.get("path") in RELEASE_WORKFLOW_PATHS
                 and run.get("event") == RELEASE_EVENT
                 and run.get("head_branch") == "main"
                 and run.get("conclusion") == "success"
