@@ -28,6 +28,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Runnable Django async-view guide with explicit application-owned lifecycle,
+  host identity/outcome mapping and request-factory cleanup evidence.
+
 - Runnable Litestar embedding guide with native host authentication, explicit
   canonical outcome mapping and same-loop resource cleanup evidence.
 

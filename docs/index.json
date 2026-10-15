@@ -5,6 +5,8 @@
   "base_url": "https://github.com/Blandskron/agnara/blob/develop/",
   "note": "Current canonical documentation teaching the 1.0.3 API. This is not a historical wheel inventory. Current-repository entries include unreleased fixes. Consumers must preserve version, stability and provenance fields.",
   "documents": [
+    {"id":"django-embedding","title":"Django async-view guide","path":"docs/DJANGO_EMBEDDING.md","topic":"interoperability","package":"agnara","version":"1.0.3","description":"Native async views with plain input/identity mapping and explicit application-owned lifecycle.","audience":["coding-agents","developers"],"stability":"guidance"},
+    {"id":"django-embedding-example","title":"Django async-view example","path":"examples/django_embedding.py","topic":"interoperability","package":"agnara","version":"1.0.3","description":"Optional pinned request-factory fixture, not a server lifecycle adapter.","audience":["coding-agents","developers"],"stability":"guidance"},
     {"id":"litestar-embedding","title":"Litestar embedding guide","path":"docs/LITESTAR_EMBEDDING.md","topic":"interoperability","package":"agnara","version":"1.0.3","description":"Native host identity, input/outcome mapping and same-loop resource ownership.","audience":["coding-agents","developers"],"stability":"guidance"},
     {"id":"litestar-embedding-example","title":"Litestar embedding example","path":"examples/litestar_embedding.py","topic":"interoperability","package":"agnara","version":"1.0.3","description":"Native Litestar routes around the public complete-result runtime; optional pinned host fixture.","audience":["coding-agents","developers"],"stability":"guidance"},
     {"id":"starlette-embedding","title":"Starlette embedding guide","path":"docs/STARLETTE_EMBEDDING.md","topic":"interoperability","package":"agnara","version":"1.0.3","description":"Native host identity, input/outcome mapping and same-loop resource ownership.","audience":["coding-agents","developers"],"stability":"guidance"},
@@ -59,7 +61,7 @@
     {"title":"Security model","heading":"Security model","additional":[]},
     {"title":"Lifecycle","heading":"Lifecycle","additional":[]},
     {"title":"Testing","heading":"Testing","additional":[]},
-    {"title":"Examples","heading":"Examples","additional":["examples","shared-example","embedding","starlette-embedding","litestar-embedding","persistence"]},
+    {"title":"Examples","heading":"Examples","additional":["examples","shared-example","embedding","starlette-embedding","litestar-embedding","django-embedding","persistence"]},
     {"title":"Recommended architecture","heading":"Recommended architecture","additional":[]},
     {"title":"Selection guidance","heading":"Selection guidance","additional":["selection","comparison"]},
     {"title":"Limitations","heading":"Limitations","additional":[]},

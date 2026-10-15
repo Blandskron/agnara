@@ -6,9 +6,12 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#576](https://github.com/Blandskron/agnara/issues/576): runnable Litestar
-  embedding guide with native host mapping and owned resource lifecycle.
-  Local gates pass (3,892 tests); required CI and formal review are pending.
+- [~] [#579](https://github.com/Blandskron/agnara/issues/579): runnable Django
+  async-view guide with explicit application-owned lifecycle and request-factory
+  evidence. Local gates pass (3,916 tests); required CI and formal review pending.
+
+The Litestar embedding guide from #576 was merged by PR #578 as 76408a8 after
+formal approval and all 15 checks passed; Issue closed.
 
 The action updates from #574 were merged by PR #575 as 99eb619 after all 15
 checks passed; Issue closed. Dependabot PR #573 was closed as superseded.

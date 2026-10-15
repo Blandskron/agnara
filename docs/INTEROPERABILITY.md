@@ -35,6 +35,12 @@ msgspec experiments are not packaged schema adapters.
 
 ## Validated integration evidence
 
+The [Django async-view guide](DJANGO_EMBEDDING.md) and
+[runnable example](../examples/django_embedding.py) exercise native views with
+`AsyncRequestFactory` and an explicit application-owned async lifecycle.
+Tests cover context isolation, cancellation and same-loop resource cleanup;
+this fixture bypasses URL resolution, middleware and server startup.
+
 The [Litestar embedding guide](LITESTAR_EMBEDDING.md) and its
 [runnable example](../examples/litestar_embedding.py) demonstrate native host
 identity, explicit JSON/outcome mapping and same-loop resource ownership.
