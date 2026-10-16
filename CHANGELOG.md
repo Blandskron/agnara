@@ -32,6 +32,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Run the exact FastAPI and SQLite guide sources against isolated candidate
+  wheels, checking HTTP outcomes/correlation and persisted rows, rollback and
+  ordered cleanup, with negative validation proofs.
+
 - Run the Starlette, Litestar and Django host-guide examples against isolated
   installed candidate wheels, verifying JSON outcomes, authorized effects and
   ordered cleanup with negative validation proofs.

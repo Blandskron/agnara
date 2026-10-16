@@ -86,12 +86,12 @@ every feature or version of the host product.
 them in a fresh Python 3.14 environment with first-party index access closed,
 checks public imports, and runs standalone, SQLite host, embedded FastAPI and
 side-by-side FastAPI consumers under isolated Python mode. It also copies the
-exact runnable Starlette, Litestar and Django host-guide programs into the
-external consumer directory and executes them with that environment's Python
+exact runnable FastAPI, Starlette, Litestar, Django and SQLite guide programs
+into the external consumer directory and executes them with that environment's Python
 `-I`. Existing optional host fixture versions are pinned in that environment;
 they remain outside distributable dependencies.
 
-The host-guide gate checks parsed JSON outcomes for authorized calls, policy
+The Starlette, Litestar and Django gate checks parsed JSON outcomes for authorized calls, policy
 denial, missing/unknown credentials, malformed/invalid input and native health,
 then verifies only the authorized order was recorded and audit/runtime cleanup
 occurred in order. Negative tests prove missing/duplicate cases, incorrect
@@ -100,6 +100,20 @@ candidate-wheel evidence tied to the reviewed source commit, not a claim that
 new guide behavior was tested against the already-published PyPI artifacts.
 It adds no framework plugin, network-server, production-authentication or
 durable-store support claim.
+
+The exact FastAPI guide additionally checks parsed status/JSON responses for
+scoped access, policy denial, missing/unknown credentials and native health,
+plus acceptance of bounded correlation and rejection of oversized or injected
+tokens. Its printed output does not independently prove resource cleanup;
+the example-level lifecycle tests remain the evidence for that boundary.
+The SQLite guide checks canonical success/refusal/failure/cancellation results,
+the committed row through a fresh observer, and the complete ordered port,
+transaction, runtime, session and engine trace. Denial and invalid input open
+no port; failure and cancellation leave no persisted rows. Negative validator
+tests reject changed outcomes, extra rows, commits replacing rollbacks, missing
+port cleanup and reordered runtime/session/engine shutdown. Both exact sources
+run outside the checkout under isolated Python mode with bounded timeouts and
+the existing optional fixture pins.
 
 The installed-wheel side-by-side FastAPI consumer compiles its live HTTP child
 inside the host lifespan and explicitly exchanges ASGI startup/shutdown

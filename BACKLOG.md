@@ -6,9 +6,14 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#583](https://github.com/Blandskron/agnara/issues/583): execute the Starlette,
-  Litestar and Django host guides against isolated installed candidate wheels.
-  Local gates pass (3,933 tests); required CI and formal review are pending.
+- [~] [#586](https://github.com/Blandskron/agnara/issues/586): execute the exact
+  FastAPI and SQLite guide sources against isolated installed candidate wheels,
+  with outcome/correlation and transaction/cleanup validation.
+  Local gates pass (3,958 tests); required CI and formal review are pending.
+
+The installed-wheel host-guide validation from #583 was merged by PR #585 as
+b2972f9 after all 15 checks passed; Issue closed. The recorded review identity
+remains subject to governance Issue #524.
 
 The side-by-side lifecycle correction from #581 was merged by PR #582 as
 16b4114 after formal approval and all 15 checks passed; Issue closed.
