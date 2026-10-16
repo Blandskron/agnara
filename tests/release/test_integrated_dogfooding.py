@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import json
 import os
 import shutil
@@ -13,6 +14,7 @@ from tests.architecture.boundaries import WORKSPACE_ROOT
 
 REFERENCE_APPS = WORKSPACE_ROOT / "tests" / "reference_apps"
 HOST_GUIDES = ("starlette_embedding.py", "litestar_embedding.py", "django_embedding.py")
+ADDITIONAL_GUIDES = ("fastapi_embedding.py", "sqlite_persistence.py")
 UV = shutil.which("uv")
 CANDIDATE_VERSION = tomllib.loads(
     (WORKSPACE_ROOT / "packages" / "agnara" / "pyproject.toml").read_text(encoding="utf-8")
@@ -60,6 +62,77 @@ def assert_host_guide_output(stdout: str) -> None:
         assert (int(status), json.loads(body)) == expected, label
     assert json.loads(observations["recorded orders"]) == [7]
     assert observations["cleanup"] == "['audit.close', 'runtime.close']"
+
+
+def assert_fastapi_guide_output(stdout: str) -> None:
+    """Check wire outcomes and bounded correlation, not unobserved cleanup."""
+    observations: dict[str, str] = {}
+    for line in stdout.splitlines():
+        label, separator, value = line.partition(" -> ")
+        if not separator:
+            continue  # The example ends with explanatory prose.
+        label = label.strip()
+        assert label not in observations, f"duplicate case: {label}"
+        observations[label] = value
+    cases = {
+        "authorized, scoped": (200, {"order": "A-1", "status": "shipped"}),
+        "authenticated, missing scope": (403, {"error": "forbidden"}),
+        "unknown credential": (401, {"detail": "unauthenticated"}),
+        "no credential": (401, {"detail": "unauthenticated"}),
+        "plain FastAPI route": (200, {"status": "ok"}),
+    }
+    correlation = {
+        "correlation accepted": "req-7f3a9c",
+        "correlation dropped (long)": None,
+        "correlation dropped (token)": None,
+    }
+    assert set(observations) == cases.keys() | correlation.keys()
+    for label, expected in cases.items():
+        status, separator, body = observations[label].partition(" ")
+        assert separator, f"missing response body for {label}"
+        assert (int(status), json.loads(body)) == expected, label
+    for label, expected_correlation in correlation.items():
+        assert ast.literal_eval(observations[label]) == expected_correlation, label
+
+
+def assert_sqlite_guide_output(stdout: str) -> None:
+    """Check durable rows, refusals, rollback and the complete ownership trace."""
+    observations: dict[str, str] = {}
+    for line in stdout.splitlines():
+        label, separator, value = line.partition(": ")
+        assert separator and label not in observations, f"invalid/duplicate case: {line!r}"
+        observations[label] = value
+    outcomes = {
+        "success": "committed",
+        "denied": "forbidden",
+        "invalid": "invalid_input",
+        "failed": "internal_failure",
+        "cancelled": "CancelledError",
+    }
+    assert set(observations) == outcomes.keys() | {"persisted", "events"}
+    for label, expected in outcomes.items():
+        assert observations[label] == expected, label
+    assert ast.literal_eval(observations["persisted"]) == ("committed",)
+    assert ast.literal_eval(observations["events"]) == [
+        "session.open",
+        "port.open",
+        "write:committed",
+        "port.close",
+        "host.commit",
+        "host.rollback",  # Denial does not acquire a port.
+        "host.rollback",  # Invalid input does not acquire a port.
+        "port.open",
+        "write:rolled-back",
+        "port.close",
+        "host.rollback",
+        "port.open",
+        "write:cancelled",
+        "port.close",
+        "host.rollback",
+        "runtime.close",
+        "session.close",
+        "engine.dispose",
+    ]
 
 
 def test_reference_apps_run_from_fresh_installed_artifacts(tmp_path: Path) -> None:
@@ -116,7 +189,7 @@ def test_reference_apps_run_from_fresh_installed_artifacts(tmp_path: Path) -> No
     )
 
     shutil.copytree(REFERENCE_APPS, consumers)
-    for guide in HOST_GUIDES:
+    for guide in (*HOST_GUIDES, *ADDITIONAL_GUIDES):
         shutil.copy2(WORKSPACE_ROOT / "examples" / guide, consumers / guide)
     _run(
         [
@@ -161,7 +234,12 @@ def test_reference_apps_run_from_fresh_installed_artifacts(tmp_path: Path) -> No
         )
         assert marker in completed.stdout
 
-    for guide in HOST_GUIDES:
+    validators = {
+        **dict.fromkeys(HOST_GUIDES, assert_host_guide_output),
+        "fastapi_embedding.py": assert_fastapi_guide_output,
+        "sqlite_persistence.py": assert_sqlite_guide_output,
+    }
+    for guide, validate in validators.items():
         completed = subprocess.run(
             [str(python), "-I", str(consumers / guide)],
             cwd=tmp_path,
@@ -174,4 +252,4 @@ def test_reference_apps_run_from_fresh_installed_artifacts(tmp_path: Path) -> No
         assert completed.returncode == 0, (
             f"{guide} failed:\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}"
         )
-        assert_host_guide_output(completed.stdout)
+        validate(completed.stdout)
