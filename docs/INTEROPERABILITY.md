@@ -201,6 +201,19 @@ demonstration's owner remain separate checkout evidence. These are cooperative
 local async fixture checks against candidate wheels, not preemptive deadlines,
 hard timing guarantees, network cancellation or published-PyPI regression evidence.
 
+The lane also loads the unchanged [confirmation guide](../examples/confirmation.py)
+from the external directory under Python `-I`, with bounded execution and module
+registration for deferred dataclass annotations. It checks all nine ordered
+outcomes, complete interaction-required envelopes, caller-safe rejection details
+and the exact approved value/resource/archive/close trace. Metadata flags,
+forged references, changed input, another actor, lost scope, replay and inclusive
+expiry produce no additional effects. Negative tests reject changed outcomes,
+interaction envelopes, diagnostic/reference leaks and missing/reordered cleanup.
+No tasks survive. This is single-event-loop demonstration authority evidence
+against candidate wheels, not authenticated human approval or a durable,
+multi-process authority. The broader exact-binding/atomic contender tests and
+verifier-exception redaction remain separate checkout evidence.
+
 The installed-wheel side-by-side FastAPI consumer compiles its live HTTP child
 inside the host lifespan and explicitly exchanges ASGI startup/shutdown
 messages through an owned task group with bounded handshake waits.
