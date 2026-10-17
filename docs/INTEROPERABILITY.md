@@ -161,6 +161,19 @@ and cancellation. This is standard-adapter candidate-wheel evidence at explicit
 Python/JSON boundaries, not a new schema adapter, transport conformance claim
 or a test against the published PyPI baseline.
 
+The lane also loads the unchanged [dependency guide](../examples/dependencies.py)
+from the external directory under Python `-I`, with bounded execution. It checks
+success/refusal/error outcomes, input error paths and redacted failure details,
+the complete ordered provider/handler trace, singleton reuse, distinct invocation
+objects, shared session identity across provider branches and closed resource
+flags. Negative tests reject changed outcomes, diagnostic leaks, unexpected
+effects, missing/reordered cleanup, wrong resource counts/identity and unclosed
+resources. No tasks survive the demonstration. The example's owner-cancellation
+test remains separate checkout evidence; this consumer exercises normal owner
+shutdown after success, refusal and handler failure. These are local resource
+fixtures against candidate wheels, not database integration or a published-PyPI
+regression claim.
+
 The installed-wheel side-by-side FastAPI consumer compiles its live HTTP child
 inside the host lifespan and explicitly exchanges ASGI startup/shutdown
 messages through an owned task group with bounded handshake waits.

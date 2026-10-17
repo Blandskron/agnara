@@ -6,10 +6,14 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#594](https://github.com/Blandskron/agnara/issues/594): execute the exact
-  schema-contracts guide against isolated installed candidate wheels, validating
-  typed Python/JSON outcomes, error paths, identity and compiled schemas.
-  Local gates pass (4,042 tests); required CI and formal review are pending.
+- [~] [#596](https://github.com/Blandskron/agnara/issues/596): execute the exact
+  dependency lifecycle guide against isolated installed candidate wheels,
+  validating outcomes, resource identity, reuse and ordered cleanup.
+  Local gates pass (4,064 tests); required CI and formal review are pending.
+
+The installed-wheel schema guide validation from #594 was merged by PR #595
+as c3f14ee after all 15 checks passed; Issue closed. The recorded approval actor
+was blandskron-AI; the former #524 did not independently reconcile that identity.
 
 The release SHA-mismatch regression from #592 was merged by PR #593 as
 da020c0 after all 15 checks passed; Issue closed. The recorded review identity

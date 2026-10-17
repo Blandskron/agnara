@@ -32,6 +32,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Run the exact dependency lifecycle guide against isolated candidate wheels,
+  checking outcomes, singleton reuse, invocation resource identity and ordered
+  cleanup with negative validation proofs.
+
 - Run the exact schema-contracts guide against isolated candidate wheels,
   checking typed Python/JSON results, input identity, error paths/redaction and
   compiled schemas with negative validation proofs.
