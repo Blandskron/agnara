@@ -7,9 +7,9 @@ Do not accumulate completed-task chronology in this file.
 
 ## In progress
 
-- [~] [#604](https://github.com/Blandskron/agnara/issues/604): prune obsolete API
-  sketches, duplicate architecture prose and completed-task context; align active
-  navigation with canonical current contracts and regenerate agent documentation.
+- [~] [#606](https://github.com/Blandskron/agnara/issues/606): validate the exact
+  filtered-introspection guide against isolated candidate wheels, including
+  publication redaction, detached JSON and independent invocation authority.
 
 ## Future work requiring a scoped Issue and review
 

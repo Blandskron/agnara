@@ -32,41 +32,12 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
-- Run the exact confirmation guide against isolated candidate wheels, checking
-  verifier-backed outcomes, interaction envelopes, rejected approval attempts
-  and ordered approved effects with negative validation proofs.
-
-- Run the exact deadline/cancellation guide against isolated candidate wheels,
-  checking canonical outcomes, propagated cancellation and ordered handler/resource
-  teardown with negative validation proofs.
-
-- Run the exact invocation telemetry guide against isolated candidate wheels,
-  checking event pairing and identities, observer failure isolation, cancellation
-  and payload privacy with negative validation proofs.
-
-- Run the exact dependency lifecycle guide against isolated candidate wheels,
-  checking outcomes, singleton reuse, invocation resource identity and ordered
-  cleanup with negative validation proofs.
-
-- Run the exact schema-contracts guide against isolated candidate wheels,
-  checking typed Python/JSON results, input identity, error paths/redaction and
-  compiled schemas with negative validation proofs.
-
-- Run the exact HTTP SSE guide against isolated candidate wheels, independently
-  validating wire frames, terminal/problem outcomes, disconnect, empty streams
-  and ordered producer/provider cleanup with negative validation proofs.
-
-- Run the exact MCP tools guide against isolated candidate wheels and the
-  pinned official client, verifying SDK discovery/results, rejected-call effects
-  and connection/provider cleanup with negative validation proofs.
-
-- Run the exact FastAPI and SQLite guide sources against isolated candidate
-  wheels, checking HTTP outcomes/correlation and persisted rows, rollback and
-  ordered cleanup, with negative validation proofs.
-
-- Run the Starlette, Litestar and Django host-guide examples against isolated
-  installed candidate wheels, verifying JSON outcomes, authorized effects and
-  ordered cleanup with negative validation proofs.
+- Validate exact runnable guides against isolated candidate wheels: host
+  embeddings and SQLite persistence, MCP, HTTP SSE, schemas, dependency lifecycle,
+  telemetry, deadlines/cancellation, confirmation and filtered introspection.
+  Check observable outcomes, refusal/redaction, identity, detached publications
+  and owned teardown with negative regression proofs; keep evidence boundaries
+  in the interoperability coverage table.
 
 - Runnable Django async-view guide with explicit application-owned lifecycle,
   host identity/outcome mapping and request-factory cleanup evidence.
