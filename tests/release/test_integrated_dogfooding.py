@@ -19,6 +19,7 @@ STRUCTURED_GUIDES = (
     ("mcp_tools.py", "mcp_guide.py", "MCP_GUIDE_ARTIFACT_OK"),
     ("http_sse.py", "sse_guide.py", "SSE_GUIDE_ARTIFACT_OK"),
     ("schema_contracts.py", "schema_guide.py", "SCHEMA_GUIDE_ARTIFACT_OK"),
+    ("dependencies.py", "dependencies_guide.py", "DEPENDENCIES_GUIDE_ARTIFACT_OK"),
 )
 UV = shutil.which("uv")
 CANDIDATE_VERSION = tomllib.loads(
