@@ -3,6 +3,10 @@
 RFCs hold design questions. An answered question points to its ADR; current
 implementation status is owned by `docs/MATURITY.md`.
 
+Proposal context in a numbered RFC describes the system at the time it was
+written. Use its answering ADRs and the maturity matrix for current behavior;
+superseded examples in a proposal are not application instructions.
+
 | RFC | Subject | Current state |
 | --- | --- | --- |
 | 0001 | Capability runtime | Implemented; architecture and runtime tests are authoritative. |

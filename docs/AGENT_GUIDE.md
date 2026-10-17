@@ -191,8 +191,9 @@ describes current development; the immutable release answers historical claims.
 
 [public-api.json](public-api.json) owns canonical imports and stability;
 [API_REFERENCE.md](API_REFERENCE.md) is generated from it. Neither is a call
-signature reference: use the runnable guide for each call. `API_DESIGN.md`
-contains labeled future sketches and must not be copied as application syntax.
+signature reference: use the runnable guide for each call. [API design](API_DESIGN.md)
+records current design constraints and links to those guides; future proposals
+belong in scoped RFCs rather than usage examples.
 After reading docs, verify an import and call in the installed environment.
 If it fails, investigate the version/API boundary instead of inventing a name.
 

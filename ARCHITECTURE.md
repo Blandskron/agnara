@@ -704,8 +704,9 @@ the app requires and remains internal.
 
 Importing a contract is not invoking a capability. Directly calling another
 app's handler bypasses its compiled policy, dependency, deadline, telemetry
-and failure boundaries. Internal capability invocation remains a separate
-research decision under initiative I8.
+and failure boundaries. ADR 0093 implements complete-result nested invocation
+within one compiled application snapshot; see `docs/NESTED_INVOCATION.md`.
+Cross-application invocation and delegated authority remain unsupported.
 
 Generated projects enforce these directions with a static architecture test
 that resolves both absolute and relative imports without importing application

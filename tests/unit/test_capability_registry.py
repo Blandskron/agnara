@@ -98,7 +98,7 @@ class TestLookup:
         assert CapabilityRegistry([REFUND])[CapabilityId("payments", "refund")] is REFUND
 
     def test_by_dotted_string(self) -> None:
-        """docs/API_DESIGN.md section 17 shows string lookup."""
+        """The registry accepts a capability's dotted-string identity."""
         assert CapabilityRegistry([REFUND])["payments.refund"] is REFUND
 
     def test_containment_by_both_key_types(self) -> None:

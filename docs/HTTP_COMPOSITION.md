@@ -5,7 +5,7 @@ API. Every import on this page is one an application may write; nothing here
 reaches into an underscore-prefixed module, and
 `tests/architecture/test_public_http_surface.py` fails if this page ever does.
 
-`docs/API_DESIGN.md` owns the intended shape of the API and
+`docs/API_DESIGN.md` records public design constraints and
 `docs/PUBLIC_API.md` owns its stability. This page owns the supported path and
 its limits.
 

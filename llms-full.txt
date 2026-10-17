@@ -449,7 +449,7 @@ API. Every import on this page is one an application may write; nothing here
 reaches into an underscore-prefixed module, and
 `tests/architecture/test_public_http_surface.py` fails if this page ever does.
 
-`docs/API_DESIGN.md` owns the intended shape of the API and
+`docs/API_DESIGN.md` records public design constraints and
 `docs/PUBLIC_API.md` owns its stability. This page owns the supported path and
 its limits.
 
@@ -2354,8 +2354,9 @@ Source: [docs/AGENT_GUIDE.md](docs/AGENT_GUIDE.md); baseline 1.0.3.
 
 [public-api.json](docs/public-api.json) owns canonical imports and stability;
 [API_REFERENCE.md](docs/API_REFERENCE.md) is generated from it. Neither is a call
-signature reference: use the runnable guide for each call. `API_DESIGN.md`
-contains labeled future sketches and must not be copied as application syntax.
+signature reference: use the runnable guide for each call. [API design](docs/API_DESIGN.md)
+records current design constraints and links to those guides; future proposals
+belong in scoped RFCs rather than usage examples.
 After reading docs, verify an import and call in the installed environment.
 If it fails, investigate the version/API boundary instead of inventing a name.
 
