@@ -6,10 +6,14 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#588](https://github.com/Blandskron/agnara/issues/588): execute the exact
-  MCP tools guide against isolated installed candidate wheels, validating SDK
-  discovery/results, rejected-call effects and owned connection/resource cleanup.
-  Local gates pass (3,982 tests); required CI and formal review are pending.
+- [~] [#590](https://github.com/Blandskron/agnara/issues/590): execute the exact
+  HTTP SSE guide against isolated installed candidate wheels, validating wire
+  frames, outcomes, disconnect and ordered producer/provider cleanup.
+  Local gates pass (4,019 tests); required CI and formal review are pending.
+
+The installed-wheel MCP guide validation from #588 was merged by PR #589 as
+6299a65 after all 15 checks passed; Issue closed. The recorded review identity
+remains subject to governance Issue #524.
 
 The installed-wheel FastAPI and SQLite guide validation from #586 was merged
 by PR #587 as ce49536 after all 15 checks passed; Issue closed. The recorded
