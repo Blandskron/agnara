@@ -15,6 +15,11 @@ from tests.architecture.boundaries import WORKSPACE_ROOT
 REFERENCE_APPS = WORKSPACE_ROOT / "tests" / "reference_apps"
 HOST_GUIDES = ("starlette_embedding.py", "litestar_embedding.py", "django_embedding.py")
 ADDITIONAL_GUIDES = ("fastapi_embedding.py", "sqlite_persistence.py")
+STRUCTURED_GUIDES = (
+    ("mcp_tools.py", "mcp_guide.py", "MCP_GUIDE_ARTIFACT_OK"),
+    ("http_sse.py", "sse_guide.py", "SSE_GUIDE_ARTIFACT_OK"),
+    ("schema_contracts.py", "schema_guide.py", "SCHEMA_GUIDE_ARTIFACT_OK"),
+)
 UV = shutil.which("uv")
 CANDIDATE_VERSION = tomllib.loads(
     (WORKSPACE_ROOT / "packages" / "agnara" / "pyproject.toml").read_text(encoding="utf-8")
@@ -189,7 +194,9 @@ def test_reference_apps_run_from_fresh_installed_artifacts(tmp_path: Path) -> No
     )
 
     shutil.copytree(REFERENCE_APPS, consumers)
-    for guide in (*HOST_GUIDES, *ADDITIONAL_GUIDES, "mcp_tools.py", "http_sse.py"):
+    for guide in (*HOST_GUIDES, *ADDITIONAL_GUIDES):
+        shutil.copy2(WORKSPACE_ROOT / "examples" / guide, consumers / guide)
+    for guide, _, _ in STRUCTURED_GUIDES:
         shutil.copy2(WORKSPACE_ROOT / "examples" / guide, consumers / guide)
     _run(
         [
@@ -234,33 +241,20 @@ def test_reference_apps_run_from_fresh_installed_artifacts(tmp_path: Path) -> No
         )
         assert marker in completed.stdout
 
-    completed = subprocess.run(
-        [str(python), "-I", str(consumers / "mcp_guide.py"), str(consumers / "mcp_tools.py")],
-        cwd=tmp_path,
-        env=env,
-        text=True,
-        capture_output=True,
-        check=False,
-        timeout=30,
-    )
-    assert completed.returncode == 0, (
-        f"MCP guide failed:\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}"
-    )
-    assert completed.stdout.splitlines() == ["MCP_GUIDE_ARTIFACT_OK"]
-
-    completed = subprocess.run(
-        [str(python), "-I", str(consumers / "sse_guide.py"), str(consumers / "http_sse.py")],
-        cwd=tmp_path,
-        env=env,
-        text=True,
-        capture_output=True,
-        check=False,
-        timeout=30,
-    )
-    assert completed.returncode == 0, (
-        f"SSE guide failed:\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}"
-    )
-    assert completed.stdout.splitlines() == ["SSE_GUIDE_ARTIFACT_OK"]
+    for guide, consumer, marker in STRUCTURED_GUIDES:
+        completed = subprocess.run(
+            [str(python), "-I", str(consumers / consumer), str(consumers / guide)],
+            cwd=tmp_path,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=30,
+        )
+        assert completed.returncode == 0, (
+            f"{guide} failed:\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}"
+        )
+        assert completed.stdout.splitlines() == [marker]
 
     validators = {
         **dict.fromkeys(HOST_GUIDES, assert_host_guide_output),

@@ -6,10 +6,14 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#592](https://github.com/Blandskron/agnara/issues/592): cover mismatched
-  retained-artifact and workflow-run SHAs in release precondition tests.
-  Local gates pass (4,021 tests); both regressions detect removal of the SHA
-  equality guard. Required CI and formal review are pending.
+- [~] [#594](https://github.com/Blandskron/agnara/issues/594): execute the exact
+  schema-contracts guide against isolated installed candidate wheels, validating
+  typed Python/JSON outcomes, error paths, identity and compiled schemas.
+  Local gates pass (4,042 tests); required CI and formal review are pending.
+
+The release SHA-mismatch regression from #592 was merged by PR #593 as
+da020c0 after all 15 checks passed; Issue closed. The recorded review identity
+was not independently reconciled by #524, closed as not planned on request.
 
 The installed-wheel SSE guide validation from #590 was merged by PR #591 as
 90e913e after all 15 checks passed; Issue closed. The recorded review identity

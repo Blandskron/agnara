@@ -145,6 +145,22 @@ catch escaped text. This is bounded in-memory ASGI evidence against candidate
 wheels, not network chunk parsing, socket/server,
 reconnect, replay or deployment evidence.
 
+The lane also loads the exact
+[schema-contracts guide source](../examples/schema_contracts.py) from the copied
+external directory under Python `-I`, keeping its module registered while the
+dataclass annotations resolve. The consumer checks typed direct/JSON/default
+successes, successful-value JSON serialization, direct input identity versus
+detached JSON objects, unchanged wire input and exact handler events. It checks
+denial, strict direct-mapping refusal, nested error paths, boolean/extra-field/
+enum refusals, output redaction, unconstrained annotation-only output and the
+demonstrated compiled input/output schemas. Negative tests reject changed
+outcomes/paths, weakened schemas, unexpected effects, wrong identity and leaked
+diagnostics. It checks that no tasks survive; the existing example tests remain
+the separate evidence for container closure, policy-before-materialization order
+and cancellation. This is standard-adapter candidate-wheel evidence at explicit
+Python/JSON boundaries, not a new schema adapter, transport conformance claim
+or a test against the published PyPI baseline.
+
 The installed-wheel side-by-side FastAPI consumer compiles its live HTTP child
 inside the host lifespan and explicitly exchanges ASGI startup/shutdown
 messages through an owned task group with bounded handshake waits.
