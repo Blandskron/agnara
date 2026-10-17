@@ -6,10 +6,15 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#596](https://github.com/Blandskron/agnara/issues/596): execute the exact
-  dependency lifecycle guide against isolated installed candidate wheels,
-  validating outcomes, resource identity, reuse and ordered cleanup.
-  Local gates pass (4,064 tests); required CI and formal review are pending.
+- [~] [#598](https://github.com/Blandskron/agnara/issues/598): execute the exact
+  invocation telemetry guide against isolated installed candidate wheels,
+  validating outcomes, event pairing/identity, observer isolation and privacy.
+  Local gates pass (4,099 tests); required CI and formal review are pending.
+
+The installed-wheel dependency guide validation from #596 was merged by PR #597
+as f5c0fe7 after all 15 checks passed; Issue closed after maintainer confirmation
+of the merge. The API reviewer request was rejected because the available
+client created the PR under the requested reviewer's account.
 
 The installed-wheel schema guide validation from #594 was merged by PR #595
 as c3f14ee after all 15 checks passed; Issue closed. The recorded approval actor
