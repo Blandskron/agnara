@@ -6,10 +6,16 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#600](https://github.com/Blandskron/agnara/issues/600): execute the exact
-  deadline/cancellation guide against isolated installed candidate wheels,
-  validating canonical outcomes, propagated cancellation and ordered teardown.
-  Local gates pass (4,116 tests); required CI and formal review are pending.
+- [~] [#602](https://github.com/Blandskron/agnara/issues/602): execute the exact
+  confirmation guide against isolated installed candidate wheels, validating
+  verification/refusal outcomes, interaction envelopes and ordered approved effects.
+  Local gates pass (4,151 tests); required CI and formal review are pending.
+
+The installed-wheel deadline guide validation from #600 was merged by PR #601
+as 1efceb7 after all 15 checks passed; Issue closed. A targeted lockfile-job retry
+resolved inconsistent GitHub status without code changes. The API reviewer
+request was rejected because the available client created the PR under the
+requested reviewer's account.
 
 The installed-wheel telemetry guide validation from #598 was merged by PR #599
 as 752c747 after all 15 checks passed; Issue closed after maintainer confirmation

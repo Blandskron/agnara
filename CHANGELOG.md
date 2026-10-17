@@ -32,6 +32,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Run the exact confirmation guide against isolated candidate wheels, checking
+  verifier-backed outcomes, interaction envelopes, rejected approval attempts
+  and ordered approved effects with negative validation proofs.
+
 - Run the exact deadline/cancellation guide against isolated candidate wheels,
   checking canonical outcomes, propagated cancellation and ordered handler/resource
   teardown with negative validation proofs.
