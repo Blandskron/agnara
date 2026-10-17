@@ -129,6 +129,22 @@ effects and missing/reordered cleanup. This is anonymous in-process dispatcher
 evidence against candidate wheels; it does not test sockets, JSON-RPC framing,
 OAuth, network transport or additional MCP features.
 
+The same installed-wheel lane copies the exact
+[HTTP SSE guide source](../examples/http_sse.py) and runs a self-contained
+external consumer under Python `-I` with a bounded timeout. It exercises the six
+demonstration cases and the original empty-stream path. An independent decoder
+checks complete captured SSE frames against the guide's structured observations,
+including exact units, terminal outcomes/counts, ordinary pre-stream problems,
+redacted first/late failures and terminal-free disconnect. It also checks
+headers, producer/provider lifecycle order, no resource acquisition on refusal,
+no prefetch after disconnect and no surviving ASGI/lifespan tasks. Negative
+tests reject corrupt frames/results/headers, unsupported or duplicate events,
+diagnostic leaks and missing/reordered cleanup. JSON booleans cannot substitute
+for integer units/counts, and diagnostic checks also inspect decoded JSON to
+catch escaped text. This is bounded in-memory ASGI evidence against candidate
+wheels, not network chunk parsing, socket/server,
+reconnect, replay or deployment evidence.
+
 The installed-wheel side-by-side FastAPI consumer compiles its live HTTP child
 inside the host lifespan and explicitly exchanges ASGI startup/shutdown
 messages through an owned task group with bounded handshake waits.
