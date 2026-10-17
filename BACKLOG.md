@@ -6,10 +6,14 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#590](https://github.com/Blandskron/agnara/issues/590): execute the exact
-  HTTP SSE guide against isolated installed candidate wheels, validating wire
-  frames, outcomes, disconnect and ordered producer/provider cleanup.
-  Local gates pass (4,019 tests); required CI and formal review are pending.
+- [~] [#592](https://github.com/Blandskron/agnara/issues/592): cover mismatched
+  retained-artifact and workflow-run SHAs in release precondition tests.
+  Local gates pass (4,021 tests); both regressions detect removal of the SHA
+  equality guard. Required CI and formal review are pending.
+
+The installed-wheel SSE guide validation from #590 was merged by PR #591 as
+90e913e after all 15 checks passed; Issue closed. The recorded review identity
+remains subject to governance Issue #524.
 
 The installed-wheel MCP guide validation from #588 was merged by PR #589 as
 6299a65 after all 15 checks passed; Issue closed. The recorded review identity
