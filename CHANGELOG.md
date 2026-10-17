@@ -32,6 +32,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Run the exact invocation telemetry guide against isolated candidate wheels,
+  checking event pairing and identities, observer failure isolation, cancellation
+  and payload privacy with negative validation proofs.
+
 - Run the exact dependency lifecycle guide against isolated candidate wheels,
   checking outcomes, singleton reuse, invocation resource identity and ordered
   cleanup with negative validation proofs.

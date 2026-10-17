@@ -174,6 +174,19 @@ shutdown after success, refusal and handler failure. These are local resource
 fixtures against candidate wheels, not database integration or a published-PyPI
 regression claim.
 
+The lane also loads the unchanged
+[local telemetry guide](../examples/invocation_telemetry.py) under Python `-I`
+from the external directory with bounded execution. It checks six outcomes,
+failure paths/redaction, observer failure isolation, exact handler effects,
+paired start/terminal events, unique attempt/execution IDs and their shared
+correlation label. It verifies complete event field sets, terminal durations
+and counts, absence of payloads/private diagnostics in events, empty pending
+state and no surviving tasks. Negative tests reject changed results, pairing,
+identities, terminal metadata, private values and incomplete observer state.
+This is local synchronous observer evidence against candidate wheels; container
+closure remains separate checkout evidence. It does not exercise exporters,
+OpenTelemetry integration or production collector synchronization/retention.
+
 The installed-wheel side-by-side FastAPI consumer compiles its live HTTP child
 inside the host lifespan and explicitly exchanges ASGI startup/shutdown
 messages through an owned task group with bounded handshake waits.
