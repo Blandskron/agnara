@@ -115,6 +115,20 @@ port cleanup and reordered runtime/session/engine shutdown. Both exact sources
 run outside the checkout under isolated Python mode with bounded timeouts and
 the existing optional fixture pins.
 
+The installed-wheel lane also copies the exact
+[MCP tools guide source](../examples/mcp_tools.py). A separate external consumer
+loads that copied source and calls its demonstration through the pinned
+official client under Python `-I`, with an overall subprocess timeout. It checks
+SDK discovery order, private zero-TTL listing, the closed input schema without
+DI parameters, success/recovery text and structured envelopes, refusal/error
+codes, diagnostic redaction, unknown-tool protocol errors and no effects from
+rejected calls. It checks the complete ordered provider/handler effect trace
+and that no connection tasks survive the demonstration. Negative tests reject
+weakened discovery/schema, changed envelopes/codes, leaked diagnostics, forbidden
+effects and missing/reordered cleanup. This is anonymous in-process dispatcher
+evidence against candidate wheels; it does not test sockets, JSON-RPC framing,
+OAuth, network transport or additional MCP features.
+
 The installed-wheel side-by-side FastAPI consumer compiles its live HTTP child
 inside the host lifespan and explicitly exchanges ASGI startup/shutdown
 messages through an owned task group with bounded handshake waits.

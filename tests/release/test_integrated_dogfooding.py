@@ -189,7 +189,7 @@ def test_reference_apps_run_from_fresh_installed_artifacts(tmp_path: Path) -> No
     )
 
     shutil.copytree(REFERENCE_APPS, consumers)
-    for guide in (*HOST_GUIDES, *ADDITIONAL_GUIDES):
+    for guide in (*HOST_GUIDES, *ADDITIONAL_GUIDES, "mcp_tools.py"):
         shutil.copy2(WORKSPACE_ROOT / "examples" / guide, consumers / guide)
     _run(
         [
@@ -233,6 +233,20 @@ def test_reference_apps_run_from_fresh_installed_artifacts(tmp_path: Path) -> No
             f"{script} failed:\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}"
         )
         assert marker in completed.stdout
+
+    completed = subprocess.run(
+        [str(python), "-I", str(consumers / "mcp_guide.py"), str(consumers / "mcp_tools.py")],
+        cwd=tmp_path,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=30,
+    )
+    assert completed.returncode == 0, (
+        f"MCP guide failed:\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}"
+    )
+    assert completed.stdout.splitlines() == ["MCP_GUIDE_ARTIFACT_OK"]
 
     validators = {
         **dict.fromkeys(HOST_GUIDES, assert_host_guide_output),
