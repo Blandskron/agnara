@@ -21,6 +21,7 @@ STRUCTURED_GUIDES = (
     ("schema_contracts.py", "schema_guide.py", "SCHEMA_GUIDE_ARTIFACT_OK"),
     ("dependencies.py", "dependencies_guide.py", "DEPENDENCIES_GUIDE_ARTIFACT_OK"),
     ("invocation_telemetry.py", "telemetry_guide.py", "TELEMETRY_GUIDE_ARTIFACT_OK"),
+    ("deadlines.py", "deadlines_guide.py", "DEADLINES_GUIDE_ARTIFACT_OK"),
 )
 UV = shutil.which("uv")
 CANDIDATE_VERSION = tomllib.loads(

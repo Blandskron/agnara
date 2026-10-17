@@ -187,6 +187,20 @@ This is local synchronous observer evidence against candidate wheels; container
 closure remains separate checkout evidence. It does not exercise exporters,
 OpenTelemetry integration or production collector synchronization/retention.
 
+The lane also loads the unchanged [deadline guide](../examples/deadlines.py)
+from the external directory under Python `-I` with bounded execution. It checks
+exact success, forbidden, canonical timeout and propagated child-cancellation
+outcomes, including failure messages and empty details, and the complete ordered
+handler/provider trace. Success, an expired deadline and caller cancellation
+each exit the handler before closing its resource; denial acquires nothing.
+The expired deadline deliberately allows synchronous entry before cancellation
+at the first suspension. Negative tests reject changed/missing outcomes,
+diagnostics, cancellation translated to a result, extra effects and missing or
+reordered teardown. No tasks survive. Container closure and cancellation of the
+demonstration's owner remain separate checkout evidence. These are cooperative
+local async fixture checks against candidate wheels, not preemptive deadlines,
+hard timing guarantees, network cancellation or published-PyPI regression evidence.
+
 The installed-wheel side-by-side FastAPI consumer compiles its live HTTP child
 inside the host lifespan and explicitly exchanges ASGI startup/shutdown
 messages through an owned task group with bounded handshake waits.
