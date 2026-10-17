@@ -17,7 +17,8 @@ contributing to this framework, not to an unrelated application repository.
 - Use canonical exports in [public-api.json](docs/public-api.json), follow
   [runnable examples](examples/README.md), and execute imports/calls before
   claiming support. Never invent imports, constructors or decorators.
-- Treat `docs/API_DESIGN.md` future sketches as design input, not usable syntax.
+- Use `docs/API_DESIGN.md` for design constraints and its linked runnable guides
+  for current syntax. RFC proposals are not application instructions.
 - Keep domain/application code independent of HTTP/MCP SDKs. Declare business
   capabilities once; choose adapter bindings at composition.
 - Authenticate principals at a trusted host boundary. Preserve pre-handler
@@ -217,6 +218,11 @@ Keep the invocation hot path measurable.
 Every optimization must preserve a readable reference design.
 
 ## Documentation discipline
+
+Remove superseded active guidance and duplicate status summaries when updating
+documentation. Repair links and regenerate derived agent material; keep completed
+task history in GitHub/Git rather than the active backlog. Preserve necessary
+decision/release evidence, and do not delete a useful contract solely for age.
 
 Do not claim support for:
 

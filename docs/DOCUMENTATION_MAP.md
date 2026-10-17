@@ -38,14 +38,13 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 
 - [Principles](../PRINCIPLES.md)
 - [Architecture](../ARCHITECTURE.md)
-- [Target architecture](TARGET_ARCHITECTURE.md)
 - [Decision records](adr/README.md) and [open research](rfc/README.md)
 
 ## PUBLIC API
 
 - [Compatibility policy](PUBLIC_API.md)
 - [Generated API reference](API_REFERENCE.md)
-- [Current design contracts and labeled future sketches](API_DESIGN.md)
+- [API design constraints and current usage references](API_DESIGN.md)
 - [Exact manifest](public-api.json)
 
 ## SECURITY
@@ -107,3 +106,9 @@ One source owns each claim: `docs/MATURITY.md` owns implementation status,
 definitions, and `docs/releases/release-status.json` owns target evidence.
 Never revive superseded release documentation into current context unless a
 task explicitly requires historical research.
+
+When updating documentation, remove superseded instructions and duplicate
+status summaries, then repair links and regenerate the agent corpus where
+needed. Keep pending work in the backlog and completed-work evidence in GitHub
+and Git history. Retain decision records and publication evidence that still
+explain contracts; do not delete useful guidance solely because of its age.
