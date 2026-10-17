@@ -32,6 +32,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Run the exact MCP tools guide against isolated candidate wheels and the
+  pinned official client, verifying SDK discovery/results, rejected-call effects
+  and connection/provider cleanup with negative validation proofs.
+
 - Run the exact FastAPI and SQLite guide sources against isolated candidate
   wheels, checking HTTP outcomes/correlation and persisted rows, rollback and
   ordered cleanup, with negative validation proofs.
