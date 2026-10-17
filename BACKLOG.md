@@ -6,10 +6,15 @@ completed work remains available through Git history and closed Issues. The
 
 ## In progress
 
-- [~] [#598](https://github.com/Blandskron/agnara/issues/598): execute the exact
-  invocation telemetry guide against isolated installed candidate wheels,
-  validating outcomes, event pairing/identity, observer isolation and privacy.
-  Local gates pass (4,099 tests); required CI and formal review are pending.
+- [~] [#600](https://github.com/Blandskron/agnara/issues/600): execute the exact
+  deadline/cancellation guide against isolated installed candidate wheels,
+  validating canonical outcomes, propagated cancellation and ordered teardown.
+  Local gates pass (4,116 tests); required CI and formal review are pending.
+
+The installed-wheel telemetry guide validation from #598 was merged by PR #599
+as 752c747 after all 15 checks passed; Issue closed after maintainer confirmation
+of the merge. The API reviewer request was rejected because the available
+client created the PR under the requested reviewer's account.
 
 The installed-wheel dependency guide validation from #596 was merged by PR #597
 as f5c0fe7 after all 15 checks passed; Issue closed after maintainer confirmation
