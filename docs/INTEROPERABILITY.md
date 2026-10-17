@@ -82,137 +82,44 @@ every feature or version of the host product.
 | `tests/conformance/test_host_harness.py` | Shared lifecycle, context, policy and cleanup assertions across host fixtures. | A fixture is not a support tier. |
 | `tests/integration/test_surface_agreement.py` | Direct, HTTP and MCP projections of the same capability. | Transport policy cannot weaken core policy. |
 
-`tests/release/test_integrated_dogfooding.py` builds all seven wheels, installs
-them in a fresh Python 3.14 environment with first-party index access closed,
-checks public imports, and runs standalone, SQLite host, embedded FastAPI and
-side-by-side FastAPI consumers under isolated Python mode. It also copies the
-exact runnable FastAPI, Starlette, Litestar, Django and SQLite guide programs
-into the external consumer directory and executes them with that environment's Python
-`-I`. Existing optional host fixture versions are pinned in that environment;
-they remain outside distributable dependencies.
+## Installed candidate-wheel guide coverage
 
-The Starlette, Litestar and Django gate checks parsed JSON outcomes for authorized calls, policy
-denial, missing/unknown credentials, malformed/invalid input and native health,
-then verifies only the authorized order was recorded and audit/runtime cleanup
-occurred in order. Negative tests prove missing/duplicate cases, incorrect
-statuses/bodies, extra effects and broken cleanup fail the gate. This is
-candidate-wheel evidence tied to the reviewed source commit, not a claim that
-new guide behavior was tested against the already-published PyPI artifacts.
-It adds no framework plugin, network-server, production-authentication or
-durable-store support claim.
+`tests/release/test_integrated_dogfooding.py` builds all seven candidate wheels,
+installs them together in a fresh Python 3.14 environment with first-party index
+access closed, audits public imports and verifies installed-package provenance.
+It runs standalone, SQLite host, embedded and side-by-side FastAPI consumers,
+then copies the exact guide sources into an external directory and runs them
+under Python `-I` with bounded subprocess timeouts. Optional host/SDK fixture
+versions stay pinned outside distributable dependencies.
 
-The exact FastAPI guide additionally checks parsed status/JSON responses for
-scoped access, policy denial, missing/unknown credentials and native health,
-plus acceptance of bounded correlation and rejection of oversized or injected
-tokens. Its printed output does not independently prove resource cleanup;
-the example-level lifecycle tests remain the evidence for that boundary.
-The SQLite guide checks canonical success/refusal/failure/cancellation results,
-the committed row through a fresh observer, and the complete ordered port,
-transaction, runtime, session and engine trace. Denial and invalid input open
-no port; failure and cancellation leave no persisted rows. Negative validator
-tests reject changed outcomes, extra rows, commits replacing rollbacks, missing
-port cleanup and reordered runtime/session/engine shutdown. Both exact sources
-run outside the checkout under isolated Python mode with bounded timeouts and
-the existing optional fixture pins.
+| Exact guide | Checked behavior | Evidence boundary |
+| --- | --- | --- |
+| [Starlette](../examples/starlette_embedding.py), [Litestar](../examples/litestar_embedding.py), [Django](../examples/django_embedding.py) | Parsed JSON/status for success, denial, credentials, malformed/invalid input and native health; only authorized effects and ordered audit/runtime cleanup. | In-process host fixtures; no network server or production authentication. |
+| [FastAPI](../examples/fastapi_embedding.py) | Parsed outcomes and acceptance/rejection of bounded correlation labels. | Printed outcomes do not independently prove cleanup; lifecycle tests remain separate. |
+| [SQLite](../examples/sqlite_persistence.py) | Canonical success/refusal/failure/cancellation, fresh-observer rows, rollback and ordered port/runtime/session/engine teardown. | Sequential local fixture, not concurrent session sharing or a durable store adapter. |
+| [MCP tools](../examples/mcp_tools.py) | Official-client discovery order/cache hints, closed schemas, text/structured envelopes, refusal/errors/redaction and provider/connection cleanup. | Anonymous in-process dispatcher; no sockets, JSON-RPC framing, OAuth or wider conformance. |
+| [HTTP SSE](../examples/http_sse.py) | Independent complete-frame decoding, units/counts, terminal/problems/redaction, disconnect, empty stream and producer/provider order without prefetch. | In-memory ASGI capture; no socket chunk parsing, reconnect or replay. |
+| [Schemas](../examples/schema_contracts.py) | Typed Python/JSON/default outcomes, serialization, input identity, unchanged wire data, error paths and complete compiled schemas. | Standard schema adapter only; container closure, policy/materialization order and cancellation remain separate checkout evidence. |
+| [Dependencies](../examples/dependencies.py) | Refusals, singleton reuse, distinct invocation resources, shared branch identity, closed flags and complete effect/cleanup trace. | Local resources; owner-cancellation remains separate checkout evidence. |
+| [Telemetry](../examples/invocation_telemetry.py) | Six outcomes, observer-failure isolation, paired unique attempt/execution IDs, correlation, field sets, duration/count contracts and payload privacy. | Local synchronous observers; container closure remains separate checkout evidence, with no exporter/production collector claim. |
+| [Deadlines](../examples/deadlines.py) | Exact success/refusal/timeout/child cancellation and ordered handler/resource teardown. | Cooperative cancellation permits synchronous entry before the first suspension; owner cancellation/container closure remain separate checkout evidence, not hard timing guarantees. |
+| [Confirmation](../examples/confirmation.py) | Nine outcomes, complete interaction envelopes, rejected metadata/forgery/input/actor/scope/replay/expiry and approved effect/cleanup trace. | Local single-loop authority; broader exact-binding/atomic contender and verifier-exception tests remain separate checkout evidence. No authenticated human or durable/multi-process approval service. |
+| [Introspection](../examples/introspection.py) | Source descriptors, five complete filtered publications, redaction, detached JSON, independent invocation authority and effect/cleanup order. | Compiled descriptions and direct calls; no served discovery/OpenAPI/Explorer/MCP endpoint, authentication, network, browser or thread-safety evidence. |
 
-The installed-wheel lane also copies the exact
-[MCP tools guide source](../examples/mcp_tools.py). A separate external consumer
-loads that copied source and calls its demonstration through the pinned
-official client under Python `-I`, with an overall subprocess timeout. It checks
-SDK discovery order, private zero-TTL listing, the closed input schema without
-DI parameters, success/recovery text and structured envelopes, refusal/error
-codes, diagnostic redaction, unknown-tool protocol errors and no effects from
-rejected calls. It checks the complete ordered provider/handler effect trace
-and that no connection tasks survive the demonstration. Negative tests reject
-weakened discovery/schema, changed envelopes/codes, leaked diagnostics, forbidden
-effects and missing/reordered cleanup. This is anonymous in-process dispatcher
-evidence against candidate wheels; it does not test sockets, JSON-RPC framing,
-OAuth, network transport or additional MCP features.
+Each guide has negative validation proofs in `tests/release/` for its stated
+contract: altered results/metadata, leaked internals, unexpected effects and
+missing/reordered cleanup fail the corresponding gate. SSE units/counts and
+schema booleans cannot be substituted with equal Python numeric values;
+SSE diagnostic checks also inspect decoded JSON for escaped text. Structured
+consumers check that no tasks survive. Introspection additionally rejects shared
+mutable serialization containers before exercising mutation isolation.
+Deferred dataclass annotations resolve through registered unchanged modules.
 
-The same installed-wheel lane copies the exact
-[HTTP SSE guide source](../examples/http_sse.py) and runs a self-contained
-external consumer under Python `-I` with a bounded timeout. It exercises the six
-demonstration cases and the original empty-stream path. An independent decoder
-checks complete captured SSE frames against the guide's structured observations,
-including exact units, terminal outcomes/counts, ordinary pre-stream problems,
-redacted first/late failures and terminal-free disconnect. It also checks
-headers, producer/provider lifecycle order, no resource acquisition on refusal,
-no prefetch after disconnect and no surviving ASGI/lifespan tasks. Negative
-tests reject corrupt frames/results/headers, unsupported or duplicate events,
-diagnostic leaks and missing/reordered cleanup. JSON booleans cannot substitute
-for integer units/counts, and diagnostic checks also inspect decoded JSON to
-catch escaped text. This is bounded in-memory ASGI evidence against candidate
-wheels, not network chunk parsing, socket/server,
-reconnect, replay or deployment evidence.
-
-The lane also loads the exact
-[schema-contracts guide source](../examples/schema_contracts.py) from the copied
-external directory under Python `-I`, keeping its module registered while the
-dataclass annotations resolve. The consumer checks typed direct/JSON/default
-successes, successful-value JSON serialization, direct input identity versus
-detached JSON objects, unchanged wire input and exact handler events. It checks
-denial, strict direct-mapping refusal, nested error paths, boolean/extra-field/
-enum refusals, output redaction, unconstrained annotation-only output and the
-demonstrated compiled input/output schemas. Negative tests reject changed
-outcomes/paths, weakened schemas, unexpected effects, wrong identity and leaked
-diagnostics. It checks that no tasks survive; the existing example tests remain
-the separate evidence for container closure, policy-before-materialization order
-and cancellation. This is standard-adapter candidate-wheel evidence at explicit
-Python/JSON boundaries, not a new schema adapter, transport conformance claim
-or a test against the published PyPI baseline.
-
-The lane also loads the unchanged [dependency guide](../examples/dependencies.py)
-from the external directory under Python `-I`, with bounded execution. It checks
-success/refusal/error outcomes, input error paths and redacted failure details,
-the complete ordered provider/handler trace, singleton reuse, distinct invocation
-objects, shared session identity across provider branches and closed resource
-flags. Negative tests reject changed outcomes, diagnostic leaks, unexpected
-effects, missing/reordered cleanup, wrong resource counts/identity and unclosed
-resources. No tasks survive the demonstration. The example's owner-cancellation
-test remains separate checkout evidence; this consumer exercises normal owner
-shutdown after success, refusal and handler failure. These are local resource
-fixtures against candidate wheels, not database integration or a published-PyPI
-regression claim.
-
-The lane also loads the unchanged
-[local telemetry guide](../examples/invocation_telemetry.py) under Python `-I`
-from the external directory with bounded execution. It checks six outcomes,
-failure paths/redaction, observer failure isolation, exact handler effects,
-paired start/terminal events, unique attempt/execution IDs and their shared
-correlation label. It verifies complete event field sets, terminal durations
-and counts, absence of payloads/private diagnostics in events, empty pending
-state and no surviving tasks. Negative tests reject changed results, pairing,
-identities, terminal metadata, private values and incomplete observer state.
-This is local synchronous observer evidence against candidate wheels; container
-closure remains separate checkout evidence. It does not exercise exporters,
-OpenTelemetry integration or production collector synchronization/retention.
-
-The lane also loads the unchanged [deadline guide](../examples/deadlines.py)
-from the external directory under Python `-I` with bounded execution. It checks
-exact success, forbidden, canonical timeout and propagated child-cancellation
-outcomes, including failure messages and empty details, and the complete ordered
-handler/provider trace. Success, an expired deadline and caller cancellation
-each exit the handler before closing its resource; denial acquires nothing.
-The expired deadline deliberately allows synchronous entry before cancellation
-at the first suspension. Negative tests reject changed/missing outcomes,
-diagnostics, cancellation translated to a result, extra effects and missing or
-reordered teardown. No tasks survive. Container closure and cancellation of the
-demonstration's owner remain separate checkout evidence. These are cooperative
-local async fixture checks against candidate wheels, not preemptive deadlines,
-hard timing guarantees, network cancellation or published-PyPI regression evidence.
-
-The lane also loads the unchanged [confirmation guide](../examples/confirmation.py)
-from the external directory under Python `-I`, with bounded execution and module
-registration for deferred dataclass annotations. It checks all nine ordered
-outcomes, complete interaction-required envelopes, caller-safe rejection details
-and the exact approved value/resource/archive/close trace. Metadata flags,
-forged references, changed input, another actor, lost scope, replay and inclusive
-expiry produce no additional effects. Negative tests reject changed outcomes,
-interaction envelopes, diagnostic/reference leaks and missing/reordered cleanup.
-No tasks survive. This is single-event-loop demonstration authority evidence
-against candidate wheels, not authenticated human approval or a durable,
-multi-process authority. The broader exact-binding/atomic contender tests and
-verifier-exception redaction remain separate checkout evidence.
+This is candidate-wheel evidence tied to the reviewed source commit, not a
+regression claim against already-published PyPI artifacts or a new general
+framework support tier. Current source-specific tests retain the detailed
+checks; this table summarizes their boundary rather than duplicating a growing
+chronology of completed work.
 
 The installed-wheel side-by-side FastAPI consumer compiles its live HTTP child
 inside the host lifespan and explicitly exchanges ASGI startup/shutdown
