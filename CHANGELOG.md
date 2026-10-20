@@ -7,6 +7,13 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Move the official MCP Python SDK pin from `mcp==2.1.1` to `mcp==2.2.0`,
+  resolving a published advisory against 2.1.1. `MCP_PYTHON_SDK_VERSION` now
+  reports `2.2.0`; the protocol revision stays `2026-07-28` and
+  `SUPPORTED_MCP_PROTOCOL_VERSIONS` is unchanged, so no wire behavior moves.
+  `agnara-mcp` does not use the transport the advisory concerns, but the exact
+  pin reached every consumer, including those that do.
+
 - Drive the mounted Agnara HTTP child's lifespan in the installed-wheel
   side-by-side FastAPI fixture, with same-loop singleton cleanup evidence on
   normal and exceptional host exit and cancellation/failure regression tests.

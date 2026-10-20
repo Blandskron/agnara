@@ -14,7 +14,7 @@ uv run python examples/mcp_tools.py
 ```
 
 The complete [example](../examples/mcp_tools.py) needs the workspace's pinned
-`mcp==2.1.1` SDK. It connects the official `Client` to an in-process server and
+`mcp==2.2.0` SDK. It connects the official `Client` to an in-process server and
 uses no sockets, external service or credentials. Its output is:
 
 ```text
