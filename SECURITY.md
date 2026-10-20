@@ -122,8 +122,28 @@ GitHub secret scanning, push protection, Dependabot alerts and Dependabot
 security updates are enabled for this repository. Read back repository
 settings during release preflight; their state is external to Git history.
 `docs/releases/release-status.json` records target-specific gate evidence.
-Dependency update PRs follow the normal review and required-check
-workflow and are never automatically merged by this configuration.
+Dependency *version* update pull requests follow the normal review and
+required-check workflow and are never automatically merged by this
+configuration.
+
+A Dependabot *security* update does not, and cannot be made to. GitHub raises
+security updates against the repository's default branch, `main`, and
+`GIT_WORKFLOW.md` reserves `main` for `release/*`, `hotfix/*` and documented
+governance changes. Setting `target-branch` does not help: it makes that
+ecosystem's configuration apply to version updates only. So a Dependabot
+security pull request is triaged, not merged:
+
+1. open a tracking Issue carrying the alert, the affected manifests and
+   whether adapter code reaches the vulnerable path;
+2. implement on a `security/<issue>-<slug>` branch cut from `develop`, moving
+   every place the version is pinned, including runtime guards and repository
+   tooling, not only the manifest Dependabot edited;
+3. run the documented gates and open a pull request to `develop`;
+4. close the Dependabot pull request as superseded, naming the replacement.
+
+Closing it is a base-branch decision, not a dismissal of the alert: the alert
+closes when the replacement merges. Never merge a security update directly to
+`main` and never weaken a protection to let one through.
 
 Required CI analyzes Python and GitHub Actions using SHA-pinned CodeQL
 actions. Only the analysis job receives `security-events: write`; it does not
