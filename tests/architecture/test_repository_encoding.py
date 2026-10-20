@@ -36,6 +36,8 @@ import re
 from collections.abc import Iterator
 from pathlib import Path
 
+import pytest
+
 from tests.architecture.boundaries import WORKSPACE_ROOT
 
 #: Two or more consecutive question marks. Verified to have no legitimate
@@ -74,14 +76,38 @@ SKIPPED_DIRECTORIES = frozenset(
 )
 
 
+def _is_nested_working_tree(directory: Path) -> bool:
+    """Report whether ``directory`` is the root of another Git working tree.
+
+    ``MULTI_AGENT_PROTOCOL.md`` has concurrent agents isolate their work with
+    ``git worktree``. A worktree created inside this checkout holds another
+    agent's files, often half-written, and scanning them reports damage that
+    does not exist in the tree under review. A linked worktree and a submodule
+    mark their root with a ``.git`` *file* naming the real repository; a nested
+    clone marks it with a ``.git`` directory. Detecting that marker rather than
+    a directory name keeps the guard working whatever the worktree is called.
+    """
+    return (directory / ".git").exists()
+
+
+def _own_text_files(directory: Path) -> Iterator[Path]:
+    """Yield text files under ``directory``, pruning trees this one does not own."""
+    for entry in sorted(directory.iterdir()):
+        if entry.name in SKIPPED_DIRECTORIES:
+            continue
+        if entry.is_dir():
+            # ``rglob`` does not descend into symlinked directories either:
+            # following one risks a cycle and files owned somewhere else.
+            if entry.is_symlink() or _is_nested_working_tree(entry):
+                continue
+            yield from _own_text_files(entry)
+        elif entry.is_file() and entry.suffix.lower() in TEXT_SUFFIXES:
+            yield entry
+
+
 def text_files() -> Iterator[Path]:
     """Yield the workspace's own text files in a deterministic order."""
-    for path in sorted(WORKSPACE_ROOT.rglob("*")):
-        if not path.is_file() or path.suffix.lower() not in TEXT_SUFFIXES:
-            continue
-        if SKIPPED_DIRECTORIES.intersection(path.relative_to(WORKSPACE_ROOT).parts):
-            continue
-        yield path
+    yield from _own_text_files(WORKSPACE_ROOT)
 
 
 def _location(path: Path) -> str:
@@ -92,6 +118,33 @@ def test_the_workspace_has_text_files_to_check() -> None:
     # A silently empty walk would make every check below vacuous.
     names = {path.name for path in text_files()}
     assert {"README.md", "BACKLOG.md", "pyproject.toml"} <= names
+
+
+def test_the_walk_stops_at_another_working_tree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A worktree, submodule or clone nested in the checkout is not ours to judge.
+
+    Agents working in parallel put a linked worktree inside the checkout, and
+    before this guard existed its files entered the scan: one run pulled 611
+    files belonging to another agent's half-finished task into these checks.
+    The damage they would report is not damage in the tree under review.
+    """
+    (tmp_path / "own.md").write_text("# Ours\n", encoding="utf-8")
+
+    linked = tmp_path / ".worktrees" / "issue-610"
+    linked.mkdir(parents=True)
+    # What `git worktree add` writes: a file, not a directory.
+    (linked / ".git").write_text("gitdir: ../../.git/worktrees/issue-610\n", encoding="utf-8")
+    (linked / "theirs.md").write_text("# Theirs\n", encoding="utf-8")
+
+    clone = tmp_path / "vendored"
+    (clone / ".git").mkdir(parents=True)
+    (clone / "theirs.md").write_text("# Theirs\n", encoding="utf-8")
+
+    monkeypatch.setattr("tests.architecture.test_repository_encoding.WORKSPACE_ROOT", tmp_path)
+
+    assert [path.relative_to(tmp_path).as_posix() for path in text_files()] == ["own.md"]
 
 
 def test_every_text_file_is_valid_utf8() -> None:
