@@ -7,6 +7,12 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Keep a Git worktree nested in the checkout out of repository-wide gates:
+  the workspace text scan stops at any directory carrying a `.git` entry, so a
+  linked worktree, submodule or nested clone is excluded whatever it is named,
+  and `.worktrees/` no longer reports the working tree as dirty. Parallel agent
+  work can no longer fail another agent's run.
+
 - Drive the mounted Agnara HTTP child's lifespan in the installed-wheel
   side-by-side FastAPI fixture, with same-loop singleton cleanup evidence on
   normal and exceptional host exit and cancellation/failure regression tests.
