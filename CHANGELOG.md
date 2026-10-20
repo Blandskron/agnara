@@ -7,6 +7,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Record how a Dependabot security alert is triaged against the branch model:
+  such a pull request always arrives on the default branch, so it is replaced by
+  a `security/<issue>-<slug>` branch to `develop` and closed as superseded.
+  `.github/dependabot.yml` no longer claims Dependabot lacks a uv ecosystem.
+
 - Drive the mounted Agnara HTTP child's lifespan in the installed-wheel
   side-by-side FastAPI fixture, with same-loop singleton cleanup evidence on
   normal and exceptional host exit and cancellation/failure regression tests.
