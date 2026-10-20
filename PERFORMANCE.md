@@ -52,7 +52,7 @@ claim in either direction on the machine used.
 The E7.9 in-process MCP comparison is implemented by
 `benchmarks/mcp_tool_invocation.py` and recorded in
 `docs/benchmarks/mcp-tool-invocation.md`. FastMCP is `MCPServer` in the pinned
-`mcp==2.1.1`. It measures the handler boundary and the official client
+`mcp==2.2.0`. It measures the handler boundary and the official client
 boundary separately, and reports synchronous and asynchronous tools
 separately because the SDK runs a synchronous tool in a worker thread. The
 same caveats apply: no portable ranking, no throughput claim, no threshold.

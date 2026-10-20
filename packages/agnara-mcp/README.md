@@ -17,7 +17,7 @@ not by this file: a README ships inside the artifact and cannot describe
 the state of a publication that happens after it is built.
 
 - Import package: `agnara_mcp`
-- Depends on: the exact synchronized `agnara` version, plus `mcp==2.1.1`
+- Depends on: the exact synchronized `agnara` version, plus `mcp==2.2.0`
 - Must not import: sibling adapter packages
 
 See `ARCHITECTURE.md` sections 3 and 4 for the package boundaries and the
@@ -26,7 +26,7 @@ allowed dependency graph.
 ## Protocol baseline
 
 The adapter targets exactly MCP `2026-07-28` through the official
-Python SDK `mcp==2.1.1`. The public constants are:
+Python SDK `mcp==2.2.0`. The public constants are:
 
 ```python
 from agnara_mcp import MCP_PROTOCOL_VERSION, SUPPORTED_MCP_PROTOCOL_VERSIONS

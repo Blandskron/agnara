@@ -1,4 +1,4 @@
-"""Five bounded, read-only MCP tools over startup bytes, using SDK 2.1.1."""
+"""Five bounded, read-only MCP tools over startup bytes, using SDK 2.2.0."""
 
 from __future__ import annotations
 
@@ -264,7 +264,7 @@ class DocumentationService:
 
 
 def build_server(corpus: Corpus) -> Server[Any]:
-    if version("mcp") != "2.1.1" or version("mcp-types") != "2.1.1":
+    if version("mcp") != "2.2.0" or version("mcp-types") != "2.2.0":
         raise CorpusError()
     service = DocumentationService(corpus)
 

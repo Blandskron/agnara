@@ -57,7 +57,7 @@ python scripts/check_distributions.py --workspace "$PWD" --dist dist/ \
     --expected-version <target-version>
 uv venv --python 3.14 <external>/.venv
 uv pip install --python <external>/.venv/bin/python \
-    "mcp==2.1.1" "opentelemetry-api>=1.44,<2"
+    "mcp==2.2.0" "opentelemetry-api>=1.44,<2"
 uv pip install --python <external>/.venv/bin/python \
     --no-index --find-links dist/ dist/*.whl
 <external>/.venv/bin/python -I scripts/check_distributions.py \
