@@ -103,7 +103,7 @@ file publication should precede or accompany remote MCP. Future multi-version
 support selects separate immutable snapshots, never current checkout aliases.
 
 Repository tooling lives in `tools/documentation_mcp`; it never imports the
-Agnara runtime. The official SDK and types are pinned to 2.1.1 in its
+Agnara runtime. The official SDK and types are pinned to 2.2.0 in its
 `requirements.txt`. The five tools are exercised through the official client,
 including an actual stdio initialize/list/call exchange. These bounded tests
 are evidence for this local subset, not complete protocol certification.

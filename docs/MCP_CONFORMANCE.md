@@ -5,8 +5,8 @@ Suite revision: 4. Tracking: [#181](https://github.com/Blandskron/agnara/issues/
 [#185](https://github.com/Blandskron/agnara/issues/185), plus
 [#307](https://github.com/Blandskron/agnara/issues/307).
 
-This is Agnara-owned compatibility evidence against the official `mcp==2.1.1`
-and `mcp-types==2.1.1` packages for MCP `2026-07-28`. It is not an official
+This is Agnara-owned compatibility evidence against the official `mcp==2.2.0`
+and `mcp-types==2.2.0` packages for MCP `2026-07-28`. It is not an official
 certification or a claim of complete MCP support.
 
 ## Reproduce
@@ -77,7 +77,7 @@ advertised.
 
 ## Upstream reference
 
-The pinned [official SDK source](https://github.com/modelcontextprotocol/python-sdk/tree/v2.1.1)
+The pinned [official SDK source](https://github.com/modelcontextprotocol/python-sdk/tree/v2.2.0)
 is the reference, particularly `src/mcp/client/client.py`,
 `src/mcp/client/session.py` and `src/mcp/server/runner.py`. Agnara tests its
 adapter through that boundary rather than reimplementing the SDK's validator.

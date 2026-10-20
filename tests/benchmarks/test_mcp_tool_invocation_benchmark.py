@@ -59,8 +59,8 @@ def test_mcp_tool_invocation_benchmark_emits_reproducible_json_contract() -> Non
     assert record["versions"] == {
         "agnara": importlib.metadata.version("agnara"),
         "agnara-mcp": importlib.metadata.version("agnara-mcp"),
-        "mcp": "2.1.1",
-        "mcp-types": "2.1.1",
+        "mcp": "2.2.0",
+        "mcp-types": "2.2.0",
     }
     assert record["config"] == {
         "garbage_collector_disabled_during_samples": True,

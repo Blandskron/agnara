@@ -44,7 +44,7 @@
       "import_name": "agnara_mcp",
       "role": "adapter",
       "console_scripts": [],
-      "third_party_requirements": ["mcp==2.1.1"]
+      "third_party_requirements": ["mcp==2.2.0"]
     },
     {
       "name": "agnara-telemetry",

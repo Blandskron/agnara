@@ -5,7 +5,7 @@
 This benchmark measures a narrow warm in-process MCP `tools/call` boundary for
 E7.9. It exists because a discovery-only timing is not invocation evidence, and
 because `PERFORMANCE.md` names FastMCP as the comparison for MCP scenarios.
-FastMCP is `MCPServer` in the pinned `mcp==2.1.1`; the v1 module now raises on
+FastMCP is `MCPServer` in the pinned `mcp==2.2.0`; the v1 module now raises on
 import.
 
 It is not a production throughput benchmark and not a ranking. It excludes the
@@ -85,7 +85,11 @@ metadata and median ratios to `direct_sdk`.
 ## Recorded baseline
 
 Two consecutive runs were retained instead of selecting the more favorable
-one:
+one. They were measured under `mcp` 2.1.1, which the run metadata states, and
+they have not been re-measured since the pin moved to 2.2.0. The numbers below
+are evidence of that run, not of the current pin; this document already claims
+no portable ranking and no threshold, so the baseline is not restated as a
+current measurement.
 
 ```text
 recorded at: 2026-09-05T03:58:57.240239+00:00 and 2026-09-05T03:59:25.259905+00:00
@@ -164,6 +168,7 @@ measured path enough to invalidate this baseline.
 
 ## Sources
 
-- https://pypi.org/project/mcp/2.1.1/
-- https://github.com/modelcontextprotocol/python-sdk/tree/v2.1.1
+- https://pypi.org/project/mcp/2.2.0/
+- https://github.com/modelcontextprotocol/python-sdk/tree/v2.2.0
+- https://pypi.org/project/mcp/2.1.1/ (the release the run below was measured under)
 - https://modelcontextprotocol.io/specification/2026-07-28/server/tools
