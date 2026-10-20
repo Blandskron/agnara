@@ -5,12 +5,6 @@ completed work and review evidence remain in closed Issues, merged PRs and Git
 history. The [maturity matrix](docs/MATURITY.md) describes implemented behavior.
 Do not accumulate completed-task chronology in this file.
 
-## In progress
-
-- [~] [#606](https://github.com/Blandskron/agnara/issues/606): validate the exact
-  filtered-introspection guide against isolated candidate wheels, including
-  publication redaction, detached JSON and independent invocation authority.
-
 ## Future work requiring a scoped Issue and review
 
 - [ ] Maintain runnable tutorials and reference applications against the
