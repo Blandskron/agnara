@@ -104,7 +104,7 @@ full history are available through Git tags and GitHub Releases.
 
 ### Changed
 
-- Refresh immutable CI/release action pins for CodeQL 4.38.3, setup-uv 10.3.0,
+- Refresh immutable CI/release action pins for CodeQL 4.39.0, setup-uv 10.3.0,
   upload-artifact 7.0.2 and download-artifact 8.0.2.
 
 - Prune superseded API sketches, duplicate target-architecture prose and
