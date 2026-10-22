@@ -28,8 +28,11 @@ from agnara.core.di import DIRegistry
 from agnara.core.di.resolver import DIContainer
 from agnara.execution import (
     ExecutionPlan,
+    Failure,
+    FailureCode,
     InvocationStartEvent,
     InvocationTerminalEvent,
+    Success,
     TelemetryHook,
 )
 from agnara_http import Binding, BindingSource, Http, HttpDefinitionError, OpenApiOperation
@@ -186,6 +189,33 @@ def terminal(events: list[dict[str, Any]]) -> dict[str, Any]:
 
 def problem(events: list[dict[str, Any]]) -> dict[str, Any]:
     return json.loads(events[1]["body"].decode("utf-8"))
+
+
+@pytest.mark.parametrize("unit", [Success(1), Failure(FailureCode.CONFLICT, "private marker")])
+@pytest.mark.parametrize("prefix", [False, True])
+def test_result_objects_cannot_be_sent_outside_the_declared_unit_schema(unit, prefix):
+    async def rows() -> AsyncIterator[object]:
+        if prefix:
+            yield 1
+        yield unit
+
+    compiled = ExecutionPlan.compile(
+        CapabilityDefinition(CAPABILITY, rows, streaming=True, output=int), DIRegistry()
+    )
+    exposure = _HTTPExposure("GET", "/reports", compiled, (), sse=_SSEProjection())
+    events = request(dispatcher(exposure))
+    assert "private marker" not in wire(events)
+    if prefix:
+        assert events[0]["status"] == 200
+        assert data_units(events) == [1]
+        ended = terminal(events)
+        assert ended["outcome"] == "interrupted"
+        assert ended["units"] == 1
+        assert ended["problem"]["code"] == "internal_failure"
+    else:
+        assert events[0]["status"] == 500
+        assert problem(events)["code"] == "internal_failure"
+        assert "agnara.terminal" not in wire(events)
 
 
 # ---------------------------------------------------------------------------
