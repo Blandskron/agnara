@@ -24,6 +24,11 @@ STRUCTURED_GUIDES = (
     ("deadlines.py", "deadlines_guide.py", "DEADLINES_GUIDE_ARTIFACT_OK"),
     ("confirmation.py", "confirmation_guide.py", "CONFIRMATION_GUIDE_ARTIFACT_OK"),
     ("introspection.py", "introspection_guide.py", "INTROSPECTION_GUIDE_ARTIFACT_OK"),
+    (
+        "direct_idempotency.py",
+        "direct_idempotency_guide.py",
+        "DIRECT_IDEMPOTENCY_GUIDE_ARTIFACT_OK",
+    ),
 )
 UV = shutil.which("uv")
 CANDIDATE_VERSION = tomllib.loads(

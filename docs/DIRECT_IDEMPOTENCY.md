@@ -65,3 +65,25 @@ This is the implemented **direct, complete-result** path from
 [ADR 0091](adr/0091-operational-idempotency-runtime.md). Agnara's HTTP
 and MCP adapters do not accept an idempotency selector. It does not add a
 retry policy, durable execution or transaction ownership.
+
+## Validation evidence
+
+The installed candidate-wheel lane in
+`tests/release/test_integrated_dogfooding.py` copies this exact example outside
+the checkout and loads it under Python `-I`. Its consumer checks canonical
+successes and refusals, nonempty execution identities, duplicate identity reuse,
+principal isolation and the exact two effects. Negative proofs in
+`tests/release/test_direct_idempotency_guide_artifact.py` reject missing or extra
+outcomes, changed receipts, incorrect identities/refusals and extra effects.
+
+Run the focused checks with:
+
+```bash
+uv run pytest tests/docs/test_direct_idempotency_example.py tests/release/test_direct_idempotency_guide_artifact.py tests/release/test_integrated_dogfooding.py
+```
+
+This is sequential process-local candidate-wheel evidence. It does not validate
+durable storage, concurrent contenders, restart recovery or HTTP/MCP selectors.
+No surviving tasks are permitted; resource-close behavior remains separate
+runtime-test evidence. See the [coverage matrix](INTEROPERABILITY.md#installed-candidate-wheel-guide-coverage)
+for the shared provenance and public-import gates.
