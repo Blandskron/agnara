@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from agnara.core.di import (
@@ -187,3 +189,66 @@ def test_an_unresolvable_annotation_is_a_definition_error_naming_the_handler():
 
     with pytest.raises(DependencyResolutionError, match=r"my_cap.*NameError.*NeverDefined"):
         compile_dag(DIRegistry(), [my_cap])
+
+
+@pytest.mark.parametrize(
+    "signature, diagnostic",
+    [
+        ("dependency", "requires a type annotation"),
+        ("dependency=None", "requires a type annotation"),
+        ("*, dependency", "requires a type annotation"),
+        ("*, dependency=None", "requires a type annotation"),
+        ("dependency: Database, /", "positional-or-keyword or keyword-only"),
+        ("*dependency: Database", "positional-or-keyword or keyword-only"),
+        ("**dependency: Database", "positional-or-keyword or keyword-only"),
+    ],
+)
+@pytest.mark.parametrize("transitive", [False, True])
+def test_provider_signature_errors_fail_before_acquisition(signature, diagnostic, transitive):
+    acquired = []
+    namespace: dict[str, Any] = {
+        "Database": Database,
+        "Repository": Repository,
+        "acquired": acquired,
+    }
+    exec(
+        f"def malformed({signature}) -> Repository:\n"
+        "    acquired.append('malformed')\n"
+        "    return Repository()\n",
+        namespace,
+    )
+    registry = DIRegistry()
+    registry.bind(Database, provide_db)
+    registry.bind(Repository, provider()(namespace["malformed"]))
+
+    @provider()
+    def outer(repository: Repository) -> Service:
+        acquired.append("outer")
+        return Service()
+
+    registry.bind(Service, outer)
+
+    def direct(repository: Repository) -> None:
+        pass
+
+    def indirect(service: Service) -> None:
+        pass
+
+    with pytest.raises(DependencyResolutionError, match=f"malformed.*dependency.*{diagnostic}"):
+        compile_dag(registry, [indirect if transitive else direct])
+    assert acquired == []
+
+
+def test_unreachable_malformed_provider_does_not_prevent_compilation():
+    @provider()
+    def unused(missing) -> Repository:
+        raise AssertionError("unused provider must not run")
+
+    registry = DIRegistry()
+    registry.bind(Database, provide_db)
+    registry.bind(Repository, unused)
+
+    def handler(db: Database) -> None:
+        pass
+
+    assert compile_dag(registry, [handler])[handler] == [Database]

@@ -19,6 +19,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Reject provider parameters with missing annotations or unsupported calling
+  conventions during DI graph compilation, before resource acquisition.
+  Name the provider and parameter in the startup diagnostic; preserve bound
+  named dependencies, keyword-only parameters and lazy provider construction.
+
 - Sample the process-local idempotency store's clock inside each atomic
   transition, so lock contention cannot backdate lease/result retention or
   reuse a timestamp from before expiry. Preserve targeted cleanup and capacity
