@@ -200,6 +200,12 @@ dependencies and injected `ExecutionContext` or `CapabilityInvoker` values.
 Positional-only parameters, `*args` and `**kwargs` are rejected when building
 an execution plan, before acquiring resources or entering the handler.
 
+For a callable instance, put these annotations on its `__call__` method.
+Compilation, dependency resolution and introspection read the same method
+contract, excluding the bound receiver. Register an instance without a
+`__name__` using an explicit capability name. Its mutable application state
+still needs its own ownership and concurrency discipline.
+
 Binding a payload type such as `str` changes how parameters of that type are
 classified. Prefer dedicated resource types, assemble bindings before plan
 compilation and keep the registry unchanged during execution. An unbound
