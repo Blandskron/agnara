@@ -13,5 +13,5 @@ MCP_PROTOCOL_VERSION: Final = "2026-07-28"
 SUPPORTED_MCP_PROTOCOL_VERSIONS: Final = (MCP_PROTOCOL_VERSION,)
 """Protocol revisions for which Agnara intends to maintain conformance tests."""
 
-MCP_PYTHON_SDK_VERSION: Final = "2.1.1"
+MCP_PYTHON_SDK_VERSION: Final = "2.2.0"
 """The exact official Python SDK version used at the adapter boundary."""

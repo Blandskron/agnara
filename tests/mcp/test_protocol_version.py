@@ -24,7 +24,7 @@ def test_mcp_protocol_contract_targets_one_exact_revision() -> None:
 
 
 def test_mcp_protocol_contract_matches_the_pinned_official_sdk() -> None:
-    assert MCP_PYTHON_SDK_VERSION == "2.1.1"
+    assert MCP_PYTHON_SDK_VERSION == "2.2.0"
     assert importlib.metadata.version("mcp") == MCP_PYTHON_SDK_VERSION
     assert mcp_types.LATEST_PROTOCOL_VERSION == MCP_PROTOCOL_VERSION
 

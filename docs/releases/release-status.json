@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "current_target": "1.0.3",
-  "status": "IN_PROGRESS",
-  "assessed_on": "2026-09-25",
+  "previous_release": "1.0.3",
+  "status": "PUBLISHED",
+  "assessed_on": "2026-10-22",
   "notes": [
-    "1.0.3 changes documentation, synchronized versions and package metadata; runtime AST and docs/public-api.json match the develop baseline.",
-    "Local full pytest, explicit browser lane, seven-artifact build, metadata validation and clean Python 3.14 wheel install passed.",
-    "The measured performance budget gate exceeded three ratios on an idle local Windows rerun; CI evidence and maintainer review remain pending.",
-    "The accepted candidate SHA, protected publication and index verification can only be recorded after review and dispatch."
+    "GitHub records v1.0.3 as published on 2026-09-25; its immutable tag resolves to c25d9eb5b2d432f652c4661a1925cb38baa63c82. Verified from https://github.com/Blandskron/agnara/releases/tag/v1.0.3 on 2026-10-22.",
+    "The unchanged gate entries below retain the historical preparation state; they are not evidence for validation or approval of a new source hotfix.",
+    "No new release target is selected. Source-only security changes do not alter already-published 1.0.3 artifacts."
   ],
   "gates": [
     {
