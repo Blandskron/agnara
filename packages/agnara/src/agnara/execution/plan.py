@@ -161,21 +161,21 @@ class ExecutionPlan:
         input_schemas: dict[str, TypeSchema] = {}
         required_inputs: set[str] = set()
         for name, parameter in signature.parameters.items():
-            if (
-                name in dependency_parameters
-                or name in context_parameters
-                or name in capability_invoker_parameters
-            ):
-                continue
             if parameter.kind in {
                 inspect.Parameter.POSITIONAL_ONLY,
                 inspect.Parameter.VAR_POSITIONAL,
                 inspect.Parameter.VAR_KEYWORD,
             }:
                 raise DefinitionError(
-                    f"capability {self.definition.id} input {name!r} must be an explicit "
+                    f"capability {self.definition.id} parameter {name!r} must be an explicit "
                     "positional-or-keyword or keyword-only parameter"
                 )
+            if (
+                name in dependency_parameters
+                or name in context_parameters
+                or name in capability_invoker_parameters
+            ):
+                continue
             if name not in hints:
                 raise DefinitionError(
                     f"capability {self.definition.id} input {name!r} requires a type annotation"
