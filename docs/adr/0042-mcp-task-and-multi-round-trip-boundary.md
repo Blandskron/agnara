@@ -24,9 +24,18 @@ official SDK reflects that split precisely: `mcp_types` defines `Task`,
 `CreateTaskResult`, `GetTaskRequest`, `CancelTaskRequest`,
 `GetTaskPayloadRequest`, `ListTasksRequest` and `TaskStatusNotification` as
 types only, and their methods are absent from the request and notification
-unions the server dispatches. `mcp` 2.1.1 ships no task store, no task
+unions the server dispatches. `mcp` 2.2.0 ships no task store, no task
 lifecycle and no `tasks/*` handler; `mcp.server.extension` names `tasks/get`
 only as an example of a method some future extension could serve.
+
+This was first observed on 2026-09-04 against `mcp` 2.1.1, the release pinned
+when the decision was taken, and re-verified on 2026-10-20 when #613 moved the
+pin to 2.2.0: `mcp_types.methods` carries no task entry, no task member
+appears in the client or server request and notification unions, and
+`mcp.server` exposes no task store. That check is behavioral, against the
+installed package; the `v2.1.1` source links below remain the code read at the
+original review. `tests/mcp/test_task_boundary.py` is the live guard and fails
+if a future pin changes this.
 
 Implementing Tasks would therefore mean Agnara authoring an extension and its
 entire retention, cancellation, polling and status-notification lifecycle
