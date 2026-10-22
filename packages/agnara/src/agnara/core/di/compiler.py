@@ -1,3 +1,4 @@
+import inspect
 from collections.abc import Callable
 from typing import Any, get_type_hints
 
@@ -89,6 +90,21 @@ def compile_dag(
             raise DependencyResolutionError(f"Type {current_type} is not bound.")
 
         deps = _get_dependencies(provider.func)
+        provider_name = getattr(provider.func, "__qualname__", repr(provider.func))
+        for name, parameter in inspect.signature(provider.func).parameters.items():
+            if parameter.kind not in (
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                inspect.Parameter.KEYWORD_ONLY,
+            ):
+                raise DependencyResolutionError(
+                    f"Provider {provider_name} parameter {name!r} must be an explicit "
+                    "positional-or-keyword or keyword-only parameter."
+                )
+            if name not in deps:
+                raise DependencyResolutionError(
+                    f"Provider {provider_name} parameter {name!r} requires a type annotation. "
+                    "Providers can only depend on other registered providers."
+                )
         di_deps = []
         for name, typ in deps.items():
             if registry.is_bound(typ):

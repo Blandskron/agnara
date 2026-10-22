@@ -279,19 +279,24 @@ def _provider_for(bound: type, needs: type | None) -> Any:
     `__annotations__` directly hands the compiler the actual objects.
     """
 
-    def make(*args: Any, **kwargs: Any) -> Any:
-        return bound()
-
     if needs is None:
+
+        def make() -> Any:
+            return bound()
+
         make.__annotations__ = {"return": bound}
     else:
+
+        def make(upstream: Any) -> Any:
+            return bound()
+
         make.__annotations__ = {"upstream": needs, "return": bound}
     make.__name__ = f"provide_{bound.__name__}"
     return provider()(make)
 
 
 def _capability_requiring(kind: type) -> Any:
-    def capability(*args: Any, **kwargs: Any) -> None:
+    def capability(dependency: Any) -> None:
         return None
 
     capability.__annotations__ = {"dependency": kind, "return": None}

@@ -206,6 +206,13 @@ annotation; generator providers annotate their yielded resource with
 `Iterator[T]` or `AsyncIterator[T]`. The explicit binding identifies the
 injected type. Every provider parameter must itself be bound: providers do
 not receive handler payload implicitly.
+Each parameter requires a resolvable type annotation and must be
+positional-or-keyword or keyword-only, because providers receive dependencies
+by name. Positional-only parameters, `*args`, `**kwargs` and missing parameter
+annotations are rejected during graph compilation, including on transitive
+providers. Defaults do not make a provider parameter optional for DI: its
+annotated type must still be bound, and the resolved dependency overrides the
+default. Unreachable provider bindings are not traversed by that graph.
 
 ##### Choose the implemented lifetime
 
