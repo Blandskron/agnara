@@ -255,9 +255,9 @@ class InMemoryIdempotencyStore:
     ) -> IdempotencyClaimed | IdempotencyInProgress | IdempotencyCompleted | IdempotencyConflict:
         _validate_scope(scope)
         ttl = _validate_ttl(lease_ttl, name="lease_ttl")
-        now = self._now()
         selector = _selector(scope)
         with self._lock:
+            now = self._now()
             record = self._live(selector, now)
             if record is None:
                 if len(self._records) >= self._max_entries:
@@ -285,8 +285,8 @@ class InMemoryIdempotencyStore:
         self, scope: IdempotencyScope
     ) -> IdempotencyInProgress | IdempotencyCompleted | IdempotencyConflict | None:
         _validate_scope(scope)
-        now = self._now()
         with self._lock:
+            now = self._now()
             record = self._live(_selector(scope), now)
             return None if record is None else _state(scope, record)
 
@@ -296,9 +296,9 @@ class InMemoryIdempotencyStore:
         _validate_reservation(reservation)
         _validate_result(result)
         ttl = _validate_ttl(result_ttl, name="result_ttl")
-        now = self._now()
         selector = _selector(reservation.scope)
         with self._lock:
+            now = self._now()
             record = self._live(selector, now)
             if record is None or record.token != reservation.token:
                 return False
@@ -309,9 +309,9 @@ class InMemoryIdempotencyStore:
 
     async def abandon(self, reservation: IdempotencyReservation) -> bool:
         _validate_reservation(reservation)
-        now = self._now()
         selector = _selector(reservation.scope)
         with self._lock:
+            now = self._now()
             record = self._live(selector, now)
             if record is None or record.token != reservation.token:
                 return False
