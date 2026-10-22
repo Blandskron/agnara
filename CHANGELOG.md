@@ -5,6 +5,18 @@ full history are available through Git tags and GitHub Releases.
 
 ## [Unreleased]
 
+### Security
+
+- Update the official MCP SDK dependency from 2.1.1 to 2.2.0 for
+  GHSA-84m7-p3x7-pcfv (CVE-2026-59951), removing the vulnerable exact pin
+  for consumers using stateful Streamable HTTP. The MCP protocol revision
+  remains `2026-07-28`; first-party versions and published artifacts are unchanged.
+
+### Fixed
+
+- Reconcile the main-branch 1.0.3 release record with its existing published
+  tag so the unchanged release-workflow guard can validate the historical baseline.
+
 ## [1.0.3] - 2026-09-25
 
 ### Changed

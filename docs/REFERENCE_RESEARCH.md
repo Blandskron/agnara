@@ -389,11 +389,15 @@ limits which origin may supply it.
 
 MCP is a primary protocol adapter target.
 
-Reviewed 2026-09-04 for E7.1. Agnara's first MCP adapter line targets the
-authoritative `2026-07-28` specification and pins the official Python SDK to
-`mcp==2.1.1`. PyPI identifies 2.1.1 as the current stable release, published
-through the SDK repository's trusted-publishing workflow, and declares Python
-3.14 support. The SDK's public `LATEST_PROTOCOL_VERSION` is `2026-07-28`.
+Reviewed 2026-09-04 for E7.1, pin re-reviewed 2026-10-20. Agnara's first MCP
+adapter line targets the authoritative `2026-07-28` specification and pins the
+official Python SDK to `mcp==2.2.0`. The pin was 2.1.1 until a published
+advisory against that release (unbounded session accumulation in the
+StreamableHTTP transport) made the exact pin a liability for consumers; the
+adapter itself does not use that transport. Verified in an isolated Python
+3.14 environment: 2.2.0 installs `mcp-types` 2.2.0 and reports the same public
+`LATEST_PROTOCOL_VERSION`, `2026-07-28`, so the specification revision is
+unchanged.
 
 The `2026-07-28` specification introduced/strengthened concepts including:
 
@@ -498,9 +502,11 @@ pinned SDK encodes that split exactly: `mcp_types` defines `Task`,
 `CreateTaskResult`, `GetTaskRequest`, `CancelTaskRequest`,
 `GetTaskPayloadRequest`, `ListTasksRequest` and `TaskStatusNotification` as
 types only, and their methods are absent from the dispatched request and
-notification unions. `mcp` 2.1.1 ships no task store, lifecycle or `tasks/*`
+notification unions. `mcp` 2.2.0 ships no task store, lifecycle or `tasks/*`
 handler, and its extension interface names `tasks/get` only as an example
-contribution. `Tool.execution` with its `task_support` marker is likewise
+contribution. Re-checked at the 2.2.0 pin: `mcp_types.methods` carries no task
+entry, and no task member appears in the client/server request or notification
+unions, so the split the pin encodes is unchanged. `Tool.execution` with its `task_support` marker is likewise
 `2025-11-25`-only; Agnara's projection never sets it.
 
 Multi Round-Trip Requests are therefore the resumption mechanism the pinned

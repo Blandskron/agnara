@@ -21,7 +21,7 @@ PACKAGE_SOURCE = Path(agnara_mcp.__file__).parent
 
 
 def test_the_pinned_sdk_never_dispatches_the_tasks_extension() -> None:
-    """The ADR 0042 premise: task methods are types only in `mcp` 2.1.1."""
+    """The ADR 0042 premise: task methods are types only in `mcp` 2.2.0."""
     assert [method for method, _ in CLIENT_REQUESTS if method.startswith("tasks/")] == []
     assert [method for method in MONOLITH_REQUESTS if method.startswith("tasks/")] == []
     assert [method for method in MONOLITH_NOTIFICATIONS if "tasks" in method] == []

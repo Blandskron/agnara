@@ -1,12 +1,12 @@
 # MCP conformance evidence
 
-Suite revision: 4. Tracking: [#181](https://github.com/Blandskron/agnara/issues/181),
+Suite revision: 5. Tracking: [#181](https://github.com/Blandskron/agnara/issues/181),
 [#183](https://github.com/Blandskron/agnara/issues/183) and
 [#185](https://github.com/Blandskron/agnara/issues/185), plus
 [#307](https://github.com/Blandskron/agnara/issues/307).
 
-This is Agnara-owned compatibility evidence against the official `mcp==2.1.1`
-and `mcp-types==2.1.1` packages for MCP `2026-07-28`. It is not an official
+This is Agnara-owned compatibility evidence against the official `mcp==2.2.0`
+and `mcp-types==2.2.0` packages for MCP `2026-07-28`. It is not an official
 certification or a claim of complete MCP support.
 
 ## Reproduce
@@ -36,6 +36,15 @@ The SDK's in-process modern connection uses a direct dispatcher pair. It does
 not exercise sockets, HTTP, stdio or JSON-RPC framing. Generic official
 `Request` models allow malformed pagination and unsupported methods to reach
 server dispatch instead of being rejected by a typed client constructor.
+
+The separate `test_sdk_session_bounds.py` dependency regression drives the
+SDK's Streamable HTTP session manager through in-process ASGI requests. It
+checks finite default limits, refused opening requests, capacity under
+concurrent admission, continued use of an existing session, deletion, idle
+expiry and shutdown cleanup. It uses the SDK's legacy initialize handshake
+to reach stateful retention; this does not add legacy protocol support to
+Agnara or establish network transport conformance. No sockets or external
+service are used.
 
 ## Coverage matrix
 
@@ -73,7 +82,7 @@ advertised.
 
 ## Upstream reference
 
-The pinned [official SDK source](https://github.com/modelcontextprotocol/python-sdk/tree/v2.1.1)
+The pinned [official SDK source](https://github.com/modelcontextprotocol/python-sdk/tree/v2.2.0)
 is the reference, particularly `src/mcp/client/client.py`,
 `src/mcp/client/session.py` and `src/mcp/server/runner.py`. Agnara tests its
 adapter through that boundary rather than reimplementing the SDK's validator.

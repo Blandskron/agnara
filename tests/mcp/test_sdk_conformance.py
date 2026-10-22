@@ -83,8 +83,8 @@ def surface():
 
 
 def test_modern_discovery_contract_survives_the_official_client_validator() -> None:
-    assert version("mcp") == "2.1.1"
-    assert version("mcp-types") == "2.1.1"
+    assert version("mcp") == "2.2.0"
+    assert version("mcp-types") == "2.2.0"
     server, effects = surface()
 
     async def scenario() -> None:
