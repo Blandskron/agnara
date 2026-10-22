@@ -33,7 +33,14 @@ def _get_dependencies(func: Callable[..., Any]) -> dict[str, type]:
     as one rather than as a bare `NameError` from inside the graph compiler.
     """
     try:
-        hints = get_type_hints(func)
+        target = func
+        if not inspect.isroutine(func) and not inspect.isclass(func):
+            target = func.__call__
+        hints = get_type_hints(target)
+        if target is not func:
+            # The bound receiver belongs to the instance, not the invocation.
+            parameters = inspect.signature(func).parameters
+            hints = {name: hint for name, hint in hints.items() if name in parameters}
     except Exception as error:
         name = getattr(func, "__qualname__", None) or repr(func)
         raise DependencyResolutionError(

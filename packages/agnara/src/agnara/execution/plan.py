@@ -6,12 +6,13 @@ import inspect
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import InitVar, field
 from types import MappingProxyType
-from typing import Any, get_type_hints
+from typing import Any
 
 from agnara._frozen import frozen_slots_dataclass
 from agnara.capability.definition import CapabilityDefinition
 from agnara.capability.metadata import Confirmation
 from agnara.core.di import DIRegistry, compile_dag
+from agnara.core.di.compiler import _get_dependencies
 from agnara.errors import DefinitionError, SchemaError
 from agnara.execution._composition import CapabilityInvoker
 from agnara.execution.context import ExecutionContext
@@ -133,7 +134,7 @@ class ExecutionPlan:
 
         signature = inspect.signature(self.definition.handler)
         direct_dependencies = frozenset(immutable_deps.get(self.definition.handler, ()))
-        hints = get_type_hints(self.definition.handler)
+        hints = _get_dependencies(self.definition.handler)
         dependency_parameters = frozenset(
             name
             for name, annotation in hints.items()

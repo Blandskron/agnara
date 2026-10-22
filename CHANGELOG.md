@@ -19,6 +19,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Read callable handler instances' annotations from their bound `__call__`
+  method consistently during plan compilation, dependency resolution and
+  introspection. Preserve payload validation, context injection, generator
+  cleanup and explicit streaming declarations for these registered handlers.
+
 - Validate handler calling conventions for injected dependencies, execution
   contexts and capability invokers at plan construction. Refuse positional-only
   and variadic parameters before invocation, matching the existing payload
