@@ -55,6 +55,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Validate the exact direct-idempotency guide against isolated candidate wheels,
+  including receipt/execution identity reuse, principal isolation, policy denial,
+  input conflicts and effect counts, with negative proofs of the consumer gate.
+
 - Validate exact runnable guides against isolated candidate wheels: host
   embeddings and SQLite persistence, MCP, HTTP SSE, schemas, dependency lifecycle,
   telemetry, deadlines/cancellation, confirmation and filtered introspection.
