@@ -19,6 +19,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Sample the process-local idempotency store's clock inside each atomic
+  transition, so lock contention cannot backdate lease/result retention or
+  reuse a timestamp from before expiry. Preserve targeted cleanup and capacity
+  bounds with deterministic contention and deadline regressions.
+
 - Report the actual documentation MCP startup refusal category to the operator
   and distinguish redacted I/O failures, while preserving client error contracts.
 
