@@ -7,6 +7,12 @@ full history are available through Git tags and GitHub Releases.
 
 ### Security
 
+- Update the locked contributor dependencies certifi to 2026.10.19
+  (GHSA-6q48-6c7w-9gw2) and multidict to 6.9.1 (GHSA-54p9-h82j-f925).
+  Remove the affected certificate trust root and fix C-extension items-view
+  reference leaks while retaining legitimate trust roots and set operations.
+  These dependencies belong to the development/test graph, not the published
+  Agnara runtime requirements.
 - Update the official MCP SDK dependency from 2.1.1 to 2.2.0 for
   GHSA-84m7-p3x7-pcfv (CVE-2026-59951), removing the vulnerable exact pin
   for consumers using stateful Streamable HTTP. The MCP protocol revision
