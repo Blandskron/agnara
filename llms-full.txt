@@ -194,6 +194,12 @@ dependencies because their types are bound in this registry. The caller sends
 only payload fields. No `Inject` annotation or application provider decorator
 is required or implemented.
 
+Every handler parameter must be positional-or-keyword or keyword-only: the
+runtime calls handlers by name. This applies equally to payload fields, bound
+dependencies and injected `ExecutionContext` or `CapabilityInvoker` values.
+Positional-only parameters, `*args` and `**kwargs` are rejected when building
+an execution plan, before acquiring resources or entering the handler.
+
 Binding a payload type such as `str` changes how parameters of that type are
 classified. Prefer dedicated resource types, assemble bindings before plan
 compilation and keep the registry unchanged during execution. An unbound

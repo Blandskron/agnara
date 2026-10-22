@@ -19,6 +19,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Validate handler calling conventions for injected dependencies, execution
+  contexts and capability invokers at plan construction. Refuse positional-only
+  and variadic parameters before invocation, matching the existing payload
+  parameter contract; retain named and keyword-only injection.
+
 - Reject provider parameters with missing annotations or unsupported calling
   conventions during DI graph compilation, before resource acquisition.
   Name the provider and parameter in the startup diagnostic; preserve bound
