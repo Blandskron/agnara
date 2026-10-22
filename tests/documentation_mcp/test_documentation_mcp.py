@@ -11,6 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 from mcp_types import INVALID_PARAMS, REQUEST_TIMEOUT, CallToolResult, Request, TextContent
+from tools.documentation_mcp import __main__ as cli_module
 from tools.documentation_mcp import server as server_module
 from tools.documentation_mcp.corpus import (
     MAX_CORPUS,
@@ -24,7 +25,12 @@ from tools.documentation_mcp.corpus import (
     make_lock,
     read_source,
 )
-from tools.documentation_mcp.server import MAX_RESPONSE, DocumentationService, build_server
+from tools.documentation_mcp.server import (
+    MAX_RESPONSE,
+    SDK_VERSION,
+    DocumentationService,
+    build_server,
+)
 
 from mcp import Client, ClientSession, MCPError, StdioServerParameters, stdio_client
 
@@ -138,6 +144,30 @@ def body(result: CallToolResult) -> dict:
     assert payload == result.structured_content
     assert len(result.model_dump_json(by_alias=True, exclude_none=True).encode()) <= MAX_RESPONSE
     return payload
+
+
+def test_the_declared_sdk_version_matches_what_requirements_pin() -> None:
+    """A partial bump fails here, not at startup with an opaque refusal.
+
+    `build_server` refuses to start unless the installed SDK matches
+    `SDK_VERSION`. Before #629 the operator message guessed between
+    ``stale_snapshot or size_limit``. #613 exposed a partial bump because
+    nothing tied this guard to the requirements beside it. This test keeps
+    that relationship explicit independently of the startup diagnostic.
+    """
+    pinned = {}
+    for line in (
+        (ROOT / "tools" / "documentation_mcp" / "requirements.txt")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    ):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        name, _, declared = line.partition("==")
+        pinned[name] = declared
+
+    assert pinned == {"mcp": SDK_VERSION, "mcp-types": SDK_VERSION}
 
 
 def test_frozen_source_provenance_pagination_and_mutation_isolation(root: Path) -> None:
@@ -697,6 +727,90 @@ def test_setup_cli_preserves_exact_lock_bytes_and_redacts_startup_errors(root: P
     )
     assert refused.returncode == 1
     assert refused.stdout == b""
-    assert refused.stderr.decode().strip() == (
-        "Documentation snapshot refused: stale_snapshot or size_limit"
+    assert refused.stderr.decode().splitlines() == [
+        "Documentation snapshot refused: stale_snapshot"
+    ]
+
+
+@pytest.mark.parametrize(
+    "code",
+    ["stale_snapshot", "size_limit", "unknown_document", "unsupported_version", "unknown_export"],
+)
+def test_startup_reports_the_corpus_category(
+    code: str, root: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def refuse(_root: Path, _commit: str) -> bytes:
+        raise CorpusError(code)
+
+    monkeypatch.setattr(cli_module, "make_lock", refuse)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["documentation_mcp", "prepare", "--root", str(root), "--source-commit", COMMIT],
     )
+    assert cli_module.main() == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == f"Documentation snapshot refused: {code}\n"
+
+
+def test_startup_io_failure_is_redacted_and_distinct(root: Path) -> None:
+    failed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "tools.documentation_mcp",
+            "serve",
+            "--root",
+            str(root),
+            "--lock",
+            str(root / "missing-private-lock.json"),
+            "--lock-sha256",
+            "0" * 64,
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+    assert failed.returncode == 1
+    assert failed.stdout == b""
+    assert failed.stderr.decode().splitlines() == ["Documentation snapshot unreadable: io_error"]
+
+
+@pytest.mark.parametrize("mismatched_package", ["mcp", "mcp-types"])
+def test_sdk_mismatch_remains_a_redacted_startup_refusal(
+    mismatched_package: str,
+    root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    lock_bytes = make_lock(root, COMMIT)
+    lock = root / "lock.json"
+    lock.write_bytes(lock_bytes)
+    monkeypatch.setattr(
+        server_module,
+        "version",
+        lambda package: (
+            "unexpected-private-version" if package == mismatched_package else SDK_VERSION
+        ),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "documentation_mcp",
+            "serve",
+            "--root",
+            str(root),
+            "--lock",
+            str(lock),
+            "--lock-sha256",
+            digest(lock_bytes),
+        ],
+    )
+    # Exercise the real loader, serve() and build_server() guard before stdio starts.
+    assert cli_module.main() == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == "Documentation snapshot refused: stale_snapshot\n"

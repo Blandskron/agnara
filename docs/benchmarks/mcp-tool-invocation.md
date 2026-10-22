@@ -85,24 +85,28 @@ metadata and median ratios to `direct_sdk`.
 ## Recorded baseline
 
 Two consecutive runs were retained instead of selecting the more favorable
-one. They were measured under `mcp` 2.1.1, which the run metadata states, and
-they have not been re-measured since the pin moved to 2.2.0. The numbers below
-are evidence of that run, not of the current pin; this document already claims
-no portable ranking and no threshold, so the baseline is not restated as a
-current measurement.
+one. They were measured under the pinned `mcp` 2.2.0.
+
+A 2026-09-05 pair measured under `mcp` 2.1.1 stood here before #623 and
+remains in Git history. It is not reproduced alongside these numbers: the two
+pairs are not a before/after comparison. They share a host but not an
+operating-system build, the `direct_sdk` reference itself moved 14% between
+the two consecutive runs recorded here, and this benchmark claims no portable
+ranking and no threshold. Reading a difference between the pairs as an effect
+of the SDK upgrade is exactly the claim the method does not support.
 
 ```text
-recorded at: 2026-09-05T03:58:57.240239+00:00 and 2026-09-05T03:59:25.259905+00:00
-source base commit: ed87f520b833d7ccbb19a542d711dce3d626602f
-dirty: true (the E7.9 benchmark under measurement is not yet committed)
+recorded at: 2026-10-22T12:58:52.785013+00:00 and 2026-10-22T12:59:18.312143+00:00
+source base commit: bfd02c4eb263f3bcb398160db51c4408e0b0f046
+dirty: false
 command: uv run python benchmarks/mcp_tool_invocation.py --iterations 1000 --samples 9 --warmups 2 --json
-platform: Windows 11 10.0.26200 (AMD64)
+platform: Windows 11 10.0.26300 (AMD64)
 processor: Intel64 Family 6 Model 140 Stepping 1, GenuineIntel
 logical CPU count: 8
 Python: CPython 3.14.4
 GIL enabled: true
 timer: QueryPerformanceCounter(), 100 ns reported resolution
-mcp 2.1.1, mcp-types 2.1.1, agnara baseline, agnara-mcp baseline
+mcp 2.2.0, mcp-types 2.2.0, agnara 1.0.3, agnara-mcp 1.0.3
 network / framing / concurrency: excluded
 ```
 
@@ -110,36 +114,42 @@ network / framing / concurrency: excluded
 
 | Scenario | First median ns/call | Second median ns/call | Observed median range | Ratio range to direct SDK |
 | --- | ---: | ---: | ---: | ---: |
-| `direct_sdk` | 6,190 | 4,549 | 4,549–6,190 | 1.00x |
-| `mcpserver_sync` | 216,272 | 154,693 | 154,693–216,272 | 34.01–34.94x |
-| `mcpserver_async` | 31,610 | 22,855 | 22,855–31,610 | 5.02–5.11x |
-| `agnara_mcp_sync` | 32,198 | 26,270 | 26,270–32,198 | 5.20–5.77x |
-| `agnara_mcp_async` | 31,680 | 23,081 | 23,081–31,680 | 5.07–5.12x |
+| `direct_sdk` | 4,941 | 5,834 | 4,941–5,834 | 1.00x |
+| `mcpserver_sync` | 156,029 | 174,741 | 156,029–174,741 | 29.95–31.58x |
+| `mcpserver_async` | 26,110 | 28,999 | 26,110–28,999 | 4.97–5.28x |
+| `agnara_mcp_sync` | 32,250 | 39,973 | 32,250–39,973 | 6.53–6.85x |
+| `agnara_mcp_async` | 30,634 | 38,387 | 30,634–38,387 | 6.20–6.58x |
 
 ### Client boundary
 
 | Scenario | First median ns/call | Second median ns/call | Observed median range | Ratio range to direct SDK |
 | --- | ---: | ---: | ---: | ---: |
-| `direct_sdk` | 186,800 | 222,648 | 186,800–222,648 | 1.00x |
-| `mcpserver_sync` | 600,851 | 971,378 | 600,851–971,378 | 3.22–4.36x |
-| `mcpserver_async` | 344,150 | 340,756 | 340,756–344,150 | 1.53–1.84x |
-| `agnara_mcp_sync` | 288,711 | 301,552 | 288,711–301,552 | 1.35–1.55x |
-| `agnara_mcp_async` | 286,413 | 279,765 | 279,765–286,413 | 1.26–1.53x |
+| `direct_sdk` | 196,086 | 222,635 | 196,086–222,635 | 1.00x |
+| `mcpserver_sync` | 545,205 | 610,763 | 545,205–610,763 | 2.74–2.78x |
+| `mcpserver_async` | 270,297 | 300,351 | 270,297–300,351 | 1.35–1.38x |
+| `agnara_mcp_sync` | 252,309 | 267,802 | 252,309–267,802 | 1.20–1.29x |
+| `agnara_mcp_async` | 254,951 | 277,506 | 254,951–277,506 | 1.25–1.30x |
 
 ## Reading these numbers
 
-Dispersion is material. Sample standard deviation reached roughly 20–30% of
-the median in several scenarios, the `direct_sdk` reference itself moved by
-about 19% between runs at the client boundary, and ratios amplify that
-movement. Nothing here is a portable constant or a regression threshold.
+Dispersion is material, and larger in this pair than in the pair recorded
+before it. Sample standard deviation reached 56% of the median at the client
+boundary and 38% at the handler boundary, and exceeded 19% in nine
+scenario-runs. The `direct_sdk` reference itself moved 14% between the two
+runs at the client boundary and 18% at the handler boundary, and ratios
+amplify that movement. Nothing here is a portable constant or a regression
+threshold, and no difference smaller than this dispersion is a finding.
 
 With that noise stated, three things are supported by the data:
 
 1. At the handler boundary, `mcpserver_async`, `agnara_mcp_sync` and
-   `agnara_mcp_async` overlap. Agnara's compiled dispatch, scope policy, input
-   validation, DI scope and canonical projection cost about the same as
-   `MCPServer`'s ergonomic tool path, at roughly 5x a hand-written handler
-   that does none of it.
+   `agnara_mcp_async` stay the same order of magnitude: 5.0–5.3x, 6.5–6.9x and
+   6.2–6.6x a hand-written handler that does none of their work. Agnara's
+   compiled dispatch, scope policy, input validation, DI scope and canonical
+   projection cost single-digit multiples of that handler, like `MCPServer`'s
+   ergonomic tool path. Unlike the previous pair, these ranges do not overlap;
+   the gap between them is nevertheless smaller than the dispersion stated
+   above, so it is not read here as a difference between the two paths.
 2. `mcpserver_sync` is an order of magnitude slower than every other scenario,
    and profiling attributes that to `anyio.to_thread.run_sync`. This is a
    worker-thread hop, not dispatch overhead, and it is a real cost for a
