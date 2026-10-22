@@ -42,8 +42,11 @@ def main() -> int:
             sys.stderr.write(f"lock_sha256={digest(lock)}\n")
         else:
             asyncio.run(serve(args.root, args.lock, args.lock_sha256))
-    except CorpusError, OSError:
-        sys.stderr.write("Documentation snapshot refused: stale_snapshot or size_limit\n")
+    except CorpusError as error:
+        sys.stderr.write(f"Documentation snapshot refused: {error.code}\n")
+        return 1
+    except OSError:
+        sys.stderr.write("Documentation snapshot unreadable: io_error\n")
         return 1
     return 0
 

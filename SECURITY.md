@@ -141,9 +141,13 @@ security pull request is triaged, not merged:
 3. run the documented gates and open a pull request to `develop`;
 4. close the Dependabot pull request as superseded, naming the replacement.
 
-Closing it is a base-branch decision, not a dismissal of the alert: the alert
-closes when the replacement merges. Never merge a security update directly to
-`main` and never weaken a protection to let one through.
+Closing it is a base-branch decision, not a dismissal of the alert. Merging
+the replacement into `develop` does not resolve an alert against the default
+branch: the fixed dependency must also reach `main` through the reviewed
+release or hotfix flow. Check the alert state after that integration. Until
+then, keep the alert open rather than dismissing it as fixed. Never merge a
+routine security-update PR directly to `main` and never weaken a protection
+to let one through.
 
 Required CI analyzes Python and GitHub Actions using SHA-pinned CodeQL
 actions. Only the analysis job receives `security-events: write`; it does not

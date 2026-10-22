@@ -7,6 +7,12 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Report the actual documentation MCP startup refusal category to the operator
+  and distinguish redacted I/O failures, while preserving client error contracts.
+
+- Clarify that a dependency fix merged into `develop` resolves a default-branch
+  Dependabot alert only after it reaches `main` through release or hotfix review.
+
 - Record how a Dependabot security alert is triaged against the branch model:
   such a pull request always arrives on the default branch, so it is replaced by
   a `security/<issue>-<slug>` branch to `develop` and closed as superseded.
