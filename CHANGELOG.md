@@ -5,6 +5,18 @@ full history are available through Git tags and GitHub Releases.
 
 ## [Unreleased]
 
+### Security
+
+- Propagate the accepted main-branch security dependency updates into the
+  development lock: PyJWT 2.15.0, certifi 2026.10.19 (GHSA-6q48-6c7w-9gw2)
+  and multidict 6.9.1 (GHSA-54p9-h82j-f925). Certifi and multidict belong to
+  the contributor development/test graph, not published runtime requirements.
+- Retain the MCP SDK 2.2.0 fix for GHSA-84m7-p3x7-pcfv (CVE-2026-59951)
+  with bounded session-admission, refusal and cleanup regressions from main.
+  Add trust-root and items-view reference cleanup regressions for the updated
+  contributor dependencies. Protocol revision and first-party versions remain
+  unchanged; published 1.0.3 artifacts are unaffected.
+
 ### Fixed
 
 - Report the actual documentation MCP startup refusal category to the operator
