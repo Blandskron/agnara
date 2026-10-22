@@ -19,6 +19,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Validate each actual stream unit without applying complete-result envelope
+  rules. A yielded `Success` or `Failure` cannot bypass an explicit unit schema;
+  preserve redacted interruptions, partial-output counts and resource cleanup,
+  while unconstrained units retain their original values and identity.
+
 - Read callable handler instances' annotations from their bound `__call__`
   method consistently during plan compilation, dependency resolution and
   introspection. Preserve payload validation, context injection, generator

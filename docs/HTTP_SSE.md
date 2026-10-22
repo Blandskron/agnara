@@ -34,7 +34,15 @@ paths means the resource was never opened. It does not mean a resource leaked.
 The `rows` capability is an async generator with `streaming=True` and an
 explicit `output=dict[str, int]`. The runtime validates every yielded unit
 against that output contract; its return annotation alone would not declare
-the contract. The `count` input has an explicit query binding:
+the contract.
+
+Every actual yielded value must satisfy the unit schema. Yielding `Success`
+or `Failure` does not create a complete-result envelope: these objects are
+data and receive the same unit validation. A rejected first unit produces a
+redacted problem response; after valid output, rejection preserves that output
+and ends with an interrupted terminal event and the valid-unit count.
+
+The `count` input has an explicit query binding:
 
 ```python
 from agnara_http import Binding, BindingSource, Http
