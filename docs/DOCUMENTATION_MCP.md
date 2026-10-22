@@ -103,8 +103,13 @@ file publication should precede or accompany remote MCP. Future multi-version
 support selects separate immutable snapshots, never current checkout aliases.
 
 Repository tooling lives in `tools/documentation_mcp`; it never imports the
-Agnara runtime. The official SDK and types are pinned to 2.2.0 in its
-`requirements.txt`. The five tools are exercised through the official client,
+Agnara runtime. Because of that it cannot read `MCP_PYTHON_SDK_VERSION`, so it
+declares the SDK release it is written against once, as `SDK_VERSION` in
+`server.py`, and `requirements.txt` pins `mcp` and `mcp-types` to the same
+value. The server refuses to start on any other installed version, and
+`tests/documentation_mcp` fails if the constant and the pins disagree, so a
+partial bump is caught in the suite rather than as a refused snapshot at
+startup. The five tools are exercised through the official client,
 including an actual stdio initialize/list/call exchange. These bounded tests
 are evidence for this local subset, not complete protocol certification.
 

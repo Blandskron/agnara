@@ -1,4 +1,4 @@
-"""Five bounded, read-only MCP tools over startup bytes, using SDK 2.2.0."""
+"""Five bounded, read-only MCP tools over startup bytes, using a pinned SDK."""
 
 from __future__ import annotations
 
@@ -24,6 +24,11 @@ from mcp import MCPError
 
 from .corpus import NONBASELINE, TOKEN, Corpus, CorpusError, Document, encode
 
+#: The official SDK release this tool is written against, named once.
+#: `docs/DOCUMENTATION_MCP.md` keeps this tool out of the Agnara runtime, so it
+#: cannot read `agnara_mcp.MCP_PYTHON_SDK_VERSION`; `requirements.txt` pins the
+#: same value and `tests/documentation_mcp` fails if the two ever disagree.
+SDK_VERSION = "2.2.0"
 MAX_RESPONSE = 32 * 1024
 TIMEOUT = 5
 DESCRIPTIONS = {
@@ -264,7 +269,7 @@ class DocumentationService:
 
 
 def build_server(corpus: Corpus) -> Server[Any]:
-    if version("mcp") != "2.2.0" or version("mcp-types") != "2.2.0":
+    if version("mcp") != SDK_VERSION or version("mcp-types") != SDK_VERSION:
         raise CorpusError()
     service = DocumentationService(corpus)
 

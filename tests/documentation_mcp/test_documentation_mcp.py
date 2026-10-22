@@ -24,7 +24,12 @@ from tools.documentation_mcp.corpus import (
     make_lock,
     read_source,
 )
-from tools.documentation_mcp.server import MAX_RESPONSE, DocumentationService, build_server
+from tools.documentation_mcp.server import (
+    MAX_RESPONSE,
+    SDK_VERSION,
+    DocumentationService,
+    build_server,
+)
 
 from mcp import Client, ClientSession, MCPError, StdioServerParameters, stdio_client
 
@@ -138,6 +143,30 @@ def body(result: CallToolResult) -> dict:
     assert payload == result.structured_content
     assert len(result.model_dump_json(by_alias=True, exclude_none=True).encode()) <= MAX_RESPONSE
     return payload
+
+
+def test_the_declared_sdk_version_matches_what_requirements_pin() -> None:
+    """A partial bump fails here, not at startup with an opaque refusal.
+
+    `build_server` refuses to start unless the installed SDK matches
+    `SDK_VERSION`, and that refusal reaches an operator as
+    ``stale_snapshot or size_limit`` with no mention of a version. #613 moved
+    this pin and the constant was the site that broke, because nothing tied it
+    to the requirements file beside it. This is that tie.
+    """
+    pinned = {}
+    for line in (
+        (ROOT / "tools" / "documentation_mcp" / "requirements.txt")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    ):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        name, _, declared = line.partition("==")
+        pinned[name] = declared
+
+    assert pinned == {"mcp": SDK_VERSION, "mcp-types": SDK_VERSION}
 
 
 def test_frozen_source_provenance_pagination_and_mutation_isolation(root: Path) -> None:
