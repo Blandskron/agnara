@@ -602,7 +602,7 @@ def test_real_stdio_initialize_list_call_and_clean_shutdown(root: Path) -> None:
 
 def test_actual_repository_corpus_and_governed_api() -> None:
     corpus = freeze(ROOT)
-    assert len(corpus.documents) == 37
+    assert len(corpus.documents) == 39
     assert corpus.documents["starlette-embedding"].path == "docs/STARLETTE_EMBEDDING.md"
     assert corpus.documents["starlette-embedding-example"].path == "examples/starlette_embedding.py"
     assert corpus.documents["embedding"].path == "docs/FASTAPI_EMBEDDING.md"
@@ -667,6 +667,58 @@ def test_actual_repository_corpus_and_governed_api() -> None:
         )
     )["content"]["classification"]["exports"] == [{"name": "__version__", "stability": "stable"}]
     assert "agnara_a2a" in corpus.modules
+
+
+def test_direct_streaming_corpus_preserves_current_repository_provenance() -> None:
+    service = DocumentationService(freeze(ROOT))
+
+    async def scenario() -> None:
+        baseline = body(
+            await service.call(
+                "search_docs", {"version": "1.0.3", "query": "streaming", "topic": "streaming"}
+            )
+        )
+        assert baseline["content"]["hits"] == []
+        current = body(
+            await service.call(
+                "search_docs",
+                {
+                    "version": "1.0.3",
+                    "query": "streaming",
+                    "topic": "streaming",
+                    "include_nonbaseline": True,
+                },
+            )
+        )
+        assert {hit["id"] for hit in current["content"]["hits"]} == {
+            "direct-streaming",
+            "direct-streaming-example",
+        }
+        assert (
+            await service.call("read_doc", {"version": "1.0.3", "document_id": "direct-streaming"})
+        ).is_error
+        guide = body(
+            await service.call(
+                "read_doc",
+                {
+                    "version": "1.0.3",
+                    "document_id": "direct-streaming",
+                    "include_nonbaseline": True,
+                },
+            )
+        )
+        assert guide["stability"] == "current-repository"
+        assert guide["source_path"] == "docs/DIRECT_STREAMING.md"
+        assert guide["content"]["text"].startswith("# Direct Python streaming")
+        # get_example intentionally exposes baseline examples only; adding an
+        # index entry must not silently turn unreleased fixes into wheel claims.
+        assert (
+            await service.call(
+                "get_example", {"version": "1.0.3", "example_id": "direct-streaming-example"}
+            )
+        ).is_error
+
+    run(scenario())
 
 
 def test_offline_preparation_is_reproducible(root: Path) -> None:
