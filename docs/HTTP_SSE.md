@@ -1,5 +1,7 @@
 # Streaming a capability over HTTP
 
+For protocol-neutral Python consumption, see [direct streaming](DIRECT_STREAMING.md).
+
 Use `Http.sse` to project an explicitly declared capability stream as
 server-sent events. Each successful unit becomes one JSON `message` event;
 the terminal event distinguishes completion from a failure after output.

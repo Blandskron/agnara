@@ -80,6 +80,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Runnable direct Python streaming guide covering pull-based demand, early
+  abandonment, refusal before effects, partial failure, unit validation and
+  cancellation cleanup through the governed public API.
+
 - Validate the exact direct-idempotency guide against isolated candidate wheels,
   including receipt/execution identity reuse, principal isolation, policy denial,
   input conflicts and effect counts, with negative proofs of the consumer gate.

@@ -22,7 +22,8 @@ repository, run `uv sync` then `uv run python examples/<file>.py`.
 | Execution telemetry without exporter | [invocation_telemetry.py](invocation_telemetry.py) | [test](../tests/docs/test_telemetry_example.py), [guide](../docs/TELEMETRY.md) |
 | Optional OpenTelemetry bridge | [telemetry.py](telemetry.py) | [integration evidence](../tests/integration/telemetry/test_opentelemetry_shared_host.py) |
 | Filtered discovery | [introspection.py](introspection.py) | [test](../tests/docs/test_introspection_example.py), [guide](../docs/INTROSPECTION.md) |
-| Streaming and cancellation | [http_sse.py](http_sse.py), [deadlines.py](deadlines.py) | [SSE guide](../docs/HTTP_SSE.md), [deadline guide](../docs/DEADLINES.md) |
+| Direct streaming, demand and early closure | [direct_streaming.py](direct_streaming.py) | [test](../tests/docs/test_direct_streaming_example.py), [guide](../docs/DIRECT_STREAMING.md); current-checkout output fixes |
+| HTTP streaming and cancellation | [http_sse.py](http_sse.py), [deadlines.py](deadlines.py) | [SSE guide](../docs/HTTP_SSE.md), [deadline guide](../docs/DEADLINES.md) |
 | Explicit direct idempotency / nested invocation | [direct_idempotency.py](direct_idempotency.py), [nested_invocation.py](nested_invocation.py) | [idempotency](../docs/DIRECT_IDEMPOTENCY.md), [composition](../docs/NESTED_INVOCATION.md) |
 
 The minimal and HTTP+MCP programs run with installed PyPI **1.0.3** packages.
