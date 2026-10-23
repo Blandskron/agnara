@@ -52,6 +52,7 @@ partial examples here.
 | Explicit direct idempotency | [Direct idempotency](DIRECT_IDEMPOTENCY.md) |
 | HTTP composition and documentation | [HTTP composition](HTTP_COMPOSITION.md) |
 | HTTP streaming | [HTTP SSE](HTTP_SSE.md) |
+| Direct Python streaming | [Direct streaming](DIRECT_STREAMING.md) |
 | MCP discovery and invocation | [MCP tools](MCP_TOOLS.md), [conformance boundary](MCP_CONFORMANCE.md) |
 | Filtered protocol-neutral discovery | [Introspection](INTROSPECTION.md) |
 | Host-owned runtime composition | [Interoperability](INTEROPERABILITY.md) |

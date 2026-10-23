@@ -126,6 +126,9 @@ extraction and shutdown. Read the [telemetry guide](TELEMETRY.md) and run
 Inspect the governed vocabulary in [API reference](API_REFERENCE.md).
 HTTP maps failures to problem responses; MCP maps them to its own wire result.
 Cancellation propagates as `CancelledError`; it is not a business failure.
+For direct streaming, use the owned `open_stream` context manager and an
+explicit per-unit output contract; [direct streaming](DIRECT_STREAMING.md)
+demonstrates demand, early exit and partial failures on the current checkout.
 
 ## Security model
 
