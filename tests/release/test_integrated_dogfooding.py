@@ -24,6 +24,7 @@ STRUCTURED_GUIDES = (
     ("deadlines.py", "deadlines_guide.py", "DEADLINES_GUIDE_ARTIFACT_OK"),
     ("confirmation.py", "confirmation_guide.py", "CONFIRMATION_GUIDE_ARTIFACT_OK"),
     ("introspection.py", "introspection_guide.py", "INTROSPECTION_GUIDE_ARTIFACT_OK"),
+    ("nested_invocation.py", "nested_invocation_guide.py", "NESTED_INVOCATION_GUIDE_ARTIFACT_OK"),
     (
         "direct_idempotency.py",
         "direct_idempotency_guide.py",

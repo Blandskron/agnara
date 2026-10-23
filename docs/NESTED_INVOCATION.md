@@ -72,3 +72,29 @@ See [ADR 0093](adr/0093-nested-capability-invocation-contract.md) and
 uv run pytest tests/docs/test_nested_invocation_example.py
 uv run python scripts/check_public_imports.py examples/nested_invocation.py
 ```
+
+The installed candidate-wheel lane in
+[`tests/release/test_integrated_dogfooding.py`](../tests/release/test_integrated_dogfooding.py)
+also copies this exact example unchanged into an external consumer directory.
+It runs under Python `-I` after all seven local wheels are installed together,
+with installed-package provenance and governed imports checked separately.
+
+The structured consumer calls `demonstrate` for the three principal cases
+above and an additional caller with no scopes. It validates exact canonical
+outcomes, including successful parent fallback when the child is denied,
+nonempty distinct root execution identities and independent ordered handler
+traces. Parent denial runs neither handler; child denial runs only the parent.
+Execution is bounded and each case must leave no additional tasks running.
+Negative validation proofs reject changed results, leaked refusal diagnostics,
+shared/missing identities, changed effects and shared mutable trace lists:
+
+```bash
+uv run pytest tests/release/test_nested_invocation_guide_artifact.py
+uv run pytest tests/release/test_integrated_dogfooding.py
+```
+
+This is evidence against wheels built from the reviewed candidate source,
+not against previously published PyPI artifacts. The guide consumer observes
+root identities and handler effects; it does not independently verify child
+context/identity, DI resource closure, cancellation or deadlines. Those remain
+core execution-test evidence. It adds no transport, host or delegation support.
