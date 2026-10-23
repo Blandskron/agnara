@@ -84,6 +84,11 @@ full history are available through Git tags and GitHub Releases.
   including receipt/execution identity reuse, principal isolation, policy denial,
   input conflicts and effect counts, with negative proofs of the consumer gate.
 
+- Validate the unchanged nested-invocation guide against isolated candidate
+  wheels, including independent parent/child scope checks, explicit fallback,
+  root execution identities and exact handler effects. Add negative proofs
+  for altered outcomes, diagnostics, identities, traces and leaked tasks.
+
 - Validate exact runnable guides against isolated candidate wheels: host
   embeddings and SQLite persistence, MCP, HTTP SSE, schemas, dependency lifecycle,
   telemetry, deadlines/cancellation, confirmation and filtered introspection.
