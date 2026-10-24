@@ -24,6 +24,11 @@ full history are available through Git tags and GitHub Releases.
   Git status. Continue checking tracked/unignored files and other directories;
   retain the full scan when Git cannot establish the exclusion.
 
+- Validate the unchanged direct streaming tutorial against installed candidate
+  wheels, including typed stream units/counts, refusals, redacted interruptions,
+  demand and cleanup order, and propagated caller cancellation. Negative proofs
+  reject altered observations and leaked tasks; runtime and public API are unchanged.
+
 - Validate each actual stream unit without applying complete-result envelope
   rules. A yielded `Success` or `Failure` cannot bypass an explicit unit schema;
   preserve redacted interruptions, partial-output counts and resource cleanup,
