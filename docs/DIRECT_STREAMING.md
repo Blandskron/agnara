@@ -125,3 +125,24 @@ uv run pytest tests/docs/test_direct_streaming_example.py tests/architecture
 This is direct Python consumption evidence. For the separately implemented
 HTTP projection, see [HTTP SSE](HTTP_SSE.md). It establishes no MCP streaming,
 network backpressure, durable resumption or cross-task stream sharing support.
+
+The installed candidate-wheel lane copies this exact example unchanged into
+an external consumer directory and runs it under Python `-I`, after installing
+all seven local wheels with first-party index access closed. Public imports
+and installed-package provenance are checked separately. The structured
+consumer validates all seven ordered observations: exact typed units/counts,
+terminal/refusal states, redacted canonical failures and complete demand and
+producer/provider cleanup traces. It also cancels an event-synchronized owning
+task and verifies propagated cancellation and ordered cleanup, with bounded
+execution and no surviving tasks. Negative proofs reject altered observations,
+effects, diagnostics and swallowed cancellation:
+
+```bash
+uv run pytest tests/release/test_direct_streaming_guide_artifact.py
+uv run pytest tests/release/test_integrated_dogfooding.py
+```
+
+This evidence concerns wheels built from the reviewed candidate source, not
+previously published artifacts. The consumer observes the example's local
+producer/provider trace; independent container-close and deadline checks remain
+in the checkout suites. It adds no transport or deployment support claim.
