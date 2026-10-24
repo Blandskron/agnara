@@ -19,6 +19,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Exclude Git-confirmed ignored local recovery files under `.worktrees/recovery/`
+  from architecture source scans, avoiding false encoding failures on serialized
+  Git status. Continue checking tracked/unignored files and other directories;
+  retain the full scan when Git cannot establish the exclusion.
+
 - Validate the unchanged direct streaming tutorial against installed candidate
   wheels, including typed stream units/counts, refusals, redacted interruptions,
   demand and cleanup order, and propagated caller cancellation. Negative proofs

@@ -103,6 +103,15 @@ Two gates depend on this:
   worktree, a submodule and a nested clone are all excluded whatever they are
   named, and another agent's half-written files never count as damage here.
 
+Local recovery evidence may be retained under `.worktrees/recovery/`. These
+artifacts can contain serialized Git status markers that resemble lossy source
+encoding. The shared architecture scanner excludes files there only when
+`git ls-files --others --ignored --exclude-standard` confirms they are ignored
+and untracked. Tracked files, unignored recovery files and all other directories
+retain their existing checks. If Git fails or is unavailable, the scanner keeps
+the files in scope. Recovery artifacts are preserved rather than rewritten to
+satisfy source-integrity checks.
+
 Removing the worktree when the work is pushed remains the expectation; the
 guards exist so that a worktree still in place cannot fail someone else's run.
 
