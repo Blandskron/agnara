@@ -12,6 +12,7 @@ function body is still an architecture violation.
 from __future__ import annotations
 
 import ast
+import subprocess
 import sys
 import tomllib
 from collections.abc import Iterator
@@ -268,7 +269,45 @@ def _is_nested_working_tree(directory: Path) -> bool:
     return (directory / ".git").exists()
 
 
-def _walk(directory: Path, suffixes: frozenset[str]) -> Iterator[Path]:
+def _ignored_recovery_files() -> frozenset[Path]:
+    """Exclude only Git-confirmed local recovery artifacts, never tracked source.
+
+    A recovery manifest can contain serialized Git status markers that look
+    like damaged source text. If Git is unavailable, scan everything as before.
+    No cache: a newly tracked recovery file must enter the next scan.
+    """
+    recovery = WORKSPACE_ROOT / ".worktrees" / "recovery"
+    if not recovery.is_dir():
+        return frozenset()
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "ls-files",
+                "--others",
+                "--ignored",
+                "--exclude-standard",
+                "-z",
+                "--",
+                ".worktrees/recovery/",
+            ],
+            cwd=WORKSPACE_ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=5,
+            check=False,
+        )
+    except OSError, UnicodeError, subprocess.TimeoutExpired:
+        return frozenset()
+    if result.returncode != 0:
+        return frozenset()
+    return frozenset(WORKSPACE_ROOT / name for name in result.stdout.split("\0") if name)
+
+
+def _walk(
+    directory: Path, suffixes: frozenset[str], ignored_recovery: frozenset[Path]
+) -> Iterator[Path]:
     for entry in sorted(directory.iterdir()):
         if entry.name in SKIPPED_DIRECTORIES:
             continue
@@ -277,8 +316,8 @@ def _walk(directory: Path, suffixes: frozenset[str]) -> Iterator[Path]:
             # following one risks a cycle and files owned somewhere else.
             if entry.is_symlink() or _is_nested_working_tree(entry):
                 continue
-            yield from _walk(entry, suffixes)
-        elif entry.is_file() and entry.suffix.lower() in suffixes:
+            yield from _walk(entry, suffixes, ignored_recovery)
+        elif entry not in ignored_recovery and entry.is_file() and entry.suffix.lower() in suffixes:
             yield entry
 
 
@@ -289,7 +328,7 @@ def workspace_files(suffixes: frozenset[str]) -> Iterator[Path]:
     guard exists once. Writing a second scanner without it is exactly how one
     run came to read 611 files belonging to another agent's task.
     """
-    yield from _walk(WORKSPACE_ROOT, suffixes)
+    yield from _walk(WORKSPACE_ROOT, suffixes, _ignored_recovery_files())
 
 
 def package_source_root(dist_name: str) -> Path:

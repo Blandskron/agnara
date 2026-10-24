@@ -19,6 +19,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Exclude Git-confirmed ignored local recovery files under `.worktrees/recovery/`
+  from architecture source scans, avoiding false encoding failures on serialized
+  Git status. Continue checking tracked/unignored files and other directories;
+  retain the full scan when Git cannot establish the exclusion.
+
 - Validate each actual stream unit without applying complete-result envelope
   rules. A yielded `Success` or `Failure` cannot bypass an explicit unit schema;
   preserve redacted interruptions, partial-output counts and resource cleanup,
