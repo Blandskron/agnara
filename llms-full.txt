@@ -257,6 +257,18 @@ yield exactly one resource and put teardown in `finally`. Decorate the raw
 generator with `provider`; the container manages its context. Do not wrap it
 with another context-manager decorator first.
 
+Callable provider instances use the same four kinds, determined by their
+`__call__` implementation. Register the instance explicitly, for example
+`dependencies.bind(Session, provider()(session_factory))`, with its parameter
+and return annotations on `__call__`. The original instance remains the
+registered callable; an async implementation is awaited and a generator
+implementation enters the same owned teardown stack as a generator function.
+Compilation does not execute it. A provider class passed directly is still a
+constructor, rather than an invocation of one of its instances. Application
+state retained by a factory needs its own ownership/concurrency discipline.
+This callable-instance classification fix is current-checkout behavior under
+`[Unreleased]`, not evidence about the published 1.0.3 wheel.
+
 The example uses a synchronous pool generator, an asynchronous session
 generator, a synchronous reader generator and an asynchronous writer function.
 Only generator providers register resource teardown automatically. A returned

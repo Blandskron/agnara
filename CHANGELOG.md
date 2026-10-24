@@ -19,6 +19,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Classify callable dependency-provider instances by their `__call__`
+  implementation, so async providers are awaited and generator providers own
+  resource acquisition and teardown. Preserve the registered instance, existing
+  function/partial classification and class-constructor behavior.
+
 - Exclude Git-confirmed ignored local recovery files under `.worktrees/recovery/`
   from architecture source scans, avoiding false encoding failures on serialized
   Git status. Continue checking tracked/unignored files and other directories;

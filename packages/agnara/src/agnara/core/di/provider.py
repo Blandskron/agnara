@@ -33,11 +33,18 @@ class ProviderDefinition:
 
     @classmethod
     def from_callable(cls, func: Callable[..., Any], scope: Scope) -> ProviderDefinition:
-        if inspect.isasyncgenfunction(func):
+        # Calling an instance dispatches to its type's __call__. Inspect that
+        # implementation without replacing the registered callable, while
+        # preserving inspect's handling of ordinary functions and partials.
+        # A class is a constructor here, not a call to one of its instances.
+        call_method = None
+        if not inspect.isclass(func) and callable(func):
+            call_method = type(func).__call__
+        if inspect.isasyncgenfunction(func) or inspect.isasyncgenfunction(call_method):
             provider_type = ProviderType.ASYNC_GENERATOR
-        elif inspect.isgeneratorfunction(func):
+        elif inspect.isgeneratorfunction(func) or inspect.isgeneratorfunction(call_method):
             provider_type = ProviderType.SYNC_GENERATOR
-        elif inspect.iscoroutinefunction(func):
+        elif inspect.iscoroutinefunction(func) or inspect.iscoroutinefunction(call_method):
             provider_type = ProviderType.ASYNC_FUNCTION
         else:
             provider_type = ProviderType.SYNC_FUNCTION
