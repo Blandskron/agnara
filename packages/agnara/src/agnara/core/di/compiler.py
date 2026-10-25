@@ -1,5 +1,6 @@
 import inspect
 from collections.abc import Callable
+from functools import partial
 from typing import Any, get_type_hints
 
 from agnara.errors import DefinitionError
@@ -34,11 +35,14 @@ def _get_dependencies(func: Callable[..., Any]) -> dict[str, type]:
     """
     try:
         target = func
-        if not inspect.isroutine(func) and not inspect.isclass(func):
-            target = func.__call__
+        while isinstance(target, partial):
+            target = target.func
+        if not inspect.isroutine(target) and not inspect.isclass(target):
+            target = target.__call__
         hints = get_type_hints(target)
         if target is not func:
-            # The bound receiver belongs to the instance, not the invocation.
+            # Bound receivers and positionally bound partial arguments do not
+            # belong to the invocation. Keyword defaults remain overridable.
             parameters = inspect.signature(func).parameters
             hints = {name: hint for name, hint in hints.items() if name in parameters}
     except Exception as error:
