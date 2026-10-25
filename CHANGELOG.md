@@ -19,6 +19,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Resolve annotations through `functools.partial` wrappers using the wrapped
+  callable's module and the partial's remaining signature. Preserve typed inputs,
+  explicit DI/context injection, keyword defaults and resource cleanup without
+  introducing dependencies for positionally bound arguments.
+
 - Classify callable dependency-provider instances by their `__call__`
   implementation, so async providers are awaited and generator providers own
   resource acquisition and teardown. Preserve the registered instance, existing

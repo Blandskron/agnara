@@ -107,6 +107,18 @@ Dependency cycles, unbound provider parameters and unresolved annotations also
 fail at startup with a `DefinitionError` subtype. Existing
 [DI compiler tests](../tests/unit/di/test_compiler.py) exercise these graph diagnostics.
 
+For `functools.partial` wrappers of ordinary functions or bound methods,
+compilation reads annotations from the wrapped callable in its defining module
+and selects parameters from the partial's actual signature. Positionally bound
+arguments no longer enter the dependency graph or capability input contract.
+Keyword-bound arguments remain defaults that normal Python calls can override:
+an explicit DI binding still supplies its resource, and a payload parameter
+retains its typed default/override behavior. Context and DI parameters remain
+protected from caller payloads. Register a partial handler with an explicit
+capability name because partial objects have no function `__name__`.
+This annotation-resolution fix is unreleased checkout behavior; it changes no
+public exports or invocation policy order.
+
 ## Put cleanup around the yield
 
 Providers can be synchronous functions, asynchronous functions, synchronous
