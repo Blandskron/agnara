@@ -115,7 +115,7 @@ Dependency cycles, unbound provider parameters and unresolved annotations also
 fail at startup with a `DefinitionError` subtype. Existing
 [DI compiler tests](../tests/unit/di/test_compiler.py) exercise these graph diagnostics.
 
-For `functools.partial` wrappers of ordinary functions or bound methods,
+For `functools.partial` wrappers of ordinary functions, bound methods or callable instances,
 compilation reads annotations from the wrapped callable in its defining module
 and selects parameters from the partial's actual signature. Positionally bound
 arguments no longer enter the dependency graph or capability input contract.
@@ -136,7 +136,10 @@ generator with `provider`; the container manages its context. Do not wrap it
 with another context-manager decorator first.
 
 Callable provider instances use the same four kinds, determined by their
-`__call__` implementation. Register the instance explicitly, for example
+`__call__` implementation, including when wrapped in `functools.partial`.
+Kind inspection follows the wrapped callable; execution retains the original
+partial with its bound arguments and the same scope-owned resource cleanup.
+Register the instance explicitly, for example
 `dependencies.bind(Session, provider()(session_factory))`, with its parameter
 and return annotations on `__call__`. The original instance remains the
 registered callable; an async implementation is awaited and a generator
@@ -144,7 +147,7 @@ implementation enters the same owned teardown stack as a generator function.
 Compilation does not execute it. A provider class passed directly is still a
 constructor, rather than an invocation of one of its instances. Application
 state retained by a factory needs its own ownership/concurrency discipline.
-This callable-instance classification fix is current-checkout behavior under
+These callable-instance and partial-wrapper classification fixes are checkout behavior under
 `[Unreleased]`, not evidence about the published 1.0.3 wheel.
 
 The example uses a synchronous pool generator, an asynchronous session

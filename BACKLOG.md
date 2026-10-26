@@ -20,8 +20,8 @@ Do not accumulate completed-task chronology in this file.
 
 ## Maintenance
 
-- [~] Exclude annotated bound receivers from DI without reserving parameter
-  names or dropping actual unbound inputs (#666).
+- [~] Preserve provider execution kinds through partial-wrapped callable
+  objects and their resource ownership (#668).
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,

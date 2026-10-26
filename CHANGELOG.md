@@ -19,6 +19,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Preserve coroutine and generator provider kinds for callable instances wrapped
+  in `functools.partial`, so DI awaits values and owns resource cleanup while
+  retaining bound arguments, dependency injection and scope validation.
+
 - Exclude annotated bound-method receivers from dependency compilation and
   introspection, preventing duplicate receiver injection, unbound-receiver
   errors and false singleton scope edges. Keep actual dependencies and ordinary,
