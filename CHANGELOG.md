@@ -19,6 +19,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Exclude annotated bound-method receivers from dependency compilation and
+  introspection, preventing duplicate receiver injection, unbound-receiver
+  errors and false singleton scope edges. Keep actual dependencies and ordinary,
+  static or unbound parameters governed by their real signatures.
+
 - Resolve annotations through `functools.partial` wrappers using the wrapped
   callable's module and the partial's remaining signature. Preserve typed inputs,
   explicit DI/context injection, keyword defaults and resource cleanup without

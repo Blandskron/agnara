@@ -20,6 +20,9 @@ Do not accumulate completed-task chronology in this file.
 
 ## Maintenance
 
+- [~] Exclude annotated bound receivers from DI without reserving parameter
+  names or dropping actual unbound inputs (#666).
+
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,
 remove superseded active guidance and repair navigation instead of appending
