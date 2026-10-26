@@ -206,6 +206,14 @@ contract, excluding the bound receiver. Register an instance without a
 `__name__` using an explicit capability name. Its mutable application state
 still needs its own ownership and concurrency discipline.
 
+For bound instance and class methods, the receiver is already fixed by Python
+and is excluded using the method's bound signature, even when the receiver has
+an explicit annotation or its type has a registry binding. This applies to
+handlers and providers and does not reserve names: ordinary/static parameters
+named `self` or `cls`, and receiver parameters of unbound methods, retain their
+explicit input/DI contracts. The bound-receiver annotation fix is unreleased
+checkout behavior; it does not infer dependencies for class constructors.
+
 Binding a payload type such as `str` changes how parameters of that type are
 classified. Prefer dedicated resource types, assemble bindings before plan
 compilation and keep the registry unchanged during execution. An unbound

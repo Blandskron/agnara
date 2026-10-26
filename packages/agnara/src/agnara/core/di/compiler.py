@@ -40,7 +40,7 @@ def _get_dependencies(func: Callable[..., Any]) -> dict[str, type]:
         if not inspect.isroutine(target) and not inspect.isclass(target):
             target = target.__call__
         hints = get_type_hints(target)
-        if target is not func:
+        if target is not func or inspect.ismethod(func):
             # Bound receivers and positionally bound partial arguments do not
             # belong to the invocation. Keyword defaults remain overridable.
             parameters = inspect.signature(func).parameters
