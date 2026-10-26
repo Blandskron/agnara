@@ -1,8 +1,7 @@
 """Project introspection and scaffolding CLI for Agnara.
 
-Owns ``agnara project create``, ``agnara app create``, capability
-generation, introspection commands and diagnostics. Templates live here,
-never in ``agnara-core``.
+Owns project/app scaffolding and introspection commands. Templates live here,
+never in the ``agnara`` kernel.
 
 Currently implemented: ``agnara project create`` and ``agnara app create``,
 which generate a project and a bounded context from a reviewable plan,
@@ -12,11 +11,12 @@ application and presents its filtered protocol-neutral introspection
 snapshot as text or as deterministic JSON, ``agnara graph``, which draws the
 relationships in that same snapshot, ``agnara schema openapi``, which exports
 the OpenAPI document a composition already produced, and ``agnara context``,
-which writes the visible capabilities as Markdown for a model to read. Exposure
-selection and capability generation remain ahead in EPIC 0A.
+which writes the visible capabilities as Markdown for a model to read.
+App profiles and ``--with`` select generated adapter bindings. There is no
+standalone capability generator, ``doctor`` or development-server command.
 
-Depends on ``agnara-core``. Must not import a sibling adapter.
-See ``ARCHITECTURE.md`` section 15, ``docs/CLI_SPEC.md`` and EPIC 0A.
+Depends on ``agnara``. Must not import a sibling adapter.
+See ``ARCHITECTURE.md`` section 15, ``docs/CLI_SPEC.md`` and ``docs/MATURITY.md``.
 """
 
 #: The supported programmatic surface of this distribution.

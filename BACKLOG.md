@@ -14,14 +14,14 @@ Do not accumulate completed-task chronology in this file.
 - [ ] Research Python 3.15 compatibility under
   [the research plan](docs/research/python-315-readiness.md) before changing the
   declared Python floor or CI support.
-- [ ] Evaluate additional protocol projections, durable execution and reserved
-  distributions through separate RFCs. No runtime implementation is authorized
-  by this backlog entry alone.
+- [ ] Define scoped RFCs for the unimplemented A2A and Events adapters, other
+  protocol projections and durable execution. Reserved distributions are not
+  completed adapters; this entry alone authorizes no runtime implementation.
 
 ## Maintenance
 
-- [~] Preserve provider execution kinds through partial-wrapped callable
-  objects and their resource ownership (#668).
+- [~] Reconcile active package documentation and verify implementation
+  evidence and remaining completion gaps for all seven distributions (#670).
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,
