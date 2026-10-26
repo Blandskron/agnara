@@ -29,7 +29,9 @@ allowed dependency graph.
 `agnara project create`, `agnara app create` with its `app-api`, `app-mcp`,
 `app-agent` and `app-worker` profile shorthands, `agnara apps`,
 `agnara inspect`, `agnara graph`, `agnara schema openapi` and `agnara context`
-are implemented. `agnara doctor` remains ahead in the backlog.
+are implemented. `agnara doctor` and a development-server command are not
+implemented. Proposed commands in a specification do not make them available;
+the [maturity inventory](../../docs/MATURITY.md) records current boundaries.
 
 `agnara --help` lists the commands the installed version actually has, which is
 the answer to trust over any list written down elsewhere.

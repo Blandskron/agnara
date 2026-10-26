@@ -27,7 +27,7 @@ reserve namespaces without runtime APIs.
 pip install agnara
 ```
 
-For reproducible installations after publication, pin the synchronized version:
+For reproducible installations, pin the synchronized version:
 
 ```bash
 pip install "agnara==1.0.3"

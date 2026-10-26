@@ -179,6 +179,8 @@ Two tests check every attribute both hooks emit against the installed
 or stable, and no incubating name may appear. See
 [proposed ADR 0057](../../docs/adr/0057-semantic-convention-compatibility.md).
 
-No-op benchmarks remain E9.6. See
+The no-op benchmark is implemented in `benchmarks/telemetry_overhead.py`;
+the [benchmark inventory](../../docs/benchmarks/coverage.md) records its
+measurement boundary and limits. See
 [proposed ADR 0054](../../docs/adr/0054-opentelemetry-metrics-bridge.md)
 and [proposed ADR 0055](../../docs/adr/0055-capability-invocation-spans.md).

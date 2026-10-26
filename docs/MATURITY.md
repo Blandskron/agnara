@@ -35,13 +35,28 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 
 | Package | Status | Published to PyPI | Public names | Notes |
 | --- | --- | --- | --- | --- |
-| `agnara` | `IMPLEMENTED` | yes | 41 | The kernel. Standard library only. |
-| `agnara-http` | `IMPLEMENTED` | yes | 14 | Public HTTP composition, OpenAPI, documentation UIs and filtered Explorer. Third-party provider extension remains internal. |
-| `agnara-mcp` | `IMPLEMENTED` | yes | 20 | Version-pinned tool projection and invocation; see the MCP table. |
-| `agnara-cli` | `IMPLEMENTED` | yes | 4 | Scaffolding, introspection and the `agnara` script. |
-| `agnara-telemetry` | `IMPLEMENTED` | yes | 2 | Explicit OpenTelemetry metrics and tracing hooks. |
-| `agnara-a2a` | `PLANNED` | yes | 0 | Published reserved namespace; no A2A runtime. |
-| `agnara-events` | `PLANNED` | yes | 0 | Published reserved namespace; no event runtime. |
+| `agnara` | `IMPLEMENTED` | yes | 41 | Standard-library kernel. [Plan tests](../tests/unit/execution/test_plan.py) and the subsystem table below define the implemented boundary; durable execution, delegation and cross-application composition remain absent. |
+| `agnara-http` | `IMPLEMENTED` | yes | 14 | [Public composition tests](../tests/http/test_public_composition.py) cover the stable API; HTTP/SSE, OpenAPI, documentation UIs and filtered Explorer are implemented. WebSockets are absent; third-party provider extension and JSON discovery remain internal. |
+| `agnara-mcp` | `IMPLEMENTED` | yes | 20 | [Pinned SDK tests](../tests/mcp/test_sdk_conformance.py) cover bounded tool discovery/invocation. No MRTR resumption, Tasks extension or packaged network-transport lifecycle; see the MCP table and conformance guide. |
+| `agnara-cli` | `IMPLEMENTED` | yes | 4 | [Project generation tests](../tests/cli/test_project_create.py) and `tests/cli/` cover scaffolding and introspection. `doctor` and a development-server command are absent. |
+| `agnara-telemetry` | `IMPLEMENTED` | yes | 2 | [Metrics](../tests/telemetry/test_metrics.py) and [tracing tests](../tests/telemetry/test_tracing.py) cover explicit hooks. SDK/provider/exporter setup, propagation and shutdown remain host-owned. |
+| `agnara-a2a` | `PLANNED` | yes | 0 | [Namespace](../packages/agnara-a2a/src/agnara_a2a/__init__.py) reserved; no Agent Card, task, streaming or A2A runtime. Not a completed adapter. |
+| `agnara-events` | `PLANNED` | yes | 0 | [Namespace](../packages/agnara-events/src/agnara_events/__init__.py) reserved; no event publication, broker integration or AsyncAPI runtime. Not a completed adapter. |
+
+`IMPLEMENTED` means the stated contract works with test evidence; it does not
+mean every proposed feature or roadmap item is complete. Five packages expose
+implemented, bounded public surfaces. A2A and Events are unfinished adapters,
+even though their reserved distributions can be built, installed and imported.
+Their runtime contracts require separate design and implementation work.
+
+Package verification starts with `scripts/check_distributions.py`, which
+checks the seven-package publication inventory, metadata, exact core pins,
+public imports and installed artifacts. The
+[public-surface tests](../tests/architecture/test_public_api_surface.py) enforce
+the governed inventory, and [package-boundary tests](../tests/architecture/test_package_boundaries.py)
+check dependency direction. These checks complement the behavioral suites;
+a successful build alone is not completion evidence. Reproduce validation
+with the commands in [QUALITY_GATES.md](../QUALITY_GATES.md).
 
 All seven distributions have a published synchronized 1.0.3 set. This table
 describes the current repository, including subsequent changes under
@@ -106,7 +121,7 @@ The fourteen public exports follow the 1.x compatibility contract.
 | Request binding | `IMPLEMENTED` | Path, query, header, JSON body, cookie, form field and file upload. ADR 0026, ADR 0072. Repeated values and collections are refused by decision. |
 | Response serialization | `IMPLEMENTED` | Deterministic success responses. ADR 0027. |
 | RFC 9457 problem responses | `IMPLEMENTED` | ADR 0028, ADR 0030. |
-| OpenAPI projection | `IMPLEMENTED` | Deterministic, pinned against a fixture. ADR 0032. |
+| OpenAPI projection | `IMPLEMENTED` | Deterministic input projection, pinned against a fixture. Success response schemas remain generic despite runtime output validation; SSE operations are omitted. ADR 0032 and the HTTP composition guide. |
 | Documentation providers | `IMPLEMENTED` | Swagger UI, ReDoc and Scalar, vendored and version-pinned. ADR 0036-0040. |
 | Discovery endpoint | `IMPLEMENTED` | ADR 0049. |
 | Explorer | `IMPLEMENTED` | Read-only shell. ADR 0052. |
@@ -129,15 +144,15 @@ The fourteen public exports follow the 1.x compatibility contract.
 | Tool invocation dispatch | `IMPLEMENTED` | |
 | Schema mapping | `IMPLEMENTED` | |
 | Result projection | `IMPLEMENTED` | Canonical results into MCP shapes. |
-| Interaction-required projection | `IMPLEMENTED` | |
+| Interaction-required projection | `IMPLEMENTED` | Confirmation becomes a form-mode elicitation request; returned client input is not verified confirmation evidence. No resumption path. |
 | Authorization and principal mapping | `IMPLEMENTED` | |
 | Protocol version pinning | `IMPLEMENTED` | ADR 0010. |
 | Task boundary | `DESIGNED` | ADR 0042 decides the boundary; no multi-round-trip runtime. |
 | Resources, prompts | `RESEARCH` | Whether capabilities map to them coherently is undecided. |
 | Progress, sessions, notifications | `PLANNED` | |
-| Streamable HTTP, stdio transports | `PLANNED` | |
-| Sampling, elicitation | `RESEARCH` | |
-| Pagination | `PLANNED` | |
+| Streamable HTTP, stdio transports | `PLANNED` | Application-owned SDK hosting is not a packaged Agnara transport lifecycle; current conformance uses in-process streams. |
+| Sampling, general elicitation | `RESEARCH` | The narrow confirmation projection above does not implement general interactions or sampling. |
+| Pagination | `PLANNED` | Current `tools/list` returns one complete filtered startup snapshot and rejects supplied cursors. |
 
 ## Other surfaces
 

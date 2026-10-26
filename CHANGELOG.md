@@ -5,6 +5,13 @@ full history are available through Git tags and GitHub Releases.
 
 ## [Unreleased]
 
+### Changed
+
+- Reconcile active architecture and package guidance with implemented contracts:
+  stable HTTP composition, output validation, public Explorer, actual DI scopes
+  and telemetry benchmark evidence. Record verification boundaries and remaining
+  gaps for all seven packages; A2A and Events remain reserved namespaces.
+
 ### Security
 
 - Propagate the accepted main-branch security dependency updates into the
