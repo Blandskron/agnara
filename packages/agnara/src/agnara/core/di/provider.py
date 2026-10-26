@@ -1,6 +1,7 @@
 import enum
 import inspect
 from collections.abc import AsyncIterator, Callable, Iterator
+from functools import partial
 from typing import Any, get_args, get_origin
 
 from agnara._frozen import frozen_slots_dataclass
@@ -33,18 +34,21 @@ class ProviderDefinition:
 
     @classmethod
     def from_callable(cls, func: Callable[..., Any], scope: Scope) -> ProviderDefinition:
-        # Calling an instance dispatches to its type's __call__. Inspect that
-        # implementation without replacing the registered callable, while
-        # preserving inspect's handling of ordinary functions and partials.
+        # Partials preserve the wrapped callable's execution kind. Calling an
+        # instance dispatches to its type's __call__; inspect that implementation
+        # without replacing the registered callable or its bound arguments.
         # A class is a constructor here, not a call to one of its instances.
+        target = func
+        while isinstance(target, partial):
+            target = target.func
         call_method = None
-        if not inspect.isclass(func) and callable(func):
-            call_method = type(func).__call__
-        if inspect.isasyncgenfunction(func) or inspect.isasyncgenfunction(call_method):
+        if not inspect.isclass(target) and callable(target):
+            call_method = type(target).__call__
+        if inspect.isasyncgenfunction(target) or inspect.isasyncgenfunction(call_method):
             provider_type = ProviderType.ASYNC_GENERATOR
-        elif inspect.isgeneratorfunction(func) or inspect.isgeneratorfunction(call_method):
+        elif inspect.isgeneratorfunction(target) or inspect.isgeneratorfunction(call_method):
             provider_type = ProviderType.SYNC_GENERATOR
-        elif inspect.iscoroutinefunction(func) or inspect.iscoroutinefunction(call_method):
+        elif inspect.iscoroutinefunction(target) or inspect.iscoroutinefunction(call_method):
             provider_type = ProviderType.ASYNC_FUNCTION
         else:
             provider_type = ProviderType.SYNC_FUNCTION
