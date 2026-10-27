@@ -20,8 +20,8 @@ Do not accumulate completed-task chronology in this file.
 
 ## Maintenance
 
-- [~] Reconcile active package documentation and verify implementation
-  evidence and remaining completion gaps for all seven distributions (#670).
+- [~] Add a read-only static `agnara doctor` command with explicit unchecked
+  runtime boundaries and deterministic diagnostic reports (#672).
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,
