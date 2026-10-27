@@ -7,6 +7,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Publish compiled complete-result output schemas in HTTP OpenAPI 200 JSON
+  responses for opted-in operations. Keep `Any` unconstrained, HEAD/204
+  bodyless and SSE excluded; reject invalid published schema metadata and
+  detach documents from schema-port data.
+
 - Add read-only `agnara doctor` diagnostics with text/versioned JSON reports
   and failing-check exit codes. Check manifest, app paths, executing Python and
   synchronized declared HTTP/MCP package metadata without importing project or

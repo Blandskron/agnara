@@ -61,11 +61,13 @@ this contract. See the [SSE guide](../../docs/HTTP_SSE.md).
 
 ## OpenAPI, documentation and discovery
 
-OpenAPI 3.2 is projected from compiled HTTP exposures, shared input schemas and
-explicit operation publication metadata. Success responses currently retain a
-generic JSON schema even when the runtime validates an explicit output
-contract. SSE routes are absent from OpenAPI; their stream-unit and terminal
-event schemas have no reviewed projection. See the HTTP composition guide.
+OpenAPI 3.2 is projected from compiled HTTP exposures, shared schemas and
+explicit operation publication metadata. The unreleased checkout publishes
+the compiled output contract as the 200 JSON response schema; omitted or
+explicit `Any` stays unconstrained. None still gives bodyless 204 and HEAD has
+no response content. SSE routes remain absent from OpenAPI; their stream-unit
+and terminal schemas have no reviewed projection. See the
+[HTTP composition guide](../../docs/HTTP_COMPOSITION.md).
 
 `HttpDocumentation` selects independent schema and built-in UI surfaces. Its
 default is pinned, self-hosted Swagger UI at `/docs` with `/openapi.json`.
