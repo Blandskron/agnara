@@ -121,7 +121,7 @@ The fourteen public exports follow the 1.x compatibility contract.
 | Request binding | `IMPLEMENTED` | Path, query, header, JSON body, cookie, form field and file upload. ADR 0026, ADR 0072. Repeated values and collections are refused by decision. |
 | Response serialization | `IMPLEMENTED` | Deterministic success responses. ADR 0027. |
 | RFC 9457 problem responses | `IMPLEMENTED` | ADR 0028, ADR 0030. |
-| OpenAPI projection | `IMPLEMENTED` | Deterministic input projection, pinned against a fixture. Success response schemas remain generic despite runtime output validation; SSE operations are omitted. ADR 0032 and the HTTP composition guide. |
+| OpenAPI projection | `IMPLEMENTED` | Deterministic input/output projection, pinned against a fixture. Unreleased HTTP adopts compiled output schemas for published 200 JSON bodies (proposed ADR 0097); Any stays unconstrained, HEAD/204 stay bodyless and SSE operations are omitted. ADR 0032 and the HTTP composition guide. |
 | Documentation providers | `IMPLEMENTED` | Swagger UI, ReDoc and Scalar, vendored and version-pinned. ADR 0036-0040. |
 | Discovery endpoint | `IMPLEMENTED` | ADR 0049. |
 | Explorer | `IMPLEMENTED` | Read-only shell. ADR 0052. |

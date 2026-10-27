@@ -118,6 +118,9 @@ until a separate HTTP decision deliberately adopts `output_schema`. This record
 amends only its former premise that the runtime cannot compile output; it does
 not silently add a response-schema or introspection-format promise.
 
+Proposed ADR 0097 records the separate complete-result HTTP OpenAPI adoption;
+its scope does not extend this record to MCP or streaming discovery.
+
 ## Threat and concurrency analysis
 
 An output value is application-controlled and can contain secrets or internal

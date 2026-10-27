@@ -891,6 +891,29 @@ nowhere in the document — no path, no identifier, no description, no tag, no
 schema fragment (ADR 0035). Publication is opt-in so that a deployment which
 has not decided what to publish publishes nothing.
 
+###### Complete-result output schemas (unreleased checkout)
+
+For a published operation with a response body, the 200 `application/json`
+schema comes from the same compiled `output=...` contract the runtime validates.
+Declare it once on the capability; a handler return annotation alone does not
+create an output contract. Omitted or explicit `Any` remains unconstrained.
+Proposed ADR 0097 records this HTTP projection separately from ADR 0086's
+runtime contract. This is checkout behavior, not evidence about the 1.0.3 wheel.
+
+The existing 200/204/default status vocabulary is unchanged. Non-None successes
+serialize as JSON 200; None still becomes a bodyless 204. The schema is copied
+without interpreting nullable/custom fragments to infer reachable statuses:
+a nullable or null-only output contract does not cause a JSON null response.
+HEAD has no response content and does not retrieve output schema metadata.
+SSE operations remain absent from OpenAPI.
+
+Unpublished operations are filtered before output metadata is read. Published
+output fragments pass the same defensive JSON copy/validation as inputs;
+invalid metadata fails when OpenAPI is projected, including startup when a
+schema/documentation surface is configured. The projected document and served
+bytes retain no mutable alias to the schema-port fragment. Publishing a schema
+does not grant invocation authority or execute a handler/provider.
+
 `HttpDocumentation()` is the supported local documentation profile. It serves
 the generated canonical OpenAPI 3.2 document at `/openapi.json` and local,
 hash-verified Swagger UI at `/docs`; no CDN, separate ASGI app or

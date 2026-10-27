@@ -20,8 +20,8 @@ Do not accumulate completed-task chronology in this file.
 
 ## Maintenance
 
-- [~] Add a read-only static `agnara doctor` command with explicit unchecked
-  runtime boundaries and deterministic diagnostic reports (#672).
+- [~] Project compiled complete-result output schemas into explicitly published
+  HTTP OpenAPI operations while preserving filtering and wire semantics (#674).
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,

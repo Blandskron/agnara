@@ -133,6 +133,9 @@ def test_the_fixture_covers_every_projection_feature_the_adapter_implements() ->
         for media in operation.get("requestBody", {}).get("content", {}).values()
     ), "the fixture should exercise an upload encoding"
     assert refs(doc), "the fixture should exercise a shared component reference"
+    assert doc["paths"]["/v1/orders/{order_id}"]["get"]["responses"]["200"]["content"][
+        "application/json"
+    ]["schema"] == {"type": "object", "additionalProperties": {"type": "integer"}}
 
 
 # --- structure -------------------------------------------------------------
