@@ -5,6 +5,13 @@ full history are available through Git tags and GitHub Releases.
 
 ## [Unreleased]
 
+### Added
+
+- Add read-only `agnara doctor` diagnostics with text/versioned JSON reports
+  and failing-check exit codes. Check manifest, app paths, executing Python and
+  synchronized declared HTTP/MCP package metadata without importing project or
+  adapter code; list runtime checks that remain unimplemented explicitly.
+
 ### Changed
 
 - Reconcile active architecture and package guidance with implemented contracts:

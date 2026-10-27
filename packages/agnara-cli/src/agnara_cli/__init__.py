@@ -13,7 +13,11 @@ relationships in that same snapshot, ``agnara schema openapi``, which exports
 the OpenAPI document a composition already produced, and ``agnara context``,
 which writes the visible capabilities as Markdown for a model to read.
 App profiles and ``--with`` select generated adapter bindings. There is no
-standalone capability generator, ``doctor`` or development-server command.
+standalone capability generator or development-server command.
+
+The unreleased checkout's ``agnara doctor`` performs read-only static checks
+of the manifest, app paths and installed version metadata. Runtime registration,
+dependency cycles and architecture rules remain explicitly unchecked.
 
 Depends on ``agnara``. Must not import a sibling adapter.
 See ``ARCHITECTURE.md`` section 15, ``docs/CLI_SPEC.md`` and ``docs/MATURITY.md``.
