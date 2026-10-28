@@ -20,9 +20,9 @@ Do not accumulate completed-task chronology in this file.
 
 ## Maintenance
 
-- [~] Decide the A2A-02 complete-result projection (routing, envelope, numeric
-  domain, principal bridge, failure table, card, limits, lifecycle) in a
-  proposed ADR before adapter code (#687).
+- [~] Scope the first event projection (inbound consumption, delivery and
+  acknowledgement, principal, AsyncAPI schema dialect) in RFC 0011 before any
+  broker or adapter work (#691).
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,

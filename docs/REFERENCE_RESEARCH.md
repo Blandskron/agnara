@@ -597,14 +597,21 @@ Research checkpoint, inspected on 2026-10-28:
 ## AsyncAPI
 
 Event-driven support should project to AsyncAPI rather than inventing a documentation format.
+The event adapter is unimplemented; [RFC 0011](rfc/0011-event-initial-projection.md)
+owns the initial projection questions and feasibility gates.
 
-Current reviewed line:
+Research checkpoint, inspected on 2026-10-28:
 
-- AsyncAPI 3.1.0.
+- AsyncAPI `3.1.0`, immutable commit
+  `b3fac5bb522771428ea57b16129b273cd3ea0180`:
+  [specification](https://github.com/asyncapi/spec/blob/b3fac5bb522771428ea57b16129b273cd3ea0180/spec/asyncapi.md).
+  Its Schema Object is a JSON Schema Draft 07 superset.
+- CloudEvents `v1.0.2`, tag `ce@v1.0.2`, immutable commit
+  `fc1f6f31f5f011a72183f1bcea20c987cb683ade`:
+  [specification](https://github.com/cloudevents/spec/blob/fc1f6f31f5f011a72183f1bcea20c987cb683ade/cloudevents/spec.md).
+  A candidate envelope, not an Agnara core type.
 
-Reference:
-
-- https://www.asyncapi.com/docs/reference/specification/v3.1.0
+No broker or client SDK is selected, installed or claimed compatible.
 
 ## uv
 
