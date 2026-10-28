@@ -12,8 +12,9 @@ capability semantics. `agnara-a2a` currently reserves a namespace and exports
 nothing. This proposal adds no endpoint, SDK dependency, public syntax or
 protocol support. [Maturity](../MATURITY.md) remains authoritative.
 
-The next deliverable proposed here is a separately scoped feasibility report,
-followed by an ADR if the maintainer chooses implementation. An approved RFC
+The [A2A-01 report](../research/a2a-initial-feasibility.md) records an isolated
+SDK checkpoint and fit gaps. The next decision is a separately reviewed
+projection ADR if the maintainer chooses to proceed. An approved RFC
 document alone does not authorize the runtime slices below. No model calls,
 reasoning engine or task scheduler are implied by an A2A adapter.
 
@@ -155,8 +156,9 @@ store or free-threading support follows from immutable discovery metadata.
 
 ## Feasibility gates and proposed work sequence
 
-These are future work packages requiring their own Issues and review. No
-runtime package or workflow change is included with this RFC.
+These work packages require their own Issues and review. A2A-01 has the
+isolated checkpoint linked above; later slices remain separate work. No
+runtime package or workflow change is authorized by this RFC.
 
 | Slice | Required evidence before closure |
 | --- | --- |

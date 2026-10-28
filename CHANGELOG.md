@@ -28,6 +28,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Changed
 
+- Record isolated A2A SDK feasibility with a hash-locked experiment, observed
+  operation/lifecycle results and explicit numeric, parser and version fit gaps.
+  The evidence does not add adapter APIs or protocol-support claims.
+
 - Scope the initial A2A adapter proposal with immutable protocol/SDK research
   references, explicit feasibility gates and acceptance criteria. The reserved
   package still has no public API or runtime support.
