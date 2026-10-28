@@ -165,6 +165,15 @@ without a callback, so dependency cleanup does not require a custom hook. Keep
 lifespan enabled on the ASGI server; requests must be drained before shutdown.
 Each compiled surface belongs to one worker event loop.
 
+The [runnable HTTP example](../examples/http_service.py) shows a server-free
+host: one `asyncio.run` owns startup, every request and shutdown, and a task
+group joins the lifespan task. Its fresh-application factory keeps repeated
+demonstrations independent of the module-level `asgi` entry point. The local
+`lifespan` and `request` helpers demonstrate ASGI messages; they are example
+code, not framework APIs or a production server. Its
+[lifecycle tests](../tests/docs/test_http_service_example.py) verify singleton
+cleanup on success, host failure and cancellation.
+
 ## Bindings are explicit
 
 Agnara does not infer that `{order_id}` in a path fills an input called
