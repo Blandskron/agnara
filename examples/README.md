@@ -7,7 +7,7 @@ repository, run `uv sync` then `uv run python examples/<file>.py`.
 | Task | Canonical source | Validation / deeper guide |
 | --- | --- | --- |
 | Minimal capability and direct invocation | [minimal_capability.py](minimal_capability.py) | [test](../tests/docs/test_minimal_capability_example.py), [agent path](../docs/AGENT_GUIDE.md) |
-| Capability metadata, DI and policy | [quickstart.py](quickstart.py) | [core guide](../packages/agnara/README.md) |
+| Capability metadata, DI and policy | [quickstart.py](quickstart.py) | [lifecycle tests](../tests/docs/test_standalone_example_lifecycle.py), [core guide](../packages/agnara/README.md) |
 | HTTP backend, dataclass JSON contract and owned ASGI lifespan | [http_service.py](http_service.py) | [lifecycle test](../tests/docs/test_http_service_example.py), [composition guide](../docs/HTTP_COMPOSITION.md), [public surface tests](../tests/architecture/test_public_http_surface.py) |
 | Official-client MCP service | [mcp_tools.py](mcp_tools.py) | [test](../tests/docs/test_mcp_tools_example.py), [guide](../docs/MCP_TOOLS.md) |
 | Same capability invoked over HTTP + MCP | [http_mcp.py](http_mcp.py) | [test](../tests/docs/test_http_mcp_example.py) |
@@ -20,7 +20,7 @@ repository, run `uv sync` then `uv run python examples/<file>.py`.
 | Dependency providers and teardown | [dependencies.py](dependencies.py) | [test](../tests/docs/test_dependencies_example.py), [guide](../docs/DEPENDENCIES.md) |
 | Verifier-backed confirmation policy | [confirmation.py](confirmation.py) | [test](../tests/docs/test_confirmation_example.py), [guide](../docs/CONFIRMATION.md) |
 | Execution telemetry without exporter | [invocation_telemetry.py](invocation_telemetry.py) | [test](../tests/docs/test_telemetry_example.py), [guide](../docs/TELEMETRY.md) |
-| Optional OpenTelemetry bridge | [telemetry.py](telemetry.py) | [integration evidence](../tests/integration/telemetry/test_opentelemetry_shared_host.py) |
+| Optional OpenTelemetry bridge and owned provider shutdown | [telemetry.py](telemetry.py) | [lifecycle tests](../tests/docs/test_standalone_example_lifecycle.py), [integration evidence](../tests/integration/telemetry/test_opentelemetry_shared_host.py) |
 | Filtered discovery | [introspection.py](introspection.py) | [test](../tests/docs/test_introspection_example.py), [guide](../docs/INTROSPECTION.md) |
 | Direct streaming, demand and early closure | [direct_streaming.py](direct_streaming.py) | [test](../tests/docs/test_direct_streaming_example.py), [guide](../docs/DIRECT_STREAMING.md); current-checkout output fixes |
 | HTTP streaming and cancellation | [http_sse.py](http_sse.py), [deadlines.py](deadlines.py) | [SSE guide](../docs/HTTP_SSE.md), [deadline guide](../docs/DEADLINES.md) |

@@ -7,6 +7,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Close the standalone quickstart's shared DI container and the telemetry
+  example's owned SDK provider on success, errors and cancellation. Preserve
+  API-only mode when the optional SDK is absent; surface unrelated import faults.
+
 - Run the HTTP service tutorial's startup, requests and shutdown on one event
   loop; close its singleton provider and join lifespan on errors and cancellation.
 

@@ -129,6 +129,15 @@ the core does not manage them. See the
 [telemetry package](../packages/agnara-telemetry/README.md). This guide claims no
 exporter or backend interoperability.
 
+The separate [SDK wiring example](../examples/telemetry.py) owns a local tracer
+provider without installing it globally. It closes the invocation container,
+inspects finished spans, then shuts down the provider and its exporter even
+when the host fails or is cancelled. When the optional SDK is absent it uses
+the API tracer without taking ownership of an external provider; unrelated
+SDK import failures propagate. The
+[standalone lifecycle tests](../tests/docs/test_standalone_example_lifecycle.py)
+verify these ownership boundaries alongside the direct quickstart's container.
+
 ## Evidence and ownership
 
 [Guide tests](../tests/docs/test_telemetry_example.py) verify all six outcomes,
