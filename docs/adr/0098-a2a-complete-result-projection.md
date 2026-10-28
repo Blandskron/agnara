@@ -306,13 +306,34 @@ unshipped syntax are added before then.
 - **Carry large numbers as strings automatically:** rejected. It silently
   changes the capability's published types.
 
+## Evidence from A2A-03 (Issue #695)
+
+The [A2A-03 fixture checkpoint](../research/a2a-initial-feasibility.md#a2a-03-fixture-checkpoint)
+exercised this record through the official client with compiled Agnara plans.
+It confirmed D1, D2, D3, D4, D8, D9 and D10 and the D6 protocol and
+other-operation rows. Four points conflict with the text above at the
+inspected SDK pin and need a maintainer decision before A2A-04. This section
+records them; it does not change the decisions:
+
+1. **D6 codes and details:** through the SDK dispatcher a handler cannot emit
+   `-32000`, an `agnara` `ErrorInfo.domain` or the reasons listed. Non-A2A
+   categories arrive as `-32603` / `UNKNOWN_ERROR`, distinguishable only through
+   `ErrorInfo.metadata`. Options: amend D6, own JSON-RPC dispatch in the
+   adapter, or seek an upstream extension point.
+2. **D6 redaction:** the dispatcher returns `str(e)` for non-A2A exceptions, so
+   the adapter must guarantee that none escapes its handler.
+3. **D7 depth:** the SDK accepts at most 47 nested input levels and serializes
+   at most 31 output levels (protobuf 7.36.2). The 64-level figure is
+   unreachable, and the output limit is hit after handler effects.
+4. **D5 headers:** the SDK's version validator reads `A2A-Version` from SDK
+   state headers. The bridge must copy that admitted header, and only that one.
+
 ## Remaining evidence
 
-A2A-03 must still show compiled Agnara invocation through the official client,
-policy before effects, cleanup, redaction, concurrent principal isolation,
-every D6 row, disconnect handling and cross-platform CI. A2A-04 decides
-exports, the exact dependency pin, examples and maturity. Until then there is
-no A2A support.
+A2A-03 covered the in-process items listed above. Still missing: network
+server disconnect handling, cross-platform CI, installed `agnara-a2a` wheels,
+the exact dependency pin, exports, examples and maturity (A2A-04). Until then
+there is no A2A support.
 
 [spec]: https://github.com/a2aproject/A2A/blob/3303592588e388e62e0f69f701af531d2f4e3991/docs/specification.md
 [proto]: https://github.com/a2aproject/A2A/blob/3303592588e388e62e0f69f701af531d2f4e3991/specification/a2a.proto

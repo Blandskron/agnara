@@ -1,0 +1,383 @@
+{
+  "agnara": "1.0.3",
+  "deviations": [
+    {
+      "expected": {
+        "deepest_accepted": 64
+      },
+      "observed": {
+        "deepest_accepted": 47,
+        "first_refusal": {
+          "by": "sdk-parser",
+          "code": -32602,
+          "levels": 48,
+          "message": "Invalid params"
+        }
+      },
+      "row": "D7 depth"
+    },
+    {
+      "expected": {
+        "deepest_accepted": 64
+      },
+      "observed": {
+        "after_handler_effects": true,
+        "deepest_accepted": 31,
+        "first_refusal": {
+          "code": -32603,
+          "levels": 32,
+          "redacted": true
+        }
+      },
+      "row": "D7 output depth"
+    },
+    {
+      "expected": {
+        "code": -32602,
+        "reason": "INVALID_INPUT"
+      },
+      "observed": {
+        "code": -32602,
+        "reason": "INVALID_PARAMS"
+      },
+      "row": "D6 invalid_input"
+    },
+    {
+      "expected": {
+        "code": -32000,
+        "reason": "UNAUTHENTICATED"
+      },
+      "observed": {
+        "code": -32603,
+        "reason": "UNKNOWN_ERROR"
+      },
+      "row": "D6 unauthenticated"
+    },
+    {
+      "expected": {
+        "code": -32000,
+        "reason": "FORBIDDEN"
+      },
+      "observed": {
+        "code": -32603,
+        "reason": "UNKNOWN_ERROR"
+      },
+      "row": "D6 forbidden"
+    },
+    {
+      "expected": {
+        "code": -32000,
+        "reason": "NOT_FOUND"
+      },
+      "observed": {
+        "code": -32603,
+        "reason": "UNKNOWN_ERROR"
+      },
+      "row": "D6 not_found"
+    },
+    {
+      "expected": {
+        "code": -32000,
+        "reason": "CONFLICT"
+      },
+      "observed": {
+        "code": -32603,
+        "reason": "UNKNOWN_ERROR"
+      },
+      "row": "D6 conflict"
+    },
+    {
+      "expected": {
+        "code": -32000,
+        "reason": "RATE_LIMITED"
+      },
+      "observed": {
+        "code": -32603,
+        "reason": "UNKNOWN_ERROR"
+      },
+      "row": "D6 rate_limited"
+    },
+    {
+      "expected": {
+        "code": -32000,
+        "reason": "INTERACTION_REQUIRED"
+      },
+      "observed": {
+        "code": -32603,
+        "reason": "UNKNOWN_ERROR"
+      },
+      "row": "D6 interaction_required"
+    },
+    {
+      "expected": {
+        "code": -32000,
+        "reason": "UNAVAILABLE"
+      },
+      "observed": {
+        "code": -32603,
+        "reason": "UNKNOWN_ERROR"
+      },
+      "row": "D6 unavailable"
+    },
+    {
+      "expected": {
+        "code": -32000,
+        "reason": "TIMEOUT"
+      },
+      "observed": {
+        "code": -32603,
+        "reason": "UNKNOWN_ERROR"
+      },
+      "row": "D6 timeout"
+    },
+    {
+      "expected": {
+        "code": -32603,
+        "reason": "INTERNAL_FAILURE"
+      },
+      "observed": {
+        "code": -32603,
+        "reason": "INTERNAL_ERROR"
+      },
+      "row": "D6 internal_failure"
+    }
+  ],
+  "gil_enabled": true,
+  "observations": {
+    "add": {
+      "client_type": "float",
+      "result": 5.0
+    },
+    "add_big": {
+      "code": -32602,
+      "message": "number outside the supported domain",
+      "reason": "INVALID_PARAMS"
+    },
+    "add_fraction": {
+      "code": -32602,
+      "message": "expected int, got float",
+      "reason": "INVALID_PARAMS"
+    },
+    "add_max_safe": "accepted",
+    "add_two_pow_53": -32602,
+    "authentication": {
+      "challenge": true,
+      "missing": 401,
+      "unknown_token": 401
+    },
+    "body_limit": {
+      "configured": 4096,
+      "status": 413
+    },
+    "cancellation_reaches_handler": true,
+    "card": {
+      "cache_control": null,
+      "etag_304": true,
+      "flags_false": true,
+      "single_interface": true
+    },
+    "composition": {
+      "confirmation_required": "refused",
+      "missing_card_metadata": "refused"
+    },
+    "deadline": {
+      "agnaraCode": "timeout",
+      "code": -32603
+    },
+    "default_max_body": 1048576,
+    "depth": {
+      "deepest_accepted": 47,
+      "first_refusal": {
+        "by": "sdk-parser",
+        "code": -32602,
+        "levels": 48,
+        "message": "Invalid params"
+      }
+    },
+    "failures": {
+      "conflict": {
+        "code": -32603,
+        "domain": "a2a-protocol.org",
+        "message": "canonical conflict message",
+        "metadata": {
+          "agnaraCode": "conflict"
+        },
+        "reason": "UNKNOWN_ERROR"
+      },
+      "forbidden": {
+        "code": -32603,
+        "domain": "a2a-protocol.org",
+        "message": "canonical forbidden message",
+        "metadata": {
+          "agnaraCode": "forbidden"
+        },
+        "reason": "UNKNOWN_ERROR"
+      },
+      "interaction_required": {
+        "code": -32603,
+        "domain": "a2a-protocol.org",
+        "message": "Interaction required",
+        "metadata": {
+          "agnaraCode": "interaction_required"
+        },
+        "reason": "UNKNOWN_ERROR"
+      },
+      "internal_failure": {
+        "code": -32603,
+        "domain": "a2a-protocol.org",
+        "message": "Internal error",
+        "metadata": {
+          "agnaraCode": "internal_failure"
+        },
+        "reason": "INTERNAL_ERROR"
+      },
+      "invalid_input": {
+        "code": -32602,
+        "domain": "a2a-protocol.org",
+        "message": "canonical invalid_input message",
+        "metadata": {
+          "agnaraCode": "invalid_input"
+        },
+        "reason": "INVALID_PARAMS"
+      },
+      "not_found": {
+        "code": -32603,
+        "domain": "a2a-protocol.org",
+        "message": "canonical not_found message",
+        "metadata": {
+          "agnaraCode": "not_found"
+        },
+        "reason": "UNKNOWN_ERROR"
+      },
+      "rate_limited": {
+        "code": -32603,
+        "domain": "a2a-protocol.org",
+        "message": "canonical rate_limited message",
+        "metadata": {
+          "agnaraCode": "rate_limited"
+        },
+        "reason": "UNKNOWN_ERROR"
+      },
+      "timeout": {
+        "code": -32603,
+        "domain": "a2a-protocol.org",
+        "message": "canonical timeout message",
+        "metadata": {
+          "agnaraCode": "timeout"
+        },
+        "reason": "UNKNOWN_ERROR"
+      },
+      "unauthenticated": {
+        "code": -32603,
+        "domain": "a2a-protocol.org",
+        "message": "canonical unauthenticated message",
+        "metadata": {
+          "agnaraCode": "unauthenticated"
+        },
+        "reason": "UNKNOWN_ERROR"
+      },
+      "unavailable": {
+        "code": -32603,
+        "domain": "a2a-protocol.org",
+        "message": "canonical unavailable message",
+        "metadata": {
+          "agnaraCode": "unavailable"
+        },
+        "reason": "UNKNOWN_ERROR"
+      }
+    },
+    "jsonrpc": {
+      "parse": -32700,
+      "unknown_method": -32601
+    },
+    "lifecycle": {
+      "final": "container.close",
+      "order_per_surface": [
+        "client.close",
+        "lifespan.close"
+      ]
+    },
+    "no_remaining_tasks": true,
+    "operations": {
+      "CancelTask": -32001,
+      "CreateTaskPushNotificationConfig": -32003,
+      "DeleteTaskPushNotificationConfig": -32003,
+      "GetExtendedAgentCard": -32004,
+      "GetTask": -32001,
+      "GetTaskPushNotificationConfig": -32003,
+      "ListTaskPushNotificationConfigs": -32003,
+      "ListTasks": "empty",
+      "SendStreamingMessage": -32004,
+      "SubscribeToTask": -32004
+    },
+    "output_depth": {
+      "after_handler_effects": true,
+      "deepest_accepted": 31,
+      "first_refusal": {
+        "code": -32603,
+        "levels": 32,
+        "redacted": true
+      }
+    },
+    "policy_before_effects": {
+      "denied_code": "forbidden",
+      "effects_after_admin": 1,
+      "effects_after_denial": 0
+    },
+    "principal_isolation": {
+      "concurrent_identities": [
+        "alice",
+        "bob"
+      ],
+      "context_metadata": {
+        "transport": "a2a"
+      },
+      "headers_in_context": false
+    },
+    "protocol_rows": {
+      "contextId": -32004,
+      "extensions": -32004,
+      "list_data": -32602,
+      "non_json_media_type": -32005,
+      "output_mode": -32005,
+      "push_config": -32003,
+      "referenceTaskIds": -32004,
+      "role_agent": -32602,
+      "taskId": -32001,
+      "tenant": -32602,
+      "text_part": -32005,
+      "two_parts": -32602,
+      "url_part": -32005
+    },
+    "redacted_explode": -32603,
+    "redacted_huge": -32603,
+    "redacted_not_finite": -32603,
+    "redacted_wrong_output": -32603,
+    "response_identifiers": {
+      "client_accepts_message_without_context_id": true,
+      "context_id": null,
+      "fresh_message_id": true,
+      "task_id": null
+    },
+    "scale_int_to_float": "accepted",
+    "shape_roundtrip": true,
+    "unknown_fields_ignored": true,
+    "versions": {
+      "0.3": -32009,
+      "1.0": "accepted",
+      "1.0.0": -32009,
+      "1.99": -32009,
+      "9.0": -32009,
+      "empty": -32009
+    }
+  },
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.14.4",
+  "schema_version": 1,
+  "sdk": "1.3.0",
+  "sources_sha256": {
+    "fixture.py": "e9e7724c010178e841f2943009d5f0efbe07cf6871815d9edb1fe8c735285590",
+    "fixture_probe.py": "7bc0c23e497d8776d121005335222a82a555602c17958414137c135e8192f577",
+    "requirements.lock": "06d9a2844ff5cd4eb12d7af92d3610c6c270931b38506015c5eb4eea45fdc61f"
+  }
+}

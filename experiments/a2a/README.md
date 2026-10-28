@@ -47,3 +47,33 @@ The probes intentionally demonstrate permissive parsing and numeric/version
 limitations rather than correcting them. They are regression evidence for a
 research checkpoint, not a server conformance suite, authenticated deployment
 or proposal to change Agnara's domain semantics.
+
+## A2A-03 adapter fixture
+
+[fixture.py](fixture.py) is an internal, experiment-only implementation of the
+[ADR 0098](../../docs/adr/0098-a2a-complete-result-projection.md) profile. It
+consists of an admission gate in front of the SDK, a context builder that
+passes only the resolved principal and the `A2A-Version` header, and a no-task
+`RequestHandler`. That handler invokes compiled Agnara plans through public
+`agnara.execution.invoke_result`. The kernel decides every capability outcome;
+the fixture validates the envelope, converts numbers and projects outcomes.
+[fixture_probe.py](fixture_probe.py) drives it through the official JSON-RPC
+client and raw ASGI requests and asserts each row. Where an observation differs
+from ADR 0098, it records a `deviations` entry instead of failing.
+
+The fixture also needs the workspace `agnara` kernel in the same isolated
+environment. Install it without dependencies (the kernel has none) and run the
+probe as a module from the repository root:
+
+```powershell
+uv pip install --no-deps --python experiments/a2a/.venv/Scripts/python.exe ./packages/agnara
+experiments/a2a/.venv/Scripts/python.exe -m experiments.a2a.fixture_probe
+```
+
+This does not modify `requirements.lock`. The installed kernel is the current
+checkout, not a published wheel. A later rerun of `probe.py` in the same
+environment therefore lists 31 distributions rather than the 30 retained for
+A2A-01. [observed-fixture-windows.json](observed-fixture-windows.json)
+retains one successful run on the same Windows/Python 3.14.4 environment as
+A2A-01, with source hashes. Expected SDK refusal diagnostics appear on stderr.
+The fixture is not an `agnara-a2a` API, example or support claim.

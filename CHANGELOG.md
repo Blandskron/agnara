@@ -28,6 +28,13 @@ full history are available through Git tags and GitHub Releases.
 
 ### Changed
 
+- Exercise the ADR 0098 A2A profile in an isolated experiment fixture that
+  invokes compiled Agnara plans through the official SDK client. Record four
+  SDK discrepancies for maintainer decision: fixed JSON-RPC error codes and
+  details, raw exception text in unhandled errors, nesting ceilings of 47
+  input and 31 output levels, and the version validator's header dependency. No
+  adapter API or support claim is added.
+
 - Propose ADR 0098 for the first A2A projection: fixed one-capability dispatch,
   an explicit numeric domain for protobuf `Value`, exact `1.0` revision
   admission, a complete JSON-RPC failure table, public card consent, limits and
