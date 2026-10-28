@@ -43,6 +43,10 @@ Workspace / Project
 
 ## Terminology
 
+The hierarchy illustrates architectural roles, not adapter availability. HTTP
+and MCP are implemented adapters; A2A, Events and Tasks remain reserved. See
+[current maturity](MATURITY.md) before selecting a transport or runtime.
+
 ### Project
 
 A deployable/composable Agnara system.
@@ -150,12 +154,22 @@ Cross-app communication options, in order of preference:
 
 Direct imports from one app's infrastructure internals into another app are forbidden.
 
-The first option describes the intended semantic boundary, not a direct
-Python call to another handler. Agnara does not yet define internal capability
-invocation: a direct call would bypass the target's policy, dependencies,
-deadline, telemetry and canonical failures. Initiative I8 owns that future
-decision. Until then, project composition may satisfy a public Protocol
-through dependency injection without pretending it invoked a capability.
+The first option describes a capability boundary, not a direct Python call to
+another handler. Within one frozen capability snapshot, `CapabilityRuntime`
+supports complete-result composition through a plan-supplied
+`CapabilityInvoker`. Each child enters its compiled plan with fresh execution
+identity, context and invocation dependencies, and evaluates its own policy
+and confirmation requirement. Deadlines cannot be extended, and cancellation
+propagates through the awaited child. See the runnable
+[nested invocation guide](NESTED_INVOCATION.md) and
+[ADR 0093](adr/0093-nested-capability-invocation-contract.md).
+
+This does not change the cross-app public module boundary or provide a bridge
+to another application snapshot or embedded host. Streaming children and
+delegated authority remain unsupported. A direct handler call still bypasses
+the target's policies, dependencies, deadline, telemetry and canonical
+outcomes. Project composition may satisfy a public Protocol through dependency
+injection without claiming that an ordinary Python call invoked a capability.
 
 A minimal app has no application layer and publishes no cross-app contract by
 default. Needing one is a reason to move to the modular architecture rather
