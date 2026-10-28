@@ -58,8 +58,9 @@ passes only the resolved principal and the `A2A-Version` header, and a no-task
 `agnara.execution.invoke_result`. The kernel decides every capability outcome;
 the fixture validates the envelope, converts numbers and projects outcomes.
 [fixture_probe.py](fixture_probe.py) drives it through the official JSON-RPC
-client and raw ASGI requests and asserts each row. Where an observation differs
-from ADR 0098, it records a `deviations` entry instead of failing.
+client and raw ASGI requests and asserts each row against the amended
+ADR 0098. Where an observation differs from the record, it adds a
+`deviations` entry instead of failing; the retained run has none.
 
 The fixture also needs the workspace `agnara` kernel in the same isolated
 environment. Install it without dependencies (the kernel has none) and run the

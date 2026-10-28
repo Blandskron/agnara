@@ -37,7 +37,8 @@ from agnara.schema import materialize_json
 
 #: ADR 0098 D3/D4: the integer range a protobuf double carries exactly.
 SAFE_INTEGER = 2**53 - 1
-#: ADR 0098 D6/D7 defaults.
+#: Defensive nesting bound. ADR 0098 D7: the binding refuses earlier
+#: (47 input / 31 output levels with protobuf 7.36.2).
 MAX_DEPTH = 64
 DEFAULT_MAX_BODY = 1 << 20
 DEFAULT_TIMEOUT = 30.0
@@ -275,7 +276,8 @@ def build_surface(
     pb, proto, errors = sdk.pb, sdk.proto, sdk.errors
 
     class CapabilityFailure(errors.A2AError):
-        """ADR 0098 D6 asks for JSON-RPC -32000 for these categories."""
+        """ADR 0098 D6: the SDK emits -32603 / UNKNOWN_ERROR for this type;
+        the category travels in ``ErrorInfo.metadata.agnaraCode``."""
 
     class PrincipalContext(sdk.common.ServerCallContextBuilder):
         """Carry the resolved principal and an allowlisted header set only.

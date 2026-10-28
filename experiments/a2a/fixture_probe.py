@@ -43,19 +43,19 @@ TOKENS = {"Bearer alice-token": "alice", "Bearer bob-token": "bob", "Bearer admi
 ALICE = {"Authorization": "Bearer alice-token"}
 ADMIN = {"Authorization": "Bearer admin-token"}
 
-#: ADR 0098 D6 expectations for canonical outcomes: (JSON-RPC code, reason).
+#: Amended ADR 0098 D6 expectations: (JSON-RPC code, SDK ErrorInfo reason).
+#: The category itself is asserted separately through ``metadata.agnaraCode``.
 EXPECTED_FAILURES = {
-    FailureCode.INVALID_INPUT: (-32602, "INVALID_INPUT"),
-    FailureCode.UNAUTHENTICATED: (-32000, "UNAUTHENTICATED"),
-    FailureCode.FORBIDDEN: (-32000, "FORBIDDEN"),
-    FailureCode.NOT_FOUND: (-32000, "NOT_FOUND"),
-    FailureCode.CONFLICT: (-32000, "CONFLICT"),
-    FailureCode.RATE_LIMITED: (-32000, "RATE_LIMITED"),
-    FailureCode.INTERACTION_REQUIRED: (-32000, "INTERACTION_REQUIRED"),
-    FailureCode.UNAVAILABLE: (-32000, "UNAVAILABLE"),
-    FailureCode.TIMEOUT: (-32000, "TIMEOUT"),
-    FailureCode.INTERNAL_FAILURE: (-32603, "INTERNAL_FAILURE"),
+    code: (-32603, "UNKNOWN_ERROR")
+    for code in FailureCode
+    if code not in (FailureCode.INVALID_INPUT, FailureCode.INTERNAL_FAILURE)
+} | {
+    FailureCode.INVALID_INPUT: (-32602, "INVALID_PARAMS"),
+    FailureCode.INTERNAL_FAILURE: (-32603, "INTERNAL_ERROR"),
 }
+#: Amended ADR 0098 D7: ceilings measured at this pin (protobuf 7.36.2).
+INPUT_DEPTH_CEILING = 47
+OUTPUT_DEPTH_CEILING = 31
 
 CARD = CardMetadata(
     name="Fixture agent",
@@ -471,11 +471,11 @@ async def probe() -> dict[str, Any]:
                 break
             assert refusal, "nesting beyond the limit must be refused"
             results["depth"] = {"deepest_accepted": deepest_accepted, "first_refusal": refusal}
-            if deepest_accepted < MAX_DEPTH:
+            if deepest_accepted != INPUT_DEPTH_CEILING:
                 deviations.append(
                     {
                         "row": "D7 depth",
-                        "expected": {"deepest_accepted": MAX_DEPTH},
+                        "expected": {"deepest_accepted": INPUT_DEPTH_CEILING},
                         "observed": results["depth"],
                     }
                 )
@@ -498,11 +498,11 @@ async def probe() -> dict[str, Any]:
                 "first_refusal": output_refusal,
                 "after_handler_effects": True,
             }
-            if deepest_output < MAX_DEPTH:
+            if deepest_output != OUTPUT_DEPTH_CEILING:
                 deviations.append(
                     {
                         "row": "D7 output depth",
-                        "expected": {"deepest_accepted": MAX_DEPTH},
+                        "expected": {"deepest_accepted": OUTPUT_DEPTH_CEILING},
                         "observed": results["output_depth"],
                     }
                 )

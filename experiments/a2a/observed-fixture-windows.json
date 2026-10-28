@@ -1,147 +1,6 @@
 {
   "agnara": "1.0.3",
-  "deviations": [
-    {
-      "expected": {
-        "deepest_accepted": 64
-      },
-      "observed": {
-        "deepest_accepted": 47,
-        "first_refusal": {
-          "by": "sdk-parser",
-          "code": -32602,
-          "levels": 48,
-          "message": "Invalid params"
-        }
-      },
-      "row": "D7 depth"
-    },
-    {
-      "expected": {
-        "deepest_accepted": 64
-      },
-      "observed": {
-        "after_handler_effects": true,
-        "deepest_accepted": 31,
-        "first_refusal": {
-          "code": -32603,
-          "levels": 32,
-          "redacted": true
-        }
-      },
-      "row": "D7 output depth"
-    },
-    {
-      "expected": {
-        "code": -32602,
-        "reason": "INVALID_INPUT"
-      },
-      "observed": {
-        "code": -32602,
-        "reason": "INVALID_PARAMS"
-      },
-      "row": "D6 invalid_input"
-    },
-    {
-      "expected": {
-        "code": -32000,
-        "reason": "UNAUTHENTICATED"
-      },
-      "observed": {
-        "code": -32603,
-        "reason": "UNKNOWN_ERROR"
-      },
-      "row": "D6 unauthenticated"
-    },
-    {
-      "expected": {
-        "code": -32000,
-        "reason": "FORBIDDEN"
-      },
-      "observed": {
-        "code": -32603,
-        "reason": "UNKNOWN_ERROR"
-      },
-      "row": "D6 forbidden"
-    },
-    {
-      "expected": {
-        "code": -32000,
-        "reason": "NOT_FOUND"
-      },
-      "observed": {
-        "code": -32603,
-        "reason": "UNKNOWN_ERROR"
-      },
-      "row": "D6 not_found"
-    },
-    {
-      "expected": {
-        "code": -32000,
-        "reason": "CONFLICT"
-      },
-      "observed": {
-        "code": -32603,
-        "reason": "UNKNOWN_ERROR"
-      },
-      "row": "D6 conflict"
-    },
-    {
-      "expected": {
-        "code": -32000,
-        "reason": "RATE_LIMITED"
-      },
-      "observed": {
-        "code": -32603,
-        "reason": "UNKNOWN_ERROR"
-      },
-      "row": "D6 rate_limited"
-    },
-    {
-      "expected": {
-        "code": -32000,
-        "reason": "INTERACTION_REQUIRED"
-      },
-      "observed": {
-        "code": -32603,
-        "reason": "UNKNOWN_ERROR"
-      },
-      "row": "D6 interaction_required"
-    },
-    {
-      "expected": {
-        "code": -32000,
-        "reason": "UNAVAILABLE"
-      },
-      "observed": {
-        "code": -32603,
-        "reason": "UNKNOWN_ERROR"
-      },
-      "row": "D6 unavailable"
-    },
-    {
-      "expected": {
-        "code": -32000,
-        "reason": "TIMEOUT"
-      },
-      "observed": {
-        "code": -32603,
-        "reason": "UNKNOWN_ERROR"
-      },
-      "row": "D6 timeout"
-    },
-    {
-      "expected": {
-        "code": -32603,
-        "reason": "INTERNAL_FAILURE"
-      },
-      "observed": {
-        "code": -32603,
-        "reason": "INTERNAL_ERROR"
-      },
-      "row": "D6 internal_failure"
-    }
-  ],
+  "deviations": [],
   "gil_enabled": true,
   "observations": {
     "add": {
@@ -376,8 +235,8 @@
   "schema_version": 1,
   "sdk": "1.3.0",
   "sources_sha256": {
-    "fixture.py": "e9e7724c010178e841f2943009d5f0efbe07cf6871815d9edb1fe8c735285590",
-    "fixture_probe.py": "7bc0c23e497d8776d121005335222a82a555602c17958414137c135e8192f577",
+    "fixture.py": "012f23b9559cfb82fbe23541c6ad6ba5f30c8aae70166c4756b2da18fda26811",
+    "fixture_probe.py": "38bf3422d5981b8b0af4851ad3a48a838eb4e5a271238d0b06d5a5e3a589fa07",
     "requirements.lock": "06d9a2844ff5cd4eb12d7af92d3610c6c270931b38506015c5eb4eea45fdc61f"
   }
 }

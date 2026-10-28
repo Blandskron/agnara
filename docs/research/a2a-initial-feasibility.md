@@ -188,8 +188,9 @@ retains the run. The fixture is not an adapter API.
   expected code, and each row was checked against an unrelated refusal.
   Unrecognized fields (`capabilityId`, `skillId`, metadata) were ignored, and
   `historyLength`/`returnImmediately` had no effect.
-- **Revision (D1):** empty, `0.3`, `1.99`, `9.0` and `1.0.0` were refused with
-  `-32009` before the SDK; `1.0` was accepted.
+- **Revision (D1):** empty, `0.3`, `1.99`, `9.0` and `1.0` with a patch
+  component appended were refused with `-32009` before the SDK; exactly `1.0`
+  was accepted.
 - **Authentication and principal (D5):** missing and unknown credentials got
   HTTP `401` with a challenge before body parsing. A scope policy denied a
   caller with zero handler effects, while an authorized caller ran once. Two
@@ -208,10 +209,13 @@ retains the run. The fixture is not an adapter API.
   JSON-RPC `1.0` interface, JSON modes and a working ETag/`304`, with no
   `Cache-Control`.
 
-### Discrepancies with ADR 0098
+### Discrepancies with the original ADR 0098
 
-These are real results that need a decision, not fixture bugs. The installed
-SDK files cited here were hash-compared with the pinned upstream commit.
+These were real results, not fixture bugs. The installed SDK files cited here
+were hash-compared with the pinned upstream commit. The maintainer resolved
+them by amending ADR 0098 D5, D6 and D7 to the observed SDK behavior (PR #697).
+The retained run, asserted against the amended record, reports no remaining
+deviations.
 
 1. **Error codes and details (D6).** The SDK's
    [response helper][response-helpers] maps an exception to its JSON-RPC code by
@@ -222,26 +226,26 @@ SDK files cited here were hash-compared with the pinned upstream commit.
    and reason. Observed: the eight `-32000` rows arrive as `-32603` with reason
    `UNKNOWN_ERROR`, and the fixture's `metadata.agnaraCode` keeps them
    distinguishable. `invalid_input` arrives as `-32602` with reason
-   `INVALID_PARAMS`, and `internal_failure` with reason `INTERNAL_ERROR`. Options:
-   amend D6 to this representation, own the JSON-RPC dispatch layer in the
-   adapter, or seek an upstream extension point.
+   `INVALID_PARAMS`, and `internal_failure` with reason `INTERNAL_ERROR`.
+   **Resolved:** D6 now specifies this representation, with the category in
+   `metadata.agnaraCode`. Adapter-owned dispatch is deferred.
 2. **Unhandled exception text (D6 redaction).** The
    [dispatcher][dispatcher] answers any non-A2A exception with
    `InternalError(message=str(e))`. During development, a protobuf
-   `DecodeError` reached a client verbatim this way. An adapter must never let a
-   non-A2A exception escape its handler.
+   `DecodeError` reached a client verbatim this way. **Resolved:** D6 now
+   requires that no non-A2A exception escape the handler.
 3. **Nesting limits (D7).** With protobuf 7.36.2, inbound `data` nested more than
    47 levels is refused by the SDK parser (`-32602`), before the fixture's
    64-level check can run. The dispatcher's response wrapper fails beyond 31
    levels of `result`, which happens **after** handler effects. The fixture now
-   checks that wrapper and returns a redacted `-32603`. D7's 64-level figure
-   cannot be met in either direction at this pin.
+   checks that wrapper and returns a redacted `-32603`. **Resolved:** D7 now
+   states these measured ceilings, which must be re-measured on any pin change.
 4. **Version header in SDK state (D5).** The SDK's
    [version validator][version-validator] reads `A2A-Version` from
    `ServerCallContext.state["headers"]`. A builder that copies no headers makes
    every request look like `0.3` and refuses it. The fixture copies only that
-   admitted header, never credentials. D5's "never forward headers into SDK
-   state" needs this exception stated.
+   admitted header, never credentials. **Resolved:** D5 now states this single
+   exception.
 
 Still unproven: a real network server with disconnects, cross-platform CI,
 installed `agnara-a2a` wheels, the exact adapter dependency pin and the public

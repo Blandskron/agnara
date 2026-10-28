@@ -21,8 +21,7 @@ Do not accumulate completed-task chronology in this file.
 ## Maintenance
 
 - [~] Exercise the ADR 0098 profile in an isolated A2A-03 adapter fixture and
-  report the SDK discrepancies (error codes, redaction, depth, version header)
-  back to the ADR (#695).
+  amend D5/D6/D7 to the observed SDK behavior (#695).
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,

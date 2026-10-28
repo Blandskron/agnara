@@ -3,6 +3,8 @@
 - Status: Proposed
 - Date: 2026-10-28
 - Tracking: GitHub Issue #687 (A2A-02)
+- Amended: 2026-10-28, D5/D6/D7, after the A2A-03 evidence (Issue #695),
+  by maintainer decision on PR #697
 - Answers: RFC 0010 questions 1–5 for the first profile
 - Related: ADR 0010, ADR 0024, ADR 0043, ADR 0046, ADR 0070, ADR 0086,
   ADR 0094, RFC 0005, RFC 0009, [A2A-01 report](../research/a2a-initial-feasibility.md)
@@ -104,16 +106,17 @@ fresh server-generated `messageId` and one `data` part whose value is
 `{"result": value}`, with `mediaType` `application/json`. The value has
 already passed the plan's output contract (ADR 0086). The envelope keeps the
 ADR 0043 rules: explicit JSON built-ins only, tuples become arrays, no cycles,
-depth at most 64, and `null` stays distinct from an absent part.
+the binding's depth ceiling (D7), and `null` stays distinct from an absent
+part.
 
 Integers outside `±(2**53 - 1)` and non-finite floats cannot be carried
 faithfully by `Value` and become a redacted `internal_failure` instead of a
 rounded success. Clients see integral numbers serialized as JSON numbers that
 protobuf may render with a fractional part (`5.0`); this is a property of the
 binding, not a change to the capability contract. The response sets no
-`contextId` and no `taskId`. Whether an official client accepts a message
-without `contextId` is an A2A-03 test obligation; if it does not, a fresh
-opaque value per response is the fallback, never an echo of client input.
+`contextId` and no `taskId`. A2A-03 showed that the official client accepts a
+message without `contextId` at the inspected pin. If a later pin does not, a
+fresh opaque value per response is the fallback, never an echo of client input.
 
 ### D5 — Authentication, principal and policy
 
@@ -127,7 +130,11 @@ deployment that wants an anonymous surface must say so.
 SDK `ServerCallContext.state`, raw headers and credentials never reach the
 capability context. A2A-01 observed the default context builder copying
 headers, including `Authorization`, into SDK state; the adapter's handler
-reads only the resolved principal. Card `securitySchemes` and
+reads only the resolved principal. The adapter's context builder replaces the
+default and copies exactly one header into SDK state: the already-admitted
+`A2A-Version`, which the SDK's version validator reads from there. Without it,
+every request is treated as revision `0.3` and refused (A2A-03). No other
+header, and never a credential, enters SDK state. Card `securitySchemes` and
 `securityRequirements` are public metadata configured at composition and grant
 no authority. The kernel evaluates policy, confirmation and input validation
 before dependency acquisition and handler effects (ADR 0024, AGENTS.md
@@ -141,12 +148,20 @@ an `INPUT_REQUIRED` or `AUTH_REQUIRED` task.
 ### D6 — Failure table
 
 Failures are JSON-RPC error objects, never a successful `Message` wrapping an
-error. Error `data` carries one `google.rpc.ErrorInfo` object (section 9.5,
-recommended) with `reason` and `domain: "agnara"`; it never carries canonical
+error. The representation is the one the SDK dispatcher can emit at the
+inspected pin: it selects the JSON-RPC code from the exception type and builds
+the `google.rpc.ErrorInfo` detail itself, with domain `a2a-protocol.org` and a
+reason from its own table (A2A-03). The Agnara category travels in
+`ErrorInfo.metadata` as `{"agnaraCode": "<failure_code>"}`, and clients that
+need the category read it there. Error `data` never carries canonical
 `Failure.details`, validation paths, values, exception text or policy
-internals. Code `-32000` lies in JSON-RPC's implementation-defined server range
-but outside the `-32001` to `-32099` block that A2A reserves (section 9.5),
-so it cannot collide with a future A2A error.
+internals.
+
+The adapter's handler must not let any exception other than an SDK
+`A2AError` escape. The dispatcher answers any other exception with its raw
+`str(e)` as the message, which would leak exception text. Every unexpected
+path, including failures while building the response, becomes the redacted
+`internal_failure` row below.
 
 **Protocol input, decided before invocation:**
 
@@ -163,7 +178,7 @@ so it cannot collide with a future A2A error.
 | `acceptedOutputModes` non-empty and excludes `application/json` | `-32005` `ContentTypeNotSupportedError` | Section 3.3.2 |
 | A text, raw or URL part, or a non-JSON `mediaType` | `-32005` | Section 3.1.1 |
 | Zero or several parts, a non-object `data`, `role` not user, non-empty `tenant`, or JSON depth over the limit | `-32602` Invalid params | Section 3.3.2 validation |
-| Number outside the D3 domain | `-32602` with reason `INVALID_INPUT` | Profile |
+| Number outside the D3 domain | `-32602`, `agnaraCode` `invalid_input` | Profile |
 
 `historyLength` and `returnImmediately` have no effect on a direct `Message`
 (section 3.2.2) and are ignored. Request and message `metadata` are untrusted
@@ -171,18 +186,23 @@ and are not forwarded.
 
 **Canonical capability outcomes** (`agnara.execution.result.FailureCode`):
 
-| `FailureCode` | JSON-RPC code | `ErrorInfo.reason` | Message |
-| --- | --- | --- | --- |
-| `invalid_input` | `-32602` | `INVALID_INPUT` | Canonical caller-safe message |
-| `unauthenticated` | `-32000` | `UNAUTHENTICATED` | Canonical message |
-| `forbidden` | `-32000` | `FORBIDDEN` | Canonical message |
-| `not_found` | `-32000` | `NOT_FOUND` | Canonical message |
-| `conflict` | `-32000` | `CONFLICT` | Canonical message |
-| `rate_limited` | `-32000` | `RATE_LIMITED` | Canonical message |
-| `interaction_required` | `-32000` | `INTERACTION_REQUIRED` | Fixed text; no interaction request is serialized |
-| `unavailable` | `-32000` | `UNAVAILABLE` | Canonical message |
-| `timeout` | `-32000` | `TIMEOUT` | Canonical message |
-| `internal_failure` | `-32603` | `INTERNAL_FAILURE` | Fixed text "Internal error" |
+| `FailureCode` | JSON-RPC code | SDK `ErrorInfo.reason` | `metadata.agnaraCode` | Message |
+| --- | --- | --- | --- | --- |
+| `invalid_input` | `-32602` | `INVALID_PARAMS` | `invalid_input` | Canonical caller-safe message |
+| `unauthenticated` | `-32603` | `UNKNOWN_ERROR` | `unauthenticated` | Canonical message |
+| `forbidden` | `-32603` | `UNKNOWN_ERROR` | `forbidden` | Canonical message |
+| `not_found` | `-32603` | `UNKNOWN_ERROR` | `not_found` | Canonical message |
+| `conflict` | `-32603` | `UNKNOWN_ERROR` | `conflict` | Canonical message |
+| `rate_limited` | `-32603` | `UNKNOWN_ERROR` | `rate_limited` | Canonical message |
+| `interaction_required` | `-32603` | `UNKNOWN_ERROR` | `interaction_required` | Fixed text "Interaction required"; no interaction request is serialized |
+| `unavailable` | `-32603` | `UNKNOWN_ERROR` | `unavailable` | Canonical message |
+| `timeout` | `-32603` | `UNKNOWN_ERROR` | `timeout` | Canonical message |
+| `internal_failure` | `-32603` | `INTERNAL_ERROR` | `internal_failure` | Fixed text "Internal error" |
+
+Only `invalid_input` and `internal_failure` use a JSON-RPC code whose
+meaning matches. The other eight categories share `-32603` because the SDK
+cannot emit anything else for them. A caller distinguishes them by
+`agnaraCode` and the canonical message, never by the code alone.
 
 `unauthenticated` here is a policy outcome after the host accepted a
 credential; host authentication failures are HTTP `401` (D5). Unexpected
@@ -190,7 +210,7 @@ handler exceptions, output-contract violations and unrepresentable results
 reach this table only through the kernel's redacting result path, as
 `internal_failure`. `not_found` describes an application resource and is
 unrelated to `TaskNotFoundError`. A2A-03 asserts every row through the
-official client.
+official client; A2A-03 did so at this pin.
 
 **Other operations**, as observed for the stateless fixture in A2A-01:
 
@@ -205,8 +225,16 @@ official client.
 ### D7 — Limits and deadlines
 
 The admission gate reads at most a configured number of body bytes before
-the SDK parses, with a default of 1 MiB. JSON nesting deeper than 64 levels in
-`data` is refused as `-32602`; the byte bound also bounds parser recursion.
+the SDK parses, with a default of 1 MiB. Nesting depth is bounded by the
+binding rather than by an adapter figure. At the inspected pin (protobuf
+7.36.2), the SDK's parser refuses input `data` nested more than 47 levels with
+`-32602`, before invocation. The response wrapper cannot serialize a `result`
+nested more than 31 levels. That ceiling is reached only after the handler
+ran, so the adapter checks the wrapper itself and returns the redacted
+`internal_failure` instead of the SDK's raw error. Applications whose outputs
+can nest that deeply must not use this surface. Both figures are measured
+properties of the dependency pin and must be re-measured whenever protobuf or
+the SDK changes.
 Each invocation runs under a required, configured deadline with a default of
 30 seconds; expiry yields `timeout` through the existing cooperative deadline
 model ([deadlines](../DEADLINES.md)). Deployments may lower these
@@ -282,9 +310,13 @@ unshipped syntax are added before then.
 - Clients that rely on a `TaskState` lifecycle (`INPUT_REQUIRED`,
   `AUTH_REQUIRED`, `WORKING`) will not get one. Long-running work and
   confirmation flows stay out of scope until a task-first record.
-- Capability failures use code `-32000` plus `ErrorInfo.reason`, which generic
-  A2A clients may show only as a server error. That is the honest
-  representation; no category is disguised as an A2A-specific error.
+- Eight capability-failure categories share JSON-RPC `-32603`. Generic A2A
+  clients show them as internal errors; only clients that read
+  `ErrorInfo.metadata.agnaraCode` see the real category. This is the cost of
+  staying on the SDK dispatcher, and no category is disguised as an
+  A2A-specific error.
+- A capability whose result nests more than 31 levels fails after its effects.
+  Output contracts served over this surface should stay shallow.
 - Several surfaces require several URLs and cards.
 
 ## Alternatives
@@ -300,6 +332,13 @@ unshipped syntax are added before then.
   profile.
 - **Map categories onto A2A-specific codes** (for example `forbidden` to
   `-32001`): rejected as semantically false.
+- **Emit `-32000` with an `agnara` `ErrorInfo` (the original D6):** not
+  expressible through the SDK dispatcher at the inspected pin (A2A-03).
+- **Own the JSON-RPC dispatch layer in the adapter:** would restore distinct
+  codes but reimplements request parsing, method routing and error
+  serialization that the SDK already provides. Deferred; it can be revisited,
+  together with an upstream extension point, if distinct codes become a
+  requirement.
 - **Use `DefaultRequestHandler` with an in-memory store:** rejected for this
   profile. It is viable, but it carries unused task lifecycle and still needs
   the D3/D6 checks.
@@ -311,22 +350,24 @@ unshipped syntax are added before then.
 The [A2A-03 fixture checkpoint](../research/a2a-initial-feasibility.md#a2a-03-fixture-checkpoint)
 exercised this record through the official client with compiled Agnara plans.
 It confirmed D1, D2, D3, D4, D8, D9 and D10 and the D6 protocol and
-other-operation rows. Four points conflict with the text above at the
-inspected SDK pin and need a maintainer decision before A2A-04. This section
-records them; it does not change the decisions:
+other-operation rows. Four points conflicted with the original text at the
+inspected SDK pin. The maintainer chose to amend D5, D6 and D7 to match the
+observed SDK behavior (PR #697); the decisions above already include those
+amendments:
 
 1. **D6 codes and details:** through the SDK dispatcher a handler cannot emit
    `-32000`, an `agnara` `ErrorInfo.domain` or the reasons listed. Non-A2A
    categories arrive as `-32603` / `UNKNOWN_ERROR`, distinguishable only through
-   `ErrorInfo.metadata`. Options: amend D6, own JSON-RPC dispatch in the
-   adapter, or seek an upstream extension point.
+   `ErrorInfo.metadata`. Resolved by amending D6; adapter-owned dispatch is
+   deferred (see Alternatives).
 2. **D6 redaction:** the dispatcher returns `str(e)` for non-A2A exceptions, so
-   the adapter must guarantee that none escapes its handler.
+   the adapter must guarantee that none escapes its handler. Now a D6 rule.
 3. **D7 depth:** the SDK accepts at most 47 nested input levels and serializes
    at most 31 output levels (protobuf 7.36.2). The 64-level figure is
-   unreachable, and the output limit is hit after handler effects.
+   unreachable, and the output limit is hit after handler effects. D7 now
+   states the measured ceilings and the adapter's response check.
 4. **D5 headers:** the SDK's version validator reads `A2A-Version` from SDK
-   state headers. The bridge must copy that admitted header, and only that one.
+   state headers. D5 now allows that admitted header, and only that one.
 
 ## Remaining evidence
 
