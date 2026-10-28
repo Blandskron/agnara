@@ -13,5 +13,9 @@ synchronized `agnara==1.0.3` kernel and does not depend on sibling adapters.
 There is no usage API beyond importing the reserved namespace. Protocol work
 requires a separate reviewed contract and implementation.
 
+[RFC 0010](../../docs/rfc/0010-a2a-initial-projection.md) compares candidate
+first projections and defines a future feasibility gate. It is open research,
+not a usage guide or an implementation/support commitment.
+
 See the [public API policy](../../docs/PUBLIC_API.md) and
 [maturity matrix](../../docs/MATURITY.md).

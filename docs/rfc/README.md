@@ -18,6 +18,7 @@ superseded examples in a proposal are not application instructions.
 | 0007 | Distribution version identity | Implemented by ADR 0069 and ADR 0095. |
 | 0008 | Framework embedding | Host boundary implemented by ADR 0094; streaming, delegation and cross-application questions remain open. |
 | 0009 | Protocol-neutral streaming | Kernel and HTTP SSE implemented by ADR 0084 and ADR 0086; other projections require separate decisions. |
+| [0010](0010-a2a-initial-projection.md) | Initial A2A projection | Open research; proposes a feasibility gate, not an implemented adapter or public API. |
 
 `RFC 9457` denotes the external IETF problem-details standard, not a local
 record. Local RFC identifiers are zero-padded to four digits. Historical

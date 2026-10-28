@@ -28,6 +28,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Changed
 
+- Scope the initial A2A adapter proposal with immutable protocol/SDK research
+  references, explicit feasibility gates and acceptance criteria. The reserved
+  package still has no public API or runtime support.
+
 - Refresh immutable GitHub Actions pins for Python setup, CodeQL, uv, artifact
   upload/download and Docker login in the existing CI and publication workflows.
 
