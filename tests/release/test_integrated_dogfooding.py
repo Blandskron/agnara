@@ -239,6 +239,7 @@ def test_reference_apps_run_from_fresh_installed_artifacts(tmp_path: Path) -> No
         ("host_sqlite.py", "HOST_DOGFOOD_OK"),
         ("embedded_fastapi.py", "EMBEDDED_DOGFOOD_OK"),
         ("side_by_side_fastapi.py", "SIDE_BY_SIDE_DOGFOOD_OK"),
+        ("nested_resource_lifecycle.py", "NESTED_RESOURCE_LIFECYCLE_ARTIFACT_OK"),
     ):
         completed = subprocess.run(
             [str(python), "-I", str(consumers / script)],
@@ -247,6 +248,7 @@ def test_reference_apps_run_from_fresh_installed_artifacts(tmp_path: Path) -> No
             text=True,
             capture_output=True,
             check=False,
+            timeout=60,
         )
         assert completed.returncode == 0, (
             f"{script} failed:\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}"
