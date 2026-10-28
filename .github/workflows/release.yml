@@ -555,7 +555,7 @@ jobs:
           cp "dist/${stem}-${RELEASE_VERSION}.tar.gz" "staged/$PUBLISH_PROJECT/"
 
       - name: Publish agnara-a2a
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           packages-dir: staged/agnara-a2a
           verify-metadata: true
@@ -644,7 +644,7 @@ jobs:
           cp "dist/${stem}-${RELEASE_VERSION}.tar.gz" "staged/$PUBLISH_PROJECT/"
 
       - name: Publish agnara-cli
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           packages-dir: staged/agnara-cli
           verify-metadata: true
@@ -733,7 +733,7 @@ jobs:
           cp "dist/${stem}-${RELEASE_VERSION}.tar.gz" "staged/$PUBLISH_PROJECT/"
 
       - name: Publish agnara-events
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           packages-dir: staged/agnara-events
           verify-metadata: true
@@ -876,7 +876,7 @@ jobs:
           cp "dist/${stem}-${RELEASE_VERSION}.tar.gz" "staged/$PUBLISH_PROJECT/"
 
       - name: Publish agnara-http
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           packages-dir: staged/agnara-http
           verify-metadata: true
@@ -965,7 +965,7 @@ jobs:
           cp "dist/${stem}-${RELEASE_VERSION}.tar.gz" "staged/$PUBLISH_PROJECT/"
 
       - name: Publish agnara-mcp
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           packages-dir: staged/agnara-mcp
           verify-metadata: true
@@ -1054,7 +1054,7 @@ jobs:
           cp "dist/${stem}-${RELEASE_VERSION}.tar.gz" "staged/$PUBLISH_PROJECT/"
 
       - name: Publish agnara-telemetry
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           packages-dir: staged/agnara-telemetry
           verify-metadata: true
@@ -1197,7 +1197,7 @@ jobs:
           cp "dist/${stem}-${RELEASE_VERSION}.tar.gz" "staged/$PUBLISH_PROJECT/"
 
       - name: Publish agnara
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           packages-dir: staged/agnara
           verify-metadata: true
