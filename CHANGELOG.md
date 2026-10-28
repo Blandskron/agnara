@@ -28,6 +28,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Changed
 
+- Scope the first event projection in RFC 0011 with immutable AsyncAPI 3.1.0
+  and CloudEvents v1.0.2 references, an inbound-consumer candidate profile,
+  delivery/acknowledgement and AsyncAPI schema-dialect gaps, and feasibility
+  gates. The reserved `agnara-events` package still has no API or runtime.
+
 - Propose ADR 0098 for the first A2A projection: fixed one-capability dispatch,
   an explicit numeric domain for protobuf `Value`, exact `1.0` revision
   admission, a complete JSON-RPC failure table, public card consent, limits and
