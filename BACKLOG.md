@@ -20,8 +20,8 @@ Do not accumulate completed-task chronology in this file.
 
 ## Maintenance
 
-- [~] Reconcile the existing Actions dependency PR with `develop`, preserving
-  accepted workflow guards and validating the remaining immutable updates (#678).
+- [~] Preserve one-loop ASGI lifespan ownership and singleton cleanup in the
+  runnable HTTP tutorial, with failure/cancellation evidence (#679).
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,

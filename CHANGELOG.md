@@ -5,6 +5,11 @@ full history are available through Git tags and GitHub Releases.
 
 ## [Unreleased]
 
+### Fixed
+
+- Run the HTTP service tutorial's startup, requests and shutdown on one event
+  loop; close its singleton provider and join lifespan on errors and cancellation.
+
 ### Added
 
 - Publish compiled complete-result output schemas in HTTP OpenAPI 200 JSON

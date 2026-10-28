@@ -8,7 +8,7 @@ repository, run `uv sync` then `uv run python examples/<file>.py`.
 | --- | --- | --- |
 | Minimal capability and direct invocation | [minimal_capability.py](minimal_capability.py) | [test](../tests/docs/test_minimal_capability_example.py), [agent path](../docs/AGENT_GUIDE.md) |
 | Capability metadata, DI and policy | [quickstart.py](quickstart.py) | [core guide](../packages/agnara/README.md) |
-| HTTP backend and dataclass JSON contract | [http_service.py](http_service.py) | [composition guide](../docs/HTTP_COMPOSITION.md), [public surface tests](../tests/architecture/test_public_http_surface.py) |
+| HTTP backend, dataclass JSON contract and owned ASGI lifespan | [http_service.py](http_service.py) | [lifecycle test](../tests/docs/test_http_service_example.py), [composition guide](../docs/HTTP_COMPOSITION.md), [public surface tests](../tests/architecture/test_public_http_surface.py) |
 | Official-client MCP service | [mcp_tools.py](mcp_tools.py) | [test](../tests/docs/test_mcp_tools_example.py), [guide](../docs/MCP_TOOLS.md) |
 | Same capability invoked over HTTP + MCP | [http_mcp.py](http_mcp.py) | [test](../tests/docs/test_http_mcp_example.py) |
 | Runtime embedded inside native FastAPI routes | [fastapi_embedding.py](fastapi_embedding.py) | [test](../tests/docs/test_fastapi_embedding_example.py), [guide](../docs/FASTAPI_EMBEDDING.md); optional pinned host fixture |
