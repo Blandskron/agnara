@@ -150,7 +150,9 @@ The next separately scoped A2A-02 ADR should resolve those three gaps, exact
 failure/interaction mapping, authenticated principal construction, allowed
 parts/modes, request limits and chosen handler lifecycle. It may narrow or
 reject this candidate. No public import or decorator should be invented as
-part of that decision.
+part of that decision. [ADR 0098](../adr/0098-a2a-complete-result-projection.md)
+proposes those dispositions. It treats discarded unknown fields as consistent
+with specification section 5.7 once dispatch is fixed by composition.
 
 Future A2A-03/04 evidence still needs actual compiled Agnara invocation,
 policy-before-effects and cleanup tests, output-error redaction, concurrent
