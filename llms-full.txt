@@ -1544,6 +1544,15 @@ the core does not manage them. See the
 [telemetry package](packages/agnara-telemetry/README.md). This guide claims no
 exporter or backend interoperability.
 
+The separate [SDK wiring example](examples/telemetry.py) owns a local tracer
+provider without installing it globally. It closes the invocation container,
+inspects finished spans, then shuts down the provider and its exporter even
+when the host fails or is cancelled. When the optional SDK is absent it uses
+the API tracer without taking ownership of an external provider; unrelated
+SDK import failures propagate. The
+[standalone lifecycle tests](tests/docs/test_standalone_example_lifecycle.py)
+verify these ownership boundaries alongside the direct quickstart's container.
+
 ##### Evidence and ownership
 
 [Guide tests](tests/docs/test_telemetry_example.py) verify all six outcomes,
@@ -1627,7 +1636,7 @@ repository, run `uv sync` then `uv run python examples/<file>.py`.
 | Task | Canonical source | Validation / deeper guide |
 | --- | --- | --- |
 | Minimal capability and direct invocation | [minimal_capability.py](examples/minimal_capability.py) | [test](tests/docs/test_minimal_capability_example.py), [agent path](docs/AGENT_GUIDE.md) |
-| Capability metadata, DI and policy | [quickstart.py](examples/quickstart.py) | [core guide](packages/agnara/README.md) |
+| Capability metadata, DI and policy | [quickstart.py](examples/quickstart.py) | [lifecycle tests](tests/docs/test_standalone_example_lifecycle.py), [core guide](packages/agnara/README.md) |
 | HTTP backend, dataclass JSON contract and owned ASGI lifespan | [http_service.py](examples/http_service.py) | [lifecycle test](tests/docs/test_http_service_example.py), [composition guide](docs/HTTP_COMPOSITION.md), [public surface tests](tests/architecture/test_public_http_surface.py) |
 | Official-client MCP service | [mcp_tools.py](examples/mcp_tools.py) | [test](tests/docs/test_mcp_tools_example.py), [guide](docs/MCP_TOOLS.md) |
 | Same capability invoked over HTTP + MCP | [http_mcp.py](examples/http_mcp.py) | [test](tests/docs/test_http_mcp_example.py) |
@@ -1640,7 +1649,7 @@ repository, run `uv sync` then `uv run python examples/<file>.py`.
 | Dependency providers and teardown | [dependencies.py](examples/dependencies.py) | [test](tests/docs/test_dependencies_example.py), [guide](docs/DEPENDENCIES.md) |
 | Verifier-backed confirmation policy | [confirmation.py](examples/confirmation.py) | [test](tests/docs/test_confirmation_example.py), [guide](docs/CONFIRMATION.md) |
 | Execution telemetry without exporter | [invocation_telemetry.py](examples/invocation_telemetry.py) | [test](tests/docs/test_telemetry_example.py), [guide](docs/TELEMETRY.md) |
-| Optional OpenTelemetry bridge | [telemetry.py](examples/telemetry.py) | [integration evidence](tests/integration/telemetry/test_opentelemetry_shared_host.py) |
+| Optional OpenTelemetry bridge and owned provider shutdown | [telemetry.py](examples/telemetry.py) | [lifecycle tests](tests/docs/test_standalone_example_lifecycle.py), [integration evidence](tests/integration/telemetry/test_opentelemetry_shared_host.py) |
 | Filtered discovery | [introspection.py](examples/introspection.py) | [test](tests/docs/test_introspection_example.py), [guide](docs/INTROSPECTION.md) |
 | Direct streaming, demand and early closure | [direct_streaming.py](examples/direct_streaming.py) | [test](tests/docs/test_direct_streaming_example.py), [guide](docs/DIRECT_STREAMING.md); current-checkout output fixes |
 | HTTP streaming and cancellation | [http_sse.py](examples/http_sse.py), [deadlines.py](examples/deadlines.py) | [SSE guide](docs/HTTP_SSE.md), [deadline guide](docs/DEADLINES.md) |

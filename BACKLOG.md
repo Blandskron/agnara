@@ -20,8 +20,8 @@ Do not accumulate completed-task chronology in this file.
 
 ## Maintenance
 
-- [~] Preserve one-loop ASGI lifespan ownership and singleton cleanup in the
-  runnable HTTP tutorial, with failure/cancellation evidence (#679).
+- [~] Close owned containers and optional telemetry providers in the standalone
+  quickstart/telemetry tutorials, including error and cancellation paths (#681).
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,
