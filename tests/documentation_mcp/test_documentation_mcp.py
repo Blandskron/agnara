@@ -602,9 +602,11 @@ def test_real_stdio_initialize_list_call_and_clean_shutdown(root: Path) -> None:
 
 def test_actual_repository_corpus_and_governed_api() -> None:
     corpus = freeze(ROOT)
-    assert len(corpus.documents) == 40
+    assert len(corpus.documents) == 41
     assert corpus.documents["a2a-proposal"].path == "docs/rfc/0010-a2a-initial-projection.md"
     assert corpus.documents["a2a-proposal"].stability == "proposed"
+    assert corpus.documents["a2a-feasibility"].path == "docs/research/a2a-initial-feasibility.md"
+    assert corpus.documents["a2a-feasibility"].stability == "current-repository"
     assert corpus.documents["starlette-embedding"].path == "docs/STARLETTE_EMBEDDING.md"
     assert corpus.documents["starlette-embedding-example"].path == "examples/starlette_embedding.py"
     assert corpus.documents["embedding"].path == "docs/FASTAPI_EMBEDDING.md"

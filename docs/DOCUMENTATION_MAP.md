@@ -94,6 +94,7 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 
 - [Python 3.15 readiness](research/python-315-readiness.md)
 - [Initial A2A projection proposal](rfc/0010-a2a-initial-projection.md)
+- [Isolated A2A SDK feasibility evidence](research/a2a-initial-feasibility.md)
 - [External standards](REFERENCE_RESEARCH.md)
 
 ## MAINTAINERS
