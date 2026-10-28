@@ -16,6 +16,8 @@ requires a separate reviewed contract and implementation.
 [RFC 0010](../../docs/rfc/0010-a2a-initial-projection.md) compares candidate
 first projections and defines a future feasibility gate. It is open research,
 not a usage guide or an implementation/support commitment.
+[ADR 0098](../../docs/adr/0098-a2a-complete-result-projection.md) proposes the
+first profile's projection contract; it adds no API or runtime.
 
 See the [public API policy](../../docs/PUBLIC_API.md) and
 [maturity matrix](../../docs/MATURITY.md).

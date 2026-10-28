@@ -28,6 +28,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Changed
 
+- Propose ADR 0098 for the first A2A projection: fixed one-capability dispatch,
+  an explicit numeric domain for protobuf `Value`, exact `1.0` revision
+  admission, a complete JSON-RPC failure table, public card consent, limits and
+  handler lifecycle. It is a design record only; `agnara-a2a` still has no API.
+
 - Record isolated A2A SDK feasibility with a hash-locked experiment, observed
   operation/lifecycle results and explicit numeric, parser and version fit gaps.
   The evidence does not add adapter APIs or protocol-support claims.

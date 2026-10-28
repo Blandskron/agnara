@@ -20,8 +20,9 @@ Do not accumulate completed-task chronology in this file.
 
 ## Maintenance
 
-- [~] Investigate A2A-01 in an isolated SDK environment, retaining immediate-message,
-  required-operation and lifecycle evidence before an adapter ADR (#685).
+- [~] Decide the A2A-02 complete-result projection (routing, envelope, numeric
+  domain, principal bridge, failure table, card, limits, lifecycle) in a
+  proposed ADR before adapter code (#687).
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,

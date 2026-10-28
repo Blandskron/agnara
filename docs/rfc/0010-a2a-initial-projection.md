@@ -1,9 +1,9 @@
 # RFC 0010 — Initial A2A projection boundary
 
-- Status: Open research; no implementation decision
+- Status: Open research; first-profile answers proposed in ADR 0098
 - Date: 2026-10-28
 - Tracking: GitHub Issue #683
-- Related: ADR 0010, ADR 0046, ADR 0070, ADR 0086, ADR 0094, RFC 0005, RFC 0009
+- Related: ADR 0010, ADR 0046, ADR 0070, ADR 0086, ADR 0094, ADR 0098, RFC 0005, RFC 0009
 
 ## Purpose and current boundary
 
@@ -13,8 +13,9 @@ nothing. This proposal adds no endpoint, SDK dependency, public syntax or
 protocol support. [Maturity](../MATURITY.md) remains authoritative.
 
 The [A2A-01 report](../research/a2a-initial-feasibility.md) records an isolated
-SDK checkpoint and fit gaps. The next decision is a separately reviewed
-projection ADR if the maintainer chooses to proceed. An approved RFC
+SDK checkpoint and fit gaps.
+[ADR 0098](../adr/0098-a2a-complete-result-projection.md) proposes the
+projection contract for the first profile; it remains under review. An approved RFC
 document alone does not authorize the runtime slices below. No model calls,
 reasoning engine or task scheduler are implied by an A2A adapter.
 
@@ -87,8 +88,10 @@ caller metadata, tenant values or a claimed execution identity.
 
 The first candidate accepts one structured message part containing an object
 of capability inputs. Reject unsupported text/file mixtures, multiple parts,
-extra routing selectors and unsupported output-mode requests before handler
-effects. Validate size, depth and JSON-compatible values at the adapter
+recognized state or routing fields outside the profile and unsupported
+output-mode requests before handler effects. Unrecognized fields are ignored
+as specification section 5.7 recommends; fixed dispatch means they cannot
+select work (ADR 0098 D2). Validate size, depth and JSON-compatible values at the adapter
 boundary; the compiled input contract remains authoritative. A transport
 field may not replace a DI parameter or trusted context.
 
@@ -179,7 +182,7 @@ contains implementations. No implementation pin is chosen by this RFC.
 
 | Boundary | Required future test evidence |
 | --- | --- |
-| Skill versus dispatch | Another skill ID, capability ID or tenant claim cannot redirect an invocation. Unknown/continuation selectors fail without effects. |
+| Skill versus dispatch | Another skill ID, capability ID or tenant claim cannot redirect an invocation. Recognized continuation/routing fields fail without effects; unrecognized fields are ignored and cannot select work. |
 | Publication and authority | Hidden capabilities, fields and deployment details never reach serialized cards. A visible skill still refuses an unauthorized caller before DI/handler effects. |
 | Credential and identity isolation | Two concurrent callers cannot share principal, confirmation, metadata or correlation state. Message/context/task IDs cannot select execution identity or cross-owner state. |
 | Shape and resource limits | Malformed, mixed, excessive and unsupported parts/modes fail before application effects; valid scalar/object/list/null outputs round-trip through the chosen envelope. |
@@ -201,7 +204,8 @@ contains implementations. No implementation pin is chosen by this RFC.
 5. Is public-card-only discovery sufficient initially? Which decisions would
    separately authorize filtered cards, signatures, tasks or additional modes?
 
-Record answers in a later ADR and explicit implementation Issues. Until then,
+[ADR 0098](../adr/0098-a2a-complete-result-projection.md) proposes answers for
+the first profile; implementation still needs explicit Issues. Until then,
 the reserved package, zero-export manifest and absence of A2A support remain
 unchanged. [RFC 0005](0005-protocol-neutral-delegation.md) owns delegation and
 [RFC 0009](0009-streaming-model.md) owns the protocol-neutral streaming
