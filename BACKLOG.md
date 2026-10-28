@@ -14,14 +14,14 @@ Do not accumulate completed-task chronology in this file.
 - [ ] Research Python 3.15 compatibility under
   [the research plan](docs/research/python-315-readiness.md) before changing the
   declared Python floor or CI support.
-- [ ] Define scoped RFCs for the unimplemented A2A and Events adapters, other
+- [ ] Define scoped RFCs for the unimplemented Events adapter, further
   protocol projections and durable execution. Reserved distributions are not
   completed adapters; this entry alone authorizes no runtime implementation.
 
 ## Maintenance
 
-- [~] Close owned containers and optional telemetry providers in the standalone
-  quickstart/telemetry tutorials, including error and cancellation paths (#681).
+- [~] Define the first A2A projection's research boundary, feasibility gates and
+  acceptance matrix in RFC 0010 before any adapter implementation (#683).
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,

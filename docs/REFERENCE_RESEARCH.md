@@ -576,17 +576,23 @@ Task and MRTR references:
 
 ## A2A
 
-A2A is a post-v0.1 adapter target.
+A2A remains an unimplemented adapter target. The initial projection questions
+and feasibility gates are owned by [RFC 0010](rfc/0010-a2a-initial-projection.md);
+[maturity](MATURITY.md) owns the current zero-API package status.
 
-Current reviewed line:
+Research checkpoint, inspected on 2026-10-28:
 
-- A2A Protocol 1.0.
-
-The protocol supports independent agent interoperability, discovery, tasks, streaming and multiple protocol bindings.
-
-Reference:
-
-- https://github.com/a2aproject/A2A/blob/main/docs/specification.md
+- Candidate wire line: `1.0`, distinct from the specification release and SDK
+  package versions. This is not an Agnara protocol-support declaration.
+- Specification release `v1.0.1`, immutable commit
+  `3303592588e388e62e0f69f701af531d2f4e3991`:
+  [specification](https://github.com/a2aproject/A2A/blob/3303592588e388e62e0f69f701af531d2f4e3991/docs/specification.md)
+  and [protocol definitions](https://github.com/a2aproject/A2A/blob/3303592588e388e62e0f69f701af531d2f4e3991/specification/a2a.proto).
+- SDK candidate `a2a-python v1.3.0`, commit
+  `0d9dafb92328144384eca58a6e8ab80cb8f7d445`:
+  [package metadata](https://github.com/a2aproject/a2a-python/blob/0d9dafb92328144384eca58a6e8ab80cb8f7d445/pyproject.toml).
+  Inspected source is not installation, interoperability or dependency-adoption
+  evidence. Any implementation pin requires a separate ADR 0010 review.
 
 ## AsyncAPI
 

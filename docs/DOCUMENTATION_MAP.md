@@ -93,6 +93,7 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 ## RESEARCH
 
 - [Python 3.15 readiness](research/python-315-readiness.md)
+- [Initial A2A projection proposal](rfc/0010-a2a-initial-projection.md)
 - [External standards](REFERENCE_RESEARCH.md)
 
 ## MAINTAINERS

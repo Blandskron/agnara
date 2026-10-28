@@ -40,7 +40,7 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 | `agnara-mcp` | `IMPLEMENTED` | yes | 20 | [Pinned SDK tests](../tests/mcp/test_sdk_conformance.py) cover bounded tool discovery/invocation. No MRTR resumption, Tasks extension or packaged network-transport lifecycle; see the MCP table and conformance guide. |
 | `agnara-cli` | `IMPLEMENTED` | yes | 4 | [Project generation tests](../tests/cli/test_project_create.py) and `tests/cli/` cover scaffolding and introspection. Static `doctor` diagnostics are implemented in the unreleased checkout; runtime diagnostics and a development-server command remain absent. |
 | `agnara-telemetry` | `IMPLEMENTED` | yes | 2 | [Metrics](../tests/telemetry/test_metrics.py) and [tracing tests](../tests/telemetry/test_tracing.py) cover explicit hooks. SDK/provider/exporter setup, propagation and shutdown remain host-owned. |
-| `agnara-a2a` | `PLANNED` | yes | 0 | [Namespace](../packages/agnara-a2a/src/agnara_a2a/__init__.py) reserved; no Agent Card, task, streaming or A2A runtime. Not a completed adapter. |
+| `agnara-a2a` | `PLANNED` | yes | 0 | [Namespace](../packages/agnara-a2a/src/agnara_a2a/__init__.py) reserved; no Agent Card, task, streaming or A2A runtime. [RFC 0010](rfc/0010-a2a-initial-projection.md) is open research; not a completed adapter. |
 | `agnara-events` | `PLANNED` | yes | 0 | [Namespace](../packages/agnara-events/src/agnara_events/__init__.py) reserved; no event publication, broker integration or AsyncAPI runtime. Not a completed adapter. |
 
 `IMPLEMENTED` means the stated contract works with test evidence; it does not
@@ -163,7 +163,7 @@ The fourteen public exports follow the 1.x compatibility contract.
 | CLI static diagnostics | `IMPLEMENTED` (unreleased checkout) | `doctor` reports interpreter, manifest, contained app paths and synchronized installed HTTP/MCP metadata without imports or writes. Proposed ADR 0096. Runtime registration, DI cycles, protocol configuration, architecture rules, transitive dependencies and the manifest Python constraint remain unchecked. |
 | Project manifest | `IMPLEMENTED` | `agnara.toml`. ADR 0059. No schema version field yet. |
 | Telemetry bridges | `IMPLEMENTED` | Optional OpenTelemetry metrics and spans. `tests/integration/telemetry/` proves one FastAPI 0.141.1 host trace with nested capability spans, concurrent isolation, stream terminal closure and redaction using SDK 1.44.0 in-memory export. Host extraction, providers, exporters and shutdown remain application-owned; compilation, nested invocation and streaming are additionally proven in an interpreter where `opentelemetry` is unimportable. No network-exporter or framework-support claim follows. ADR 0054-0058. |
-| A2A | `PLANNED` | Namespace reserved. |
+| A2A | `PLANNED` | Namespace reserved; [RFC 0010](rfc/0010-a2a-initial-projection.md) proposes an initial-projection feasibility gate, with no runtime or support change. |
 | Events / AsyncAPI | `PLANNED` | Namespace reserved. |
 | Tasks and durable execution | `RESEARCH` | No package, no abstraction. |
 | Workflows | `RESEARCH` | Whether Agnara should own one is undecided. |

@@ -43,7 +43,8 @@
     {"id":"discovery","title":"Discovery architecture","path":"docs/AGENT_DISCOVERY.md","topic":"discovery","package":"agnara","version":"1.0.3","description":"Sources, generation, client compatibility and trust boundaries.","audience":["coding-agents","maintainers"],"stability":"guidance"},
     {"id":"docs-mcp","title":"Documentation MCP specification","path":"docs/DOCUMENTATION_MCP.md","topic":"documentation-mcp","package":"agnara-mcp","version":"1.0.3","description":"Proposed read-only service, not a deployed endpoint.","audience":["coding-agents","maintainers"],"stability":"proposed"},
     {"id":"benchmark","title":"Discovery benchmark","path":"docs/AGENT_DISCOVERY_BENCHMARK.md","topic":"measurement","package":"agnara","version":"1.0.3","description":"Reproducible prompts and honest scoring without results.","audience":["coding-agents","maintainers"],"stability":"guidance"},
-    {"id":"starters","title":"Starter proposals","path":"docs/AGENT_STARTERS.md","topic":"starters","package":"agnara-cli","version":"1.0.3","description":"External starter designs; no repositories created.","audience":["coding-agents","maintainers"],"stability":"proposed"}
+    {"id":"starters","title":"Starter proposals","path":"docs/AGENT_STARTERS.md","topic":"starters","package":"agnara-cli","version":"1.0.3","description":"External starter designs; no repositories created.","audience":["coding-agents","maintainers"],"stability":"proposed"},
+    {"id":"a2a-proposal","title":"Initial A2A projection proposal","path":"docs/rfc/0010-a2a-initial-projection.md","topic":"a2a","package":"agnara-a2a","version":"1.0.3","description":"Open research and feasibility gates; no implemented A2A API or support.","audience":["coding-agents","maintainers"],"stability":"proposed"}
   ],
   "corpus": [
     {"title":"What is Agnara","heading":"What is Agnara","additional":[]},
