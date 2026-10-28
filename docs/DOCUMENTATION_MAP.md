@@ -10,21 +10,41 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 
 ## USAGE
 
+- [Short agent index](../llms.txt) and [generated full corpus](../llms-full.txt)
+- [Versioned machine-readable index](index.json)
+- [Agent selection](AGENT_SELECTION.md) and [architecture comparison](CHOOSING_AGNARA.md)
+- [Agent implementation and zero-hallucination path](AGENT_GUIDE.md)
+- [Runnable example index](../examples/README.md)
+- [Discovery architecture and source ownership](AGENT_DISCOVERY.md)
+- [Documentation MCP specification](DOCUMENTATION_MCP.md)
+- [Agent discovery benchmark](AGENT_DISCOVERY_BENCHMARK.md)
+- [Starter proposals](AGENT_STARTERS.md)
+
 - [Core quick start](../packages/agnara/README.md)
+- [Runnable schema input and output contracts guide](SCHEMA_CONTRACTS.md)
+- [Runnable dependency lifecycle guide](DEPENDENCIES.md)
+- [Runnable invocation telemetry guide](TELEMETRY.md)
+- [Runnable deadline and cancellation guide](DEADLINES.md)
+- [Direct idempotency guide](DIRECT_IDEMPOTENCY.md)
+- [Verifier-backed confirmation guide](CONFIRMATION.md)
+- [Nested invocation guide](NESTED_INVOCATION.md)
 - [HTTP composition guide](HTTP_COMPOSITION.md)
+- [Runnable HTTP SSE lifecycle guide](HTTP_SSE.md)
+- [Runnable official-client MCP tools guide](MCP_TOOLS.md)
+- [Runnable filtered introspection guide](INTROSPECTION.md)
 - [Container reference runtime](CONTAINERS.md)
 
 ## ARCHITECTURE
 
 - [Principles](../PRINCIPLES.md)
 - [Architecture](../ARCHITECTURE.md)
-- [Target architecture](TARGET_ARCHITECTURE.md)
 - [Decision records](adr/README.md) and [open research](rfc/README.md)
 
 ## PUBLIC API
 
 - [Compatibility policy](PUBLIC_API.md)
 - [Generated API reference](API_REFERENCE.md)
+- [API design constraints and current usage references](API_DESIGN.md)
 - [Exact manifest](public-api.json)
 
 ## SECURITY
@@ -42,6 +62,11 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 ## INTEROPERABILITY
 
 - [Supported modes and validated fixtures](INTEROPERABILITY.md)
+- [Runnable FastAPI embedding guide](FASTAPI_EMBEDDING.md)
+- [Runnable Starlette embedding guide](STARLETTE_EMBEDDING.md)
+- [Runnable Litestar embedding guide](LITESTAR_EMBEDDING.md)
+- [Runnable Django async-view guide](DJANGO_EMBEDDING.md)
+- [Runnable SQLite transaction ownership guide](SQLITE_PERSISTENCE.md)
 
 ## CLI
 
@@ -59,6 +84,8 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 
 ## CONTRIBUTING
 
+- [Code of Conduct](../CODE_OF_CONDUCT.md)
+- [Accessibility Statement](../ACCESSIBILITY.md)
 - [Contributor guide](../CONTRIBUTING.md)
 - [Git workflow](../GIT_WORKFLOW.md)
 - [Agent instructions](../AGENTS.md)
@@ -79,3 +106,9 @@ One source owns each claim: `docs/MATURITY.md` owns implementation status,
 definitions, and `docs/releases/release-status.json` owns target evidence.
 Never revive superseded release documentation into current context unless a
 task explicitly requires historical research.
+
+When updating documentation, remove superseded instructions and duplicate
+status summaries, then repair links and regenerate the agent corpus where
+needed. Keep pending work in the backlog and completed-work evidence in GitHub
+and Git history. Retain decision records and publication evidence that still
+explain contracts; do not delete useful guidance solely because of its age.

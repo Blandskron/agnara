@@ -27,7 +27,7 @@ reserve namespaces without runtime APIs.
 pip install agnara
 ```
 
-For reproducible installations after publication, pin the synchronized version:
+For reproducible installations, pin the synchronized version:
 
 ```bash
 pip install "agnara==1.0.3"
@@ -67,19 +67,23 @@ async def main() -> None:
     dependencies = DIRegistry()
     plan = ExecutionPlan.compile(capabilities["billing.refund"], dependencies)
 
-    outcome = await invoke_result(
-        plan,
-        ExecutionContext(
-            Invocation(
-                capability_id=plan.definition.id,
-                payload={"payment_id": "pay_123", "amount_cents": 2500},
-                metadata={},
+    container = DIContainer(dependencies)
+    try:
+        outcome = await invoke_result(
+            plan,
+            ExecutionContext(
+                Invocation(
+                    capability_id=plan.definition.id,
+                    payload={"payment_id": "pay_123", "amount_cents": 2500},
+                    metadata={},
+                ),
+                container,
+                principal=Principal("quickstart", scopes={"billing:write"}),
             ),
-            DIContainer(dependencies),
-            principal=Principal("quickstart", scopes={"billing:write"}),
-        ),
-    )
-    print(outcome)
+        )
+        print(outcome)
+    finally:
+        await container.aclose()
 
 
 asyncio.run(main())
@@ -96,13 +100,18 @@ transformation of the function.
   metadata;
 - a schema port with a standard-library adapter and compiled per-parameter
   input validation;
+  see the [runnable schema contracts guide](../../docs/SCHEMA_CONTRACTS.md);
 - dependency injection with compile-time graph validation and scoped
   resolution;
+  see the [runnable dependency lifecycle guide](../../docs/DEPENDENCIES.md);
 - execution plans, direct invocation and optional monotonic deadlines;
+  see the [runnable deadline and cancellation guide](../../docs/DEADLINES.md);
 - protocol-neutral policies, principals and scope evaluation;
 - canonical `Success` / `Failure` outcomes with stable failure codes;
 - protocol-neutral introspection snapshots and explicit discovery visibility;
-- structured execution telemetry hooks with per-invocation identity.
+  see the [runnable filtering guide](../../docs/INTROSPECTION.md);
+- structured execution telemetry hooks with per-invocation identity;
+  see the [runnable telemetry guide](../../docs/TELEMETRY.md).
 
 ## What it does not include
 

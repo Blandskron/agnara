@@ -74,6 +74,12 @@ to the consumer. This preserves pull backpressure: validation creates no queue,
 prefetch or task. Empty streams validate no unit and finish `COMPLETED` with
 zero units.
 
+A yielded `Success` or `Failure` object is an ordinary unit, not a
+complete-result envelope. The actual object must satisfy the unit schema;
+stream validation neither unwraps `Success` nor exempts `Failure`. An
+unconstrained or application-defined schema may admit such objects as data,
+without turning them into lifecycle control or terminal metadata.
+
 `ValidationError` from a producer output is never projected as `invalid_input`.
 It is converted to an `InvocationError` without the invalid value or nested
 path, then classified as the existing redacted `internal_failure`. The handler
@@ -111,6 +117,9 @@ ADR 0032's existing HTTP OpenAPI response remains an unconstrained projection
 until a separate HTTP decision deliberately adopts `output_schema`. This record
 amends only its former premise that the runtime cannot compile output; it does
 not silently add a response-schema or introspection-format promise.
+
+Proposed ADR 0097 records the separate complete-result HTTP OpenAPI adoption;
+its scope does not extend this record to MCP or streaming discovery.
 
 ## Threat and concurrency analysis
 

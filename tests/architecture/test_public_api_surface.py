@@ -206,7 +206,6 @@ def test_policy_lists_every_governed_module(module: str) -> None:
 COUNTED_DOCUMENTS = (
     "docs/PUBLIC_API.md",
     "docs/MATURITY.md",
-    "docs/TARGET_ARCHITECTURE.md",
     "docs/releases/RELEASE_CHECKLIST.md",
 )
 
@@ -244,11 +243,9 @@ def test_no_document_states_a_public_surface_count_the_manifest_contradicts(
 ) -> None:
     """One manifest, one set of numbers.
 
-    `docs/MATURITY.md` said 324 exports, `docs/releases/RELEASE_CHECKLIST.md` said
-    292, `docs/TARGET_ARCHITECTURE.md` said 292 across 48 modules, and the
-    manifest said 337 across 49. Four documents, four answers, no way for a
-    reader to know which to trust. Counts written by hand drift the moment an
-    export is added, so the gate reads them back.
+    Counts written by hand drift when an export is added. Compare every current
+    count-bearing document with the manifest rather than preserving old totals
+    in a second source of truth.
     """
     paths, modules, names = _surface_totals()
     text = (WORKSPACE_ROOT / relative).read_text(encoding="utf-8")

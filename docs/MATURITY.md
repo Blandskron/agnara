@@ -35,17 +35,34 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 
 | Package | Status | Published to PyPI | Public names | Notes |
 | --- | --- | --- | --- | --- |
-| `agnara` | `IMPLEMENTED` | yes | 41 | The kernel. Standard library only. |
-| `agnara-http` | `IMPLEMENTED` | yes | 14 | Public HTTP composition, OpenAPI, documentation UIs and filtered Explorer. Third-party provider extension remains internal. |
-| `agnara-mcp` | `IMPLEMENTED` | yes | 20 | Version-pinned tool projection and invocation; see the MCP table. |
-| `agnara-cli` | `IMPLEMENTED` | yes | 4 | Scaffolding, introspection and the `agnara` script. |
-| `agnara-telemetry` | `IMPLEMENTED` | yes | 2 | Explicit OpenTelemetry metrics and tracing hooks. |
-| `agnara-a2a` | `PLANNED` | yes | 0 | Published reserved namespace; no A2A runtime. |
-| `agnara-events` | `PLANNED` | yes | 0 | Published reserved namespace; no event runtime. |
+| `agnara` | `IMPLEMENTED` | yes | 41 | Standard-library kernel. [Plan tests](../tests/unit/execution/test_plan.py) and the subsystem table below define the implemented boundary; durable execution, delegation and cross-application composition remain absent. |
+| `agnara-http` | `IMPLEMENTED` | yes | 14 | [Public composition tests](../tests/http/test_public_composition.py) cover the stable API; HTTP/SSE, OpenAPI, documentation UIs and filtered Explorer are implemented. WebSockets are absent; third-party provider extension and JSON discovery remain internal. |
+| `agnara-mcp` | `IMPLEMENTED` | yes | 20 | [Pinned SDK tests](../tests/mcp/test_sdk_conformance.py) cover bounded tool discovery/invocation. No MRTR resumption, Tasks extension or packaged network-transport lifecycle; see the MCP table and conformance guide. |
+| `agnara-cli` | `IMPLEMENTED` | yes | 4 | [Project generation tests](../tests/cli/test_project_create.py) and `tests/cli/` cover scaffolding and introspection. Static `doctor` diagnostics are implemented in the unreleased checkout; runtime diagnostics and a development-server command remain absent. |
+| `agnara-telemetry` | `IMPLEMENTED` | yes | 2 | [Metrics](../tests/telemetry/test_metrics.py) and [tracing tests](../tests/telemetry/test_tracing.py) cover explicit hooks. SDK/provider/exporter setup, propagation and shutdown remain host-owned. |
+| `agnara-a2a` | `PLANNED` | yes | 0 | [Namespace](../packages/agnara-a2a/src/agnara_a2a/__init__.py) reserved; no Agent Card, task, streaming or A2A runtime. Not a completed adapter. |
+| `agnara-events` | `PLANNED` | yes | 0 | [Namespace](../packages/agnara-events/src/agnara_events/__init__.py) reserved; no event publication, broker integration or AsyncAPI runtime. Not a completed adapter. |
 
-All seven distributions have a published synchronized set. The 1.0.3 source
-tree prepares their next synchronized metadata; publication of that target
-requires the protected release workflow. Published reserved namespaces do not
+`IMPLEMENTED` means the stated contract works with test evidence; it does not
+mean every proposed feature or roadmap item is complete. Five packages expose
+implemented, bounded public surfaces. A2A and Events are unfinished adapters,
+even though their reserved distributions can be built, installed and imported.
+Their runtime contracts require separate design and implementation work.
+
+Package verification starts with `scripts/check_distributions.py`, which
+checks the seven-package publication inventory, metadata, exact core pins,
+public imports and installed artifacts. The
+[public-surface tests](../tests/architecture/test_public_api_surface.py) enforce
+the governed inventory, and [package-boundary tests](../tests/architecture/test_package_boundaries.py)
+check dependency direction. These checks complement the behavioral suites;
+a successful build alone is not completion evidence. Reproduce validation
+with the commands in [QUALITY_GATES.md](../QUALITY_GATES.md).
+
+All seven distributions have a published synchronized 1.0.3 set. This table
+describes the current repository, including subsequent changes under
+`CHANGELOG.md` `[Unreleased]`; it is not an inventory of a historical wheel.
+Historical release reconstruction uses Git tags or GitHub Releases. No next
+publication target has been selected. Published reserved namespaces do not
 imply an implemented A2A or event adapter.
 
 Every distribution's public surface is classified in
@@ -104,7 +121,7 @@ The fourteen public exports follow the 1.x compatibility contract.
 | Request binding | `IMPLEMENTED` | Path, query, header, JSON body, cookie, form field and file upload. ADR 0026, ADR 0072. Repeated values and collections are refused by decision. |
 | Response serialization | `IMPLEMENTED` | Deterministic success responses. ADR 0027. |
 | RFC 9457 problem responses | `IMPLEMENTED` | ADR 0028, ADR 0030. |
-| OpenAPI projection | `IMPLEMENTED` | Deterministic, pinned against a fixture. ADR 0032. |
+| OpenAPI projection | `IMPLEMENTED` | Deterministic input/output projection, pinned against a fixture. Unreleased HTTP adopts compiled output schemas for published 200 JSON bodies (proposed ADR 0097); Any stays unconstrained, HEAD/204 stay bodyless and SSE operations are omitted. ADR 0032 and the HTTP composition guide. |
 | Documentation providers | `IMPLEMENTED` | Swagger UI, ReDoc and Scalar, vendored and version-pinned. ADR 0036-0040. |
 | Discovery endpoint | `IMPLEMENTED` | ADR 0049. |
 | Explorer | `IMPLEMENTED` | Read-only shell. ADR 0052. |
@@ -127,15 +144,15 @@ The fourteen public exports follow the 1.x compatibility contract.
 | Tool invocation dispatch | `IMPLEMENTED` | |
 | Schema mapping | `IMPLEMENTED` | |
 | Result projection | `IMPLEMENTED` | Canonical results into MCP shapes. |
-| Interaction-required projection | `IMPLEMENTED` | |
+| Interaction-required projection | `IMPLEMENTED` | Confirmation becomes a form-mode elicitation request; returned client input is not verified confirmation evidence. No resumption path. |
 | Authorization and principal mapping | `IMPLEMENTED` | |
 | Protocol version pinning | `IMPLEMENTED` | ADR 0010. |
 | Task boundary | `DESIGNED` | ADR 0042 decides the boundary; no multi-round-trip runtime. |
 | Resources, prompts | `RESEARCH` | Whether capabilities map to them coherently is undecided. |
 | Progress, sessions, notifications | `PLANNED` | |
-| Streamable HTTP, stdio transports | `PLANNED` | |
-| Sampling, elicitation | `RESEARCH` | |
-| Pagination | `PLANNED` | |
+| Streamable HTTP, stdio transports | `PLANNED` | Application-owned SDK hosting is not a packaged Agnara transport lifecycle; current conformance uses in-process streams. |
+| Sampling, general elicitation | `RESEARCH` | The narrow confirmation projection above does not implement general interactions or sampling. |
+| Pagination | `PLANNED` | Current `tools/list` returns one complete filtered startup snapshot and rejects supplied cursors. |
 
 ## Other surfaces
 
@@ -143,6 +160,7 @@ The fourteen public exports follow the 1.x compatibility contract.
 | --- | --- | --- |
 | CLI scaffolding | `IMPLEMENTED` | `project create`, `app create`, architectures, `--with`, profiles, aliases. |
 | CLI introspection | `IMPLEMENTED` | `apps`, `inspect`, `graph`, `schema openapi`, `context`. |
+| CLI static diagnostics | `IMPLEMENTED` (unreleased checkout) | `doctor` reports interpreter, manifest, contained app paths and synchronized installed HTTP/MCP metadata without imports or writes. Proposed ADR 0096. Runtime registration, DI cycles, protocol configuration, architecture rules, transitive dependencies and the manifest Python constraint remain unchecked. |
 | Project manifest | `IMPLEMENTED` | `agnara.toml`. ADR 0059. No schema version field yet. |
 | Telemetry bridges | `IMPLEMENTED` | Optional OpenTelemetry metrics and spans. `tests/integration/telemetry/` proves one FastAPI 0.141.1 host trace with nested capability spans, concurrent isolation, stream terminal closure and redaction using SDK 1.44.0 in-memory export. Host extraction, providers, exporters and shutdown remain application-owned; compilation, nested invocation and streaming are additionally proven in an interpreter where `opentelemetry` is unimportable. No network-exporter or framework-support claim follows. ADR 0054-0058. |
 | A2A | `PLANNED` | Namespace reserved. |

@@ -23,11 +23,11 @@ from tests.architecture.boundaries import DISTRIBUTIONS, WORKSPACE_ROOT
 
 MATURITY = WORKSPACE_ROOT / "docs" / "MATURITY.md"
 INITIATIVES = WORKSPACE_ROOT / "docs" / "INITIATIVES.md"
-TARGET = WORKSPACE_ROOT / "docs" / "TARGET_ARCHITECTURE.md"
+ARCHITECTURE = WORKSPACE_ROOT / "ARCHITECTURE.md"
 MAP = WORKSPACE_ROOT / "docs" / "DOCUMENTATION_MAP.md"
 ROADMAP = WORKSPACE_ROOT / "ROADMAP.md"
 
-PLANNING_DOCUMENTS = (MATURITY, INITIATIVES, TARGET, MAP, ROADMAP)
+PLANNING_DOCUMENTS = (MATURITY, INITIATIVES, ARCHITECTURE, MAP, ROADMAP)
 
 #: The vocabulary `docs/MATURITY.md` declares. A status outside this set means
 #: either the table or the vocabulary drifted, and either way a reader now has

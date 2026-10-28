@@ -308,8 +308,9 @@ agnara apps --json
 Reads `agnara.toml`, searching the given directory and its ancestors, and
 defaulting to the working directory. It imports nothing and runs no project
 code, so it reports the composition a project *declares* rather than what a
-compiled application registers; detecting divergence between the two belongs
-to `agnara doctor`.
+compiled application registers. Runtime divergence detection needs a future
+explicit runtime mode of `agnara doctor`; its static baseline imports no
+project code and does not compare runtime registration.
 
 `--json` emits a versioned, deterministically ordered document with POSIX
 paths on every platform. A missing or invalid manifest is an operator error:
@@ -434,7 +435,7 @@ not change the meaning of the generated context.
 
 ### `agnara doctor`
 
-Checks:
+The intended broader diagnostic scope includes:
 
 - Python version;
 - project manifest;
@@ -443,6 +444,44 @@ Checks:
 - invalid app registration;
 - protocol configuration;
 - architecture rule violations.
+
+#### Implemented static baseline (unreleased checkout)
+
+```bash
+agnara doctor
+agnara doctor --project path/to/project
+agnara doctor --project path/to/project --json
+```
+
+ADR 0096 proposes this first read-only boundary. It searches for `agnara.toml`
+like `agnara apps`, uses the same strict reader, verifies that declared app
+directories resolve inside the project, and checks the executing interpreter's
+Python >=3.14 baseline. It reads installed `agnara`, `agnara-cli` and declared
+HTTP/MCP adapter distribution versions and checks exact equality with the
+installed kernel. Repeated exposure declarations share one metadata check.
+A2A, Events and Tasks declarations fail the runtime-availability check even
+when reserved distributions are installed.
+
+This command imports no project or adapter code, writes no files, installs
+nothing and performs no repairs. Metadata checks do not prove adapter imports
+or transitive dependency compatibility. The free-form project `python` value
+is echoed without interpreting it as a version constraint.
+
+Text and JSON reports identify every performed check and list unchecked
+boundaries explicitly: project Python constraint, application imports, runtime
+registration, dependency cycles, protocol configuration, architecture rules
+and transitive dependencies. If the manifest cannot be read, declared paths
+and adapters are unchecked too. A passing report establishes only the static
+checks listed; it does not establish application startup or runtime readiness.
+
+JSON has `format: agnara.doctor`, `format_version: 1`, `project`, `checks`,
+`status` and `unchecked`; each check contains `id`, `status` and `message`.
+Evaluation order is deterministic and no timestamp is emitted. Reports go to
+stdout, with exit 0 for all checks passing and exit 1 for any failed check,
+including a missing or malformed manifest. Invalid command-line arguments
+retain exit 2 on stderr. Unexpected programming errors still propagate.
+
+The full runtime diagnostic scope above is not implemented by this baseline.
 
 ## Development commands
 

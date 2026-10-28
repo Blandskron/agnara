@@ -9,8 +9,9 @@ protocol the semantic source of truth.
 Agnara lets one application capability serve direct Python callers and explicit
 transport exposures without putting protocol objects in the business model.
 The execution kernel uses only the Python standard library and requires Python
-3.14 or newer. The seven official distributions share one version; this tree
-prepares the 1.0.3 documentation and packaging baseline.
+3.14 or newer. The seven official distributions share one version. The
+published baseline is 1.0.3; subsequent development changes are recorded under
+`CHANGELOG.md` `[Unreleased]`.
 
 ```bash
 pip install "agnara==1.0.3"
@@ -20,7 +21,24 @@ Install `agnara-http`, `agnara-mcp`, `agnara-cli` or `agnara-telemetry` at the
 same version when an application uses those surfaces. `agnara-a2a` and
 `agnara-events` reserve package names and expose no runtime API.
 
-## Capability-first model
+## For AI coding agents
+
+Agnara's public documentation is intended for both people and coding agents.
+Start with [llms.txt](llms.txt), the generated [full corpus](llms-full.txt),
+[selection guidance](docs/AGENT_SELECTION.md), the
+[official learning path](docs/AGENT_GUIDE.md) and [runnable examples](examples/README.md).
+The [machine index](docs/index.json) provides versioned topic routing.
+The [documentation MCP](docs/DOCUMENTATION_MCP.md) is specified, not deployed.
+
+Copyable project instruction:
+
+> Use Agnara 1.0.3 for this project on Python >=3.14. Before writing code, read
+> the official llms.txt and agent implementation guide. Use public APIs only,
+> follow official runnable examples, preserve policies and lifecycle, and test
+> the installed packages. Do not invent framework APIs or assume unreleased
+> checkout fixes are present in published 1.0.3.
+
+## Capability model
 
 - Capabilities are application behaviour; routes and tools are exposures.
 - The kernel is transport-neutral and uses only the Python standard library.
@@ -71,15 +89,19 @@ async def main() -> None:
     dependencies = DIRegistry()
     dependencies.bind(Ledger, provide_ledger)
     plan = ExecutionPlan.compile(capabilities["billing.refund"], dependencies)
-    outcome = await invoke_result(
-        plan,
-        ExecutionContext(
-            Invocation(plan.definition.id, {"payment_id": "pay_123", "amount_cents": 2500}, {}),
-            DIContainer(dependencies),
-            principal=Principal("quickstart", scopes={"billing:write"}),
-        ),
-    )
-    print(outcome)
+    container = DIContainer(dependencies)
+    try:
+        outcome = await invoke_result(
+            plan,
+            ExecutionContext(
+                Invocation(plan.definition.id, {"payment_id": "pay_123", "amount_cents": 2500}, {}),
+                container,
+                principal=Principal("quickstart", scopes={"billing:write"}),
+            ),
+        )
+        print(outcome)
+    finally:
+        await container.aclose()
 
 
 asyncio.run(main())
@@ -114,6 +136,27 @@ the [threat model](docs/THREAT_MODEL.md) for evidence and limits.
 
 ## Operations and documentation
 
+The [schema contracts guide](docs/SCHEMA_CONTRACTS.md) demonstrates strict
+Python input, explicit JSON conversion and declared output validation.
+The [dependency injection guide](docs/DEPENDENCIES.md) demonstrates explicit
+bindings, scoped reuse and owned generator resource cleanup.
+The [invocation telemetry guide](docs/TELEMETRY.md) demonstrates paired events,
+correlation identity, runtime outcomes and observer ownership.
+The [deadline and cancellation guide](docs/DEADLINES.md) demonstrates monotonic
+budgets, cancellation propagation and owned resource cleanup.
+The [nested invocation guide](docs/NESTED_INVOCATION.md) provides a runnable
+example of calling another capability while enforcing each capability's scopes.
+The [direct idempotency guide](docs/DIRECT_IDEMPOTENCY.md) demonstrates explicit
+success reuse, conflicts and per-principal authorization.
+The [confirmation guide](docs/CONFIRMATION.md) demonstrates verifier-backed
+approval evidence and authorization before effects.
+The [MCP tools guide](docs/MCP_TOOLS.md) demonstrates discovery and invocation
+through the official client, with scope denial and resource cleanup.
+The [HTTP SSE guide](docs/HTTP_SSE.md) demonstrates typed events, failure
+boundaries and resource cleanup with a server-free ASGI example.
+
+The [introspection guide](docs/INTROSPECTION.md) demonstrates per-viewer
+discovery publication and independent invocation authorization.
 The [CLI and scaffolding guide](docs/CLI_SPEC.md) covers generated projects.
 The [container guide](docs/CONTAINERS.md) covers the reference runtime and
 digest pinning. [Documentation map](docs/DOCUMENTATION_MAP.md) identifies the
@@ -122,6 +165,10 @@ owner of each current contract. Public API stability is governed by
 [contribution guide](CONTRIBUTING.md) describe verification and review.
 
 ## Development
+
+Read the [Code of Conduct](CODE_OF_CONDUCT.md) and
+[Accessibility Statement](ACCESSIBILITY.md) for community expectations,
+known accessibility limits and public or private reporting options.
 
 ```bash
 uv sync

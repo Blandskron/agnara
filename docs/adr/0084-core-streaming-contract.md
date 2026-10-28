@@ -62,12 +62,11 @@ every consumer filter the sequence before using it, and the obvious vocabulary
 to reach for would be SSE's or MCP's, which is the coupling RFC 0009 constraint
 1 forbids.
 
-Units are not schema-validated. The kernel compiles input schemas only;
-`ExecutionPlan` has no output schema, for streaming and non-streaming
-capabilities alike. Introducing one is output-schema work that applies to both
-boundaries, and inventing it here for streams only would leave the kernel with
-two different answers to one question. This is a known gap, recorded in
-`docs/MATURITY.md` rather than left implicit.
+ADR 0086 amends the original deferral of output validation in this section.
+`ExecutionPlan.output_schema` now governs each yielded unit, validated before
+the consumer observes it or `units_emitted` increases. The same declaration
+describes successful complete-result values; ADR 0086 owns the validation and
+redacted failure rules for both boundaries.
 
 ### D3 — The execution boundary owns the stream, one-shot (RFC 0009 Q3)
 

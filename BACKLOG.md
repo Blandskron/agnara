@@ -1,14 +1,9 @@
 # Backlog
 
-This file tracks current and future work. GitHub Issues own executable tasks;
-completed work remains available through Git history and closed Issues. The
-[maturity matrix](docs/MATURITY.md) describes shipped behavior.
-
-## In progress
-
-- [~] [#512](https://github.com/Blandskron/agnara/issues/512): establish the
-  1.0.3 documentation and synchronized package metadata baseline. Acceptance:
-  no runtime or public API change; current docs, links and packaging checks pass.
+This file tracks active and future work. GitHub Issues own executable tasks;
+completed work and review evidence remain in closed Issues, merged PRs and Git
+history. The [maturity matrix](docs/MATURITY.md) describes implemented behavior.
+Do not accumulate completed-task chronology in this file.
 
 ## Future work requiring a scoped Issue and review
 
@@ -19,12 +14,17 @@ completed work remains available through Git history and closed Issues. The
 - [ ] Research Python 3.15 compatibility under
   [the research plan](docs/research/python-315-readiness.md) before changing the
   declared Python floor or CI support.
-- [ ] Evaluate additional protocol projections, durable execution and reserved
-  distributions through separate RFCs. No runtime implementation is authorized
-  by this backlog entry alone.
+- [ ] Define scoped RFCs for the unimplemented A2A and Events adapters, other
+  protocol projections and durable execution. Reserved distributions are not
+  completed adapters; this entry alone authorizes no runtime implementation.
 
 ## Maintenance
 
+- [~] Reconcile the existing Actions dependency PR with `develop`, preserving
+  accepted workflow guards and validating the remaining immutable updates (#678).
+
 Keep security fixes, dependency updates, documentation drift, supply-chain
-checks and CI failures in normal issue/branch/PR review. Do not use roadmap
-headings as evidence that a feature ships.
+checks and CI failures in normal issue/branch/PR review. When behavior changes,
+remove superseded active guidance and repair navigation instead of appending
+another competing description. Preserve necessary decision and release evidence;
+age alone does not make a contract obsolete.

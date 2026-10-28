@@ -32,26 +32,26 @@ Agnara uses a hexagonal / ports-and-adapters architecture around a capability ex
 
 ### CapabilityDefinition
 
-Immutable description of a callable application capability.
-
-Candidate fields:
+Immutable declaration of a callable application capability. The implemented
+fields are:
 
 ```text
 id
-name
+handler
 description
-input contract
-output contract
-dependency declarations
-policy declarations
 effects
+scopes
 risk
+confirmation
 idempotency
-streaming mode
-task mode
-timeouts
-metadata
+policies
+streaming
+output
 ```
+
+`ExecutionPlan` compiles input annotations and the explicit `output` contract;
+the declaration does not contain a transport route or task runtime. See
+`docs/API_DESIGN.md` and ADR 0086.
 
 ### CapabilityRegistry
 
@@ -69,54 +69,53 @@ Requirements:
 
 ### Invocation
 
-Transport-neutral request to execute a capability.
-
-Candidate model:
+Transport-neutral request to execute a capability. The implemented fields are:
 
 ```text
 capability_id
-arguments
-context
-deadline
+payload
 metadata
-principal
-delegation
+deadline
 ```
 
-The exact representation must be defined by RFC before implementation.
+`payload` is unvalidated caller input. `deadline` is an optional finite
+monotonic timestamp. The trusted principal and opaque confirmation evidence
+belong to `ExecutionContext`, not caller metadata. See ADR 0022 and
+`docs/DEADLINES.md`.
 
 ### ExecutionContext
 
-Execution-scoped state.
+One execution's invocation, DI container, trusted principal, optional
+confirmation evidence, direct idempotency option and correlation label. The
+runtime generates its execution identity; the principal and confirmation
+evidence remain fixed for that context's lifetime. Mutable `state` belongs to
+that execution. Caller cancellation propagates through owned work.
 
-Must distinguish:
-
-- immutable metadata;
-- task-local values;
-- resource handles;
-- authenticated principal;
-- delegation information;
-- cancellation/deadline information;
-- transport identity.
+Nested invocation derives a fresh child context under ADR 0093; it does not
+grant delegation or cross-application composition. See
+`docs/NESTED_INVOCATION.md` and `docs/DIRECT_IDEMPOTENCY.md`.
 
 Transport-specific raw objects must not leak into general domain handlers.
 
 If an application requires access to transport-specific data, that must occur through an explicit optional adapter capability.
 
-### DependencyProvider
+### ProviderDefinition
 
-A provider contributes a value to an execution plan.
+A provider contributes a value to an execution plan. `provider(...)` returns
+a `ProviderDefinition`, which an explicit `DIRegistry.bind` registers by type.
 
-Providers must declare scope:
+The implemented scopes are:
 
 ```text
-singleton
-application
-invocation
-transient
+SINGLETON
+INVOCATION
 ```
 
-Additional scopes require ADR approval.
+Generator providers release resources through the scope owner's teardown
+stack. Singleton resources close with their container; invocation resources
+close when the owned invocation exits. Application and transient scopes are
+not implemented. See `docs/DEPENDENCIES.md` for dependency graph and lifetime
+rules; additional scopes require ADR approval.
 
 ### ExecutionPlan
 
@@ -135,7 +134,10 @@ authenticate
 → return canonical result
 ```
 
-The exact order is security-sensitive and must have explicit tests.
+The implemented order is security-sensitive: pre-handler policies precede
+materialization, input validation and dependency acquisition. Runtime tests
+enforce it; ADR 0025 records the materialization boundary and ADR 0086 the
+output contract. Telemetry surrounds execution when hooks are registered.
 
 ### Policy
 
@@ -167,13 +169,20 @@ No adapter may redefine capability semantics.
 
 ### CanonicalResult / Failure
 
-The runtime needs protocol-neutral success/failure semantics.
+`CanonicalResult[T]` is `Success[T] | Failure`. `FailureCode` defines the ten
+protocol-neutral categories; a failure carries a safe message and immutable
+details. `invoke_result` wraps values, preserves explicit canonical outcomes
+and redacts unexpected exceptions. Cancellation propagates. See ADR 0022.
 
 Do not use HTTP status codes as core errors.
 
 Transport adapters translate canonical outcomes into protocol-specific representations.
 
 ## 3. Package boundaries
+
+The architectural name `agnara-core` refers to the kernel distributed and
+imported as `agnara`; the workspace has seven distributions, as inventoried in
+`docs/MATURITY.md`. The core boundary below applies to that distribution.
 
 ### `agnara-core`
 
@@ -317,7 +326,7 @@ The current split:
 | `agnara-telemetry` | public | two hook classes over an OpenTelemetry contract |
 | `agnara-cli` | public | supports the `agnara` console script |
 | `agnara-http` | public, stable | fourteen governed composition exports; see `docs/PUBLIC_API.md` and `docs/HTTP_COMPOSITION.md` |
-| `agnara-a2a`, `agnara-events` | none yet | reserved namespaces holding a package boundary; adapters are Post-v0.1 |
+| `agnara-a2a`, `agnara-events` | none yet | reserved namespaces holding a package boundary; runtime adapters remain unimplemented |
 
 HTTP application examples and consumer tests use the public composition API.
 Internal adapter tests may still exercise private modules; that does not make
@@ -403,23 +412,18 @@ to build one.
 
 ## 6. Startup compilation
 
-Startup compilation should transform author-friendly declarations into runtime-friendly immutable plans.
+Startup composition transforms explicit declarations into immutable plans:
 
-Potential phases:
+1. `Agnara.compile()` freezes the capability registry.
+2. `ExecutionPlan.compile()` validates signatures and dependency graphs,
+   compiles input/output schemas, and prepares policies and hooks.
+3. Each adapter compiles its exposures against the same capabilities; the
+   composition root can aggregate the resulting neutral records.
 
-```text
-DISCOVER
-→ NORMALIZE
-→ VALIDATE GRAPH
-→ COMPILE SCHEMAS
-→ COMPILE DEPENDENCIES
-→ COMPILE POLICIES
-→ COMPILE EXPOSURES
-→ FREEZE
-→ START
-```
-
-Compilation failures should be explicit and fail fast.
+`Http.compile()` owns HTTP plan compilation; MCP consumes plans supplied by
+the application. Compilation fails before invocation on invalid declarations.
+Resources are acquired lazily during execution. There is no automatic plugin
+discovery or generic `START` pipeline. See ADR 0005 and `docs/API_DESIGN.md`.
 
 ## 7. Runtime phases
 
@@ -447,7 +451,7 @@ Requirements:
 - cancellation propagation;
 - deadlines;
 - context isolation;
-- free-threading-safe registries after freeze.
+- immutable registries after freeze; free-threaded validation remains research.
 
 Mutable global caches require locks or immutable replacement strategies.
 
@@ -704,8 +708,9 @@ the app requires and remains internal.
 
 Importing a contract is not invoking a capability. Directly calling another
 app's handler bypasses its compiled policy, dependency, deadline, telemetry
-and failure boundaries. Internal capability invocation remains a separate
-research decision under initiative I8.
+and failure boundaries. ADR 0093 implements complete-result nested invocation
+within one compiled application snapshot; see `docs/NESTED_INVOCATION.md`.
+Cross-application invocation and delegated authority remain unsupported.
 
 Generated projects enforce these directions with a static architecture test
 that resolves both absolute and relative imports without importing application

@@ -568,17 +568,36 @@ def materialize_json(schema: TypeSchema, value: object) -> Any:
                 raise error.at(index) from error
         return tuple(materialized_tuple)
 
+    if isinstance(schema, LiteralSchema) and type(value) in (int, float):
+        # Preserve already-valid Python representations before considering
+        # JSON's numeric equivalence. Use a declared value, never a lossy cast.
+        for declared in schema.values:
+            if type(value) is type(declared) and value == declared:
+                return value
+        for declared in schema.values:
+            if type(declared) in (int, float) and value == declared:
+                return declared
+        return value
+
     if isinstance(schema, EnumSchema):
-        try:
-            return schema.enum_type(value)
-        except TypeError, ValueError:
-            return value
+        # JSON booleans are not numbers, even though Python equates True and
+        # 1. Match declared values before calling Enum, so _missing_ cannot
+        # expand the published wire contract. JSON numbers share equality.
+        for declared in schema.values:
+            same_type = type(value) is type(declared)
+            both_numbers = type(value) in (int, float) and type(declared) in (int, float)
+            if (same_type or both_numbers) and value == declared:
+                return schema.enum_type(declared)
+        return value
 
     if isinstance(schema, PrimitiveSchema) and schema.python_type is float and type(value) is int:
         # JSON has one number type. A wire value ``3`` satisfies the published
         # ``{"type": "number"}`` schema, so a JSON transport owes the handler
         # the float it declared; ``bool`` is excluded by the exact type check.
-        return float(value)
+        try:
+            return float(value)
+        except OverflowError as error:
+            raise ValidationError("integer is outside the float range") from error
 
     if isinstance(schema, UnionSchema):
         for choice in schema.choices:

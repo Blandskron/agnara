@@ -405,7 +405,136 @@ class TestSerializeJson:
             serialize_json([deep])
 
 
+class TestMaterializeLiterals:
+    @pytest.mark.parametrize("value", [1.0, 2.0])
+    def test_equivalent_json_number_uses_the_declared_python_type(self, value: float) -> None:
+        schema = StandardSchemaAdapter().compile(Literal[1, 2])
+        result = schema.validate(materialize_json(schema, value))
+        assert result == value
+        assert type(result) is int
+        with pytest.raises(ValidationError):
+            schema.validate(value)
+
+    def test_single_value_literal_materializes_equivalent_number(self) -> None:
+        schema = StandardSchemaAdapter().compile(Literal[1])
+        assert type(schema.validate(materialize_json(schema, 1.0))) is int
+
+    @pytest.mark.parametrize("value", [1, 1.0])
+    def test_existing_exact_numeric_match_is_preserved(self, value: int | float) -> None:
+        schema = LiteralSchema((1, 1.0))
+        assert schema.validate(materialize_json(schema, value)) is value
+
+    def test_integer_can_match_a_declared_float_value(self) -> None:
+        schema = LiteralSchema((1.0,))
+        assert type(schema.validate(materialize_json(schema, 1))) is float
+
+    @pytest.mark.parametrize("value", [True, False, 3.0, "1", float("inf"), float("nan")])
+    def test_undeclared_values_remain_invalid(self, value: object) -> None:
+        schema = StandardSchemaAdapter().compile(Literal[0, 1])
+        with pytest.raises(ValidationError):
+            schema.validate(materialize_json(schema, value))
+
+    @pytest.mark.parametrize("value", [0, 1, 0.0, 1.0])
+    def test_numbers_do_not_match_boolean_literals(self, value: int | float) -> None:
+        schema = StandardSchemaAdapter().compile(Literal[True, False])
+        with pytest.raises(ValidationError):
+            schema.validate(materialize_json(schema, value))
+
+    def test_declared_boolean_stays_boolean_next_to_numeric_literal(self) -> None:
+        schema = StandardSchemaAdapter().compile(Literal[1, True])
+        assert schema.validate(materialize_json(schema, True)) is True
+
+    def test_unequal_number_falls_back_to_float_union_member(self) -> None:
+        schema = StandardSchemaAdapter().compile(Literal[1] | float)
+        result = schema.validate(materialize_json(schema, 2.0))
+        assert result == 2.0
+        assert type(result) is float
+
+    def test_nested_literals_materialize_and_retain_failure_paths(self) -> None:
+        schema = StandardSchemaAdapter().compile(list[dict[str, Literal[1]]])
+        assert schema.validate(materialize_json(schema, [{"choice": 1.0}])) == [{"choice": 1}]
+        with pytest.raises(ValidationError) as caught:
+            schema.validate(materialize_json(schema, [{"choice": 2.0}]))
+        assert caught.value.path == (0, "choice")
+
+
+class TestMaterializeEnums:
+    @pytest.mark.parametrize("value", [True, False])
+    def test_booleans_do_not_materialize_as_numeric_members(self, value: bool) -> None:
+        class Number(Enum):
+            ZERO = 0
+            ONE = 1
+
+        schema = StandardSchemaAdapter().compile(Number)
+        with pytest.raises(ValidationError):
+            schema.validate(materialize_json(schema, value))
+
+    @pytest.mark.parametrize("value", [0, 1, 0.0, 1.0])
+    def test_numbers_do_not_materialize_as_boolean_members(self, value: int | float) -> None:
+        class Flag(Enum):
+            NO = False
+            YES = True
+
+        schema = StandardSchemaAdapter().compile(Flag)
+        with pytest.raises(ValidationError):
+            schema.validate(materialize_json(schema, value))
+
+    @pytest.mark.parametrize("value", [1, 1.0])
+    def test_equivalent_json_numbers_still_select_the_declared_member(
+        self, value: int | float
+    ) -> None:
+        schema = StandardSchemaAdapter().compile(Priority)
+        assert schema.validate(materialize_json(schema, value)) is Priority.LOW
+        assert materialize_json(schema, Priority.LOW) is Priority.LOW
+
+    def test_unknown_values_do_not_call_missing_hooks(self) -> None:
+        calls: list[object] = []
+
+        class Status(Enum):
+            ACTIVE = "active"
+
+            @classmethod
+            def _missing_(cls, value: object) -> Status:
+                calls.append(value)
+                return cls.ACTIVE
+
+        schema = StandardSchemaAdapter().compile(Status)
+        with pytest.raises(ValidationError):
+            schema.validate(materialize_json(schema, "unknown"))
+        assert calls == []
+
+    def test_invalid_enum_branch_falls_back_to_boolean_union_member(self) -> None:
+        schema = StandardSchemaAdapter().compile(Priority | bool)
+        assert schema.validate(materialize_json(schema, True)) is True
+
+    def test_invalid_nested_enum_retains_its_path(self) -> None:
+        schema = StandardSchemaAdapter().compile(list[dict[str, Priority]])
+        with pytest.raises(ValidationError) as caught:
+            schema.validate(materialize_json(schema, [{"priority": True}]))
+        assert caught.value.path == (0, "priority")
+
+
 class TestMaterializeNumbers:
+    @pytest.mark.parametrize("value", [10**400, -(10**400)], ids=["positive", "negative"])
+    def test_out_of_range_integer_is_a_validation_error(self, value: int) -> None:
+        schema = StandardSchemaAdapter().compile(float)
+        with pytest.raises(ValidationError, match="outside the float range"):
+            materialize_json(schema, value)
+
+    @pytest.mark.parametrize("value", [10**400, -(10**400)], ids=["positive", "negative"])
+    def test_out_of_range_integer_preserves_nested_error_path(self, value: int) -> None:
+        schema = StandardSchemaAdapter().compile(list[dict[str, float]])
+        with pytest.raises(ValidationError) as caught:
+            materialize_json(schema, [{"factor": value}])
+        assert caught.value.path == (0, "factor")
+
+    @pytest.mark.parametrize("value", [10**400, -(10**400)], ids=["positive", "negative"])
+    def test_union_can_fall_back_to_an_integer_member(self, value: int) -> None:
+        schema = StandardSchemaAdapter().compile(float | int)
+        result = schema.validate(materialize_json(schema, value))
+        assert type(result) is int
+        assert result == value
+
     def test_a_json_integer_materializes_as_the_declared_float(self) -> None:
         schema = StandardSchemaAdapter().compile(float)
         assert materialize_json(schema, 3) == 3.0

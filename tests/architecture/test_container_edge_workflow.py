@@ -105,7 +105,9 @@ def test_only_edge_is_published_to_both_registries_with_attestations() -> None:
         "attestations": "write",
         "id-token": "write",
     }
-    assert build["uses"] == "docker/build-push-action@0a97817b6ade9f46837855d676c4cca3a2471fc9"
+    # The workflow owns the reviewed pin; an immutable dependency update must
+    # not require editing this contract. Keep the action identity and full SHA.
+    assert re.fullmatch(r"docker/build-push-action@[0-9a-f]{40}", build["uses"]), build["uses"]
     assert build["with"]["platforms"] == "linux/amd64,linux/arm64"
     assert build["with"]["push"] is True
     # A container repository name must be lowercase. `github.repository_owner`

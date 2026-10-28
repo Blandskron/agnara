@@ -5,7 +5,7 @@ API. Every import on this page is one an application may write; nothing here
 reaches into an underscore-prefixed module, and
 `tests/architecture/test_public_http_surface.py` fails if this page ever does.
 
-`docs/API_DESIGN.md` owns the intended shape of the API and
+`docs/API_DESIGN.md` records public design constraints and
 `docs/PUBLIC_API.md` owns its stability. This page owns the supported path and
 its limits.
 
@@ -278,6 +278,9 @@ alone accepts either encoding. The OpenAPI document advertises exactly that.
 
 ## Streaming with server-sent events
 
+The [runnable SSE guide](HTTP_SSE.md) demonstrates completion, pre-output
+failures, late failures, scope denial and disconnect cleanup without a server.
+
 A capability declared `streaming=True` yields units instead of returning one
 value, so it has no complete JSON representation and an ordinary `get` refuses
 it. `Http.sse` is the one supported projection (ADR 0085):
@@ -389,6 +392,29 @@ An exposure declared without an `OpenApiOperation` is served and appears
 nowhere in the document — no path, no identifier, no description, no tag, no
 schema fragment (ADR 0035). Publication is opt-in so that a deployment which
 has not decided what to publish publishes nothing.
+
+### Complete-result output schemas (unreleased checkout)
+
+For a published operation with a response body, the 200 `application/json`
+schema comes from the same compiled `output=...` contract the runtime validates.
+Declare it once on the capability; a handler return annotation alone does not
+create an output contract. Omitted or explicit `Any` remains unconstrained.
+Proposed ADR 0097 records this HTTP projection separately from ADR 0086's
+runtime contract. This is checkout behavior, not evidence about the 1.0.3 wheel.
+
+The existing 200/204/default status vocabulary is unchanged. Non-None successes
+serialize as JSON 200; None still becomes a bodyless 204. The schema is copied
+without interpreting nullable/custom fragments to infer reachable statuses:
+a nullable or null-only output contract does not cause a JSON null response.
+HEAD has no response content and does not retrieve output schema metadata.
+SSE operations remain absent from OpenAPI.
+
+Unpublished operations are filtered before output metadata is read. Published
+output fragments pass the same defensive JSON copy/validation as inputs;
+invalid metadata fails when OpenAPI is projected, including startup when a
+schema/documentation surface is configured. The projected document and served
+bytes retain no mutable alias to the schema-port fragment. Publishing a schema
+does not grant invocation authority or execute a handler/provider.
 
 `HttpDocumentation()` is the supported local documentation profile. It serves
 the generated canonical OpenAPI 3.2 document at `/openapi.json` and local,

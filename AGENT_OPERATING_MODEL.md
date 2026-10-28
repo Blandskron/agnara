@@ -208,9 +208,12 @@ They must never silently lower quality, security or branch rules to make automat
 
 Use a PR, objective CI gates and a mandatory self-review, then request formal
 review from Blandskron. Self-review is supplementary, never approval. The
-versioned ruleset definitions require one approval, dismiss it after a push and
-require approval of the last push; GitHub cannot force a named reviewer, so the
-PR request and formal review record Blandskron's decision.
+formal review requirement is a maintainer commitment. The versioned ruleset
+definitions set `required_approving_review_count` to `0`; GitHub cannot require
+the lone maintainer to approve a PR created under his own account. Follow
+`GIT_WORKFLOW.md` for the platform limitation and the enforced CI/branch checks.
+This does not waive formal review or authorize an agent to approve or merge
+its own PR.
 
 ## High-risk changes
 

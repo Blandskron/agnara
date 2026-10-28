@@ -220,6 +220,7 @@ def _candidate_fetch(
     version: str = VERSION,
     phase: str = "bootstrap-1",
     workflow_path: str = ".github/workflows/release.yml@main",
+    run_head_sha: str | None = None,
 ) -> Any:
     name = f"agnara-release-candidate-{version}-{phase}"
 
@@ -241,7 +242,7 @@ def _candidate_fetch(
                 "path": workflow_path,
                 "event": "workflow_dispatch",
                 "head_branch": "main",
-                "head_sha": sha,
+                "head_sha": sha if run_head_sha is None else run_head_sha,
                 "conclusion": "success",
             }
         return _protected()
@@ -278,6 +279,32 @@ def test_later_phase_refuses_an_unrelated_workflow_candidate(checkout: Path) -> 
     )
     assert code == 1
     assert any("expected exactly one retained candidate" in problem for problem in problems)
+
+
+@pytest.mark.parametrize("artifact_matches_dispatch", [True, False])
+def test_later_phase_refuses_a_candidate_with_a_mismatched_run_sha(
+    checkout: Path, artifact_matches_dispatch: bool
+) -> None:
+    context = _context(checkout)
+    other_sha = "a" * 40 if context.sha != "a" * 40 else "b" * 40
+    artifact_sha, run_sha = (
+        (context.sha, other_sha) if artifact_matches_dispatch else (other_sha, context.sha)
+    )
+    code, problems, _ = tool.run(
+        VERSION,
+        context=context,
+        git=tool.make_git(checkout),
+        fetch=_candidate_fetch(artifact_sha, run_head_sha=run_sha),
+        protected_environment="pypi",
+        phase="bootstrap-2",
+    )
+    assert code == 1
+    # If only the later dispatch check rejected this, the SHA equality guard
+    # could disappear unnoticed. Neither mismatched pair is a valid candidate.
+    assert problems == [
+        f"bootstrap-1 has 0 distinct successful candidate commits for {VERSION}; "
+        "expected exactly one retained candidate"
+    ]
 
 
 def test_later_phase_refuses_a_new_main_commit_for_the_same_version(checkout: Path) -> None:

@@ -10,7 +10,8 @@ Exit codes:
     visible" or nothing at all, as when a document was written to a file
 ``1``
     the operator's input or application could not be used, reported as a
-    diagnostic on stderr rather than a traceback
+    diagnostic on stderr rather than a traceback; doctor instead emits its
+    structured failed-check report on stdout
 ``2``
     argparse rejected the command line
 """
@@ -24,7 +25,9 @@ from importlib.metadata import PackageNotFoundError, version
 
 from agnara_cli._app import add_app_alias_parsers, add_app_parser
 from agnara_cli._apps import add_apps_parser
+from agnara_cli._command import CommandResult
 from agnara_cli._context import add_context_parser
+from agnara_cli._doctor import add_doctor_parser
 from agnara_cli._generate import GenerationError
 from agnara_cli._graph import add_graph_parser
 from agnara_cli._inspect import add_inspect_parser
@@ -62,6 +65,7 @@ def _parser() -> argparse.ArgumentParser:
     add_project_parser(subparsers)
     add_schema_parser(subparsers)
     add_context_parser(subparsers)
+    add_doctor_parser(subparsers)
     return parser
 
 
@@ -81,6 +85,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     except (GenerationError, ManifestError, TargetError) as error:
         print(f"agnara: {error}", file=sys.stderr)
         return EXIT_FAILED
+    if isinstance(output, CommandResult):
+        _emit(output.output)
+        return output.exit_code
     _emit(output)
     return EXIT_OK
 

@@ -2,7 +2,7 @@
 
 This is the semantic matrix for direct runtime, HTTP/OpenAPI and MCP.
 It records equivalence, not byte identity. Executable evidence lives in
-`tests/conformance/test_a4_schema_policy_failure_consistency.py`; adapter suites
+`tests/conformance/test_schema_policy_failure_consistency.py`; adapter suites
 retain their protocol-specific cases.
 
 ## Schemas
@@ -12,7 +12,7 @@ retain their protocol-specific cases.
 | `bool`, `int`, `float`, `str` | exact Python type; `bool` is not `int` | scalar text bindings convert strictly; JSON preserves JSON scalars | decoded JSON scalar, then common strict validation |
 | `T | None` | exact matching union member | `anyOf` including `null`; decoded JSON is materialized against a matching member | same compiled `anyOf` fragment and materialization |
 | `Enum` | exact enum instance | underlying JSON scalar is materialized to the enum member | same as HTTP; the tool schema publishes the underlying scalar values |
-| `Literal` | exact type and value | JSON `const`/`enum` | identical compiled fragment |
+| `Literal` | exact type and value | JSON `const`/`enum`; equivalent numbers materialize to a declared value | same |
 | dataclass | exact instance | closed JSON object becomes the declared instance recursively | same closed object schema and recursive materialization |
 | `list[T]` | exact list | JSON array; nested values materialized | same |
 | `dict[str, T]` | exact string-keyed dict | JSON object; nested values materialized | same |
@@ -25,6 +25,24 @@ Materialization occurs after policy and before validation. Direct calls omit
 the helper: a dictionary is not silently accepted where Python declared a
 dataclass. Custom schema implementations receive decoded JSON unchanged and
 retain their own validation/coercion behavior.
+
+JSON integers supplied to a `float` contract widen only within Python's float
+range. An out-of-range integer is `invalid_input`, with the ordinary nested
+field/index path, before dependency construction or handler execution. A union
+with an `int` member can still accept that integer through its matching branch.
+Direct Python invocation retains exact-type validation.
+
+Enum materialization matches only the declared JSON values. Booleans cannot
+select numeric members, and numbers cannot select boolean members. Equivalent
+JSON numbers such as `1` and `1.0` select the same declared member. Unknown wire
+values are not passed to `Enum._missing_`; applications can still use that hook
+when constructing enum instances explicitly before direct invocation.
+
+Numeric Literal inputs follow the same JSON equivalence: `1.0` can materialize
+to the declared integer in `Literal[1]`. An already-valid exact type/value
+match is preserved; otherwise the first numerically equal declared value is
+used. Booleans and numeric strings do not select numeric literals. Direct
+Python invocation still requires an exact declared type and value.
 
 Binary values are not a general JSON shape. HTTP upload/scalar bindings have
 the bounded behavior documented in `HTTP_COMPOSITION.md`. MCP rejects a tool

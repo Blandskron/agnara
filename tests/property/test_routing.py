@@ -18,8 +18,10 @@ are the two places the method side of it was missing.
 
 from __future__ import annotations
 
+import keyword
 import string
 
+import pytest
 from hypothesis import example, given
 from hypothesis import strategies as st
 
@@ -40,7 +42,7 @@ static_segment = st.text(
     alphabet=string.ascii_lowercase + string.digits + "-_", min_size=1, max_size=8
 )
 parameter_name = st.text(alphabet=string.ascii_lowercase, min_size=1, max_size=8).filter(
-    lambda name: name.isidentifier()
+    lambda name: name.isidentifier() and not keyword.iskeyword(name)
 )
 
 
@@ -115,6 +117,19 @@ def test_only_the_registered_method_matches_its_path(method: str) -> None:
 # ---------------------------------------------------------------------------
 # Method identity
 # ---------------------------------------------------------------------------
+
+
+@given(name=parameter_name)
+def test_generated_parameter_names_are_valid_authored_identifiers(name: str) -> None:
+    assert name.isidentifier() and not keyword.iskeyword(name)
+
+
+@example(path="/{return}")
+@given(path=st.sampled_from(["/{" + name + "}" for name in keyword.kwlist]))
+def test_keyword_parameters_are_invalid_authored_templates(path: str) -> None:
+    registry: _RouteRegistry[str] = _RouteRegistry()
+    with pytest.raises(_RouteDefinitionError, match="non-keyword Python identifier"):
+        registry.register("POST", path, "target")
 
 
 @given(method=methods)

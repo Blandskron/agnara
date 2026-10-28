@@ -3,8 +3,9 @@
 Owns MCP server projection, tool discovery, schema mapping, MCP
 authorization integration and MCP-specific error representations.
 
-Depends on ``agnara-core``. Must not import a sibling adapter.
-See ``ARCHITECTURE.md`` sections 3 and 4, and EPIC 7 in ``BACKLOG.md``.
+Depends on ``agnara`` and the pinned official MCP SDK. Must not import a sibling
+adapter. See ``ARCHITECTURE.md`` for boundaries and ``docs/MATURITY.md`` for
+implemented tool contracts and remaining protocol gaps.
 """
 
 from .authorization import (

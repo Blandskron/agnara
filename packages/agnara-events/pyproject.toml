@@ -1,7 +1,7 @@
 [project]
 name = "agnara-events"
 version = "1.0.3"
-description = "Event exposure abstractions for Agnara capabilities."
+description = "Reserved events namespace for Agnara; no public event runtime API is implemented."
 readme = "README.md"
 requires-python = ">=3.14"
 authors = [{name = "Agnara Maintainers", email = "maintainers@agnara.dev"}]

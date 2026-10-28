@@ -328,9 +328,11 @@ def test_clean_room_installs_wheels_without_workspace_source_discovery(tmp_path:
     assert starlette.returncode == 0, starlette.stderr
     script = """
 import asyncio
+import json
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from agnara import Agnara
-from agnara.core.di import DIContainer, DIRegistry
+from agnara.di import DIContainer, DIRegistry, Scope, provider
 from agnara.execution import (
     CapabilityRuntime,
     ExecutionContext,
@@ -343,30 +345,54 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 
+events = []
+
+class Resource:
+    closed = False
+
+@provider(scope=Scope.SINGLETON)
+async def resource() -> AsyncIterator[Resource]:
+    value = Resource()
+    events.append(('resource.open', id(asyncio.get_running_loop())))
+    try:
+        yield value
+    finally:
+        value.closed = True
+        events.append(('resource.close', id(asyncio.get_running_loop())))
+
 app = Agnara('cleanroom')
-@app.capability
-def ping() -> str:
+@app.capability(output=str)
+def ping(resource: Resource) -> str:
+    assert not resource.closed
     return 'pong'
 
 capabilities = app.compile()
 registry = DIRegistry()
-container = DIContainer(registry)
+registry.bind(Resource, resource)
 plan = ExecutionPlan.compile(capabilities['cleanroom.ping'], registry)
-runtime = CapabilityRuntime(capabilities, [plan], container)
 
 @asynccontextmanager
-async def lifespan(_: Starlette):
+async def lifespan(host: Starlette):
+    container = DIContainer(registry)
+    runtime = CapabilityRuntime(capabilities, [plan], container)
+    host.state.container = container
+    host.state.runtime = runtime
+    events.append(('runtime.open', id(asyncio.get_running_loop())))
     try:
         yield
     finally:
         await runtime.aclose()
+        events.append(('runtime.close', id(asyncio.get_running_loop())))
+        del host.state.runtime
+        del host.state.container
 
-async def endpoint(_: Request):
+async def endpoint(request: Request):
+    events.append(('invoke', id(asyncio.get_running_loop())))
     context = ExecutionContext(
         Invocation(capabilities['cleanroom.ping'].id, {}, {}),
-        container,
+        request.app.state.container,
     )
-    result = await runtime.invoke_result(context)
+    result = await request.app.state.runtime.invoke_result(context)
     assert isinstance(result, Success)
     return JSONResponse({'value': result.value})
 
@@ -377,8 +403,7 @@ async def run():
         return {'type': 'http.request', 'body': b'', 'more_body': False}
     async def send(message):
         sent.append(message)
-    async with host.router.lifespan_context(host):
-        scope = {
+    scope = {
             'type': 'http',
             'asgi': {'version': '3.0'},
             'http_version': '1.1',
@@ -391,14 +416,44 @@ async def run():
             'headers': [],
             'client': ('127.0.0.1', 1),
             'server': ('test', 80),
-        }
-        await host(scope, receive, send)
-    assert sent[0]['status'] == 200
+    }
+    for exceptional in (False, True):
+        events.clear()
+        sent.clear()
+        exited_exceptionally = False
+        try:
+            async with host.router.lifespan_context(host):
+                await host(scope, receive, send)
+                if exceptional:
+                    raise RuntimeError('host exit')
+        except RuntimeError as error:
+            assert exceptional and str(error) == 'host exit'
+            exited_exceptionally = True
+        assert exited_exceptionally is exceptional
+        assert sent[0]['status'] == 200
+        body = b''.join(message.get('body', b'') for message in sent)
+        assert json.loads(body) == {'value': 'pong'}
+        assert [name for name, _ in events] == [
+            'runtime.open', 'invoke', 'resource.open', 'resource.close', 'runtime.close'
+        ]
+        assert len({loop for _, loop in events}) == 1
+        assert not hasattr(host.state, 'runtime')
+        assert not hasattr(host.state, 'container')
 asyncio.run(run())
 print('clean-room-ok')
 """
+    consumer = tmp_path / "consumer.py"
+    consumer.write_text(script, encoding="utf-8")
+    audited = subprocess.run(
+        [str(python), "-I", str(workspace / "scripts/check_public_imports.py"), str(consumer)],
+        check=False,
+        cwd=tmp_path,
+        text=True,
+        capture_output=True,
+    )
+    assert audited.returncode == 0, audited.stdout + audited.stderr
     isolated = subprocess.run(
-        [str(python), "-I", "-c", script],
+        [str(python), "-I", str(consumer)],
         check=False,
         cwd=tmp_path,
         env={

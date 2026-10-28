@@ -1,7 +1,7 @@
 [project]
 name = "agnara-mcp"
 version = "1.0.3"
-description = "Model Context Protocol exposure adapter for Agnara capabilities."
+description = "MCP tool adapter exposing Agnara business capabilities to AI agents with explicit authorization and invocation."
 readme = "README.md"
 requires-python = ">=3.14"
 authors = [{name = "Agnara Maintainers", email = "maintainers@agnara.dev"}]

@@ -6,12 +6,13 @@ import inspect
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import InitVar, field
 from types import MappingProxyType
-from typing import Any, get_type_hints
+from typing import Any
 
 from agnara._frozen import frozen_slots_dataclass
 from agnara.capability.definition import CapabilityDefinition
 from agnara.capability.metadata import Confirmation
 from agnara.core.di import DIRegistry, compile_dag
+from agnara.core.di.compiler import _get_dependencies
 from agnara.errors import DefinitionError, SchemaError
 from agnara.execution._composition import CapabilityInvoker
 from agnara.execution.context import ExecutionContext
@@ -133,7 +134,7 @@ class ExecutionPlan:
 
         signature = inspect.signature(self.definition.handler)
         direct_dependencies = frozenset(immutable_deps.get(self.definition.handler, ()))
-        hints = get_type_hints(self.definition.handler)
+        hints = _get_dependencies(self.definition.handler)
         dependency_parameters = frozenset(
             name
             for name, annotation in hints.items()
@@ -161,21 +162,21 @@ class ExecutionPlan:
         input_schemas: dict[str, TypeSchema] = {}
         required_inputs: set[str] = set()
         for name, parameter in signature.parameters.items():
-            if (
-                name in dependency_parameters
-                or name in context_parameters
-                or name in capability_invoker_parameters
-            ):
-                continue
             if parameter.kind in {
                 inspect.Parameter.POSITIONAL_ONLY,
                 inspect.Parameter.VAR_POSITIONAL,
                 inspect.Parameter.VAR_KEYWORD,
             }:
                 raise DefinitionError(
-                    f"capability {self.definition.id} input {name!r} must be an explicit "
+                    f"capability {self.definition.id} parameter {name!r} must be an explicit "
                     "positional-or-keyword or keyword-only parameter"
                 )
+            if (
+                name in dependency_parameters
+                or name in context_parameters
+                or name in capability_invoker_parameters
+            ):
+                continue
             if name not in hints:
                 raise DefinitionError(
                     f"capability {self.definition.id} input {name!r} requires a type annotation"

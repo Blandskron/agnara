@@ -25,4 +25,8 @@ separate future decisions, not current commitments. See
 [initiatives](docs/INITIATIVES.md), [backlog](BACKLOG.md) and
 [interoperability](docs/INTEROPERABILITY.md).
 
-No delivery date or release cadence is implied by this roadmap.
+Per maintainer direction on 2026-09-28, new version publication is paused
+until approximately March 2027 while framework development and improvement
+continue on `develop`. March is a planning reference, not a committed release
+date or publication authorization. Changes accumulate under `[Unreleased]`;
+publication still requires a separate maintainer decision and release gates.

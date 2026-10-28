@@ -41,6 +41,86 @@ class Tier(Enum):
     PRO = "pro"
 
 
+class _NumberChoice(Enum):
+    ZERO = 0
+    ONE = 1
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_boolean_json_cannot_select_a_numeric_enum_on_http_or_mcp(value: bool) -> None:
+    app = Agnara("enum_contract")
+    calls: list[_NumberChoice] = []
+
+    @app.capability
+    def accept(choice: _NumberChoice) -> str:
+        calls.append(choice)
+        return choice.name
+
+    definition = app.capabilities["enum_contract.accept"]
+    plan = ExecutionPlan.compile(definition, DIRegistry())
+    http = Http()
+    http.post("/choice", accept, Binding("choice", BindingSource.BODY))
+    status, failure = _request(http.compile(app.compile()), value, path="/choice")
+    assert status == 400
+    assert failure["code"] == "invalid_input"
+    assert failure["details"]["path"] == ["choice"]
+
+    mcp = Mcp(app)
+    mcp.tool(accept)
+    result = _mcp_call(
+        McpToolInvoker(mcp.compile(), [plan], DIContainer(DIRegistry())),
+        "enum_contract.accept",
+        {"choice": value},
+    )
+    assert result.is_error is True
+    assert _mcp_payload(result)["code"] == "invalid_input"
+    assert calls == []
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"), [(1.0, 1), (2.0, 2), (True, None), (3.0, None), ("1", None)]
+)
+def test_numeric_literal_inputs_agree_on_http_and_mcp(value: object, expected: int | None) -> None:
+    app = Agnara("literal_contract")
+    calls: list[int] = []
+
+    @app.capability
+    def accept(choice: Literal[1, 2]) -> dict[str, int]:
+        assert type(choice) is int
+        calls.append(choice)
+        return {"choice": choice}
+
+    plan = ExecutionPlan.compile(app.capabilities["literal_contract.accept"], DIRegistry())
+    direct = asyncio.run(invoke_result(plan, _context(plan, {"choice": value})))
+    assert isinstance(direct, Failure)
+    assert direct.code is FailureCode.INVALID_INPUT
+    assert calls == []
+
+    http = Http()
+    http.post("/choice", accept, Binding("choice", BindingSource.BODY))
+    status, payload = _request(http.compile(app.compile()), value, path="/choice")
+    mcp = Mcp(app)
+    mcp.tool(accept)
+    result = _mcp_call(
+        McpToolInvoker(mcp.compile(), [plan], DIContainer(DIRegistry())),
+        "literal_contract.accept",
+        {"choice": value},
+    )
+    if expected is None:
+        assert status == 400
+        assert payload["code"] == "invalid_input"
+        assert payload["details"]["path"] == ["choice"]
+        assert result.is_error is True
+        assert _mcp_payload(result)["code"] == "invalid_input"
+        assert calls == []
+    else:
+        assert status == 200
+        assert payload == {"choice": expected}
+        assert result.is_error is False
+        assert result.structured_content == {"result": {"choice": expected}}
+        assert calls == [expected, expected]
+
+
 @dataclass(frozen=True)
 class Profile:
     tier: Tier
@@ -109,6 +189,45 @@ def _mcp_payload(result: CallToolResult) -> dict[str, Any]:
     block = result.content[0]
     assert isinstance(block, TextContent)
     return cast(dict[str, Any], json.loads(block.text))
+
+
+@pytest.mark.parametrize("value", [10**400, -(10**400)], ids=["positive", "negative"])
+def test_out_of_range_json_float_is_invalid_input_on_every_json_surface(value: int) -> None:
+    app = Agnara("numbers")
+    calls: list[float] = []
+
+    @app.capability
+    def accept(factor: float) -> float:
+        calls.append(factor)
+        return factor
+
+    definition = app.capabilities["numbers.accept"]
+    plan = ExecutionPlan.compile(definition, DIRegistry())
+    direct = asyncio.run(
+        invoke_result(plan, _context(plan, {"factor": value}), input_materializer=materialize_json)
+    )
+    assert isinstance(direct, Failure)
+    assert direct.code is FailureCode.INVALID_INPUT
+    assert direct.details["path"] == ("factor",)
+
+    http = Http()
+    http.post("/numbers", accept, Binding("factor", BindingSource.BODY))
+    status, http_failure = _request(http.compile(app.compile()), value, path="/numbers")
+    assert status == 400
+    assert http_failure["code"] == "invalid_input"
+    assert http_failure["details"]["path"] == ["factor"]
+
+    mcp = Mcp(app)
+    mcp.tool(accept)
+    result = _mcp_call(
+        McpToolInvoker(mcp.compile(), [plan], DIContainer(DIRegistry())),
+        "numbers.accept",
+        {"factor": value},
+    )
+    assert result.is_error is True
+    assert _mcp_payload(result)["code"] == "invalid_input"
+    assert _mcp_payload(result)["message"] == "integer is outside the float range"
+    assert calls == []
 
 
 def test_supported_schema_graph_is_one_semantic_contract_on_all_surfaces() -> None:

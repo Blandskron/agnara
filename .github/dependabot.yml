@@ -3,13 +3,27 @@
 # moving them: it rewrites the SHA and the trailing human version together, and
 # the change arrives as an ordinary reviewed pull request.
 #
-# Only GitHub Actions is enabled. Python dependencies are resolved through
-# `uv.lock`, which `uv lock --check` gates in CI; Dependabot has no uv
-# ecosystem and would fight that lockfile rather than maintain it.
+# Only GitHub Actions is enabled for version updates. Dependabot does now
+# support a `uv` ecosystem, and it maintains `uv.lock` correctly: the security
+# update that moved `mcp` to 2.2.0 arrived on a `dependabot/uv/` branch with
+# `Lockfile is current` passing. Routine Python version updates stay off anyway,
+# because this repository pins protocol and host-fixture versions deliberately
+# and each move needs the reviewed procedure in ADR 0010, not a weekly bump.
+#
+# Security updates are separate and cannot be routed. GitHub raises them
+# against the default branch, `main`, whatever this file says, and configuring
+# `target-branch` for an ecosystem makes that ecosystem's options apply to
+# version updates only. SECURITY.md records how such a pull request is triaged
+# against the branch model.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
+    # GitHub reads this configuration from the default branch, so the target
+    # takes effect when the reviewed configuration is promoted to main.
+    # Routine version updates follow the integration branch. Security updates
+    # continue to use GitHub's default-branch behavior independently.
+    target-branch: develop
     schedule:
       interval: weekly
     open-pull-requests-limit: 5

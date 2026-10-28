@@ -49,8 +49,9 @@ store canonical `Failure` values. Failures and cancellations must call
 retries a capability.
 
 Both in-progress leases and completed successes have explicit positive TTLs.
-The reference implementation removes expired entries before every operation,
-uses a fixed entry capacity, and fails closed when full. A lease expiry is a
+The reference implementation checks the targeted record's expiry on every
+operation, sweeps expired entries when capacity is needed, uses a fixed entry
+capacity, and fails closed when full. A lease expiry is a
 liveness boundary, not evidence that the previous handler stopped; a future
 runtime integration must choose lease lengths and any renewal policy relative
 to its owned execution deadline.
@@ -62,6 +63,14 @@ must apply this rule atomically with claim, lookup, complete and abandon, and
 must reject stale completion or abandonment after cleanup. The reusable
 contract at ``tests/conformance/idempotency_store.py`` exercises these rules
 with an injected clock and a provider factory.
+
+The reference store samples its clock inside the same lock as the expiration
+check and state transition. Waiting for the lock must not reuse an earlier
+timestamp: newly claimed leases and newly published successes receive their
+full configured TTL from that serialized transition. Event-gated contention
+regressions in ``tests/unit/execution/test_idempotency.py`` cover this rule,
+including observations that prevent publication from being backdated before
+another operation's result.
 
 ### D4 — The reference implementation is deliberately process-local
 

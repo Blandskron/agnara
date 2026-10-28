@@ -74,7 +74,8 @@ python scripts/check_public_imports.py path/to/application
 python scripts/check_distributions.py --workspace . --require-installed
 ```
 
-The first command also audits imports in Markdown Python examples. Repository
+The first command also audits imports in Markdown and `.txt` Python fences,
+including the agent reading corpus. Repository
 examples and current guides use only governed paths; ADR and RFC research may
 discuss internal implementation without making it a public API.
 

@@ -29,10 +29,36 @@ allowed dependency graph.
 `agnara project create`, `agnara app create` with its `app-api`, `app-mcp`,
 `app-agent` and `app-worker` profile shorthands, `agnara apps`,
 `agnara inspect`, `agnara graph`, `agnara schema openapi` and `agnara context`
-are implemented. `agnara doctor` remains ahead in the backlog.
+are implemented. The current checkout also implements the static `doctor`
+baseline described below; a development-server command remains unimplemented.
+The [maturity inventory](../../docs/MATURITY.md) records current boundaries;
+proposed commands in a specification do not make them available.
 
 `agnara --help` lists the commands the installed version actually has, which is
 the answer to trust over any list written down elsewhere.
+
+## `agnara doctor` (unreleased checkout)
+
+```bash
+agnara doctor --project path/to/project
+agnara doctor --project path/to/project --json
+```
+
+Read-only checks cover the executing Python >=3.14 baseline, strict project
+manifest, contained app directories and installed core/CLI/declared HTTP/MCP
+version metadata. Reserved A2A/Events and unimplemented Tasks exposures are
+reported as unavailable. No project or adapter code is imported, no files are
+written and no dependencies are installed.
+
+Reports always list unchecked runtime and architecture boundaries. The project's
+free-form Python constraint is not evaluated, and matching package metadata does
+not prove importability or transitive dependency compatibility. A passing
+report is not a runtime-readiness assertion. See the
+[doctor contract](../../docs/CLI_SPEC.md#agnara-doctor) and proposed ADR 0096.
+
+The versioned JSON or text report goes to stdout. Any failed check exits 1;
+all checks passing exits 0. Argument errors retain exit 2 on stderr. This
+command is unreleased checkout behavior, not a claim about the 1.0.3 wheel.
 
 ## `agnara inspect`
 

@@ -1,611 +1,75 @@
-# Golden API Design Examples
-
-These examples define desired developer experience before implementation.
-
-The implementation must not be allowed to dictate the public API accidentally.
-
-## 1. Smallest application
-
-```python
-from agnara import Agnara
-
-app = Agnara("hello")
-```
-
-## 2. Simple capability
-
-```python
-@app.capability
-def add(a: int, b: int) -> int:
-    return a + b
-```
-
-## 3. Async capability
-
-```python
-@app.capability
-async def get_user(user_id: str) -> User:
-    return await repository.get(user_id)
-```
-
-## 4. HTTP exposure
-
-```python
-http = Http("public")
-http.get("/users/{user_id}", get_user, Binding("user_id", BindingSource.PATH))
-asgi = http.compile(app.compile(), openapi=OpenApiInfo("Users", "1.0"))
-```
-
-`http` is a typed adapter surface selected by project composition, not a
-capability property. The exposure lifecycle is settled by ADR 0070 and this
-public composition syntax is implemented by ADR 0071. Its fourteen exports
-are stable in the 1.0 contract at the `agnara_http` package root;
-`agnara_http.composition` is an implementation module, not a second supported
-import path. Implementation alone does not imply a new public commitment.
-
-## 5. MCP exposure
-
-```python
-mcp = Mcp(app, surface="agents")
-mcp.tool(get_user)
-```
-
-This one is real. MCP owns its tool-name grammar and SDK validation, and
-`surface` names the deployment so two MCP servers of one project do not
-collide. See ADR 0070.
-
-## 5a. Project composition
-
-```python
-capabilities = project.compile()
-exposures = compile_exposures(capabilities, [http_surface, mcp.compile_surface()])
-```
-
-`compile_exposures` is the aggregation step: it takes one
-`SurfaceCompilation` per selected adapter surface, validates the cross-adapter
-rules and returns the frozen registry that introspection reads. It is a
-function rather than a method on `Agnara`, because `Agnara.compile()` returns
-a governed type and the composition root should not become a god object
-(`ARCHITECTURE.md` section 5).
-
-The exposure model and both implemented adapter builders are public today.
-`Mcp.compile_surface()` produces an MCP `SurfaceCompilation`; `Http.compile()`
-composes the HTTP surface with a compiled capability registry and returns the
-ASGI application, while `Http.compile_surface()` exposes the shared
-cross-adapter compilation boundary. ADR 0071 records the HTTP decision and
-`docs/HTTP_COMPOSITION.md` is the supported application guide.
-
-## 6. A2A exposure
-
-```python
-a2a.skill(get_user)
-```
-
-The unified model does not make a tool, route and skill interchangeable. It
-standardizes identity, ownership and compilation while each adapter retains
-its protocol semantics.
-
-## 7. Same capability, multiple surfaces
-
-```python
-http.get("/users/{user_id}", get_user)
-mcp.tool(get_user)
-a2a.skill(get_user)
-```
-
-## 8. Dependency injection
-
-```python
-@app.capability
-async def get_user(
-    user_id: str,
-    repo: Inject[UserRepository],
-) -> User:
-    return await repo.get(user_id)
-```
-
-## 9. Invocation-scoped dependency
-
-```python
-@app.provider(scope="invocation")
-async def database_session() -> AsyncIterator[Session]:
-    async with Session() as session:
-        yield session
-```
-
-## 10. Security scope
-
-```python
-@app.capability(scopes={"users:read"})
-async def get_user(...) -> User:
-    ...
-```
-
-## 11. Side-effect metadata
-
-```python
-@app.capability(
-    effects={"database-write"},
-    idempotent=False,
-)
-async def create_user(...) -> User:
-    ...
-```
-
-## 12. High-risk capability
-
-```python
-@app.capability(
-    effects={"destructive"},
-    risk="high",
-    confirmation="required",
-)
-async def delete_account(...) -> DeleteReceipt:
-    ...
-```
-
-## 13. Human interaction
-
-```python
-@app.capability(
-    confirmation="required",
-    effects={"financial-write"},
-)
-async def approve_transfer(command: Transfer) -> Receipt:
-    return await transfer(command)
-```
-
-`confirmation="required"` compiles only when the execution plan receives an
-application-provided `ConfirmationVerifier`. Evidence is passed explicitly as
-`ConfirmationEvidence` on the invocation context; arbitrary invocation
-metadata is never treated as approval. Missing evidence produces an immutable
-interaction request, while invalid evidence is denied.
-
-Conditional interaction is expressed by an explicit pre-handler `Policy`
-that returns `PolicyInteractionRequired`. Dynamic
-`ctx.require_confirmation(...)` remains deferred because handler code could
-produce effects before reaching it. A `confirmation="policy"` declaration
-without an explicit policy is rejected during plan compilation (ADR 0024).
-
-`ExecutionPlan.compile()` is the normal plan constructor. A directly
-constructed plan is also checked at construction: its policy sequence must
-start with the declared scope check and explicit application policies, in
-that order, and end with a matching confirmation check when confirmation is
-required. Missing declarations raise `DefinitionError` before the plan can be
-invoked or exposed through an adapter. Direct plans without security
-declarations remain valid.
-
-## 14. Deadline-aware handler
-
-```python
-@app.capability(timeout=5.0)
-async def lookup(...) -> Result:
-    ...
-```
-
-Runtime cancellation must propagate.
-
-## 15. Streaming
-
-```python
-@app.capability(streaming=True, output=ReportChunk)
-async def generate_report(...) -> AsyncIterator[ReportChunk]:
-    ...
-```
-
-The declaration and the handler's shape are held to each other: `streaming=True`
-over a handler that is not an async generator is rejected when the plan
-compiles, and so is an async generator handler that never declared it.
-
-`output=...` is the explicit contract for one successful complete result or,
-for a stream, one yielded unit. It is compiled when the plan is built and
-validated before a caller receives the value. Omitting it means the intentional
-unconstrained `Any` contract; return annotations do not silently define a
-transport or adapter contract. An output violation is a redacted internal
-failure, not caller `invalid_input`.
-
-Consumption is owned, one-shot and pull-based. Nothing is buffered, so the
-producer advances exactly as fast as the consumer pulls, and closing the stream
-closes the producer before releasing the invocation's dependencies:
-
-```python
-from agnara.execution import StreamInterrupted, StreamTerminal, open_stream
-
-async with open_stream(plan, context) as stream:
-    async for chunk in stream:
-        ...
-assert stream.terminal is StreamTerminal.COMPLETED
-```
-
-Policy and input validation run before the first unit, so failure before then
-is the ordinary canonical failure. Once a unit has reached the consumer that is
-no longer honest, and a later failure raises `StreamInterrupted` instead,
-carrying a redacted canonical `Failure` and the number of units already
-emitted. Cancellation is neither: it propagates untouched.
-
-The kernel contract is ADR 0084. Every transport projection of it -- SSE,
-WebSockets, MCP progress, A2A task events -- is still open in RFC 0009, so no
-adapter exposes streamed capabilities yet.
-
-## 16. Direct invocation
-
-```python
-result = await app.invoke(
-    get_user,
-    user_id="u_123",
-    context=context,
-)
-```
-
-Direct invocation keeps ordinary Python semantics: it returns the handler
-value and raises exceptions. Transport adapters use the canonical boundary so
-all protocols observe the same success/failure meaning:
-
-```python
-from agnara.execution import Failure, Success, invoke_result
-
-match await invoke_result(plan, context):
-    case Success(value):
-        ...
-    case Failure(code, message):
-        ...
-```
-
-JSON transports pass the explicit schema-boundary conversion without changing
-direct Python semantics:
-
-```python
-from agnara.schema import materialize_json
-
-result = await invoke_result(plan, context, input_materializer=materialize_json)
-```
-
-The runtime performs that conversion after policies and before strict schema
-validation. Declared scopes compile into the common plan's first policy, so a
-transport cannot omit their enforcement. See ADR 0077 and
-`docs/CROSS_SURFACE_CONFORMANCE.md`.
-
-`FailureCode` is protocol-neutral. An HTTP, MCP or A2A adapter maps it to its
-own representation; core never stores a transport status code.
-
-### 16A. Same-application nested invocation
-
-ADR 0093 adds a narrow, stable composition boundary. Compile every
-complete-result target into one `CapabilityRuntime`; a handler that explicitly
-asks for `CapabilityInvoker` can invoke a target from that frozen snapshot:
-
-```python
-from agnara import CapabilityId
-from agnara.di import DIContainer
-from agnara.execution import (
-    CapabilityInvoker,
-    CapabilityRuntime,
-    ExecutionContext,
-    Failure,
-    Invocation,
-    Success,
-)
-
-
-async def settle_invoice(invoice_id: str, invoker: CapabilityInvoker) -> str:
-    result = await invoker.invoke(CapabilityId.parse("billing.collect"), {"invoice_id": invoice_id})
-    match result:
-        case Success(receipt):
-            return receipt
-        case Failure(code, message):
-            return f"collection unavailable: {code}"
-
-
-container = DIContainer(dependencies)
-# The application's frozen registry proves these plans share one application.
-compiled_capabilities = app.compile()
-runtime = CapabilityRuntime(compiled_capabilities, [settle_plan, collect_plan], container)
-outcome = await runtime.invoke_result(
-    ExecutionContext(Invocation(settle_plan.definition.id, {"invoice_id": "inv_123"}, {}), container)
-)
-```
-
-The invoker returns the child's `CanonicalResult`; it does not call a Python
-handler directly. The child gets a fresh context, identity and invocation DI
-scope, re-evaluates its own policy and confirmation, receives no parent
-confirmation or idempotency configuration, and can only receive an earlier
-deadline. Stream targets, absent targets, recursive/depth-exceeding calls,
-delegation and cross-application composition are unsupported. Close the
-application-owned container through `await runtime.aclose()`.
-
-The implemented MCP result boundary is explicit composition:
-
-```python
-from agnara_mcp import project_mcp_result
-
-mcp_result = project_mcp_result(await invoke_result(plan, context))
-```
-
-Success JSON values are copied into `structuredContent.result` with equivalent
-JSON text. Canonical failures expose only code/message as tool error content;
-`internal_failure` always uses fixed redacted text;
-interaction requirements use the strict E7.6 projection. This function does not
-validate an outputSchema. See ADR 0043.
-
-A server that also serves `tools/call` composes the same pieces once at
-startup:
-
-```python
-from agnara_mcp import build_mcp_server
-
-server = build_mcp_server(
-    exposures,
-    plans,
-    di_container,
-    name="billing",
-    version="2026.1",
-    authorization=authorization,
-    timeout=30,
-)
-```
-
-`build_mcp_server` adds invocation over the discovery snapshot
-`build_mcp_discovery_server` already produces, so no name is invocable without
-being discoverable. Each call enforces the capability's declared scopes with
-core's `ScopePolicy` before any effect, invokes the compiled plan and projects
-the canonical outcome. Unknown tools, task-augmented execution and resumption
-attempts are protocol errors; everything else is a tool result. See ADR 0044.
-
-## 17. Capability introspection
-
-```python
-definition = app.capabilities["users.get_user"]
-print(definition.effects)
-print(definition.exposures)
-```
-
-The final registry API may differ but this must be easy. RFC 0006 places
-compiled exposure availability in a project-wide frozen registry rather than
-mutating `CapabilityDefinition`; this line remains an ergonomic sketch, not a
-decision that a capability owns deployment configuration.
-
-For tooling rather than authoring, one protocol-neutral snapshot describes a
-compiled application:
-
-```python
-from agnara.introspection import ExposureDescriptor, describe_app, snapshot
-
-document = snapshot(
-    [
-        describe_app(
-            app,
-            plans,
-            dependencies=registry,
-            exposures={"users.get_user": [ExposureDescriptor.of("http", "GET /users/{id}")]},
-        )
-    ]
-).json_data()
-```
-
-The explicit mapping remains a supported transitional API. ADR 0070 implements
-the RFC 0006 model: `describe_app(exposures=...)` also accepts the
-`FrozenExposureRegistry` aggregated from compiled HTTP and MCP surfaces, so
-introspection can describe the same availability as dispatch.
-
-The CLI, an authorized discovery endpoint and Agnara Explorer read this rather
-than deriving answers from OpenAPI or from one another. Descriptors are frozen
-and hold only names, declared metadata and canonical JSON text, so a snapshot
-cannot reach a handler, a dependency instance or a policy object. See ADR 0045.
-
-Serializing is not publishing. Decide what a viewer may see first:
-
-```python
-from agnara.introspection import DiscoveryVisibility, Hiding, ScopeVisible, filter_snapshot
-
-visibility = DiscoveryVisibility.agent_safe(Hiding({"users.reindex"}, ScopeVisible()))
-published = filter_snapshot(document, visibility, principal).json_data()
-```
-
-The visibility rule decides which capabilities this principal may discover;
-the published field set decides what is said about each one, and it has no
-default. `identity_only`, `agent_safe` and `unrestricted` are named starting
-points. Hiding is discovery-only: a hidden capability stays registered and
-stays invocable by anyone the policy layer allows. See ADR 0046.
-
-## 18. OpenAPI projection
-
-```python
-http = app.use(Http(openapi=True))
-```
-
-OpenAPI is generated from HTTP exposures plus shared capability schemas.
-
-The complete semantic input is:
-
-```text
-CapabilityDefinition
-+ compiled HTTP exposure
-+ schema adapter output
-+ explicitly publishable policy/discovery metadata
-        ↓
-OpenAPI 3.2
-```
-
-Developers do not maintain a parallel OpenAPI document for generated
-exposures. Capabilities without an HTTP exposure do not appear as invented
-OpenAPI operations.
-
-`Http(openapi=True)` remains a golden-design sketch. It is not stable syntax.
-The implementation must review typed schema/documentation configuration,
-route collision handling and independent enable/disable controls before
-freezing the API.
-
-## 19. Agent-readable metadata
-
-```python
-manifest = app.describe(format="agnara")
-```
-
-The manifest should include permissions, effects, risk and available exposures.
-
-The final API returns or serializes a versioned, filtered introspection
-snapshot. It must not expose internal runtime objects, secret configuration or
-private capabilities merely because they are registered.
-
-OpenAPI and the Agnara snapshot are separate projections. Agents never need to
-parse a documentation HTML page to discover capabilities.
-
-## 19A. Optional documentation interfaces
-
-ADR 0090 makes the reviewed, stable composition explicit rather
-than using a boolean bag:
-
-```python
-asgi = http.compile(
-    app.compile(),
-    openapi=OpenApiInfo("Shop API", "2026.1"),
-    documentation=HttpDocumentation(),
-)
-```
-
-The default profile serves local Swagger UI at `/docs` and the generated
-OpenAPI 3.2 document at `/openapi.json`. `HttpDocumentation` independently
-selects `OpenApiSchema`, `SwaggerUI`, `Scalar` and `ReDoc`; absence disables a
-single surface, and `schema=None` embeds the one generated document in a
-selected UI. `HttpExplorer` is separate and requires a snapshot, visibility
-policy and principal resolver.
-
-The public API keeps these independent:
-
-- OpenAPI schema generation and serving;
-- one or more replaceable OpenAPI UI providers;
-- Agnara Explorer;
-- interactive "try it" execution;
-- visibility/authorization policy for each published surface.
-
-The default route shapes `/openapi.json`, `/docs`, `/scalar`, `/redoc` and
-`/agnara` are configurable, disableable and checked for collisions. Every
-selected documentation route supports GET/HEAD/405 and respects ASGI
-`root_path` when producing page and initializer URLs.
-
-Documentation providers consume an already-filtered OpenAPI contract. Agnara
-Explorer consumes the already-filtered protocol-neutral snapshot instead.
-
-No UI provider is required for OpenAPI export. Production deployments can
-disable all HTML while preserving an authorized machine-readable schema or
-snapshot. The third-party provider protocol remains internal for 1.0.
-
-## 20. Testing without a server
-
-```python
-async def test_get_user(app, context):
-    result = await app.invoke(
-        get_user,
-        user_id="u_123",
-        context=context,
-    )
-    assert result.id == "u_123"
-```
-
-## Design rules inferred from the examples
-
-- decorators register domain intent, not transport intent;
-- transport exposure is explicit;
-- dependencies are explicit;
-- framework magic should be inspectable;
-- capability functions remain ordinary Python callables where practical;
-- no decorator stack should be required for common cases;
-- agent metadata should never obscure normal Python semantics.
-
-## 21. Create a project
-
-```bash
-agnara project create commerce
-```
-
-## 22. Create a domain app
-
-```bash
-agnara app create payments
-```
-
-## 23. Create app with multiple exposures
-
-```bash
-agnara app create payments --with http,mcp,tasks
-```
-
-## 24. MCP shortcut
-
-```bash
-agnara app-mcp tools
-```
-
-is an alias for:
-
-```bash
-agnara app create tools --profile mcp
-```
-
-Both create the same runtime app type.
-
-## 25. Add a transport later
-
-```bash
-agnara app expose payments a2a
-```
-
-No domain/application file should require modification merely to install the adapter skeleton.
-
-## 26. Generate a capability
-
-```bash
-agnara capability create payments refund
-```
-
-## 27. Inspect an app
-
-```bash
-agnara inspect payments
-```
-
-Example conceptual output:
-
-```text
-App: payments
-Architecture: modular-hexagonal
-
-Capabilities
-  payments.create
-  payments.refund
-
-Exposures
-  HTTP
-  MCP
-  Tasks
-
-Dependencies
-  PaymentRepository
-  AuditPublisher
-```
-
-## 28. Machine-readable inspection
-
-```bash
-agnara inspect payments --json
-```
-
-This is a first-class requirement for agents and automation.
-
-The JSON format must be versioned and deterministic and should match the data
-contract consumed by Agnara Explorer. Human text output is a presentation of
-the same filtered snapshot, not a separately discovered model.
-
-## 29. Export generated OpenAPI
-
-```bash
-agnara schema openapi
-```
-
-The command exports the same deterministic projection served by the HTTP
-schema endpoint and must support non-interactive file/stdout use. Exact output
-flags and exit codes remain pending CLI review.
-
-`agnara docs` is not yet accepted. Add it only if it provides framework-specific
-development value beyond `agnara dev`; it must not become a second source of
-documentation configuration.
+# API design contract
+
+This document records the constraints for public API changes. The
+[public manifest](public-api.json) owns canonical exports and stability;
+[maturity](MATURITY.md) owns implementation status. Use the
+[runnable examples](../examples/README.md) for executable syntax.
+
+## Authoring and composition
+
+- An app represents a bounded context. A capability declares business intent;
+  HTTP and MCP exposures are selected explicitly at composition.
+- Compile declarations, schemas, dependencies and policies before invocation.
+  Compiled registries and execution plans are immutable snapshots.
+- Bind dependency types explicitly in `DIRegistry`. Handlers remain independent
+  of transport SDKs; providers and containers have explicit lifecycle owners.
+- Declare `output=...` for a checked result or stream unit. A return annotation
+  alone does not establish an output contract. JSON conversion is an explicit
+  schema boundary; direct Python invocation preserves Python values.
+- Authenticate principals at a trusted host boundary. Scope, policy and
+  confirmation checks precede dependency acquisition and handler effects.
+  Risk/effect metadata and discoverability never grant authority.
+- Invocation results and failures are protocol-neutral. Caller cancellation
+  propagates; deadlines are cooperative and do not preempt synchronous work.
+- Pull-based streams own producer and dependency cleanup. HTTP SSE projects
+  that contract; another protocol needs its own reviewed projection.
+- Nested complete-result invocation uses one compiled application snapshot,
+  fresh child identity/context and independent policy/confirmation evaluation.
+  Cross-application calls and delegated authority remain unsupported.
+- Discovery is filtered before serialization. OpenAPI projects HTTP exposures;
+  protocol-neutral introspection and optional human documentation remain distinct.
+- Profiles select generated adapters, not different app runtime classes.
+  Scaffolding is deterministic, supports dry-run and refuses overwrite by default.
+
+These constraints follow [architecture](../ARCHITECTURE.md) and the
+[decision records](adr/README.md). The implementation must not accidentally
+create a second public API through internal modules or transport-specific types.
+
+## Current usage references
+
+Keep executable instructions in their owning guides instead of duplicating
+partial examples here.
+
+| Task | Canonical guide |
+| --- | --- |
+| Declare and invoke a capability | [Core quick start](../packages/agnara/README.md), [minimal runnable source](../examples/minimal_capability.py) |
+| Input/output schemas and Python/JSON boundaries | [Schema contracts](SCHEMA_CONTRACTS.md) |
+| Explicit providers and teardown | [Dependencies](DEPENDENCIES.md) |
+| Confirmation with independently verified evidence | [Confirmation](CONFIRMATION.md) |
+| Invocation deadlines and caller cancellation | [Deadlines](DEADLINES.md) |
+| Execution telemetry | [Telemetry](TELEMETRY.md) |
+| Same-snapshot nested invocation | [Nested invocation](NESTED_INVOCATION.md) |
+| Explicit direct idempotency | [Direct idempotency](DIRECT_IDEMPOTENCY.md) |
+| HTTP composition and documentation | [HTTP composition](HTTP_COMPOSITION.md) |
+| HTTP streaming | [HTTP SSE](HTTP_SSE.md) |
+| Direct Python streaming | [Direct streaming](DIRECT_STREAMING.md) |
+| MCP discovery and invocation | [MCP tools](MCP_TOOLS.md), [conformance boundary](MCP_CONFORMANCE.md) |
+| Filtered protocol-neutral discovery | [Introspection](INTROSPECTION.md) |
+| Host-owned runtime composition | [Interoperability](INTEROPERABILITY.md) |
+| Project/app generation and CLI output | [CLI specification](CLI_SPEC.md), [scaffolding](SCAFFOLDING.md), [manifest](PROJECT_MANIFEST.md) |
+
+The [API reference](API_REFERENCE.md) lists classified exports; it is not a
+replacement for executing a guide against the installed distribution versions.
+Current-checkout evidence does not establish behavior in a historical wheel.
+
+## Proposing new syntax
+
+Compare the proposal with the current manifest, guides and architectural
+constraints. Record undecided semantics in a scoped RFC and the accepted
+contract in an ADR before implementation. Add a runnable example, compatibility
+decision and relevant validation before publishing an export.
+
+The [initiatives](INITIATIVES.md), [roadmap](../ROADMAP.md) and
+[open RFC questions](rfc/README.md) track future work. They do not authorize
+unsupported imports, decorators, constructors or CLI commands. Superseded API
+sketches are available through Git history rather than the active usage path.
