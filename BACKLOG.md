@@ -20,8 +20,8 @@ Do not accumulate completed-task chronology in this file.
 
 ## Maintenance
 
-- [~] Project compiled complete-result output schemas into explicitly published
-  HTTP OpenAPI operations while preserving filtering and wire semantics (#674).
+- [~] Reconcile the existing Actions dependency PR with `develop`, preserving
+  accepted workflow guards and validating the remaining immutable updates (#678).
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,

@@ -19,6 +19,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Changed
 
+- Refresh immutable GitHub Actions pins for Python setup, CodeQL, uv, artifact
+  upload/download and Docker login in the existing CI and publication workflows.
+
 - Reconcile active architecture and package guidance with implemented contracts:
   stable HTTP composition, output validation, public Explorer, actual DI scopes
   and telemetry benchmark evidence. Record verification boundaries and remaining
