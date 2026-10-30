@@ -78,3 +78,25 @@ A2A-01. [observed-fixture-windows.json](observed-fixture-windows.json)
 retains one successful run on the same Windows/Python 3.14.4 environment as
 A2A-01, with source hashes. Expected SDK refusal diagnostics appear on stderr.
 The fixture is not an `agnara-a2a` API, example or support claim.
+
+## Proposed host disconnect policy
+
+[disconnect_policy.py](disconnect_policy.py) is a separate, stdlib-only
+prototype for [Proposed ADR 0100](../../docs/adr/0100-opt-in-host-disconnect-cancellation.md).
+It does not extend the earlier SDK experiment or change `requirements.lock`.
+Run its synthetic and real-loopback tests using the current workspace's
+pinned A2A/Uvicorn development environment:
+
+```bash
+uv sync --locked
+uv run pytest tests/a2a/test_disconnect_policy_experiment.py tests/a2a/test_a2a_network.py
+```
+
+The experiment lazily owns the receive stream, passes body events through a
+bounded FIFO and joins its application/pump tasks. It cancels pending work on
+a peer disconnect without waiting for the kernel deadline, preserves outer
+cancellation/errors, and leaves completed-response cleanup alone. No shipped
+package or runnable application imports it. Keep the unwrapped network tests:
+they prove the public adapter's existing deadline-owned behavior still holds.
+The ADR proposes a host policy and a future scope; it does not ship or approve
+a production wrapper, new API, support claim or maturity promotion.

@@ -113,6 +113,11 @@ disconnect requires a separately designed policy that owns and joins that work.
 The deadline remains cooperative; it does not roll back completed effects or
 interrupt a blocking synchronous handler.
 
+[Proposed ADR 0100](adr/0100-opt-in-host-disconnect-cancellation.md) compares
+host-policy options and an isolated receive/cancellation prototype. It is a
+design proposal, not a public wrapper or application recipe; the unwrapped
+adapter behavior described above remains unchanged.
+
 ## Verification and limits
 
 ```bash

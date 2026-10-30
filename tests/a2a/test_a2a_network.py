@@ -132,7 +132,7 @@ class TestServer(uvicorn.Server):
 
 
 @asynccontextmanager
-async def serve(*, timeout: float = 0.5):
+async def serve(*, timeout: float = 0.5, wrap=None):
     """Own listener, server task and lifespan/container on one event loop."""
     state = Observation()
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -148,6 +148,8 @@ async def serve(*, timeout: float = 0.5):
         if scope["type"] == "lifespan":
             assert (await receive())["type"] == "lifespan.startup"
             application, container = compose(url, state, timeout)
+            if wrap is not None:
+                application = wrap(application)
             state.lifecycle.append("lifespan.start")
             state.loops.add(id(asyncio.get_running_loop()))
             try:

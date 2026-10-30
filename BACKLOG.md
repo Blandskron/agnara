@@ -20,11 +20,12 @@ Do not accumulate completed-task chronology in this file.
 
 ## Maintenance
 
-- [~] Measure the provisional A2A profile over real loopback TCP, including
-  peer disconnect, deadline cleanup and graceful host shutdown (A2A-04b2, #707).
-- [ ] Decide and scope any A2A host policy for cancellation on disconnect;
-  bounded deadline cleanup alone does not justify broader host support or
-  maturity promotion.
+- [~] Propose the opt-in host disconnect policy and scope its implementation,
+  backed by an isolated receive-ownership/cancellation experiment (ADR 0100,
+  #709). Keep the current adapter default unchanged.
+- [ ] After maintainer review of ADR 0100, scope an application-owned recipe
+  and exact installed-wheel/host evidence before any public API or support
+  promotion.
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,

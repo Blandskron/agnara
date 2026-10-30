@@ -16,6 +16,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Propose ADR 0100 for optional host-owned A2A disconnect cancellation, with an
+  isolated experiment covering bounded receive ownership, cancellation races
+  and real socket cleanup. Existing adapter defaults and public APIs remain
+  unchanged; the prototype is not an application integration.
+
 - Add real-loopback A2A conformance against a development-only Uvicorn 0.52.4
   fixture: official-client calls, refusals before effects, deadline recovery,
   peer disconnect and graceful shutdown. Clarify that this host does not cancel
