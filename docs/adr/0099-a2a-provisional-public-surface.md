@@ -118,3 +118,7 @@ graceful shutdown; see the [guide](../A2A_SERVICE.md#real-loopback-host-evidence
 That host relies on kernel deadlines after a post-entry disconnect. Immediate
 disconnect cancellation, production host policy and any later maturity
 promotion remain separate work.
+
+[Proposed ADR 0100](0100-opt-in-host-disconnect-cancellation.md) records the
+host-policy alternatives, isolated prototype evidence and a future recipe
+scope. It adds no public implementation or default behavior change.
