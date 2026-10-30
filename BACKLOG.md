@@ -20,12 +20,11 @@ Do not accumulate completed-task chronology in this file.
 
 ## Maintenance
 
-- [~] Propose the opt-in host disconnect policy and scope its implementation,
-  backed by an isolated receive-ownership/cancellation experiment (ADR 0100,
-  #709). Keep the current adapter default unchanged.
-- [ ] After maintainer review of ADR 0100, scope an application-owned recipe
-  and exact installed-wheel/host evidence before any public API or support
-  promotion.
+- [~] Add the reviewed opt-in application-owned disconnect recipe and exact
+  installed-wheel/real-host evidence (#711). Preserve the builder default and
+  provisional status.
+- [ ] Make any broader A2A host/support or stability decision separately from
+  a copyable application recipe, using its exact evidence and deployment limits.
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,

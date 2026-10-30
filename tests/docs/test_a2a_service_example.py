@@ -9,17 +9,18 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
+from examples.a2a_disconnect import cancel_on_disconnect
 from examples.a2a_service import connect, demonstrate, resolve_principal, send
 
 from agnara import Principal
 from tests.reference_apps.a2a_guide import validate
 
 
-@pytest.fixture(scope="module")
-def outcome():
+@pytest.fixture(scope="module", params=[None, cancel_on_disconnect], ids=["default", "opt_in"])
+def outcome(request):
     async def run():
         before = asyncio.all_tasks()
-        result = await demonstrate()
+        result = await demonstrate(wrap=request.param)
         assert asyncio.all_tasks() == before
         return result
 
@@ -37,14 +38,15 @@ def test_resolver_uses_only_host_verified_identity() -> None:
 
 
 @pytest.mark.parametrize("failure", ["error", "cancel"])
-def test_client_work_failure_closes_http_lifespan_and_container(failure: str) -> None:
+@pytest.mark.parametrize("wrap", [None, cancel_on_disconnect], ids=["default", "opt_in"])
+def test_client_work_failure_closes_http_lifespan_and_container(failure: str, wrap) -> None:
     async def run():
         events: list[str] = []
         entered = asyncio.Event()
         clients = []
 
         async def work():
-            async with connect(events) as (http, client):
+            async with connect(events, wrap=wrap) as (http, client):
                 clients.append(http)
                 await send(client, 3)
                 entered.set()

@@ -1,7 +1,7 @@
-"""Isolated host-policy prototype for Proposed ADR 0100, not a public API.
+"""Application-owned opt-in disconnect recipe for a dedicated A2A surface.
 
-Nothing in a shipped package or runnable application imports this module.
-The host must opt in explicitly around one dedicated A2A ASGI surface.
+Copy this stdlib-only companion module into the application's host boundary.
+It is not an Agnara export or a standalone server. See docs/A2A_SERVICE.md.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ type _WrappedASGI = Callable[[_Message, _Receive, _Send], Coroutine[Any, Any, No
 
 
 def cancel_on_disconnect(application: _ASGI) -> _WrappedASGI:
-    """Experiment: cancel a pending POST task on EOF, then join its cleanup.
+    """Opt in to cancelling a pending POST task on EOF, then join its cleanup.
 
     One pump owns the underlying receive stream. It starts only when the
     application first asks for input, preserving a no-read authentication

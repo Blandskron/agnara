@@ -111,6 +111,11 @@ installed candidate wheels. They require this checkout, not the published
 after handler entry relies on kernel deadline cleanup, not automatic request
 cancellation. This bounded fixture is not general host support.
 
+An optional [application-owned disconnect recipe](A2A_SERVICE.md#try-the-opt-in-recipe)
+can cancel a pending task when the host observes peer closure. It is explicit
+composition code with installed-wheel/host tests, not an `agnara_a2a` export or
+builder default; preserve its receive ownership and cooperative-effect limits.
+
 ## Events
 
 `agnara-events` is a published reserved namespace with no public runtime API.

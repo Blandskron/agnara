@@ -1,4 +1,4 @@
-"""Proposed ADR 0100 evidence; the shipped adapter's default is unchanged."""
+"""The application-owned recipe preserves the shipped adapter's default."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import json
 
 import httpx
 import pytest
-from experiments.a2a.disconnect_policy import cancel_on_disconnect
+from examples.a2a_disconnect import cancel_on_disconnect
 
 from tests.a2a.test_a2a_network import HEADERS, category, envelope, official, raw_client, serve
 
@@ -17,7 +17,7 @@ def run(awaitable):
         before = asyncio.all_tasks()
         async with asyncio.timeout(10):
             result = await awaitable
-        assert asyncio.all_tasks() == before, "prototype left an owned task alive"
+        assert asyncio.all_tasks() == before, "recipe left an owned task alive"
         return result
 
     return asyncio.run(bounded())
@@ -243,7 +243,7 @@ def test_completed_response_prevents_late_disconnect_from_cancelling_cleanup() -
 
 
 @pytest.mark.parametrize("stage", ["mid_body", "handler"])
-def test_opt_in_experiment_cancels_real_disconnected_request(stage: str) -> None:
+def test_opt_in_recipe_cancels_real_disconnected_request(stage: str) -> None:
     async def scenario():
         # Deadline is intentionally beyond the fixture's outer 15s bound.
         # Passing therefore requires peer cancellation, not deadline cleanup.
