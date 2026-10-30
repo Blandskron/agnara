@@ -152,10 +152,20 @@ def test_no_public_name_is_underscore_prefixed(module: str) -> None:
     assert not offenders, f"{module} publishes private-looking names: {offenders}"
 
 
+#: Modules whose exports are classified `provisional` by a reviewed decision.
+#: ADR 0099 classifies the whole `agnara_a2a` surface; nothing else may be.
+PROVISIONAL_MODULES = frozenset({"agnara_a2a"})
+
+
 @pytest.mark.parametrize("module", MODULE_NAMES)
 def test_every_governed_export_is_stable(module: str) -> None:
-    """The 1.0 surface contains only deliberate canonical commitments."""
-    assert {entry["stability"] for entry in exports_of(module)} <= {"stable"}
+    """The 1.0 surface contains only deliberate canonical commitments.
+
+    A provisional module is all provisional, so a stable name cannot hide
+    among names that carry no compatibility promise.
+    """
+    allowed = {"provisional"} if module in PROVISIONAL_MODULES else {"stable"}
+    assert {entry["stability"] for entry in exports_of(module)} <= allowed
 
 
 def test_policy_defines_every_stability_term() -> None:

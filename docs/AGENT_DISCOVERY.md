@@ -23,7 +23,8 @@ not narrative documentation. The new standard-library-only corpus renderer
 uses explicit index IDs and exact learning-guide sections, never a crawl.
 Examples are embedded from their actual Python sources. It relocates links for
 the root corpus and emits sources only once. The 22 main sections are ordered;
-unsupported A2A/events/tasks are statements of absence, not API tutorials.
+A2A describes the unreleased provisional boundary; events/tasks describe
+absent runtimes. These sections are not API tutorials.
 
 ```bash
 uv run python scripts/render_agent_docs.py

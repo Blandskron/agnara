@@ -8,9 +8,10 @@
 ## Purpose and current boundary
 
 Determine the smallest useful A2A adapter that preserves Agnara's existing
-capability semantics. `agnara-a2a` currently reserves a namespace and exports
-nothing. This proposal adds no endpoint, SDK dependency, public syntax or
-protocol support. [Maturity](../MATURITY.md) remains authoritative.
+capability semantics. The published 1.0.3 `agnara-a2a` package reserves a
+namespace with no exports. This checkout adds the provisional ADR 0099 surface
+through #701, following the #695 fixture. This proposal itself adds no
+protocol-support claim. [Maturity](../MATURITY.md) remains authoritative.
 
 The [A2A-01 report](../research/a2a-initial-feasibility.md) records an isolated
 SDK checkpoint and fit gaps.
@@ -205,9 +206,10 @@ contains implementations. No implementation pin is chosen by this RFC.
    separately authorize filtered cards, signatures, tasks or additional modes?
 
 [ADR 0098](../adr/0098-a2a-complete-result-projection.md) proposes answers for
-the first profile; implementation still needs explicit Issues. Until then,
-the reserved package, zero-export manifest and absence of A2A support remain
-unchanged. [RFC 0005](0005-protocol-neutral-delegation.md) owns delegation and
+the first profile; #695 exercises it and #701 adds the provisional public
+surface under [ADR 0099](../adr/0099-a2a-provisional-public-surface.md).
+A2A-04b evidence and broader support remain pending.
+[RFC 0005](0005-protocol-neutral-delegation.md) owns delegation and
 [RFC 0009](0009-streaming-model.md) owns the protocol-neutral streaming
 questions; this proposal does not settle either by adopting SDK defaults.
 

@@ -167,7 +167,7 @@ GOVERNED_MODULES = [
 ]
 
 #: Distributions that hold a reserved namespace: classified, and empty.
-RESERVED_DISTRIBUTIONS = ["agnara-a2a", "agnara-events"]
+RESERVED_DISTRIBUTIONS = ["agnara-events"]
 
 
 def manifest() -> dict[str, Any]:
@@ -242,7 +242,7 @@ def test_public_api_gate_rejects_manifest_drift(
 def test_a_reserved_namespace_cannot_quietly_gain_an_export(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, distribution: str
 ) -> None:
-    """`agnara-a2a` and `agnara-events` declare an empty surface on purpose.
+    """`agnara-events` declares an empty surface on purpose.
 
     An empty ``__all__`` is skipped by the reverse walk, so without a manifest
     entry a reserved namespace would be the one place a first export could

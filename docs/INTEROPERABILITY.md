@@ -158,7 +158,9 @@ There is no generic host facade, synchronous embedding bridge, automatic
 mounted-child lifespan management, OpenAPI merge, automatic retry, durable
 idempotency store, cross-application invocation or delegated authority.
 WebSockets and MCP streaming are not projections of the kernel stream.
-`agnara-a2a` and `agnara-events` expose no runtime API. GraphQL, gRPC,
+`agnara-a2a` has an unreleased provisional complete-result surface (ADR 0099),
+with in-process evidence only; it is not a supported host integration.
+`agnara-events` exposes no runtime API. GraphQL, gRPC,
 brokers, task queues and workflow engines require separate contracts before
 implementation.
 
