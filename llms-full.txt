@@ -1391,7 +1391,9 @@ ADR 0099). Do not present it as supported A2A, and do not use names outside
 The [A2A guide](docs/A2A_SERVICE.md) and [example](examples/a2a_service.py)
 exercise that provisional surface through the official in-process client and
 installed candidate wheels. They require this checkout, not the published
-1.0.3 wheel; network hosting and real-disconnect evidence remain pending.
+1.0.3 wheel. Separate real-loopback tests measure Uvicorn/h11: a peer disconnect
+after handler entry relies on kernel deadline cleanup, not automatic request
+cancellation. This bounded fixture is not general host support.
 
 ## 11. Events
 

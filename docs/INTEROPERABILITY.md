@@ -159,7 +159,9 @@ mounted-child lifespan management, OpenAPI merge, automatic retry, durable
 idempotency store, cross-application invocation or delegated authority.
 WebSockets and MCP streaming are not projections of the kernel stream.
 `agnara-a2a` has an unreleased provisional complete-result surface (ADR 0099),
-with in-process evidence only; it is not a supported host integration.
+with in-process and a bounded real-loopback Uvicorn/h11 fixture. Peer disconnect
+after handler entry relies on deadline cleanup; this is not a supported host
+integration. See the [A2A guide](A2A_SERVICE.md#real-loopback-host-evidence).
 `agnara-events` exposes no runtime API. GraphQL, gRPC,
 brokers, task queues and workflow engines require separate contracts before
 implementation.

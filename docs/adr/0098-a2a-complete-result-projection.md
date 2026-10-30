@@ -5,6 +5,8 @@
 - Tracking: GitHub Issue #687 (A2A-02)
 - Amended: 2026-10-28, D5/D6/D7, after the A2A-03 evidence (Issue #695),
   by maintainer decision on PR #697
+- Clarification proposed: 2026-10-30, D10 peer-disconnect behavior, after
+  the A2A-04b2 loopback evidence (Issue #707)
 - Answers: RFC 0010 questions 1–5 for the first profile
 - Related: ADR 0010, ADR 0024, ADR 0043, ADR 0046, ADR 0070, ADR 0086,
   ADR 0094, RFC 0005, RFC 0009, [A2A-01 report](../research/a2a-initial-feasibility.md)
@@ -277,8 +279,12 @@ implements exactly D3–D6, and A2A-03 re-tests every check the default handler
 would otherwise have provided.
 
 The handler owns no background work and no task state. Each `SendMessage`
-awaits its invocation inside the request task, so caller disconnect and
-cancellation propagate to the owned work (RFC 0010 lifecycle). The host creates
+awaits its invocation inside the request task, so cancellation of that task
+propagates to the owned work (RFC 0010 lifecycle). A socket disconnect is not
+itself task cancellation: the A2A-04b2 Uvicorn/h11 fixture does not cancel an
+active handler when the peer closes. The configured kernel deadline still
+cancels waiting work and releases invocation resources; an immediate
+disconnect-cancellation policy needs explicit host ownership. The host creates
 the SDK routes, admission gate, handler and container on one event loop inside
 its ASGI lifespan. On shutdown it stops accepting requests, lets in-flight
 invocations finish or cancels them at the deadline, closes SDK resources and
@@ -373,9 +379,17 @@ amendments:
 
 A2A-03 covered the in-process items listed above. A2A-04a
 ([ADR 0099](0099-a2a-provisional-public-surface.md)) added the exact dependency
-pin and provisional exports. Still missing (A2A-04b): network server disconnect
-handling, cross-platform CI, installed `agnara-a2a` wheels, examples and
-maturity. Until then there is no A2A support.
+pin and provisional exports. A2A-04b1 added the runnable guide and installed
+candidate-wheel consumer in the cross-platform CI matrix. A2A-04b2 adds the
+[real-loopback fixture](../../tests/a2a/test_a2a_network.py) with a pinned
+Uvicorn/h11 host, including mid-body and post-entry peer disconnects and
+graceful shutdown. Its post-entry timeout observation corrects the earlier
+D10 implication that socket disconnect automatically cancels a request task;
+the in-process A2A-03 cancellation test did not establish that.
+
+Immediate disconnect cancellation, production host policy and any maturity
+promotion remain separate decisions. Exports remain provisional and no broader
+A2A support is claimed.
 
 [spec]: https://github.com/a2aproject/A2A/blob/3303592588e388e62e0f69f701af531d2f4e3991/docs/specification.md
 [proto]: https://github.com/a2aproject/A2A/blob/3303592588e388e62e0f69f701af531d2f4e3991/specification/a2a.proto

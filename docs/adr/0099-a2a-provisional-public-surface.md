@@ -111,5 +111,10 @@ nothing new.
 [A2A-04b1](https://github.com/Blandskron/agnara/issues/705) adds the
 [runnable guide](../A2A_SERVICE.md) and an exact-example installed-wheel
 consumer to the existing cross-platform CI gate. It changes no decision above
-and keeps the surface provisional and experimental. A network server with
-real-disconnect evidence and any later maturity promotion remain separate work.
+and keeps the surface provisional and experimental.
+[A2A-04b2](https://github.com/Blandskron/agnara/issues/707) measures a pinned
+Uvicorn/h11 fixture over real loopback TCP, including peer disconnects and
+graceful shutdown; see the [guide](../A2A_SERVICE.md#real-loopback-host-evidence).
+That host relies on kernel deadlines after a post-entry disconnect. Immediate
+disconnect cancellation, production host policy and any later maturity
+promotion remain separate work.

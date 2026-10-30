@@ -57,6 +57,8 @@ dev = [
     # V1-28 SQLite persistence fixture only; never a core dependency.
     "SQLAlchemy==2.0.54",
     "ty>=0.0.1a1",
+    # A2A-04b2 loopback conformance fixture only; never an adapter dependency.
+    "uvicorn==0.52.4",
 ]
 
 # --------------------------------------------------------------------------
