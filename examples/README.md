@@ -10,6 +10,7 @@ repository, run `uv sync` then `uv run python examples/<file>.py`.
 | Capability metadata, DI and policy | [quickstart.py](quickstart.py) | [lifecycle tests](../tests/docs/test_standalone_example_lifecycle.py), [core guide](../packages/agnara/README.md) |
 | HTTP backend, dataclass JSON contract and owned ASGI lifespan | [http_service.py](http_service.py) | [lifecycle test](../tests/docs/test_http_service_example.py), [composition guide](../docs/HTTP_COMPOSITION.md), [public surface tests](../tests/architecture/test_public_http_surface.py) |
 | Official-client MCP service | [mcp_tools.py](mcp_tools.py) | [test](../tests/docs/test_mcp_tools_example.py), [guide](../docs/MCP_TOOLS.md) |
+| Provisional A2A service through the official in-process client | [a2a_service.py](a2a_service.py) | [test](../tests/docs/test_a2a_service_example.py), [guide](../docs/A2A_SERVICE.md); unreleased checkout/candidate wheels only, no network-support claim |
 | Same capability invoked over HTTP + MCP | [http_mcp.py](http_mcp.py) | [test](../tests/docs/test_http_mcp_example.py) |
 | Runtime embedded inside native FastAPI routes | [fastapi_embedding.py](fastapi_embedding.py) | [test](../tests/docs/test_fastapi_embedding_example.py), [guide](../docs/FASTAPI_EMBEDDING.md); optional pinned host fixture |
 | Runtime embedded inside native Starlette routes | [starlette_embedding.py](starlette_embedding.py) | [test](../tests/docs/test_starlette_embedding_example.py), [guide](../docs/STARLETTE_EMBEDDING.md); optional pinned host fixture |

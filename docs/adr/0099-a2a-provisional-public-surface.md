@@ -108,5 +108,8 @@ nothing new.
 
 ## Remaining evidence (A2A-04b)
 
-A runnable example, installed-wheel consumers, a network server with real
-disconnects, cross-platform CI and the maturity promotion that would follow.
+[A2A-04b1](https://github.com/Blandskron/agnara/issues/705) adds the
+[runnable guide](../A2A_SERVICE.md) and an exact-example installed-wheel
+consumer to the existing cross-platform CI gate. It changes no decision above
+and keeps the surface provisional and experimental. A network server with
+real-disconnect evidence and any later maturity promotion remain separate work.

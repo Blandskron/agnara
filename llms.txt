@@ -56,6 +56,7 @@ evidence that those fixes are present in a PyPI wheel.
 - [Shared HTTP+MCP capability](examples/http_mcp.py): both adapters invoke the same handler.
 - [HTTP composition](docs/HTTP_COMPOSITION.md): public ASGI API and limitations.
 - [MCP tools](docs/MCP_TOOLS.md): official in-process client, authority and teardown.
+- [Provisional A2A guide](docs/A2A_SERVICE.md): unreleased checkout/candidate wheels, in-process client and cleanup; no network-support claim.
 - [FastAPI embedding](docs/FASTAPI_EMBEDDING.md): explicit host identity, runtime invocation and lifecycle.
 - [Starlette embedding](docs/STARLETTE_EMBEDDING.md): native routes, input/outcome mapping and owned resources.
 - [Litestar embedding](docs/LITESTAR_EMBEDDING.md): native routes, input/outcome mapping and owned resources.

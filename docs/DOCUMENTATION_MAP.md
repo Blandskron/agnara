@@ -57,6 +57,7 @@ tags, GitHub Releases and PyPI release history answer historical questions.
 - [HTTP package](../packages/agnara-http/README.md)
 - [MCP package](../packages/agnara-mcp/README.md)
 - [Provisional A2A surface](../packages/agnara-a2a/README.md)
+- [Runnable provisional A2A guide](A2A_SERVICE.md)
 - [Reserved Events namespace](../packages/agnara-events/README.md)
 
 ## INTEROPERABILITY

@@ -1388,6 +1388,11 @@ requirement is not satisfied by Agnara 1.0.3. This checkout adds an unreleased,
 ADR 0099). Do not present it as supported A2A, and do not use names outside
 `docs/public-api.json`.
 
+The [A2A guide](docs/A2A_SERVICE.md) and [example](examples/a2a_service.py)
+exercise that provisional surface through the official in-process client and
+installed candidate wheels. They require this checkout, not the published
+1.0.3 wheel; network hosting and real-disconnect evidence remain pending.
+
 ## 11. Events
 
 Source: [docs/AGENT_GUIDE.md](docs/AGENT_GUIDE.md); baseline 1.0.3.
@@ -1641,6 +1646,7 @@ repository, run `uv sync` then `uv run python examples/<file>.py`.
 | Capability metadata, DI and policy | [quickstart.py](examples/quickstart.py) | [lifecycle tests](tests/docs/test_standalone_example_lifecycle.py), [core guide](packages/agnara/README.md) |
 | HTTP backend, dataclass JSON contract and owned ASGI lifespan | [http_service.py](examples/http_service.py) | [lifecycle test](tests/docs/test_http_service_example.py), [composition guide](docs/HTTP_COMPOSITION.md), [public surface tests](tests/architecture/test_public_http_surface.py) |
 | Official-client MCP service | [mcp_tools.py](examples/mcp_tools.py) | [test](tests/docs/test_mcp_tools_example.py), [guide](docs/MCP_TOOLS.md) |
+| Provisional A2A service through the official in-process client | [a2a_service.py](examples/a2a_service.py) | [test](tests/docs/test_a2a_service_example.py), [guide](docs/A2A_SERVICE.md); unreleased checkout/candidate wheels only, no network-support claim |
 | Same capability invoked over HTTP + MCP | [http_mcp.py](examples/http_mcp.py) | [test](tests/docs/test_http_mcp_example.py) |
 | Runtime embedded inside native FastAPI routes | [fastapi_embedding.py](examples/fastapi_embedding.py) | [test](tests/docs/test_fastapi_embedding_example.py), [guide](docs/FASTAPI_EMBEDDING.md); optional pinned host fixture |
 | Runtime embedded inside native Starlette routes | [starlette_embedding.py](examples/starlette_embedding.py) | [test](tests/docs/test_starlette_embedding_example.py), [guide](docs/STARLETTE_EMBEDDING.md); optional pinned host fixture |

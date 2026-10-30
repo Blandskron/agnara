@@ -104,6 +104,11 @@ requirement is not satisfied by Agnara 1.0.3. This checkout adds an unreleased,
 ADR 0099). Do not present it as supported A2A, and do not use names outside
 `docs/public-api.json`.
 
+The [A2A guide](A2A_SERVICE.md) and [example](../examples/a2a_service.py)
+exercise that provisional surface through the official in-process client and
+installed candidate wheels. They require this checkout, not the published
+1.0.3 wheel; network hosting and real-disconnect evidence remain pending.
+
 ## Events
 
 `agnara-events` is a published reserved namespace with no public runtime API.
