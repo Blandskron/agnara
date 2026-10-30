@@ -46,7 +46,7 @@ dev = [
     "msgspec>=0.21,<0.22",
     "playwright==1.62.0",
     # E9.2 integration evidence only; applications own SDK configuration.
-    "opentelemetry-sdk==1.44.0",
+    "opentelemetry-sdk==1.45.1",
     "pydantic>=2.9,<3",
     # tests/release/test_publication_set.py parses the workflows to hold
     # them to docs/distributions.json, so this is a direct test dependency

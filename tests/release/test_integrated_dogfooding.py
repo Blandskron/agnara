@@ -177,7 +177,7 @@ def test_reference_apps_run_from_fresh_installed_artifacts(tmp_path: Path) -> No
             str(python),
             "mcp==2.2.0",
             "opentelemetry-api>=1.44,<2",
-            "opentelemetry-sdk==1.44.0",
+            "opentelemetry-sdk==1.45.1",
             "fastapi==0.141.1",
             "starlette==1.6.0",
             "litestar==2.24.0",

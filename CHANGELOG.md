@@ -56,6 +56,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Security
 
+- Move the locked OpenTelemetry API and SDK from 1.44.0 to 1.45.1
+  (GHSA-xcq7-p3pf-p88h, unbounded `tracestate` parsing); semantic conventions
+  follow to 0.66b1. The development pin is `opentelemetry-sdk==1.45.1`;
+  `agnara-telemetry` still publishes `opentelemetry-api>=1.44,<2`.
+
 - Propagate the accepted main-branch security dependency updates into the
   development lock: PyJWT 2.15.0, certifi 2026.10.19 (GHSA-6q48-6c7w-9gw2)
   and multidict 6.9.1 (GHSA-54p9-h82j-f925). Certifi and multidict belong to
