@@ -44,7 +44,8 @@ Workspace / Project
 ## Terminology
 
 The hierarchy illustrates architectural roles, not adapter availability. HTTP
-and MCP are implemented adapters; A2A, Events and Tasks remain reserved. See
+and MCP are implemented adapters; A2A has an unreleased provisional surface
+for one complete-result profile (ADR 0099); Events and Tasks remain reserved. See
 [current maturity](MATURITY.md) before selecting a transport or runtime.
 
 ### Project
