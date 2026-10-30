@@ -22,6 +22,8 @@ Do not accumulate completed-task chronology in this file.
 
 - [~] Exercise the ADR 0098 profile in an isolated A2A-03 adapter fixture and
   amend D5/D6/D7 to the observed SDK behavior (#695).
+- [~] Publish the provisional ADR 0099 A2A surface and SDK pin (A2A-04a, #701);
+  A2A-04b adds the example, installed wheels, network and CI evidence.
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,

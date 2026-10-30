@@ -200,16 +200,17 @@ def check_import(
 
 
 def check_stable_public_imports(workspace: Path) -> list[str]:
-    """Import every stable manifest name from its canonical installed path."""
+    """Import every stable or provisional manifest name from its canonical installed path."""
     document = json.loads((workspace / PUBLIC_API_RELATIVE).read_text(encoding="utf-8"))
     problems: list[str] = []
     for distribution in document["distributions"]:
         for module in distribution["modules"]:
             imported = importlib.import_module(module["module"])
             for export in module["exports"]:
-                if export["stability"] == "stable" and not hasattr(imported, export["name"]):
+                stability = export["stability"]
+                if stability in {"stable", "provisional"} and not hasattr(imported, export["name"]):
                     problems.append(
-                        f"{module['module']}: stable export {export['name']} is unavailable"
+                        f"{module['module']}: {stability} export {export['name']} is unavailable"
                     )
     return problems
 

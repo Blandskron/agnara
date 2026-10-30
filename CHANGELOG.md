@@ -21,6 +21,14 @@ full history are available through Git tags and GitHub Releases.
   bodyless and SSE excluded; reject invalid published schema metadata and
   detach documents from schema-port data.
 
+- Add a provisional `agnara_a2a` surface for the ADR 0098 A2A profile:
+  `A2a`, `A2aSkillExposure`, `A2aAgentCard`, `A2aDefinitionError`,
+  `build_a2a_app` and the protocol/SDK identity constants (ADR 0099). One
+  capability per surface over JSON-RPC at revision 1.0 with a required
+  principal resolver; no tasks or streaming. `agnara-a2a` now depends on
+  `a2a-sdk[http-server]==1.3.0`. Provisional names may change in a minor
+  release, and no A2A support is claimed before the A2A-04b evidence.
+
 - Add read-only `agnara doctor` diagnostics with text/versioned JSON reports
   and failing-check exit codes. Check manifest, app paths, executing Python and
   synchronized declared HTTP/MCP package metadata without importing project or

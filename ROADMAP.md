@@ -19,7 +19,8 @@ The canonical current-state source is `docs/MATURITY.md`.
 5. **Framework evolution.** Preserve the transport-neutral kernel while
    considering narrowly scoped capabilities through RFCs and reviewed issues.
 
-A2A and events remain reserved namespaces. They do not imply protocol support.
+Events remains a reserved namespace. A2A has an unreleased, provisional
+surface for one complete-result profile. Neither implies protocol support.
 GraphQL, gRPC, durable execution and broader MCP features are research or
 separate future decisions, not current commitments. See
 [initiatives](docs/INITIATIVES.md), [backlog](BACKLOG.md) and

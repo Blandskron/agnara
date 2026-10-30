@@ -298,8 +298,8 @@ a new composition style: an exposure declared at the composition root
 plans, a container, card metadata, a principal resolver and limits (compare
 `build_mcp_server` and the HTTP `principals=` resolver), and adapter-specific
 definition errors. Names, signatures and exports are decided in A2A-04 against
-[public-api.json](../public-api.json). No example imports or documentation of
-unshipped syntax are added before then.
+[public-api.json](../public-api.json); [ADR 0099](0099-a2a-provisional-public-surface.md)
+records them as provisional.
 
 ## Consequences
 
@@ -371,10 +371,11 @@ amendments:
 
 ## Remaining evidence
 
-A2A-03 covered the in-process items listed above. Still missing: network
-server disconnect handling, cross-platform CI, installed `agnara-a2a` wheels,
-the exact dependency pin, exports, examples and maturity (A2A-04). Until then
-there is no A2A support.
+A2A-03 covered the in-process items listed above. A2A-04a
+([ADR 0099](0099-a2a-provisional-public-surface.md)) added the exact dependency
+pin and provisional exports. Still missing (A2A-04b): network server disconnect
+handling, cross-platform CI, installed `agnara-a2a` wheels, examples and
+maturity. Until then there is no A2A support.
 
 [spec]: https://github.com/a2aproject/A2A/blob/3303592588e388e62e0f69f701af531d2f4e3991/docs/specification.md
 [proto]: https://github.com/a2aproject/A2A/blob/3303592588e388e62e0f69f701af531d2f4e3991/specification/a2a.proto

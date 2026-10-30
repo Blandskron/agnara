@@ -182,7 +182,16 @@ Use `--check` in automation to verify that this projection has not drifted.
 
 ### `agnara_a2a`
 
-This module currently exports no public names.
+| Name | Stability |
+| --- | --- |
+| `A2A_PROTOCOL_VERSION` | `provisional` |
+| `A2A_PYTHON_SDK_VERSION` | `provisional` |
+| `SUPPORTED_A2A_PROTOCOL_VERSIONS` | `provisional` |
+| `A2a` | `provisional` |
+| `A2aAgentCard` | `provisional` |
+| `A2aDefinitionError` | `provisional` |
+| `A2aSkillExposure` | `provisional` |
+| `build_a2a_app` | `provisional` |
 
 
 ## `agnara-cli`

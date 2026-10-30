@@ -326,7 +326,8 @@ The current split:
 | `agnara-telemetry` | public | two hook classes over an OpenTelemetry contract |
 | `agnara-cli` | public | supports the `agnara` console script |
 | `agnara-http` | public, stable | fourteen governed composition exports; see `docs/PUBLIC_API.md` and `docs/HTTP_COMPOSITION.md` |
-| `agnara-a2a`, `agnara-events` | none yet | reserved namespaces holding a package boundary; runtime adapters remain unimplemented |
+| `agnara-a2a` | public, provisional | eight ADR 0099 exports for the ADR 0098 profile; not a 1.x compatibility commitment |
+| `agnara-events` | none yet | reserved namespace holding a package boundary; the runtime adapter remains unimplemented |
 
 HTTP application examples and consumer tests use the public composition API.
 Internal adapter tests may still exercise private modules; that does not make
