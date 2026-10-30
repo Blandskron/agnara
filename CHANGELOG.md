@@ -16,6 +16,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Add an executable provisional A2A guide with the official in-process client,
+  host-verified identity, denial before effects and owned resource cleanup.
+  Validate the exact example against installed candidate wheels in the existing
+  cross-platform test gate; network/disconnect support remains unclaimed.
+
 - Publish compiled complete-result output schemas in HTTP OpenAPI 200 JSON
   responses for opted-in operations. Keep `Any` unconstrained, HEAD/204
   bodyless and SSE excluded; reject invalid published schema metadata and

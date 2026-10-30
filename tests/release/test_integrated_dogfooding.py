@@ -16,6 +16,7 @@ REFERENCE_APPS = WORKSPACE_ROOT / "tests" / "reference_apps"
 HOST_GUIDES = ("starlette_embedding.py", "litestar_embedding.py", "django_embedding.py")
 ADDITIONAL_GUIDES = ("fastapi_embedding.py", "sqlite_persistence.py")
 STRUCTURED_GUIDES = (
+    ("a2a_service.py", "a2a_guide.py", "A2A_GUIDE_ARTIFACT_OK"),
     ("direct_streaming.py", "direct_streaming_guide.py", "DIRECT_STREAMING_GUIDE_ARTIFACT_OK"),
     ("mcp_tools.py", "mcp_guide.py", "MCP_GUIDE_ARTIFACT_OK"),
     ("http_sse.py", "sse_guide.py", "SSE_GUIDE_ARTIFACT_OK"),
