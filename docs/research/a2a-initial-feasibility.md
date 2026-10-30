@@ -1,7 +1,7 @@
 # A2A-01 — Initial SDK feasibility
 
 - Date: 2026-10-28
-- Tracking: GitHub Issue #685
+- Tracking: GitHub Issue #685 (A2A-01), #695 (A2A-03)
 - Input: [RFC 0010](../rfc/0010-a2a-initial-projection.md)
 - Status: Isolated research evidence; no adapter or support declaration
 
@@ -162,9 +162,101 @@ cross-platform CI. No Linux/macOS, free-threading, other binding, authenticated
 card, streaming, push, delegation or production-readiness claim is made here.
 The public package remains reserved with zero exports.
 
+## A2A-03 fixture checkpoint
+
+- Date: 2026-10-28
+- Tracking: GitHub Issue #695
+
+The [fixture](../../experiments/a2a/fixture.py) implements ADR 0098 in the
+same isolated environment, with the current checkout's `agnara` kernel
+installed without dependencies. Compiled plans run through public
+`invoke_result`. The [probe](../../experiments/a2a/fixture_probe.py) asserts
+every row through the official JSON-RPC client or raw ASGI requests, and
+[observed-fixture-windows.json](../../experiments/a2a/observed-fixture-windows.json)
+retains the run. The fixture is not an adapter API.
+
+### Confirmed by observation
+
+- **Numbers (D3/D4):** `{"a": 2, "b": 3}` reaches an `int` parameter after
+  normalization, and a `float` parameter accepts `3`. `2**53 - 1` is accepted;
+  `2**53` and `2**53 + 1` are refused before invocation; `2.5` for an `int` is
+  refused by the kernel. The official client receives `5` as Python `5.0`.
+- **Envelope and identifiers (D4/D9):** a fresh `messageId`, no `contextId` or
+  `taskId`, and `mediaType` `application/json`. The official client accepts a
+  message without `contextId`, which settles the D4 open question for this pin.
+- **Protocol rows (D6):** every pre-invocation row in the table returned its
+  expected code, and each row was checked against an unrelated refusal.
+  Unrecognized fields (`capabilityId`, `skillId`, metadata) were ignored, and
+  `historyLength`/`returnImmediately` had no effect.
+- **Revision (D1):** empty, `0.3`, `1.99`, `9.0` and `1.0` with a patch
+  component appended were refused with `-32009` before the SDK; exactly `1.0`
+  was accepted.
+- **Authentication and principal (D5):** missing and unknown credentials got
+  HTTP `401` with a challenge before body parsing. A scope policy denied a
+  caller with zero handler effects, while an authorized caller ran once. Two
+  concurrent callers saw only their own identity. Invocation metadata was
+  exactly `{"transport": "a2a"}`, and a forged forwarding header did not reach
+  the context.
+- **Redaction:** a raised exception, an output-contract violation, an integer
+  beyond `2**53 - 1` and a non-finite float each produced `-32603`
+  "Internal error". The exception text and path did not appear in the response.
+- **Limits and lifecycle (D7/D10):** an oversized body got HTTP `413`; a
+  0.2-second deadline produced the kernel's `timeout` outcome; caller
+  cancellation reached the handler's cleanup; each client closed before its
+  server lifespan, the container closed last and no task remained.
+- **Composition and card (D5/D8):** `Confirmation.REQUIRED` and missing public
+  metadata were refused at composition. The card had all flags false, one
+  JSON-RPC `1.0` interface, JSON modes and a working ETag/`304`, with no
+  `Cache-Control`.
+
+### Discrepancies with the original ADR 0098
+
+These were real results, not fixture bugs. The installed SDK files cited here
+were hash-compared with the pinned upstream commit. The maintainer resolved
+them by amending ADR 0098 D5, D6 and D7 to the observed SDK behavior (PR #697).
+The retained run, asserted against the amended record, reports no remaining
+deviations.
+
+1. **Error codes and details (D6).** The SDK's
+   [response helper][response-helpers] maps an exception to its JSON-RPC code by
+   exact type, defaulting to `-32603`. [Error details][error-handlers] fix
+   `ErrorInfo.domain` to `a2a-protocol.org` and take `reason` from the SDK's own
+   table (`UNKNOWN_ERROR` for an unknown type). Through the SDK dispatcher, a
+   handler therefore cannot emit the ADR's `-32000` code or an `agnara` domain
+   and reason. Observed: the eight `-32000` rows arrive as `-32603` with reason
+   `UNKNOWN_ERROR`, and the fixture's `metadata.agnaraCode` keeps them
+   distinguishable. `invalid_input` arrives as `-32602` with reason
+   `INVALID_PARAMS`, and `internal_failure` with reason `INTERNAL_ERROR`.
+   **Resolved:** D6 now specifies this representation, with the category in
+   `metadata.agnaraCode`. Adapter-owned dispatch is deferred.
+2. **Unhandled exception text (D6 redaction).** The
+   [dispatcher][dispatcher] answers any non-A2A exception with
+   `InternalError(message=str(e))`. During development, a protobuf
+   `DecodeError` reached a client verbatim this way. **Resolved:** D6 now
+   requires that no non-A2A exception escape the handler.
+3. **Nesting limits (D7).** With protobuf 7.36.2, inbound `data` nested more than
+   47 levels is refused by the SDK parser (`-32602`), before the fixture's
+   64-level check can run. The dispatcher's response wrapper fails beyond 31
+   levels of `result`, which happens **after** handler effects. The fixture now
+   checks that wrapper and returns a redacted `-32603`. **Resolved:** D7 now
+   states these measured ceilings, which must be re-measured on any pin change.
+4. **Version header in SDK state (D5).** The SDK's
+   [version validator][version-validator] reads `A2A-Version` from
+   `ServerCallContext.state["headers"]`. A builder that copies no headers makes
+   every request look like `0.3` and refuses it. The fixture copies only that
+   admitted header, never credentials. **Resolved:** D5 now states this single
+   exception.
+
+Still unproven: a real network server with disconnects, cross-platform CI,
+installed `agnara-a2a` wheels, the exact adapter dependency pin and the public
+surface (A2A-04). The fixture runs in-process over HTTPX's ASGI transport on
+Windows only.
+
 [spec]: https://github.com/a2aproject/A2A/blob/3303592588e388e62e0f69f701af531d2f4e3991/docs/specification.md
 [dispatcher]: https://github.com/a2aproject/a2a-python/blob/0d9dafb92328144384eca58a6e8ab80cb8f7d445/src/a2a/server/routes/jsonrpc_dispatcher.py
 [context]: https://github.com/a2aproject/a2a-python/blob/0d9dafb92328144384eca58a6e8ab80cb8f7d445/src/a2a/server/routes/common.py
 [version-validator]: https://github.com/a2aproject/a2a-python/blob/0d9dafb92328144384eca58a6e8ab80cb8f7d445/src/a2a/utils/version_validator.py
 [default-handler]: https://github.com/a2aproject/a2a-python/blob/0d9dafb92328144384eca58a6e8ab80cb8f7d445/src/a2a/server/request_handlers/default_request_handler_v2.py
 [card-routes]: https://github.com/a2aproject/a2a-python/blob/0d9dafb92328144384eca58a6e8ab80cb8f7d445/src/a2a/server/routes/agent_card_routes.py
+[response-helpers]: https://github.com/a2aproject/a2a-python/blob/0d9dafb92328144384eca58a6e8ab80cb8f7d445/src/a2a/server/request_handlers/response_helpers.py
+[error-handlers]: https://github.com/a2aproject/a2a-python/blob/0d9dafb92328144384eca58a6e8ab80cb8f7d445/src/a2a/utils/error_handlers.py

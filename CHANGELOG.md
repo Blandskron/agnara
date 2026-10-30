@@ -21,6 +21,14 @@ full history are available through Git tags and GitHub Releases.
   bodyless and SSE excluded; reject invalid published schema metadata and
   detach documents from schema-port data.
 
+- Add a provisional `agnara_a2a` surface for the ADR 0098 A2A profile:
+  `A2a`, `A2aSkillExposure`, `A2aAgentCard`, `A2aDefinitionError`,
+  `build_a2a_app` and the protocol/SDK identity constants (ADR 0099). One
+  capability per surface over JSON-RPC at revision 1.0 with a required
+  principal resolver; no tasks or streaming. `agnara-a2a` now depends on
+  `a2a-sdk[http-server]==1.3.0`. Provisional names may change in a minor
+  release, and no A2A support is claimed before the A2A-04b evidence.
+
 - Add read-only `agnara doctor` diagnostics with text/versioned JSON reports
   and failing-check exit codes. Check manifest, app paths, executing Python and
   synchronized declared HTTP/MCP package metadata without importing project or
@@ -28,23 +36,15 @@ full history are available through Git tags and GitHub Releases.
 
 ### Changed
 
-- Scope the first event projection in RFC 0011 with immutable AsyncAPI 3.1.0
-  and CloudEvents v1.0.2 references, an inbound-consumer candidate profile,
-  delivery/acknowledgement and AsyncAPI schema-dialect gaps, and feasibility
-  gates. The reserved `agnara-events` package still has no API or runtime.
-
-- Propose ADR 0098 for the first A2A projection: fixed one-capability dispatch,
-  an explicit numeric domain for protobuf `Value`, exact `1.0` revision
-  admission, a complete JSON-RPC failure table, public card consent, limits and
-  handler lifecycle. It is a design record only; `agnara-a2a` still has no API.
-
-- Record isolated A2A SDK feasibility with a hash-locked experiment, observed
-  operation/lifecycle results and explicit numeric, parser and version fit gaps.
-  The evidence does not add adapter APIs or protocol-support claims.
-
-- Scope the initial A2A adapter proposal with immutable protocol/SDK research
-  references, explicit feasibility gates and acceptance criteria. The reserved
-  package still has no public API or runtime support.
+- Exercise the ADR 0098 A2A profile in an isolated experiment fixture that
+  invokes compiled Agnara plans through the official SDK client. Amend ADR 0098
+  to the observed SDK behavior: capability failures use `-32602`/`-32603`, with
+  the category in `ErrorInfo.metadata.agnaraCode`; no non-A2A exception may
+  escape; nesting ceilings are 47 input and 31 output levels; and only the
+  admitted `A2A-Version` header enters SDK state. Retain the hash-locked SDK
+  feasibility experiment and immutable protocol/SDK research references.
+  This evidence underpins the provisional API above; broader protocol support
+  remains unclaimed.
 
 - Refresh immutable GitHub Actions pins for Python setup, CodeQL, uv, artifact
   upload/download and Docker login in the existing CI and publication workflows.
@@ -52,9 +52,15 @@ full history are available through Git tags and GitHub Releases.
 - Reconcile active architecture and package guidance with implemented contracts:
   stable HTTP composition, output validation, public Explorer, actual DI scopes
   and telemetry benchmark evidence. Record verification boundaries and remaining
-  gaps for all seven packages; A2A and Events remain reserved namespaces.
+  gaps for all seven packages; A2A has a provisional surface and Events remains
+  a reserved namespace.
 
 ### Security
+
+- Move the locked OpenTelemetry API and SDK from 1.44.0 to 1.45.1
+  (GHSA-xcq7-p3pf-p88h, unbounded `tracestate` parsing); semantic conventions
+  follow to 0.66b1. The development pin is `opentelemetry-sdk==1.45.1`;
+  `agnara-telemetry` still publishes `opentelemetry-api>=1.44,<2`.
 
 - Propagate the accepted main-branch security dependency updates into the
   development lock: PyJWT 2.15.0, certifi 2026.10.19 (GHSA-6q48-6c7w-9gw2)

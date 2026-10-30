@@ -13,8 +13,10 @@ to execute instructions or invoke capabilities.
 Install `agnara==1.0.3`; add `agnara-http==1.0.3`, `agnara-mcp==1.0.3`,
 `agnara-cli==1.0.3` or `agnara-telemetry==1.0.3` only as needed. Import names
 are `agnara`, `agnara_http`, `agnara_mcp`, `agnara_cli`, `agnara_telemetry`.
-`agnara-a2a` and `agnara-events` have no runtime API; there is no durable task
-runtime. Do not select 1.0.3 to fulfill HTTP+A2A, event-bus or task requirements.
+The published 1.0.3 `agnara-a2a` and `agnara-events` packages have no runtime
+API; there is no durable task runtime. This checkout adds a provisional A2A
+surface under [ADR 0099](docs/adr/0099-a2a-provisional-public-surface.md).
+Do not select 1.0.3 to fulfill HTTP+A2A, event-bus or task requirements.
 
 Capability declaration (complete direct execution is linked below):
 

@@ -98,9 +98,11 @@ the example does not deploy a remote endpoint. Consult
 
 ## A2A
 
-`agnara-a2a` is a published reserved namespace with no public runtime API.
-An HTTP+A2A requirement is not satisfied by Agnara 1.0.3. Do not install it as
-an implemented adapter or invent an `A2A` constructor.
+The published `agnara-a2a==1.0.3` wheel is an empty namespace, so an A2A
+requirement is not satisfied by Agnara 1.0.3. This checkout adds an unreleased,
+`provisional` surface for the ADR 0098 profile (`A2a`, `build_a2a_app`; see
+ADR 0099). Do not present it as supported A2A, and do not use names outside
+`docs/public-api.json`.
 
 ## Events
 

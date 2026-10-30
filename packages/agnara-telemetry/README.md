@@ -80,7 +80,7 @@ repeated tracking IDs need no correlation map. The supplied meter must support
 concurrent, synchronous, non-blocking recording. Do not mutate instruments
 while plans are active. A custom blocking instrument blocks invocation.
 
-Development tests use the pinned OpenTelemetry API/SDK 1.44.0 with an in-memory
+Development tests use the pinned OpenTelemetry API/SDK 1.45.1 with an in-memory
 reader and an in-memory span exporter:
 `uv run pytest tests/telemetry tests/architecture`. Tests cover exact
 values/units, attributes, span names, status mapping, parent/child nesting,

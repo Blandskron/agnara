@@ -1382,9 +1382,11 @@ adapter through that boundary rather than reimplementing the SDK's validator.
 
 Source: [docs/AGENT_GUIDE.md](docs/AGENT_GUIDE.md); baseline 1.0.3.
 
-`agnara-a2a` is a published reserved namespace with no public runtime API.
-An HTTP+A2A requirement is not satisfied by Agnara 1.0.3. Do not install it as
-an implemented adapter or invent an `A2A` constructor.
+The published `agnara-a2a==1.0.3` wheel is an empty namespace, so an A2A
+requirement is not satisfied by Agnara 1.0.3. This checkout adds an unreleased,
+`provisional` surface for the ADR 0098 profile (`A2a`, `build_a2a_app`; see
+ADR 0099). Do not present it as supported A2A, and do not use names outside
+`docs/public-api.json`.
 
 ## 11. Events
 
@@ -2481,14 +2483,19 @@ inventory and does not create a second contract.
 
 ##### Current 1.x public API stability contract
 
-The current 1.x contract contains **166 stable exports across 13 modules**: 166
-distinct names at 166 canonical import paths. Leaf-module re-export aliases
-are no longer in `__all__` and are not supported public API.
+The manifest classifies **174 exports across 13 modules**: 174
+distinct names at 174 canonical import paths. The current 1.x contract contains
+the 166 `stable` names; the 8 `agnara_a2a` names are `provisional` (ADR 0099).
+Leaf-module re-export aliases are no longer in `__all__` and are not
+supported public API.
 
 `stable` means a name, its canonical import path, signature, and documented
-behaviour are compatible throughout the current major line. `provisional` and
-`experimental` remain vocabulary for a future deliberate classification, but
-neither occurs in the current inventory. `internal` names are outside the manifest
+behaviour are compatible throughout the current major line. `provisional`
+means the name is governed and importable, but its signature and behaviour may
+change in a minor release after a reviewed decision; it is not part of the 1.x
+compatibility promise. Only `agnara_a2a` uses it, by maintainer decision
+recorded in ADR 0099. `experimental` remains vocabulary for a future deliberate
+classification and does not occur in the current inventory. `internal` names are outside the manifest
 and have no compatibility promise.
 
 ##### Canonical modules
@@ -2502,15 +2509,15 @@ and have no compatibility promise.
 | `agnara` | `agnara.introspection` | 23 |
 | `agnara` | `agnara.policy` | 1 |
 | `agnara` | `agnara.schema` | 13 |
-| `agnara-a2a` | `agnara_a2a` | 0 |
+| `agnara-a2a` | `agnara_a2a` | 0 (8 `provisional`) |
 | `agnara-cli` | `agnara_cli` | 4 |
 | `agnara-events` | `agnara_events` | 0 |
 | `agnara-http` | `agnara_http` | 14 |
 | `agnara-mcp` | `agnara_mcp` | 20 |
 | `agnara-telemetry` | `agnara_telemetry` | 2 |
 
-Reserved `agnara_a2a` and `agnara_events` namespaces are deliberately
-classified with no exports. All other non-private implementation modules are
+The reserved `agnara_events` namespace is deliberately classified with no
+exports. All other non-private implementation modules are
 internal unless their name is re-exported from this table's module through the
 manifest.
 
@@ -2761,7 +2768,16 @@ Use `--check` in automation to verify that this projection has not drifted.
 
 ###### `agnara_a2a`
 
-This module currently exports no public names.
+| Name | Stability |
+| --- | --- |
+| `A2A_PROTOCOL_VERSION` | `provisional` |
+| `A2A_PYTHON_SDK_VERSION` | `provisional` |
+| `SUPPORTED_A2A_PROTOCOL_VERSIONS` | `provisional` |
+| `A2a` | `provisional` |
+| `A2aAgentCard` | `provisional` |
+| `A2aDefinitionError` | `provisional` |
+| `A2aSkillExposure` | `provisional` |
+| `build_a2a_app` | `provisional` |
 
 
 ##### `agnara-cli`

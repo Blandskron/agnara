@@ -20,9 +20,13 @@ Do not accumulate completed-task chronology in this file.
 
 ## Maintenance
 
-- [~] Scope the first event projection (inbound consumption, delivery and
-  acknowledgement, principal, AsyncAPI schema dialect) in RFC 0011 before any
-  broker or adapter work (#691).
+- [~] Consolidate pending A2A and telemetry work into one reviewed integration
+  PR (#703), preserving source commits and validating the combined workspace.
+- [~] Update the locked OpenTelemetry API/SDK baseline to 1.45.1 (#702).
+- [~] Exercise the ADR 0098 profile in an isolated A2A-03 adapter fixture and
+  amend D5/D6/D7 to the observed SDK behavior (#695).
+- [~] Publish the provisional ADR 0099 A2A surface and SDK pin (A2A-04a, #701);
+  A2A-04b adds the example, installed wheels, network and CI evidence.
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,

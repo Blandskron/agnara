@@ -68,6 +68,16 @@ This decision does not implement or claim:
 - official SDK conformance (E7.8);
 - legacy protocol negotiation by Agnara.
 
+## A2A baseline
+
+`agnara-a2a` targets A2A protocol revision `1.0` through the JSON-RPC binding,
+using the official Python SDK pinned exactly to `a2a-sdk[http-server]==1.3.0`
+(ADR 0099). The adapter publishes `SUPPORTED_A2A_PROTOCOL_VERSIONS`, containing
+only `1.0`, and its admission gate refuses every other revision (ADR 0098 D1).
+The nesting ceilings in ADR 0098 D7 are properties of this pin and its
+protobuf 7.36.2 runtime, re-measured on any change. The SDK is a dependency of
+`agnara-a2a` only.
+
 ## Evidence
 
 - https://modelcontextprotocol.io/specification/2026-07-28

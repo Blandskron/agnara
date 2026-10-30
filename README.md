@@ -18,8 +18,11 @@ pip install "agnara==1.0.3"
 ```
 
 Install `agnara-http`, `agnara-mcp`, `agnara-cli` or `agnara-telemetry` at the
-same version when an application uses those surfaces. `agnara-a2a` and
-`agnara-events` reserve package names and expose no runtime API.
+same version when an application uses those surfaces. The published 1.0.3
+`agnara-a2a` and `agnara-events` packages reserve names without runtime APIs.
+This checkout adds a provisional A2A surface under
+[ADR 0099](docs/adr/0099-a2a-provisional-public-surface.md); see the
+[maturity matrix](docs/MATURITY.md) for its evidence and limitations.
 
 ## For AI coding agents
 
@@ -120,7 +123,8 @@ effect metadata describe the capability; they do not grant authorization.
 | `agnara-mcp` | Version-pinned MCP tool projection, authorization and invocation for the documented subset. |
 | `agnara-cli` | Project/app scaffolding, inspection, graph, context and OpenAPI export commands. |
 | `agnara-telemetry` | Explicit OpenTelemetry metrics and tracing hooks; the application owns its SDK and exporter. |
-| `agnara-a2a`, `agnara-events` | Reserved namespaces with no public runtime API. |
+| `agnara-a2a` | Unreleased provisional complete-result profile; published 1.0.3 has no runtime API. |
+| `agnara-events` | Reserved namespace with no public runtime API. |
 
 Compiled snapshots and policies remain transport neutral. Streaming is pull
 based in the kernel and has an HTTP SSE projection; it is not projected by the
