@@ -87,10 +87,37 @@ ASGI lifespan have ended. The small host drives lifespan through an owned
 `TaskGroup`; HTTPX does not drive it automatically. `finally` closes the
 container when client work raises or is cancelled. There is no unowned task.
 
+## Real-loopback host evidence
+
+The separate [network tests](../tests/a2a/test_a2a_network.py) drive a Uvicorn
+0.52.4/h11 fixture over real TCP on `127.0.0.1`, using an OS-assigned port and
+the official A2A client. Uvicorn is pinned as a development fixture, not an
+Agnara package dependency. HTTPX ignores proxy environment variables for these
+local connections. No external endpoint, TLS or production server is tested.
+
+| Boundary | Asserted observation |
+| --- | --- |
+| Card and invocation | The card advertises the actual listener URL and revision `1.0`; the official client receives the compiled capability's result. |
+| Input and authority | HTTP 401 precedes parsing; malformed JSON, invalid input and a principal without the required scope have no dependency/handler effects. |
+| Deadline and recovery | A waiting handler is cancelled at its kernel deadline, closes its invocation resource and maps to `timeout`; a subsequent call succeeds. |
+| Peer closes mid-body | The admission gate receives `http.disconnect` and exits without acquiring application resources. |
+| Peer closes after handler entry | Uvicorn does not cancel the request task automatically. The kernel deadline still cancels the handler and releases its invocation resource; the SDK constructs a timeout reply that the disconnected client cannot receive. |
+| Graceful shutdown | The listener stops accepting connections, the active request completes, and invocation resources close before the host closes its singleton/container and lifespan. Server tasks and listener are joined/closed on the owning loop. |
+
+The post-entry disconnect test waits for actual handler entry before closing a
+real client socket. It observes a canonical timeout response at the ASGI send
+boundary and provider teardown, rather than treating a closed client socket as
+proof of task cancellation. The fixture does not add a disconnect watcher or
+change adapter behavior. A host that needs cancellation immediately on peer
+disconnect requires a separately designed policy that owns and joins that work.
+The deadline remains cooperative; it does not roll back completed effects or
+interrupt a blocking synchronous handler.
+
 ## Verification and limits
 
 ```bash
 uv run pytest tests/docs/test_a2a_service_example.py tests/a2a
+uv run pytest tests/a2a/test_a2a_network.py
 uv run pytest tests/release/test_integrated_dogfooding.py
 uv run python scripts/check_public_imports.py examples/a2a_service.py docs/A2A_SERVICE.md
 ```
@@ -103,9 +130,10 @@ effects on refusal, and the complete cleanup sequence. The existing required
 Linux/macOS/Windows test matrix runs that gate; it does not install a public
 index substitute for a candidate Agnara wheel.
 
-This is in-process evidence. It proves neither real socket disconnect handling
-nor a production server lifecycle. Network hosting/disconnects remain the next
-A2A-04b slice. Tasks, streaming, push notifications, extended or signed cards,
-other bindings and revisions, and confirmation-required capabilities remain
+The runnable example and installed-wheel consumer remain in-process evidence;
+the network suite separately measures the pinned Uvicorn/h11 fixture above.
+Neither proves a production server lifecycle, immediate cancellation on
+disconnect or support for arbitrary hosts. Tasks, streaming, push notifications,
+extended or signed cards, other bindings and revisions, and confirmation-required capabilities remain
 outside this profile. Exports stay provisional and maturity stays
 `EXPERIMENTAL`; this guide does not promote protocol support.

@@ -37,6 +37,7 @@ dev = [
     { name = "sqlalchemy", specifier = "==2.0.54" },
     { name = "starlette", specifier = "==1.6.0" },
     { name = "ty", specifier = ">=0.0.1a1" },
+    { name = "uvicorn", specifier = "==0.52.4" },
 ]
 
 [[package]]

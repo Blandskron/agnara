@@ -20,10 +20,11 @@ Do not accumulate completed-task chronology in this file.
 
 ## Maintenance
 
-- [~] Add the runnable provisional A2A guide and exact installed-wheel consumer
-  (A2A-04b1, #705), using the existing cross-platform CI matrix.
-- [ ] Scope A2A-04b network hosting and real-disconnect evidence separately
-  before any broader support or maturity promotion.
+- [~] Measure the provisional A2A profile over real loopback TCP, including
+  peer disconnect, deadline cleanup and graceful host shutdown (A2A-04b2, #707).
+- [ ] Decide and scope any A2A host policy for cancellation on disconnect;
+  bounded deadline cleanup alone does not justify broader host support or
+  maturity promotion.
 
 Keep security fixes, dependency updates, documentation drift, supply-chain
 checks and CI failures in normal issue/branch/PR review. When behavior changes,

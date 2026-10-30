@@ -16,6 +16,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Add real-loopback A2A conformance against a development-only Uvicorn 0.52.4
+  fixture: official-client calls, refusals before effects, deadline recovery,
+  peer disconnect and graceful shutdown. Clarify that this host does not cancel
+  an active handler on socket close; its kernel deadline still owns cleanup.
+
 - Add an executable provisional A2A guide with the official in-process client,
   host-verified identity, denial before effects and owned resource cleanup.
   Validate the exact example against installed candidate wheels in the existing
