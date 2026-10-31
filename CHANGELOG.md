@@ -7,6 +7,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Synchronize active A2A guidance with the unreleased provisional surface,
+  completed guide/artifact/host evidence and optional application-owned
+  disconnect recipe. Preserve the published 1.0.3 boundary and experimental
+  status; clarify CLI diagnostic and threat-model coverage limits.
+
 - Close the standalone quickstart's shared DI container and the telemetry
   example's owned SDK provider on success, errors and cancellation. Preserve
   API-only mode when the optional SDK is absent; surface unrelated import faults.
@@ -43,7 +48,8 @@ full history are available through Git tags and GitHub Releases.
   capability per surface over JSON-RPC at revision 1.0 with a required
   principal resolver; no tasks or streaming. `agnara-a2a` now depends on
   `a2a-sdk[http-server]==1.3.0`. Provisional names may change in a minor
-  release, and no A2A support is claimed before the A2A-04b evidence.
+  release. The guide, installed-wheel and bounded host evidence above do not
+  establish broader A2A support or promote these names to stable.
 
 - Add read-only `agnara doctor` diagnostics with text/versioned JSON reports
   and failing-check exit codes. Check manifest, app paths, executing Python and

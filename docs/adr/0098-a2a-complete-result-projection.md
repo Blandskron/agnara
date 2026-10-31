@@ -20,9 +20,11 @@ A2A surface, answered with immediate messages and no tasks. The
 fidelity, discarded unknown fields and permissive minor-version handling block
 using the SDK defaults unchanged.
 
-This record settles the contract that A2A-03 must implement and test. It adds
-no dependency, export, endpoint or support claim, and `agnara-a2a` stays
-`PLANNED` with zero exports. Section references are to the pinned A2A v1.0.1
+This record defines the contract exercised by A2A-03. It did not itself add a
+dependency, export, endpoint or support claim. The subsequent
+[ADR 0099](0099-a2a-provisional-public-surface.md) governs the current
+experimental adapter and provisional exports; [maturity](../MATURITY.md) owns
+implementation status. Section references are to the pinned A2A v1.0.1
 [specification][spec] and [protocol definitions][proto]. Each mapping below is
 marked as **required** by that snapshot, **recommended** (a SHOULD) or a
 **profile** choice that this ADR makes and a later record may relax.

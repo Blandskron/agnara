@@ -5,6 +5,13 @@
 - Input: [RFC 0010](../rfc/0010-a2a-initial-projection.md)
 - Status: Isolated research evidence; no adapter or support declaration
 
+This report retains the A2A-01/03 experiment checkpoints, not current package
+status. Subsequent [ADR 0099](../adr/0099-a2a-provisional-public-surface.md)
+governs the unreleased provisional adapter and exact SDK pin. The
+[current guide](../A2A_SERVICE.md) links the later installed-wheel, runnable
+example and bounded host evidence. Those additions do not expand the retained
+experiments' platform coverage or declare protocol support.
+
 ## Result
 
 The immediate-message path is technically usable in the inspected SDK on
@@ -146,21 +153,22 @@ decisions blocking direct adoption. The message-only/no-task option remains
 worth considering; the data, envelope and version differences prevent calling
 the SDK defaults an equivalent projection of current Agnara contracts.
 
-The next separately scoped A2A-02 ADR should resolve those three gaps, exact
-failure/interaction mapping, authenticated principal construction, allowed
+The checkpoint called for a separately scoped A2A-02 ADR to resolve those
+three gaps, exact failure/interaction mapping, authenticated principal construction, allowed
 parts/modes, request limits and chosen handler lifecycle. It may narrow or
 reject this candidate. No public import or decorator should be invented as
 part of that decision. [ADR 0098](../adr/0098-a2a-complete-result-projection.md)
 proposes those dispositions. It treats discarded unknown fields as consistent
 with specification section 5.7 once dispatch is fixed by composition.
 
-Future A2A-03/04 evidence still needs actual compiled Agnara invocation,
-policy-before-effects and cleanup tests, output-error redaction, concurrent
+At the A2A-01 checkpoint, future A2A-03/04 evidence still needed actual compiled
+Agnara invocation, policy-before-effects and cleanup tests, output-error redaction, concurrent
 authority isolation, invalid required fields/modes, network client/server
 disconnect behavior, full required-operation coverage, installed artifacts and
 cross-platform CI. No Linux/macOS, free-threading, other binding, authenticated
 card, streaming, push, delegation or production-readiness claim is made here.
-The public package remains reserved with zero exports.
+At that checkpoint the public package was reserved with zero exports; use
+ADR 0099 and maturity for current checkout status.
 
 ## A2A-03 fixture checkpoint
 
@@ -247,8 +255,8 @@ deviations.
    admitted header, never credentials. **Resolved:** D5 now states this single
    exception.
 
-Still unproven: a real network server with disconnects, cross-platform CI,
-installed `agnara-a2a` wheels, the exact adapter dependency pin and the public
+Unproven by this A2A-03 fixture: a real network server with disconnects,
+cross-platform CI, installed `agnara-a2a` wheels, the exact adapter dependency pin and the public
 surface (A2A-04). The fixture runs in-process over HTTPX's ASGI transport on
 Windows only.
 

@@ -576,11 +576,15 @@ Task and MRTR references:
 
 ## A2A
 
-A2A remains an unimplemented adapter target. The initial projection questions
-and feasibility gates are owned by [RFC 0010](rfc/0010-a2a-initial-projection.md);
-[maturity](MATURITY.md) owns the current zero-API package status.
+A2A has an unreleased, experimental complete-result projection with provisional
+exports under [ADR 0099](adr/0099-a2a-provisional-public-surface.md). The
+[guide](A2A_SERVICE.md) links the current in-process, installed candidate-wheel
+and bounded Uvicorn/h11 evidence, including the opt-in application-owned
+disconnect recipe. [Maturity](MATURITY.md) owns current status; the published
+1.0.3 package remains an empty namespace. No broader host or protocol support
+follows from these fixtures.
 
-Research checkpoint, inspected on 2026-10-28:
+Initial research checkpoint, inspected on 2026-10-28 (not the current dependency decision):
 
 - Candidate wire line: `1.0`, distinct from the specification release and SDK
   package versions. This is not an Agnara protocol-support declaration.
@@ -591,8 +595,10 @@ Research checkpoint, inspected on 2026-10-28:
 - SDK candidate `a2a-python v1.3.0`, commit
   `0d9dafb92328144384eca58a6e8ab80cb8f7d445`:
   [package metadata](https://github.com/a2aproject/a2a-python/blob/0d9dafb92328144384eca58a6e8ab80cb8f7d445/pyproject.toml).
-  Inspected source is not installation, interoperability or dependency-adoption
-  evidence. Any implementation pin requires a separate ADR 0010 review.
+  That source-inspection checkpoint alone did not establish installation or
+  interoperability. The subsequent exact `a2a-sdk[http-server]==1.3.0`
+  dependency decision belongs to ADR 0099; the checkpoint is not an instruction
+  to select a different SDK or update the pin.
 
 ## AsyncAPI
 

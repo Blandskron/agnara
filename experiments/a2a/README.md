@@ -3,7 +3,11 @@
 This is A2A-01 evidence for [RFC 0010](../../docs/rfc/0010-a2a-initial-projection.md),
 not an Agnara adapter or application example. The
 [report](../../docs/research/a2a-initial-feasibility.md) owns conclusions and limits.
-No `agnara_a2a` API is added. The workspace environment does not need the SDK.
+This probe adds no `agnara_a2a` API and uses its own isolated SDK environment.
+The current checkout separately declares the adapter's SDK dependency and
+provisional exports under [ADR 0099](../../docs/adr/0099-a2a-provisional-public-surface.md).
+Use the [current guide](../../docs/A2A_SERVICE.md) for application instructions;
+the retained experiment does not own current package status.
 
 Run from the repository root on conventional CPython 3.14. The retained run
 used Windows 11 and Python 3.14.4 with the GIL enabled; no other OS or

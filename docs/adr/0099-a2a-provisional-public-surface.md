@@ -97,16 +97,17 @@ nothing new.
 
 ## Alternatives
 
-- **Classify the exports `stable`:** rejected by the maintainer. The profile is
-  one week old, its ADR is still Proposed, and no installed-wheel or
-  cross-platform evidence exists yet.
+- **Classify the exports `stable`:** rejected by the maintainer. At that
+  decision point, installed-wheel and cross-platform evidence was not yet
+  available. The subsequent bounded evidence below does not itself promote
+  stability; the profile's ADR remains Proposed.
 - **Return a Starlette application instead of a plain ASGI callable:** rejected.
   It would make Starlette part of the published return type.
 - **Accept a mapping of skills per surface:** rejected by ADR 0098 D2.
 - **Take a token verifier instead of a principal resolver:** rejected.
   Authentication stays at the host boundary, as for HTTP and MCP.
 
-## Remaining evidence (A2A-04b)
+## Evidence and remaining decisions (A2A-04b)
 
 [A2A-04b1](https://github.com/Blandskron/agnara/issues/705) adds the
 [runnable guide](../A2A_SERVICE.md) and an exact-example installed-wheel
@@ -115,9 +116,9 @@ and keeps the surface provisional and experimental.
 [A2A-04b2](https://github.com/Blandskron/agnara/issues/707) measures a pinned
 Uvicorn/h11 fixture over real loopback TCP, including peer disconnects and
 graceful shutdown; see the [guide](../A2A_SERVICE.md#real-loopback-host-evidence).
-That host relies on kernel deadlines after a post-entry disconnect. Immediate
-disconnect cancellation, production host policy and any later maturity
-promotion remain separate work.
+Without the optional recipe below, that host relies on kernel deadlines after
+a post-entry disconnect. Production host policy and any later maturity
+promotion remain separate decisions.
 
 [Proposed ADR 0100](0100-opt-in-host-disconnect-cancellation.md) records the
 host-policy alternatives and the reviewed application-owned option. The

@@ -197,8 +197,10 @@ tool. Check existing architecture and migration costs before recommending it.
 
 ## Limitations
 
-There is no ORM, built-in LLM reasoning, A2A/event/task runtime, WebSocket
-projection or verified free-threaded support. CORS, compression and static
+There is no ORM, built-in LLM reasoning, event-bus adapter, durable task runtime,
+WebSocket projection or verified free-threaded support. The unreleased A2A
+complete-result projection is experimental and provisional, as described above;
+it does not implement A2A tasks or streaming. CORS, compression and static
 assets are owned by the surrounding ASGI/proxy layer. Do not promise full MCP
 conformance, distributed idempotency from the in-memory store, or production
 readiness based solely on a classifier. The [maturity matrix](MATURITY.md)

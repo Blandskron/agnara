@@ -22,7 +22,9 @@ reasoning engine or task scheduler are implied by an A2A adapter.
 
 ## Research checkpoint and source hierarchy
 
-The checkpoint was read on 2026-10-28. Keep these identities separate:
+The initial checkpoint was read on 2026-10-28. Its source-inspection status is
+not the current installation or dependency decision; ADR 0099 subsequently
+selected `a2a-sdk[http-server]==1.3.0`. Keep these identities separate:
 
 | Identity | Inspected source | Meaning here |
 | --- | --- | --- |
@@ -208,7 +210,11 @@ contains implementations. No implementation pin is chosen by this RFC.
 [ADR 0098](../adr/0098-a2a-complete-result-projection.md) proposes answers for
 the first profile; #695 exercises it and #701 adds the provisional public
 surface under [ADR 0099](../adr/0099-a2a-provisional-public-surface.md).
-A2A-04b evidence and broader support remain pending.
+The [current guide](../A2A_SERVICE.md) links A2A-04b's runnable example,
+installed candidate-wheel consumers and bounded Uvicorn/h11 loopback evidence.
+It also documents the opt-in application-owned disconnect recipe under proposed
+ADR 0100. These fixtures do not settle broader host/protocol support or promote
+the provisional exports to stable; those remain separate maintainer decisions.
 [RFC 0005](0005-protocol-neutral-delegation.md) owns delegation and
 [RFC 0009](0009-streaming-model.md) owns the protocol-neutral streaming
 questions; this proposal does not settle either by adopting SDK defaults.
