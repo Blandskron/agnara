@@ -12,6 +12,11 @@ from agnara_cli._command import CommandResult
 from agnara_cli._manifest import ManifestError, ProjectManifest
 
 _ADAPTERS = {"http": "agnara-http", "mcp": "agnara-mcp"}
+_UNCHECKED_EXPOSURE_MESSAGES = {
+    "a2a": "adapter metadata checks are not implemented for this declared exposure",
+    "events": "reserved namespace; no implemented Agnara event runtime",
+    "tasks": "no implemented Agnara task runtime",
+}
 _UNCHECKED = (
     "project_python_constraint",
     "application_imports",
@@ -123,7 +128,7 @@ def run_doctor(arguments: argparse.Namespace) -> CommandResult:
                     {
                         "id": f"exposure:{exposure}",
                         "status": "fail",
-                        "message": "no implemented Agnara runtime for this declared exposure",
+                        "message": _UNCHECKED_EXPOSURE_MESSAGES[exposure],
                     }
                 )
             else:

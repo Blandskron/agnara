@@ -7,6 +7,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Correct `agnara doctor` exposure messages: A2A reports missing diagnostic
+  coverage, Events reports a reserved namespace and Tasks reports an absent
+  runtime. Preserve failing checks, exit codes, report format and read-only
+  behavior regardless of installed adapter metadata.
+
 - Synchronize active A2A guidance with the unreleased provisional surface,
   completed guide/artifact/host evidence and optional application-owned
   disconnect recipe. Preserve the published 1.0.3 boundary and experimental

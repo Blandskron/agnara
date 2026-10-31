@@ -125,17 +125,48 @@ def test_metadata_absence_and_synchronized_version_refusal(
         assert checks(document)[f"distribution:{distribution}"]["status"] == "fail"
 
 
-@pytest.mark.parametrize("exposure", ["a2a", "events", "tasks"])
-def test_reserved_or_missing_runtime_is_not_inferred_from_installed_metadata(
-    project: Path, installed, capsys: pytest.CaptureFixture[str], exposure: str
+@pytest.mark.parametrize(
+    ("exposure", "message"),
+    [
+        ("a2a", "adapter metadata checks are not implemented for this declared exposure"),
+        ("events", "reserved namespace; no implemented Agnara event runtime"),
+        ("tasks", "no implemented Agnara task runtime"),
+    ],
+)
+@pytest.mark.parametrize("has_metadata", [False, True])
+@pytest.mark.parametrize("as_json", [False, True])
+def test_unchecked_exposures_explain_coverage_without_inferring_runtime_from_metadata(
+    project: Path,
+    installed,
+    capsys: pytest.CaptureFixture[str],
+    exposure: str,
+    message: str,
+    has_metadata: bool,
+    as_json: bool,
 ) -> None:
     manifest = project / "agnara.toml"
     manifest.write_text(MANIFEST.replace('["http", "mcp"]', f'["{exposure}"]'), encoding="utf-8")
-    installed[0][f"agnara-{exposure}"] = "1.0.3"
-    code, document = report(project, capsys)
+    if has_metadata:
+        installed[0][f"agnara-{exposure}"] = "1.0.3"
+    arguments = ["doctor", "--project", str(project)]
+    if as_json:
+        arguments.append("--json")
+    code = main(arguments)
+    captured = capsys.readouterr()
     assert code == EXIT_FAILED
-    check = checks(document)[f"exposure:{exposure}"]
-    assert check["status"] == "fail" and "no implemented" in check["message"]
+    assert captured.err == ""
+    if as_json:
+        document = json.loads(captured.out)
+        assert document["format"] == "agnara.doctor" and document["format_version"] == 1
+        assert document["status"] == "fail"
+        assert checks(document)[f"exposure:{exposure}"] == {
+            "id": f"exposure:{exposure}",
+            "status": "fail",
+            "message": message,
+        }
+    else:
+        assert "doctor commerce: fail" in captured.out
+        assert f"[fail] exposure:{exposure}: {message}" in captured.out
     assert f"agnara-{exposure}" not in installed[1]
 
 
@@ -270,14 +301,25 @@ def test_argument_errors_keep_the_existing_usage_exit(capsys: pytest.CaptureFixt
     assert "unrecognized arguments" in capsys.readouterr().err
 
 
-def test_fresh_interpreter_imports_no_application_or_adapter(project: Path) -> None:
+@pytest.mark.parametrize("unchecked_exposures", [False, True])
+def test_fresh_interpreter_imports_no_application_or_adapter(
+    project: Path, unchecked_exposures: bool
+) -> None:
+    if unchecked_exposures:
+        (project / "agnara.toml").write_text(
+            MANIFEST.replace('["http", "mcp"]', '["http", "mcp", "a2a", "events", "tasks"]'),
+            encoding="utf-8",
+        )
     script = """
 import importlib.abc
 import sys
 
 class RefuseImports(importlib.abc.MetaPathFinder):
     def find_spec(self, fullname, path=None, target=None):
-        if fullname.split('.')[0] in {'commerce', 'agnara_http', 'agnara_mcp'}:
+        if fullname.split('.')[0] in {
+            'commerce', 'agnara_http', 'agnara_mcp', 'agnara_a2a', 'agnara_events',
+            'a2a', 'mcp',
+        }:
             raise AssertionError(f'doctor attempted forbidden import: {fullname}')
 
 sys.meta_path.insert(0, RefuseImports())
@@ -291,5 +333,13 @@ raise SystemExit(main(['doctor', '--project', sys.argv[1], '--json']))
         timeout=30,
         check=False,
     )
-    assert completed.returncode == EXIT_OK, completed.stderr
-    assert json.loads(completed.stdout)["status"] == "pass"
+    expected_exit = EXIT_FAILED if unchecked_exposures else EXIT_OK
+    assert completed.returncode == expected_exit, completed.stderr
+    document = json.loads(completed.stdout)
+    assert document["status"] == ("fail" if unchecked_exposures else "pass")
+    if unchecked_exposures:
+        assert [check["id"] for check in document["checks"] if check["status"] == "fail"] == [
+            "exposure:a2a",
+            "exposure:events",
+            "exposure:tasks",
+        ]

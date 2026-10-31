@@ -22,8 +22,16 @@ the existing strict manifest and performs only these checks:
 - declared app directories exist inside the project after path resolution;
 - `agnara`, `agnara-cli` and declared HTTP/MCP distribution metadata exist
   with non-empty version strings matching the installed kernel version;
-- declared A2A, Events and Tasks exposures are reported as lacking an
-  implemented runtime, irrespective of reserved package installation.
+- declared A2A exposures fail with an explanation that adapter metadata checks
+  are not implemented by this diagnostic; they do not imply the provisional
+  adapter has no runtime;
+- Events exposures fail as a reserved namespace without an implemented event
+  runtime; Tasks exposures fail because no task runtime is implemented.
+
+The latter checks do not inspect installed adapter metadata. Installing a
+distribution does not make an unchecked exposure pass. These messages preserve
+the failure status while distinguishing diagnostic coverage from framework
+implementation status; they do not enable provisional A2A metadata checks.
 
 No application module, adapter or SDK is imported. No source file is read
 to infer registration or architecture. No dependency is installed, project
