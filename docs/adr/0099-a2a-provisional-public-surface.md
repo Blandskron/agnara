@@ -120,5 +120,6 @@ disconnect cancellation, production host policy and any later maturity
 promotion remain separate work.
 
 [Proposed ADR 0100](0100-opt-in-host-disconnect-cancellation.md) records the
-host-policy alternatives, isolated prototype evidence and a future recipe
-scope. It adds no public implementation or default behavior change.
+host-policy alternatives and the reviewed application-owned option. The
+[recipe](../A2A_SERVICE.md#try-the-opt-in-recipe) and its installed-wheel/host
+evidence remain outside the package's public API and do not change its default.

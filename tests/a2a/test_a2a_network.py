@@ -59,7 +59,7 @@ class Observation:
         self.effects.append(event)
 
 
-def compose(url: str, state: Observation, timeout: float):
+def compose(url: str, state: Observation, timeout: float, *, max_body_bytes: int = 1 << 20):
     app = Agnara("network")
 
     @provider(scope=Scope.SINGLETON)
@@ -118,6 +118,7 @@ def compose(url: str, state: Observation, timeout: float):
         principals=lambda scope: scope.get("fixture.principal"),
         challenge='Bearer realm="loopback"',
         timeout=timeout,
+        max_body_bytes=max_body_bytes,
     )
     return application, container
 
@@ -132,7 +133,7 @@ class TestServer(uvicorn.Server):
 
 
 @asynccontextmanager
-async def serve(*, timeout: float = 0.5, wrap=None):
+async def serve(*, timeout: float = 0.5, wrap=None, max_body_bytes: int = 1 << 20):
     """Own listener, server task and lifespan/container on one event loop."""
     state = Observation()
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -147,7 +148,7 @@ async def serve(*, timeout: float = 0.5, wrap=None):
         nonlocal application
         if scope["type"] == "lifespan":
             assert (await receive())["type"] == "lifespan.startup"
-            application, container = compose(url, state, timeout)
+            application, container = compose(url, state, timeout, max_body_bytes=max_body_bytes)
             if wrap is not None:
                 application = wrap(application)
             state.lifecycle.append("lifespan.start")

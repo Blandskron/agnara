@@ -23,9 +23,10 @@ contract is required to investigate it.
 
 Recommend an **explicit host-owned policy around a dedicated A2A ASGI
 surface**, while retaining the current deadline-owned adapter behavior by
-default. This proposal and its isolated prototype do not ship a supported
-wrapper, application recipe or public API. Maintainer review is required
-before a later implementation slice teaches an opt-in application pattern.
+default. The initial proposal/prototype was reviewed in PR #710; follow-up
+Issue #711 provides a copyable application-owned recipe and exact-source
+installed-wheel/host evidence. This is not a supported framework wrapper or
+public API, and it does not change this record's `Proposed` status.
 
 ### D1 — Composition and authority
 
@@ -36,7 +37,7 @@ policy and classifies no business failure. The adapter and kernel retain all
 their existing authentication, materialization, authorization, DI and output
 contracts. Discovery metadata never grants authority.
 
-The experiment wraps only HTTP POST calls to the dedicated surface. GET/card
+The application recipe wraps only HTTP POST calls to the dedicated surface. GET/card
 and lifespan traffic pass through with the original callables. It does not
 claim support for other middleware stacks, generic HTTP streaming, WebSockets,
 MCP, A2A tasks or other hosts and bindings.
@@ -74,7 +75,7 @@ structured owner; no detached watcher or global connection registry is used.
 The outer host may suppress only the `CancelledError` it deliberately caused
 for a disconnected peer. Cancellation of the outer request owner still
 propagates, including when it races with disconnect-triggered cleanup.
-Non-cancellation exceptions propagate through `TaskGroup`; the experiment does
+Non-cancellation exceptions propagate through `TaskGroup`; the recipe does
 not serialize their diagnostics or turn them into a canonical business error.
 An infrastructure error-response/logging policy remains the host's concern.
 
@@ -98,7 +99,7 @@ remote client consumed or persisted the response.
 Cancellation is cooperative. The policy cannot interrupt blocking synchronous
 code or force a handler/provider that suppresses cancellation to terminate.
 The kernel deadline and host shutdown ownership remain independent safeguards;
-the prototype adds no replacement timeout. Body size bounds do not establish
+the recipe adds no replacement timeout. Body size bounds do not establish
 a read-time bound for a slow peer; hosts still own appropriate admission and
 read/shutdown timeouts.
 
@@ -111,52 +112,51 @@ transactional guarantee.
 
 ## Evidence and boundaries
 
-The stdlib-only [prototype](../../experiments/a2a/disconnect_policy.py) lives
-outside every shipped package and application example. Nothing in the public
-manifest, builder, dependencies or runtime defaults changes. It has no
-production stability or host-support promise.
+The [original prototype checkpoint](https://github.com/Blandskron/agnara/blob/46307ea2635b6c7799ec92d1afab87e4308a4205/experiments/a2a/disconnect_policy.py)
+was isolated research under #709. The implementation now lives once, in the
+application-owned [recipe source](../../examples/a2a_disconnect.py), following
+review of PR #710 and the maintainer's continuation in #711. No shipped package
+imports it; there is no public manifest/builder/dependency/default change.
 
-[Synthetic and loopback tests](../../tests/a2a/test_disconnect_policy_experiment.py)
-cover no-read refusal, pass-through traffic, event identity/order, bounded
-prefetch with a single reader, application/receive/send errors, external
-cancellation including a race during policy-triggered cleanup, and a completed
-response followed by a late disconnect. Tests assert that owned tasks end.
+[Recipe tests](../../tests/a2a/test_a2a_disconnect_recipe.py) retain no-read
+refusal, pass-through traffic, event identity/order, bounded prefetch with a
+single reader, application/receive/send errors, outer cancellation during
+peer-triggered cleanup, completed-response cleanup and joined tasks.
 
-The existing pinned Uvicorn/h11 fixture additionally drives real mid-body and
-post-entry socket closes with the prototype explicitly installed. Its kernel
-deadline is 30 seconds, beyond the fixture's outer 15-second bound (and the
-test's 10-second bound), so success requires peer-triggered cleanup rather
-than eventual kernel timeout. The tests inspect handler/provider cleanup,
-absence of a fabricated timeout reply, and a subsequent official-client call.
-Real-host refusals additionally preserve HTTP 401 without an ASGI body read,
-invalid input and policy denial before effects, and verified principal mapping.
-The unwrapped host tests continue to assert the original deadline behavior.
-CI on its final commit is the authority for cross-platform evidence; this
-record itself does not certify a platform or production deployment.
+The real Uvicorn/h11 tests use the recipe explicitly for mid-body/post-entry
+socket closes with a 30-second kernel deadline beyond the outer fixture/test
+bounds. Passing requires peer-triggered cleanup, not deadline expiry. The
+unwrapped host tests retain the original deadline-owned behavior.
+
+The [installed-source consumer](../../tests/reference_apps/a2a_disconnect_guide.py)
+copies the exact recipe, demonstration and pinned host fixture outside the
+checkout and runs under Python `-I` against installed candidate wheels. It
+checks ordinary outcomes/redaction/cleanup, real socket disconnects, 401 without
+a body read, invalid input, policy denial, a body limit before effects, recovery
+and graceful draining before container close. CI on its final commit owns the
+cross-platform evidence. This record does not certify a platform or deployment.
 
 ## Alternatives
 
 | Option | Benefit | Cost / disposition |
 | --- | --- | --- |
 | Deadline-only adapter behavior | Smallest ownership model; preserves current callers and semantics. | Work can continue until its cooperative deadline after a peer leaves. Retained as the default. |
-| Explicit host-owned policy | Host controls receive ownership, deployment and effects policy without changing Agnara's public API. | Two owned tasks per monitored request and coordination with other receive consumers. Recommended for a separately reviewed opt-in pattern, backed by this reversible experiment. |
+| Explicit host-owned policy | Host controls receive ownership, deployment and effects policy without changing Agnara's public API. | Two owned tasks per monitored request and coordination with other receive consumers. Recommended for a separately reviewed opt-in pattern, backed by the reviewed recipe and its bounded evidence. |
 | Adapter/builder flag | A single adapter could govern and test a reusable option. | Adds a public contract and assumptions about upstream receive consumers, middleware and host cancellation. Deferred until host evidence and an API need justify it. |
 | Core disconnect handling | Could appear uniform across transports. | A socket/ASGI event is protocol-specific, while core already propagates task cancellation. Rejected: no protocol dependency or new request type belongs in the kernel. |
 
 No task/transport facade, core cancellation token or automatic classification
-from capability metadata is introduced by selecting the host experiment.
+from capability metadata is introduced by selecting the host recipe.
 
-## Follow-up implementation scope
+## Implementation boundary and remaining decisions
 
-1. Maintainer reviews the policy choice, receive ownership and effect/race
-   limits in this Proposed record. Acceptance is a separate maintainer action.
-2. If approved, create a scoped Issue for an application-owned recipe using
-   governed imports. It must not import the experiment or change the existing
-   builder's default; a new public export would require its own API proposal.
-3. Validate that exact recipe from installed candidate wheels and over the
-   pinned real host, including refusal before body reads, body limits,
-   cancellation/error races, response completion and host shutdown. Keep the
-   ordinary unwrapped host tests as a regression contract.
-4. Only then consider any broader host/support or maturity decision on its
-   own evidence. This proposal does not promote A2A beyond provisional and
-   `EXPERIMENTAL`.
+Issue #711 implements the reviewed application-owned scope: a copyable module,
+explicit composition hook, unchanged default, retained ownership/race tests and
+exact installed-wheel/host evidence. It does not import the historical
+experiment or add a package export. A new public export or builder option would
+require its own API proposal.
+
+Any formal status change for this record, broader host/support declaration or
+maturity promotion remains a separate maintainer decision based on deployment
+requirements and reproducible evidence. Application examples do not create a
+stable framework contract. A2A stays provisional and `EXPERIMENTAL`.

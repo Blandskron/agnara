@@ -17,6 +17,7 @@ HOST_GUIDES = ("starlette_embedding.py", "litestar_embedding.py", "django_embedd
 ADDITIONAL_GUIDES = ("fastapi_embedding.py", "sqlite_persistence.py")
 STRUCTURED_GUIDES = (
     ("a2a_service.py", "a2a_guide.py", "A2A_GUIDE_ARTIFACT_OK"),
+    ("a2a_disconnect.py", "a2a_disconnect_guide.py", "A2A_DISCONNECT_RECIPE_ARTIFACT_OK"),
     ("direct_streaming.py", "direct_streaming_guide.py", "DIRECT_STREAMING_GUIDE_ARTIFACT_OK"),
     ("mcp_tools.py", "mcp_guide.py", "MCP_GUIDE_ARTIFACT_OK"),
     ("http_sse.py", "sse_guide.py", "SSE_GUIDE_ARTIFACT_OK"),
@@ -178,6 +179,7 @@ def test_reference_apps_run_from_fresh_installed_artifacts(tmp_path: Path) -> No
             str(python),
             "mcp==2.2.0",
             "a2a-sdk[http-server]==1.3.0",
+            "uvicorn==0.52.4",
             "opentelemetry-api>=1.44,<2",
             "opentelemetry-sdk==1.45.1",
             "fastapi==0.141.1",
@@ -208,6 +210,10 @@ def test_reference_apps_run_from_fresh_installed_artifacts(tmp_path: Path) -> No
     )
 
     shutil.copytree(REFERENCE_APPS, consumers)
+    shutil.copy2(
+        WORKSPACE_ROOT / "tests" / "a2a" / "test_a2a_network.py",
+        consumers / "a2a_network_fixture.py",
+    )
     for guide in (*HOST_GUIDES, *ADDITIONAL_GUIDES):
         shutil.copy2(WORKSPACE_ROOT / "examples" / guide, consumers / guide)
     for guide, _, _ in STRUCTURED_GUIDES:

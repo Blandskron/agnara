@@ -26,6 +26,7 @@ EXECUTABLE: tuple[tuple[str, str], ...] = (
     ("README.md", "Quick start"),
     ("packages/agnara/README.md", "Quick start"),
     ("packages/agnara-mcp/README.md", "Execution plans"),
+    ("docs/A2A_SERVICE.md", "Try the opt-in recipe"),
 )
 
 

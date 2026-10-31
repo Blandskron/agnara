@@ -7,7 +7,7 @@ The published 1.0.3 A2A wheel cannot run this example. See docs/A2A_SERVICE.md.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator, Callable, Mapping
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -61,8 +61,10 @@ async def lifespan(application: Any, events: list[str]) -> AsyncIterator[None]:
 
 
 @asynccontextmanager
-async def connect(events: list[str]) -> AsyncIterator[tuple[httpx.AsyncClient, JsonRpcTransport]]:
-    """Compose one capability and own client, lifespan and DI cleanup."""
+async def connect(
+    events: list[str], *, wrap: Callable[[Any], Any] | None = None
+) -> AsyncIterator[tuple[httpx.AsyncClient, JsonRpcTransport]]:
+    """Compose and own the service; optionally install an application-owned wrapper."""
     app = Agnara("catalog")
 
     @provider(scope=Scope.SINGLETON)
@@ -106,6 +108,8 @@ async def connect(events: list[str]) -> AsyncIterator[tuple[httpx.AsyncClient, J
             challenge=CHALLENGE,
             timeout=2,
         )
+        if wrap is not None:
+            application = wrap(application)
 
         async def host(scope: Any, receive: Any, send: Any) -> None:
             # Toy authentication at the host boundary, not production token
@@ -177,9 +181,9 @@ async def rpc(http: httpx.AsyncClient, data: dict[str, Any], **options: Any) -> 
     return response.json()
 
 
-async def demonstrate() -> dict[str, Any]:
+async def demonstrate(*, wrap: Callable[[Any], Any] | None = None) -> dict[str, Any]:
     events: list[str] = []
-    async with asyncio.timeout(10), connect(events) as (http, client):
+    async with asyncio.timeout(10), connect(events, wrap=wrap) as (http, client):
         missing = await http.post("/", content=b"{", headers={"Authorization": "unknown"})
         results = {
             "invalid_input": await rpc(http, {"quantity": "bad"}),

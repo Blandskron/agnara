@@ -79,24 +79,19 @@ retains one successful run on the same Windows/Python 3.14.4 environment as
 A2A-01, with source hashes. Expected SDK refusal diagnostics appear on stderr.
 The fixture is not an `agnara-a2a` API, example or support claim.
 
-## Proposed host disconnect policy
+## Host disconnect policy checkpoint
 
-[disconnect_policy.py](disconnect_policy.py) is a separate, stdlib-only
-prototype for [Proposed ADR 0100](../../docs/adr/0100-opt-in-host-disconnect-cancellation.md).
-It does not extend the earlier SDK experiment or change `requirements.lock`.
-Run its synthetic and real-loopback tests using the current workspace's
-pinned A2A/Uvicorn development environment:
+The [original prototype](https://github.com/Blandskron/agnara/blob/46307ea2635b6c7799ec92d1afab87e4308a4205/experiments/a2a/disconnect_policy.py)
+for [ADR 0100](../../docs/adr/0100-opt-in-host-disconnect-cancellation.md) is
+preserved in Git. Following review of PR #710, its implementation moved to the
+application-owned [companion module](../../examples/a2a_disconnect.py) in #711;
+there is no duplicate implementation or experiment import in application code.
+Use the [current guide](../../docs/A2A_SERVICE.md#try-the-opt-in-recipe) and
+[recipe tests](../../tests/a2a/test_a2a_disconnect_recipe.py) for the reviewed
+pattern and exact installed-wheel/host evidence.
 
-```bash
-uv sync --locked
-uv run pytest tests/a2a/test_disconnect_policy_experiment.py tests/a2a/test_a2a_network.py
-```
-
-The experiment lazily owns the receive stream, passes body events through a
-bounded FIFO and joins its application/pump tasks. It cancels pending work on
-a peer disconnect without waiting for the kernel deadline, preserves outer
-cancellation/errors, and leaves completed-response cleanup alone. No shipped
-package or runnable application imports it. Keep the unwrapped network tests:
-they prove the public adapter's existing deadline-owned behavior still holds.
-The ADR proposes a host policy and a future scope; it does not ship or approve
-a production wrapper, new API, support claim or maturity promotion.
+This movement changes neither the A2A-01/03 experiment locks nor the adapter's
+default behavior, public exports, protocol or support status. Keep the unwrapped
+network tests as evidence of deadline-owned cleanup. The recipe is optional
+application code with cooperative cancellation and effect limits, not a shipped
+framework integration or maturity promotion.

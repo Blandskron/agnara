@@ -113,16 +113,58 @@ disconnect requires a separately designed policy that owns and joins that work.
 The deadline remains cooperative; it does not roll back completed effects or
 interrupt a blocking synchronous handler.
 
-[Proposed ADR 0100](adr/0100-opt-in-host-disconnect-cancellation.md) compares
-host-policy options and an isolated receive/cancellation prototype. It is a
-design proposal, not a public wrapper or application recipe; the unwrapped
-adapter behavior described above remains unchanged.
+## Try the opt-in recipe
+
+The application-owned companion [a2a_disconnect.py](../examples/a2a_disconnect.py)
+implements the host option reviewed in
+[ADR 0100](adr/0100-opt-in-host-disconnect-cancellation.md). It uses only the
+standard library. Copy that source into the application's host boundary and
+choose explicitly whether to wrap the dedicated ASGI app returned by
+`build_a2a_app`. It is not an export of `agnara_a2a` or a builder option.
+
+The ordinary command above still runs without the wrapper. From this
+checkout, the following complete program exercises the explicit opt-in:
+
+```python
+import asyncio
+
+from examples.a2a_disconnect import cancel_on_disconnect
+from examples.a2a_service import demonstrate
+
+outcome = asyncio.run(demonstrate(wrap=cancel_on_disconnect))
+assert outcome["results"]["valid"]["message"]["parts"][0]["data"]["result"] == 30
+assert outcome["rejected_effects"] == []
+assert outcome["events"][-3:] == ["lifespan.close", "pool.close", "container.close"]
+```
+
+`wrap` belongs to the demonstration's composition helper; do not add it to
+`build_a2a_app`. The host still verifies identity and places its principal in
+the scope before calling the wrapped app. The recipe never reads credentials,
+changes authority, chooses capabilities or inspects JSON. It begins its single
+receive pump only when the app first requests input, preserving a 401 without
+an ASGI body read. It passes original events in order through one bounded slot.
+
+With the recipe installed, observing a peer disconnect cancels the pending
+application task and joins its cleanup. A completed response wins over a later
+disconnect; external cancellation and errors still propagate. GET/card and
+lifespan calls pass through. Without the recipe, the pinned host continues to
+rely on the kernel deadline after a post-entry peer disconnect.
+
+This is a copyable application pattern, not a framework integration or stable
+export. Cancellation remains cooperative and does not roll back effects. A
+consumer that abandons an incomplete body with a full slot can delay disconnect
+detection; the A2A gate consumes the body before invoking a capability. Host
+chunk/body/read/shutdown limits and application persistence/retry policy remain
+necessary. The recipe does not certify arbitrary middleware, hosts or production
+deployment. ADR 0100 remains `Proposed`; no stability or maturity promotion is
+implied by this example.
 
 ## Verification and limits
 
 ```bash
 uv run pytest tests/docs/test_a2a_service_example.py tests/a2a
 uv run pytest tests/a2a/test_a2a_network.py
+uv run pytest tests/a2a/test_a2a_disconnect_recipe.py tests/release/test_a2a_disconnect_recipe_artifact.py
 uv run pytest tests/release/test_integrated_dogfooding.py
 uv run python scripts/check_public_imports.py examples/a2a_service.py docs/A2A_SERVICE.md
 ```
@@ -134,6 +176,14 @@ wire values, failure categories, redaction, fresh message IDs, absence of
 effects on refusal, and the complete cleanup sequence. The existing required
 Linux/macOS/Windows test matrix runs that gate; it does not install a public
 index substitute for a candidate Agnara wheel.
+
+The [recipe consumer](../tests/reference_apps/a2a_disconnect_guide.py) copies
+the exact companion module and A2A demonstration into that same isolated
+environment and runs them under Python `-I`. It also runs the copied pinned
+Uvicorn fixture over real TCP: mid-body/post-entry disconnect, refusal without
+a body read, a 413 body limit before effects, recovery and graceful shutdown.
+It checks actual wire outcomes, effects, resource closure and teardown order.
+The fixture is test evidence, not a server implementation users must import.
 
 The runnable example and installed-wheel consumer remain in-process evidence;
 the network suite separately measures the pinned Uvicorn/h11 fixture above.
