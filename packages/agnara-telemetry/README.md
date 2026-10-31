@@ -16,6 +16,10 @@ not by this file: a README ships inside the artifact and cannot describe
 the state of a publication that happens after it is built.
 
 It imports `agnara` and `opentelemetry-api`, never a sibling adapter or the SDK.
+The unreleased checkout requires `opentelemetry-api>=1.45.1,<2`, excluding the
+API versions affected by [GHSA-xcq7-p3pf-p88h](https://github.com/advisories/GHSA-xcq7-p3pf-p88h).
+This dependency floor does not add header extraction: applications still own
+propagation and deployment limits. It does not change published 1.0.3 artifacts.
 
 ## Composition
 

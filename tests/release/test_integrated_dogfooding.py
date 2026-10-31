@@ -180,7 +180,7 @@ def test_reference_apps_run_from_fresh_installed_artifacts(tmp_path: Path) -> No
             "mcp==2.2.0",
             "a2a-sdk[http-server]==1.3.0",
             "uvicorn==0.52.4",
-            "opentelemetry-api>=1.44,<2",
+            "opentelemetry-api>=1.45.1,<2",
             "opentelemetry-sdk==1.45.1",
             "fastapi==0.141.1",
             "starlette==1.6.0",
