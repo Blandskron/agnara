@@ -86,10 +86,13 @@ All seven PyPI `1.0.3` JSON records were read on 2026-10-04: exact synchronized
 versions, Python >=3.14, no core third-party requirements, exact adapter core
 pins, MCP SDK pin and optional telemetry dependency. Current published summaries
 call reserved A2A/events packages adapters/abstractions despite their empty APIs.
-The source summaries now identify reserved namespaces truthfully and describe
-the core as a backend capability framework for applications and AI agents.
-No version, requirement, publication or PyPI artifact was changed. Updated
-source metadata reaches PyPI only through a future authorized release.
+That metadata correction identified the reserved namespaces and described the
+core as a backend capability framework for applications and AI agents; it
+changed no version, requirement, publication or PyPI artifact. The current
+checkout subsequently added the provisional A2A adapter under
+[ADR 0099](adr/0099-a2a-provisional-public-surface.md); only Events remains
+reserved. Updated source metadata reaches PyPI only through a future
+authorized release. Use [maturity](MATURITY.md) for current checkout status.
 
 The GitHub description previously advertised HTTP, MCP, A2A, events and tasks
 without qualification. The corrected description identifies implemented

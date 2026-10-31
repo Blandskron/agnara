@@ -459,8 +459,10 @@ directories resolve inside the project, and checks the executing interpreter's
 Python >=3.14 baseline. It reads installed `agnara`, `agnara-cli` and declared
 HTTP/MCP adapter distribution versions and checks exact equality with the
 installed kernel. Repeated exposure declarations share one metadata check.
-A2A, Events and Tasks declarations fail the runtime-availability check even
-when reserved distributions are installed.
+A2A, Events and Tasks declarations fail the runtime-availability check. The
+diagnostic does not inspect the unreleased provisional A2A adapter; Events
+remains reserved and a durable task runtime is absent. Installing a distribution
+does not change this command's coverage.
 
 This command imports no project or adapter code, writes no files, installs
 nothing and performs no repairs. Metadata checks do not prove adapter imports

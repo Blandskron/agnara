@@ -10,8 +10,11 @@ records its names, signatures and dependency pin.
 The profile is deliberately narrow: one capability per surface, JSON-RPC 2.0
 at A2A revision `1.0`, one immediate `Message` per `SendMessage`, and no
 tasks, streaming, push notifications, extended or signed cards. It is not a
-support claim. Network hosting, installed-wheel consumers, a runnable example
-and cross-platform CI evidence are tracked separately (A2A-04b).
+support claim. The [runnable guide](../../docs/A2A_SERVICE.md) links official-client,
+installed candidate-wheel and bounded Uvicorn/h11 loopback tests in the existing
+cross-platform CI matrix. Its optional application-owned disconnect recipe
+adds cooperative cancellation without changing adapter defaults or exports.
+Those fixtures do not certify a deployment or promote host support/stability.
 
 The adapter depends on the exact `agnara` kernel and on
 `a2a-sdk[http-server]==1.3.0`. It does not depend on sibling adapters.

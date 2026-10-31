@@ -20,9 +20,8 @@ Do not accumulate completed-task chronology in this file.
 
 ## Maintenance
 
-- [~] Add the reviewed opt-in application-owned disconnect recipe and exact
-  installed-wheel/real-host evidence (#711). Preserve the builder default and
-  provisional status.
+- [ ] Correct `agnara doctor` messages that confuse missing diagnostic coverage
+  with an absent adapter runtime (#714), preserving read-only checks and exits.
 - [ ] Make any broader A2A host/support or stability decision separately from
   a copyable application recipe, using its exact evidence and deployment limits.
 

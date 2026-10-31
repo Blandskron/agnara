@@ -119,8 +119,11 @@ The HTTP/ASGI, OpenAPI, MCP, CLI and OpenTelemetry functionality lives in
 separate distributions -- `agnara-http`, `agnara-mcp`, `agnara-cli` and
 `agnara-telemetry` -- and is not bundled into this standard-library-only
 kernel. Each is versioned in step with this one; check its PyPI project page
-for the versions available to install. Events and A2A remain zero-API reserved
-namespaces.
+for the versions available to install. Events remains a zero-API reserved
+namespace. The published 1.0.3 A2A wheel also has no runtime API; this checkout
+adds an unreleased, experimental projection with provisional exports in
+`agnara-a2a`. See the [A2A guide](../../docs/A2A_SERVICE.md) for its exact
+evidence and limits before using that separate adapter.
 
 ## Frozen value semantics
 
