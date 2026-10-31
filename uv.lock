@@ -144,7 +144,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "agnara", editable = "packages/agnara" },
-    { name = "opentelemetry-api", specifier = ">=1.44,<2" },
+    { name = "opentelemetry-api", specifier = ">=1.45.1,<2" },
 ]
 
 [[package]]

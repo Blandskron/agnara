@@ -12,6 +12,13 @@ to a compiled execution plan. It uses the core's public telemetry contracts,
 without an exporter, network connection or protocol adapter. Its trusted local
 principal is a fixture, not an authentication implementation.
 
+The optional `agnara-telemetry` bridge in this unreleased checkout requires
+`opentelemetry-api>=1.45.1,<2`, the corrected API baseline for
+[GHSA-xcq7-p3pf-p88h](https://github.com/advisories/GHSA-xcq7-p3pf-p88h).
+It depends on the API only; applications own SDKs, exporters and header
+extraction. The core example below needs none of them. This requirement is
+not a change to published 1.0.3 wheels or a deployment-security assertion.
+
 Expected standard output:
 
 ```text

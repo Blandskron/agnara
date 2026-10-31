@@ -51,7 +51,7 @@
       "import_name": "agnara_telemetry",
       "role": "adapter",
       "console_scripts": [],
-      "third_party_requirements": ["opentelemetry-api>=1.44,<2"]
+      "third_party_requirements": ["opentelemetry-api>=1.45.1,<2"]
     }
   ]
 }
