@@ -100,5 +100,77 @@ def test_dependency_example_runs_outside_checkout(tmp_path: Path) -> None:
         "failed: internal_failure",
         "pools: 1; sessions: 3",
         "events: " + repr(["pool.open", *INVOCATION_EVENTS * 3, "pool.close"]),
+        "cancelled: CancelledError",
+        "cancelled pools: 1; sessions: 1",
+        "cancelled events: "
+        + repr(
+            [
+                "pool.open",
+                "session.open",
+                "reader.open",
+                "handler.enter",
+                "handler.exit",
+                "reader.close",
+                "session.close",
+                "pool.close",
+            ]
+        ),
     ]
     assert "private fixture diagnostic" not in completed.stdout + completed.stderr
+
+
+def test_dependency_example_cancellation_unwinds_before_singleton_shutdown() -> None:
+    async def run() -> None:
+        before = asyncio.all_tasks()
+        demo = await dependencies.demonstrate(cancel=True)
+        assert demo.cancelled is True
+        assert set(demo.results) == {"denied", "invalid"}
+        for name, code in (
+            ("denied", FailureCode.FORBIDDEN),
+            ("invalid", FailureCode.INVALID_INPUT),
+        ):
+            result = demo.results[name]
+            assert isinstance(result, Failure) and result.code is code
+        assert demo.events == [
+            "pool.open",
+            "session.open",
+            "reader.open",
+            "handler.enter",
+            "handler.exit",
+            "reader.close",
+            "session.close",
+            "pool.close",
+        ]
+        assert len(demo.pools) == len(demo.sessions) == len(demo.readers) == len(demo.writers) == 1
+        assert demo.readers[0].session is demo.writers[0].session is demo.sessions[0]
+        assert demo.sessions[0].pool is demo.pools[0]
+        assert demo.pools[0].closed and demo.sessions[0].closed and demo.readers[0].closed
+        assert asyncio.all_tasks() == before
+
+    asyncio.run(run())
+
+
+def test_cancellation_demo_preserves_owner_cancellation(monkeypatch) -> None:
+    original_create = asyncio.TaskGroup.create_task
+    demo = dependencies.Demonstration()
+    monkeypatch.setattr(dependencies, "Demonstration", lambda: demo)
+
+    def cancel_owner(self, coro, **kwargs):
+        owner = asyncio.current_task()
+        assert owner is not None
+        task = original_create(self, coro, **kwargs)
+        task.add_done_callback(lambda _: owner.cancel())
+        return task
+
+    monkeypatch.setattr(asyncio.TaskGroup, "create_task", cancel_owner)
+
+    async def run() -> None:
+        before = asyncio.all_tasks()
+        with pytest.raises(asyncio.CancelledError):
+            await dependencies.demonstrate(cancel=True)
+        assert demo.cancelled is False
+        assert demo.events[-4:] == ["handler.exit", "reader.close", "session.close", "pool.close"]
+        assert demo.pools[0].closed and demo.sessions[0].closed and demo.readers[0].closed
+        assert asyncio.all_tasks() == before
+
+    asyncio.run(run())

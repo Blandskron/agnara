@@ -26,6 +26,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Demonstrate dependency teardown during caller cancellation with an owned,
+  event-gated invocation. Verify reader/session cleanup before singleton shutdown
+  against installed candidate wheels and preserve cancellation of the guide's owner.
+
 - Demonstrate direct idempotency with event-gated concurrent contenders: refuse
   in-progress and unauthorized calls, then reuse the completed receipt with
   exactly one effect. Verify the exact guide against installed candidate wheels;

@@ -55,11 +55,13 @@ class Demonstration:
     readers: list[Reader] = field(default_factory=list)
     writers: list[Writer] = field(default_factory=list)
     pools: list[Pool] = field(default_factory=list)
+    cancelled: bool = False
 
 
-async def demonstrate() -> Demonstration:
+async def demonstrate(*, cancel: bool = False) -> Demonstration:
     demo = Demonstration()
     app = Agnara("storage")
+    entered = asyncio.Event()
 
     @provider(scope=Scope.SINGLETON)
     def provide_pool() -> Iterator[Pool]:
@@ -101,12 +103,18 @@ async def demonstrate() -> Demonstration:
         return writer
 
     @app.capability(scopes=("storage:write",), output=str)
-    def work(label: str, fail: bool, reader: Reader, writer: Writer) -> str:
+    async def work(label: str, fail: bool, reader: Reader, writer: Writer) -> str:
         # The two provider branches share one session within this call.
         assert reader.session is writer.session
         assert not reader.closed and not reader.session.closed
         assert not reader.session.pool.closed
         demo.events.append("handler.enter")
+        if cancel:
+            entered.set()
+            try:
+                await asyncio.Event().wait()
+            finally:
+                demo.events.append("handler.exit")
         if fail:
             raise RuntimeError("private fixture diagnostic")
         return label
@@ -136,9 +144,28 @@ async def demonstrate() -> Demonstration:
             )
             demo.results["invalid"] = await call({"label": 42, "fail": False})
             assert not demo.events
-            demo.results["first"] = await call({"label": "first", "fail": False})
-            demo.results["second"] = await call({"label": "second", "fail": False})
-            demo.results["failed"] = await call({"label": "failed", "fail": True})
+            if cancel:
+                async with asyncio.TaskGroup() as owned:
+                    caller = asyncio.current_task()
+                    assert caller is not None
+                    task = owned.create_task(call({"label": "cancelled", "fail": False}))
+                    await entered.wait()
+                    task.cancel()
+                    try:
+                        await task
+                    except asyncio.CancelledError:
+                        # Handle only the child cancellation this caller owns.
+                        # Owner/watchdog cancellation must still propagate.
+                        if caller.cancelling():
+                            raise
+                        demo.cancelled = True
+                    else:
+                        raise AssertionError("invocation cancellation must propagate")
+                assert task.cancelled()
+            else:
+                demo.results["first"] = await call({"label": "first", "fail": False})
+                demo.results["second"] = await call({"label": "second", "fail": False})
+                demo.results["failed"] = await call({"label": "failed", "fail": True})
             assert len(demo.pools) == 1 and not demo.pools[0].closed
     finally:
         # Invocations have exited; the application owns singleton teardown.
@@ -155,6 +182,11 @@ def main() -> None:
             print(f"{name}: {result.code.value}")
     print(f"pools: {len(demo.pools)}; sessions: {len(demo.sessions)}")
     print(f"events: {demo.events}")
+    cancelled = asyncio.run(demonstrate(cancel=True))
+    assert cancelled.cancelled
+    print("cancelled: CancelledError")
+    print(f"cancelled pools: {len(cancelled.pools)}; sessions: {len(cancelled.sessions)}")
+    print(f"cancelled events: {cancelled.events}")
 
 
 if __name__ == "__main__":

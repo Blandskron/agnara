@@ -117,3 +117,64 @@ def test_broken_resource_identity_is_rejected(demonstrated, case) -> None:
         changed.sessions[0].pool = deepcopy(changed.pools[0])
     with pytest.raises(AssertionError):
         validate(changed)
+
+
+@pytest.fixture(scope="module")
+def cancelled_demo():
+    return asyncio.run(run_guide(WORKSPACE_ROOT / "examples" / "dependencies.py", cancel=True))
+
+
+def test_actual_cancelled_guide_passes(cancelled_demo) -> None:
+    validate(cancelled_demo, cancelled=True)
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "unobserved_cancellation",
+        "non_boolean_cancellation",
+        "canonical_cancellation",
+        "missing_reader_close",
+        "pool_closed_early",
+        "extra_handler",
+        "reader_open",
+        "session_open",
+        "pool_open",
+        "extra_session",
+        "broken_pool",
+        "broken_reader",
+        "wrong_denial",
+        "wrong_input_path",
+    ],
+)
+def test_cancelled_consumer_rejects_broken_observations(cancelled_demo, case) -> None:
+    changed = clone(cancelled_demo)
+    if case == "unobserved_cancellation":
+        changed.cancelled = False
+    elif case == "non_boolean_cancellation":
+        changed.cancelled = 1
+    elif case == "canonical_cancellation":
+        changed.results["cancelled"] = Failure(FailureCode.INTERNAL_FAILURE, "cancelled")
+    elif case == "missing_reader_close":
+        changed.events.remove("reader.close")
+    elif case == "pool_closed_early":
+        changed.events.insert(5, changed.events.pop())
+    elif case == "extra_handler":
+        changed.events.insert(0, "handler.enter")
+    elif case in {"reader_open", "session_open", "pool_open"}:
+        collection = {"reader_open": "readers", "session_open": "sessions", "pool_open": "pools"}
+        getattr(changed, collection[case])[0].closed = False
+    elif case == "extra_session":
+        changed.sessions.append(changed.sessions[0])
+    elif case == "broken_pool":
+        changed.sessions[0].pool = deepcopy(changed.pools[0])
+    elif case == "broken_reader":
+        changed.readers[0].session = deepcopy(changed.sessions[0])
+    elif case == "wrong_denial":
+        changed.results["denied"] = replace(changed.results["denied"], code=FailureCode.CONFLICT)
+    else:
+        changed.results["invalid"] = replace(
+            changed.results["invalid"], details={"path": ("fail",)}
+        )
+    with pytest.raises(AssertionError):
+        validate(changed, cancelled=True)

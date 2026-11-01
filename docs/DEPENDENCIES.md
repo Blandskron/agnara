@@ -23,10 +23,18 @@ failed: internal_failure
 pools: 1; sessions: 3
 ```
 
-The final line lists resource events: one pool opens, each of three calls
+The default demonstration's event line lists resource events: one pool opens, each of three calls
 opens a session and reader, enters the handler, closes the reader, then closes
 the session. The pool closes last. The intentional handler exception also
 produces a redacted operator log on standard error.
+
+The program then runs an independent cancellation demonstration and prints:
+
+```text
+cancelled: CancelledError
+cancelled pools: 1; sessions: 1
+cancelled events: ['pool.open', 'session.open', 'reader.open', 'handler.enter', 'handler.exit', 'reader.close', 'session.close', 'pool.close']
+```
 
 ## Bind types before compiling plans
 
@@ -164,6 +172,27 @@ invocation does not close its shared pool. The application awaits
 release singleton resources. Drain owned calls before application shutdown;
 this example does not race shutdown with active invocations.
 
+## Cancel active work before closing the container
+
+`demonstrate(cancel=True)` uses a fresh container and fixture state. Denied and
+malformed calls still run first and acquire no resources. A task group then
+owns one authorized invocation. The handler signals entry through an event
+and suspends, so the caller can cancel it after the reader and session have
+actually opened. No timing sleep or short deadline decides when to cancel.
+
+The caller cancels and awaits that task. `invoke_result` propagates
+`CancelledError`; it does not turn cancellation into a canonical failure.
+Only this fixture caller catches its requested child cancellation and records
+`demo.cancelled = True`. If the demonstration's own caller or watchdog is
+cancelled, it re-raises rather than recording a successful demonstration.
+
+The handler exits first, followed by reader and session teardown. The task
+group joins the invocation before the outer `finally` closes the singleton
+pool. The cancellation mode returns only the initial denial/input failures
+in `demo.results`; there is no fabricated canonical cancellation result.
+The retained fixture objects prove that both provider branches shared the
+same session and that the pool, session and reader are closed on return.
+
 Authorization and input validation happen before dependency resolution.
 The first two calls deliberately fail those checks before anything opens.
 Resources therefore cannot serve as implicit authorization, and malformed
@@ -173,9 +202,12 @@ semantics.
 
 The fixtures and their event lists belong to one demonstration and one event
 loop. Real shared resources must own their synchronization and concurrency
-contract. This sequential example makes no free-threading or production
-database claim. For cancellation during handler work and asynchronous cleanup,
-see the [deadline and cancellation guide](DEADLINES.md).
+contract. The default sequence and cancellation scenario each use one event
+loop and make no free-threading, concurrent shared-resource or production
+database claim. Cancellation is cooperative and does not roll back business
+effects. These teardown fixtures perform no blocking I/O; they do not prove
+cleanup under repeated cancellation or cleanup failures. For deadlines and
+asynchronous teardown suspension, see the [deadline and cancellation guide](DEADLINES.md).
 
 ## Evidence
 
@@ -183,6 +215,17 @@ see the [deadline and cancellation guide](DEADLINES.md).
 identity, fresh sessions across calls, diamond reuse, reverse teardown on
 success/failure, redaction, application closure when caller cancellation
 propagates, no leftover tasks and bounded execution outside the checkout.
-The example uses a separate five-second demonstration watchdog and creates
-no background tasks. Existing DI compiler/resolver tests cover startup graph
-refusal and provider kinds. No runtime contract or dependency is changed.
+The cancellation tests additionally check ordered handler/invocation/singleton
+teardown and preservation of owner cancellation with no surviving tasks.
+Each demonstration has a separate five-second watchdog; the cancellation
+scenario owns and joins its invocation through a task group. Existing DI
+compiler/resolver tests cover startup graph refusal and provider kinds.
+
+The installed candidate-wheel consumer copies this exact source outside the
+checkout and runs both modes under Python `-I`. It validates refusal outcomes,
+resource identity and closed flags, the complete event trace and observed
+child cancellation. Negative proofs reject fabricated cancellation, extra
+resources, broken aliases and missing or reordered cleanup. Owner-cancellation
+preservation remains separate checkout-test evidence. See the
+[coverage matrix](INTEROPERABILITY.md#installed-candidate-wheel-guide-coverage).
+No runtime contract or dependency is changed.
