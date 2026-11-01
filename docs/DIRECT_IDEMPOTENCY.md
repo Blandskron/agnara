@@ -22,6 +22,11 @@ changed_input: conflict
 permission_lost: forbidden
 other_principal: receipt-2
 effects: [('A-1', 2500), ('A-1', 2500)]
+concurrent_first: receipt-1
+concurrent_contender: conflict
+concurrent_permission_lost: forbidden
+concurrent_duplicate: receipt-1
+concurrent_effects: [('A-1', 2500)]
 ```
 
 The duplicate returns the first receipt and retains its logical execution
@@ -29,6 +34,31 @@ identity; the handler runs once for Alice. Reusing the key with a different
 amount conflicts. Losing `orders:write` blocks reuse because policy runs again
 before the store is consulted. Bob can use the same key because his verified
 principal identity defines a separate namespace.
+
+## Observe a concurrent contender
+
+The second demonstration, `demonstrate(concurrent=True)`, uses a fresh runtime
+and process-local store on the same event loop. A task group owns the first
+invocation. Its handler signals entry, then waits on an event before recording
+the simulated effect. While that invocation holds the reservation, the caller
+awaits a second invocation with the same principal, key and fingerprint.
+
+The contender returns `FailureCode.CONFLICT` with the safe message
+`idempotency request is already in progress`. It does not wait for the receipt
+or enter the handler. This differs from the sequential changed-input conflict,
+whose message identifies a different request. An unscoped matching caller is
+still forbidden while the reservation is held: policy precedes store lookup.
+
+The caller then releases the first handler and awaits its success. A later
+duplicate reuses that receipt and logical execution identity. The refusal has
+its own execution identity; it does not disclose the holder's identity. Exactly
+one simulated effect is recorded in this second demonstration.
+
+Events establish the overlap without sleeps or a race over scheduling. A
+five-second watchdog fails the demonstration if it cannot progress. Task-group
+exit joins or cancels owned work before the runtime closes in `finally`.
+The watchdog is separate from the example's lease TTL; this does not test
+lease expiry or prove a bound on arbitrary handler or cleanup code.
 
 ## What the application owns
 
@@ -72,9 +102,13 @@ The installed candidate-wheel lane in
 `tests/release/test_integrated_dogfooding.py` copies this exact example outside
 the checkout and loads it under Python `-I`. Its consumer checks canonical
 successes and refusals, nonempty execution identities, duplicate identity reuse,
-principal isolation and the exact two effects. Negative proofs in
+principal isolation and the exact two sequential effects. It also runs the
+concurrent scenario, checking the complete in-progress refusal, denial, later
+receipt/identity reuse and exactly one effect. Negative proofs in
 `tests/release/test_direct_idempotency_guide_artifact.py` reject missing or extra
-outcomes, changed receipts, incorrect identities/refusals and extra effects.
+outcomes, changed receipts, incorrect identities/refusals, leaked holder identity
+or diagnostics, and missing or extra effects. The focused guide tests separately
+verify runtime closure and joined tasks after success, owner error and cancellation.
 
 Run the focused checks with:
 
@@ -82,8 +116,9 @@ Run the focused checks with:
 uv run pytest tests/docs/test_direct_idempotency_example.py tests/release/test_direct_idempotency_guide_artifact.py tests/release/test_integrated_dogfooding.py
 ```
 
-This is sequential process-local candidate-wheel evidence. It does not validate
-durable storage, concurrent contenders, restart recovery or HTTP/MCP selectors.
-No surviving tasks are permitted; resource-close behavior remains separate
-runtime-test evidence. See the [coverage matrix](INTEROPERABILITY.md#installed-candidate-wheel-guide-coverage)
+This is sequential and event-gated concurrent evidence in one process and one
+event loop. It does not validate threads, multiple workers, durable storage,
+lease expiry, restart recovery or HTTP/MCP selectors. No surviving tasks are
+permitted; independent runtime/resource-close checks remain checkout-test
+evidence. See the [coverage matrix](INTEROPERABILITY.md#installed-candidate-wheel-guide-coverage)
 for the shared provenance and public-import gates.
