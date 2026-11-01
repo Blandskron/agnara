@@ -97,4 +97,17 @@ This is evidence against wheels built from the reviewed candidate source,
 not against previously published PyPI artifacts. The guide consumer observes
 root identities and handler effects; it does not independently verify child
 context/identity, DI resource closure, cancellation or deadlines. Those remain
-core execution-test evidence. It adds no transport, host or delegation support.
+outside the minimal guide consumer's evidence. It adds no transport, host or
+delegation support.
+
+A separate [nested resource reference consumer](../tests/reference_apps/nested_resource_lifecycle.py)
+also runs against installed candidate wheels. Its seven cases check child
+context/identity isolation, separate invocation resources, a shared singleton,
+refusal before child resources, redacted failures and nested cancellation.
+It checks child teardown before parent resumption or unwind, then invocation
+cleanup before singleton shutdown. Its own caller's cancellation must propagate
+rather than be mistaken for the child cancellation the fixture requested.
+The deterministic owner-cancellation race is covered separately by
+[the focused tests](../tests/release/test_nested_resource_lifecycle.py).
+This fixture does not extend the guide, add deadline evidence or establish
+cross-loop/thread, transport or delegation support.

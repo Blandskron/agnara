@@ -174,15 +174,21 @@ async def run_case(case: Case) -> None:
         async with asyncio.timeout(10):
             if case == "cancelled":
                 async with asyncio.TaskGroup() as tasks:
+                    caller = asyncio.current_task()
+                    assert caller is not None
                     task = tasks.create_task(runtime.invoke_result(root))
                     await entered.wait()  # Child and both resources are active.
                     task.cancel()
                     try:
                         await task
                     except asyncio.CancelledError:
-                        pass
+                        # Handle the child cancellation this fixture requested,
+                        # preserving cancellation of the owner or watchdog.
+                        if caller.cancelling():
+                            raise
                     else:
                         raise AssertionError("nested cancellation did not propagate")
+                assert task.cancelled()
             else:
                 result = await runtime.invoke_result(root)
                 assert result.execution_id == root.execution_id and result.execution_id
