@@ -82,6 +82,16 @@ every feature or version of the host product.
 | `tests/conformance/test_host_harness.py` | Shared lifecycle, context, policy and cleanup assertions across host fixtures. | A fixture is not a support tier. |
 | `tests/integration/test_surface_agreement.py` | Direct, HTTP and MCP projections of the same capability. | Transport policy cannot weaken core policy. |
 
+The standalone consumer waits for actual producer entry before cancelling
+its stream. A task group joins that work before runtime shutdown, and its
+caller distinguishes requested child cancellation from cancellation of the
+consumer itself. Focused regressions cover owner cancellation before the join
+and at child completion, runtime-close order and no surviving tasks. The same
+self-contained consumer runs against installed candidate wheels below; those
+race regressions remain separate checkout evidence. This is cooperative local
+stream cancellation, not transport disconnect, repeated-cancellation or durable
+execution evidence.
+
 ## Installed candidate-wheel guide coverage
 
 `tests/release/test_integrated_dogfooding.py` builds all seven candidate wheels,
