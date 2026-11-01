@@ -15,8 +15,12 @@ Do not accumulate completed-task chronology in this file.
   [the research plan](docs/research/python-315-readiness.md) before changing the
   declared Python floor or CI support.
 - [ ] Define scoped RFCs for the unimplemented Events adapter, further
-  protocol projections and durable execution. Reserved distributions are not
-  completed adapters; this entry alone authorizes no runtime implementation.
+  protocol projections and durable execution. Evaluate the open
+  [Events proposal](docs/rfc/0011-event-initial-projection.md) and
+  [durable execution proposal](docs/rfc/0012-durable-execution-boundary.md)
+  through separately scoped feasibility Issues and decisions. Reserved
+  distributions are not completed adapters; this entry alone authorizes no
+  runtime implementation.
 
 ## Maintenance
 

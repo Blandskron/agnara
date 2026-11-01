@@ -20,6 +20,7 @@ superseded examples in a proposal are not application instructions.
 | 0009 | Protocol-neutral streaming | Kernel and HTTP SSE implemented by ADR 0084 and ADR 0086; other projections require separate decisions. |
 | [0010](0010-a2a-initial-projection.md) | Initial A2A projection | ADR 0098 profile and provisional ADR 0099 surface; guide, installed-wheel and bounded host evidence are linked in the A2A guide. Broader support/stability remains undecided. |
 | [0011](0011-event-initial-projection.md) | Initial event projection | Open research; proposes an inbound-consumer feasibility gate, not an implemented adapter, broker integration or public API. |
+| [0012](0012-durable-execution-boundary.md) | Durable execution boundary | Open research; proposes a single-invocation crash-recovery study, with authority revalidation and uncertain-effect reconciliation. No durable runtime or API is selected. |
 
 `RFC 9457` denotes the external IETF problem-details standard, not a local
 record. Local RFC identifiers are zero-padded to four digits. Historical
