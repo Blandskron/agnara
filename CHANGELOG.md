@@ -26,6 +26,11 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Demonstrate direct idempotency with event-gated concurrent contenders: refuse
+  in-progress and unauthorized calls, then reuse the completed receipt with
+  exactly one effect. Verify the exact guide against installed candidate wheels;
+  coverage remains limited to one process and event loop.
+
 - Add a copyable application-owned A2A disconnect recipe following the reviewed
   ADR 0100 host option. Verify its exact source against installed candidate
   wheels and real sockets, including body limits, refusal ordering, cancellation

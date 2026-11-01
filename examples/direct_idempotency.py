@@ -50,12 +50,21 @@ def fingerprint(order_id: str, amount_cents: int) -> bytes:
     return hashlib.sha256(canonical).digest()
 
 
-async def demonstrate() -> tuple[dict[str, CanonicalResult], list[tuple[str, int]]]:
+async def demonstrate(
+    *, concurrent: bool = False
+) -> tuple[dict[str, CanonicalResult], list[tuple[str, int]]]:
     app = Agnara("orders")
     effects: list[tuple[str, int]] = []
+    entered = asyncio.Event()
+    release = asyncio.Event()
 
     @app.capability(scopes=("orders:write",), idempotent=True, output=str)
-    def capture(order_id: str, amount_cents: int) -> str:
+    async def capture(order_id: str, amount_cents: int) -> str:
+        if concurrent:
+            # Hold the first reservation until the caller has observed the
+            # matching contender. Events establish overlap without sleeps.
+            entered.set()
+            await release.wait()
         # A local stand-in for one business effect; no payment is made.
         effects.append((order_id, amount_cents))
         return f"receipt-{len(effects)}"
@@ -99,6 +108,24 @@ async def demonstrate() -> tuple[dict[str, CanonicalResult], list[tuple[str, int
         alice = Principal("customer-alice", scopes={"orders:write"})
         alice_without_scope = Principal("customer-alice", scopes=set())
         bob = Principal("customer-bob", scopes={"orders:write"})
+        if concurrent:
+            # The watchdog fails the demonstration if ownership or progress
+            # breaks. It is separate from the store's example lease TTL.
+            async with asyncio.timeout(5):
+                async with asyncio.TaskGroup() as owned:
+                    first = owned.create_task(call(alice))
+                    await entered.wait()
+                    contender = await call(alice)
+                    denied = await call(alice_without_scope)
+                    release.set()
+                    completed = await first
+                outcomes = {
+                    "first": completed,
+                    "contender": contender,
+                    "permission_lost": denied,
+                    "duplicate": await call(alice),
+                }
+            return outcomes, effects
         outcomes = {
             "first": await call(alice),
             "duplicate": await call(alice),
@@ -112,14 +139,15 @@ async def demonstrate() -> tuple[dict[str, CanonicalResult], list[tuple[str, int
 
 
 async def main() -> None:
-    outcomes, effects = await demonstrate()
-    for label, outcome in outcomes.items():
-        match outcome:
-            case Success(value=value):
-                print(f"{label}: {value}")
-            case Failure(code=code):
-                print(f"{label}: {code.value}")
-    print(f"effects: {effects}")
+    for prefix, concurrent in (("", False), ("concurrent_", True)):
+        outcomes, effects = await demonstrate(concurrent=concurrent)
+        for label, outcome in outcomes.items():
+            match outcome:
+                case Success(value=value):
+                    print(f"{prefix}{label}: {value}")
+                case Failure(code=code):
+                    print(f"{prefix}{label}: {code.value}")
+        print(f"{prefix}effects: {effects}")
 
 
 if __name__ == "__main__":

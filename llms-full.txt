@@ -1676,7 +1676,8 @@ repository, run `uv sync` then `uv run python examples/<file>.py`.
 | Filtered discovery | [introspection.py](examples/introspection.py) | [test](tests/docs/test_introspection_example.py), [guide](docs/INTROSPECTION.md) |
 | Direct streaming, demand and early closure | [direct_streaming.py](examples/direct_streaming.py) | [test](tests/docs/test_direct_streaming_example.py), [guide](docs/DIRECT_STREAMING.md); current-checkout output fixes |
 | HTTP streaming and cancellation | [http_sse.py](examples/http_sse.py), [deadlines.py](examples/deadlines.py) | [SSE guide](docs/HTTP_SSE.md), [deadline guide](docs/DEADLINES.md) |
-| Explicit direct idempotency / nested invocation | [direct_idempotency.py](examples/direct_idempotency.py), [nested_invocation.py](examples/nested_invocation.py) | [idempotency](docs/DIRECT_IDEMPOTENCY.md), [composition](docs/NESTED_INVOCATION.md) |
+| Explicit direct idempotency, sequential reuse and concurrent contenders | [direct_idempotency.py](examples/direct_idempotency.py) | [test](tests/docs/test_direct_idempotency_example.py), [idempotency guide](docs/DIRECT_IDEMPOTENCY.md); one process and event loop |
+| Nested capability invocation | [nested_invocation.py](examples/nested_invocation.py) | [test](tests/docs/test_nested_invocation_example.py), [composition guide](docs/NESTED_INVOCATION.md) |
 
 The minimal and HTTP+MCP programs run with installed PyPI **1.0.3** packages.
 Most guides were added after publication but teach existing public contracts;

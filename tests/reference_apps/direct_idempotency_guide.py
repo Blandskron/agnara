@@ -36,7 +36,28 @@ def validate(demo: Any) -> None:
     assert effects == [("A-1", 2500), ("A-1", 2500)]
 
 
-async def run_guide(path: Path) -> Any:
+def validate_concurrent(demo: Any) -> None:
+    results, effects = demo
+    expected = {
+        "first": Success("receipt-1"),
+        "contender": Failure(FailureCode.CONFLICT, "idempotency request is already in progress"),
+        "permission_lost": Failure(FailureCode.FORBIDDEN, "required scopes not granted"),
+        "duplicate": Success("receipt-1"),
+    }
+    assert list(results) == list(expected)
+    for name, outcome in expected.items():
+        result = results[name]
+        assert result == outcome, name
+        if isinstance(outcome, Failure):
+            assert isinstance(result, Failure) and result.code is outcome.code
+        assert isinstance(result.execution_id, str) and result.execution_id
+    assert results["duplicate"].execution_id == results["first"].execution_id
+    # The refusal must not reveal the holder's logical execution identity.
+    assert results["contender"].execution_id != results["first"].execution_id
+    assert effects == [("A-1", 2500)]
+
+
+async def run_guide(path: Path, *, concurrent: bool = False) -> Any:
     name = "_agnara_direct_idempotency_guide_consumer"
     assert name not in sys.modules
     spec = importlib.util.spec_from_file_location(name, path)
@@ -46,7 +67,7 @@ async def run_guide(path: Path) -> Any:
     try:
         spec.loader.exec_module(module)
         async with asyncio.timeout(20):
-            demo = await module.demonstrate()
+            demo = await module.demonstrate(concurrent=concurrent)
         assert asyncio.all_tasks() == {asyncio.current_task()}, "guide tasks survived"
         return demo
     finally:
@@ -55,4 +76,5 @@ async def run_guide(path: Path) -> Any:
 
 if __name__ == "__main__":
     validate(asyncio.run(run_guide(Path(sys.argv[1]))))
+    validate_concurrent(asyncio.run(run_guide(Path(sys.argv[1]), concurrent=True)))
     print("DIRECT_IDEMPOTENCY_GUIDE_ARTIFACT_OK")
