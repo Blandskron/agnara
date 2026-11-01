@@ -51,8 +51,10 @@ class Recorder:
 
 
 async def main() -> None:
+    before = asyncio.all_tasks()
     effects = 0
     cancelled = 0
+    stream_waiting = asyncio.Event()
     application = Agnara("dogfood_standalone")
     app = App("orders")
 
@@ -88,6 +90,7 @@ async def main() -> None:
         nonlocal cancelled
         try:
             yield "opened"
+            stream_waiting.set()
             await asyncio.Event().wait()
         finally:
             cancelled += 1
@@ -164,15 +167,22 @@ async def main() -> None:
                 assert await anext(stream) == "opened"
                 await anext(stream)
 
-        task = asyncio.create_task(consume_then_cancel())
-        await asyncio.sleep(0)
-        task.cancel()
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
-        else:  # pragma: no cover - cancellation must propagate to the caller
-            raise AssertionError("consumer cancellation must propagate")
+        # Own the stream until its cancellation and cleanup have completed.
+        # The event proves producer entry; the watchdog is only a test bound.
+        async with asyncio.timeout(10), asyncio.TaskGroup() as owned:
+            caller = asyncio.current_task()
+            assert caller is not None
+            task = owned.create_task(consume_then_cancel())
+            await stream_waiting.wait()
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                if caller.cancelling():
+                    raise
+            else:  # pragma: no cover - cancellation must propagate to the caller
+                raise AssertionError("consumer cancellation must propagate")
+        assert task.cancelled()
         assert cancelled == 1
 
         assert recorder.starts and recorder.terminals
@@ -183,6 +193,7 @@ async def main() -> None:
     finally:
         await runtime.aclose()
 
+    assert asyncio.all_tasks() == before, "standalone consumer left tasks running"
     print("STANDALONE_DOGFOOD_OK")
 
 

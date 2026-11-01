@@ -7,6 +7,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Own and join the standalone reference consumer's cancelled stream before
+  runtime shutdown. Wait for producer entry explicitly and propagate owner
+  cancellation rather than printing a successful artifact result.
+
 - Preserve owner cancellation in the nested-resource reference consumer instead
   of treating it as the child cancellation the fixture requested. Verify joined
   tasks and singleton cleanup without changing framework cancellation behavior.
