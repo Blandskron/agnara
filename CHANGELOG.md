@@ -7,6 +7,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Preserve owner cancellation in the nested-resource reference consumer instead
+  of treating it as the child cancellation the fixture requested. Verify joined
+  tasks and singleton cleanup without changing framework cancellation behavior.
+
 - Correct `agnara doctor` exposure messages: A2A reports missing diagnostic
   coverage, Events reports a reserved namespace and Tasks reports an absent
   runtime. Preserve failing checks, exit codes, report format and read-only

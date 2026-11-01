@@ -118,6 +118,14 @@ consumers check that no tasks survive. Introspection additionally rejects shared
 mutable serialization containers before exercising mutation isolation.
 Deferred dataclass annotations resolve through registered unchanged modules.
 
+The separate `tests/reference_apps/nested_resource_lifecycle.py` consumer runs
+seven cases against those same installed wheels. It checks child context and
+resource isolation, shared singleton ownership, refusals, redaction and nested
+cancellation with ordered teardown. Its cancellation handler preserves owner
+and watchdog cancellation; a deterministic owner-cancellation race is tested
+in the checkout. These observations belong to that reference fixture, not to
+the minimal nested guide's output or an additional transport support claim.
+
 This is candidate-wheel evidence tied to the reviewed source commit, not a
 regression claim against already-published PyPI artifacts or a new general
 framework support tier. Current source-specific tests retain the detailed
