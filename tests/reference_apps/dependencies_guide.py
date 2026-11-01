@@ -11,21 +11,28 @@ from typing import Any
 from agnara.execution import Failure, FailureCode, Success
 
 
-def validate(demo: Any) -> None:
-    assert demo.results.keys() == {"denied", "invalid", "first", "second", "failed"}
-    assert demo.results["first"] == Success("first")
-    assert demo.results["second"] == Success("second")
-    for name, code in (
+def validate(demo: Any, *, cancelled: bool = False) -> None:
+    assert demo.cancelled is cancelled
+    expected_names = {"denied", "invalid"}
+    if not cancelled:
+        expected_names.update({"first", "second", "failed"})
+        assert demo.results["first"] == Success("first")
+        assert demo.results["second"] == Success("second")
+    assert demo.results.keys() == expected_names
+    refusals = [
         ("denied", FailureCode.FORBIDDEN),
         ("invalid", FailureCode.INVALID_INPUT),
-        ("failed", FailureCode.INTERNAL_FAILURE),
-    ):
+    ]
+    if not cancelled:
+        refusals.append(("failed", FailureCode.INTERNAL_FAILURE))
+    for name, code in refusals:
         result = demo.results[name]
         assert isinstance(result, Failure) and result.code is code
         assert "private" not in result.message + repr(result.details)
     assert demo.results["invalid"].details["path"] == ("label",)
-    failed = demo.results["failed"]
-    assert failed.message == "capability invocation failed" and not failed.details
+    if not cancelled:
+        failed = demo.results["failed"]
+        assert failed.message == "capability invocation failed" and not failed.details
     invocation_events = [
         "session.open",
         "reader.open",
@@ -33,18 +40,21 @@ def validate(demo: Any) -> None:
         "reader.close",
         "session.close",
     ]
-    assert demo.events == ["pool.open", *invocation_events * 3, "pool.close"]
+    if cancelled:
+        invocation_events.insert(3, "handler.exit")
+    count = 1 if cancelled else 3
+    assert demo.events == ["pool.open", *invocation_events * count, "pool.close"]
     assert len(demo.pools) == 1 and demo.pools[0].closed is True
-    assert len(demo.sessions) == len(demo.readers) == len(demo.writers) == 3
+    assert len(demo.sessions) == len(demo.readers) == len(demo.writers) == count
     for resources in (demo.sessions, demo.readers, demo.writers):
-        assert len({id(resource) for resource in resources}) == 3
+        assert len({id(resource) for resource in resources}) == count
     for session, reader, writer in zip(demo.sessions, demo.readers, demo.writers, strict=True):
         assert session is reader.session is writer.session
         assert session.pool is demo.pools[0]
         assert session.closed is True and reader.closed is True
 
 
-async def run_guide(path: Path) -> Any:
+async def run_guide(path: Path, *, cancel: bool = False) -> Any:
     name = "_agnara_dependencies_guide_consumer"
     assert name not in sys.modules
     spec = importlib.util.spec_from_file_location(name, path)
@@ -55,7 +65,7 @@ async def run_guide(path: Path) -> Any:
     try:
         spec.loader.exec_module(module)
         async with asyncio.timeout(20):
-            demo = await module.demonstrate()
+            demo = await module.demonstrate(cancel=cancel)
         assert asyncio.all_tasks() == {asyncio.current_task()}, "guide tasks survived"
         return demo
     finally:
@@ -64,4 +74,5 @@ async def run_guide(path: Path) -> Any:
 
 if __name__ == "__main__":
     validate(asyncio.run(run_guide(Path(sys.argv[1]))))
+    validate(asyncio.run(run_guide(Path(sys.argv[1]), cancel=True)), cancelled=True)
     print("DEPENDENCIES_GUIDE_ARTIFACT_OK")
