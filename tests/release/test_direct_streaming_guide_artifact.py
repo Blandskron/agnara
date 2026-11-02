@@ -25,6 +25,42 @@ def test_actual_guide_and_cancellation_pass(demonstrated) -> None:
     assert "_agnara_direct_streaming_guide_consumer" not in sys.modules
 
 
+@pytest.mark.parametrize("when", ["before_join", "on_completion"])
+def test_consumer_owner_cancellation_joins_child_and_removes_module(monkeypatch, when) -> None:
+    async def run() -> None:
+        before = asyncio.all_tasks()
+        owner = asyncio.current_task()
+        assert owner is not None
+        loop = asyncio.get_running_loop()
+        original_create = loop.create_task
+        children = []
+        cancellation_requests = []
+
+        def request_cancellation() -> None:
+            cancellation_requests.append(owner.cancel())
+
+        def create_child(coro, **kwargs):
+            # The verifier creates its child after demonstrate() finishes.
+            task = original_create(coro, **kwargs)
+            children.append(task)
+            if when == "on_completion":
+                task.add_done_callback(lambda _: request_cancellation())
+            else:
+                loop.call_soon(request_cancellation)
+            return task
+
+        with monkeypatch.context() as patch:
+            patch.setattr(loop, "create_task", create_child)
+            with pytest.raises(asyncio.CancelledError):
+                await run_guide(WORKSPACE_ROOT / "examples" / "direct_streaming.py")
+        assert cancellation_requests == [True]
+        assert len(children) == 1 and children[0].cancelled()
+        assert "_agnara_direct_streaming_guide_consumer" not in sys.modules
+        assert asyncio.all_tasks() == before
+
+    asyncio.run(run())
+
+
 @pytest.mark.parametrize("case", CASES)
 def test_missing_case_is_rejected(demonstrated, case) -> None:
     outcomes, events = demonstrated

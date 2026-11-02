@@ -142,6 +142,12 @@ uv run pytest tests/release/test_direct_streaming_guide_artifact.py
 uv run pytest tests/release/test_integrated_dogfooding.py
 ```
 
+Checkout regressions also cancel the verifier itself before it joins the child
+and at child completion. They verify that owner cancellation propagates, the
+owned child finishes, the temporary imported module is removed and no tasks
+survive. The verifier handles its deliberate child cancellation locally; owner
+or watchdog cancellation aborts verification instead of producing observations.
+
 This evidence concerns wheels built from the reviewed candidate source, not
 previously published artifacts. The consumer observes the example's local
 producer/provider trace; independent container-close and deadline checks remain
