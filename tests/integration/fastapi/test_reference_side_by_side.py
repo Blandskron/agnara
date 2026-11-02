@@ -22,6 +22,91 @@ def assert_closed(state: example.State) -> None:
     ]
 
 
+def test_installed_consumer_main_exercises_real_cancellation(monkeypatch, capsys) -> None:
+    states = []
+    cancelled = []
+    original_host = example.build_host
+    original_read = example.Resource.read
+
+    def build_host(state):
+        states.append(state)
+        return original_host(state)
+
+    async def read(self, value):
+        try:
+            return await original_read(self, value)
+        except asyncio.CancelledError:
+            assert not self.closed, "resource closed before its caller drained"
+            cancelled.append(self)
+            raise
+
+    monkeypatch.setattr(example, "build_host", build_host)
+    monkeypatch.setattr(example.Resource, "read", read)
+
+    async def run() -> None:
+        before = asyncio.all_tasks()
+        await example.main()
+        assert len(states) == 3
+        assert cancelled == [states[-1].resources[0]]
+        for state in states:
+            assert_closed(state)
+        assert asyncio.all_tasks() == before
+
+    asyncio.run(run())
+    assert capsys.readouterr().out.splitlines() == ["SIDE_BY_SIDE_DOGFOOD_OK"]
+
+
+@pytest.mark.parametrize("when", ["before_join", "on_completion"])
+def test_consumer_owner_cancellation_drains_and_closes_host(monkeypatch, capsys, when) -> None:
+    states = []
+    original_host = example.build_host
+
+    def build_host(state):
+        states.append(state)
+        return original_host(state)
+
+    monkeypatch.setattr(example, "build_host", build_host)
+
+    async def run() -> None:
+        before = asyncio.all_tasks()
+        owner = asyncio.current_task()
+        assert owner is not None
+        loop = asyncio.get_running_loop()
+        original_create = loop.create_task
+        children = []
+        cancellation_requests = []
+
+        def cancel_owner() -> None:
+            cancellation_requests.append(owner.cancel())
+
+        def create_child(coro, **kwargs):
+            task = original_create(coro, **kwargs)
+            # Lifespan tasks retain their ordinary scheduling; target only
+            # the real blocked HTTP request that main owns for cancellation.
+            if coro.cr_code is example.request.__code__:
+                children.append(task)
+                if when == "on_completion":
+                    task.add_done_callback(lambda _: cancel_owner())
+                else:
+                    loop.call_soon(cancel_owner)
+            return task
+
+        with monkeypatch.context() as patch:
+            patch.setattr(loop, "create_task", create_child)
+            with pytest.raises(asyncio.CancelledError):
+                await example.main()
+        assert cancellation_requests == [True]
+        assert len(children) == 1 and children[0].cancelled()
+        assert len(states) == 3
+        assert states[-1].resources[0].finished.is_set()
+        for state in states:
+            assert_closed(state)
+        assert asyncio.all_tasks() == before
+
+    asyncio.run(run())
+    assert "SIDE_BY_SIDE_DOGFOOD_OK" not in capsys.readouterr().out
+
+
 @pytest.mark.parametrize("exceptional", [False, True])
 def test_host_owns_child_container_and_resources_on_one_loop(monkeypatch, exceptional) -> None:
     loops: list[int] = []

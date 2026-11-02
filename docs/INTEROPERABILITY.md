@@ -148,10 +148,14 @@ messages through an owned task group with bounded handshake waits.
 [FastAPI does not drive mounted-child lifespan automatically](https://fastapi.tiangolo.com/advanced/events/#sub-applications).
 The fixture verifies the child's actual lifecycle callbacks and singleton
 resource reuse, then resource closure before child stop and host stop on one
-loop, for normal and exceptional host exits. Its local tests additionally
-exercise cancellation after draining HTTP calls, failed handshakes and a silent
-startup timeout without orphan tasks. This remains fixture wiring, not a
-generic host adapter, automatic drainage or merged OpenAPI contract.
+loop, for normal and exceptional host exits. A third installed-wheel scenario
+waits for a blocked resource read, cancels and joins its owned HTTP caller,
+and verifies read exit while the singleton remains active before host shutdown.
+The consumer checks exact lifecycle order and no surviving tasks. Local tests
+additionally exercise cancellation of the consumer owner before joining and at
+HTTP completion, failed handshakes and a silent startup timeout. This is
+explicit in-process caller cancellation, not evidence of peer-disconnect
+handling, a generic host adapter, automatic drainage or merged OpenAPI.
 
 The Litestar fixture constructs its runtime and container inside the host's
 lifespan, invokes them on that loop and closes them at lifespan exit. Generator
