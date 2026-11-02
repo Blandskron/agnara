@@ -7,6 +7,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Preserve owner cancellation in the direct-streaming guide verifier instead
+  of suppressing it while joining the deliberately cancelled child. Join owned
+  work and remove the temporary imported module before cancellation propagates.
+
 - Own and join the standalone reference consumer's cancelled stream before
   runtime shutdown. Wait for producer entry explicitly and propagate owner
   cancellation rather than printing a successful artifact result.

@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import importlib.util
 import sys
-from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -72,13 +71,20 @@ async def run_guide(path: Path) -> Any:
             waiting = asyncio.Event()
             events: list[str] = []
             async with asyncio.TaskGroup() as owned:
+                caller = asyncio.current_task()
+                assert caller is not None
                 task = owned.create_task(
                     module.run_case("cancelled", waiting=waiting, events=events)
                 )
                 await waiting.wait()
                 task.cancel()
-                with suppress(asyncio.CancelledError):
+                try:
                     await task
+                except asyncio.CancelledError:
+                    # Handle only the child cancellation requested here.
+                    # Owner or watchdog cancellation must abort verification.
+                    if caller.cancelling():
+                        raise
             assert task.cancelled(), "caller cancellation did not propagate"
             assert asyncio.all_tasks() == before, "guide tasks survived"
             return outcomes, tuple(events)
