@@ -38,6 +38,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Exercise event-gated HTTP caller cancellation in the installed-wheel FastAPI
+  side-by-side consumer. Join the request before singleton/child/host shutdown
+  and verify cleanup order without adding automatic host or disconnect handling.
+
 - Demonstrate dependency teardown during caller cancellation with an owned,
   event-gated invocation. Verify reader/session cleanup before singleton shutdown
   against installed candidate wheels and preserve cancellation of the guide's owner.

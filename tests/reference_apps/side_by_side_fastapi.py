@@ -19,9 +19,18 @@ from agnara_http import Binding, BindingSource, Http, HttpApplication
 @dataclass
 class Resource:
     closed: bool = False
+    waiting: asyncio.Event = field(default_factory=asyncio.Event)
+    finished: asyncio.Event = field(default_factory=asyncio.Event)
 
     async def read(self, value: str) -> str:
         assert not self.closed
+        if value == "wait":
+            # Local fixture mode: prove entry and cleanup without sleeps.
+            self.waiting.set()
+            try:
+                await asyncio.Event().wait()
+            finally:
+                self.finished.set()
         return value
 
 
@@ -181,7 +190,8 @@ async def request(host: FastAPI, path: str) -> tuple[int, dict[str, object]]:
 
 async def main() -> None:
     before = asyncio.all_tasks()
-    for exceptional in (False, True):
+    for case in ("normal", "exceptional", "cancelled"):
+        exceptional = case == "exceptional"
         state = State()
         host = build_host(state)
         raised = False
@@ -192,6 +202,25 @@ async def main() -> None:
                 for value in ("ready", "again"):
                     assert await request(host, f"/agnara/check/{value}") == (200, {"agnara": value})
                 assert len(state.resources) == 1 and not state.resources[0].closed
+                if case == "cancelled":
+                    resource = state.resources[0]
+                    async with asyncio.timeout(5), asyncio.TaskGroup() as owned:
+                        caller = asyncio.current_task()
+                        assert caller is not None
+                        call = owned.create_task(request(host, "/agnara/check/wait"))
+                        await resource.waiting.wait()
+                        call.cancel()
+                        try:
+                            await call
+                        except asyncio.CancelledError:
+                            if caller.cancelling():
+                                raise
+                        else:
+                            raise AssertionError("HTTP caller cancellation must propagate")
+                    assert call.cancelled() and resource.finished.is_set()
+                    assert not resource.closed and state.child is not None
+                    assert "child.stop" not in [name for name, _ in state.events]
+                    state.record("request.cancelled")
                 if exceptional:
                     raise RuntimeError("host exit")
         except* RuntimeError as errors:
@@ -208,6 +237,7 @@ async def main() -> None:
             "resource.open",
             "invoke",
             "invoke",
+            *(["invoke", "request.cancelled"] if case == "cancelled" else []),
             "resource.close",
             "child.stop",
             "host.stop",
