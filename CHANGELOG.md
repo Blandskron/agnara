@@ -7,6 +7,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Reject `agnara doctor --path` and `--dependencies` without a
+  `--runtime` target with a usage error.
+
 - Preserve owner cancellation in the direct-streaming guide verifier instead
   of suppressing it while joining the deliberately cancelled child. Join owned
   work and remove the temporary imported module before cancellation propagates.
