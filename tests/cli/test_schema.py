@@ -162,6 +162,27 @@ def test_overwrite_replaces_the_file(
     assert json.loads(destination.read_bytes())["openapi"] == "3.2.0"
 
 
+def test_a_file_created_at_open_is_not_replaced(
+    project: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    destination = project / "openapi.json"
+    original_open = Path.open
+
+    def open_after_competing_writer(path, mode="r", *args, **kwargs):
+        if path == destination and mode in {"wb", "xb"}:
+            with original_open(path, "xb") as stream:
+                stream.write(b"competing writer")
+        return original_open(path, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", open_after_competing_writer)
+    code, out, err = run(project, "served", "--output", str(destination), capsys=capsys)
+
+    assert code == EXIT_FAILED
+    assert out == b""
+    assert "pass --overwrite" in err
+    assert destination.read_bytes() == b"competing writer"
+
+
 def test_an_unwritable_destination_is_a_diagnostic(
     project: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

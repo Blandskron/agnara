@@ -7,6 +7,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Create CLI document outputs exclusively unless `--overwrite` is supplied,
+  preserving a destination created by another writer before the file opens.
+
 - Reject non-JSON numeric constants in OpenAPI byte exports and report
   serialization errors consistently when using `--pretty`.
 
