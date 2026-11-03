@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from contextlib import redirect_stdout
 from importlib.metadata import PackageNotFoundError, version
 
 from agnara_cli._apps import _manifest as load_project_manifest
@@ -183,13 +182,11 @@ def _runtime_checks(
 ) -> None:
     unchecked.remove("application_imports")
     try:
-        # Keep Python output from the explicitly trusted target out of the report.
-        with redirect_stdout(sys.stderr):
-            target = resolve_target(
-                arguments.runtime,
-                search_path=arguments.path,
-                dependencies=arguments.dependencies,
-            )
+        target = resolve_target(
+            arguments.runtime,
+            search_path=arguments.path,
+            dependencies=arguments.dependencies,
+        )
     except TargetError as error:
         checks.append({"id": "runtime:target", "status": "fail", "message": str(error)})
         return

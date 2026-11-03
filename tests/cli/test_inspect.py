@@ -162,7 +162,11 @@ def stock() -> int:
 def test_json_output_is_the_versioned_snapshot(
     project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    code, out, _ = run(project, "--dependencies", "registry", "--json", capsys=capsys)
+    (project / "billing.py").write_text(
+        APPLICATION + '\nprint("loading billing")\n', encoding="utf-8"
+    )
+    code, out, err = run(project, "--dependencies", "registry", "--json", capsys=capsys)
+    assert err == "loading billing\n"
     document = json.loads(out)
 
     assert code == EXIT_OK

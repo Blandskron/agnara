@@ -337,6 +337,9 @@ ordering and no ANSI decoration. Offline inspection still applies a declared
 publication/redaction policy; it is not permission to dump secrets, dependency
 instances or private policy internals.
 
+The CLI reserves stdout for its result. Python stdout from target imports
+and schema producers is redirected to stderr during command execution.
+
 #### Implemented form
 
 `agnara.toml` now exists (E0A.2, ADR 0059) but does not yet resolve a target:

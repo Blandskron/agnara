@@ -7,6 +7,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Keep CLI output parseable when an imported target or schema producer
+  prints to Python stdout by routing those messages to stderr.
+
 - Compile the final application snapshot for CLI inspection and runtime
   diagnostics, including capabilities declared after their app was mounted.
 
