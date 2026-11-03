@@ -38,6 +38,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Add opt-in `agnara doctor --runtime` checks for target compilation and
+  declared app registration. The default diagnostics remain static.
+
 - Verify modern MCP negotiation, tool calls, denial, caller cancellation and
   singleton cleanup over application-owned stdio subprocess pipes with the
   pinned official SDK.
