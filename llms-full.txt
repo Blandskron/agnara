@@ -1330,7 +1330,7 @@ Source: [docs/MCP_CONFORMANCE.md](docs/MCP_CONFORMANCE.md); API 1.0.3; stable-ap
 
 #### MCP conformance evidence
 
-Suite revision: 5. Tracking: [#181](https://github.com/Blandskron/agnara/issues/181),
+Suite revision: 6. Tracking: [#181](https://github.com/Blandskron/agnara/issues/181),
 [#183](https://github.com/Blandskron/agnara/issues/183) and
 [#185](https://github.com/Blandskron/agnara/issues/185), plus
 [#307](https://github.com/Blandskron/agnara/issues/307).
@@ -1380,6 +1380,22 @@ to reach stateful retention; this does not add legacy protocol support to
 Agnara or establish network transport conformance. No sockets or external
 service are used.
 
+##### Application-owned stdio subprocess
+
+Run `uv run pytest tests/mcp/test_sdk_stdio.py -q` from the workspace. The
+official client starts a child Python process and negotiates MCP `2026-07-28`
+over real stdin/stdout pipes using `mcp==2.2.0` and `mcp-types==2.2.0`.
+The child owns the SDK's stdio server and closes its Agnara DI container
+after the transport exits. The test lists and invokes a compiled tool,
+checks that an unauthorized tool has no effect, and cancels a blocked call
+after an explicit entry signal. A second tool observes handler unwind
+before client exit. The child's shutdown log verifies transport closure
+before singleton teardown.
+
+This evidence is limited to the host-owned SDK stdio fixture and the pinned
+modern revision. Agnara's package exposes the compiled server; the
+application owns subprocess and transport setup.
+
 ##### Coverage matrix
 
 | Surface | Executable evidence | Limit |
@@ -1409,10 +1425,9 @@ Network transport conformance, OAuth token verification, complete protocol
 certification, legacy revisions, MCP output-schema publication, MRTR resumption,
 confirmation verification over MCP, Tasks, notifications, progress, streaming
 and performance remain outside this suite's support claim. Tool invocation is
-now implemented and tested in process; it is not benchmarked (E7.9) and
-carries no network or throughput claim. Future implementation must extend the
-matrix with positive and negative evidence before those surfaces are
-advertised.
+covered in process and over application-owned stdio subprocess pipes. Future
+implementation must extend the matrix with positive and negative evidence
+before additional surfaces are advertised.
 
 ##### Upstream reference
 
