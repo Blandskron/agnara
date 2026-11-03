@@ -462,6 +462,9 @@ target is redirected to stderr so the diagnostic report stays on stdout.
 The report adds `runtime:target` and, after successful compilation, one
 `app:<name>:registration` check per declared app. Each declared app must
 be registered by name. Additional registered apps are allowed.
+An `app:<name>:module` check compares a registered app's descriptor module
+with the manifest. A mismatch fails. When the descriptor omits its module
+or the app is absent, the module check is listed as unchecked.
 Runtime mode does not invoke handlers, resolve provider instances or start
 a transport. Whole-registry cycle coverage and protocol configuration
 remain unchecked. The report format and exit codes are shared with static mode.

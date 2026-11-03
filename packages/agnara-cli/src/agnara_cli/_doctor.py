@@ -197,11 +197,30 @@ def _runtime_checks(
     checks.append({"id": "runtime:target", "status": "pass", "message": "target compiled"})
     unchecked.remove("runtime_registration")
     for app in manifest.apps:
-        registered = app.name in target.app.apps
+        registered = target.app.apps.get(app.name)
         checks.append(
             {
                 "id": f"app:{app.name}:registration",
-                "status": "pass" if registered else "fail",
-                "message": "registered" if registered else "declared app is not registered",
+                "status": "pass" if registered is not None else "fail",
+                "message": "registered"
+                if registered is not None
+                else "declared app is not registered",
+            }
+        )
+        module_check = f"app:{app.name}:module"
+        module = registered.descriptor.module if registered is not None else None
+        if module is None:
+            unchecked.append(module_check)
+            continue
+        matches = module == app.module
+        checks.append(
+            {
+                "id": module_check,
+                "status": "pass" if matches else "fail",
+                "message": (
+                    f"descriptor module matches {app.module}"
+                    if matches
+                    else f"descriptor module {module} differs from declared {app.module}"
+                ),
             }
         )
