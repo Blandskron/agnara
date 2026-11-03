@@ -116,6 +116,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Changed
 
+- Update the CI and release `setup-uv` action pin to 10.3.3 and check that
+  workflows agree on the SHA and version annotation for each action repository.
+
 - Exercise the ADR 0098 A2A profile in an isolated experiment fixture that
   invokes compiled Agnara plans through the official SDK client. Amend ADR 0098
   to the observed SDK behavior: capability failures use `-32602`/`-32603`, with
