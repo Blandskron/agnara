@@ -1,34 +1,43 @@
 # Backlog
 
-This file tracks active and future work. GitHub Issues own executable tasks;
-completed work and review evidence remain in closed Issues, merged PRs and Git
-history. The [maturity matrix](docs/MATURITY.md) describes implemented behavior.
-Do not accumulate completed-task chronology in this file.
+GitHub Issues are executable work units. Closed Issues, merged PRs and Git
+retain completed work and review evidence. See the [roadmap](ROADMAP.md) for
+the milestone and the [maturity matrix](docs/MATURITY.md) for current behavior.
 
-## Future work requiring a scoped Issue and review
+## November 14 presentation
 
-- [ ] Maintain runnable tutorials and reference applications against the
-  governed public API.
-- [ ] Extend interoperability evidence only where the existing host contract
-  applies; distinguish fixtures from supported integrations.
-- [ ] Research Python 3.15 compatibility under
-  [the research plan](docs/research/python-315-readiness.md) before changing the
-  declared Python floor or CI support.
-- [ ] Define scoped RFCs for the unimplemented Events adapter, further
-  protocol projections and durable execution. Evaluate the open
-  [Events proposal](docs/rfc/0011-event-initial-projection.md) and
-  [durable execution proposal](docs/rfc/0012-durable-execution-boundary.md)
-  through separately scoped feasibility Issues and decisions. Reserved
-  distributions are not completed adapters; this entry alone authorizes no
-  runtime implementation.
+Scope each work item in an Issue before implementation. Priorities reflect
+what improves the demonstration and adoption within the available time.
 
-## Maintenance
+- [ ] **P0 · MCP transport evidence.** Use one host-owned SDK transport and
+  record exact versions. Exercise startup, discovery, invocation, denial
+  before effects, caller cancellation and resource shutdown. Keep the
+  existing in-process flow as the demo fallback.
+- [ ] **P1 · CLI adoption.** Rehearse scaffolding, inspection and the existing
+  static `doctor` from a clean environment. Document one reproducible path and
+  record the first runtime diagnostic gap for a separate Issue.
+- [ ] **P1 · A2A scope decision.** Record what the provisional complete-result
+  profile can demonstrate with the pinned client and host. Review API stability
+  and broader host support separately from the runnable recipe.
+- [ ] **P1 · Core, HTTP and telemetry rehearsal.** Use the same capability for
+  direct, HTTP and MCP calls. Verify canonical results, denial before effects,
+  resource closure and trace redaction. Record the candidate-wheel commit,
+  versions and commands used at the demo freeze.
+- [ ] **P2 · Events feasibility.** Identify one first use case and its minimum
+  contract in the [Events proposal](docs/rfc/0011-event-initial-projection.md).
+  Capture a proceed or defer decision for follow-up review.
 
-- [ ] Make any broader A2A host/support or stability decision separately from
-  a copyable application recipe, using its exact evidence and deployment limits.
+## After the presentation
 
-Keep security fixes, dependency updates, documentation drift, supply-chain
-checks and CI failures in normal issue/branch/PR review. When behavior changes,
-remove superseded active guidance and repair navigation instead of appending
-another competing description. Preserve necessary decision and release evidence;
-age alone does not make a contract obsolete.
+- [ ] Maintain runnable tutorials, reference applications and interoperability
+  evidence against the governed API and explicit host contract.
+- [ ] Scope runtime CLI diagnostics from the clean-project rehearsal.
+- [ ] Evaluate [durable execution](docs/rfc/0012-durable-execution-boundary.md)
+  and further protocol projections in separate feasibility Issues.
+- [ ] Review activation of the
+  [Python 3.15 research plan](docs/research/python-315-readiness.md) before
+  changing the Python floor or CI support.
+
+Handle regressions, security fixes, dependency updates and CI failures through
+normal Issue and PR review. Preserve decision and release evidence when
+removing superseded guidance.
