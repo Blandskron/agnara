@@ -35,7 +35,7 @@ from agnara_cli._inspect import add_inspect_parser
 from agnara_cli._manifest import ManifestError
 from agnara_cli._project import add_project_parser
 from agnara_cli._schema import add_schema_parser
-from agnara_cli._target import TargetError
+from agnara_cli._target import TargetError, target_search_path
 
 __all__ = ["main"]
 
@@ -83,7 +83,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     arguments = _parser().parse_args(argv)
     try:
         # Handlers return their output. Imported targets can also print.
-        with redirect_stdout(sys.stderr):
+        with target_search_path(getattr(arguments, "path", ())), redirect_stdout(sys.stderr):
             output = arguments.handler(arguments)
     except (GenerationError, ManifestError, TargetError) as error:
         print(f"agnara: {error}", file=sys.stderr)

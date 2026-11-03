@@ -342,6 +342,9 @@ instances or private policy internals.
 
 The CLI reserves stdout for its result. Python stdout from target imports
 and schema producers is redirected to stderr during command execution.
+Explicit `--path` entries remain available for deferred imports while
+resolving the target, compiling it or calling an OpenAPI producer. The
+CLI restores the previous search path when the command exits.
 
 #### Implemented form
 

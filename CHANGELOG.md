@@ -7,6 +7,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Keep CLI `--path` entries available for deferred imports during target
+  resolution and OpenAPI production, then restore the previous search path.
+
 - Report excessive OpenAPI document nesting as a CLI error before writing
   output when the JSON decoder or encoder reaches its recursion limit.
 

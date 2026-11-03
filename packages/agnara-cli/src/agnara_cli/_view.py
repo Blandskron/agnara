@@ -130,7 +130,6 @@ def resolve_view(arguments: argparse.Namespace) -> View:
     """
     resolved = resolve_target(
         arguments.target,
-        search_path=arguments.path,
         dependencies=arguments.dependencies,
     )
     visibility = POSTURES[arguments.visibility](_rule(arguments.as_scope, arguments.hide))

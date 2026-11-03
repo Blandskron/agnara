@@ -167,7 +167,7 @@ def _encode(document: Mapping[str, Any], served: bytes | None, *, pretty: bool) 
 
 def run_schema(arguments: argparse.Namespace) -> bytes | None:
     """Export the document, to stdout as exact bytes or to a file."""
-    value = resolve_attribute(arguments.target, search_path=arguments.path)
+    value = resolve_attribute(arguments.target)
     document, served = _document(value)
     body = _encode(document, served, pretty=arguments.pretty)
     if arguments.output is None:

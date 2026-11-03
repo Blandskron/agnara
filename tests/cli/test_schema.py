@@ -105,6 +105,35 @@ def test_a_callable_target_is_invoked_once(
     assert out == b'{"info":{"title":"Billing API","version":"1"},"openapi":"3.2.0","paths":{}}'
 
 
+@pytest.mark.parametrize("fails", [False, True])
+def test_schema_producer_can_import_from_target_path(
+    project: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    fails: bool,
+) -> None:
+    monkeypatch.setitem(sys.modules, "schema_path_helper", None)
+    sys.modules.pop("schema_path_helper")
+    (project / "schema_path_helper.py").write_text(
+        'document = {"openapi": "3.2.0"}\n', encoding="utf-8"
+    )
+    (project / "contract.py").write_text(
+        "def build():\n"
+        "    from schema_path_helper import document\n"
+        + ('    raise RuntimeError("producer failed")\n' if fails else "    return document\n"),
+        encoding="utf-8",
+    )
+    original_path = sys.path[:]
+    code, out, err = run(project, "build", capsys=capsys)
+    assert sys.path == original_path
+    if fails:
+        assert code == EXIT_FAILED and out == b""
+        assert "producer failed" in err
+    else:
+        assert code == EXIT_OK and err == ""
+        assert json.loads(out) == {"openapi": "3.2.0"}
+
+
 def test_non_ascii_survives_unescaped(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
     _, out, _ = run(project, "unicode_document", capsys=capsys)
 
