@@ -63,11 +63,20 @@ A private CLI command-result value carries output and exit code. Existing
 handlers returning text/bytes/None retain their behavior; the four governed
 Python exports are unchanged.
 
+## Explicit runtime extension
+
+`--runtime MODULE:ATTRIBUTE` opts into running trusted module code. With a
+valid manifest, use the same explicit target, import paths and optional DI
+registry as inspection. Report target compilation and declared app
+registration by name. A failed target prevents the registration checks.
+The static default and output schema stay intact. Compilation does not
+invoke capabilities or start resources. Whole-registry validation and
+protocol diagnostics remain separate work.
+
 ## Alternatives and remaining work
 
 Importing a runtime target by default would make a diagnostic command execute
-arbitrary project startup. A runtime mode needs an explicit target, ownership
-and output contract in separate work. A complete architecture analyzer also
+arbitrary project startup. The explicit mode above provides a bounded check. A complete architecture analyzer
 needs its own bounded contract; the generated test remains the existing
 architecture check. A third-party PEP 440 parser or another manifest format
 is unnecessary for this first boundary.

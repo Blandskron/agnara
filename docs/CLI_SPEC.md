@@ -308,9 +308,8 @@ agnara apps --json
 Reads `agnara.toml`, searching the given directory and its ancestors, and
 defaulting to the working directory. It imports nothing and runs no project
 code, so it reports the composition a project *declares* rather than what a
-compiled application registers. Runtime divergence detection needs a future
-explicit runtime mode of `agnara doctor`; its static baseline imports no
-project code and does not compare runtime registration.
+compiled application registers. Use the explicit `agnara doctor --runtime`
+mode to compare declared app names with a loaded composition.
 
 `--json` emits a versioned, deterministically ordered document with POSIX
 paths on every platform. A missing or invalid manifest is an operator error:
@@ -444,6 +443,26 @@ The intended broader diagnostic scope includes:
 - invalid app registration;
 - protocol configuration;
 - architecture rule violations.
+
+#### Optional runtime composition check (unreleased checkout)
+
+```bash
+agnara doctor --runtime commerce.bootstrap:app --path src --dependencies dependencies --json
+```
+
+Use an explicit trusted target. With a valid manifest, this mode imports the
+target and compiles its capability plans using the same resolver as
+`agnara inspect`. `--path` is repeatable and relative to the working
+directory. `--dependencies` names a registry in the target module.
+Importing the target executes its module code. Python stdout from the
+target is redirected to stderr so the diagnostic report stays on stdout.
+
+The report adds `runtime:target` and, after successful compilation, one
+`app:<name>:registration` check per declared app. Each declared app must
+be registered by name. Additional registered apps are allowed.
+Runtime mode does not invoke handlers, resolve provider instances or start
+a transport. Whole-registry cycle coverage and protocol configuration
+remain unchecked. The report format and exit codes are shared with static mode.
 
 #### Implemented static baseline (unreleased checkout)
 

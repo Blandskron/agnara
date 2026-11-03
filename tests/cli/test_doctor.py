@@ -343,3 +343,60 @@ raise SystemExit(main(['doctor', '--project', sys.argv[1], '--json']))
             "exposure:events",
             "exposure:tasks",
         ]
+
+
+@pytest.mark.parametrize("mode", ["registered", "missing", "broken", "compile_error"])
+def test_explicit_runtime_checks_report_composition(
+    mode: str,
+    project: Path,
+    installed,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = "doctor_runtime_fixture"
+    # The shared resolver caches imports normally. Restore the test module slot.
+    monkeypatch.setitem(sys.modules, module, None)
+    sys.modules.pop(module)
+    source = {
+        "registered": 'app.include(App("users"))\napp.include(App("payments"))\n',
+        "missing": 'app.include(App("users"))\n',
+        "broken": 'raise RuntimeError("broken bootstrap")\n',
+        "compile_error": (
+            "@app.capability\ndef invalid(value: complex) -> str:\n    return str(value)\n"
+        ),
+    }[mode]
+    (project / f"{module}.py").write_text(
+        'from agnara import Agnara, App\nprint("bootstrap output")\napp = Agnara("commerce")\n'
+        + source,
+        encoding="utf-8",
+    )
+    code = main(
+        [
+            "doctor",
+            "--project",
+            str(project),
+            "--json",
+            "--runtime",
+            f"{module}:app",
+            "--path",
+            str(project),
+        ]
+    )
+    captured = capsys.readouterr()
+    assert captured.err == "bootstrap output\n"
+    document = json.loads(captured.out)
+    results = checks(document)
+    assert code == (EXIT_OK if mode == "registered" else EXIT_FAILED)
+    assert "application_imports" not in document["unchecked"]
+    if mode in {"broken", "compile_error"}:
+        assert results["runtime:target"]["status"] == "fail"
+        expected = "broken bootstrap" if mode == "broken" else "compiling"
+        assert expected in results["runtime:target"]["message"]
+        assert "runtime_registration" in document["unchecked"]
+    else:
+        assert results["runtime:target"]["status"] == "pass"
+        assert results["app:users:registration"]["status"] == "pass"
+        assert results["app:payments:registration"]["status"] == (
+            "pass" if mode == "registered" else "fail"
+        )
+        assert "runtime_registration" not in document["unchecked"]

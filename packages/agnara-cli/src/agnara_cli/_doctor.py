@@ -1,15 +1,17 @@
-"""Read-only checks of manifest intent and installed distribution metadata."""
+"""Check project metadata and, on request, an explicit runtime composition."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import sys
+from contextlib import redirect_stdout
 from importlib.metadata import PackageNotFoundError, version
 
 from agnara_cli._apps import _manifest as load_project_manifest
 from agnara_cli._command import CommandResult
 from agnara_cli._manifest import ManifestError, ProjectManifest
+from agnara_cli._target import TargetError, resolve_target
 
 _ADAPTERS = {"http": "agnara-http", "mcp": "agnara-mcp"}
 _UNCHECKED_EXPOSURE_MESSAGES = {
@@ -31,13 +33,20 @@ _UNCHECKED = (
 def add_doctor_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     parser = subparsers.add_parser(
         "doctor",
-        help="check manifest, app paths and adapter metadata without running project code",
+        help="check project metadata and optionally an explicit runtime composition",
         description=(
-            "Read-only static checks. No project or adapter code is imported; "
-            "runtime registration, graph cycles and protocol behavior are not checked."
+            "Static checks import no project code. An explicit --runtime target imports "
+            "trusted project code and checks compilation and declared app registration."
         ),
     )
     parser.add_argument("--project", metavar="DIR", help="directory to search and its ancestors")
+    parser.add_argument(
+        "--runtime", metavar="MODULE:ATTRIBUTE", help="import and compile this target"
+    )
+    parser.add_argument(
+        "--path", action="append", default=[], metavar="DIR", help="runtime import path"
+    )
+    parser.add_argument("--dependencies", metavar="ATTRIBUTE", help="runtime target's DIRegistry")
     parser.add_argument("--json", action="store_true", help="emit a versioned diagnostic report")
     parser.set_defaults(handler=run_doctor)
 
@@ -134,6 +143,9 @@ def run_doctor(arguments: argparse.Namespace) -> CommandResult:
             else:
                 _distribution_check(distribution, checks, kernel=kernel, compare=True)
 
+        if arguments.runtime is not None:
+            _runtime_checks(arguments, manifest, checks, unchecked)
+
     status = "fail" if any(check["status"] == "fail" for check in checks) else "pass"
     report = {
         "format": "agnara.doctor",
@@ -152,3 +164,35 @@ def run_doctor(arguments: argparse.Namespace) -> CommandResult:
         lines.append("Unchecked: " + ", ".join(unchecked))
         output = "\n".join(lines)
     return CommandResult(output, 1 if status == "fail" else 0)
+
+
+def _runtime_checks(
+    arguments: argparse.Namespace,
+    manifest: ProjectManifest,
+    checks: list[dict[str, str]],
+    unchecked: list[str],
+) -> None:
+    unchecked.remove("application_imports")
+    try:
+        # Keep Python output from the explicitly trusted target out of the report.
+        with redirect_stdout(sys.stderr):
+            target = resolve_target(
+                arguments.runtime,
+                search_path=arguments.path,
+                dependencies=arguments.dependencies,
+            )
+    except TargetError as error:
+        checks.append({"id": "runtime:target", "status": "fail", "message": str(error)})
+        return
+
+    checks.append({"id": "runtime:target", "status": "pass", "message": "target compiled"})
+    unchecked.remove("runtime_registration")
+    for app in manifest.apps:
+        registered = app.name in target.app.apps
+        checks.append(
+            {
+                "id": f"app:{app.name}:registration",
+                "status": "pass" if registered else "fail",
+                "message": "registered" if registered else "declared app is not registered",
+            }
+        )
