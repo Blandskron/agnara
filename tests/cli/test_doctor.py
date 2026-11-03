@@ -361,7 +361,9 @@ raise SystemExit(main(['doctor', '--project', sys.argv[1], '--json']))
         ]
 
 
-@pytest.mark.parametrize("mode", ["registered", "missing", "broken", "compile_error"])
+@pytest.mark.parametrize(
+    "mode", ["registered", "missing", "broken", "compile_error", "module_drift"]
+)
 def test_explicit_runtime_checks_report_composition(
     mode: str,
     project: Path,
@@ -374,7 +376,13 @@ def test_explicit_runtime_checks_report_composition(
     monkeypatch.setitem(sys.modules, module, None)
     sys.modules.pop(module)
     source = {
-        "registered": 'app.include(App("users"))\napp.include(App("payments"))\n',
+        "registered": (
+            'app.include(App("users", module="commerce.apps.users"))\n'
+            'app.include(App("payments"))\n'
+        ),
+        "module_drift": (
+            'app.include(App("users", module="legacy.users"))\napp.include(App("payments"))\n'
+        ),
         "missing": 'app.include(App("users"))\n',
         "broken": 'raise RuntimeError("broken bootstrap")\n',
         "compile_error": (
@@ -413,6 +421,15 @@ def test_explicit_runtime_checks_report_composition(
         assert results["runtime:target"]["status"] == "pass"
         assert results["app:users:registration"]["status"] == "pass"
         assert results["app:payments:registration"]["status"] == (
-            "pass" if mode == "registered" else "fail"
+            "fail" if mode == "missing" else "pass"
         )
         assert "runtime_registration" not in document["unchecked"]
+        assert "app:payments:module" in document["unchecked"]
+        if mode == "missing":
+            assert "app:users:module" in document["unchecked"]
+        else:
+            module_check = results["app:users:module"]
+            assert module_check["status"] == ("pass" if mode == "registered" else "fail")
+            assert "commerce.apps.users" in module_check["message"]
+            if mode == "module_drift":
+                assert "legacy.users" in module_check["message"]

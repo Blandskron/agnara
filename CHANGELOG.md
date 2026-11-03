@@ -7,6 +7,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Report module mismatches in `agnara doctor --runtime` when a registered
+  app's descriptor supplies a module that differs from the manifest.
+
 - Reject `agnara doctor --path` and `--dependencies` without a
   `--runtime` target with a usage error.
 

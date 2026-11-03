@@ -68,7 +68,8 @@ Python exports are unchanged.
 `--runtime MODULE:ATTRIBUTE` opts into running trusted module code. With a
 valid manifest, use the same explicit target, import paths and optional DI
 registry as inspection. Report target compilation and declared app
-registration by name. A failed target prevents the registration checks.
+registration by name. Compare available descriptor module metadata with the
+declared module without importing it. A failed target prevents app checks.
 The static default and output schema stay intact. Compilation does not
 invoke capabilities or start resources. Whole-registry validation and
 protocol diagnostics remain separate work.
