@@ -7,6 +7,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Refuse files that appear after scaffold planning unless overwrite is
+  explicit. Apply app manifest updates after scaffold files are written.
+
 - Create CLI document outputs exclusively unless `--overwrite` is supplied,
   preserving a destination created by another writer before the file opens.
 

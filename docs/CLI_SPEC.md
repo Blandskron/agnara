@@ -68,9 +68,12 @@ an apply step that writes it. `--dry-run` renders the plan and creates
 nothing, not even the project directory. `--json` emits the same plan, so a
 preview cannot disagree with the result.
 
-A run that would replace an existing file refuses before writing anything,
-naming every conflicting path; `--overwrite` authorizes replacement for that
-run. The command never prompts. Identical inputs produce byte-identical
+A run with conflicts found during planning refuses before writing anything
+and names every conflicting path. Generated files use exclusive creation
+unless `--overwrite` is supplied. If a conflict appears during application,
+files already written may remain. App creation applies its manifest update
+after writing the scaffold files. The command never prompts.
+Identical inputs produce byte-identical
 output, and generated files use `
 ` endings on every platform.
 

@@ -315,6 +315,27 @@ def test_a_refused_run_does_not_update_the_manifest(project: Path) -> None:
     assert source_of(project, MANIFEST_FILENAME) == before
 
 
+def test_a_late_scaffold_conflict_preserves_the_file_and_manifest(
+    project: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    destination = project / APP_ROOT / "__init__.py"
+    before = source_of(project, MANIFEST_FILENAME)
+    original_open = Path.open
+
+    def open_after_competing_writer(path, mode="r", *args, **kwargs):
+        if path == destination and mode in {"w", "x"}:
+            with original_open(path, "xb") as stream:
+                stream.write(b"# competing writer\n")
+        return original_open(path, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", open_after_competing_writer)
+
+    assert create_app("billing", "--project", str(project)) == EXIT_FAILED
+    assert "refusing to replace" in capsys.readouterr().err
+    assert destination.read_bytes() == b"# competing writer\n"
+    assert source_of(project, MANIFEST_FILENAME) == before
+
+
 def test_a_missing_manifest_points_at_project_create(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
