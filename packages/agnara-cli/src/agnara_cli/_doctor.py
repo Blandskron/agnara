@@ -184,7 +184,6 @@ def _runtime_checks(
     try:
         target = resolve_target(
             arguments.runtime,
-            search_path=arguments.path,
             dependencies=arguments.dependencies,
         )
     except TargetError as error:

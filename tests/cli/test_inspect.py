@@ -159,6 +159,29 @@ def stock() -> int:
     assert "inventory.stock" in out
 
 
+def test_dotted_target_can_import_from_target_path(
+    project: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setitem(sys.modules, "inspect_path_helper", None)
+    sys.modules.pop("inspect_path_helper")
+    (project / "inspect_path_helper.py").write_text(
+        'from agnara import Agnara\napp = Agnara("billing")\n', encoding="utf-8"
+    )
+    (project / "billing.py").write_text(
+        "class Holder:\n"
+        "    @property\n"
+        "    def app(self):\n"
+        "        from inspect_path_helper import app\n"
+        "        return app\n"
+        "holder = Holder()\n",
+        encoding="utf-8",
+    )
+    original_path = sys.path[:]
+    code, _, err = run(project, target="billing:holder.app", capsys=capsys)
+    assert sys.path == original_path
+    assert code == EXIT_OK and err == ""
+
+
 def test_json_output_is_the_versioned_snapshot(
     project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
