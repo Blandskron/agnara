@@ -38,6 +38,10 @@ full history are available through Git tags and GitHub Releases.
 
 ### Added
 
+- Verify modern MCP negotiation, tool calls, denial, caller cancellation and
+  singleton cleanup over application-owned stdio subprocess pipes with the
+  pinned official SDK.
+
 - Exercise event-gated HTTP caller cancellation in the installed-wheel FastAPI
   side-by-side consumer. Join the request before singleton/child/host shutdown
   and verify cleanup order without adding automatic host or disconnect handling.
