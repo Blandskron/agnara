@@ -203,3 +203,21 @@ def test_every_workflow_names_the_version_behind_each_pin(workflow: Path) -> Non
     ]
 
     assert not unlabelled, f"{workflow.name} pins without naming the version: {unlabelled}"
+
+
+def test_workflows_agree_on_pins_for_the_same_action_repository() -> None:
+    references: dict[str, dict[tuple[str, str], set[str]]] = {}
+    for workflow in _workflow_files():
+        for line in workflow.read_text(encoding="utf-8").splitlines():
+            match = _USES.match(line)
+            if match is None or match["action"].startswith("./"):
+                continue
+            action, _, sha = match["action"].partition("@")
+            repository = "/".join(action.split("/")[:2])
+            version = line.partition("#")[2].strip()
+            references.setdefault(repository, {}).setdefault((sha, version), set()).add(
+                workflow.name
+            )
+
+    divergent = {action: pins for action, pins in references.items() if len(pins) > 1}
+    assert not divergent, f"Action SHAs or version annotations disagree: {divergent}"
