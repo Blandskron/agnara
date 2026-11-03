@@ -22,6 +22,9 @@ document = {
 unicode_document = {"openapi": "3.2.0", "info": {"title": "Caf\\u00e9", "version": "1"}}
 not_json = b"\\xff\\xfe not json"
 malformed = b"{not json"
+nonfinite = b'{"openapi":"3.2.0","example":NaN}'
+positive_infinity = b'{"openapi":"3.2.0","example":Infinity}'
+negative_infinity = b'{"openapi":"3.2.0","example":-Infinity}'
 not_an_object = b"[1, 2, 3]"
 without_version = b'{"info":{"title":"x"}}'
 numeric_version = b'{"openapi":3}'
@@ -173,11 +176,15 @@ def test_an_unwritable_destination_is_a_diagnostic(
     assert "Traceback" not in err
 
 
+@pytest.mark.parametrize("options", [(), ("--pretty",)])
 @pytest.mark.parametrize(
     ("attribute", "expected"),
     [
         ("not_json", "not valid UTF-8"),
         ("malformed", "not valid JSON"),
+        ("nonfinite", "not valid JSON"),
+        ("positive_infinity", "not valid JSON"),
+        ("negative_infinity", "not valid JSON"),
         ("not_an_object", "must be a JSON object"),
         ("without_version", "'openapi' version"),
         ("numeric_version", "'openapi' version"),
@@ -186,9 +193,13 @@ def test_an_unwritable_destination_is_a_diagnostic(
     ],
 )
 def test_a_target_that_is_not_an_openapi_document_is_refused(
-    project: Path, capsys: pytest.CaptureFixture[str], attribute: str, expected: str
+    project: Path,
+    capsys: pytest.CaptureFixture[str],
+    attribute: str,
+    expected: str,
+    options: tuple[str, ...],
 ) -> None:
-    code, out, err = run(project, attribute, capsys=capsys)
+    code, out, err = run(project, attribute, *options, capsys=capsys)
 
     assert code == EXIT_FAILED
     assert out == b""

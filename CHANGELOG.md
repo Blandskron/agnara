@@ -7,6 +7,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Reject non-JSON numeric constants in OpenAPI byte exports and report
+  serialization errors consistently when using `--pretty`.
+
 - Keep CLI output parseable when an imported target or schema producer
   prints to Python stdout by routing those messages to stderr.
 

@@ -561,6 +561,10 @@ either. Bytes are emitted unchanged, so an export is byte-identical to what is
 served; a mapping is serialized with the same arguments the HTTP projection
 uses.
 
+Byte targets must contain valid UTF-8 JSON. Non-JSON constants such as
+`NaN` and `Infinity` are rejected. Serialization failures in either mode
+produce a diagnostic on stderr and exit 1 before writing any document.
+
 `--output` writes the file and prints nothing, refusing to replace an existing
 file without `--overwrite`. `--pretty` indents for a reader and is no longer
 byte-identical to the served document. See ADR 0050.
