@@ -7,6 +7,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Compile the final application snapshot for CLI inspection and runtime
+  diagnostics, including capabilities declared after their app was mounted.
+
 - Report module mismatches in `agnara doctor --runtime` when a registered
   app's descriptor supplies a module that differs from the manifest.
 

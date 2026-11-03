@@ -137,6 +137,28 @@ def test_text_output_carries_no_ansi_decoration(
     assert "\x1b" not in out
 
 
+def test_inspect_includes_capabilities_declared_after_mount(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (project / "billing.py").write_text(
+        """
+from agnara import Agnara, App
+
+app = Agnara("billing")
+inventory = App("inventory")
+app.include(inventory)
+
+@inventory.capability
+def stock() -> int:
+    return 3
+""",
+        encoding="utf-8",
+    )
+    code, out, err = run(project, capsys=capsys)
+    assert code == EXIT_OK and err == ""
+    assert "inventory.stock" in out
+
+
 def test_json_output_is_the_versioned_snapshot(
     project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

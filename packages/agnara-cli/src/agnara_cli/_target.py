@@ -173,9 +173,10 @@ def resolve_target(
     registry = _registry(module, dependencies)
     compile_against = DIRegistry() if registry is None else registry
     try:
+        capabilities = app.compile()
         plans = tuple(
-            ExecutionPlan.compile(app.capabilities[capability_id], compile_against)
-            for capability_id in app.capabilities
+            ExecutionPlan.compile(capabilities[capability_id], compile_against)
+            for capability_id in capabilities
         )
     except Exception as error:
         # A schema error with no registry named is nearly always a dependency
