@@ -386,7 +386,8 @@ def test_explicit_runtime_checks_report_composition(
         "missing": 'app.include(App("users"))\n',
         "broken": 'raise RuntimeError("broken bootstrap")\n',
         "compile_error": (
-            "@app.capability\ndef invalid(value: complex) -> str:\n    return str(value)\n"
+            'users = App("users")\napp.include(users)\n'
+            "@users.capability\ndef invalid(value: complex) -> str:\n    return str(value)\n"
         ),
     }[mode]
     (project / f"{module}.py").write_text(

@@ -328,6 +328,10 @@ introspection snapshot used by Agnara Explorer. Inspection must not infer its
 model from OpenAPI because non-HTTP exposures and capability semantics would
 be lost.
 
+The target is compiled before inspection builds its plans. This closes
+registration and includes capabilities added to mounted apps before
+compilation, including declarations made after mounting.
+
 The JSON representation requires an explicit format version, deterministic
 ordering and no ANSI decoration. Offline inspection still applies a declared
 publication/redaction policy; it is not permission to dump secrets, dependency
