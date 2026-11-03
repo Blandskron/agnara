@@ -17,9 +17,12 @@ __all__ = ["write_document"]
 def write_document(destination: str, body: bytes, *, overwrite: bool) -> None:
     """Write ``body`` to ``destination``, refusing an unauthorized replacement."""
     path = Path(destination)
-    if path.exists() and not overwrite:
-        raise TargetError(f"{destination!r} already exists; pass --overwrite to replace it")
     try:
-        path.write_bytes(body)
+        with path.open("wb" if overwrite else "xb") as stream:
+            stream.write(body)
+    except FileExistsError as error:
+        raise TargetError(
+            f"{destination!r} already exists; pass --overwrite to replace it"
+        ) from error
     except OSError as error:
         raise TargetError(f"cannot write {destination!r}: {error}") from error
