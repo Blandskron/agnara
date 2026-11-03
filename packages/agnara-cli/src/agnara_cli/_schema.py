@@ -124,6 +124,8 @@ def _document(value: object) -> tuple[dict[str, Any], bytes | None]:
             raise TargetError("the OpenAPI document is not valid UTF-8") from error
         try:
             parsed = json.loads(decoded, parse_constant=_reject_json_constant)
+        except RecursionError as error:
+            raise TargetError("the OpenAPI document is nested too deeply to parse") from error
         except ValueError as error:
             raise TargetError(f"the OpenAPI document is not valid JSON: {error}") from error
     elif isinstance(value, Mapping):
@@ -157,6 +159,8 @@ def _encode(document: Mapping[str, Any], served: bytes | None, *, pretty: bool) 
             {**_JSON_ARGUMENTS, "separators": None, "indent": 2} if pretty else _JSON_ARGUMENTS
         )
         return json.dumps(document, **options).encode("utf-8")
+    except RecursionError as error:
+        raise TargetError("the OpenAPI document is nested too deeply to serialize") from error
     except (TypeError, ValueError) as error:
         raise TargetError(f"the OpenAPI document cannot be serialized as JSON: {error}") from error
 
