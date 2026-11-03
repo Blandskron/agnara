@@ -19,7 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 from collections.abc import Callable, Mapping
-from typing import Any, cast
+from typing import Any, Never, cast
 
 from agnara_cli._target import TargetError, resolve_attribute
 from agnara_cli._write import write_document
@@ -91,6 +91,10 @@ def add_schema_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentPa
     openapi.set_defaults(handler=run_schema)
 
 
+def _reject_json_constant(token: str) -> Never:
+    raise ValueError(f"{token} is not a JSON number")
+
+
 def _document(value: object) -> tuple[dict[str, Any], bytes | None]:
     """Read a target into a document, keeping its exact bytes when it has them.
 
@@ -119,8 +123,8 @@ def _document(value: object) -> tuple[dict[str, Any], bytes | None]:
         except UnicodeDecodeError as error:
             raise TargetError("the OpenAPI document is not valid UTF-8") from error
         try:
-            parsed = json.loads(decoded)
-        except json.JSONDecodeError as error:
+            parsed = json.loads(decoded, parse_constant=_reject_json_constant)
+        except ValueError as error:
             raise TargetError(f"the OpenAPI document is not valid JSON: {error}") from error
     elif isinstance(value, Mapping):
         parsed = dict(value)
@@ -144,21 +148,16 @@ def _document(value: object) -> tuple[dict[str, Any], bytes | None]:
 
 
 def _encode(document: Mapping[str, Any], served: bytes | None, *, pretty: bool) -> bytes:
-    if pretty:
-        return json.dumps(
-            document,
-            allow_nan=False,
-            ensure_ascii=False,
-            indent=2,
-            sort_keys=True,
-        ).encode("utf-8")
-    if served is not None:
+    if served is not None and not pretty:
         # Exactly what a server would send, including whatever the projection
         # chose. Re-serializing here would silently normalize it.
         return served
     try:
-        return json.dumps(document, **_JSON_ARGUMENTS).encode("utf-8")
-    except (TypeError, ValueError, UnicodeEncodeError) as error:
+        options = (
+            {**_JSON_ARGUMENTS, "separators": None, "indent": 2} if pretty else _JSON_ARGUMENTS
+        )
+        return json.dumps(document, **options).encode("utf-8")
+    except (TypeError, ValueError) as error:
         raise TargetError(f"the OpenAPI document cannot be serialized as JSON: {error}") from error
 
 
