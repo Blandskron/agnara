@@ -7,10 +7,11 @@ import json
 import sys
 from collections.abc import Iterator
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
-from agnara_cli import EXIT_FAILED, EXIT_OK, EXIT_USAGE, main
+from agnara_cli import EXIT_FAILED, EXIT_OK, EXIT_USAGE, _schema, main
 
 MODULE = """
 served = b\'{"info":{"title":"Billing API","version":"1"},"openapi":"3.2.0","paths":{}}\'
@@ -237,6 +238,37 @@ def test_a_producer_that_raises_reports_the_reason(
     assert "producing the OpenAPI document failed" in err
     assert "projection failed on purpose" in err
     assert "Traceback" not in err
+
+
+@pytest.mark.parametrize(
+    ("attribute", "operation", "options"),
+    [("served", "loads", ()), ("document", "dumps", ()), ("document", "dumps", ("--pretty",))],
+)
+def test_excessive_document_nesting_preserves_destination(
+    project: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    attribute: str,
+    operation: str,
+    options: tuple[str, ...],
+) -> None:
+    def excessive_nesting(*_args, **_kwargs):
+        raise RecursionError("JSON nesting limit")
+
+    # The C codec's stack limit depends on the interpreter build and platform.
+    codec = SimpleNamespace(loads=json.loads, dumps=json.dumps)
+    setattr(codec, operation, excessive_nesting)
+    monkeypatch.setattr(_schema, "json", codec)
+    destination = project / "openapi.json"
+    destination.write_bytes(b"existing document")
+    code, out, err = run(
+        project, attribute, "--output", str(destination), "--overwrite", *options, capsys=capsys
+    )
+    assert code == EXIT_FAILED
+    assert out == b""
+    assert "OpenAPI document is nested too deeply" in err
+    assert "Traceback" not in err
+    assert destination.read_bytes() == b"existing document"
 
 
 def test_an_absent_attribute_is_refused(project: Path, capsys: pytest.CaptureFixture[str]) -> None:

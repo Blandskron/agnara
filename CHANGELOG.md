@@ -7,6 +7,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Report excessive OpenAPI document nesting as a CLI error before writing
+  output when the JSON decoder or encoder reaches its recursion limit.
+
 - Refuse files that appear after scaffold planning unless overwrite is
   explicit. Apply app manifest updates after scaffold files are written.
 
