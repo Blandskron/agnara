@@ -89,10 +89,16 @@ def test_a_mapping_is_serialized_the_way_the_http_projection_does(
 def test_a_callable_target_is_invoked_once(
     project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    code, out, _ = run(project, "build", capsys=capsys)
+    (project / "contract.py").write_text(
+        'print("loading contract")\n'
+        + MODULE.replace("    return served", '    print("producing document")\n    return served'),
+        encoding="utf-8",
+    )
+    code, out, err = run(project, "build", capsys=capsys)
 
     assert code == EXIT_OK
-    assert json.loads(out)["info"]["title"] == "Billing API"
+    assert err == "loading contract\nproducing document\n"
+    assert out == b'{"info":{"title":"Billing API","version":"1"},"openapi":"3.2.0","paths":{}}'
 
 
 def test_non_ascii_survives_unescaped(project: Path, capsys: pytest.CaptureFixture[str]) -> None:

@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Sequence
+from contextlib import redirect_stdout
 from importlib.metadata import PackageNotFoundError, version
 
 from agnara_cli._app import add_app_alias_parsers, add_app_parser
@@ -81,7 +82,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     """
     arguments = _parser().parse_args(argv)
     try:
-        output = arguments.handler(arguments)
+        # Handlers return their output. Imported targets can also print.
+        with redirect_stdout(sys.stderr):
+            output = arguments.handler(arguments)
     except (GenerationError, ManifestError, TargetError) as error:
         print(f"agnara: {error}", file=sys.stderr)
         return EXIT_FAILED
