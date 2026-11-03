@@ -301,6 +301,22 @@ def test_argument_errors_keep_the_existing_usage_exit(capsys: pytest.CaptureFixt
     assert "unrecognized arguments" in capsys.readouterr().err
 
 
+@pytest.mark.parametrize(("option", "value"), [("--path", "src"), ("--dependencies", "registry")])
+def test_runtime_options_require_explicit_target(
+    option: str, value: str, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def unexpected_manifest_load(*_args):
+        pytest.fail("usage errors must precede manifest loading")
+
+    monkeypatch.setattr(_doctor, "load_project_manifest", unexpected_manifest_load)
+    with pytest.raises(SystemExit) as error:
+        main(["doctor", "--json", option, value])
+    assert error.value.code == EXIT_USAGE
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert f"{option} requires --runtime" in captured.err
+
+
 @pytest.mark.parametrize("unchecked_exposures", [False, True])
 def test_fresh_interpreter_imports_no_application_or_adapter(
     project: Path, unchecked_exposures: bool

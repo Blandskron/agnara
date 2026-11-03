@@ -48,7 +48,16 @@ def add_doctor_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentPa
     )
     parser.add_argument("--dependencies", metavar="ATTRIBUTE", help="runtime target's DIRegistry")
     parser.add_argument("--json", action="store_true", help="emit a versioned diagnostic report")
-    parser.set_defaults(handler=run_doctor)
+
+    def handle(arguments: argparse.Namespace) -> CommandResult:
+        if arguments.runtime is None:
+            if arguments.path:
+                parser.error("--path requires --runtime")
+            if arguments.dependencies is not None:
+                parser.error("--dependencies requires --runtime")
+        return run_doctor(arguments)
+
+    parser.set_defaults(handler=handle)
 
 
 def _python_version() -> tuple[int, int, int]:

@@ -454,6 +454,8 @@ Use an explicit trusted target. With a valid manifest, this mode imports the
 target and compiles its capability plans using the same resolver as
 `agnara inspect`. `--path` is repeatable and relative to the working
 directory. `--dependencies` names a registry in the target module.
+Both options require `--runtime`. Supplying either without a runtime target
+is a usage error (exit 2).
 Importing the target executes its module code. Python stdout from the
 target is redirected to stderr so the diagnostic report stays on stdout.
 
