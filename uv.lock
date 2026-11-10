@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.14"
 
 [manifest]
@@ -66,12 +66,12 @@ http-server = [
 
 [[package]]
 name = "agnara"
-version = "1.0.3"
+version = "1.0.4"
 source = { editable = "packages/agnara" }
 
 [[package]]
 name = "agnara-a2a"
-version = "1.0.3"
+version = "1.0.4"
 source = { editable = "packages/agnara-a2a" }
 dependencies = [
     { name = "a2a-sdk", extra = ["http-server"] },
@@ -86,7 +86,7 @@ requires-dist = [
 
 [[package]]
 name = "agnara-cli"
-version = "1.0.3"
+version = "1.0.4"
 source = { editable = "packages/agnara-cli" }
 dependencies = [
     { name = "agnara" },
@@ -97,7 +97,7 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-events"
-version = "1.0.3"
+version = "1.0.4"
 source = { editable = "packages/agnara-events" }
 dependencies = [
     { name = "agnara" },
@@ -108,7 +108,7 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-http"
-version = "1.0.3"
+version = "1.0.4"
 source = { editable = "packages/agnara-http" }
 dependencies = [
     { name = "agnara" },
@@ -119,7 +119,7 @@ requires-dist = [{ name = "agnara", editable = "packages/agnara" }]
 
 [[package]]
 name = "agnara-mcp"
-version = "1.0.3"
+version = "1.0.4"
 source = { editable = "packages/agnara-mcp" }
 dependencies = [
     { name = "agnara" },
@@ -134,7 +134,7 @@ requires-dist = [
 
 [[package]]
 name = "agnara-telemetry"
-version = "1.0.3"
+version = "1.0.4"
 source = { editable = "packages/agnara-telemetry" }
 dependencies = [
     { name = "agnara" },

@@ -635,6 +635,7 @@ def test_json_output_is_machine_readable(capsys: pytest.CaptureFixture[str]) -> 
 def test_published_status_requires_complete_evidence(field, value, message) -> None:
     published = document().copy()
     published["status"] = readiness.PUBLISHED
+    published["previous_release"] = published["current_target"]
     published[field] = value
 
     with pytest.raises(readiness.StatusError, match=message):
