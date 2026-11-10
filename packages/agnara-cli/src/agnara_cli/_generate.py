@@ -114,7 +114,7 @@ def build_plan(
             FileAction(
                 path=path,
                 contents=files[relative],
-                exists=target.exists(),
+                exists=target.is_symlink() or target.exists(),
                 intended_update=relative in intended,
             )
         )
@@ -152,13 +152,7 @@ def plan_json(plan: GenerationPlan) -> dict[str, object]:
 
 
 def apply_plan(plan: GenerationPlan, *, overwrite: bool = False) -> GenerationPlan:
-    """Write a plan, or refuse before writing anything.
-
-    Conflicts are checked against the whole plan first. A run that would
-    replace a file the operator did not authorize must leave the directory
-    exactly as it was, not half-written, so the refusal happens before the
-    first ``write_text``.
-    """
+    """Reject planned conflicts before writing and apply metadata updates last."""
     conflicts = plan.conflicts
     if conflicts and not overwrite:
         listed = ", ".join(str(action.path) for action in conflicts)
@@ -166,14 +160,22 @@ def apply_plan(plan: GenerationPlan, *, overwrite: bool = False) -> GenerationPl
             f"refusing to replace existing file(s) in {plan.root}: {listed}. "
             "Pass --overwrite to allow it."
         )
-    for action in plan.actions:
+    for action in sorted(plan.actions, key=lambda action: action.intended_update):
         target = plan.resolve(action)
+        mode = "w" if overwrite or action.intended_update else "x"
         try:
             target.parent.mkdir(parents=True, exist_ok=True)
             # newline="\n" so a generated file is byte-identical on every
             # platform; a project is shared, and its line endings are its own
             # decision rather than that of the machine that created it.
-            target.write_text(action.contents, encoding="utf-8", newline="\n")
+            with target.open(mode, encoding="utf-8", newline="\n") as stream:
+                stream.write(action.contents)
+        except FileExistsError as error:
+            if mode == "x" and error.filename == str(target):
+                raise GenerationError(
+                    f"refusing to replace existing file {target}. Pass --overwrite to allow it."
+                ) from error
+            raise GenerationError(f"cannot write {target}: {error}") from error
         except OSError as error:
             raise GenerationError(f"cannot write {target}: {error}") from error
     return plan

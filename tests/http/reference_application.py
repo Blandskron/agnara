@@ -78,12 +78,13 @@ def replace_avatar(order_id: int, session: str, caption: str, avatar: bytes) -> 
     return {"order_id": order_id, "size": len(avatar)}
 
 
-def _plan(handler: Any, name: str) -> ExecutionPlan:
+def _plan(handler: Any, name: str, *, output: Any = Any) -> ExecutionPlan:
     return ExecutionPlan.compile(
         CapabilityDefinition(
             CapabilityId("reference", name),
             handler,
             description=(handler.__doc__ or "").strip().splitlines()[0] or None,
+            output=output,
         ),
         DIRegistry(),
     )
@@ -109,7 +110,7 @@ def exposures() -> tuple[_HTTPExposure, ...]:
         _HTTPExposure(
             "GET",
             "/v1/orders/{order_id}",
-            _plan(show_order, "show_order"),
+            _plan(show_order, "show_order", output=dict[str, int]),
             (
                 _InputBinding("order_id", _BindingSource.PATH),
                 _InputBinding("trace_id", _BindingSource.HEADER, "x-trace-id"),

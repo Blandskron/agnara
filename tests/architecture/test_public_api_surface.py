@@ -152,10 +152,20 @@ def test_no_public_name_is_underscore_prefixed(module: str) -> None:
     assert not offenders, f"{module} publishes private-looking names: {offenders}"
 
 
+#: Modules whose exports are classified `provisional` by a reviewed decision.
+#: ADR 0099 classifies the whole `agnara_a2a` surface; nothing else may be.
+PROVISIONAL_MODULES = frozenset({"agnara_a2a"})
+
+
 @pytest.mark.parametrize("module", MODULE_NAMES)
 def test_every_governed_export_is_stable(module: str) -> None:
-    """The 1.0 surface contains only deliberate canonical commitments."""
-    assert {entry["stability"] for entry in exports_of(module)} <= {"stable"}
+    """The 1.0 surface contains only deliberate canonical commitments.
+
+    A provisional module is all provisional, so a stable name cannot hide
+    among names that carry no compatibility promise.
+    """
+    allowed = {"provisional"} if module in PROVISIONAL_MODULES else {"stable"}
+    assert {entry["stability"] for entry in exports_of(module)} <= allowed
 
 
 def test_policy_defines_every_stability_term() -> None:
@@ -206,7 +216,6 @@ def test_policy_lists_every_governed_module(module: str) -> None:
 COUNTED_DOCUMENTS = (
     "docs/PUBLIC_API.md",
     "docs/MATURITY.md",
-    "docs/TARGET_ARCHITECTURE.md",
     "docs/releases/RELEASE_CHECKLIST.md",
 )
 
@@ -244,11 +253,9 @@ def test_no_document_states_a_public_surface_count_the_manifest_contradicts(
 ) -> None:
     """One manifest, one set of numbers.
 
-    `docs/MATURITY.md` said 324 exports, `docs/releases/RELEASE_CHECKLIST.md` said
-    292, `docs/TARGET_ARCHITECTURE.md` said 292 across 48 modules, and the
-    manifest said 337 across 49. Four documents, four answers, no way for a
-    reader to know which to trust. Counts written by hand drift the moment an
-    export is added, so the gate reads them back.
+    Counts written by hand drift when an export is added. Compare every current
+    count-bearing document with the manifest rather than preserving old totals
+    in a second source of truth.
     """
     paths, modules, names = _surface_totals()
     text = (WORKSPACE_ROOT / relative).read_text(encoding="utf-8")

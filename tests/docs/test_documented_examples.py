@@ -23,8 +23,10 @@ REPOSITORY = Path(__file__).resolve().parents[2]
 
 #: (document, heading) pairs whose Python block must run unchanged.
 EXECUTABLE: tuple[tuple[str, str], ...] = (
+    ("README.md", "Quick start"),
     ("packages/agnara/README.md", "Quick start"),
     ("packages/agnara-mcp/README.md", "Execution plans"),
+    ("docs/A2A_SERVICE.md", "Try the opt-in recipe"),
 )
 
 

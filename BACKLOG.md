@@ -1,30 +1,43 @@
 # Backlog
 
-This file tracks current and future work. GitHub Issues own executable tasks;
-completed work remains available through Git history and closed Issues. The
-[maturity matrix](docs/MATURITY.md) describes shipped behavior.
+GitHub Issues are executable work units. Closed Issues, merged PRs and Git
+retain completed work and review evidence. See the [roadmap](ROADMAP.md) for
+the milestone and the [maturity matrix](docs/MATURITY.md) for current behavior.
 
-## In progress
+## November 14 presentation
 
-- [~] [#512](https://github.com/Blandskron/agnara/issues/512): establish the
-  1.0.3 documentation and synchronized package metadata baseline. Acceptance:
-  no runtime or public API change; current docs, links and packaging checks pass.
+Scope each work item in an Issue before implementation. Priorities reflect
+what improves the demonstration and adoption within the available time.
 
-## Future work requiring a scoped Issue and review
+- [ ] **P0 · MCP transport evidence.** Use one host-owned SDK transport and
+  record exact versions. Exercise startup, discovery, invocation, denial
+  before effects, caller cancellation and resource shutdown. Keep the
+  existing in-process flow as the demo fallback.
+- [ ] **P1 · CLI adoption.** Rehearse scaffolding, inspection and the existing
+  static `doctor` from a clean environment. Document one reproducible path and
+  record the first runtime diagnostic gap for a separate Issue.
+- [ ] **P1 · A2A scope decision.** Record what the provisional complete-result
+  profile can demonstrate with the pinned client and host. Review API stability
+  and broader host support separately from the runnable recipe.
+- [ ] **P1 · Core, HTTP and telemetry rehearsal.** Use the same capability for
+  direct, HTTP and MCP calls. Verify canonical results, denial before effects,
+  resource closure and trace redaction. Record the candidate-wheel commit,
+  versions and commands used at the demo freeze.
+- [ ] **P2 · Events feasibility.** Identify one first use case and its minimum
+  contract in the [Events proposal](docs/rfc/0011-event-initial-projection.md).
+  Capture a proceed or defer decision for follow-up review.
 
-- [ ] Maintain runnable tutorials and reference applications against the
-  governed public API.
-- [ ] Extend interoperability evidence only where the existing host contract
-  applies; distinguish fixtures from supported integrations.
-- [ ] Research Python 3.15 compatibility under
-  [the research plan](docs/research/python-315-readiness.md) before changing the
-  declared Python floor or CI support.
-- [ ] Evaluate additional protocol projections, durable execution and reserved
-  distributions through separate RFCs. No runtime implementation is authorized
-  by this backlog entry alone.
+## After the presentation
 
-## Maintenance
+- [ ] Maintain runnable tutorials, reference applications and interoperability
+  evidence against the governed API and explicit host contract.
+- [ ] Scope runtime CLI diagnostics from the clean-project rehearsal.
+- [ ] Evaluate [durable execution](docs/rfc/0012-durable-execution-boundary.md)
+  and further protocol projections in separate feasibility Issues.
+- [ ] Review activation of the
+  [Python 3.15 research plan](docs/research/python-315-readiness.md) before
+  changing the Python floor or CI support.
 
-Keep security fixes, dependency updates, documentation drift, supply-chain
-checks and CI failures in normal issue/branch/PR review. Do not use roadmap
-headings as evidence that a feature ships.
+Handle regressions, security fixes, dependency updates and CI failures through
+normal Issue and PR review. Preserve decision and release evidence when
+removing superseded guidance.

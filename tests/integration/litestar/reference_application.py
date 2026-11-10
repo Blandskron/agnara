@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -10,9 +13,8 @@ from litestar import Litestar, Request, get, post
 from litestar.params import FromPath
 from litestar.response import Response
 
-from agnara import Agnara, AnonymousPrincipal, App, Principal
-from agnara.capability import CapabilityId
-from agnara.di import DIContainer, DIRegistry
+from agnara import Agnara, AnonymousPrincipal, App, CapabilityId, Principal
+from agnara.di import DIContainer, DIRegistry, Scope, provider
 from agnara.execution import (
     CapabilityInvoker,
     CapabilityRuntime,
@@ -39,21 +41,71 @@ class Codec:
 
 
 @dataclass(slots=True)
+class Connection:
+    """Local lifecycle probe, not a database connection or host object."""
+
+    closed: bool = False
+
+
+@dataclass(slots=True)
+class Session:
+    connection: Connection
+    closed: bool = False
+
+
+@dataclass(slots=True)
 class State:
     effects: int = 0
+    starts: int = 0
     closes: int = 0
     runtime: CapabilityRuntime | None = None
     container: DIContainer | None = None
     store: InMemoryIdempotencyStore = field(default_factory=InMemoryIdempotencyStore)
+    # Observe loop identities in host-owned state, never inject a loop object.
+    events: list[tuple[str, int]] = field(default_factory=list)
+    connections: list[Connection] = field(default_factory=list)
+    sessions: list[Session] = field(default_factory=list)
 
 
 class Host:
     def __init__(self, state: State) -> None:
         self.state = state
+
+    def record(self, event: str) -> None:
+        self.state.events.append((event, id(asyncio.get_running_loop())))
+
+    async def start(self) -> None:
+        assert self.state.runtime is None and self.state.container is None
+        state = self.state
         project, app = Agnara("litestar_fixture"), App("fixture")
 
+        @provider(scope=Scope.SINGLETON)
+        async def connection() -> AsyncIterator[Connection]:
+            resource = Connection()
+            state.connections.append(resource)
+            self.record("connection.open")
+            try:
+                yield resource
+            finally:
+                resource.closed = True
+                self.record("connection.close")
+
+        @provider(scope=Scope.INVOCATION)
+        async def session(connection: Connection) -> AsyncIterator[Session]:
+            resource = Session(connection)
+            state.sessions.append(resource)
+            self.record("session.open")
+            try:
+                yield resource
+            finally:
+                resource.closed = True
+                self.record("session.close")
+
         @app.capability(scopes=(_SCOPE,))
-        def echo(value: str) -> str:
+        def echo(value: str, session: Session, same_session: Session) -> str:
+            assert session is same_session
+            assert not session.closed and not session.connection.closed
+            self.record("echo")
             return f"agnara:{value}"
 
         @app.capability(scopes=(_SCOPE,))
@@ -68,12 +120,16 @@ class Host:
             return state.effects
 
         @app.capability(scopes=(_SCOPE,))
-        def failure() -> str:
+        def failure(session: Session) -> str:
+            assert not session.closed and not session.connection.closed
+            self.record("failure")
             raise RuntimeError("host exception must not cross")
 
         project.include(app)
         caps = project.compile()
         registry = DIRegistry()
+        registry.bind(Connection, connection)
+        registry.bind(Session, session)
         container = DIContainer(registry)
         state.runtime, state.container = (
             CapabilityRuntime(
@@ -81,6 +137,8 @@ class Host:
             ),
             container,
         )
+        state.starts += 1
+        self.record("startup")
 
     def principal(self, request: Request[Any, Any, Any]) -> Principal:
         return (
@@ -113,6 +171,7 @@ class Host:
             self.state.runtime = None
             self.state.container = None
             self.state.closes += 1
+            self.record("shutdown")
 
 
 def _response(result: Success[object] | Failure) -> Response:
@@ -124,6 +183,15 @@ def _response(result: Success[object] | Failure) -> Response:
 
 def create_application(state: State | None = None) -> tuple[Litestar, Host]:
     host = Host(state or State())
+
+    @asynccontextmanager
+    async def lifespan(_: Litestar) -> AsyncIterator[None]:
+        await host.start()
+        try:
+            yield
+        finally:
+            # Litestar owns this lifespan; calls have finished before shutdown.
+            await host.close()
 
     @get("/native")
     async def native() -> dict[str, str]:
@@ -160,4 +228,6 @@ def create_application(state: State | None = None) -> tuple[Litestar, Host]:
             )
         return _response(await host.invoke("fixture.write", {}, request, idem=idem))
 
-    return Litestar(route_handlers=[native, echo, compose, failure, write]), host
+    return Litestar(
+        route_handlers=[native, echo, compose, failure, write], lifespan=[lifespan]
+    ), host

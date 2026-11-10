@@ -5,8 +5,8 @@ mirrors, including the limitations of this release.
 
     python http_service.py
 
-It composes one HTTP surface, drives four requests through the compiled ASGI
-application without a server, prints the generated OpenAPI paths, and shows
+It composes one HTTP surface and owns its startup, requests and shutdown on
+one event loop without a server, prints the generated OpenAPI paths, and shows
 that the same capabilities feed the protocol-neutral exposure registry.
 
 Install synchronized 1.x packages. The stable public API is documented in
@@ -21,20 +21,26 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Any
 
 from agnara import Agnara, Risk, StandardEffect
 from agnara.di import DIRegistry, Scope, provider
 from agnara.exposure import compile_exposures
-from agnara_http import Binding, BindingSource, Http, OpenApiInfo, OpenApiOperation
+from agnara_http import Binding, BindingSource, Http, HttpApplication, OpenApiInfo, OpenApiOperation
 
 
 class Ledger:
     """A stand-in for whatever the application really talks to."""
 
     def __init__(self) -> None:
+        self.closed = False
         self._orders: dict[str, Order] = {"A-1": Order("widget", 3)}
+
+    def close(self) -> None:
+        self.closed = True
 
     def read(self, order_id: str) -> Order | None:
         return self._orders.get(order_id)
@@ -53,12 +59,13 @@ class Order:
 
 
 @provider(scope=Scope.SINGLETON)
-def provide_ledger() -> Ledger:
-    return Ledger()
+async def provide_ledger() -> AsyncIterator[Ledger]:
+    ledger = Ledger()
+    try:
+        yield ledger
+    finally:
+        ledger.close()
 
-
-dependencies = DIRegistry()
-dependencies.bind(Ledger, provide_ledger)
 
 app = Agnara("shop")
 
@@ -101,46 +108,79 @@ def attach(order_id: str, session: str, note: str, document: bytes) -> dict[str,
     }
 
 
-# 1. Declare which capabilities this HTTP surface exposes. Bindings are
-#    explicit, including for path parameters (ADR 0026).
-http = Http("public")
-http.get(
-    "/orders/{order_id}",
-    show_order,
-    Binding("order_id", BindingSource.PATH),
-    openapi=OpenApiOperation(summary="Show an order", publish_description=True, tags=("orders",)),
-)
-http.put(
-    "/orders/{order_id}",
-    put_order,
-    Binding("order_id", BindingSource.PATH),
-    Binding("order", BindingSource.BODY),
-    openapi=OpenApiOperation(summary="Store an order", tags=("orders",)),
-)
-# No `openapi=`, so this one is served and stays out of the document (ADR 0035).
-http.get("/health", health)
-http.post(
-    "/orders/{order_id}/attachments",
-    attach,
-    Binding("order_id", BindingSource.PATH),
-    Binding("session", BindingSource.COOKIE, wire_name="sid"),
-    Binding("note", BindingSource.FORM),
-    Binding("document", BindingSource.UPLOAD, wire_name="file"),
-    openapi=OpenApiOperation(summary="Attach a document", tags=("orders",)),
-    max_body_bytes=64 * 1024,
-    max_parts=4,
-)
-
-# 2. Freeze the capabilities, then compile the surface. Both calls belong to
-#    the application: nothing is registered globally.
+# Capabilities are a frozen transport-neutral snapshot; each worker below gets
+# a fresh HTTP surface and container. Compiling does not open provider resources.
 capabilities = app.compile()
-asgi = http.compile(
-    capabilities,
-    dependencies=dependencies,
-    openapi=OpenApiInfo("Shop API", "2026.1", summary="Orders, over HTTP."),
-    openapi_path="/openapi.json",
-    request_timeout=5.0,
-)
+
+
+def create_application(dependencies: DIRegistry | None = None) -> HttpApplication:
+    """Compose a fresh application; its server owns one worker-loop lifespan."""
+    if dependencies is None:
+        dependencies = DIRegistry()
+        dependencies.bind(Ledger, provide_ledger)
+    # 1. Declare which capabilities this HTTP surface exposes. Bindings are
+    #    explicit, including for path parameters (ADR 0026).
+    http = Http("public")
+    http.get(
+        "/orders/{order_id}",
+        show_order,
+        Binding("order_id", BindingSource.PATH),
+        openapi=OpenApiOperation(
+            summary="Show an order", publish_description=True, tags=("orders",)
+        ),
+    )
+    http.put(
+        "/orders/{order_id}",
+        put_order,
+        Binding("order_id", BindingSource.PATH),
+        Binding("order", BindingSource.BODY),
+        openapi=OpenApiOperation(summary="Store an order", tags=("orders",)),
+    )
+    # No `openapi=`, so this one is served and stays out of the document (ADR 0035).
+    http.get("/health", health)
+    http.post(
+        "/orders/{order_id}/attachments",
+        attach,
+        Binding("order_id", BindingSource.PATH),
+        Binding("session", BindingSource.COOKIE, wire_name="sid"),
+        Binding("note", BindingSource.FORM),
+        Binding("document", BindingSource.UPLOAD, wire_name="file"),
+        openapi=OpenApiOperation(summary="Attach a document", tags=("orders",)),
+        max_body_bytes=64 * 1024,
+        max_parts=4,
+    )
+
+    # 2. Compile this worker's surface against the frozen capability snapshot.
+    return http.compile(
+        capabilities,
+        dependencies=dependencies,
+        openapi=OpenApiInfo("Shop API", "2026.1", summary="Orders, over HTTP."),
+        openapi_path="/openapi.json",
+        request_timeout=5.0,
+    )
+
+
+# ASGI servers drive lifespan themselves. The server-free demonstration uses
+# its own fresh application rather than consuming this importable entry point.
+asgi = create_application()
+
+
+@asynccontextmanager
+async def lifespan(application: HttpApplication) -> AsyncIterator[None]:
+    """A bounded in-memory ASGI host, not a production server implementation."""
+    incoming: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
+    outgoing: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
+    async with asyncio.timeout(5), asyncio.TaskGroup() as owned:
+        owned.create_task(application({"type": "lifespan"}, incoming.get, outgoing.put))
+        await incoming.put({"type": "lifespan.startup"})
+        if (await outgoing.get())["type"] != "lifespan.startup.complete":
+            raise RuntimeError("example lifespan startup failed")
+        try:
+            yield
+        finally:
+            await incoming.put({"type": "lifespan.shutdown"})
+            if (await outgoing.get())["type"] != "lifespan.shutdown.complete":
+                raise RuntimeError("example lifespan shutdown failed")
 
 
 #: The line ending every HTTP message format uses, spelled once.
@@ -165,7 +205,8 @@ def file_part(name: str, filename: str, media_type: str, content: bytes) -> byte
     return head + CRLF + f"Content-Type: {media_type}".encode() + CRLF + CRLF + content
 
 
-def request(
+async def request(
+    application: HttpApplication,
     method: str,
     path: str,
     *,
@@ -191,71 +232,81 @@ def request(
         "headers": list(headers),
         "root_path": "",
     }
-    asyncio.run(asgi(scope, receive, send))
+    await application(scope, receive, send)
     return events[0]["status"], b"".join(event.get("body", b"") for event in events[1:])
 
 
+async def demonstrate() -> None:
+    application = create_application()
+    async with lifespan(application):
+        print(f"compiled: {application!r}")
+
+        status, payload = await request(application, "GET", "/orders/A-1")
+        print(f"read     -> {status} {payload.decode()}")
+
+        status, payload = await request(
+            application,
+            "PUT",
+            "/orders/B-2",
+            body=json.dumps({"sku": "gadget", "quantity": 1}).encode("utf-8"),
+            headers=((b"content-type", b"application/json"),),
+        )
+        print(f"write    -> {status} {payload.decode()}")
+
+        # A capability failure is an RFC 9457 problem document, not an exception.
+        status, payload = await request(application, "GET", "/orders")
+        problem = json.loads(payload)
+        print(f"missing  -> {status} {problem['code']}")
+
+        # A cookie, a form field and an upload, in one request (ADR 0072).
+        status, payload = await request(
+            application,
+            "POST",
+            "/orders/A-1/attachments",
+            body=multipart(
+                text_part("note", "Signed copy"),
+                file_part("file", "contract.pdf", "application/pdf", b"%PDF-1.7 ..."),
+            ),
+            headers=(
+                (b"content-type", f"multipart/form-data; boundary={BOUNDARY}".encode()),
+                (b"cookie", b"sid=session-7; unrelated=x"),
+            ),
+        )
+        print(f"attach   -> {status} {payload.decode()}")
+
+        # An upload beyond the route's limit is a structured 413, never a crash.
+        status, payload = await request(
+            application,
+            "POST",
+            "/orders/A-1/attachments",
+            body=multipart(
+                text_part("note", "Too big"),
+                file_part("file", "huge.bin", "application/octet-stream", b"x" * 70_000),
+            ),
+            headers=(
+                (b"content-type", f"multipart/form-data; boundary={BOUNDARY}".encode()),
+                (b"cookie", b"sid=session-7"),
+            ),
+        )
+        print(f"oversize -> {status} {json.loads(payload)['code']}")
+
+        status, payload = await request(application, "GET", "/openapi.json")
+        document = json.loads(payload)
+        print(f"openapi  -> {status} {document['openapi']} paths={sorted(document['paths'])}")
+
+        # The undocumented route is served and absent from the document.
+        health_status, _ = await request(application, "GET", "/health")
+        print(f"health   -> {health_status} documented={'/health' in document['paths']}")
+
+        # 3. The same surface feeds the protocol-neutral exposure registry, so one
+        #    capability exposed over HTTP and MCP has one answer to where it is
+        #    reachable (ADR 0070).
+        exposures = compile_exposures(capabilities, [application.exposures])
+        print(f"exposures-> {[str(identity) for identity in exposures]}")
+
+
 def main() -> None:
-    print(f"compiled: {asgi!r}")
-
-    status, payload = request("GET", "/orders/A-1")
-    print(f"read     -> {status} {payload.decode()}")
-
-    status, payload = request(
-        "PUT",
-        "/orders/B-2",
-        body=json.dumps({"sku": "gadget", "quantity": 1}).encode("utf-8"),
-        headers=((b"content-type", b"application/json"),),
-    )
-    print(f"write    -> {status} {payload.decode()}")
-
-    # A capability failure is an RFC 9457 problem document, not an exception.
-    status, payload = request("GET", "/orders")
-    problem = json.loads(payload)
-    print(f"missing  -> {status} {problem['code']}")
-
-    # A cookie, a form field and an upload, in one request (ADR 0072).
-    status, payload = request(
-        "POST",
-        "/orders/A-1/attachments",
-        body=multipart(
-            text_part("note", "Signed copy"),
-            file_part("file", "contract.pdf", "application/pdf", b"%PDF-1.7 ..."),
-        ),
-        headers=(
-            (b"content-type", f"multipart/form-data; boundary={BOUNDARY}".encode()),
-            (b"cookie", b"sid=session-7; unrelated=x"),
-        ),
-    )
-    print(f"attach   -> {status} {payload.decode()}")
-
-    # An upload beyond the route's limit is a structured 413, never a crash.
-    status, payload = request(
-        "POST",
-        "/orders/A-1/attachments",
-        body=multipart(
-            text_part("note", "Too big"),
-            file_part("file", "huge.bin", "application/octet-stream", b"x" * 70_000),
-        ),
-        headers=(
-            (b"content-type", f"multipart/form-data; boundary={BOUNDARY}".encode()),
-            (b"cookie", b"sid=session-7"),
-        ),
-    )
-    print(f"oversize -> {status} {json.loads(payload)['code']}")
-
-    status, payload = request("GET", "/openapi.json")
-    document = json.loads(payload)
-    print(f"openapi  -> {status} {document['openapi']} paths={sorted(document['paths'])}")
-
-    # The undocumented route is served and absent from the document.
-    print(f"health   -> {request('GET', '/health')[0]} documented={'/health' in document['paths']}")
-
-    # 3. The same surface feeds the protocol-neutral exposure registry, so one
-    #    capability exposed over HTTP and MCP has one answer to where it is
-    #    reachable (ADR 0070).
-    exposures = compile_exposures(capabilities, [asgi.exposures])
-    print(f"exposures-> {[str(identity) for identity in exposures]}")
+    asyncio.run(demonstrate())
 
 
 if __name__ == "__main__":

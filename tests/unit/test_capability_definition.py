@@ -240,8 +240,7 @@ class TestDeclareConstructor:
         assert declared == define(effects=frozenset({"read"}), risk=Risk.HIGH)
 
     def test_accepts_the_documented_authoring_types(self) -> None:
-        """docs/API_DESIGN.md writes `effects={...}, risk="high"` — the very
-        call that used to be a static error."""
+        """Declaration accepts set effects and a literal risk string."""
         declared = CapabilityDefinition.declare(
             id=REFUND,
             handler=handler,
@@ -300,7 +299,7 @@ class TestValueSemantics:
 
 class TestAgenticDeclaration:
     def test_a_high_risk_destructive_capability_reads_as_intended(self) -> None:
-        """The golden example from docs/API_DESIGN.md section 12."""
+        """Destructive capability metadata remains explicit and readable."""
         definition = define(
             id=CapabilityId("accounts", "delete_account"),
             description="Permanently delete an account",

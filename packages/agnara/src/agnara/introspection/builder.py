@@ -11,7 +11,6 @@ tooling path, never an invocation path (PRINCIPLES.md P5).
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from typing import get_type_hints
 
 from agnara.application import Agnara
 from agnara.capability.identity import CapabilityId
@@ -70,7 +69,7 @@ def _dependencies(plan: ExecutionPlan) -> tuple[DependencyDescriptor, ...]:
     own ``dependency_parameters`` keeps a payload parameter out even when it
     happens to be annotated with a bound type.
     """
-    hints = get_type_hints(plan.definition.handler)
+    hints = _get_dependencies(plan.definition.handler)
     return tuple(
         DependencyDescriptor(name, TypeReference.of(annotation))
         for name, annotation in hints.items()

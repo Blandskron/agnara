@@ -84,43 +84,47 @@ async def main() -> None:
         print(f"  input {name}: {schema}")
     print(f"  protected (runtime-owned): {sorted(plan.protected_parameters)}")
 
-    # 3. Invoke directly. No HTTP, no server, no transport.
-    outcome = await invoke_result(
-        plan,
-        ExecutionContext(
-            Invocation(
-                capability_id=plan.definition.id,
-                payload={"payment_id": "pay_123", "amount_cents": 2500},
-                metadata={},
+    container = DIContainer(dependencies)
+    try:
+        # 3. Invoke directly. No HTTP, no server, no transport.
+        outcome = await invoke_result(
+            plan,
+            ExecutionContext(
+                Invocation(
+                    capability_id=plan.definition.id,
+                    payload={"payment_id": "pay_123", "amount_cents": 2500},
+                    metadata={},
+                ),
+                container,
+                principal=Principal("quickstart", scopes={"billing:write"}),
             ),
-            DIContainer(dependencies),
-            principal=Principal("quickstart", scopes={"billing:write"}),
-        ),
-    )
-    match outcome:
-        case Success(value=value):
-            print(f"\nsuccess: {value}")
-        case Failure(code=code, message=message):
-            print(f"\nfailure: {code} {message}")
+        )
+        match outcome:
+            case Success(value=value):
+                print(f"\nsuccess: {value}")
+            case Failure(code=code, message=message):
+                print(f"\nfailure: {code} {message}")
 
-    # 4. Bad input is a canonical failure, not an exception or a 422.
-    rejected = await invoke_result(
-        plan,
-        ExecutionContext(
-            Invocation(
-                capability_id=plan.definition.id,
-                payload={"payment_id": "pay_123", "amount_cents": "not-an-int"},
-                metadata={},
+        # 4. Bad input is a canonical failure, not an exception or a 422.
+        rejected = await invoke_result(
+            plan,
+            ExecutionContext(
+                Invocation(
+                    capability_id=plan.definition.id,
+                    payload={"payment_id": "pay_123", "amount_cents": "not-an-int"},
+                    metadata={},
+                ),
+                container,
+                principal=Principal("quickstart", scopes={"billing:write"}),
             ),
-            DIContainer(dependencies),
-            principal=Principal("quickstart", scopes={"billing:write"}),
-        ),
-    )
-    match rejected:
-        case Failure(code=code, message=message):
-            print(f"rejected: {code} {message}")
-        case Success():  # pragma: no cover - the payload is invalid on purpose
-            raise AssertionError("invalid input must not succeed")
+        )
+        match rejected:
+            case Failure(code=code, message=message):
+                print(f"rejected: {code} {message}")
+            case Success():  # pragma: no cover - the payload is invalid on purpose
+                raise AssertionError("invalid input must not succeed")
+    finally:
+        await container.aclose()
 
 
 if __name__ == "__main__":

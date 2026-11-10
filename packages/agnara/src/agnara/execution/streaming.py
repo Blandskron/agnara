@@ -34,7 +34,7 @@ from uuid import uuid4
 
 from agnara.errors import AgnaraError, InvocationError
 from agnara.execution._outcome import classify
-from agnara.execution._output import validate_output
+from agnara.execution._output import validate_output_unit
 from agnara.execution._preflight import bind_inputs, enforce_policies, tracking_id
 from agnara.execution.context import ExecutionContext
 from agnara.execution.plan import ExecutionPlan
@@ -331,7 +331,7 @@ class CapabilityStream:
         try:
             async with self._bounded():
                 unit = await anext(generator)
-            unit = validate_output(self._plan, unit)
+            unit = validate_output_unit(self._plan, unit)
         except StopAsyncIteration:
             self._terminal = StreamTerminal.COMPLETED
             raise

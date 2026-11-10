@@ -12,7 +12,7 @@ application configuring the SDK. The Metrics API assigns instrument creation
 to the meter and configuration to its provider. This supports supplying a
 meter explicitly without global SDK installation in `agnara-telemetry`.
 
-The published API and SDK baseline used for in-memory tests is 1.44.0. The
+The published API and SDK baseline used for in-memory tests is 1.45.1. The
 adapter consumes terminal count/duration data already available in the core
 port; it does not introduce trace correlation or claim protocol-specific
 semantic convention compatibility. See proposed ADR 0054 for measurements,
@@ -20,8 +20,8 @@ redaction, lifecycle ownership and limitations.
 
 - [Python instrumentation](https://opentelemetry.io/docs/languages/python/instrumentation/)
 - [Metrics API](https://opentelemetry.io/docs/specs/otel/metrics/api/)
-- [API 1.44.0](https://pypi.org/project/opentelemetry-api/1.44.0/)
-- [SDK 1.44.0](https://pypi.org/project/opentelemetry-sdk/1.44.0/)
+- [API 1.45.1](https://pypi.org/project/opentelemetry-api/1.45.1/)
+- [SDK 1.45.1](https://pypi.org/project/opentelemetry-sdk/1.45.1/)
 
 ## Python 3.14
 
@@ -576,29 +576,48 @@ Task and MRTR references:
 
 ## A2A
 
-A2A is a post-v0.1 adapter target.
+A2A has an unreleased, experimental complete-result projection with provisional
+exports under [ADR 0099](adr/0099-a2a-provisional-public-surface.md). The
+[guide](A2A_SERVICE.md) links the current in-process, installed candidate-wheel
+and bounded Uvicorn/h11 evidence, including the opt-in application-owned
+disconnect recipe. [Maturity](MATURITY.md) owns current status; the published
+1.0.3 package remains an empty namespace. No broader host or protocol support
+follows from these fixtures.
 
-Current reviewed line:
+Initial research checkpoint, inspected on 2026-10-28 (not the current dependency decision):
 
-- A2A Protocol 1.0.
-
-The protocol supports independent agent interoperability, discovery, tasks, streaming and multiple protocol bindings.
-
-Reference:
-
-- https://github.com/a2aproject/A2A/blob/main/docs/specification.md
+- Candidate wire line: `1.0`, distinct from the specification release and SDK
+  package versions. This is not an Agnara protocol-support declaration.
+- Specification release `v1.0.1`, immutable commit
+  `3303592588e388e62e0f69f701af531d2f4e3991`:
+  [specification](https://github.com/a2aproject/A2A/blob/3303592588e388e62e0f69f701af531d2f4e3991/docs/specification.md)
+  and [protocol definitions](https://github.com/a2aproject/A2A/blob/3303592588e388e62e0f69f701af531d2f4e3991/specification/a2a.proto).
+- SDK candidate `a2a-python v1.3.0`, commit
+  `0d9dafb92328144384eca58a6e8ab80cb8f7d445`:
+  [package metadata](https://github.com/a2aproject/a2a-python/blob/0d9dafb92328144384eca58a6e8ab80cb8f7d445/pyproject.toml).
+  That source-inspection checkpoint alone did not establish installation or
+  interoperability. The subsequent exact `a2a-sdk[http-server]==1.3.0`
+  dependency decision belongs to ADR 0099; the checkpoint is not an instruction
+  to select a different SDK or update the pin.
 
 ## AsyncAPI
 
 Event-driven support should project to AsyncAPI rather than inventing a documentation format.
+The event adapter is unimplemented; [RFC 0011](rfc/0011-event-initial-projection.md)
+owns the initial projection questions and feasibility gates.
 
-Current reviewed line:
+Research checkpoint, inspected on 2026-10-28:
 
-- AsyncAPI 3.1.0.
+- AsyncAPI `3.1.0`, immutable commit
+  `b3fac5bb522771428ea57b16129b273cd3ea0180`:
+  [specification](https://github.com/asyncapi/spec/blob/b3fac5bb522771428ea57b16129b273cd3ea0180/spec/asyncapi.md).
+  Its Schema Object is a JSON Schema Draft 07 superset.
+- CloudEvents `v1.0.2`, tag `ce@v1.0.2`, immutable commit
+  `fc1f6f31f5f011a72183f1bcea20c987cb683ade`:
+  [specification](https://github.com/cloudevents/spec/blob/fc1f6f31f5f011a72183f1bcea20c987cb683ade/cloudevents/spec.md).
+  A candidate envelope, not an Agnara core type.
 
-Reference:
-
-- https://www.asyncapi.com/docs/reference/specification/v3.1.0
+No broker or client SDK is selected, installed or claimed compatible.
 
 ## uv
 

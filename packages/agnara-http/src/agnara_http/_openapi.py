@@ -1,6 +1,6 @@
 """Deterministic OpenAPI 3.2 projection from compiled HTTP exposures.
 
-The module is internal until the HTTP composition API is reviewed. It consumes
+This internal module backs the public HTTP composition API. It consumes
 only the immutable registry used by request dispatch and plain JSON Schema data
 from core's schema port. OpenAPI vocabulary stays in this adapter.
 """
@@ -113,7 +113,7 @@ def _operation(
         raise _OpenAPIDefinitionError("an unpublished exposure has no OpenAPI operation")
     operation: dict[str, Any] = {
         "operationId": operation_id,
-        "responses": _responses(method),
+        "responses": _responses(exposure, method),
     }
     if publication.summary is not None:
         operation["summary"] = publication.summary
@@ -212,11 +212,12 @@ def _form_request_body(
     }
 
 
-def _responses(method: str) -> dict[str, Any]:
+def _responses(exposure: _CompiledExposure, method: str) -> dict[str, Any]:
     """Describe exactly the adapter's current non-streaming output boundary."""
     success: dict[str, Any] = {"description": "Successful capability result."}
     if method != "HEAD":
-        success["content"] = {"application/json": {"schema": {}}}
+        schema = _schema_value(exposure.plan.output_schema.json_schema())
+        success["content"] = {"application/json": {"schema": schema}}
     return {
         "200": success,
         "204": {"description": "Successful capability result with no value."},

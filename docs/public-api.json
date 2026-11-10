@@ -552,7 +552,40 @@
       "modules": [
         {
           "module": "agnara_a2a",
-          "exports": []
+          "exports": [
+            {
+              "name": "A2A_PROTOCOL_VERSION",
+              "stability": "provisional"
+            },
+            {
+              "name": "A2A_PYTHON_SDK_VERSION",
+              "stability": "provisional"
+            },
+            {
+              "name": "SUPPORTED_A2A_PROTOCOL_VERSIONS",
+              "stability": "provisional"
+            },
+            {
+              "name": "A2a",
+              "stability": "provisional"
+            },
+            {
+              "name": "A2aAgentCard",
+              "stability": "provisional"
+            },
+            {
+              "name": "A2aDefinitionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "A2aSkillExposure",
+              "stability": "provisional"
+            },
+            {
+              "name": "build_a2a_app",
+              "stability": "provisional"
+            }
+          ]
         }
       ]
     },

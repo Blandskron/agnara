@@ -475,9 +475,23 @@ def test_the_current_target_is_not_tagged_ahead_of_the_workflow() -> None:
     if listed:
         # The tag may legitimately exist once the release has been published
         # and the record moved on; then the status file must say so.
-        assert document["previous_release"] == target, (
-            f"v{target} exists but release-status.json still prepares {target}; a tag must be "
-            "created only by the release run after verified publication, never ahead of it"
+        assert document.get("status") == "PUBLISHED", (
+            f"v{target} exists but release-status.json still marks it as preparing; "
+            "record verified publication before treating this tag as complete"
+        )
+        assert document.get("previous_release") == target, (
+            f"v{target} exists but previous_release is missing or differs from current_target"
+        )
+        tagged_commit = subprocess.run(
+            ["git", "rev-parse", f"v{target}^{{}}"],
+            cwd=WORKSPACE_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        assert document.get("candidate_sha") == tagged_commit, (
+            f"v{target} points to {tagged_commit}, but release-status.json records "
+            f"{document.get('candidate_sha')!r}"
         )
 
 

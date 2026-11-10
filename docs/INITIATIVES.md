@@ -73,11 +73,13 @@ lifecycle integration. See [INTEROPERABILITY.md](INTEROPERABILITY.md).
 
 ### I21 Documentation baseline
 
-**Horizon:** current release preparation.
-**Status:** `IN PROGRESS`.
+**Horizon:** current documentation baseline.
+**Status:** `IMPLEMENTED`.
 
-Issue [#512](https://github.com/Blandskron/agnara/issues/512) aligns the
-documentation and package metadata for 1.0.3 without runtime or API changes.
+Issue [#512](https://github.com/Blandskron/agnara/issues/512) aligned the
+documentation and package metadata without runtime or API changes, integrated
+through PR #513. Publication remains a separate maintainer decision; see the
+[development roadmap](../ROADMAP.md).
 
 ### I22 Python 3.15 research
 

@@ -1,4 +1,6 @@
+import inspect
 from collections.abc import Callable
+from functools import partial
 from typing import Any, get_type_hints
 
 from agnara.errors import DefinitionError
@@ -32,7 +34,17 @@ def _get_dependencies(func: Callable[..., Any]) -> dict[str, type]:
     as one rather than as a bare `NameError` from inside the graph compiler.
     """
     try:
-        hints = get_type_hints(func)
+        target = func
+        while isinstance(target, partial):
+            target = target.func
+        if not inspect.isroutine(target) and not inspect.isclass(target):
+            target = target.__call__
+        hints = get_type_hints(target)
+        if target is not func or inspect.ismethod(func):
+            # Bound receivers and positionally bound partial arguments do not
+            # belong to the invocation. Keyword defaults remain overridable.
+            parameters = inspect.signature(func).parameters
+            hints = {name: hint for name, hint in hints.items() if name in parameters}
     except Exception as error:
         name = getattr(func, "__qualname__", None) or repr(func)
         raise DependencyResolutionError(
@@ -89,6 +101,21 @@ def compile_dag(
             raise DependencyResolutionError(f"Type {current_type} is not bound.")
 
         deps = _get_dependencies(provider.func)
+        provider_name = getattr(provider.func, "__qualname__", repr(provider.func))
+        for name, parameter in inspect.signature(provider.func).parameters.items():
+            if parameter.kind not in (
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                inspect.Parameter.KEYWORD_ONLY,
+            ):
+                raise DependencyResolutionError(
+                    f"Provider {provider_name} parameter {name!r} must be an explicit "
+                    "positional-or-keyword or keyword-only parameter."
+                )
+            if name not in deps:
+                raise DependencyResolutionError(
+                    f"Provider {provider_name} parameter {name!r} requires a type annotation. "
+                    "Providers can only depend on other registered providers."
+                )
         di_deps = []
         for name, typ in deps.items():
             if registry.is_bound(typ):

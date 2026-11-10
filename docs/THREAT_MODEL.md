@@ -342,7 +342,10 @@ this corpus is evidence about this corpus. There is also no penetration test,
 no load or denial-of-service testing under real concurrency, no review of the
 vendored documentation bundles' own code, and no analysis of git history for
 previously committed credentials. The CLI review is bounded to section 8;
-there is no hostile-local-filesystem or plugin-execution audit. Reserved A2A
-and events distributions have no implemented protocol behavior to review.
+there is no hostile-local-filesystem or plugin-execution audit. Events remains
+a reserved distribution with no implemented protocol behavior. The unreleased,
+provisional A2A projection and application-owned disconnect recipe are outside
+this model's analyzed protocol scope. Their [bounded tests and guide](A2A_SERVICE.md)
+do not constitute a repository-wide A2A security assessment or deployment audit.
 Native secret scanning and static analysis supplement these limits; they do
 not replace a full historical credential, cryptographic or supply-chain audit.

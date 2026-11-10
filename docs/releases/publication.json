@@ -17,7 +17,7 @@
   "last_registry_failure": null,
   "notes": [
     "Trusted Publisher configuration is recorded separately from target publication.",
-    "Protected authorization and index verification for 1.0.3 have not occurred."
+    "Protected 1.0.3 phases completed on c25d9eb5b2d432f652c4661a1925cb38baa63c82 in runs 36198149576, 36198710966 and 36199330668; the final run verified all seven distributions and created v1.0.3."
   ],
   "projects": [
     {
@@ -92,6 +92,6 @@
     }
   ],
   "current_target": "1.0.3",
-  "candidate_sha": null,
-  "target_publication_state": "PENDING"
+  "candidate_sha": "c25d9eb5b2d432f652c4661a1925cb38baa63c82",
+  "target_publication_state": "PUBLISHED"
 }

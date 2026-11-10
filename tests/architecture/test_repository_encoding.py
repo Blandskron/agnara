@@ -33,10 +33,14 @@ characters in this file.
 from __future__ import annotations
 
 import re
+import subprocess
+import sys
 from collections.abc import Iterator
 from pathlib import Path
 
-from tests.architecture.boundaries import WORKSPACE_ROOT
+import pytest
+
+from tests.architecture.boundaries import WORKSPACE_ROOT, workspace_files
 
 #: Two or more consecutive question marks. Verified to have no legitimate
 #: occurrence in this repository. A genuine one would need an explicit
@@ -60,28 +64,10 @@ ALLOWED_CONTROL_CHARACTERS = frozenset({"\t", "\n", "\r"})
 
 TEXT_SUFFIXES = frozenset({".md", ".py", ".toml", ".json", ".yml", ".yaml", ".txt", ".cfg", ".ini"})
 
-SKIPPED_DIRECTORIES = frozenset(
-    {
-        ".git",
-        ".pytest_cache",
-        ".ruff_cache",
-        ".uv-cache",
-        ".venv",
-        "__pycache__",
-        "dist",
-        "node_modules",
-    }
-)
-
 
 def text_files() -> Iterator[Path]:
     """Yield the workspace's own text files in a deterministic order."""
-    for path in sorted(WORKSPACE_ROOT.rglob("*")):
-        if not path.is_file() or path.suffix.lower() not in TEXT_SUFFIXES:
-            continue
-        if SKIPPED_DIRECTORIES.intersection(path.relative_to(WORKSPACE_ROOT).parts):
-            continue
-        yield path
+    yield from workspace_files(TEXT_SUFFIXES)
 
 
 def _location(path: Path) -> str:
@@ -94,6 +80,33 @@ def test_the_workspace_has_text_files_to_check() -> None:
     assert {"README.md", "BACKLOG.md", "pyproject.toml"} <= names
 
 
+def test_the_walk_stops_at_another_working_tree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A worktree, submodule or clone nested in the checkout is not ours to judge.
+
+    Agents working in parallel put a linked worktree inside the checkout, and
+    before this guard existed its files entered the scan: one run pulled 611
+    files belonging to another agent's half-finished task into these checks.
+    The damage they would report is not damage in the tree under review.
+    """
+    (tmp_path / "own.md").write_text("# Ours\n", encoding="utf-8")
+
+    linked = tmp_path / ".worktrees" / "issue-610"
+    linked.mkdir(parents=True)
+    # What `git worktree add` writes: a file, not a directory.
+    (linked / ".git").write_text("gitdir: ../../.git/worktrees/issue-610\n", encoding="utf-8")
+    (linked / "theirs.md").write_text("# Theirs\n", encoding="utf-8")
+
+    clone = tmp_path / "vendored"
+    (clone / ".git").mkdir(parents=True)
+    (clone / "theirs.md").write_text("# Theirs\n", encoding="utf-8")
+
+    monkeypatch.setattr("tests.architecture.boundaries.WORKSPACE_ROOT", tmp_path)
+
+    assert [path.relative_to(tmp_path).as_posix() for path in text_files()] == ["own.md"]
+
+
 def test_every_text_file_is_valid_utf8() -> None:
     undecodable = []
     for path in text_files():
@@ -102,6 +115,82 @@ def test_every_text_file_is_valid_utf8() -> None:
         except UnicodeDecodeError:
             undecodable.append(_location(path))
     assert not undecodable, f"not valid UTF-8: {undecodable}"
+
+
+@pytest.fixture
+def recovery_workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A real Git index distinguishes ignored evidence from reviewed source."""
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, capture_output=True)
+    (tmp_path / ".gitignore").write_text("/.worktrees/\n", encoding="utf-8")
+    (tmp_path / "own.md").write_text("# Source\n", encoding="utf-8")
+    recovery = tmp_path / ".worktrees" / "recovery"
+    recovery.mkdir(parents=True)
+    manifest = recovery / "snapshot.manifest.json"
+    manifest.write_text('{"status": "' + "?" * 2 + ' untracked.md"}\n', encoding="utf-8")
+    monkeypatch.setattr("tests.architecture.boundaries.WORKSPACE_ROOT", tmp_path)
+    monkeypatch.setattr(sys.modules[__name__], "WORKSPACE_ROOT", tmp_path)
+    return manifest
+
+
+def test_ignored_recovery_status_is_preserved_outside_source_scan(recovery_workspace: Path) -> None:
+    original = recovery_workspace.read_bytes()
+    assert [path.name for path in text_files()] == ["own.md"]
+    test_no_text_file_contains_replaced_characters()
+    assert recovery_workspace.read_bytes() == original
+
+
+def test_newly_tracked_recovery_damage_is_checked_without_cached_exemption(
+    recovery_workspace: Path,
+) -> None:
+    assert recovery_workspace not in set(text_files())
+    subprocess.run(
+        ["git", "add", "-f", "--", str(recovery_workspace)],
+        cwd=WORKSPACE_ROOT,
+        check=True,
+        capture_output=True,
+    )
+    assert recovery_workspace in set(text_files())
+    with pytest.raises(AssertionError, match=r"snapshot\.manifest\.json"):
+        test_no_text_file_contains_replaced_characters()
+
+
+def test_unignored_recovery_damage_remains_checked(recovery_workspace: Path) -> None:
+    (WORKSPACE_ROOT / ".gitignore").write_text("", encoding="utf-8")
+    assert recovery_workspace in set(text_files())
+    with pytest.raises(AssertionError, match=r"snapshot\.manifest\.json"):
+        test_no_text_file_contains_replaced_characters()
+
+
+@pytest.mark.parametrize("relative", ["recovery", ".worktrees/recovery-copy", "docs/recovery"])
+def test_other_recovery_named_directories_retain_encoding_checks(
+    recovery_workspace: Path, relative: str
+) -> None:
+    source = WORKSPACE_ROOT / relative / "damaged.md"
+    source.parent.mkdir(parents=True)
+    source.write_text("?" * 2, encoding="utf-8")
+    # The .worktrees sibling is also ignored by Git, but not recovery evidence.
+    assert source in set(text_files())
+    with pytest.raises(AssertionError, match=r"damaged\.md"):
+        test_no_text_file_contains_replaced_characters()
+
+
+@pytest.mark.parametrize("failure", ["missing", "timeout", "decode", "exit"])
+def test_git_failure_keeps_recovery_files_in_scope(
+    recovery_workspace: Path, monkeypatch: pytest.MonkeyPatch, failure: str
+) -> None:
+    def failed_git(*args, **kwargs):
+        if failure == "missing":
+            raise FileNotFoundError("git unavailable")
+        if failure == "timeout":
+            raise subprocess.TimeoutExpired("git", 5)
+        if failure == "decode":
+            raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid path")
+        return subprocess.CompletedProcess(args[0], 128, stdout="", stderr="not a repository")
+
+    monkeypatch.setattr("tests.architecture.boundaries.subprocess.run", failed_git)
+    assert recovery_workspace in set(text_files())
+    with pytest.raises(AssertionError, match=r"snapshot\.manifest\.json"):
+        test_no_text_file_contains_replaced_characters()
 
 
 def test_no_text_file_contains_replaced_characters() -> None:

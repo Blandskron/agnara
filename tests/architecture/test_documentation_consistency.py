@@ -23,11 +23,11 @@ from tests.architecture.boundaries import DISTRIBUTIONS, WORKSPACE_ROOT
 
 MATURITY = WORKSPACE_ROOT / "docs" / "MATURITY.md"
 INITIATIVES = WORKSPACE_ROOT / "docs" / "INITIATIVES.md"
-TARGET = WORKSPACE_ROOT / "docs" / "TARGET_ARCHITECTURE.md"
+ARCHITECTURE = WORKSPACE_ROOT / "ARCHITECTURE.md"
 MAP = WORKSPACE_ROOT / "docs" / "DOCUMENTATION_MAP.md"
 ROADMAP = WORKSPACE_ROOT / "ROADMAP.md"
 
-PLANNING_DOCUMENTS = (MATURITY, INITIATIVES, TARGET, MAP, ROADMAP)
+PLANNING_DOCUMENTS = (MATURITY, INITIATIVES, ARCHITECTURE, MAP, ROADMAP)
 
 #: The vocabulary `docs/MATURITY.md` declares. A status outside this set means
 #: either the table or the vocabulary drifted, and either way a reader now has
@@ -165,12 +165,12 @@ def test_the_declared_public_surface_matches_the_package(distribution: str) -> N
 
 
 def test_the_reserved_namespaces_are_still_reserved(maturity: str) -> None:
-    """`agnara-a2a` and `agnara-events` are documented as having no runtime.
+    """`agnara-events` is documented as having no runtime.
 
-    If either grows an implementation, its row stops being true, and this is
-    the cheapest place to notice.
+    If it grows an implementation, its row stops being true, and this is
+    the cheapest place to notice. `agnara-a2a` left this list with ADR 0099.
     """
-    for distribution in ("agnara-a2a", "agnara-events"):
+    for distribution in ("agnara-events",):
         module = importlib.import_module(distribution.replace("-", "_"))
         assert getattr(module, "__all__", None) == [], (
             f"{distribution} now exports something; update docs/MATURITY.md"

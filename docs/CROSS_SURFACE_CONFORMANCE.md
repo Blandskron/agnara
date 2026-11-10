@@ -2,7 +2,7 @@
 
 This is the semantic matrix for direct runtime, HTTP/OpenAPI and MCP.
 It records equivalence, not byte identity. Executable evidence lives in
-`tests/conformance/test_a4_schema_policy_failure_consistency.py`; adapter suites
+`tests/conformance/test_schema_policy_failure_consistency.py`; adapter suites
 retain their protocol-specific cases.
 
 ## Schemas
@@ -12,7 +12,7 @@ retain their protocol-specific cases.
 | `bool`, `int`, `float`, `str` | exact Python type; `bool` is not `int` | scalar text bindings convert strictly; JSON preserves JSON scalars | decoded JSON scalar, then common strict validation |
 | `T | None` | exact matching union member | `anyOf` including `null`; decoded JSON is materialized against a matching member | same compiled `anyOf` fragment and materialization |
 | `Enum` | exact enum instance | underlying JSON scalar is materialized to the enum member | same as HTTP; the tool schema publishes the underlying scalar values |
-| `Literal` | exact type and value | JSON `const`/`enum` | identical compiled fragment |
+| `Literal` | exact type and value | JSON `const`/`enum`; equivalent numbers materialize to a declared value | same |
 | dataclass | exact instance | closed JSON object becomes the declared instance recursively | same closed object schema and recursive materialization |
 | `list[T]` | exact list | JSON array; nested values materialized | same |
 | `dict[str, T]` | exact string-keyed dict | JSON object; nested values materialized | same |
@@ -25,6 +25,24 @@ Materialization occurs after policy and before validation. Direct calls omit
 the helper: a dictionary is not silently accepted where Python declared a
 dataclass. Custom schema implementations receive decoded JSON unchanged and
 retain their own validation/coercion behavior.
+
+JSON integers supplied to a `float` contract widen only within Python's float
+range. An out-of-range integer is `invalid_input`, with the ordinary nested
+field/index path, before dependency construction or handler execution. A union
+with an `int` member can still accept that integer through its matching branch.
+Direct Python invocation retains exact-type validation.
+
+Enum materialization matches only the declared JSON values. Booleans cannot
+select numeric members, and numbers cannot select boolean members. Equivalent
+JSON numbers such as `1` and `1.0` select the same declared member. Unknown wire
+values are not passed to `Enum._missing_`; applications can still use that hook
+when constructing enum instances explicitly before direct invocation.
+
+Numeric Literal inputs follow the same JSON equivalence: `1.0` can materialize
+to the declared integer in `Literal[1]`. An already-valid exact type/value
+match is preserved; otherwise the first numerically equal declared value is
+used. Booleans and numeric strings do not select numeric literals. Direct
+Python invocation still requires an exact declared type and value.
 
 Binary values are not a general JSON shape. HTTP upload/scalar bindings have
 the bounded behavior documented in `HTTP_COMPOSITION.md`. MCP rejects a tool
@@ -68,6 +86,7 @@ plan/context and protected-key checks
 | dependency resolution failure | `internal_failure` | 500 problem | internal tool error | fixed redacted text, no details |
 | application/domain failure | explicit `Failure` code chosen by application | reviewed status/problem | tool error | application must provide caller-safe non-internal text; MCP omits details |
 | unexpected exception | `internal_failure` | 500 problem | internal tool error | fixed redacted text, no traceback/details |
+| declared output violation | `internal_failure` | 500 problem | internal tool error | fixed redacted text, no produced value or schema diagnostics |
 | deadline | `timeout` | 504 problem | timeout tool error | stable deadline message |
 
 HTTP also has transport-only failures before a capability exists: 405, 413 and
@@ -82,16 +101,27 @@ traceback, raw credential, object representation, dependency graph or private
 path. Cancellation propagates as control flow and is not classified as a
 failure.
 
+## Output contracts
+
+Declared output validation (ADR 0086) is common runtime behavior on every
+surface. The current checkout also projects compiled output contracts into
+OpenAPI for published HTTP complete-result operations: their 200
+`application/json` schema comes from the same `output=...` contract the runtime
+validates. Omitted or explicit `Any` stays unconstrained; a handler return
+annotation alone does not declare an output contract. HEAD and 204 responses
+remain bodyless. This HTTP projection is
+[unreleased checkout behavior](HTTP_COMPOSITION.md#complete-result-output-schemas-unreleased-checkout),
+not evidence about the published 1.0.3 wheel. Its executable evidence lives in
+`tests/http/test_openapi_output.py`.
+
+MCP does not publish an `outputSchema`, and the introspection snapshot does not
+publish output schemas. Streaming has exactly one projection: HTTP `Http.sse`
+(ADR 0085). SSE operations remain absent from OpenAPI; no surface publishes a
+stream unit's schema. MCP and A2A project no stream. These publication limits
+do not disable the runtime's declared result or unit validation.
+
 ## Deferred
 
 HTTP authentication, MCP MRTR resumption, A2A and additional schema libraries
 are not baseline behavior. Their absence is not papered over by a parallel
 schema or application workaround.
-
-Declared output validation (ADR 0086) is common runtime behavior on every
-surface, but it is not yet *published* by any surface: no adapter projects
-`plan.output_schema` into OpenAPI, an MCP `outputSchema` or the introspection
-snapshot, so a client still learns an output contract from documentation
-rather than from a wire description. Streaming is common runtime behavior with
-exactly one projection: HTTP `Http.sse` (ADR 0085). MCP and A2A project no
-stream, and no surface publishes a stream unit's schema.

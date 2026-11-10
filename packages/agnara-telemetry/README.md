@@ -16,6 +16,10 @@ not by this file: a README ships inside the artifact and cannot describe
 the state of a publication that happens after it is built.
 
 It imports `agnara` and `opentelemetry-api`, never a sibling adapter or the SDK.
+The unreleased checkout requires `opentelemetry-api>=1.45.1,<2`, excluding the
+API versions affected by [GHSA-xcq7-p3pf-p88h](https://github.com/advisories/GHSA-xcq7-p3pf-p88h).
+This dependency floor does not add header extraction: applications still own
+propagation and deployment limits. It does not change published 1.0.3 artifacts.
 
 ## Composition
 
@@ -80,7 +84,7 @@ repeated tracking IDs need no correlation map. The supplied meter must support
 concurrent, synchronous, non-blocking recording. Do not mutate instruments
 while plans are active. A custom blocking instrument blocks invocation.
 
-Development tests use the pinned OpenTelemetry API/SDK 1.44.0 with an in-memory
+Development tests use the pinned OpenTelemetry API/SDK 1.45.1 with an in-memory
 reader and an in-memory span exporter:
 `uv run pytest tests/telemetry tests/architecture`. Tests cover exact
 values/units, attributes, span names, status mapping, parent/child nesting,
@@ -179,6 +183,8 @@ Two tests check every attribute both hooks emit against the installed
 or stable, and no incubating name may appear. See
 [proposed ADR 0057](../../docs/adr/0057-semantic-convention-compatibility.md).
 
-No-op benchmarks remain E9.6. See
+The no-op benchmark is implemented in `benchmarks/telemetry_overhead.py`;
+the [benchmark inventory](../../docs/benchmarks/coverage.md) records its
+measurement boundary and limits. See
 [proposed ADR 0054](../../docs/adr/0054-opentelemetry-metrics-bridge.md)
 and [proposed ADR 0055](../../docs/adr/0055-capability-invocation-spans.md).

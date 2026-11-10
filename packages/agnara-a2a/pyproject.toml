@@ -1,7 +1,7 @@
 [project]
 name = "agnara-a2a"
 version = "1.0.3"
-description = "Agent-to-Agent exposure adapter for Agnara capabilities."
+description = "Reserved A2A namespace for Agnara; no public runtime API is implemented."
 readme = "README.md"
 requires-python = ">=3.14"
 authors = [{name = "Agnara Maintainers", email = "maintainers@agnara.dev"}]
@@ -14,7 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-dependencies = ["agnara==1.0.3"]
+dependencies = ["agnara==1.0.3", "a2a-sdk[http-server]==1.3.0"]
 
 [project.urls]
 Homepage = "https://github.com/Blandskron/agnara"

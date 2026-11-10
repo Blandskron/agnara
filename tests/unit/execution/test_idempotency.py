@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, cast
+from collections.abc import Callable, Coroutine
+from concurrent.futures import ThreadPoolExecutor
+from threading import Event
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from _collections_abc import dict_items
@@ -31,6 +34,38 @@ class Clock:
 
     def __call__(self) -> float:
         return self.value
+
+
+def _after_lock_wait[T](
+    store: InMemoryIdempotencyStore,
+    clock: Clock,
+    monkeypatch: pytest.MonkeyPatch,
+    operation: Callable[[], Coroutine[Any, Any, T]],
+    *,
+    at: float,
+    during_wait: Callable[[], None] | None = None,
+) -> T:
+    """Advance time only after a worker attempts the held transition lock."""
+    lock = store._lock
+    attempted = Event()
+
+    class SignallingLock:
+        def __enter__(self) -> None:
+            attempted.set()
+            lock.acquire()
+
+        def __exit__(self, *_exception: object) -> None:
+            lock.release()
+
+    monkeypatch.setattr(store, "_lock", SignallingLock())
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        with lock:
+            future = pool.submit(lambda: asyncio.run(operation()))
+            assert attempted.wait(5), "worker did not attempt the transition lock"
+            clock.value = at
+            if during_wait is not None:
+                during_wait()
+        return future.result(timeout=5)
 
 
 def scope(
@@ -381,3 +416,108 @@ def test_expired_records_are_still_invisible_without_a_full_sweep() -> None:
         assert not await store.complete(claimed.reservation, b"stale", result_ttl=5)
 
     asyncio.run(run())
+
+
+@pytest.mark.parametrize("operation", ["claim", "lookup", "complete", "abandon"])
+@pytest.mark.parametrize("at", [4.999, 5.0])
+def test_contended_operations_check_current_lease_expiry(monkeypatch, operation, at) -> None:
+    clock = Clock()
+    store = InMemoryIdempotencyStore(clock=clock)
+    requested = scope()
+    first = asyncio.run(store.claim(requested, lease_ttl=5))
+    assert isinstance(first, IdempotencyClaimed)
+
+    async def execute() -> object:
+        if operation == "claim":
+            return await store.claim(requested, lease_ttl=5)
+        if operation == "lookup":
+            return await store.lookup(requested)
+        if operation == "complete":
+            return await store.complete(first.reservation, b"stored", result_ttl=30)
+        return await store.abandon(first.reservation)
+
+    result = _after_lock_wait(store, clock, monkeypatch, execute, at=at)
+    if operation == "claim":
+        if at < 5:
+            assert isinstance(result, IdempotencyInProgress)
+            assert result.execution_id == first.reservation.execution_id
+        else:
+            assert isinstance(result, IdempotencyClaimed)
+            assert result.reservation.execution_id != first.reservation.execution_id
+            assert not asyncio.run(store.complete(first.reservation, b"stale", result_ttl=5))
+            assert not asyncio.run(store.abandon(first.reservation))
+    elif operation == "lookup":
+        if at < 5:
+            assert isinstance(result, IdempotencyInProgress)
+        else:
+            assert result is None
+    else:
+        assert result is (at < 5)
+
+
+@pytest.mark.parametrize("operation", ["claim", "lookup"])
+@pytest.mark.parametrize("at", [4.999, 5.0])
+def test_contended_reads_check_current_success_expiry(monkeypatch, operation, at) -> None:
+    clock = Clock()
+    store = InMemoryIdempotencyStore(clock=clock)
+    requested = scope()
+    first = asyncio.run(store.claim(requested, lease_ttl=30))
+    assert isinstance(first, IdempotencyClaimed)
+    assert asyncio.run(store.complete(first.reservation, b"stored", result_ttl=5))
+
+    async def execute() -> object:
+        if operation == "claim":
+            return await store.claim(requested, lease_ttl=5)
+        return await store.lookup(requested)
+
+    result = _after_lock_wait(store, clock, monkeypatch, execute, at=at)
+    if at < 5:
+        assert isinstance(result, IdempotencyCompleted)
+        assert result.result == b"stored"
+        assert result.execution_id == first.reservation.execution_id
+    elif operation == "lookup":
+        assert result is None
+    else:
+        assert isinstance(result, IdempotencyClaimed)
+        assert result.reservation.execution_id != first.reservation.execution_id
+
+
+@pytest.mark.parametrize("operation", ["claim", "complete"])
+def test_contended_publication_retains_the_full_ttl(monkeypatch, operation) -> None:
+    clock = Clock()
+    store = InMemoryIdempotencyStore(max_entries=1, clock=clock)
+    first = asyncio.run(store.claim(scope(), lease_ttl=30))
+    assert isinstance(first, IdempotencyClaimed)
+    requested = scope(key="new") if operation == "claim" else scope()
+
+    async def execute() -> object:
+        if operation == "claim":
+            return await store.claim(requested, lease_ttl=5)
+        return await store.complete(first.reservation, b"receipt", result_ttl=5)
+
+    def observe_before_publication() -> None:
+        if operation == "claim":
+            # Capacity is occupied until this operation frees it at time 5:
+            # the waiting claim cannot have linearized earlier at time 0.
+            assert asyncio.run(store.abandon(first.reservation))
+        else:
+            # This observation forces the waiting completion to linearize
+            # after time 5, rather than backdating publication to time 0.
+            assert isinstance(asyncio.run(store.lookup(requested)), IdempotencyInProgress)
+
+    published = _after_lock_wait(
+        store, clock, monkeypatch, execute, at=5, during_wait=observe_before_publication
+    )
+    if operation == "claim":
+        assert isinstance(published, IdempotencyClaimed)
+    else:
+        assert published is True
+    expected = IdempotencyInProgress if operation == "claim" else IdempotencyCompleted
+    for current_time in (5.0, 9.999):
+        clock.value = current_time
+        observed = asyncio.run(store.lookup(requested))
+        assert isinstance(observed, expected)
+        if isinstance(observed, IdempotencyCompleted):
+            assert observed.result == b"receipt"
+    clock.value = 10
+    assert asyncio.run(store.lookup(requested)) is None

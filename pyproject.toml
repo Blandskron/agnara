@@ -33,6 +33,9 @@ dev = [
     # V1-36 property-based and bounded-fuzz lanes only. Test-time tooling: it
     # is never a runtime dependency of any distributable Agnara package.
     "hypothesis>=6.131,<7",
+    # Independent JSON Schema oracle for enum materialization property tests.
+    # Test tooling only; never a core runtime dependency.
+    "jsonschema>=4.26,<5",
     # V1-25 conformance fixture only. Django remains outside every Agnara
     # distribution and the fixture records the exact tested host version.
     "Django==6.1.1",
@@ -43,7 +46,7 @@ dev = [
     "msgspec>=0.21,<0.22",
     "playwright==1.62.0",
     # E9.2 integration evidence only; applications own SDK configuration.
-    "opentelemetry-sdk==1.44.0",
+    "opentelemetry-sdk==1.45.1",
     "pydantic>=2.9,<3",
     # tests/release/test_publication_set.py parses the workflows to hold
     # them to docs/distributions.json, so this is a direct test dependency
@@ -54,6 +57,8 @@ dev = [
     # V1-28 SQLite persistence fixture only; never a core dependency.
     "SQLAlchemy==2.0.54",
     "ty>=0.0.1a1",
+    # A2A-04b2 loopback conformance fixture only; never an adapter dependency.
+    "uvicorn==0.52.4",
 ]
 
 # --------------------------------------------------------------------------
@@ -120,7 +125,7 @@ root = [
 ]
 
 [tool.ty.src]
-include = ["packages", "examples", "experiments", "tests"]
+include = ["packages", "examples", "experiments", "tests", "tools"]
 
 # --------------------------------------------------------------------------
 # pytest (E0.6)

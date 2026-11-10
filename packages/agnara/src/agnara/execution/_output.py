@@ -22,19 +22,24 @@ def validate_output(plan: ExecutionPlan, value: Any) -> Any:
 
     A handler may deliberately return ``Failure`` from the complete-result
     boundary; it is already an outcome, not successful output.  A ``Success``
-    carries the output to validate.  Streams never use that wrapper: every
-    yielded value is a unit and is validated directly by their owner.
+    carries the output to validate. This interpretation belongs to complete
+    results; the stream owner validates each actual yielded object as a unit.
     """
     if isinstance(value, Failure):
         return value
     payload = value.value if isinstance(value, Success) else value
+    validated = validate_output_unit(plan, payload)
+    if isinstance(value, Success):
+        return Success(validated)
+    return validated
+
+
+def validate_output_unit(plan: ExecutionPlan, value: Any) -> Any:
+    """Validate an actual produced value without canonical envelope semantics."""
     try:
-        validated = plan.output_schema.validate(payload)
+        return plan.output_schema.validate(value)
     except ValidationError as error:
         raise InvocationError(
             f"capability {plan.definition.id} produced a value that does not satisfy "
             "its declared output"
         ) from error
-    if isinstance(value, Success):
-        return Success(validated)
-    return validated

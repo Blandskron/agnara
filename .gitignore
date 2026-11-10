@@ -34,6 +34,13 @@ uv.lock.bak
 .dist-test/
 .release-validation/
 
+# Git worktrees for parallel agent work. MULTI_AGENT_PROTOCOL.md asks for a
+# sibling directory outside the checkout; `.worktrees/` is the only supported
+# location inside it. Untracked, a nested worktree makes `git status` dirty, so
+# the `repository-clean` release gate reports uncommitted changes for a tree
+# whose own content is untouched.
+/.worktrees/
+
 # Editors / OS
 .idea/
 .vscode/

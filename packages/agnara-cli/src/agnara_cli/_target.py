@@ -16,7 +16,8 @@ from __future__ import annotations
 import importlib
 import sys
 import traceback
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -105,11 +106,19 @@ def _split(target: str) -> tuple[str, str]:
     return module_name, attribute
 
 
-def _import(module_name: str, search_path: Sequence[str]) -> object:
-    """Import the target module, with the requested paths ahead of the rest."""
+@contextmanager
+def target_search_path(search_path: Sequence[str]) -> Iterator[None]:
+    """Keep CLI search paths available while target code runs."""
     added = [str(Path(entry).resolve()) for entry in search_path]
     original = list(sys.path)
     sys.path[:0] = added
+    try:
+        yield
+    finally:
+        sys.path[:] = original
+
+
+def _import(module_name: str) -> object:
     try:
         return importlib.import_module(module_name)
     except ImportError as error:
@@ -124,11 +133,9 @@ def _import(module_name: str, search_path: Sequence[str]) -> object:
         # A module that raises while executing is the user's code failing, not
         # a CLI failure, and the operator needs the reason rather than a stack.
         raise TargetError(f"importing {module_name!r} failed: {_reason(error)}") from error
-    finally:
-        sys.path[:] = original
 
 
-def resolve_attribute(target: str, *, search_path: Iterable[str] = ()) -> object:
+def resolve_attribute(target: str) -> object:
     """Import ``module:attribute`` and return whatever it names.
 
     The generic half of target resolution. A command that needs an application
@@ -137,7 +144,7 @@ def resolve_attribute(target: str, *, search_path: Iterable[str] = ()) -> object
     and reads it structurally instead.
     """
     module_name, attribute = _split(target)
-    module = _import(module_name, tuple(search_path))
+    module = _import(module_name)
     return _attribute(module, attribute)
 
 
@@ -153,7 +160,6 @@ def _registry(module: object, name: str | None) -> DIRegistry | None:
 def resolve_target(
     target: str,
     *,
-    search_path: Iterable[str] = (),
     dependencies: str | None = None,
 ) -> ResolvedTarget:
     """Import ``module:attribute`` and compile every declared capability.
@@ -164,7 +170,7 @@ def resolve_target(
     fails with the reason rather than being described as if it had none.
     """
     module_name, attribute = _split(target)
-    module = _import(module_name, tuple(search_path))
+    module = _import(module_name)
     app = _attribute(module, attribute)
     if not isinstance(app, Agnara):
         raise TargetError(
@@ -173,9 +179,10 @@ def resolve_target(
     registry = _registry(module, dependencies)
     compile_against = DIRegistry() if registry is None else registry
     try:
+        capabilities = app.compile()
         plans = tuple(
-            ExecutionPlan.compile(app.capabilities[capability_id], compile_against)
-            for capability_id in app.capabilities
+            ExecutionPlan.compile(capabilities[capability_id], compile_against)
+            for capability_id in capabilities
         )
     except Exception as error:
         # A schema error with no registry named is nearly always a dependency

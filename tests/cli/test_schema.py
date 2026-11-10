@@ -7,10 +7,11 @@ import json
 import sys
 from collections.abc import Iterator
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
-from agnara_cli import EXIT_FAILED, EXIT_OK, EXIT_USAGE, main
+from agnara_cli import EXIT_FAILED, EXIT_OK, EXIT_USAGE, _schema, main
 
 MODULE = """
 served = b\'{"info":{"title":"Billing API","version":"1"},"openapi":"3.2.0","paths":{}}\'
@@ -22,6 +23,9 @@ document = {
 unicode_document = {"openapi": "3.2.0", "info": {"title": "Caf\\u00e9", "version": "1"}}
 not_json = b"\\xff\\xfe not json"
 malformed = b"{not json"
+nonfinite = b'{"openapi":"3.2.0","example":NaN}'
+positive_infinity = b'{"openapi":"3.2.0","example":Infinity}'
+negative_infinity = b'{"openapi":"3.2.0","example":-Infinity}'
 not_an_object = b"[1, 2, 3]"
 without_version = b'{"info":{"title":"x"}}'
 numeric_version = b'{"openapi":3}'
@@ -89,10 +93,45 @@ def test_a_mapping_is_serialized_the_way_the_http_projection_does(
 def test_a_callable_target_is_invoked_once(
     project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    code, out, _ = run(project, "build", capsys=capsys)
+    (project / "contract.py").write_text(
+        'print("loading contract")\n'
+        + MODULE.replace("    return served", '    print("producing document")\n    return served'),
+        encoding="utf-8",
+    )
+    code, out, err = run(project, "build", capsys=capsys)
 
     assert code == EXIT_OK
-    assert json.loads(out)["info"]["title"] == "Billing API"
+    assert err == "loading contract\nproducing document\n"
+    assert out == b'{"info":{"title":"Billing API","version":"1"},"openapi":"3.2.0","paths":{}}'
+
+
+@pytest.mark.parametrize("fails", [False, True])
+def test_schema_producer_can_import_from_target_path(
+    project: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    fails: bool,
+) -> None:
+    monkeypatch.setitem(sys.modules, "schema_path_helper", None)
+    sys.modules.pop("schema_path_helper")
+    (project / "schema_path_helper.py").write_text(
+        'document = {"openapi": "3.2.0"}\n', encoding="utf-8"
+    )
+    (project / "contract.py").write_text(
+        "def build():\n"
+        "    from schema_path_helper import document\n"
+        + ('    raise RuntimeError("producer failed")\n' if fails else "    return document\n"),
+        encoding="utf-8",
+    )
+    original_path = sys.path[:]
+    code, out, err = run(project, "build", capsys=capsys)
+    assert sys.path == original_path
+    if fails:
+        assert code == EXIT_FAILED and out == b""
+        assert "producer failed" in err
+    else:
+        assert code == EXIT_OK and err == ""
+        assert json.loads(out) == {"openapi": "3.2.0"}
 
 
 def test_non_ascii_survives_unescaped(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -153,6 +192,27 @@ def test_overwrite_replaces_the_file(
     assert json.loads(destination.read_bytes())["openapi"] == "3.2.0"
 
 
+def test_a_file_created_at_open_is_not_replaced(
+    project: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    destination = project / "openapi.json"
+    original_open = Path.open
+
+    def open_after_competing_writer(path, mode="r", *args, **kwargs):
+        if path == destination and mode in {"wb", "xb"}:
+            with original_open(path, "xb") as stream:
+                stream.write(b"competing writer")
+        return original_open(path, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", open_after_competing_writer)
+    code, out, err = run(project, "served", "--output", str(destination), capsys=capsys)
+
+    assert code == EXIT_FAILED
+    assert out == b""
+    assert "pass --overwrite" in err
+    assert destination.read_bytes() == b"competing writer"
+
+
 def test_an_unwritable_destination_is_a_diagnostic(
     project: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -167,11 +227,15 @@ def test_an_unwritable_destination_is_a_diagnostic(
     assert "Traceback" not in err
 
 
+@pytest.mark.parametrize("options", [(), ("--pretty",)])
 @pytest.mark.parametrize(
     ("attribute", "expected"),
     [
         ("not_json", "not valid UTF-8"),
         ("malformed", "not valid JSON"),
+        ("nonfinite", "not valid JSON"),
+        ("positive_infinity", "not valid JSON"),
+        ("negative_infinity", "not valid JSON"),
         ("not_an_object", "must be a JSON object"),
         ("without_version", "'openapi' version"),
         ("numeric_version", "'openapi' version"),
@@ -180,9 +244,13 @@ def test_an_unwritable_destination_is_a_diagnostic(
     ],
 )
 def test_a_target_that_is_not_an_openapi_document_is_refused(
-    project: Path, capsys: pytest.CaptureFixture[str], attribute: str, expected: str
+    project: Path,
+    capsys: pytest.CaptureFixture[str],
+    attribute: str,
+    expected: str,
+    options: tuple[str, ...],
 ) -> None:
-    code, out, err = run(project, attribute, capsys=capsys)
+    code, out, err = run(project, attribute, *options, capsys=capsys)
 
     assert code == EXIT_FAILED
     assert out == b""
@@ -199,6 +267,37 @@ def test_a_producer_that_raises_reports_the_reason(
     assert "producing the OpenAPI document failed" in err
     assert "projection failed on purpose" in err
     assert "Traceback" not in err
+
+
+@pytest.mark.parametrize(
+    ("attribute", "operation", "options"),
+    [("served", "loads", ()), ("document", "dumps", ()), ("document", "dumps", ("--pretty",))],
+)
+def test_excessive_document_nesting_preserves_destination(
+    project: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    attribute: str,
+    operation: str,
+    options: tuple[str, ...],
+) -> None:
+    def excessive_nesting(*_args, **_kwargs):
+        raise RecursionError("JSON nesting limit")
+
+    # The C codec's stack limit depends on the interpreter build and platform.
+    codec = SimpleNamespace(loads=json.loads, dumps=json.dumps)
+    setattr(codec, operation, excessive_nesting)
+    monkeypatch.setattr(_schema, "json", codec)
+    destination = project / "openapi.json"
+    destination.write_bytes(b"existing document")
+    code, out, err = run(
+        project, attribute, "--output", str(destination), "--overwrite", *options, capsys=capsys
+    )
+    assert code == EXIT_FAILED
+    assert out == b""
+    assert "OpenAPI document is nested too deeply" in err
+    assert "Traceback" not in err
+    assert destination.read_bytes() == b"existing document"
 
 
 def test_an_absent_attribute_is_refused(project: Path, capsys: pytest.CaptureFixture[str]) -> None:

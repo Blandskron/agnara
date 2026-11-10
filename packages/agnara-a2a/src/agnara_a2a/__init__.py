@@ -1,13 +1,31 @@
-"""Agent-to-Agent exposure adapter for Agnara capabilities.
+"""Agent-to-Agent (A2A) exposure adapter for Agnara capabilities.
 
-Owns Agent Card and skill projection, A2A tasks, streaming, protocol
-bindings and A2A security/version mapping.
+Serves the ADR 0098 complete-result profile: one capability per surface,
+JSON-RPC 2.0 at protocol revision 1.0, one immediate ``Message`` per
+``SendMessage`` and no tasks, streaming or push notifications. Every export is
+``provisional`` (ADR 0099) until the A2A-04b evidence is reviewed.
 
-Depends on ``agnara-core``. Must not import a sibling adapter.
-See ``ARCHITECTURE.md`` sections 3 and 4, and Post-v0.1 in ``BACKLOG.md``.
+Depends on ``agnara`` and the pinned official ``a2a-sdk``. Must not import a
+sibling adapter. See ``ARCHITECTURE.md`` for boundaries and
+``docs/MATURITY.md`` for status.
 """
 
-#: Reserved namespace: this distribution holds the package boundary and the
-#: dependency direction for A2A while the adapter itself is Post-v0.1 work.
-#: The empty public surface is declared, not accidental.
-__all__: list[str] = []
+from .card import A2aAgentCard
+from .exposure import A2a, A2aDefinitionError, A2aSkillExposure
+from .protocol import (
+    A2A_PROTOCOL_VERSION,
+    A2A_PYTHON_SDK_VERSION,
+    SUPPORTED_A2A_PROTOCOL_VERSIONS,
+)
+from .server import build_a2a_app
+
+__all__ = [
+    "A2A_PROTOCOL_VERSION",
+    "A2A_PYTHON_SDK_VERSION",
+    "SUPPORTED_A2A_PROTOCOL_VERSIONS",
+    "A2a",
+    "A2aAgentCard",
+    "A2aDefinitionError",
+    "A2aSkillExposure",
+    "build_a2a_app",
+]

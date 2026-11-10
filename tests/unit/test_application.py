@@ -210,7 +210,7 @@ class TestDescription:
 
 class TestMetadata:
     def test_accepts_every_field_from_the_golden_examples(self, app: Agnara) -> None:
-        """docs/API_DESIGN.md section 12, declared through the decorator."""
+        """Capability metadata is declared explicitly through the decorator."""
 
         @app.capability(
             description="Permanently delete an account",
@@ -363,7 +363,7 @@ class TestCompilation:
 
 class TestGoldenApiExamples:
     def test_the_smallest_application(self) -> None:
-        """docs/API_DESIGN.md sections 1 and 2."""
+        """The minimal application declares a capability with normal Python."""
         app = Agnara("hello")
 
         @app.capability
@@ -374,7 +374,7 @@ class TestGoldenApiExamples:
         assert "hello.add" in app.capabilities
 
     def test_introspection_reads_naturally(self) -> None:
-        """docs/API_DESIGN.md section 17."""
+        """Compiled capabilities support explicit dotted-string lookup."""
         app = Agnara("users")
 
         @app.capability(effects={"database-write"}, idempotent=False)

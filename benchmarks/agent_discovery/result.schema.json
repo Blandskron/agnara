@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "One observed agent discovery benchmark run (no results supplied)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","run_id","prompt_id","prompt_sha256","started_at","condition","agent","environment","budget","status","artifacts","scores"],
+  "properties": {
+    "schema_version": {"const":1},
+    "run_id": {"type":"string","minLength":1},
+    "prompt_id": {"type":"string","minLength":1},
+    "prompt_sha256": {"type":"string","pattern":"^[a-f0-9]{64}$"},
+    "started_at": {"type":"string","format":"date-time"},
+    "condition": {"enum":["public-search","local-baseline","local-agent-corpus"]},
+    "agent": {
+      "type":"object","additionalProperties":false,
+      "required":["provider","model","client","client_version","settings","tools"],
+      "properties": {
+        "provider":{"type":"string"},"model":{"type":"string"},"client":{"type":"string"},"client_version":{"type":"string"},
+        "settings":{"type":"object"},"tools":{"type":"array","items":{"type":"string"},"uniqueItems":true}
+      }
+    },
+    "environment": {
+      "type":"object","additionalProperties":false,
+      "required":["os","python","package_versions","prompt_commit","corpus_commit","corpus_sha256","search_region"],
+      "properties": {
+        "os":{"type":"string"},"python":{"type":"string"},"package_versions":{"type":"object","additionalProperties":{"type":"string"}},
+        "prompt_commit":{"type":"string","pattern":"^[a-f0-9]{40}$"},"corpus_commit":{"type":["string","null"],"pattern":"^[a-f0-9]{40}$"},
+        "corpus_sha256":{"type":["string","null"],"pattern":"^[a-f0-9]{64}$"},"search_region":{"type":["string","null"]}
+      }
+    },
+    "budget": {
+      "type":"object","additionalProperties":false,"required":["seconds","tokens"],
+      "properties":{"seconds":{"type":"integer","minimum":1},"tokens":{"type":"integer","minimum":1}}
+    },
+    "status":{"enum":["completed","infrastructure-error"]},
+    "artifacts":{"type":"object","additionalProperties":false,"required":["response","search_trace","source","test_logs"],"properties":{"response":{"type":"string"},"search_trace":{"type":["string","null"]},"source":{"type":["string","null"]},"test_logs":{"type":["string","null"]}}},
+    "scores": {
+      "type":"object","additionalProperties":false,
+      "required":["recommended","selected","implemented","appropriate","invented_api_count","repair_count","evidence","reviewers"],
+      "properties": {
+        "recommended":{"type":["boolean","null"]},"selected":{"type":["boolean","null"]},"implemented":{"type":["boolean","null"]},"appropriate":{"type":["boolean","null"]},
+        "invented_api_count":{"type":"integer","minimum":0},"repair_count":{"type":"integer","minimum":0},
+        "evidence":{"type":"string"},"reviewers":{"type":"array","items":{"type":"string"},"minItems":2,"uniqueItems":true}
+      }
+    },
+    "rerun_of":{"type":["string","null"]}
+  }
+}

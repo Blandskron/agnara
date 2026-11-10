@@ -3,6 +3,10 @@
 RFCs hold design questions. An answered question points to its ADR; current
 implementation status is owned by `docs/MATURITY.md`.
 
+Proposal context in a numbered RFC describes the system at the time it was
+written. Use its answering ADRs and the maturity matrix for current behavior;
+superseded examples in a proposal are not application instructions.
+
 | RFC | Subject | Current state |
 | --- | --- | --- |
 | 0001 | Capability runtime | Implemented; architecture and runtime tests are authoritative. |
@@ -14,6 +18,9 @@ implementation status is owned by `docs/MATURITY.md`.
 | 0007 | Distribution version identity | Implemented by ADR 0069 and ADR 0095. |
 | 0008 | Framework embedding | Host boundary implemented by ADR 0094; streaming, delegation and cross-application questions remain open. |
 | 0009 | Protocol-neutral streaming | Kernel and HTTP SSE implemented by ADR 0084 and ADR 0086; other projections require separate decisions. |
+| [0010](0010-a2a-initial-projection.md) | Initial A2A projection | ADR 0098 profile and provisional ADR 0099 surface; guide, installed-wheel and bounded host evidence are linked in the A2A guide. Broader support/stability remains undecided. |
+| [0011](0011-event-initial-projection.md) | Initial event projection | Open research; proposes an inbound-consumer feasibility gate, not an implemented adapter, broker integration or public API. |
+| [0012](0012-durable-execution-boundary.md) | Durable execution boundary | Open research; proposes a single-invocation crash-recovery study, with authority revalidation and uncertain-effect reconciliation. No durable runtime or API is selected. |
 
 `RFC 9457` denotes the external IETF problem-details standard, not a local
 record. Local RFC identifiers are zero-padded to four digits. Historical

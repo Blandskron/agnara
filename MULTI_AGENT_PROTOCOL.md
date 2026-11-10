@@ -85,6 +85,36 @@ cd ../agnara-issue-42
 ```
 When finished and pushed, the worktree can be safely removed.
 
+### Where a worktree may live
+
+Prefer a sibling directory outside the checkout, as above. A worktree placed
+inside another checkout is that checkout's problem: its files are untracked
+there, and repository-wide gates then describe two trees at once. When a
+worktree must live inside, put it under `.worktrees/<name>`, which is the only
+in-checkout location this repository supports.
+
+Two gates depend on this:
+
+- `check_repository_clean()` in `scripts/check_release_readiness.py` reads
+  `git status`. An untracked worktree directory reports the tree as dirty
+  although its own content is untouched. `.gitignore` covers `.worktrees/`.
+- `text_files()` in `tests/architecture/test_repository_encoding.py` walks the
+  workspace. It stops at any directory carrying a `.git` entry, so a linked
+  worktree, a submodule and a nested clone are all excluded whatever they are
+  named, and another agent's half-written files never count as damage here.
+
+Local recovery evidence may be retained under `.worktrees/recovery/`. These
+artifacts can contain serialized Git status markers that resemble lossy source
+encoding. The shared architecture scanner excludes files there only when
+`git ls-files --others --ignored --exclude-standard` confirms they are ignored
+and untracked. Tracked files, unignored recovery files and all other directories
+retain their existing checks. If Git fails or is unavailable, the scanner keeps
+the files in scope. Recovery artifacts are preserved rather than rewritten to
+satisfy source-integrity checks.
+
+Removing the worktree when the work is pushed remains the expectation; the
+guards exist so that a worktree still in place cannot fail someone else's run.
+
 ## 5. Review vs Implementation Ownership
 
 Implementation ownership (the claim) is distinct from review ownership. An agent may claim an issue for implementation, push a PR, and release the claim. A *different* agent (or human) should independently review the PR.

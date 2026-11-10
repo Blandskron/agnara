@@ -1,7 +1,49 @@
 import asyncio
 from collections.abc import AsyncIterator, Iterator
 
+import pytest
+
 from agnara.core.di import DIContainer, DIRegistry, Scope, compile_dag, provider
+
+
+@pytest.mark.parametrize("asynchronous", [False, True])
+@pytest.mark.parametrize("generating", [False, True])
+def test_provider_named_parameters_resolve_for_all_provider_kinds(asynchronous, generating):
+    namespace = {"Database": Database, "Iterator": Iterator, "AsyncIterator": AsyncIterator}
+    annotation = (
+        ("AsyncIterator[tuple]" if asynchronous else "Iterator[tuple]") if generating else "tuple"
+    )
+    prefix = "async " if asynchronous else ""
+    statement = "yield" if generating else "return"
+    exec(
+        f"{prefix}def factory(db: Database, *, alias: Database = None) -> {annotation}:\n"
+        f"    {statement} (db, alias)\n",
+        namespace,
+    )
+
+    async def run_test():
+        registry = DIRegistry()
+        registry.bind(Database, provide_db)
+        registry.bind(tuple, provider()(namespace["factory"]))
+
+        def handler(value: tuple) -> None:
+            pass
+
+        dag = compile_dag(registry, [handler])
+        container = DIContainer(registry)
+        # Compilation must not instantiate the singleton generator.
+        assert container.singleton_cache == {}
+        try:
+            async with container.resolve_dependencies(handler, dag) as kwargs:
+                db, alias = kwargs["value"]
+                assert db is alias
+                assert db.connected
+            assert db.connected
+        finally:
+            await container.aclose()
+        assert not db.connected
+
+    asyncio.run(run_test())
 
 
 class Database:

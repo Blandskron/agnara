@@ -1,14 +1,12 @@
-"""Event exposure abstractions for Agnara capabilities.
+"""Reserved event adapter namespace; no runtime implementation.
 
-Owns the event capability abstractions and AsyncAPI projection. Broker
-specifics (Kafka, NATS, RabbitMQ) belong in separate plugin packages and
-must not be hardcoded here.
-
-Depends on ``agnara-core``. Must not import a sibling adapter.
-See ``ARCHITECTURE.md`` sections 3 and 4, and Post-v0.1 in ``BACKLOG.md``.
+No event publication, broker integration or AsyncAPI projection is implemented
+here. The distribution depends on ``agnara`` and must not import sibling
+adapters. See ``docs/MATURITY.md`` for status and ``ARCHITECTURE.md`` for
+boundaries; future broker-specific code belongs in separate adapters.
 """
 
 #: Reserved namespace: this distribution holds the package boundary and the
-#: dependency direction for event exposures while the adapter itself is
-#: Post-v0.1 work. The empty public surface is declared, not accidental.
+#: dependency direction while the event adapter remains unimplemented.
+#: The empty public surface is declared, not accidental.
 __all__: list[str] = []

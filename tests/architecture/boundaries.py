@@ -12,6 +12,7 @@ function body is still an architecture violation.
 from __future__ import annotations
 
 import ast
+import subprocess
 import sys
 import tomllib
 from collections.abc import Iterator
@@ -237,6 +238,97 @@ class SourceImport:
 
     def where(self) -> str:
         return f"{self.path.relative_to(WORKSPACE_ROOT).as_posix()}:{self.lineno}"
+
+
+#: Directories that hold something other than this checkout's own sources.
+SKIPPED_DIRECTORIES = frozenset(
+    {
+        ".git",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".uv-cache",
+        ".venv",
+        "__pycache__",
+        "dist",
+        "node_modules",
+    }
+)
+
+
+def _is_nested_working_tree(directory: Path) -> bool:
+    """Report whether ``directory`` is the root of another Git working tree.
+
+    ``MULTI_AGENT_PROTOCOL.md`` has concurrent agents isolate their work with
+    ``git worktree``. A worktree created inside this checkout holds another
+    agent's files, often half-written, and scanning them reports damage that
+    does not exist in the tree under review. A linked worktree and a submodule
+    mark their root with a ``.git`` *file* naming the real repository; a nested
+    clone marks it with a ``.git`` directory. Detecting that marker rather than
+    a directory name keeps the guard working whatever the worktree is called.
+    """
+    return (directory / ".git").exists()
+
+
+def _ignored_recovery_files() -> frozenset[Path]:
+    """Exclude only Git-confirmed local recovery artifacts, never tracked source.
+
+    A recovery manifest can contain serialized Git status markers that look
+    like damaged source text. If Git is unavailable, scan everything as before.
+    No cache: a newly tracked recovery file must enter the next scan.
+    """
+    recovery = WORKSPACE_ROOT / ".worktrees" / "recovery"
+    if not recovery.is_dir():
+        return frozenset()
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "ls-files",
+                "--others",
+                "--ignored",
+                "--exclude-standard",
+                "-z",
+                "--",
+                ".worktrees/recovery/",
+            ],
+            cwd=WORKSPACE_ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=5,
+            check=False,
+        )
+    except OSError, UnicodeError, subprocess.TimeoutExpired:
+        return frozenset()
+    if result.returncode != 0:
+        return frozenset()
+    return frozenset(WORKSPACE_ROOT / name for name in result.stdout.split("\0") if name)
+
+
+def _walk(
+    directory: Path, suffixes: frozenset[str], ignored_recovery: frozenset[Path]
+) -> Iterator[Path]:
+    for entry in sorted(directory.iterdir()):
+        if entry.name in SKIPPED_DIRECTORIES:
+            continue
+        if entry.is_dir():
+            # ``rglob`` does not descend into symlinked directories either:
+            # following one risks a cycle and files owned somewhere else.
+            if entry.is_symlink() or _is_nested_working_tree(entry):
+                continue
+            yield from _walk(entry, suffixes, ignored_recovery)
+        elif entry not in ignored_recovery and entry.is_file() and entry.suffix.lower() in suffixes:
+            yield entry
+
+
+def workspace_files(suffixes: frozenset[str]) -> Iterator[Path]:
+    """Yield this checkout's own files with those suffixes, in a stable order.
+
+    Every repository-wide scan shares this walk so that the nested-worktree
+    guard exists once. Writing a second scanner without it is exactly how one
+    run came to read 611 files belonging to another agent's task.
+    """
+    yield from _walk(WORKSPACE_ROOT, suffixes, _ignored_recovery_files())
 
 
 def package_source_root(dist_name: str) -> Path:

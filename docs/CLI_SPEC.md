@@ -68,9 +68,12 @@ an apply step that writes it. `--dry-run` renders the plan and creates
 nothing, not even the project directory. `--json` emits the same plan, so a
 preview cannot disagree with the result.
 
-A run that would replace an existing file refuses before writing anything,
-naming every conflicting path; `--overwrite` authorizes replacement for that
-run. The command never prompts. Identical inputs produce byte-identical
+A run with conflicts found during planning refuses before writing anything
+and names every conflicting path. Generated files use exclusive creation
+unless `--overwrite` is supplied. If a conflict appears during application,
+files already written may remain. App creation applies its manifest update
+after writing the scaffold files. The command never prompts.
+Identical inputs produce byte-identical
 output, and generated files use `
 ` endings on every platform.
 
@@ -308,8 +311,8 @@ agnara apps --json
 Reads `agnara.toml`, searching the given directory and its ancestors, and
 defaulting to the working directory. It imports nothing and runs no project
 code, so it reports the composition a project *declares* rather than what a
-compiled application registers; detecting divergence between the two belongs
-to `agnara doctor`.
+compiled application registers. Use the explicit `agnara doctor --runtime`
+mode to compare declared app names with a loaded composition.
 
 `--json` emits a versioned, deterministically ordered document with POSIX
 paths on every platform. A missing or invalid manifest is an operator error:
@@ -328,10 +331,20 @@ introspection snapshot used by Agnara Explorer. Inspection must not infer its
 model from OpenAPI because non-HTTP exposures and capability semantics would
 be lost.
 
+The target is compiled before inspection builds its plans. This closes
+registration and includes capabilities added to mounted apps before
+compilation, including declarations made after mounting.
+
 The JSON representation requires an explicit format version, deterministic
 ordering and no ANSI decoration. Offline inspection still applies a declared
 publication/redaction policy; it is not permission to dump secrets, dependency
 instances or private policy internals.
+
+The CLI reserves stdout for its result. Python stdout from target imports
+and schema producers is redirected to stderr during command execution.
+Explicit `--path` entries remain available for deferred imports while
+resolving the target, compiling it or calling an OpenAPI producer. The
+CLI restores the previous search path when the command exits.
 
 #### Implemented form
 
@@ -434,7 +447,7 @@ not change the meaning of the generated context.
 
 ### `agnara doctor`
 
-Checks:
+The intended broader diagnostic scope includes:
 
 - Python version;
 - project manifest;
@@ -443,6 +456,74 @@ Checks:
 - invalid app registration;
 - protocol configuration;
 - architecture rule violations.
+
+#### Optional runtime composition check (unreleased checkout)
+
+```bash
+agnara doctor --runtime commerce.bootstrap:app --path src --dependencies dependencies --json
+```
+
+Use an explicit trusted target. With a valid manifest, this mode imports the
+target and compiles its capability plans using the same resolver as
+`agnara inspect`. `--path` is repeatable and relative to the working
+directory. `--dependencies` names a registry in the target module.
+Both options require `--runtime`. Supplying either without a runtime target
+is a usage error (exit 2).
+Importing the target executes its module code. Python stdout from the
+target is redirected to stderr so the diagnostic report stays on stdout.
+
+The report adds `runtime:target` and, after successful compilation, one
+`app:<name>:registration` check per declared app. Each declared app must
+be registered by name. Additional registered apps are allowed.
+An `app:<name>:module` check compares a registered app's descriptor module
+with the manifest. A mismatch fails. When the descriptor omits its module
+or the app is absent, the module check is listed as unchecked.
+Runtime mode does not invoke handlers, resolve provider instances or start
+a transport. Whole-registry cycle coverage and protocol configuration
+remain unchecked. The report format and exit codes are shared with static mode.
+
+#### Implemented static baseline (unreleased checkout)
+
+```bash
+agnara doctor
+agnara doctor --project path/to/project
+agnara doctor --project path/to/project --json
+```
+
+ADR 0096 proposes this first read-only boundary. It searches for `agnara.toml`
+like `agnara apps`, uses the same strict reader, verifies that declared app
+directories resolve inside the project, and checks the executing interpreter's
+Python >=3.14 baseline. It reads installed `agnara`, `agnara-cli` and declared
+HTTP/MCP adapter distribution versions and checks exact equality with the
+installed kernel. Repeated exposure declarations share one metadata check.
+A2A, Events and Tasks declarations produce failing `exposure:<kind>` checks.
+For A2A, the message explains that adapter metadata checks are not implemented
+by this diagnostic; it does not claim the provisional adapter has no runtime.
+Events is identified as a reserved namespace without an implemented event
+runtime; Tasks has no implemented task runtime. These checks do not read the
+three distributions' metadata, and installing a distribution cannot make them
+pass or change diagnostic coverage.
+
+This command imports no project or adapter code, writes no files, installs
+nothing and performs no repairs. Metadata checks do not prove adapter imports
+or transitive dependency compatibility. The free-form project `python` value
+is echoed without interpreting it as a version constraint.
+
+Text and JSON reports identify every performed check and list unchecked
+boundaries explicitly: project Python constraint, application imports, runtime
+registration, dependency cycles, protocol configuration, architecture rules
+and transitive dependencies. If the manifest cannot be read, declared paths
+and adapters are unchecked too. A passing report establishes only the static
+checks listed; it does not establish application startup or runtime readiness.
+
+JSON has `format: agnara.doctor`, `format_version: 1`, `project`, `checks`,
+`status` and `unchecked`; each check contains `id`, `status` and `message`.
+Evaluation order is deterministic and no timestamp is emitted. Reports go to
+stdout, with exit 0 for all checks passing and exit 1 for any failed check,
+including a missing or malformed manifest. Invalid command-line arguments
+retain exit 2 on stderr. Unexpected programming errors still propagate.
+
+The full runtime diagnostic scope above is not implemented by this baseline.
 
 ## Development commands
 
@@ -485,6 +566,10 @@ the mapping those bytes came from, or a zero-argument callable returning
 either. Bytes are emitted unchanged, so an export is byte-identical to what is
 served; a mapping is serialized with the same arguments the HTTP projection
 uses.
+
+Byte targets must contain valid UTF-8 JSON. Non-JSON constants such as
+`NaN` and `Infinity` are rejected. Serialization failures in either mode
+produce a diagnostic on stderr and exit 1 before writing any document.
 
 `--output` writes the file and prints nothing, refusing to replace an existing
 file without `--overwrite`. `--pretty` indents for a reader and is no longer

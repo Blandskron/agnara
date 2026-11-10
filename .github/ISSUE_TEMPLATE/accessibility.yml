@@ -1,0 +1,44 @@
+name: Accessibility barrier
+description: Report a barrier in documentation, CLI tools or a web interface.
+title: "[Accessibility] "
+labels:
+  - "type:bug"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the task you could not complete. Screenshots, videos and medical information are not required.
+        If this form is a barrier or you prefer privacy, email contacto@blandskron.com.
+        Do not post secrets or unnecessary personal details. For vulnerabilities, use https://github.com/Blandskron/agnara/security/advisories/new.
+
+  - type: textarea
+    id: barrier
+    attributes:
+      label: Task and barrier
+      description: What were you trying to do, and what prevented or made it difficult?
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and observed behavior
+      description: Describe what you expected and what happened instead, if known.
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Page, command or reproduction steps
+      description: Include a link or command and steps, if available. A text description is enough.
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Agnara version, operating system, browser or terminal, and assistive technology/version, if relevant and known.
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact and workaround
+      description: Can you complete the task another way? Describe any workaround or whether you are blocked.

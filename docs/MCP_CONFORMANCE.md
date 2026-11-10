@@ -1,6 +1,6 @@
 # MCP conformance evidence
 
-Suite revision: 5. Tracking: [#181](https://github.com/Blandskron/agnara/issues/181),
+Suite revision: 6. Tracking: [#181](https://github.com/Blandskron/agnara/issues/181),
 [#183](https://github.com/Blandskron/agnara/issues/183) and
 [#185](https://github.com/Blandskron/agnara/issues/185), plus
 [#307](https://github.com/Blandskron/agnara/issues/307).
@@ -17,6 +17,10 @@ On Python 3.14, from the workspace:
 uv sync --locked
 uv run pytest tests/mcp tests/architecture
 ```
+
+The [runnable MCP tools guide](MCP_TOOLS.md) exercises the same official-client
+boundary as an application example, with additional regressions in
+`tests/docs/test_mcp_tools_example.py`.
 
 The normal CI pytest matrix collects these tests on Windows, Linux and macOS.
 The suite requires neither network services nor credentials at execution time.
@@ -46,12 +50,28 @@ to reach stateful retention; this does not add legacy protocol support to
 Agnara or establish network transport conformance. No sockets or external
 service are used.
 
+## Application-owned stdio subprocess
+
+Run `uv run pytest tests/mcp/test_sdk_stdio.py -q` from the workspace. The
+official client starts a child Python process and negotiates MCP `2026-07-28`
+over real stdin/stdout pipes using `mcp==2.2.0` and `mcp-types==2.2.0`.
+The child owns the SDK's stdio server and closes its Agnara DI container
+after the transport exits. The test lists and invokes a compiled tool,
+checks that an unauthorized tool has no effect, and cancels a blocked call
+after an explicit entry signal. A second tool observes handler unwind
+before client exit. The child's shutdown log verifies transport closure
+before singleton teardown.
+
+This evidence is limited to the host-owned SDK stdio fixture and the pinned
+modern revision. Agnara's package exposes the compiled server; the
+application owns subprocess and transport setup.
+
 ## Coverage matrix
 
 | Surface | Executable evidence | Limit |
 | --- | --- | --- |
 | Discovery | `test_sdk_conformance.py`, `test_discovery.py`: pinned revision, tools-only advertisement, server identity, private zero-TTL results | No legacy compatibility claim |
-| Tool definitions | `test_schema_mapping.py`, `test_tool_projection.py`, `test_sdk_conformance.py`, cross-surface conformance: compiled inputs, closed schemas, stable names, invocable dataclass/enum/tuple JSON shapes, and startup rejection of unrepresentable `bytes` graphs | Output validation is absent; no binary input extension |
+| Tool definitions | `test_schema_mapping.py`, `test_tool_projection.py`, `test_sdk_conformance.py`, cross-surface conformance: compiled inputs, closed schemas, stable names, invocable dataclass/enum/tuple JSON shapes, and startup rejection of unrepresentable `bytes` graphs | No MCP outputSchema publication; explicit core output contracts are validated; no binary input extension |
 | Pagination errors | `test_sdk_conformance.py`: empty/unissued cursors and malformed numeric/list cursors return `INVALID_PARAMS`; discovery still works afterward | Complete startup snapshot, no pagination implementation |
 | Authorization isolation | `test_sdk_conformance.py`: concurrent anonymous, unscoped and scoped tasks share one client; private lists change with each request identity and remain detached | SDK verified identity context is supplied by the test; OAuth verification is not tested |
 | Authorization failures | `test_authorization.py`: immutable credential-free mapper input, fail-closed mapper errors and scope filtering | Discovery visibility does not authorize invocation |
@@ -72,13 +92,12 @@ test. Each task resets its authentication ContextVar in `finally`.
 ## Explicit exclusions
 
 Network transport conformance, OAuth token verification, complete protocol
-certification, legacy revisions, output contracts, MRTR resumption,
+certification, legacy revisions, MCP output-schema publication, MRTR resumption,
 confirmation verification over MCP, Tasks, notifications, progress, streaming
 and performance remain outside this suite's support claim. Tool invocation is
-now implemented and tested in process; it is not benchmarked (E7.9) and
-carries no network or throughput claim. Future implementation must extend the
-matrix with positive and negative evidence before those surfaces are
-advertised.
+covered in process and over application-owned stdio subprocess pipes. Future
+implementation must extend the matrix with positive and negative evidence
+before additional surfaces are advertised.
 
 ## Upstream reference
 

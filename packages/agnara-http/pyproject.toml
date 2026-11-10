@@ -1,7 +1,7 @@
 [project]
 name = "agnara-http"
 version = "1.0.3"
-description = "HTTP/ASGI exposure adapter for Agnara capabilities."
+description = "HTTP/ASGI adapter exposing Agnara business capabilities with machine-readable OpenAPI contracts."
 readme = "README.md"
 requires-python = ">=3.14"
 authors = [{name = "Agnara Maintainers", email = "maintainers@agnara.dev"}]

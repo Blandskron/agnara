@@ -20,6 +20,8 @@ an argument value or an exception message. Telemetry is an egress boundary, so
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any
 
 from opentelemetry.trace import Tracer, get_tracer
@@ -34,8 +36,9 @@ from agnara_telemetry import OpenTelemetryTracingHook
 SECRET_TOKEN = "zzz-payload-must-never-be-exported-zzz"
 
 
-def build_tracer() -> tuple[Tracer, Any]:
-    """Return (tracer, exporter). The exporter is None without the SDK.
+@contextmanager
+def build_tracer() -> Iterator[tuple[Tracer, Any]]:
+    """Own (tracer, exporter) until inspection ends; exporter is None without SDK.
 
     Provider and exporter lifecycle belong to the application. Agnara never
     creates, configures or shuts down either one.
@@ -46,13 +49,20 @@ def build_tracer() -> tuple[Tracer, Any]:
         from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
             InMemorySpanExporter,
         )
-    except ModuleNotFoundError:
-        return get_tracer("example"), None
+    except ModuleNotFoundError as error:
+        if error.name != "opentelemetry.sdk":
+            raise
+        yield get_tracer("example"), None
+        return
 
-    exporter = InMemorySpanExporter()
-    provider = TracerProvider()
-    provider.add_span_processor(SimpleSpanProcessor(exporter))
-    return provider.get_tracer("example"), exporter
+    provider = TracerProvider(shutdown_on_exit=False)
+    try:
+        exporter = InMemorySpanExporter()
+        provider.add_span_processor(SimpleSpanProcessor(exporter))
+        yield provider.get_tracer("example"), exporter
+    finally:
+        # The provider shuts down its processor and exporter after inspection.
+        provider.shutdown()
 
 
 def build_application() -> App:
@@ -73,60 +83,59 @@ def build_application() -> App:
 
 
 async def main() -> None:
-    tracer, exporter = build_tracer()
+    with build_tracer() as (tracer, exporter):
+        project = Agnara("example")
+        project.include(build_application())
+        capabilities = project.compile()
 
-    project = Agnara("example")
-    project.include(build_application())
-    capabilities = project.compile()
+        registry = DIRegistry()
+        # The hook is compiled into the plan. A capability with no hooks pays
+        # nothing: the runtime guards lifecycle event construction on their
+        # presence rather than building events nobody consumes.
+        hook = OpenTelemetryTracingHook(tracer)
+        plans = {
+            str(identifier): ExecutionPlan.compile(definition, registry, hooks=[hook])
+            for identifier, definition in capabilities.items()
+        }
+        container = DIContainer(registry)
 
-    registry = DIRegistry()
-    # The hook is compiled into the plan. A capability with no hooks pays
-    # nothing: the runtime guards lifecycle event construction on their
-    # presence rather than building events nobody consumes.
-    hook = OpenTelemetryTracingHook(tracer)
-    plans = {
-        str(identifier): ExecutionPlan.compile(definition, registry, hooks=[hook])
-        for identifier, definition in capabilities.items()
-    }
-    container = DIContainer(registry)
+        try:
+            for identifier, payload in (
+                ("billing.total", {"amount": 100, "tax": 19}),
+                ("billing.refuse", {"token": SECRET_TOKEN}),
+            ):
+                plan = plans[identifier]
+                result = await invoke_result(
+                    plan,
+                    ExecutionContext(
+                        Invocation(plan.definition.id, payload, {}),
+                        container,
+                    ),
+                )
+                if isinstance(result, Success):
+                    print(f"{identifier}: success -> {result.value}")
+                else:
+                    # The failure is already redacted: an unexpected exception
+                    # keeps its capability identifier and loses its message.
+                    print(f"{identifier}: {result.code} -> {result.message}")
+        finally:
+            await container.aclose()
 
-    try:
-        for identifier, payload in (
-            ("billing.total", {"amount": 100, "tax": 19}),
-            ("billing.refuse", {"token": SECRET_TOKEN}),
-        ):
-            plan = plans[identifier]
-            result = await invoke_result(
-                plan,
-                ExecutionContext(
-                    Invocation(plan.definition.id, payload, {}),
-                    container,
-                ),
-            )
-            if isinstance(result, Success):
-                print(f"{identifier}: success -> {result.value}")
-            else:
-                # The failure is already redacted: an unexpected exception
-                # keeps its capability identifier and loses its message.
-                print(f"{identifier}: {result.code} -> {result.message}")
-    finally:
-        await container.aclose()
+        if exporter is None:
+            print("\nopentelemetry-sdk is not installed, so nothing was exported.")
+            print("The wiring above is unchanged; the API's default tracer is a no-op.")
+            return
 
-    if exporter is None:
-        print("\nopentelemetry-sdk is not installed, so nothing was exported.")
-        print("The wiring above is unchanged; the API's default tracer is a no-op.")
-        return
+        print("\nexported spans:")
+        for span in exporter.get_finished_spans():
+            attributes = span.attributes or {}
+            outcome = attributes.get("agnara.invocation.outcome")
+            print(f"  {span.name}: outcome={outcome}")
 
-    print("\nexported spans:")
-    for span in exporter.get_finished_spans():
-        attributes = span.attributes or {}
-        outcome = attributes.get("agnara.invocation.outcome")
-        print(f"  {span.name}: outcome={outcome}")
-
-    rendered = "\n".join(span.to_json() for span in exporter.get_finished_spans())
-    for secret in (SECRET_TOKEN, "secret payload reached the logs"):
-        assert secret not in rendered, "telemetry must not carry payloads or exception text"
-    print("\nno payload, argument value or exception message reached the exporter")
+        rendered = "\n".join(span.to_json() for span in exporter.get_finished_spans())
+        for secret in (SECRET_TOKEN, "secret payload reached the logs"):
+            assert secret not in rendered, "telemetry must not carry payloads or exception text"
+        print("\nno payload, argument value or exception message reached the exporter")
 
 
 if __name__ == "__main__":
