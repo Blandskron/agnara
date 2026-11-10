@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "current_target": "1.0.3",
+  "current_target": "1.0.4",
   "previous_release": "1.0.3",
-  "status": "PUBLISHED",
-  "assessed_on": "2026-09-28",
+  "status": "IN_PROGRESS",
+  "assessed_on": "2026-11-10",
   "notes": [
-    "Agnara 1.0.3 was published from c25d9eb5b2d432f652c4661a1925cb38baa63c82 by three protected release phases on 2026-09-25.",
-    "The pre-publication gate entries below are retained as historical preparation notes. The readiness command reports this published baseline without evaluating them as a new release candidate. PR #514 has an agent approval and a maintainer merge, but no formal Blandskron review is recorded.",
-    "New version publication is paused until approximately March 2027; no new release target has been selected."
+    "Agnara 1.0.4 is prepared from the synchronized main commit after the 1.0.3 publication baseline.",
+    "The protected release workflow must publish bootstrap-1, bootstrap-2 and final from this accepted main history before any 1.0.4 tag or GitHub Release is created.",
+    "The 1.0.3 publication evidence remains recorded below as the previous verified release."
   ],
   "gates": [
     {

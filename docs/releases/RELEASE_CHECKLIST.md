@@ -1,4 +1,10 @@
-# Agnara 1.0.3 release record
+# Agnara 1.0.4 release plan
+
+The 1.0.4 candidate is prepared from the synchronized main history. The
+protected workflow must establish fresh evidence for this target; the record
+below is retained as historical evidence for the published 1.0.3 baseline.
+
+## Historical 1.0.3 release record
 
 This release synchronizes documentation and metadata with the current stable
 1.x framework. Runtime behavior, public API, execution semantics and protocol

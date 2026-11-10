@@ -82,6 +82,7 @@ def test_only_current_release_document_set_remains() -> None:
         "README.md",
         "RELEASE_CHECKLIST.md",
         "v1.0.3.md",
+        "v1.0.4.md",
         "release-status.json",
         "publication.json",
     }
