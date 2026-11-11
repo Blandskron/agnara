@@ -17,7 +17,7 @@
   "last_registry_failure": null,
   "notes": [
     "Trusted Publisher configuration is recorded separately from target publication.",
-    "Protected 1.0.3 phases completed on c25d9eb5b2d432f652c4661a1925cb38baa63c82 in runs 36198149576, 36198710966 and 36199330668; the final run verified all seven distributions and created v1.0.3."
+    "The verified publication evidence for the current target is recorded in release-status.json."
   ],
   "projects": [
     {
@@ -91,7 +91,7 @@
       "verified_on": "2026-09-09"
     }
   ],
-  "current_target": "1.0.3",
-  "candidate_sha": "c25d9eb5b2d432f652c4661a1925cb38baa63c82",
+  "current_target": "1.0.4",
+  "candidate_sha": "b6fa9f1a9df9f8f2940d7bc351a4d40295887686",
   "target_publication_state": "PUBLISHED"
 }

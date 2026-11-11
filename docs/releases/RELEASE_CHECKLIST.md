@@ -1,4 +1,13 @@
-# Agnara 1.0.3 release record
+# Agnara 1.0.4 release record
+
+The protected workflow published 1.0.4 on 2026-11-10 from
+`b6fa9f1a9df9f8f2940d7bc351a4d40295887686`. The
+[final phase](https://github.com/Blandskron/agnara/actions/runs/42846856198)
+verified all seven distributions on PyPI and created the
+[v1.0.4 release](https://github.com/Blandskron/agnara/releases/tag/v1.0.4).
+The [status record](release-status.json) links all three runs.
+
+## Historical 1.0.3 release record
 
 This release synchronizes documentation and metadata with the current stable
 1.x framework. Runtime behavior, public API, execution semantics and protocol

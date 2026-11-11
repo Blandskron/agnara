@@ -1,6 +1,6 @@
 [project]
 name = "agnara-mcp"
-version = "1.0.3"
+version = "1.0.4"
 description = "MCP tool adapter exposing Agnara business capabilities to AI agents with explicit authorization and invocation."
 readme = "README.md"
 requires-python = ">=3.14"
@@ -14,7 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-dependencies = ["agnara==1.0.3", "mcp==2.2.0"]
+dependencies = ["agnara==1.0.4", "mcp==2.2.0"]
 
 [project.urls]
 Homepage = "https://github.com/Blandskron/agnara"

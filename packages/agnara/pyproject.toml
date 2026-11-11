@@ -1,6 +1,6 @@
 [project]
 name = "agnara"
-version = "1.0.3"
+version = "1.0.4"
 description = "Python backend capability framework for applications and AI agents, with transport-neutral contracts and policies."
 readme = "README.md"
 requires-python = ">=3.14"
