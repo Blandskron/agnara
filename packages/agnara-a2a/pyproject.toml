@@ -1,6 +1,6 @@
 [project]
 name = "agnara-a2a"
-version = "1.0.3"
+version = "1.0.4"
 description = "Reserved A2A namespace for Agnara; no public runtime API is implemented."
 readme = "README.md"
 requires-python = ">=3.14"
@@ -14,7 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-dependencies = ["agnara==1.0.3", "a2a-sdk[http-server]==1.3.0"]
+dependencies = ["agnara==1.0.4", "a2a-sdk[http-server]==1.3.0"]
 
 [project.urls]
 Homepage = "https://github.com/Blandskron/agnara"

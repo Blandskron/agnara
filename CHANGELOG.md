@@ -5,6 +5,8 @@ full history are available through Git tags and GitHub Releases.
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-11-10
+
 ### Fixed
 
 - Keep CLI `--path` entries available for deferred imports during target
@@ -366,5 +368,6 @@ full history are available through Git tags and GitHub Releases.
 Runtime behavior, public API, execution semantics and protocol support are
 unchanged.
 
-[Unreleased]: https://github.com/Blandskron/agnara/compare/v1.0.3...develop
+[Unreleased]: https://github.com/Blandskron/agnara/compare/v1.0.4...develop
+[1.0.4]: https://github.com/Blandskron/agnara/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/Blandskron/agnara/compare/v1.0.2...v1.0.3
