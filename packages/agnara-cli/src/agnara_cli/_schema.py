@@ -95,6 +95,17 @@ def _reject_json_constant(token: str) -> Never:
     raise ValueError(f"{token} is not a JSON number")
 
 
+def _object_without_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    document: dict[str, Any] = {}
+    for name, value in pairs:
+        if name in document:
+            raise TargetError(
+                f"the OpenAPI document contains a duplicate JSON object key: {name!r}"
+            )
+        document[name] = value
+    return document
+
+
 def _document(value: object) -> tuple[dict[str, Any], bytes | None]:
     """Read a target into a document, keeping its exact bytes when it has them.
 
@@ -123,7 +134,11 @@ def _document(value: object) -> tuple[dict[str, Any], bytes | None]:
         except UnicodeDecodeError as error:
             raise TargetError("the OpenAPI document is not valid UTF-8") from error
         try:
-            parsed = json.loads(decoded, parse_constant=_reject_json_constant)
+            parsed = json.loads(
+                decoded,
+                parse_constant=_reject_json_constant,
+                object_pairs_hook=_object_without_duplicates,
+            )
         except RecursionError as error:
             raise TargetError("the OpenAPI document is nested too deeply to parse") from error
         except ValueError as error:
