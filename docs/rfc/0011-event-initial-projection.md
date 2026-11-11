@@ -2,7 +2,7 @@
 
 - Status: Open research; no implementation decision
 - Date: 2026-10-28
-- Tracking: GitHub Issue #691
+- Tracking: GitHub Issues #691 and #770
 - Related: ADR 0017, ADR 0018, ADR 0046, ADR 0070, ADR 0084, ADR 0086,
   ADR 0091, ADR 0094, RFC 0005, RFC 0009, RFC 0010
 
@@ -184,6 +184,49 @@ not acceptable. The `agnara schema asyncapi` command listed in the
 [CLI specification](../CLI_SPEC.md) stays unimplemented until this projection
 exists.
 
+## First feasibility case: inventory snapshot
+
+Use one inventory publisher and one consumer that maintains a read model of
+available units per SKU. Each message carries the latest absolute quantity at a
+publisher-assigned revision. Replaying a message cannot apply a quantity twice,
+and late delivery cannot overwrite a newer snapshot. A stock adjustment that
+adds or subtracts units would need a different duplicate-handling contract.
+
+For the isolated EVT-01 experiment, configure one subscription for a single
+complete-result capability and the fixture event type
+`example.inventory.snapshot.v1`. Use the structured [CloudEvents JSON format][cloudevents-json]
+with a JSON object in `data`. The compiled input accepts `sku` as a nonempty
+string, `revision` as a positive signed 64-bit integer and `available_units`
+as a nonnegative integer. The broker must restrict publishing on the fixture
+channel to the authoritative publisher. The host supplies a service principal
+scoped to this read model. Envelope attributes and broker headers carry no
+authority, and only `data` reaches the capability as input.
+
+The application store compares and updates the revision atomically for each
+SKU. An absent or older stored revision accepts the snapshot. Equal revision
+and equal quantity, or an older incoming revision, completes successfully
+without another write. Equal revision with a different quantity is a conflict.
+The comparison uses the business revision, so transport redelivery and reused
+envelope IDs cannot suppress a newer snapshot. This assumes a single publisher
+that issues strictly increasing revisions per SKU.
+
+Add the following cases to the EVT-01 evidence alongside its broker and
+schema checks.
+
+| Case | Evidence to capture |
+| --- | --- |
+| Successful write and acknowledgement | Hold the write open and observe that the consumer acknowledges only after commit and successful invocation. |
+| Interrupted acknowledgement | Interrupt the consumer after commit and before acknowledgement. Redelivery succeeds without a second write, using the stored revision. |
+| Late and conflicting deliveries | Deliver revision 2 before revision 1. Revision 1 is acknowledged without changing the model. Reject revision 2 with a different quantity without redelivery. |
+| Invalid data or authority | Reject malformed input and a mismatched event type before effects. A subscription principal without the required scope stays denied even if message metadata claims that scope. |
+| Retry and shutdown | Force a transient failure and observe the broker's retry bound. Cancel an unfinished invocation before commit and verify cleanup and release without acknowledgement. |
+| Numeric fidelity | Deliver revision `9007199254740993` and verify the exact integer reaches the input contract and stored revision. |
+
+**Recommendation for review.** Proceed with EVT-01 after the presentation as
+an isolated experiment. Defer the adapter and any AsyncAPI support claim until
+the broker, compiled invocation and schema projection checks produce evidence
+for EVT-02. The presentation can describe the use case and its contract.
+
 ## Feasibility gates and proposed work sequence
 
 These work packages require their own Issues and review. No runtime package,
@@ -233,3 +276,4 @@ does not settle either.
 
 [asyncapi]: https://github.com/asyncapi/spec/blob/b3fac5bb522771428ea57b16129b273cd3ea0180/spec/asyncapi.md
 [cloudevents]: https://github.com/cloudevents/spec/blob/fc1f6f31f5f011a72183f1bcea20c987cb683ade/cloudevents/spec.md
+[cloudevents-json]: https://github.com/cloudevents/spec/blob/fc1f6f31f5f011a72183f1bcea20c987cb683ade/cloudevents/formats/json-format.md
