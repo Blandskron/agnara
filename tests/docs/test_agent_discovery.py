@@ -38,10 +38,9 @@ NEW_MARKDOWN = (
 )
 
 
-def test_version_and_index_metadata_match_published_baseline() -> None:
+def test_version_and_index_metadata_match_documented_baseline() -> None:
     index = load_index()
-    published = json.loads((ROOT / "docs/releases/release-status.json").read_text())
-    assert index["version"] == published["previous_release"] == "1.0.3"
+    assert index["version"] == "1.0.3"
     assert index["release_commit"] == "c25d9eb5b2d432f652c4661a1925cb38baa63c82"
     for entry in index["documents"]:
         assert entry["version"] == index["version"]

@@ -1,9 +1,10 @@
 # Releases
 
-The last published release record is 1.0.3. No new release target is selected.
-Its documents are:
+The latest published release is 1.0.4. The agent discovery corpus still
+targets the verified 1.0.3 API baseline.
 
-- [1.0.3 release record](RELEASE_CHECKLIST.md)
+- [1.0.4 release record](RELEASE_CHECKLIST.md)
+- [1.0.4 notes](v1.0.4.md)
 - [1.0.3 notes](v1.0.3.md)
 - [Published status and evidence](release-status.json)
 - [Trusted Publisher configuration](publication.json)
