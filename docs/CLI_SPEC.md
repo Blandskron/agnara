@@ -363,6 +363,10 @@ agnara inspect billing.bootstrap:app --path src --hide billing.reconcile
 Importing a target executes the module that defines it; a malformed target is
 rejected before any import happens.
 
+A `SystemExit` raised by target code during import, attribute access or
+compilation produces a diagnostic and exit 1, even when the target requests
+exit 0. Runtime doctor records the failure in its diagnostic report.
+
 The attribute after `:` may be a dotted path, so an application that lives
 inside a container, a settings object or a factory result is nameable without
 rearranging the module to suit the CLI:
@@ -570,6 +574,7 @@ uses.
 Byte targets must contain valid UTF-8 JSON. Non-JSON constants such as
 `NaN` and `Infinity` are rejected. Serialization failures in either mode
 produce a diagnostic on stderr and exit 1 before writing any document.
+A `SystemExit` during document production also fails before writing.
 
 `--output` writes the file and prints nothing, refusing to replace an existing
 file without `--overwrite`. `--pretty` indents for a reader and is no longer

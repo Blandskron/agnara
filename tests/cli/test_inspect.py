@@ -82,6 +82,10 @@ class Holder:
     def app(self):
         raise KeyError("boom")
 
+    @property
+    def exiting(self):
+        raise SystemExit(0)
+
 
 holder = Holder()
 """
@@ -453,6 +457,16 @@ def test_a_dotted_registry_is_resolved_the_same_way(
 
     assert code == EXIT_OK
     assert "billing.refund" in out
+
+
+def test_a_descriptor_exit_reports_a_target_failure(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    code, out, err = run(project, "--json", target="raising_property:holder.exiting", capsys=capsys)
+
+    assert code == EXIT_FAILED
+    assert out == ""
+    assert "reading attribute 'holder.exiting' failed at 'exiting': SystemExit: 0" in err
 
 
 def test_a_dotted_path_names_the_segment_that_failed(

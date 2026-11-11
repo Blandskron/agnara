@@ -1,6 +1,6 @@
 """Resolve a compiled Agnara application from a command-line target.
 
-There is no project manifest yet (E0A.2), so the target is explicit:
+The target is explicit:
 ``package.module:attribute``, the convention `uvicorn` and `gunicorn` already
 established, resolved with the ordinary import system. The attribute may be a
 dotted path, so an application held inside a container or a settings object is
@@ -49,7 +49,7 @@ def _attribute(module: object, path: str) -> object:
     for part in path.split("."):
         try:
             value = getattr(value, part, _MISSING)
-        except Exception as error:
+        except (Exception, SystemExit) as error:
             # A property or a descriptor ran user code and it failed. That is
             # the same situation as a module that raises on import.
             raise TargetError(
@@ -184,6 +184,10 @@ def resolve_target(
             ExecutionPlan.compile(capabilities[capability_id], compile_against)
             for capability_id in capabilities
         )
+    except SystemExit as error:
+        raise TargetError(
+            f"compiling {app.name!r} failed: the target exited with {error.code!r}"
+        ) from error
     except Exception as error:
         # A schema error with no registry named is nearly always a dependency
         # the CLI was never told about: core cannot tell a handler's unbound

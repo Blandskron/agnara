@@ -362,7 +362,7 @@ raise SystemExit(main(['doctor', '--project', sys.argv[1], '--json']))
 
 
 @pytest.mark.parametrize(
-    "mode", ["registered", "missing", "broken", "compile_error", "module_drift"]
+    "mode", ["registered", "missing", "broken", "compile_error", "compile_exit", "module_drift"]
 )
 def test_explicit_runtime_checks_report_composition(
     mode: str,
@@ -389,6 +389,10 @@ def test_explicit_runtime_checks_report_composition(
             'users = App("users")\napp.include(users)\n'
             "@users.capability\ndef invalid(value: complex) -> str:\n    return str(value)\n"
         ),
+        "compile_exit": (
+            "class ExitingApp(Agnara):\n    def compile(self):\n        raise SystemExit(0)\n"
+            'app = ExitingApp("commerce")\n'
+        ),
     }[mode]
     (project / f"{module}.py").write_text(
         'from agnara import Agnara, App\nprint("bootstrap output")\napp = Agnara("commerce")\n'
@@ -413,9 +417,13 @@ def test_explicit_runtime_checks_report_composition(
     results = checks(document)
     assert code == (EXIT_OK if mode == "registered" else EXIT_FAILED)
     assert "application_imports" not in document["unchecked"]
-    if mode in {"broken", "compile_error"}:
+    if mode in {"broken", "compile_error", "compile_exit"}:
         assert results["runtime:target"]["status"] == "fail"
-        expected = "broken bootstrap" if mode == "broken" else "compiling"
+        expected = {
+            "broken": "broken bootstrap",
+            "compile_error": "compiling",
+            "compile_exit": "compiling 'commerce' failed: the target exited with 0",
+        }[mode]
         assert expected in results["runtime:target"]["message"]
         assert "runtime_registration" in document["unchecked"]
     else:

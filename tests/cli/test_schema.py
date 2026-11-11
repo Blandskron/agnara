@@ -40,6 +40,12 @@ def build():
 def explode():
     raise RuntimeError("projection failed on purpose")
 
+def exit_successfully():
+    raise SystemExit(0)
+
+def interrupted():
+    raise KeyboardInterrupt
+
 
 class Document:
     def __init__(self):
@@ -75,6 +81,29 @@ def test_serialized_bytes_are_emitted_exactly_as_a_server_would_send_them(
     assert out.rstrip(b"\n") == (
         b'{"info":{"title":"Billing API","version":"1"},"openapi":"3.2.0","paths":{}}'
     )
+
+
+def test_a_producer_exit_fails_before_writing_output(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    destination = project / "openapi.json"
+    destination.write_bytes(b"existing document")
+
+    code, out, err = run(
+        project, "exit_successfully", "--output", str(destination), "--overwrite", capsys=capsys
+    )
+
+    assert code == EXIT_FAILED
+    assert out == b""
+    assert "producing the OpenAPI document failed: the target exited with 0" in err
+    assert destination.read_bytes() == b"existing document"
+
+
+def test_a_producer_keyboard_interrupt_propagates(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    with pytest.raises(KeyboardInterrupt):
+        run(project, "interrupted", capsys=capsys)
 
 
 def test_a_mapping_is_serialized_the_way_the_http_projection_does(
