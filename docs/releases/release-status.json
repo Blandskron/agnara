@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "current_target": "1.0.4",
-  "previous_release": "1.0.3",
-  "status": "IN_PROGRESS",
-  "assessed_on": "2026-11-10",
+  "previous_release": "1.0.4",
+  "status": "PUBLISHED",
+  "assessed_on": "2026-11-11",
   "notes": [
-    "Agnara 1.0.4 is prepared from the synchronized main commit after the 1.0.3 publication baseline.",
-    "The protected release workflow must publish bootstrap-1, bootstrap-2 and final from this accepted main history before any 1.0.4 tag or GitHub Release is created.",
-    "The 1.0.3 publication evidence remains recorded below as the previous verified release."
+    "Agnara 1.0.4 was published from b6fa9f1a9df9f8f2940d7bc351a4d40295887686 in three protected release phases on 2026-11-10.",
+    "The final run verified all seven distributions on PyPI and created the v1.0.4 tag and GitHub Release.",
+    "The gate entries below preserve preparation history. The readiness command reports the published release until a new target is selected."
   ],
   "gates": [
     {
@@ -124,13 +124,13 @@
     }
   ],
   "source_baseline_sha": "ebd83592f2e3a0f073fbfa20382b84f605877bed",
-  "candidate_sha": "c25d9eb5b2d432f652c4661a1925cb38baa63c82",
+  "candidate_sha": "b6fa9f1a9df9f8f2940d7bc351a4d40295887686",
   "published_evidence": {
-    "commit": "c25d9eb5b2d432f652c4661a1925cb38baa63c82",
-    "bootstrap_1_run": "https://github.com/Blandskron/agnara/actions/runs/36198149576",
-    "bootstrap_2_run": "https://github.com/Blandskron/agnara/actions/runs/36198710966",
-    "final_run": "https://github.com/Blandskron/agnara/actions/runs/36199330668",
-    "tag": "v1.0.3",
-    "release_url": "https://github.com/Blandskron/agnara/releases/tag/v1.0.3"
+    "commit": "b6fa9f1a9df9f8f2940d7bc351a4d40295887686",
+    "bootstrap_1_run": "https://github.com/Blandskron/agnara/actions/runs/42843157645",
+    "bootstrap_2_run": "https://github.com/Blandskron/agnara/actions/runs/42845247166",
+    "final_run": "https://github.com/Blandskron/agnara/actions/runs/42846856198",
+    "tag": "v1.0.4",
+    "release_url": "https://github.com/Blandskron/agnara/releases/tag/v1.0.4"
   }
 }
