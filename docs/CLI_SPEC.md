@@ -572,8 +572,9 @@ served; a mapping is serialized with the same arguments the HTTP projection
 uses.
 
 Byte targets must contain valid UTF-8 JSON. Non-JSON constants such as
-`NaN` and `Infinity` are rejected. Serialization failures in either mode
-produce a diagnostic on stderr and exit 1 before writing any document.
+`NaN` and `Infinity` and duplicate member names within any JSON object are
+rejected. Both plain and `--pretty` exports report validation and serialization
+failures on stderr and exit 1 before writing any document.
 A `SystemExit` during document production also fails before writing.
 
 `--output` writes the file and prints nothing, refusing to replace an existing

@@ -7,6 +7,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Reject duplicate JSON object keys in serialized OpenAPI targets before the
+  CLI writes an export.
+
 - Treat `SystemExit` from CLI target evaluation as a failure, including when a
   target requests exit code zero before inspection or OpenAPI export finishes.
 

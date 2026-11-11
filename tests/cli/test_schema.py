@@ -26,6 +26,9 @@ malformed = b"{not json"
 nonfinite = b'{"openapi":"3.2.0","example":NaN}'
 positive_infinity = b'{"openapi":"3.2.0","example":Infinity}'
 negative_infinity = b'{"openapi":"3.2.0","example":-Infinity}'
+duplicate_version = b'{"openapi":"3.0.0","openapi":"3.2.0"}'
+duplicate_nested = br'{"openapi":"3.2.0","tags":[{"name":"first","\u006eame":"second"}]}'
+separate_objects = b'{"openapi":"3.2.0","tags":[{"name":"first"},{"name":"second"}]}'
 not_an_object = b"[1, 2, 3]"
 without_version = b'{"info":{"title":"x"}}'
 numeric_version = b'{"openapi":3}'
@@ -97,6 +100,16 @@ def test_a_producer_exit_fails_before_writing_output(
     assert out == b""
     assert "producing the OpenAPI document failed: the target exited with 0" in err
     assert destination.read_bytes() == b"existing document"
+
+
+def test_member_names_can_repeat_in_separate_objects(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    code, out, err = run(project, "separate_objects", capsys=capsys)
+
+    assert code == EXIT_OK
+    assert err == ""
+    assert out == b'{"openapi":"3.2.0","tags":[{"name":"first"},{"name":"second"}]}'
 
 
 def test_a_producer_keyboard_interrupt_propagates(
@@ -265,6 +278,8 @@ def test_an_unwritable_destination_is_a_diagnostic(
         ("nonfinite", "not valid JSON"),
         ("positive_infinity", "not valid JSON"),
         ("negative_infinity", "not valid JSON"),
+        ("duplicate_version", "duplicate JSON object key: 'openapi'"),
+        ("duplicate_nested", "duplicate JSON object key: 'name'"),
         ("not_an_object", "must be a JSON object"),
         ("without_version", "'openapi' version"),
         ("numeric_version", "'openapi' version"),
@@ -296,6 +311,29 @@ def test_a_producer_that_raises_reports_the_reason(
     assert "producing the OpenAPI document failed" in err
     assert "projection failed on purpose" in err
     assert "Traceback" not in err
+
+
+@pytest.mark.parametrize("options", [(), ("--pretty",)])
+def test_a_duplicate_member_preserves_the_destination(
+    project: Path, capsys: pytest.CaptureFixture[str], options: tuple[str, ...]
+) -> None:
+    destination = project / "openapi.json"
+    destination.write_bytes(b"existing document")
+
+    code, out, err = run(
+        project,
+        "duplicate_nested",
+        "--output",
+        str(destination),
+        "--overwrite",
+        *options,
+        capsys=capsys,
+    )
+
+    assert code == EXIT_FAILED
+    assert out == b""
+    assert "duplicate JSON object key: 'name'" in err
+    assert destination.read_bytes() == b"existing document"
 
 
 @pytest.mark.parametrize(
