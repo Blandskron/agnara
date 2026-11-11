@@ -168,8 +168,13 @@ def _encode(document: Mapping[str, Any], served: bytes | None, *, pretty: bool) 
 def run_schema(arguments: argparse.Namespace) -> bytes | None:
     """Export the document, to stdout as exact bytes or to a file."""
     value = resolve_attribute(arguments.target)
-    document, served = _document(value)
-    body = _encode(document, served, pretty=arguments.pretty)
+    try:
+        document, served = _document(value)
+        body = _encode(document, served, pretty=arguments.pretty)
+    except SystemExit as error:
+        raise TargetError(
+            f"producing the OpenAPI document failed: the target exited with {error.code!r}"
+        ) from error
     if arguments.output is None:
         return body
     write_document(arguments.output, body, overwrite=arguments.overwrite)

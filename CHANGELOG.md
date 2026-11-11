@@ -5,6 +5,11 @@ full history are available through Git tags and GitHub Releases.
 
 ## [Unreleased]
 
+### Fixed
+
+- Treat `SystemExit` from CLI target evaluation as a failure, including when a
+  target requests exit code zero before inspection or OpenAPI export finishes.
+
 ## [1.0.4] - 2026-11-10
 
 ### Fixed
