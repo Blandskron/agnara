@@ -167,9 +167,11 @@ Start with a direct success, malformed input and policy denial. Assert denial
 does not enter dependencies or handlers. Test cleanup after success, failure
 and cancellation when resources are involved. Test ASGI requests and official
 MCP client calls, not only handler functions. The
-[shared HTTP/MCP test](../tests/docs/test_http_mcp_example.py) shows both adapter
-paths; [minimal tests](../tests/docs/test_minimal_capability_example.py) show
-direct execution. Run `uv run pytest tests/docs tests/architecture` in this repo.
+[shared capability test](../tests/docs/test_http_mcp_example.py) compares
+direct, HTTP and MCP results, rejects malformed inputs and checks task cleanup.
+The [installed-wheel gate](../tests/release/test_integrated_dogfooding.py) runs
+the same example with the same assertions in a clean consumer environment.
+Run `uv run pytest tests/docs tests/architecture` in this repo.
 
 ## Examples
 
