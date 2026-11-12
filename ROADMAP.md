@@ -21,9 +21,10 @@ in-process SDK flow. Include A2A as an explicitly experimental segment only
 if the pinned client and host path can be reproduced. Present Events through
 its feasibility question and reserved namespace status.
 
-The presentation may use candidate wheels from a reviewed `develop` commit.
-Label them separately from the published 1.0.3 artifacts and keep support
-claims within the evidence recorded for each package.
+The stable demo uses seven Agnara 1.0.4 wheels built locally from the reviewed
+`develop` commit `48bb8af3ac6f802c994a264f9a63741910027766`. The
+[freeze record](https://github.com/Blandskron/agnara/issues/772#issuecomment-6829840300)
+lists the exact commands, installed versions, wheel hashes and rehearsal results.
 
 ## After the presentation
 
