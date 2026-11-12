@@ -28,6 +28,9 @@ positive_infinity = b'{"openapi":"3.2.0","example":Infinity}'
 negative_infinity = b'{"openapi":"3.2.0","example":-Infinity}'
 duplicate_version = b'{"openapi":"3.0.0","openapi":"3.2.0"}'
 duplicate_nested = br'{"openapi":"3.2.0","tags":[{"name":"first","\u006eame":"second"}]}'
+surrogate_name = br'{"openapi":"3.2.0","example":{"\\udc00":1}}'
+surrogate_value = br'{"openapi":"3.2.0","example":["\\ud800"]}'
+paired_surrogates = br'{"openapi":"3.2.0","example":{"\\ud834\\udd1e":"\\\\ud800"}}'
 separate_objects = b'{"openapi":"3.2.0","tags":[{"name":"first"},{"name":"second"}]}'
 not_an_object = b"[1, 2, 3]"
 without_version = b'{"info":{"title":"x"}}'
@@ -183,6 +186,18 @@ def test_non_ascii_survives_unescaped(project: Path, capsys: pytest.CaptureFixtu
     assert b"\\u00e9" not in out
 
 
+def test_surrogate_pairs_and_literal_escape_text_are_preserved(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    plain_code, plain, _ = run(project, "paired_surrogates", capsys=capsys)
+    pretty_code, pretty, _ = run(project, "paired_surrogates", "--pretty", capsys=capsys)
+
+    assert plain_code == pretty_code == EXIT_OK
+    assert plain == rb'{"openapi":"3.2.0","example":{"\ud834\udd1e":"\\ud800"}}'
+    assert "\U0001d11e".encode() in pretty
+    assert json.loads(plain) == json.loads(pretty)
+
+
 def test_pretty_output_says_it_is_no_longer_what_a_server_sends(
     project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -280,6 +295,8 @@ def test_an_unwritable_destination_is_a_diagnostic(
         ("negative_infinity", "not valid JSON"),
         ("duplicate_version", "duplicate JSON object key: 'openapi'"),
         ("duplicate_nested", "duplicate JSON object key: 'name'"),
+        ("surrogate_name", "unpaired Unicode surrogate"),
+        ("surrogate_value", "unpaired Unicode surrogate"),
         ("not_an_object", "must be a JSON object"),
         ("without_version", "'openapi' version"),
         ("numeric_version", "'openapi' version"),
@@ -314,15 +331,26 @@ def test_a_producer_that_raises_reports_the_reason(
 
 
 @pytest.mark.parametrize("options", [(), ("--pretty",)])
-def test_a_duplicate_member_preserves_the_destination(
-    project: Path, capsys: pytest.CaptureFixture[str], options: tuple[str, ...]
+@pytest.mark.parametrize(
+    ("attribute", "diagnostic"),
+    [
+        ("duplicate_nested", "duplicate JSON object key: 'name'"),
+        ("surrogate_value", "unpaired Unicode surrogate"),
+    ],
+)
+def test_invalid_document_preserves_the_destination(
+    project: Path,
+    capsys: pytest.CaptureFixture[str],
+    options: tuple[str, ...],
+    attribute: str,
+    diagnostic: str,
 ) -> None:
     destination = project / "openapi.json"
     destination.write_bytes(b"existing document")
 
     code, out, err = run(
         project,
-        "duplicate_nested",
+        attribute,
         "--output",
         str(destination),
         "--overwrite",
@@ -332,7 +360,7 @@ def test_a_duplicate_member_preserves_the_destination(
 
     assert code == EXIT_FAILED
     assert out == b""
-    assert "duplicate JSON object key: 'name'" in err
+    assert diagnostic in err
     assert destination.read_bytes() == b"existing document"
 
 

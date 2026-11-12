@@ -571,9 +571,10 @@ either. Bytes are emitted unchanged, so an export is byte-identical to what is
 served; a mapping is serialized with the same arguments the HTTP projection
 uses.
 
-Byte targets must contain valid UTF-8 JSON. Non-JSON constants such as
-`NaN` and `Infinity` and duplicate member names within any JSON object are
-rejected. Both plain and `--pretty` exports report validation and serialization
+Byte targets must contain valid UTF-8 JSON. The exporter rejects non-JSON
+constants such as `NaN` and `Infinity`, duplicate member names within any
+JSON object, and unpaired Unicode surrogates in member names or string values.
+Both plain and `--pretty` exports report validation and serialization
 failures on stderr and exit 1 before writing any document.
 A `SystemExit` during document production also fails before writing.
 
