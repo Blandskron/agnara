@@ -1,4 +1,4 @@
-"""Invoke one capability through HTTP and the official in-process MCP client.
+"""Invoke one capability directly, over HTTP and through the in-process MCP client.
 
 Run with ``uv run python examples/http_mcp.py``. Compatible with published
 1.0.3. No server, authentication provider or network endpoint is deployed.
@@ -13,7 +13,7 @@ from typing import Any
 
 from agnara import Agnara, Principal
 from agnara.di import DIContainer, DIRegistry
-from agnara.execution import ExecutionPlan
+from agnara.execution import ExecutionContext, ExecutionPlan, Invocation, invoke_result
 from agnara_http import Binding, BindingSource, Http
 from agnara_mcp import Mcp, McpAuthenticatedIdentity, McpAuthorization, build_mcp_server
 from mcp import Client
@@ -41,7 +41,7 @@ async def demonstrate() -> dict[str, Any]:
     asgi = http.compile(capabilities, dependencies=dependencies)
 
     # The ASGI host owns its HTTP container through the compiled lifespan.
-    # The in-process MCP host owns a separate container on this same loop.
+    # Direct calls and the in-process MCP host share a separate container on this loop.
     @asynccontextmanager
     async def http_lifespan():
         incoming: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
@@ -87,10 +87,16 @@ async def demonstrate() -> dict[str, Any]:
 
     container = DIContainer(dependencies)
     try:
+        plan = ExecutionPlan.compile(capabilities["calculator.add"], dependencies)
+
+        async def invoke_direct(arguments: dict[str, object]):
+            invocation = Invocation(plan.definition.id, arguments, {})
+            return await invoke_result(plan, ExecutionContext(invocation, container))
+
         exposures = mcp.compile()
         server = build_mcp_server(
             exposures,
-            [ExecutionPlan.compile(item, dependencies) for item in capabilities.values()],
+            [plan],
             container,
             name="shared-capability-example",
             version="1.0.3",
@@ -98,12 +104,16 @@ async def demonstrate() -> dict[str, Any]:
             timeout=2,
         )
         async with asyncio.timeout(10), http_lifespan(), Client(server, mode="auto") as client:
+            direct_ok = await invoke_direct({"a": 2, "b": 3})
+            direct_bad = await invoke_direct({"a": "bad", "b": 3})
             http_ok = await request(b"a=2&b=3")
             http_bad = await request(b"a=bad&b=3")
             tools = await client.list_tools()
             mcp_ok = await client.call_tool("calculator.add", {"a": 2, "b": 3})
             mcp_bad = await client.call_tool("calculator.add", {"a": "bad", "b": 3})
             return {
+                "direct_ok": direct_ok,
+                "direct_bad": direct_bad,
                 "http_ok": http_ok,
                 "http_bad": http_bad,
                 "tools": tools,
@@ -117,4 +127,4 @@ async def demonstrate() -> dict[str, Any]:
 
 if __name__ == "__main__":
     result = asyncio.run(demonstrate())
-    print(f"HTTP: {result['http_ok']}; MCP: {result['mcp_ok']}")
+    print(f"Direct: {result['direct_ok']}; HTTP: {result['http_ok']}; MCP: {result['mcp_ok']}")
