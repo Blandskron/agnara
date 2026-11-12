@@ -8,9 +8,8 @@ the milestone and the [maturity matrix](docs/MATURITY.md) for current behavior.
 
 - [ ] Maintain runnable tutorials, reference applications and interoperability
   evidence against the governed API and explicit host contract.
-- [ ] Review the [Events feasibility case](docs/rfc/0011-event-initial-projection.md#first-feasibility-case-inventory-snapshot).
-  If accepted, scope EVT-01 in its own Issue before selecting a broker and
-  running the isolated experiment.
+- [ ] Review the [EVT-01 experiment](experiments/events/README.md) and decide
+  whether to scope EVT-02 under [RFC 0011](docs/rfc/0011-event-initial-projection.md).
 - [ ] Evaluate [durable execution](docs/rfc/0012-durable-execution-boundary.md)
   and further protocol projections in separate feasibility Issues.
 - [ ] Review activation of the
