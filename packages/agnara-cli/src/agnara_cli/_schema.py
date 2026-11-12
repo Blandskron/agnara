@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from collections.abc import Callable, Mapping
 from typing import Any, Never, cast
 
@@ -35,6 +36,7 @@ _JSON_ARGUMENTS: dict[str, Any] = {
     "separators": (",", ":"),
     "sort_keys": True,
 }
+_SURROGATE = re.compile(r"[\ud800-\udfff]")
 
 
 def add_schema_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
@@ -106,6 +108,19 @@ def _object_without_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return document
 
 
+def _validate_unicode(value: object) -> None:
+    """Check decoded strings, where valid surrogate pairs are already combined."""
+    if isinstance(value, dict):
+        for name, child in value.items():
+            _validate_unicode(name)
+            _validate_unicode(child)
+    elif isinstance(value, list):
+        for child in value:
+            _validate_unicode(child)
+    elif isinstance(value, str) and not value.isascii() and _SURROGATE.search(value):
+        raise TargetError("the OpenAPI document contains an unpaired Unicode surrogate")
+
+
 def _document(value: object) -> tuple[dict[str, Any], bytes | None]:
     """Read a target into a document, keeping its exact bytes when it has them.
 
@@ -139,6 +154,7 @@ def _document(value: object) -> tuple[dict[str, Any], bytes | None]:
                 parse_constant=_reject_json_constant,
                 object_pairs_hook=_object_without_duplicates,
             )
+            _validate_unicode(parsed)
         except RecursionError as error:
             raise TargetError("the OpenAPI document is nested too deeply to parse") from error
         except ValueError as error:

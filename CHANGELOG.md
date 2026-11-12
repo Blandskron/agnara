@@ -7,6 +7,9 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Reject unpaired Unicode surrogates before writing plain or pretty OpenAPI
+  byte exports.
+
 - Reject duplicate JSON object keys in serialized OpenAPI targets before the
   CLI writes an export.
 
