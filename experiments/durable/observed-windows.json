@@ -1,0 +1,61 @@
+{
+  "environment": {
+    "python": "3.14.4",
+    "implementation": "CPython",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "machine": "AMD64",
+    "sqlite": "3.50.4",
+    "agnara": "1.0.4"
+  },
+  "before_and_after_admission_commit": {
+    "terminated_submitters": 2,
+    "admissions": 1
+  },
+  "killed_after_claim": {
+    "generation": 2,
+    "state": "succeeded",
+    "credits": 1
+  },
+  "revoked_before_retry": {
+    "generation": 2,
+    "state": "failed",
+    "credits": 0
+  },
+  "old_worker_alive_after_takeover": {
+    "generation": 2,
+    "state": "succeeded",
+    "credits": 1
+  },
+  "crash_after_effect_with_receipt": {
+    "after_recovery": "uncertain",
+    "after_reconciliation": "succeeded",
+    "credits": 1
+  },
+  "crash_after_effect_without_receipt": {
+    "after_recovery": "uncertain",
+    "after_reconciliation": "uncertain",
+    "credits": 1
+  },
+  "lost_result_notification": {
+    "recorded_result": 25,
+    "executions": 1,
+    "unauthorized_lookups_hidden": true
+  },
+  "old_worker_alive_after_arming": {
+    "state": "uncertain",
+    "stale_effects": 0
+  },
+  "bounds": {
+    "attempt_limit": 2,
+    "quarantined": 2,
+    "expired": 1,
+    "deadline": "timeout",
+    "intent_mismatch": true,
+    "credits": 0
+  },
+  "cancellation_and_shutdown": {
+    "cancelled": "cancelled",
+    "after_shutdown_retry": "succeeded",
+    "rollback": false
+  }
+}
