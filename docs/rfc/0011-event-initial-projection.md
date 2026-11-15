@@ -3,6 +3,8 @@
 - Status: Open research; no implementation decision
 - Date: 2026-10-28
 - Tracking: GitHub Issues #691 and #770
+- Follow-up: [EVT-01 evidence](../../experiments/events/README.md) and
+  [EVT-02 proposed decision](../adr/0101-initial-inbound-event-projection.md)
 - Related: ADR 0017, ADR 0018, ADR 0046, ADR 0070, ADR 0084, ADR 0086,
   ADR 0091, ADR 0094, RFC 0005, RFC 0009, RFC 0010
 
@@ -221,11 +223,6 @@ schema checks.
 | Invalid data or authority | Reject malformed input and a mismatched event type before effects. A subscription principal without the required scope stays denied even if message metadata claims that scope. |
 | Retry and shutdown | Force a transient failure and observe the broker's retry bound. Cancel an unfinished invocation before commit and verify cleanup and release without acknowledgement. |
 | Numeric fidelity | Deliver revision `9007199254740993` and verify the exact integer reaches the input contract and stored revision. |
-
-**Recommendation for review.** Proceed with EVT-01 after the presentation as
-an isolated experiment. Defer the adapter and any AsyncAPI support claim until
-the broker, compiled invocation and schema projection checks produce evidence
-for EVT-02. The presentation can describe the use case and its contract.
 
 ## Feasibility gates and proposed work sequence
 
