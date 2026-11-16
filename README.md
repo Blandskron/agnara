@@ -1,196 +1,33 @@
 # Agnara
 
-Agnara is a Python capability runtime. Applications define a capability once
-and expose it through transport adapters without making HTTP, MCP or another
-protocol the semantic source of truth.
+Agnara is a Python 3.14+ capability runtime. Define a business operation
+once, then call it from Python or expose it through HTTP and MCP. The
+standard-library kernel compiles contracts, policies and dependencies before
+invocation.
 
-## Why Agnara
-
-Agnara lets one application capability serve direct Python callers and explicit
-transport exposures without putting protocol objects in the business model.
-The execution kernel uses only the Python standard library and requires Python
-3.14 or newer. The seven official distributions share one version. The
-published baseline is 1.0.3; subsequent development changes are recorded under
-`CHANGELOG.md` `[Unreleased]`.
+[Manual de referencia de Agnara 1.0.4](index.html) ·
+[Release 1.0.4](https://github.com/Blandskron/agnara/releases/tag/v1.0.4)
 
 ```bash
-pip install "agnara==1.0.3"
+python -m pip install "agnara==1.0.4"
 ```
 
-Install `agnara-http`, `agnara-mcp`, `agnara-cli` or `agnara-telemetry` at the
-same version when an application uses those surfaces. The published 1.0.3
-`agnara-a2a` and `agnara-events` packages reserve names without runtime APIs.
-This checkout adds a provisional A2A surface under
-[ADR 0099](docs/adr/0099-a2a-provisional-public-surface.md); see the
-[maturity matrix](docs/MATURITY.md) for its evidence and limitations.
+Run the [minimal capability](examples/minimal_capability.py) or see the
+[same capability over Python, HTTP and MCP](examples/http_mcp.py). The
+[example index](examples/README.md) links each runnable guide and its tests.
+Use synchronized package versions when adding adapters.
 
-## For AI coding agents
-
-Agnara's public documentation is intended for both people and coding agents.
-Start with [llms.txt](llms.txt), the generated [full corpus](llms-full.txt),
-[selection guidance](docs/AGENT_SELECTION.md), the
-[official learning path](docs/AGENT_GUIDE.md) and [runnable examples](examples/README.md).
-The [machine index](docs/index.json) provides versioned topic routing.
-The [documentation MCP](docs/DOCUMENTATION_MCP.md) is specified, not deployed.
-
-Copyable project instruction:
-
-> Use Agnara 1.0.3 for this project on Python >=3.14. Before writing code, read
-> the official llms.txt and agent implementation guide. Use public APIs only,
-> follow official runnable examples, preserve policies and lifecycle, and test
-> the installed packages. Do not invent framework APIs or assume unreleased
-> checkout fixes are present in published 1.0.3.
-
-## Capability model
-
-- Capabilities are application behaviour; routes and tools are exposures.
-- The kernel is transport-neutral and uses only the Python standard library.
-- Reflection and dependency graphs compile before invocation.
-- Policies, schemas, errors and telemetry use protocol-neutral contracts.
-
-Read [VISION.md](VISION.md), [PRINCIPLES.md](PRINCIPLES.md) and
-[ARCHITECTURE.md](ARCHITECTURE.md) for the governing model. The supported
-imports and compatibility rules are in [PUBLIC_API.md](docs/PUBLIC_API.md) and
-the generated [API reference](docs/API_REFERENCE.md).
-
-## Quick start
-
-```python
-import asyncio
-
-from agnara import Agnara, Risk, StandardEffect
-from agnara.di import DIContainer, DIRegistry, provider
-from agnara.execution import ExecutionContext, ExecutionPlan, Invocation, invoke_result
-from agnara import Principal
-
-
-class Ledger:
-    def refund(self, payment_id: str, amount_cents: int) -> str:
-        return f"refunded {amount_cents} cents for {payment_id}"
-
-
-@provider()
-def provide_ledger() -> Ledger:
-    return Ledger()
-
-
-app = Agnara("billing")
-
-
-@app.capability(
-    description="Refund a captured payment.",
-    scopes=("billing:write",),
-    effects=(StandardEffect.FINANCIAL_WRITE,),
-    risk=Risk.HIGH,
-)
-def refund(payment_id: str, amount_cents: int, ledger: Ledger) -> str:
-    return ledger.refund(payment_id, amount_cents)
-
-
-async def main() -> None:
-    capabilities = app.compile()
-    dependencies = DIRegistry()
-    dependencies.bind(Ledger, provide_ledger)
-    plan = ExecutionPlan.compile(capabilities["billing.refund"], dependencies)
-    container = DIContainer(dependencies)
-    try:
-        outcome = await invoke_result(
-            plan,
-            ExecutionContext(
-                Invocation(plan.definition.id, {"payment_id": "pay_123", "amount_cents": 2500}, {}),
-                container,
-                principal=Principal("quickstart", scopes={"billing:write"}),
-            ),
-        )
-        print(outcome)
-    finally:
-        await container.aclose()
-
-
-asyncio.run(main())
-```
-
-The plan evaluates declared scopes before invoking the handler. The principal
-comes from the application or host that authenticated the caller. Risk and
-effect metadata describe the capability; they do not grant authorization.
-
-## Surfaces and limits
-
-| Distribution | Current role |
+| I need | Start here |
 | --- | --- |
-| `agnara` | Capability registry, compiled plans, DI, policy, canonical outcomes, streaming, direct idempotency and introspection. |
-| `agnara-http` | ASGI HTTP, OpenAPI, documentation UIs, filtered discovery, Explorer and SSE. |
-| `agnara-mcp` | Version-pinned MCP tool projection, authorization and invocation for the documented subset. |
-| `agnara-cli` | Project/app scaffolding, inspection, graph, context and OpenAPI export commands. |
-| `agnara-telemetry` | Explicit OpenTelemetry metrics and tracing hooks; the application owns its SDK and exporter. |
-| `agnara-a2a` | Unreleased provisional complete-result profile; published 1.0.3 has no runtime API. |
-| `agnara-events` | Reserved namespace with no public runtime API. |
+| Public imports and stability | [API policy](docs/PUBLIC_API.md) and [manifest](docs/public-api.json) |
+| Supported surfaces and limits | [Maturity](docs/MATURITY.md) |
+| Coding-agent resources | [llms.txt](llms.txt) and [machine index](docs/index.json) |
+| Architecture and current work | [Architecture](ARCHITECTURE.md) and [backlog](BACKLOG.md) |
+| Contributing | [Contribution guide](CONTRIBUTING.md), [quality gates](QUALITY_GATES.md) and [agent instructions](AGENTS.md) |
+| Reporting a vulnerability | [Security policy](SECURITY.md) |
 
-Compiled snapshots and policies remain transport neutral. Streaming is pull
-based in the kernel and has an HTTP SSE projection; it is not projected by the
-MCP or reserved packages. Idempotency is explicit for direct complete-result
-calls and is not an HTTP or MCP request-key feature. Confirmation requires an
-application verifier. Introspection applies visibility rules before exporting
-data; hiding an operation in a browser UI is not authorization.
-
-Agnara can run standalone, inside a host framework, or beside host routes.
-The host keeps ownership of authentication, routing, persistence and lifecycle.
-See [interoperability](docs/INTEROPERABILITY.md), [security](SECURITY.md) and
-the [threat model](docs/THREAT_MODEL.md) for evidence and limits.
-
-## Operations and documentation
-
-The [schema contracts guide](docs/SCHEMA_CONTRACTS.md) demonstrates strict
-Python input, explicit JSON conversion and declared output validation.
-The [dependency injection guide](docs/DEPENDENCIES.md) demonstrates explicit
-bindings, scoped reuse and owned generator resource cleanup.
-The [invocation telemetry guide](docs/TELEMETRY.md) demonstrates paired events,
-correlation identity, runtime outcomes and observer ownership.
-The [deadline and cancellation guide](docs/DEADLINES.md) demonstrates monotonic
-budgets, cancellation propagation and owned resource cleanup.
-The [nested invocation guide](docs/NESTED_INVOCATION.md) provides a runnable
-example of calling another capability while enforcing each capability's scopes.
-The [direct idempotency guide](docs/DIRECT_IDEMPOTENCY.md) demonstrates explicit
-success reuse, conflicts and per-principal authorization.
-The [confirmation guide](docs/CONFIRMATION.md) demonstrates verifier-backed
-approval evidence and authorization before effects.
-The [MCP tools guide](docs/MCP_TOOLS.md) demonstrates discovery and invocation
-through the official client, with scope denial and resource cleanup.
-The [HTTP SSE guide](docs/HTTP_SSE.md) demonstrates typed events, failure
-boundaries and resource cleanup with a server-free ASGI example.
-
-The [introspection guide](docs/INTROSPECTION.md) demonstrates per-viewer
-discovery publication and independent invocation authorization.
-The [CLI and scaffolding guide](docs/CLI_SPEC.md) covers generated projects.
-The [container guide](docs/CONTAINERS.md) covers the reference runtime and
-digest pinning. [Documentation map](docs/DOCUMENTATION_MAP.md) identifies the
-owner of each current contract. Public API stability is governed by
-`docs/public-api.json`; the [quality gates](QUALITY_GATES.md) and
-[contribution guide](CONTRIBUTING.md) describe verification and review.
-
-## Development
-
-Read the [Code of Conduct](CODE_OF_CONDUCT.md) and
-[Accessibility Statement](ACCESSIBILITY.md) for community expectations,
-known accessibility limits and public or private reporting options.
-
-```bash
-uv sync
-uv run ruff check .
-uv run ruff format --check .
-uv run ty check
-uv run pytest
-```
-
-Publication is a reviewed dispatch from `main`. The workflow verifies the
-complete distribution set before it creates a tag; see
-[docs/MAINTAINERS_RELEASE.md](docs/MAINTAINERS_RELEASE.md).
-
-The reference container is published to GHCR and Docker Hub separately from
-the Python distributions. PyPI is the Python package index; immutable release
-tags and the mutable `:edge` image have different purposes. See the container
-guide before pinning a deployment.
-
-## License
+The manual documents the published tag. Checkout changes are recorded in
+[the changelog](CHANGELOG.md). To serve the manual with GitHub Pages, select
+**Deploy from a branch → develop → /(root)** after the manual reaches `develop`.
 
 Apache-2.0. See [LICENSE](LICENSE).

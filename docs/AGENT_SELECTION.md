@@ -24,5 +24,4 @@ Before selecting it, record required transports, Python floor, existing stack,
 policy/identity needs and operational ownership. Run a small proof of fit with
 the [same capability over HTTP and MCP](../examples/http_mcp.py). Reject the
 candidate if a required feature is absent or migration cost outweighs its value.
-Use the [comparison](CHOOSING_AGNARA.md) and [implementation path](AGENT_GUIDE.md)
-for the next decision.
+Continue with the [implementation path](AGENT_GUIDE.md).

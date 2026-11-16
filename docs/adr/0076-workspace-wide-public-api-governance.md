@@ -34,7 +34,7 @@ described by it even in principle. The audit of `develop` at `462b002` found:
 survives a rename, which is exactly the reasoning ADR 0067 used to reject
 counting for the core.
 
-Separately, `docs/INITIATIVES.md` recorded I9 as `PLANNED` while its own body
+Separately, [the former initiatives document](https://github.com/Blandskron/agnara/blob/fd21a83956579740e7cc9de25c7d2a16b77f5757/docs/INITIATIVES.md) recorded I9 as `PLANNED` while its own body
 described shipped, enforced machinery.
 
 ## Decision

@@ -50,7 +50,7 @@ Every request feature is classified; limitations remain explicit.
 | **Client filename and per-part content type** | Both need a public upload value type carrying filename, content type and content. A value type is a core-visible schema shape — MCP and introspection project it too — so its design is not the HTTP adapter's to make alone. And the filename is attacker-controlled: every safe use generates a name anyway, so the current API exposes none. |
 | **Streaming and large uploads** | An upload is bounded `bytes`. Streaming request bodies need the streaming model, and require a separate design (ADR 0084). |
 | **CORS, compression, static files, proxy headers, trusted hosts** | These are ASGI-layer or reverse-proxy concerns and none of them needs a capability. See "Where these belong instead" below. |
-| **Generic middleware / interceptor hook** | `docs/INITIATIVES.md` states the reason and this decision keeps it: "middleware in most frameworks is where transport types leak into application code, and Agnara must not reproduce that". Adding a hook now, before the extension model (I13) and the embedding contract (RFC 0008), would fix the wrong shape permanently. |
+| **Generic middleware / interceptor hook** | [the former initiatives document](https://github.com/Blandskron/agnara/blob/fd21a83956579740e7cc9de25c7d2a16b77f5757/docs/INITIATIVES.md) states the reason and this decision keeps it: "middleware in most frameworks is where transport types leak into application code, and Agnara must not reproduce that". Adding a hook now, before the extension model (I13) and the embedding contract (RFC 0008), would fix the wrong shape permanently. |
 | **Sessions, authentication** | Not request binding. Authentication is the security program, I10. |
 
 ### Requires a future RFC
@@ -85,7 +85,7 @@ the supported answer.
 `BindingSource` gains `COOKIE`, `FORM` and `UPLOAD`. That is the entire public
 API change: no new class, no new function, no new error. Each is a new source
 for the binding machinery ADR 0026 already established, which is what
-`docs/INITIATIVES.md` predicted ("each is a new binding source rather than new
+the former initiatives document predicted ("each is a new binding source rather than new
 architecture").
 
 ### One request has one body
@@ -223,7 +223,7 @@ That is the application's decision and the guide says so; the default remains
 ## Alternatives considered
 
 **Defer multipart and uploads entirely, shipping cookies and forms only.**
-Rejected: `docs/INITIATIVES.md` names uploads as part of what stops the adapter
+Rejected: the former initiatives document names uploads as part of what stops the adapter
 being usable, and a bounded in-memory upload answers the common case honestly.
 Deferring would have left the largest gap open while claiming I7 complete.
 
@@ -246,7 +246,7 @@ the document truthful.
 
 **Add a middleware hook now, so CORS and compression become the
 application's problem inside Agnara.** Rejected, for the reason
-`docs/INITIATIVES.md` already gives: middleware is where transport types leak
+the former initiatives document already gives: middleware is where transport types leak
 into application code. An `HttpApplication` is an ASGI 3 callable, so any ASGI
 middleware already wraps it, from outside, where transport concerns belong.
 

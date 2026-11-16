@@ -7,7 +7,7 @@ description: Build an Agnara service using direct capabilities, HTTP or MCP from
 
 Resolve links relative to this skill. Read the
 [learning path](../../../docs/AGENT_GUIDE.md) and select the smallest example
-from [the index](../../../examples/README.md). Target published **1.0.3**
+from [the index](../../../examples/README.md). Target published **1.0.4**
 on Python >=3.14 unless the user explicitly selects another supported version.
 Check installed versions; editable workspace packages are not PyPI evidence.
 
@@ -20,10 +20,9 @@ Check installed versions; editable workspace packages are not PyPI evidence.
   capability and two exposures; protocol SDKs belong at adapter boundaries.
 
 Verify imports against [public-api.json](../../../docs/public-api.json).
-Use the source's actual constructor/decorator/compile sequence. Do not infer
-APIs from future sketches, reserved A2A/events packages or other frameworks.
-The schema guide's unreleased fixes require a matching checkout; do not teach
-them as published 1.0.3 behavior.
+Use the source's actual constructor/decorator/compile sequence. Check the
+[reference manual](../../../index.html) for published signatures and the
+changelog for later changes.
 
 Add tests proving returned values, invalid input, policy denial before effects
 when scopes exist, and owned resource cleanup. Run them in the selected package

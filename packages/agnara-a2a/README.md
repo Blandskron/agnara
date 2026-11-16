@@ -1,8 +1,7 @@
 # agnara-a2a
 
-`agnara-a2a` is the Agent-to-Agent (A2A) adapter for Agnara. The published
-`agnara-a2a==1.0.3` wheel is still an empty namespace. This checkout adds an
-unreleased, **provisional** surface that serves the
+`agnara-a2a` is the **provisional** Agent-to-Agent adapter introduced in
+Agnara 1.0.4. It serves the
 [ADR 0098](../../docs/adr/0098-a2a-complete-result-projection.md)
 complete-result profile; [ADR 0099](../../docs/adr/0099-a2a-provisional-public-surface.md)
 records its names, signatures and dependency pin.

@@ -3,7 +3,7 @@
 Model Context Protocol exposure adapter. Owns MCP server projection, tool discovery, invocation dispatch, schema mapping and MCP authorization integration.
 
 ```bash
-pip install "agnara-mcp==1.0.3"
+pip install "agnara-mcp==1.0.4"
 ```
 
 The governed exports are listed in the

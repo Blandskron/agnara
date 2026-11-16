@@ -29,10 +29,8 @@ ROOT = Path(__file__).resolve().parents[2]
 NEW_MARKDOWN = (
     "docs/AGENT_GUIDE.md",
     "docs/AGENT_SELECTION.md",
-    "docs/CHOOSING_AGNARA.md",
     "docs/AGENT_DISCOVERY.md",
     "docs/DOCUMENTATION_MCP.md",
-    "docs/AGENT_STARTERS.md",
     "docs/AGENT_DISCOVERY_BENCHMARK.md",
     "examples/README.md",
 )
@@ -73,6 +71,7 @@ def test_source_change_is_detected_by_check_mode(tmp_path: Path) -> None:
         shutil.copy(path, tmp_path / path.name)
     for path in ROOT.glob("*.txt"):
         shutil.copy(path, tmp_path / path.name)
+    shutil.copy(ROOT / "index.html", tmp_path / "index.html")
     shutil.copytree(
         ROOT / "packages",
         tmp_path / "packages",

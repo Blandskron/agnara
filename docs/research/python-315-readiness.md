@@ -8,7 +8,7 @@
 
 This is the canonical program specification: activation, work-package scope,
 acceptance evidence and runtime comparisons. [BACKLOG](../../BACKLOG.md) owns
-task state; [INITIATIVES](../INITIATIVES.md) indexes the program;
+task state.
 [MATURITY](../MATURITY.md) owns claims about what exists today. Planning an
 experiment is not a decision to adopt its subject.
 

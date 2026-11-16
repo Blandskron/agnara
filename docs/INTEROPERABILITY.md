@@ -119,52 +119,11 @@ versions stay pinned outside distributable dependencies.
 | [Nested invocation](../examples/nested_invocation.py) | Exact authorized summary, explicit successful fallback for child denial, parent/no-scope refusal before effects, distinct root execution identities and ordered independent handler traces. | Sequential complete-result calls in one compiled application per case; no independent child identity/context, resource-close, cancellation, delegation or cross-application evidence from this guide consumer. |
 | [Direct streaming](../examples/direct_streaming.py) | Seven ordered typed unit/count/terminal/refusal observations, exact redacted failures, demand and producer/provider traces, plus propagated caller cancellation and cleanup without surviving tasks. | Local direct Python stream owner; independent container-close/deadline checks remain checkout evidence, with no network backpressure, durable resumption or cross-task sharing claim. |
 
-Each guide has negative validation proofs in `tests/release/` for its stated
-contract: altered results/metadata, leaked internals, unexpected effects and
-missing/reordered cleanup fail the corresponding gate. SSE units/counts and
-schema booleans cannot be substituted with equal Python numeric values;
-SSE diagnostic checks also inspect decoded JSON for escaped text. Structured
-consumers check that no tasks survive. Introspection additionally rejects shared
-mutable serialization containers before exercising mutation isolation.
-Deferred dataclass annotations resolve through registered unchanged modules.
-
-The separate `tests/reference_apps/nested_resource_lifecycle.py` consumer runs
-seven cases against those same installed wheels. It checks child context and
-resource isolation, shared singleton ownership, refusals, redaction and nested
-cancellation with ordered teardown. Its cancellation handler preserves owner
-and watchdog cancellation; a deterministic owner-cancellation race is tested
-in the checkout. These observations belong to that reference fixture, not to
-the minimal nested guide's output or an additional transport support claim.
-
-This is candidate-wheel evidence tied to the reviewed source commit, not a
-regression claim against already-published PyPI artifacts or a new general
-framework support tier. Current source-specific tests retain the detailed
-checks; this table summarizes their boundary rather than duplicating a growing
-chronology of completed work.
-
-The installed-wheel side-by-side FastAPI consumer compiles its live HTTP child
-inside the host lifespan and explicitly exchanges ASGI startup/shutdown
-messages through an owned task group with bounded handshake waits.
-[FastAPI does not drive mounted-child lifespan automatically](https://fastapi.tiangolo.com/advanced/events/#sub-applications).
-The fixture verifies the child's actual lifecycle callbacks and singleton
-resource reuse, then resource closure before child stop and host stop on one
-loop, for normal and exceptional host exits. A third installed-wheel scenario
-waits for a blocked resource read, cancels and joins its owned HTTP caller,
-and verifies read exit while the singleton remains active before host shutdown.
-The consumer checks exact lifecycle order and no surviving tasks. Local tests
-additionally exercise cancellation of the consumer owner before joining and at
-HTTP completion, failed handshakes and a silent startup timeout. This is
-explicit in-process caller cancellation, not evidence of peer-disconnect
-handling, a generic host adapter, automatic drainage or merged OpenAPI.
-
-The Litestar fixture constructs its runtime and container inside the host's
-lifespan, invokes them on that loop and closes them at lifespan exit. Generator
-resource probes verify singleton reuse, invocation isolation and cleanup on
-success, handler failure and an exceptional test-client exit. Denied calls
-acquire no resources. The host drains invocation work before singleton
-shutdown; tests do not manually close an active runtime from the test caller's
-loop. This is application-owned fixture wiring, not automatic lifecycle
-integration or permission to share a runtime across loops or threads.
+The fixture tests in `tests/release/` check output, redaction and execution
+traces. The separate `tests/reference_apps/nested_resource_lifecycle.py`
+consumer proves child resource isolation and cleanup. The
+[side-by-side FastAPI fixture](../tests/reference_apps/side_by_side_fastapi.py)
+exercises the ASGI handshake and cancellation scenarios.
 
 ## Experimental
 
@@ -180,7 +139,7 @@ There is no generic host facade, synchronous embedding bridge, automatic
 mounted-child lifespan management, OpenAPI merge, automatic retry, durable
 idempotency store, cross-application invocation or delegated authority.
 WebSockets and MCP streaming are not projections of the kernel stream.
-`agnara-a2a` has an unreleased provisional complete-result surface (ADR 0099),
+`agnara-a2a` has a provisional complete-result surface (ADR 0099),
 with in-process and a bounded real-loopback Uvicorn/h11 fixture. Peer disconnect
 after handler entry relies on deadline cleanup; this is not a supported host
 integration. See the [A2A guide](A2A_SERVICE.md#real-loopback-host-evidence).

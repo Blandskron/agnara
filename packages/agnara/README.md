@@ -15,11 +15,8 @@ depends on nothing but the standard library.
 
 ## Stable 1.x kernel
 
-This 1.0.3 distribution follows Agnara's stable 1.x public API contract.
-The source tree prepares the package; consult PyPI for publication status.
-The kernel remains standard-library-only. HTTP, MCP, CLI and telemetry live in
-separate, synchronized distributions; the A2A and events packages currently
-reserve namespaces without runtime APIs.
+The kernel follows Agnara's stable 1.x API contract. See the
+[public API policy](../../docs/PUBLIC_API.md).
 
 ## Install
 
@@ -30,7 +27,7 @@ pip install agnara
 For reproducible installations, pin the synchronized version:
 
 ```bash
-pip install "agnara==1.0.3"
+pip install "agnara==1.0.4"
 ```
 
 Requires CPython 3.14 or newer.
@@ -120,10 +117,8 @@ separate distributions -- `agnara-http`, `agnara-mcp`, `agnara-cli` and
 `agnara-telemetry` -- and is not bundled into this standard-library-only
 kernel. Each is versioned in step with this one; check its PyPI project page
 for the versions available to install. Events remains a zero-API reserved
-namespace. The published 1.0.3 A2A wheel also has no runtime API; this checkout
-adds an unreleased, experimental projection with provisional exports in
-`agnara-a2a`. See the [A2A guide](../../docs/A2A_SERVICE.md) for its exact
-evidence and limits before using that separate adapter.
+namespace. Agnara 1.0.4 includes the provisional `agnara-a2a` projection.
+See the [A2A guide](../../docs/A2A_SERVICE.md) for its limits.
 
 ## Frozen value semantics
 

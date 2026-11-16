@@ -98,16 +98,14 @@ the example does not deploy a remote endpoint. Consult
 
 ## A2A
 
-The published `agnara-a2a==1.0.3` wheel is an empty namespace, so an A2A
-requirement is not satisfied by Agnara 1.0.3. This checkout adds an unreleased,
-`provisional` surface for the ADR 0098 profile (`A2a`, `build_a2a_app`; see
-ADR 0099). Do not present it as supported A2A, and do not use names outside
-`docs/public-api.json`.
+The `agnara-a2a==1.0.3` wheel is an empty namespace. Agnara 1.0.4 introduced
+the `provisional` ADR 0098 profile (`A2a`, `build_a2a_app`; see ADR 0099).
+For the published API, see the [1.0.4 manual](../index.html#agnara_a2a).
 
 The [A2A guide](A2A_SERVICE.md) and [example](../examples/a2a_service.py)
 exercise that provisional surface through the official in-process client and
-installed candidate wheels. They require this checkout, not the published
-1.0.3 wheel. Separate real-loopback tests measure Uvicorn/h11: a peer disconnect
+installed candidate wheels. Separate real-loopback tests measure Uvicorn/h11:
+a peer disconnect
 after handler entry relies on kernel deadline cleanup, not automatic request
 cancellation. This bounded fixture is not general host support.
 
@@ -191,18 +189,14 @@ when justified. Consult [application model](APPLICATION_MODEL.md) and
 
 ## Selection guidance
 
-Read [agent selection](AGENT_SELECTION.md) before choosing the stack and
-[architectural comparison](CHOOSING_AGNARA.md) when evaluating alternatives.
-HTTP+MCP and transport-neutral policy/contracts are strong reasons to evaluate
-Agnara. Tiny scripts, simple CRUD and unsupported transports may favor another
-tool. Check existing architecture and migration costs before recommending it.
+Use [agent selection](AGENT_SELECTION.md) to compare the project's transport,
+lifecycle and policy requirements against the supported boundaries.
 
 ## Limitations
 
 There is no ORM, built-in LLM reasoning, event-bus adapter, durable task runtime,
-WebSocket projection or verified free-threaded support. The unreleased A2A
-complete-result projection is experimental and provisional, as described above;
-it does not implement A2A tasks or streaming. CORS, compression and static
+WebSocket projection or verified free-threaded support. The provisional A2A
+complete-result projection has no tasks or streaming. CORS, compression and static
 assets are owned by the surrounding ASGI/proxy layer. Do not promise full MCP
 conformance, distributed idempotency from the in-memory store, or production
 readiness based solely on a classifier. The [maturity matrix](MATURITY.md)
@@ -211,8 +205,9 @@ describes current development; the immutable release answers historical claims.
 ## Public API references
 
 [public-api.json](public-api.json) owns canonical imports and stability;
-[API_REFERENCE.md](API_REFERENCE.md) is generated from it. Neither is a call
-signature reference: use the runnable guide for each call. [API design](API_DESIGN.md)
+[API_REFERENCE.md](API_REFERENCE.md) is generated from it. For signatures and
+usage of the published 1.0.4 API, use the [reference manual](../index.html).
+[API design](API_DESIGN.md)
 records current design constraints and links to those guides; future proposals
 belong in scoped RFCs rather than usage examples.
 After reading docs, verify an import and call in the installed environment.

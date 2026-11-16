@@ -12,8 +12,9 @@ contributing to this framework, not to an unrelated application repository.
 
 - Start with [llms.txt](llms.txt), [selection guidance](docs/AGENT_SELECTION.md)
   and the [implementation path](docs/AGENT_GUIDE.md).
-- Verify Python >=3.14 and installed distribution versions. The published
-  baseline is 1.0.3; this checkout also contains `[Unreleased]` schema fixes.
+- Verify Python >=3.14 and installed distribution versions. The
+  [reference manual](index.html) covers the published 1.0.4 API. The agent
+  corpus labels its 1.0.3 teaching baseline and current-checkout guidance.
 - Use canonical exports in [public-api.json](docs/public-api.json), follow
   [runnable examples](examples/README.md), and execute imports/calls before
   claiming support. Never invent imports, constructors or decorators.

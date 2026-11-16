@@ -5,11 +5,11 @@ public exports, broker integration, event runtime or AsyncAPI projection.
 Installing it does not enable event publication.
 
 ```bash
-pip install "agnara-events==1.0.3"
+pip install "agnara-events==1.0.4"
 ```
 
 The import package is `agnara_events`; its `__all__` is empty. It pins the
-exact synchronized `agnara==1.0.3` kernel and does not depend on sibling
+exact synchronized `agnara` kernel and does not depend on sibling
 adapters. There is no usage API beyond importing the reserved namespace.
 
 [RFC 0011](../../docs/rfc/0011-event-initial-projection.md) compares candidate

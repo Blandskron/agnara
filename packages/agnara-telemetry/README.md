@@ -4,7 +4,7 @@ Explicit OpenTelemetry metrics and span bridges for Agnara's execution hooks.
 Install the synchronized distribution with:
 
 ```bash
-pip install "agnara-telemetry==1.0.3"
+pip install "agnara-telemetry==1.0.4"
 ```
 
 The two governed Python exports are listed in the
