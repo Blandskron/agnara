@@ -12,7 +12,7 @@ application configuring the SDK. The Metrics API assigns instrument creation
 to the meter and configuration to its provider. This supports supplying a
 meter explicitly without global SDK installation in `agnara-telemetry`.
 
-The published API and SDK baseline used for in-memory tests is 1.45.1. The
+The published API and SDK baseline used for in-memory tests is 1.45.2. The
 adapter consumes terminal count/duration data already available in the core
 port; it does not introduce trace correlation or claim protocol-specific
 semantic convention compatibility. See proposed ADR 0054 for measurements,
@@ -20,8 +20,8 @@ redaction, lifecycle ownership and limitations.
 
 - [Python instrumentation](https://opentelemetry.io/docs/languages/python/instrumentation/)
 - [Metrics API](https://opentelemetry.io/docs/specs/otel/metrics/api/)
-- [API 1.45.1](https://pypi.org/project/opentelemetry-api/1.45.1/)
-- [SDK 1.45.1](https://pypi.org/project/opentelemetry-sdk/1.45.1/)
+- [API 1.45.2](https://pypi.org/project/opentelemetry-api/1.45.2/)
+- [SDK 1.45.2](https://pypi.org/project/opentelemetry-sdk/1.45.2/)
 
 ## Python 3.14
 

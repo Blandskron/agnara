@@ -109,7 +109,9 @@ declares the SDK release it is written against once, as `SDK_VERSION` in
 value. The server refuses to start on any other installed version, and
 `tests/documentation_mcp` fails if the constant and the pins disagree, so a
 partial bump is caught in the suite rather than as a refused snapshot at
-startup. The five tools are exercised through the official client,
+startup. The requirements also exclude OpenTelemetry API versions before
+1.45.2 because the SDK extracts trace context from request metadata.
+The five tools are exercised through the official client,
 including an actual stdio initialize/list/call exchange. These bounded tests
 are evidence for this local subset, not complete protocol certification.
 

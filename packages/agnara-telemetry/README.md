@@ -16,10 +16,10 @@ not by this file: a README ships inside the artifact and cannot describe
 the state of a publication that happens after it is built.
 
 It imports `agnara` and `opentelemetry-api`, never a sibling adapter or the SDK.
-The unreleased checkout requires `opentelemetry-api>=1.45.1,<2`, excluding the
-API versions affected by [GHSA-xcq7-p3pf-p88h](https://github.com/advisories/GHSA-xcq7-p3pf-p88h).
-This dependency floor does not add header extraction: applications still own
-propagation and deployment limits. It does not change published 1.0.3 artifacts.
+The unreleased checkout requires `opentelemetry-api>=1.45.2,<2` for
+[GHSA-xcq7-p3pf-p88h](https://github.com/advisories/GHSA-xcq7-p3pf-p88h)
+and [GHSA-mf5v-w3w3-f6cg](https://github.com/advisories/GHSA-mf5v-w3w3-f6cg).
+Applications own propagation and deployment limits.
 
 ## Composition
 
@@ -84,7 +84,7 @@ repeated tracking IDs need no correlation map. The supplied meter must support
 concurrent, synchronous, non-blocking recording. Do not mutate instruments
 while plans are active. A custom blocking instrument blocks invocation.
 
-Development tests use the pinned OpenTelemetry API/SDK 1.45.1 with an in-memory
+Development tests use the pinned OpenTelemetry API/SDK 1.45.2 with an in-memory
 reader and an in-memory span exporter:
 `uv run pytest tests/telemetry tests/architecture`. Tests cover exact
 values/units, attributes, span names, status mapping, parent/child nesting,
@@ -136,26 +136,15 @@ Metrics and span hooks compose on one plan and can be registered together.
 
 ## Joining a caller's trace
 
-Agnara reads no propagation header. A capability span is parented by whatever
-OpenTelemetry context is current when the invocation starts, so it joins a
-caller's distributed trace exactly when the application has propagated that
-caller's context — typically with the ASGI or client instrumentation the
-application already runs.
+A capability span inherits the OpenTelemetry context current at invocation.
+Host instrumentation can establish that context for HTTP. The official MCP
+SDK uses its default middleware to extract context from request metadata.
+Agnara has no propagation parser of its own.
 
-The consequence worth stating plainly: a request carrying `traceparent` still
-produces an unlinked root span if nothing extracted it. Linking is opt-in.
-
-This is a deliberate boundary, not an omission. Honouring a caller-supplied
-`traceparent` lets that caller choose the trace identity their operation is
-recorded under, which is reasonable inside a trusted perimeter and rarely so at
-an untrusted edge. That judgment belongs to a deployment, not to a framework
-default. See [proposed ADR 0056](../../docs/adr/0056-transport-span-linking.md).
-
-Verified over the real HTTP dispatcher and the real MCP invoker: with
-propagation the capability span carries the caller's trace ID and parent span;
-without it, a root span. Malformed headers are inert rather than fatal, and an
-unknown `traceparent` version links, because W3C requires forward compatibility
-and forbids only `ff`.
+The HTTP dispatcher and direct MCP invoker tests verify that an ambient span
+supplies the trace ID and parent span ID. With an empty context, the capability
+starts a root span. The direct MCP invoker tests bypass the SDK middleware.
+See [proposed ADR 0056](../../docs/adr/0056-transport-span-linking.md).
 
 ## Semantic conventions
 

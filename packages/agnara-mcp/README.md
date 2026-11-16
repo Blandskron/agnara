@@ -17,7 +17,8 @@ not by this file: a README ships inside the artifact and cannot describe
 the state of a publication that happens after it is built.
 
 - Import package: `agnara_mcp`
-- Depends on: the exact synchronized `agnara` version, plus `mcp==2.2.0`
+- Depends on: the exact synchronized `agnara` version, `mcp==2.2.0`, and
+  `opentelemetry-api>=1.45.2,<2` for the SDK's trace-context extraction
 - Must not import: sibling adapter packages
 
 See `ARCHITECTURE.md` sections 3 and 4 for the package boundaries and the

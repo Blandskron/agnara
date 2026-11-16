@@ -18,30 +18,32 @@ nothing and inherits whatever context the application established.
 
 ## Decision
 
-**Agnara does not participate in context propagation.** No transport adapter
-reads, writes, validates or forwards a propagation header, and no transport
-adapter depends on OpenTelemetry. An application propagates incoming context —
-in practice with the instrumentation its server or client library already
-ships — and the capability span joins the caller's trace because ADR 0055
-starts it from the ambient context.
+**Security amendment (2026-11-16).** The official MCP SDK now extracts W3C
+trace context from request metadata. `agnara-mcp` requires a patched
+`opentelemetry-api` for that existing middleware, including when installed
+without the telemetry bridge. Agnara transport code still imports no
+OpenTelemetry and implements no propagation.
+[GHSA-mf5v-w3w3-f6cg](https://github.com/advisories/GHSA-mf5v-w3w3-f6cg)
 
-This was verified rather than assumed, over the real HTTP dispatcher and the
-real MCP `tools/call` invoker:
+**Agnara implements no context propagation.** Transport adapter code does
+not read or write propagation fields. The host or its protocol SDK can
+establish the incoming trace context. A capability span joins that trace
+because ADR 0055 starts it from the ambient context.
 
-| Application propagates | Result |
+The HTTP dispatcher and direct MCP `tools/call` invoker tests exercise both
+ambient context cases.
+
+| Ambient parent span | Result |
 | --- | --- |
 | yes | capability span carries the caller's trace ID, parented by the caller's span |
 | no | capability span is a root span in its own trace |
 
-The second row matters as much as the first. A request may carry a
-`traceparent` header and still produce an unlinked span, because Agnara never
-looks at it. Linking is something an application opts into.
+A `traceparent` header alone leaves the HTTP capability span unlinked when
+the host has no instrumentation extracting that header.
 
-`tests/architecture/test_package_boundaries.py` enforces the boundary: only
-`agnara-telemetry` may import or declare OpenTelemetry. That rule is what keeps
-this a decision rather than a temporary state — the moment `agnara-http` could
-import OpenTelemetry, a header parser and the trust decision below would
-follow it in.
+`tests/architecture/test_package_boundaries.py` enforces the boundary.
+`agnara-telemetry` imports the API for its hooks. The MCP adapter declares
+the patched API floor for its SDK. Transport code may not import it.
 
 ## Why not parse the header in the adapter
 
@@ -66,10 +68,9 @@ and the ambient-context approach gives both the same one.
 
 ## Consequences
 
-An application that configures no propagation gets per-invocation traces that
-are correct but unlinked. That is a visible gap for anyone expecting linking to
-work out of the box, and the package README states the composition explicitly
-so the gap is documented rather than discovered.
+Without an ambient span, the capability span is a root. The direct MCP
+invoker tests exercise that case outside the SDK middleware. A served MCP
+request can inherit a span established by the SDK.
 
 An unknown `traceparent` version links. The W3C specification requires forward
 compatibility for future versions and forbids only `ff`, and the propagator
@@ -130,10 +131,10 @@ versions, fifteen concurrent requests across two remote traces and five
 unpropagated ones without contamination, attribute containment, and nested
 invocation inside a remote trace.
 
-`tests/architecture/test_package_boundaries.py` — six distributions asserted
-free of any OpenTelemetry import or declared dependency. Verified non-vacuous:
-a temporary `import opentelemetry.trace` in `agnara-http` failed the rule with
-the offending file and line.
+`tests/architecture/test_package_boundaries.py` prohibits OpenTelemetry imports
+outside the telemetry adapter and allows only the MCP SDK's patched API floor
+as a transport dependency. `tests/security/test_dependency_security.py`
+exercises the SDK's metadata extraction with valid and over-limit values.
 
 Primary sources checked on 2026-09-05:
 

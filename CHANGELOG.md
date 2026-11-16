@@ -7,6 +7,12 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Require OpenTelemetry API 1.45.2 or later in the 1.x line for the telemetry
+  and MCP adapters and the standalone documentation MCP server. This covers
+  [GHSA-mf5v-w3w3-f6cg](https://github.com/advisories/GHSA-mf5v-w3w3-f6cg)
+  in the SDK's trace-context extraction. The workspace uses API and SDK
+  1.45.2 with semantic conventions 0.66b2.
+
 - Reject unpaired Unicode surrogates before writing plain or pretty OpenAPI
   byte exports.
 

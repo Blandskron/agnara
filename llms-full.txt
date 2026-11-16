@@ -1500,11 +1500,13 @@ without an exporter, network connection or protocol adapter. Its trusted local
 principal is a fixture, not an authentication implementation.
 
 The optional `agnara-telemetry` bridge in this unreleased checkout requires
-`opentelemetry-api>=1.45.1,<2`, the corrected API baseline for
-[GHSA-xcq7-p3pf-p88h](https://github.com/advisories/GHSA-xcq7-p3pf-p88h).
-It depends on the API only; applications own SDKs, exporters and header
-extraction. The core example below needs none of them. This requirement is
-not a change to published 1.0.3 wheels or a deployment-security assertion.
+`opentelemetry-api>=1.45.2,<2`. The floor includes the fixes for
+[GHSA-xcq7-p3pf-p88h](https://github.com/advisories/GHSA-xcq7-p3pf-p88h)
+and [GHSA-mf5v-w3w3-f6cg](https://github.com/advisories/GHSA-mf5v-w3w3-f6cg).
+The bridge depends on the API only. Applications own SDKs, exporters and
+host instrumentation. The official MCP SDK also extracts trace context from
+its request metadata, so the MCP adapter independently requires the same
+patched API floor. The core example below needs no OpenTelemetry dependency.
 
 Expected standard output:
 
