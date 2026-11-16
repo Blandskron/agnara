@@ -10,8 +10,9 @@ the milestone and the [maturity matrix](docs/MATURITY.md) for current behavior.
   evidence against the governed API and explicit host contract.
 - [ ] Review the [proposed inbound event projection](docs/adr/0101-initial-inbound-event-projection.md)
   and scope EVT-03 if the maintainer accepts the profile.
-- [ ] Evaluate [durable execution](docs/rfc/0012-durable-execution-boundary.md)
-  and further protocol projections in separate feasibility Issues.
+- [ ] Review the [proposed durable execution ownership decision](docs/adr/0102-durable-execution-ownership.md)
+  against the DUR-01 evidence and the conditions for further research.
+- [ ] Evaluate further protocol projections in separate feasibility Issues.
 - [ ] Review activation of the
   [Python 3.15 research plan](docs/research/python-315-readiness.md) before
   changing the Python floor or CI support.

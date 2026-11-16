@@ -1,10 +1,12 @@
 # RFC 0012 — Durable execution boundary
 
-- Status: Open research; no implementation decision
+- Status: Application-owned feasibility evaluated. Ownership decision proposed.
 - Date: 2026-11-01
 - Tracking: [GitHub Issue #719](https://github.com/Blandskron/agnara/issues/719)
 - Related: ADR 0087, ADR 0089, ADR 0091, ADR 0093, ADR 0094,
   RFC 0005, RFC 0011
+- Follow-up: [DUR-01 evidence](../../experiments/durable/README.md) and
+  [DUR-02 proposed decision](../adr/0102-durable-execution-ownership.md)
 
 ## Purpose and current boundary
 
@@ -195,6 +197,7 @@ establishes production readiness or a general workflow guarantee.
 5. What is the minimum deployment-version and retention policy that prevents
    silently reinterpreting old work or repeating forgotten effects?
 
-Answers belong in a later ADR and executable Issues. The existing direct
-runtime, idempotency store and nested invocation contracts remain the current
-application instructions.
+[DUR-02](../adr/0102-durable-execution-ownership.md) records the answers
+supported by the single-host probe and the evidence required to revisit them.
+The existing direct runtime, idempotency store and nested invocation contracts
+remain the current application instructions.
