@@ -609,10 +609,10 @@ deferred request feature rather than leaving it implicit.
 | Multiple files, repeated form fields | Both need a collection binding, which ADR 0026 deferred deliberately and which decides how a list arrives through *every* transport. Use distinct part names. |
 | Client filename, per-part content type | Both need a public upload value type, and that is a core-visible schema shape MCP and introspection project too. Ask for a filename as a form field if you need one. |
 | Streaming request bodies, large uploads | Not part of the current request contract. An upload remains bounded `bytes`; a future input-streaming design needs its own cross-surface decision. |
-| **WebSocket**s, SSE replay and `Last-Event-ID` | Not implemented. The ASGI boundary handles no `websocket` scope, and resumption waits for the operational identity I3 must decide. Streaming *responses* are implemented: see `Http.sse` above. |
+| **WebSocket**s, SSE replay and `Last-Event-ID` | The ASGI boundary handles no `websocket` scope. Replay requires a separate contract. Use `Http.sse` for live streaming responses. |
 | CORS, compression, trusted hosts, proxy header trust | Put them in the reverse proxy or ASGI server in front of the application, or wrap the `HttpApplication` in any third-party ASGI middleware — it is an ASGI 3 callable, so they compose. |
 | Static files | A web server or CDN. Agnara serves capabilities. |
-| Middleware / interceptor hook | Deliberately absent. `docs/INITIATIVES.md` states why: "middleware in most frameworks is where transport types leak into application code, and Agnara must not reproduce that". Wrapping from outside, at the ASGI layer, keeps transport concerns where they belong. |
+| Middleware / interceptor hook | Wrap the compiled application at the ASGI layer to keep transport objects out of capability handlers. See [ADR 0072](adr/0072-http-request-surface-scope.md). |
 | Sessions | A cookie binding plus your own store. |
 | Content negotiation, conditional and range requests | A response-model question, not a request one. Needs an RFC. |
 

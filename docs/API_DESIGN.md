@@ -69,7 +69,7 @@ constraints. Record undecided semantics in a scoped RFC and the accepted
 contract in an ADR before implementation. Add a runnable example, compatibility
 decision and relevant validation before publishing an export.
 
-The [initiatives](INITIATIVES.md), [roadmap](../ROADMAP.md) and
+The [backlog](../BACKLOG.md), [roadmap](../ROADMAP.md) and
 [open RFC questions](rfc/README.md) track future work. They do not authorize
 unsupported imports, decorators, constructors or CLI commands. Superseded API
 sketches are available through Git history rather than the active usage path.

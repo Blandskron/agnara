@@ -5,7 +5,7 @@ canonical result mapping, OpenAPI, optional documentation UIs and a filtered
 read-only Explorer.
 
 ```bash
-pip install "agnara-http==1.0.3"
+pip install "agnara-http==1.0.4"
 ```
 
 Import the fourteen stable composition names from `agnara_http`. The
@@ -16,9 +16,8 @@ Implementation modules carry no separate public compatibility promise.
 
 This package pins the exact synchronized `agnara` version and has no runtime
 dependency on a web framework, server, schema library or sibling adapter.
-The published baseline is 1.0.3; current checkout fixes are recorded under
-`CHANGELOG.md` `[Unreleased]`. A checkout version string does not prove that a
-fix exists in the published wheel.
+See the [changelog](../../CHANGELOG.md) for checkout fixes under
+`[Unreleased]`.
 
 ## Compilation and request execution
 

@@ -28,5 +28,4 @@ Numbered records retain context from the time of a decision. Read their
 answering or superseding records and [maturity](../MATURITY.md) for current
 behavior, and use runnable guides for application syntax.
 
-See [architecture](../../ARCHITECTURE.md) and the
-[documentation map](../DOCUMENTATION_MAP.md).
+See [architecture](../../ARCHITECTURE.md) and the [repository entry point](../../README.md).

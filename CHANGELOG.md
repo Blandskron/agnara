@@ -5,6 +5,11 @@ full history are available through Git tags and GitHub Releases.
 
 ## [Unreleased]
 
+### Added
+
+- Add the searchable Agnara 1.0.4 manual at the repository root for GitHub
+  Pages and consolidate duplicate navigation and planning documentation.
+
 ### Fixed
 
 - Require OpenTelemetry API 1.45.2 or later in the 1.x line for the telemetry

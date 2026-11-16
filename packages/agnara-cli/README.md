@@ -3,7 +3,7 @@
 Project introspection and scaffolding CLI. Owns project/app generators, templates and diagnostics.
 
 ```bash
-pip install "agnara-cli==1.0.3"
+pip install "agnara-cli==1.0.4"
 agnara --help
 ```
 
@@ -61,8 +61,7 @@ report is not a runtime-readiness assertion. See the
 [doctor contract](../../docs/CLI_SPEC.md#agnara-doctor) and proposed ADR 0096.
 
 The versioned JSON or text report goes to stdout. Any failed check exits 1;
-all checks passing exits 0. Argument errors retain exit 2 on stderr. This
-command is unreleased checkout behavior, not a claim about the 1.0.3 wheel.
+all checks passing exits 0. Argument errors retain exit 2 on stderr.
 
 ## `agnara inspect`
 

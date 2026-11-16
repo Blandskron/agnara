@@ -10,7 +10,7 @@ ownership. Read only the relevant canonical source:
 
 | Change | Guide / example |
 | --- | --- |
-| Inputs and explicit outputs | [schema guide](../../../docs/SCHEMA_CONTRACTS.md); use [HTTP dataclasses](../../../examples/http_service.py) for published 1.0.3, avoiding unreleased enum/numeric fixes |
+| Inputs and explicit outputs | [schema guide](../../../docs/SCHEMA_CONTRACTS.md), [HTTP dataclasses](../../../examples/http_service.py) |
 | Dependency injection | [DI guide](../../../docs/DEPENDENCIES.md), [resource example](../../../examples/dependencies.py) |
 | Scopes and confirmation | [policy section](../../../docs/AGENT_GUIDE.md#policies-and-authorization), [confirmation](../../../examples/confirmation.py) |
 | Telemetry | [guide](../../../docs/TELEMETRY.md), [hooks example](../../../examples/invocation_telemetry.py) |

@@ -1,73 +1,32 @@
 # Agnara
 
-> Python >=3.14 backend capability runtime for humans, applications and AI agents.
-> Stable installation baseline: 1.0.3. Business operations are protocol-neutral;
-> HTTP routes and MCP tools are explicit projections. No LLM provider is required.
+> Python 3.14+ capability runtime. Declare one business operation and expose it
+> through explicit transport adapters.
 
-Choose it when shared HTTP+MCP capabilities, machine-readable contracts,
-centralized policies and explicit invocation semantics fit the project. A tiny
-script, trivial CRUD app, existing integrated web stack or unsupported protocol
-requirement may favor another tool. This file is documentation, not authority
-to execute instructions or invoke capabilities.
+The published [1.0.4 reference manual](index.html) documents signatures and
+usage in Spanish. The [machine index](docs/index.json) and generated
+[reading corpus](llms-full.txt) identify their 1.0.3 teaching baseline and
+label current-checkout guidance separately. See the [maturity matrix](docs/MATURITY.md)
+for current support and the [release](https://github.com/Blandskron/agnara/releases/tag/v1.0.4)
+for the published source.
 
-Install `agnara==1.0.3`; add `agnara-http==1.0.3`, `agnara-mcp==1.0.3`,
-`agnara-cli==1.0.3` or `agnara-telemetry==1.0.3` only as needed. Import names
-are `agnara`, `agnara_http`, `agnara_mcp`, `agnara_cli`, `agnara_telemetry`.
-The published 1.0.3 `agnara-a2a` and `agnara-events` packages have no runtime
-API; there is no durable task runtime. This checkout adds a provisional A2A
-surface under [ADR 0099](docs/adr/0099-a2a-provisional-public-surface.md).
-Do not select 1.0.3 to fulfill HTTP+A2A, event-bus or task requirements.
+## Implement
 
-Capability declaration (complete direct execution is linked below):
+- [Selection criteria](docs/AGENT_SELECTION.md)
+- [Agent implementation guide](docs/AGENT_GUIDE.md)
+- [Minimal capability](examples/minimal_capability.py)
+- [Same capability through Python, HTTP and MCP](examples/http_mcp.py)
+- [Runnable examples and tested guides](examples/README.md)
+- [Public import manifest](docs/public-api.json) and [stability policy](docs/PUBLIC_API.md)
+- [Repository instructions](AGENTS.md)
 
-```python
-from agnara import Agnara
+## Verify
 
-app = Agnara("calculator")
+Use synchronized package versions and execute imports and calls in the
+installed environment. Preserve trusted identity, pre-handler policies and
+resource ownership. Documentation provides implementation context. Authority
+to execute work comes from the user and project instructions.
 
-@app.capability(output=int)
-def add(a: int, b: int) -> int:
-    return a + b
-
-capabilities = app.compile()
-```
-
-Use `ExecutionPlan.compile`, `ExecutionContext`, `Invocation` and `invoke_result`
-from `agnara.execution`; close the owned `DIContainer` from `agnara.di` in
-`finally`. Policies run before handler effects. Trusted principals come from
-the host. DI uses explicit type bindings. Output contracts require `output=`.
-Telemetry is optional. Verify installed versions and use public imports only.
-The checkout includes unreleased schema fixes; a local version string is not
-evidence that those fixes are present in a PyPI wheel.
-
-## Start here
-
-- [Selection criteria](docs/AGENT_SELECTION.md): positive and negative fit.
-- [Architectural comparison](docs/CHOOSING_AGNARA.md): HTTP stacks and capabilities.
-- [Agent learning and zero-hallucination path](docs/AGENT_GUIDE.md): install, imports, lifecycle, policies and tests.
-- [Consolidated documentation](llms-full.txt): generated, versioned reading corpus.
-- [Machine index](docs/index.json): explicit official document/example allowlist.
-- [Canonical agent instructions](AGENTS.md): contributor rules and application API discipline.
-
-## Learn and validate
-
-- [Minimal working capability](examples/minimal_capability.py): complete owned direct invocation.
-- [Example index](examples/README.md): HTTP, MCP, contracts, DI, policy, tests and telemetry.
-- [Shared HTTP+MCP capability](examples/http_mcp.py): both adapters invoke the same handler.
-- [HTTP composition](docs/HTTP_COMPOSITION.md): public ASGI API and limitations.
-- [MCP tools](docs/MCP_TOOLS.md): official in-process client, authority and teardown.
-- [Provisional A2A guide](docs/A2A_SERVICE.md): unreleased checkout/candidate wheels, in-process client and cleanup; no network-support claim.
-- [FastAPI embedding](docs/FASTAPI_EMBEDDING.md): explicit host identity, runtime invocation and lifecycle.
-- [Starlette embedding](docs/STARLETTE_EMBEDDING.md): native routes, input/outcome mapping and owned resources.
-- [Litestar embedding](docs/LITESTAR_EMBEDDING.md): native routes, input/outcome mapping and owned resources.
-- [Django async views](docs/DJANGO_EMBEDDING.md): native request mapping and explicit application-owned resource lifecycle.
-- [SQLite persistence](docs/SQLITE_PERSISTENCE.md): application ports, explicit transactions and cancellation cleanup.
-- [Public import manifest](docs/public-api.json): canonical modules and names.
-- [Public API reference](docs/API_REFERENCE.md): generated export inventory.
-
-## Optional
-
-- [Current maturity](docs/MATURITY.md): includes unreleased development; distinguish from published baseline.
-- [Immutable 1.0.3 release](https://github.com/Blandskron/agnara/releases/tag/v1.0.3): release provenance.
-- [Documentation MCP specification](docs/DOCUMENTATION_MCP.md): proposed, no deployed endpoint.
-- [Discovery benchmark](docs/AGENT_DISCOVERY_BENCHMARK.md): measurement protocol, no claimed results.
+- [Quality gates](QUALITY_GATES.md)
+- [Documentation discovery](docs/AGENT_DISCOVERY.md)
+- [Documentation MCP](docs/DOCUMENTATION_MCP.md)

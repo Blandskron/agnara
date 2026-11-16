@@ -15,6 +15,8 @@ formatting.
 
 from __future__ import annotations
 
+import re
+from html import unescape
 from pathlib import Path
 
 import pytest
@@ -23,7 +25,6 @@ REPOSITORY = Path(__file__).resolve().parents[2]
 
 #: (document, heading) pairs whose Python block must run unchanged.
 EXECUTABLE: tuple[tuple[str, str], ...] = (
-    ("README.md", "Quick start"),
     ("packages/agnara/README.md", "Quick start"),
     ("packages/agnara-mcp/README.md", "Execution plans"),
     ("docs/A2A_SERVICE.md", "Try the opt-in recipe"),
@@ -71,3 +72,19 @@ def test_every_listed_document_exists_and_is_reachable() -> None:
     """A renamed document must fail here rather than silently stop being checked."""
     for document, _ in EXECUTABLE:
         assert (REPOSITORY / document).is_file(), document
+
+
+def test_root_reference_manual_links_and_first_program(capsys: pytest.CaptureFixture[str]) -> None:
+    path = REPOSITORY / "index.html"
+    source = path.read_text(encoding="utf-8")
+    ids = re.findall(r'\bid="([^"]+)"', source)
+    fragments = set(re.findall(r'href="#([^"]+)"', source))
+    assert len(ids) == len(set(ids))
+    assert {"primera", "indice", "fuentes"} <= fragments
+    assert fragments <= set(ids)
+
+    example = re.search(r'<section id="primera">.*?<pre>(import asyncio\n.*?)</pre>', source, re.S)
+    assert example is not None
+    code = compile(unescape(example[1]), str(path), "exec")
+    exec(code, {"__name__": "__agnara_manual_example__"})
+    assert capsys.readouterr().out == "5 forbidden invalid_input\n"

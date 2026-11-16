@@ -1,20 +1,8 @@
 # Subsystem Maturity
 
-This document answers one question: **what exists today?**
-
-It is the authoritative status record. `ROADMAP.md` says where Agnara is
-going, `docs/INITIATIVES.md` says in what order, and this file says what is
-true now. When they disagree, this file wins and the others are wrong.
-
-Every status below was verified against the code on the commit that last
-edited this file, not against another document. Where a status is qualified,
-the qualification is the point: "the runtime propagates cancellation" and
-"the runtime offers a cancellation API" are different claims, and conflating
-them is how a framework acquires documentation nobody trusts.
-
-`tests/architecture/test_documentation_consistency.py` checks the parts of
-this table a machine can check, so a package cannot quietly gain or lose a
-public surface without this file failing.
+This is the status record for the current checkout. The [backlog](../BACKLOG.md)
+tracks pending work. `tests/architecture/test_documentation_consistency.py`
+checks the public surface counts against the installed packages.
 
 ## Vocabulary
 
@@ -38,9 +26,9 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 | `agnara` | `IMPLEMENTED` | yes | 41 | Standard-library kernel. [Plan tests](../tests/unit/execution/test_plan.py) and the subsystem table below define the implemented boundary; durable execution, delegation and cross-application composition remain absent. |
 | `agnara-http` | `IMPLEMENTED` | yes | 14 | [Public composition tests](../tests/http/test_public_composition.py) cover the stable API; HTTP/SSE, OpenAPI, documentation UIs and filtered Explorer are implemented. WebSockets are absent; third-party provider extension and JSON discovery remain internal. |
 | `agnara-mcp` | `IMPLEMENTED` | yes | 20 | [Pinned SDK tests](../tests/mcp/test_sdk_conformance.py) cover bounded tool discovery/invocation. No MRTR resumption, Tasks extension or packaged network-transport lifecycle; see the MCP table and conformance guide. |
-| `agnara-cli` | `IMPLEMENTED` | yes | 4 | [Project generation tests](../tests/cli/test_project_create.py) and `tests/cli/` cover scaffolding and introspection. Static `doctor` diagnostics are implemented in the unreleased checkout; an explicit runtime mode checks composition and manifest app registration. A development-server command remains absent. |
+| `agnara-cli` | `IMPLEMENTED` | yes | 4 | [Project generation tests](../tests/cli/test_project_create.py) and `tests/cli/` cover scaffolding and introspection. Static `doctor` diagnostics are available; an explicit runtime mode checks composition and manifest app registration. A development-server command remains absent. |
 | `agnara-telemetry` | `IMPLEMENTED` | yes | 2 | [Metrics](../tests/telemetry/test_metrics.py) and [tracing tests](../tests/telemetry/test_tracing.py) cover explicit hooks. SDK/provider/exporter setup, propagation and shutdown remain host-owned. |
-| `agnara-a2a` | `EXPERIMENTAL` | yes | 8 | Unreleased checkout. [Surface tests](../tests/a2a/test_a2a_surface.py) drive the ADR 0098 complete-result profile through the pinned official client in process: one capability per surface, JSON-RPC at revision 1.0, no tasks, streaming or push notifications. Every export is `provisional` (ADR 0099). [Runnable guide](A2A_SERVICE.md) and installed candidate-wheel consumers run in the existing cross-platform test matrix. [Loopback tests](../tests/a2a/test_a2a_network.py) measure Uvicorn 0.52.4/h11, including disconnects and graceful shutdown. Post-entry peer disconnect relies on kernel deadline cleanup, not immediate request cancellation; no A2A support is claimed. The published 1.0.3 wheel is still the empty namespace. |
+| `agnara-a2a` | `EXPERIMENTAL` | yes | 8 | Provisional since 1.0.4. [Surface tests](../tests/a2a/test_a2a_surface.py) drive the ADR 0098 complete-result profile through the pinned official client in process: one capability per surface, JSON-RPC at revision 1.0, no tasks, streaming or push notifications. Every export is `provisional` (ADR 0099). [Runnable guide](A2A_SERVICE.md) and installed candidate-wheel consumers run in the existing cross-platform test matrix. [Loopback tests](../tests/a2a/test_a2a_network.py) measure Uvicorn 0.52.4/h11, including disconnects and graceful shutdown. Post-entry peer disconnect relies on kernel deadline cleanup, not immediate request cancellation; no A2A support is claimed. |
 | `agnara-events` | `PLANNED` | yes | 0 | [Namespace](../packages/agnara-events/src/agnara_events/__init__.py) reserved; no event publication, broker integration or AsyncAPI runtime. Not a completed adapter. |
 
 `IMPLEMENTED` means the stated contract works with test evidence; it does not
@@ -59,12 +47,9 @@ check dependency direction. These checks complement the behavioral suites;
 a successful build alone is not completion evidence. Reproduce validation
 with the commands in [QUALITY_GATES.md](../QUALITY_GATES.md).
 
-All seven distributions have a published synchronized 1.0.3 set. This table
-describes the current repository, including subsequent changes under
-`CHANGELOG.md` `[Unreleased]`; it is not an inventory of a historical wheel.
-Historical release reconstruction uses Git tags or GitHub Releases. No next
-publication target has been selected. The published namespaces do not imply
-an implemented A2A or event adapter.
+All seven distributions have a synchronized published 1.0.4 set. The
+[1.0.4 manual](../index.html) covers that release. This matrix also covers
+unreleased checkout changes recorded in [the changelog](../CHANGELOG.md).
 
 Every distribution's public surface is classified in
 `docs/public-api.json` and enforced in both directions by the release gate:
@@ -123,7 +108,7 @@ The fourteen public exports follow the 1.x compatibility contract.
 | Request binding | `IMPLEMENTED` | Path, query, header, JSON body, cookie, form field and file upload. ADR 0026, ADR 0072. Repeated values and collections are refused by decision. |
 | Response serialization | `IMPLEMENTED` | Deterministic success responses. ADR 0027. |
 | RFC 9457 problem responses | `IMPLEMENTED` | ADR 0028, ADR 0030. |
-| OpenAPI projection | `IMPLEMENTED` | Deterministic input/output projection, pinned against a fixture. Unreleased HTTP adopts compiled output schemas for published 200 JSON bodies (proposed ADR 0097); Any stays unconstrained, HEAD/204 stay bodyless and SSE operations are omitted. ADR 0032 and the HTTP composition guide. |
+| OpenAPI projection | `IMPLEMENTED` | Deterministic input/output projection, pinned against a fixture. HTTP uses compiled output schemas for published 200 JSON bodies (proposed ADR 0097); Any stays unconstrained, HEAD/204 stay bodyless and SSE operations are omitted. ADR 0032 and the HTTP composition guide. |
 | Documentation providers | `IMPLEMENTED` | Swagger UI, ReDoc and Scalar, vendored and version-pinned. ADR 0036-0040. |
 | Discovery endpoint | `IMPLEMENTED` | ADR 0049. |
 | Explorer | `IMPLEMENTED` | Read-only shell. ADR 0052. |
@@ -162,11 +147,11 @@ The fourteen public exports follow the 1.x compatibility contract.
 | --- | --- | --- |
 | CLI scaffolding | `IMPLEMENTED` | `project create`, `app create`, architectures, `--with`, profiles, aliases. |
 | CLI introspection | `IMPLEMENTED` | `apps`, `inspect`, `graph`, `schema openapi`, `context`. |
-| CLI static diagnostics | `IMPLEMENTED` (unreleased checkout) | `doctor` reports interpreter, manifest, contained app paths and synchronized installed HTTP/MCP metadata without imports or writes. Proposed ADR 0096. Runtime registration, DI cycles, protocol configuration, architecture rules, transitive dependencies and the manifest Python constraint remain unchecked. |
-| CLI runtime composition diagnostics | `IMPLEMENTED` (unreleased checkout) | Opt-in `doctor --runtime` imports and compiles a trusted explicit target and compares declared app names and available descriptor modules with registered apps. No invocation or host startup. |
+| CLI static diagnostics | `IMPLEMENTED` | `doctor` reports interpreter, manifest, contained app paths and synchronized installed HTTP/MCP metadata without imports or writes. Proposed ADR 0096. Runtime registration, DI cycles, protocol configuration, architecture rules, transitive dependencies and the manifest Python constraint remain unchecked. |
+| CLI runtime composition diagnostics | `IMPLEMENTED` | Opt-in `doctor --runtime` imports and compiles a trusted explicit target and compares declared app names and available descriptor modules with registered apps. No invocation or host startup. |
 | Project manifest | `IMPLEMENTED` | `agnara.toml`. ADR 0059. No schema version field yet. |
 | Telemetry bridges | `IMPLEMENTED` | Optional OpenTelemetry metrics and spans. `tests/integration/telemetry/` proves one FastAPI 0.141.1 host trace with nested capability spans, concurrent isolation, stream terminal closure and redaction using SDK 1.45.2 in-memory export. Host extraction, providers, exporters and shutdown remain application-owned; compilation, nested invocation and streaming are additionally proven in an interpreter where `opentelemetry` is unimportable. No network-exporter or framework-support claim follows. ADR 0054-0058. |
-| A2A | `EXPERIMENTAL` (unreleased checkout) | ADR 0098 complete-result profile behind provisional `agnara_a2a` exports (ADR 0099); official-client in-process and bounded Uvicorn/h11 loopback evidence. The unwrapped host relies on kernel deadline cleanup after a post-entry peer disconnect. The opt-in [application-owned recipe](A2A_SERVICE.md#try-the-opt-in-recipe) adds cooperative disconnect cancellation with exact-source installed-wheel/host evidence; it is not a public API or support promotion. Tasks, streaming, push notifications, extended or signed cards and other bindings are absent. |
+| A2A | `EXPERIMENTAL` | ADR 0098 complete-result profile behind provisional `agnara_a2a` exports (ADR 0099); official-client in-process and bounded Uvicorn/h11 loopback evidence. The unwrapped host relies on kernel deadline cleanup after a post-entry peer disconnect. The opt-in [application-owned recipe](A2A_SERVICE.md#try-the-opt-in-recipe) adds cooperative disconnect cancellation with exact-source installed-wheel/host evidence; it is not a public API or support promotion. Tasks, streaming, push notifications, extended or signed cards and other bindings are absent. |
 | Events / AsyncAPI | `PLANNED` | Namespace reserved. |
 | Tasks and durable execution | `RESEARCH` | No package, no abstraction. |
 | Workflows | `RESEARCH` | Whether Agnara should own one is undecided. |

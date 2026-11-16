@@ -54,7 +54,7 @@ def test_the_example_imports_only_public_agnara_api() -> None:
 
 
 def test_the_readme_quick_start_matches_the_public_api(tmp_path: Path) -> None:
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme = (ROOT / "packages" / "agnara" / "README.md").read_text(encoding="utf-8")
     quick_start = readme[readme.index("## Quick start") :]
     block = re.search(r"```python\n(.*?)```", quick_start, re.S)
     assert block is not None, "the README must keep a runnable Quick start block"

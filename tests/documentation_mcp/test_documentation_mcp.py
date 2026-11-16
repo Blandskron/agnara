@@ -599,7 +599,7 @@ def test_real_stdio_initialize_list_call_and_clean_shutdown(root: Path) -> None:
 
 def test_actual_repository_corpus_and_governed_api() -> None:
     corpus = freeze(ROOT)
-    assert len(corpus.documents) == 44
+    assert len(corpus.documents) == 42
     assert corpus.documents["a2a-service"].path == "docs/A2A_SERVICE.md"
     assert corpus.documents["a2a-service"].stability == "current-repository"
     assert corpus.documents["a2a-service-example"].path == "examples/a2a_service.py"
@@ -676,7 +676,7 @@ def test_actual_repository_corpus_and_governed_api() -> None:
     assert "agnara_a2a" in corpus.modules
 
 
-def test_a2a_guide_remains_explicitly_outside_the_published_baseline() -> None:
+def test_a2a_guide_remains_explicitly_outside_the_1_0_3_bundle() -> None:
     service = DocumentationService(freeze(ROOT))
 
     async def scenario() -> None:
@@ -685,7 +685,7 @@ def test_a2a_guide_remains_explicitly_outside_the_published_baseline() -> None:
         guide = body(await service.call("read_doc", {**arguments, "include_nonbaseline": True}))
         assert guide["stability"] == "current-repository"
         assert guide["source_path"] == "docs/A2A_SERVICE.md"
-        assert "unreleased checkout" in guide["content"]["text"]
+        assert "shipped in Agnara 1.0.4" in guide["content"]["text"]
         assert (
             await service.call(
                 "get_example", {"version": "1.0.3", "example_id": "a2a-service-example"}

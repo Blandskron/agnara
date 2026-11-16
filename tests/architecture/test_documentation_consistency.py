@@ -22,12 +22,10 @@ import pytest
 from tests.architecture.boundaries import DISTRIBUTIONS, WORKSPACE_ROOT
 
 MATURITY = WORKSPACE_ROOT / "docs" / "MATURITY.md"
-INITIATIVES = WORKSPACE_ROOT / "docs" / "INITIATIVES.md"
 ARCHITECTURE = WORKSPACE_ROOT / "ARCHITECTURE.md"
-MAP = WORKSPACE_ROOT / "docs" / "DOCUMENTATION_MAP.md"
 ROADMAP = WORKSPACE_ROOT / "ROADMAP.md"
 
-PLANNING_DOCUMENTS = (MATURITY, INITIATIVES, ARCHITECTURE, MAP, ROADMAP)
+PLANNING_DOCUMENTS = (MATURITY, ARCHITECTURE, ROADMAP)
 
 #: The vocabulary `docs/MATURITY.md` declares. A status outside this set means
 #: either the table or the vocabulary drifted, and either way a reader now has
@@ -175,48 +173,6 @@ def test_the_reserved_namespaces_are_still_reserved(maturity: str) -> None:
         assert getattr(module, "__all__", None) == [], (
             f"{distribution} now exports something; update docs/MATURITY.md"
         )
-
-
-# ---------------------------------------------------------------------------
-# The planning documents agree with each other
-# ---------------------------------------------------------------------------
-
-
-def test_every_initiative_the_roadmap_cites_is_defined() -> None:
-    """The roadmap points at initiatives; a dangling id sends a reader nowhere."""
-    defined = set(re.findall(r"^### (I\d+) ", read(INITIATIVES), re.MULTILINE))
-    assert defined, "docs/INITIATIVES.md defines no initiatives"
-
-    cited = set(re.findall(r"\b(I\d+)\b", read(ROADMAP)))
-    dangling = sorted(cited - defined)
-    assert not dangling, f"ROADMAP.md cites undefined initiatives: {dangling}"
-
-
-def test_every_initiative_declares_a_horizon_and_a_status() -> None:
-    text = read(INITIATIVES)
-    sections = re.split(r"^### (I\d+) ", text, flags=re.MULTILINE)[1:]
-    pairs = list(zip(sections[::2], sections[1::2], strict=True))
-    assert pairs, "docs/INITIATIVES.md defines no initiatives"
-
-    incomplete = [
-        identifier
-        for identifier, body in pairs
-        if "**Horizon:**" not in body or "**Status:**" not in body
-    ]
-    assert not incomplete, f"initiatives missing a horizon or status: {incomplete}"
-
-
-def test_the_documentation_map_names_documents_that_exist() -> None:
-    """The map is only useful while every owner it names is real."""
-    owners = set(re.findall(r"`([A-Za-z0-9_./-]+\.md)`", read(MAP)))
-    assert owners, "docs/DOCUMENTATION_MAP.md names no owning documents"
-
-    missing = sorted(
-        name
-        for name in owners
-        if not (WORKSPACE_ROOT / name).exists() and not (WORKSPACE_ROOT / "docs" / name).exists()
-    )
-    assert not missing, f"the documentation map names missing documents: {missing}"
 
 
 # ---------------------------------------------------------------------------

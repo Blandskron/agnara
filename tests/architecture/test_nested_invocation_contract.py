@@ -9,7 +9,6 @@ invocation.
 from tests.architecture.boundaries import WORKSPACE_ROOT
 
 ADR = WORKSPACE_ROOT / "docs" / "adr" / "0093-nested-capability-invocation-contract.md"
-INITIATIVES = WORKSPACE_ROOT / "docs" / "INITIATIVES.md"
 MATURITY = WORKSPACE_ROOT / "docs" / "MATURITY.md"
 THREAT_MODEL = WORKSPACE_ROOT / "docs" / "THREAT_MODEL.md"
 
@@ -38,9 +37,6 @@ def test_the_contract_requires_independent_child_authorization_and_scope_isolati
 
 
 def test_authoritative_status_documents_describe_the_implemented_narrow_boundary() -> None:
-    assert "ADR 0093's same-compiled-application complete-result boundary is implemented" in (
-        INITIATIVES.read_text(encoding="utf-8")
-    )
     expected_maturity = (
         "| Capability-to-capability composition | `IMPLEMENTED` for same-snapshot "
         "complete results |"

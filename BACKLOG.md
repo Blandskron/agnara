@@ -4,7 +4,7 @@ GitHub Issues are executable work units. Closed Issues, merged PRs and Git
 retain completed work and review evidence. See the [roadmap](ROADMAP.md) for
 the milestone and the [maturity matrix](docs/MATURITY.md) for current behavior.
 
-## After the presentation
+## Pending work
 
 - [ ] Maintain runnable tutorials, reference applications and interoperability
   evidence against the governed API and explicit host contract.

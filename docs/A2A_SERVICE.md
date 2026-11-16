@@ -1,9 +1,7 @@
 # Calling the provisional A2A service
 
-This guide uses the **unreleased checkout** and the provisional exports in
-[ADR 0099](adr/0099-a2a-provisional-public-surface.md). The published
-`agnara-a2a==1.0.3` wheel has no runtime API and cannot run it. A local 1.0.3
-version string alone does not identify the candidate implementation.
+The provisional exports in [ADR 0099](adr/0099-a2a-provisional-public-surface.md)
+shipped in Agnara 1.0.4. This guide runs against the current checkout.
 
 ## Run the example
 
