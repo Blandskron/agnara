@@ -120,8 +120,8 @@ Dataclasses express structured contracts. Direct invocation requires the
 declared Python objects; a matching JSON dictionary is not a dataclass.
 Adapters materialize JSON at their boundary. Avoid assuming Pydantic or
 msgspec support: those integrations remain experiments. The
-[schema guide](docs/SCHEMA_CONTRACTS.md) describes current checkout behavior;
-enum and numeric validation fixes under `[Unreleased]` are not in 1.0.3.
+[schema guide](docs/SCHEMA_CONTRACTS.md) covers enum and numeric JSON behavior
+shipped in 1.0.4.
 The [HTTP example](examples/http_service.py) uses a dataclass contract
 available in the published baseline.
 
