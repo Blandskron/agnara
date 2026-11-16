@@ -23,10 +23,8 @@ uv run pytest tests/docs/test_fastapi_embedding_example.py tests/integration/fas
 
 The workspace pins FastAPI 0.141.1 for integration evidence. The runtime
 imports used by the example are governed by [public-api.json](public-api.json).
-An editable checkout's distribution version does not prove historical wheel
-behavior; [release history](https://github.com/Blandskron/agnara/releases/tag/v1.0.3)
-owns the published baseline. The host fixture does not establish a general
-FastAPI support tier.
+The [interoperability evidence](INTEROPERABILITY.md) describes the scope of
+this host fixture.
 
 The requests produce these observable results:
 

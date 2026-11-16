@@ -77,8 +77,7 @@ and is excluded using the method's bound signature, even when the receiver has
 an explicit annotation or its type has a registry binding. This applies to
 handlers and providers and does not reserve names: ordinary/static parameters
 named `self` or `cls`, and receiver parameters of unbound methods, retain their
-explicit input/DI contracts. The bound-receiver annotation fix is unreleased
-checkout behavior; it does not infer dependencies for class constructors.
+explicit input/DI contracts. Class constructors need explicit provider wiring.
 
 Binding a payload type such as `str` changes how parameters of that type are
 classified. Prefer dedicated resource types, assemble bindings before plan
@@ -132,8 +131,6 @@ an explicit DI binding still supplies its resource, and a payload parameter
 retains its typed default/override behavior. Context and DI parameters remain
 protected from caller payloads. Register a partial handler with an explicit
 capability name because partial objects have no function `__name__`.
-This annotation-resolution fix is unreleased checkout behavior; it changes no
-public exports or invocation policy order.
 
 ## Put cleanup around the yield
 
@@ -155,8 +152,7 @@ implementation enters the same owned teardown stack as a generator function.
 Compilation does not execute it. A provider class passed directly is still a
 constructor, rather than an invocation of one of its instances. Application
 state retained by a factory needs its own ownership/concurrency discipline.
-These callable-instance and partial-wrapper classification fixes are checkout behavior under
-`[Unreleased]`, not evidence about the published 1.0.3 wheel.
+These callable-instance and partial-wrapper rules shipped in 1.0.4.
 
 The example uses a synchronous pool generator, an asynchronous session
 generator, a synchronous reader generator and an asynchronous writer function.

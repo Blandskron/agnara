@@ -1,27 +1,26 @@
 # Requests for Comment
 
-RFCs hold design questions. An answered question points to its ADR; current
-implementation status is owned by `docs/MATURITY.md`.
+## Open and partially answered
 
-Proposal context in a numbered RFC describes the system at the time it was
-written. Use its answering ADRs and the maturity matrix for current behavior;
-superseded examples in a proposal are not application instructions.
+| RFC | Remaining work |
+| --- | --- |
+| [0005 · Delegation](0005-protocol-neutral-delegation.md) | Authority model and policy integration. |
+| [0008 · Framework embedding](0008-framework-embedding-and-ecosystem-composition.md) | Composition beyond the host boundary resolved by [ADR 0094](../adr/0094-framework-neutral-embedding-contract.md). |
+| [0009 · Streaming](0009-streaming-model.md) | Additional projections beyond the [kernel contract](../adr/0084-core-streaming-contract.md) and [HTTP SSE](../adr/0085-http-sse-streaming-projection.md). |
+| [0010 · A2A](0010-a2a-initial-projection.md) | Profiles beyond the [provisional complete-result surface](../adr/0099-a2a-provisional-public-surface.md). |
+| [0011 · Events](0011-event-initial-projection.md) | Review the [proposed inbound projection](../adr/0101-initial-inbound-event-projection.md). |
+| [0012 · Durable execution](0012-durable-execution-boundary.md) | Review the [proposed ownership decision](../adr/0102-durable-execution-ownership.md). |
 
-| RFC | Subject | Current state |
-| --- | --- | --- |
-| 0001 | Capability runtime | Implemented; architecture and runtime tests are authoritative. |
-| 0002 | Project and app scaffolding | Implemented; ADR 0065 governs app namespace. |
-| 0003 | HTTP documentation and Explorer | Implemented; ADR 0033 and ADRs 0036–0040 govern the surfaces. |
-| 0004 | Transport-neutral DI | Accepted design; current shipped subset is in `docs/MATURITY.md`. |
-| 0005 | Protocol-neutral delegation | Open research; no delegation support is claimed. |
-| 0006 | Unified exposure model | Implemented by ADR 0070 and ADR 0071. |
-| 0007 | Distribution version identity | Implemented by ADR 0069 and ADR 0095. |
-| 0008 | Framework embedding | Host boundary implemented by ADR 0094; streaming, delegation and cross-application questions remain open. |
-| 0009 | Protocol-neutral streaming | Kernel and HTTP SSE implemented by ADR 0084 and ADR 0086; other projections require separate decisions. |
-| [0010](0010-a2a-initial-projection.md) | Initial A2A projection | ADR 0098 profile and provisional ADR 0099 surface; guide, installed-wheel and bounded host evidence are linked in the A2A guide. Broader support/stability remains undecided. |
-| [0011](0011-event-initial-projection.md) | Initial event projection | Open research; proposes an inbound-consumer feasibility gate, not an implemented adapter, broker integration or public API. |
-| [0012](0012-durable-execution-boundary.md) | Durable execution boundary | Open research; proposes a single-invocation crash-recovery study, with authority revalidation and uncertain-effect reconciliation. No durable runtime or API is selected. |
+## Answered proposals
 
-`RFC 9457` denotes the external IETF problem-details standard, not a local
-record. Local RFC identifiers are zero-padded to four digits. Historical
-release reconstruction belongs to Git tags and history, not current RFC text.
+These links resolve the historical citations in ADRs. Use the current
+contracts for application and contributor guidance.
+
+| Proposal in Git history | Current contract |
+| --- | --- |
+| [0001 · Capability runtime](https://github.com/Blandskron/agnara/blob/5aab12ac352a59b7d20925f1af90b80159d3277f/docs/rfc/0001-capability-runtime.md) | [Architecture](../../ARCHITECTURE.md) and [API design](../API_DESIGN.md) |
+| [0002 · Scaffolding](https://github.com/Blandskron/agnara/blob/5aab12ac352a59b7d20925f1af90b80159d3277f/docs/rfc/0002-project-app-scaffolding.md) | [Scaffolding](../SCAFFOLDING.md) and [manifest](../PROJECT_MANIFEST.md) |
+| [0003 · HTTP documentation](https://github.com/Blandskron/agnara/blob/5aab12ac352a59b7d20925f1af90b80159d3277f/docs/rfc/0003-http-documentation-and-capability-explorer.md) | [HTTP composition](../HTTP_COMPOSITION.md) and [ADR 0018](../adr/0018-replaceable-documentation-providers.md) |
+| [0004 · Dependency injection](https://github.com/Blandskron/agnara/blob/5aab12ac352a59b7d20925f1af90b80159d3277f/docs/rfc/0004-dependency-injection.md) | [Dependency guide](../DEPENDENCIES.md) |
+| [0006 · Exposure model](https://github.com/Blandskron/agnara/blob/5aab12ac352a59b7d20925f1af90b80159d3277f/docs/rfc/0006-unified-exposure-model.md) | [ADR 0070](../adr/0070-unified-exposure-model.md) and [ADR 0071](../adr/0071-public-http-composition-api.md) |
+| [0007 · Distribution versions](https://github.com/Blandskron/agnara/blob/5aab12ac352a59b7d20925f1af90b80159d3277f/docs/rfc/0007-distribution-version-identity.md) | [ADR 0095](../adr/0095-synchronized-releases-and-curated-changelog.md) |

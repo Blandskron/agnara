@@ -34,7 +34,7 @@ the supported OpenAPI versions, provider behavior and asset configuration.
 The [llms.txt proposal](https://llmstxt.org/) describes a Markdown discovery
 index. [ADR 0053](adr/0053-llms-txt-documentation-index.md) records why the
 public documentation index is independent of runtime capability discovery.
-[Agent discovery](AGENT_DISCOVERY.md) records the sources and generation
+[Documentation discovery](DOCUMENTATION_MCP.md#source-files-and-regeneration) records the sources and generation
 commands in this checkout.
 
 ## Python and tooling

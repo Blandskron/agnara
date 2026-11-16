@@ -7,7 +7,7 @@
 
 This report retains the A2A-01/03 experiment checkpoints, not current package
 status. Subsequent [ADR 0099](../adr/0099-a2a-provisional-public-surface.md)
-governs the unreleased provisional adapter and exact SDK pin. The
+governs the provisional adapter introduced in 1.0.4 and its exact SDK pin. The
 [current guide](../A2A_SERVICE.md) links the later installed-wheel, runnable
 example and bounded host evidence. Those additions do not expand the retained
 experiments' platform coverage or declare protocol support.

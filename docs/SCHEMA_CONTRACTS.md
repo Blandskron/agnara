@@ -134,6 +134,14 @@ implementation; Pydantic/msgspec adapters remain experiments. The helper's
 conversions apply to standard schemas; an unknown custom schema receives its
 input unchanged, so a custom adapter must define its own boundary behavior.
 
+HTTP and MCP use the compiled input schema and materialize JSON after
+policy checks. Equivalent JSON numbers can match declared numeric enum or
+literal values. An exact literal match takes precedence, and booleans never
+match numbers. Out-of-range integers in a float field fail with the input
+path unless another union branch accepts the value. MCP rejects standard
+tool input schemas containing `bytes`. HTTP has explicit
+[binary bindings](HTTP_COMPOSITION.md).
+
 ## Evidence and ownership
 
 [Guide tests](../tests/docs/test_schema_contracts_example.py) check equivalent

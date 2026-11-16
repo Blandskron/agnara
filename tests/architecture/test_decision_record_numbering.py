@@ -38,6 +38,10 @@ def test_a_number_identifies_one_record(directory: str) -> None:
     by_number: dict[str, list[str]] = defaultdict(list)
     for number, name in records(directory):
         by_number[number].append(name)
+    if directory == "docs/rfc":
+        index = (WORKSPACE_ROOT / directory / "README.md").read_text(encoding="utf-8")
+        for name in re.findall(r"/blob/[0-9a-f]{40}/docs/rfc/(\d{4}-[a-z0-9-]+\.md)\)", index):
+            by_number[name[:4]].append(f"Git history: {name}")
     collisions = {number: names for number, names in by_number.items() if len(names) > 1}
     assert not collisions, f"duplicate {directory} numbers: {collisions}"
 

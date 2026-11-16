@@ -406,7 +406,7 @@ structurally impossible rather than guarded by a flag.
 The registry is availability truth and nothing more. Availability, discovery,
 publication and authorization stay four separate facts: presence permits no
 invocation, and hiding an exposure from one viewer disables it for nobody. See
-ADR 0070 and RFC 0006.
+ADR 0070.
 
 A third adapter joins by returning the same envelope. The kernel needs no
 change, which is the architectural test the model has to pass — not a reason
@@ -625,7 +625,7 @@ Visibility, schema publication, UI availability and interactive execution are
 independent security decisions. Hiding an operation in a UI does not authorize
 or deauthorize invocation.
 
-See RFC 0003 and ADR 0018.
+See ADR 0018.
 
 ## 11. Native acceleration
 

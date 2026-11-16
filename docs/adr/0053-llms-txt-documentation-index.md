@@ -58,7 +58,7 @@ deterministic `llms-full.txt` documentation build. It does not add a runtime
 route, change `agnara context` or deploy a site. The hosted-site prerequisites
 below remain requirements for a later deployment; they do not block the
 explicitly requested local repository artifacts. Source ownership and limits
-are documented in [agent discovery architecture](../AGENT_DISCOVERY.md).
+are documented in [the discovery tooling guide](../DOCUMENTATION_MCP.md#source-files-and-regeneration).
 
 Start a separate executable Issue when there is a deployed documentation site,
 an owned versioned page manifest, and a named consumer that can be tested.

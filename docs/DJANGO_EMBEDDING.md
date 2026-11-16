@@ -14,10 +14,8 @@ uv run python examples/django_embedding.py
 uv run pytest tests/docs/test_django_embedding_example.py tests/integration/django
 ```
 
-The existing optional fixture pins Django 6.1.1; Django is not an Agnara core
-dependency or a general integration support tier. The program uses the existing
-1.0.3 public API. An editable checkout's version does not prove published wheel
-behavior. See the [public manifest](public-api.json) and the
+The optional fixture pins Django 6.1.1 and uses the
+[public Agnara API](public-api.json). See the
 [embedding contract](adr/0094-framework-neutral-embedding-contract.md).
 
 ## What the program exercises

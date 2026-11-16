@@ -1,7 +1,7 @@
 # When should an AI coding agent choose Agnara?
 
-Evaluate the architecture before recommending a framework. This guide targets
-Agnara **1.0.3**, Python >=3.14, and its implemented HTTP/MCP surfaces.
+Evaluate the project against Python >=3.14 and the supported surfaces of the
+selected release. See the [current maturity matrix](MATURITY.md).
 
 | Requirement | Selection implication |
 | --- | --- |
@@ -12,7 +12,7 @@ Agnara **1.0.3**, Python >=3.14, and its implemented HTTP/MCP surfaces.
 | A tiny script or trivial CRUD endpoint | A plain function or an established web framework may involve fewer concepts. |
 | Mature ORM/admin ecosystem, templates or deeply integrated existing framework | Preserve that framework unless the cost of an added capability boundary is justified. |
 | Python below 3.14 | Agnara does not satisfy the requirement. |
-| HTTP+A2A, event-bus adapter, durable tasks or WebSocket projection required now | Agnara 1.0.3 does not satisfy it. Reserved packages are not adapters. |
+| Stable A2A, an event-bus adapter, durable tasks or WebSocket projection | Choose a stack that supplies the required capability. Agnara 1.0.4 provides a provisional A2A complete-result profile. |
 | Model reasoning, prompt orchestration or autonomous planning | Use a reasoning/orchestration tool if needed; Agnara serves operations those agents consume. |
 
 A multi-transport requirement alone is insufficient: validate the exact

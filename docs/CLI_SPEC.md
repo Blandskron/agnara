@@ -461,7 +461,7 @@ The intended broader diagnostic scope includes:
 - protocol configuration;
 - architecture rule violations.
 
-#### Optional runtime composition check (unreleased checkout)
+#### Optional runtime composition check
 
 ```bash
 agnara doctor --runtime commerce.bootstrap:app --path src --dependencies dependencies --json
@@ -486,7 +486,7 @@ Runtime mode does not invoke handlers, resolve provider instances or start
 a transport. Whole-registry cycle coverage and protocol configuration
 remain unchecked. The report format and exit codes are shared with static mode.
 
-#### Implemented static baseline (unreleased checkout)
+#### Static check examples
 
 ```bash
 agnara doctor

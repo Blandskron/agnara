@@ -22,6 +22,24 @@ file paths, app imports, reflection, subprocesses, code execution or repository
 writes are permitted. It never reads AGENTS/client configuration or runtime
 discovery exports as API authority.
 
+## Source files and regeneration
+
+[llms.txt](../llms.txt) routes readers to the versioned manual and runnable
+guides. [index.json](index.json) defines the documentation allowlist and
+corpus order. The [generated agent corpus](../llms-full.txt) labels its
+1.0.3 teaching baseline and current-checkout guidance. Runtime discovery is
+separate and uses the filtered output of `agnara context`.
+
+```bash
+uv run python scripts/render_agent_docs.py
+uv run python scripts/render_agent_docs.py --check
+uv run python scripts/render_public_api_reference.py --check
+uv run python scripts/check_public_imports.py examples llms.txt llms-full.txt .agents/skills
+```
+
+The [discovery benchmark](AGENT_DISCOVERY_BENCHMARK.md) measures discovery,
+selection and implementation separately.
+
 ## Common response and errors
 
 Every tool returns JSON structured content and a matching JSON text block:
