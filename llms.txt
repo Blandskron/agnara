@@ -5,7 +5,7 @@
 
 The published [1.0.4 reference manual](index.html) documents signatures and
 usage in Spanish. The [machine index](docs/index.json) and generated
-[reading corpus](llms-full.txt) identify their 1.0.3 teaching baseline and
+[reading corpus](llms-full.txt) identify their 1.0.4 baseline and
 label current-checkout guidance separately. See the [maturity matrix](docs/MATURITY.md)
 for current support and the [release](https://github.com/Blandskron/agnara/releases/tag/v1.0.4)
 for the published source.

@@ -1,4 +1,4 @@
-"""Minimal public-only direct capability; compatible with published Agnara 1.0.3."""
+"""Minimal direct capability using the published Agnara API."""
 
 from __future__ import annotations
 

@@ -29,11 +29,9 @@ repository, run `uv sync` then `uv run python examples/<file>.py`.
 | Explicit direct idempotency, sequential reuse and concurrent contenders | [direct_idempotency.py](direct_idempotency.py) | [test](../tests/docs/test_direct_idempotency_example.py), [idempotency guide](../docs/DIRECT_IDEMPOTENCY.md); one process and event loop |
 | Nested capability invocation | [nested_invocation.py](nested_invocation.py) | [test](../tests/docs/test_nested_invocation_example.py), [composition guide](../docs/NESTED_INVOCATION.md) |
 
-The minimal and HTTP+MCP programs run with installed PyPI **1.0.3** packages.
-Most guides were added after publication but teach existing public contracts;
-new schema bug-fix behavior is qualified above and in its guide. Use
-[Git release history](https://github.com/Blandskron/agnara/releases/tag/v1.0.3)
-for an immutable baseline, not the package version of an editable checkout.
+The minimal and HTTP+MCP programs were verified with the published PyPI
+**1.0.4** packages. See [the release](https://github.com/Blandskron/agnara/releases/tag/v1.0.4)
+for source provenance.
 Demo principals and in-process clients do not implement production authentication.
 
 For external use install matching first-party versions and required optional

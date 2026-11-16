@@ -357,7 +357,7 @@ def test_corrupt_startup_is_refused_even_with_a_fresh_lock(root: Path, mutation:
     if mutation == "schema":
         index["schema_version"] = 2
     elif mutation == "mixed":
-        index["documents"][0]["version"] = "1.0.2"
+        index["documents"][0]["version"] = "1.0.4"
     elif mutation == "duplicate-id":
         index["documents"][1]["id"] = "guide"
     elif mutation == "duplicate-path":
@@ -617,70 +617,70 @@ def test_actual_repository_corpus_and_governed_api() -> None:
     assert len(corpus.modules) == 13
     service = DocumentationService(corpus)
     django = body(
-        run(service.call("read_doc", {"version": "1.0.3", "document_id": "django-embedding"}))
+        run(service.call("read_doc", {"version": "1.0.4", "document_id": "django-embedding"}))
     )
     assert django["content"]["text"].startswith("# Agnara in Django async views")
     django_example = body(
         run(
             service.call(
-                "get_example", {"version": "1.0.3", "example_id": "django-embedding-example"}
+                "get_example", {"version": "1.0.4", "example_id": "django-embedding-example"}
             )
         )
     )
     assert "Django async views" in django_example["content"]["text"]
     litestar = body(
-        run(service.call("read_doc", {"version": "1.0.3", "document_id": "litestar-embedding"}))
+        run(service.call("read_doc", {"version": "1.0.4", "document_id": "litestar-embedding"}))
     )
     assert litestar["content"]["text"].startswith("# Embed Agnara in Litestar")
     litestar_example = body(
         run(
             service.call(
-                "get_example", {"version": "1.0.3", "example_id": "litestar-embedding-example"}
+                "get_example", {"version": "1.0.4", "example_id": "litestar-embedding-example"}
             )
         )
     )
     assert "Native Litestar routes" in litestar_example["content"]["text"]
     starlette = body(
-        run(service.call("read_doc", {"version": "1.0.3", "document_id": "starlette-embedding"}))
+        run(service.call("read_doc", {"version": "1.0.4", "document_id": "starlette-embedding"}))
     )
     assert starlette["content"]["text"].startswith("# Embed Agnara in Starlette")
     starlette_example = body(
         run(
             service.call(
-                "get_example", {"version": "1.0.3", "example_id": "starlette-embedding-example"}
+                "get_example", {"version": "1.0.4", "example_id": "starlette-embedding-example"}
             )
         )
     )
     assert "Native Starlette routes" in starlette_example["content"]["text"]
     persistence = body(
-        run(service.call("read_doc", {"version": "1.0.3", "document_id": "persistence"}))
+        run(service.call("read_doc", {"version": "1.0.4", "document_id": "persistence"}))
     )
     assert persistence["content"]["text"].startswith("# Application-owned SQLite persistence")
     persistence_example = body(
-        run(service.call("get_example", {"version": "1.0.3", "example_id": "persistence-example"}))
+        run(service.call("get_example", {"version": "1.0.4", "example_id": "persistence-example"}))
     )
     assert "Host-owned SQLite transactions" in persistence_example["content"]["text"]
-    guide = body(run(service.call("read_doc", {"version": "1.0.3", "document_id": "embedding"})))
+    guide = body(run(service.call("read_doc", {"version": "1.0.4", "document_id": "embedding"})))
     assert guide["content"]["text"].startswith("# Embed Agnara in FastAPI")
     example = body(
-        run(service.call("get_example", {"version": "1.0.3", "example_id": "embedding-example"}))
+        run(service.call("get_example", {"version": "1.0.4", "example_id": "embedding-example"}))
     )
     assert "FastAPI application" in example["content"]["text"]
     assert body(
         run(
             service.call(
-                "get_api_reference", {"version": "1.0.3", "module": "agnara", "name": "__version__"}
+                "get_api_reference", {"version": "1.0.4", "module": "agnara", "name": "__version__"}
             )
         )
     )["content"]["classification"]["exports"] == [{"name": "__version__", "stability": "stable"}]
     assert "agnara_a2a" in corpus.modules
 
 
-def test_a2a_guide_remains_explicitly_outside_the_1_0_3_bundle() -> None:
+def test_provisional_a2a_guide_requires_explicit_opt_in() -> None:
     service = DocumentationService(freeze(ROOT))
 
     async def scenario() -> None:
-        arguments = {"version": "1.0.3", "document_id": "a2a-service"}
+        arguments = {"version": "1.0.4", "document_id": "a2a-service"}
         assert (await service.call("read_doc", arguments)).is_error
         guide = body(await service.call("read_doc", {**arguments, "include_nonbaseline": True}))
         assert guide["stability"] == "current-repository"
@@ -688,61 +688,45 @@ def test_a2a_guide_remains_explicitly_outside_the_1_0_3_bundle() -> None:
         assert "shipped in Agnara 1.0.4" in guide["content"]["text"]
         assert (
             await service.call(
-                "get_example", {"version": "1.0.3", "example_id": "a2a-service-example"}
+                "get_example", {"version": "1.0.4", "example_id": "a2a-service-example"}
             )
         ).is_error
 
     run(scenario())
 
 
-def test_direct_streaming_corpus_preserves_current_repository_provenance() -> None:
+def test_direct_streaming_is_available_in_the_published_1_0_4_baseline() -> None:
     service = DocumentationService(freeze(ROOT))
 
     async def scenario() -> None:
         baseline = body(
             await service.call(
-                "search_docs", {"version": "1.0.3", "query": "streaming", "topic": "streaming"}
+                "search_docs", {"version": "1.0.4", "query": "streaming", "topic": "streaming"}
             )
         )
-        assert baseline["content"]["hits"] == []
-        current = body(
-            await service.call(
-                "search_docs",
-                {
-                    "version": "1.0.3",
-                    "query": "streaming",
-                    "topic": "streaming",
-                    "include_nonbaseline": True,
-                },
-            )
-        )
-        assert {hit["id"] for hit in current["content"]["hits"]} == {
+        assert {hit["id"] for hit in baseline["content"]["hits"]} == {
             "direct-streaming",
             "direct-streaming-example",
         }
-        assert (
-            await service.call("read_doc", {"version": "1.0.3", "document_id": "direct-streaming"})
-        ).is_error
         guide = body(
-            await service.call(
-                "read_doc",
-                {
-                    "version": "1.0.3",
-                    "document_id": "direct-streaming",
-                    "include_nonbaseline": True,
-                },
-            )
+            await service.call("read_doc", {"version": "1.0.4", "document_id": "direct-streaming"})
         )
-        assert guide["stability"] == "current-repository"
+        assert guide["documentation_version"] == "1.0.4"
+        assert guide["release_commit"] == "b6fa9f1a9df9f8f2940d7bc351a4d40295887686"
+        assert guide["stability"] == "stable-api"
         assert guide["source_path"] == "docs/DIRECT_STREAMING.md"
         assert guide["content"]["text"].startswith("# Direct Python streaming")
-        # get_example intentionally exposes baseline examples only; adding an
-        # index entry must not silently turn unreleased fixes into wheel claims.
-        assert (
+        example = body(
             await service.call(
-                "get_example", {"version": "1.0.3", "example_id": "direct-streaming-example"}
+                "get_example", {"version": "1.0.4", "example_id": "direct-streaming-example"}
             )
-        ).is_error
+        )
+        assert example["source_path"] == "examples/direct_streaming.py"
+        older = await service.call(
+            "read_doc", {"version": "1.0.3", "document_id": "direct-streaming"}
+        )
+        assert older.is_error
+        assert body(older)["content"] == {"error": "unsupported_version"}
 
     run(scenario())
 

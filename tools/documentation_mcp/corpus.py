@@ -109,7 +109,7 @@ def read_index(root: Path) -> tuple[bytes, dict[str, Any], dict[str, bytes]]:
         not isinstance(index, dict)
         or type(index.get("schema_version")) is not int
         or index["schema_version"] != 1
-        or index.get("version") != "1.0.3"
+        or index.get("version") not in ("1.0.3", "1.0.4")
         or not isinstance(index.get("release_commit"), str)
         or not COMMIT.fullmatch(index["release_commit"])
         or not isinstance(index.get("documents"), list)

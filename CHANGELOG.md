@@ -15,6 +15,9 @@ full history are available through Git tags and GitHub Releases.
 - Retire answered RFCs to linked Git history and consolidate discovery,
   schema and adapter guidance around their current contracts.
 
+- Align agent discovery and the local documentation MCP corpus with the
+  published 1.0.4 API. The loader still accepts frozen 1.0.3 snapshots.
+
 ### Fixed
 
 - Require OpenTelemetry API 1.45.2 or later in the 1.x line for the telemetry
