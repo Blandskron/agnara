@@ -2,13 +2,49 @@
 
 import gc
 import hashlib
+import json
 import operator
 import ssl
 import sys
 
 import certifi
 import pytest
+from mcp.shared._otel import extract_trace_context
+from mcp_types import RequestParams
 from multidict import CIMultiDict, CIMultiDictProxy, MultiDict, MultiDictProxy
+from opentelemetry.context import Context
+from opentelemetry.propagate import get_global_textmap, set_global_textmap
+from opentelemetry.trace import get_current_span
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+
+
+def test_mcp_trace_context_extraction_preserves_valid_parents_and_bounds_input() -> None:
+    """GHSA-mf5v-w3w3-f6cg applies to JSON metadata before the handler runs."""
+    trace_id = "4bf92f3577b34da6a3ce929d0e0e4736"
+    span_id = "00f067aa0ba902b7"
+    traceparent = f"00-{trace_id}-{span_id}-01"
+
+    def extract(value: str) -> Context | None:
+        params = RequestParams.model_validate_json(json.dumps({"_meta": {"traceparent": value}}))
+        return extract_trace_context(params.meta)
+
+    previous = get_global_textmap()
+    set_global_textmap(TraceContextTextMapPropagator())
+    try:
+        context = extract(traceparent)
+        assert context is not None
+        parent = get_current_span(context).get_span_context()
+        assert parent.is_remote
+        assert parent.trace_id == int(trace_id, 16)
+        assert parent.span_id == int(span_id, 16)
+
+        future_version = "01" + traceparent[2:] + "-extra"
+        assert extract(future_version) is not None
+        assert extract(future_version + "x" * 512) is None
+        assert extract(traceparent + "-" + " " * 512 + "\n!") is None
+        assert extract(traceparent + "\r\n!") is None
+    finally:
+        set_global_textmap(previous)
 
 
 def test_certifi_excludes_compromised_root_and_preserves_trust() -> None:

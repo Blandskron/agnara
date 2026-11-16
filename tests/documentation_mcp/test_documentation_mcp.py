@@ -155,19 +155,16 @@ def test_the_declared_sdk_version_matches_what_requirements_pin() -> None:
     nothing tied this guard to the requirements beside it. This test keeps
     that relationship explicit independently of the startup diagnostic.
     """
-    pinned = {}
-    for line in (
+    requirements = (
         (ROOT / "tools" / "documentation_mcp" / "requirements.txt")
         .read_text(encoding="utf-8")
         .splitlines()
-    ):
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        name, _, declared = line.partition("==")
-        pinned[name] = declared
-
-    assert pinned == {"mcp": SDK_VERSION, "mcp-types": SDK_VERSION}
+    )
+    assert {line for line in map(str.strip, requirements) if line and not line.startswith("#")} == {
+        f"mcp=={SDK_VERSION}",
+        f"mcp-types=={SDK_VERSION}",
+        "opentelemetry-api>=1.45.2,<2",
+    }
 
 
 def test_frozen_source_provenance_pagination_and_mutation_isolation(root: Path) -> None:

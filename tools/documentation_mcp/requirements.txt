@@ -1,3 +1,4 @@
-# Repository tooling only. No first-party package dependency changes.
+# Standalone dependencies for the repository documentation server.
 mcp==2.2.0
 mcp-types==2.2.0
+opentelemetry-api>=1.45.2,<2
