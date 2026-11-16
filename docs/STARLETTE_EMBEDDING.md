@@ -14,10 +14,8 @@ uv run python examples/starlette_embedding.py
 uv run pytest tests/docs/test_starlette_embedding_example.py tests/integration/starlette
 ```
 
-The workspace's optional Starlette fixture is pinned to 1.6.0. It is not a core
-dependency or a general integration support tier. The example uses the existing
-1.0.3 public API; checkout version strings do not prove published wheel behavior.
-See the [public manifest](public-api.json), [embedding contract](adr/0094-framework-neutral-embedding-contract.md)
+The optional fixture pins Starlette 1.6.0 and uses the
+[public Agnara API](public-api.json). See the [embedding contract](adr/0094-framework-neutral-embedding-contract.md)
 and [interoperability limits](INTEROPERABILITY.md).
 
 ## Native host boundary

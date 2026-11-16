@@ -28,4 +28,5 @@ Numbered records retain context from the time of a decision. Read their
 answering or superseding records and [maturity](../MATURITY.md) for current
 behavior, and use runnable guides for application syntax.
 
-See [architecture](../../ARCHITECTURE.md) and the [repository entry point](../../README.md).
+See [architecture](../../ARCHITECTURE.md) and the
+[RFC index](../rfc/README.md), including links to answered proposals in Git.

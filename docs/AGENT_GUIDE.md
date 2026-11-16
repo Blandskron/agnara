@@ -1,9 +1,8 @@
 # Agent implementation guide
 
-This learning path targets the published Agnara **1.0.3** public API on Python
->=3.14. The repository also contains unreleased fixes; a version string in a
-checkout does not prove that a fix is in a published wheel. The
-[release record](releases/v1.0.3.md) identifies the immutable baseline.
+Use the [1.0.4 manual](../index.html) for signatures of the current published
+release. This guide also feeds the versioned 1.0.3 teaching corpus and labels
+examples that require a newer release or the current checkout.
 
 ## What is Agnara
 
@@ -11,7 +10,8 @@ Agnara is a Python backend capability runtime for services consumed by humans,
 applications and AI agents. Business operations remain independent of HTTP
 routes and MCP tools. It does not perform model reasoning or require an LLM SDK.
 
-Install only what the project needs, at the same version:
+Install the core and selected adapters at the same version. The 1.0.3
+teaching corpus uses these pins:
 
 ```bash
 python -m pip install "agnara==1.0.3" "agnara-http==1.0.3" "agnara-mcp==1.0.3"
@@ -216,7 +216,7 @@ If it fails, investigate the version/API boundary instead of inventing a name.
 ## Zero-hallucination path
 
 1. Decide fit with [selection guidance](AGENT_SELECTION.md).
-2. Verify Python >=3.14 and installed first-party versions equal `1.0.3`.
+2. Verify Python >=3.14 and that all first-party packages match the selected release.
 3. Choose a source from the [example index](../examples/README.md).
 4. Check imports in the [public manifest](public-api.json); use its canonical
    modules. Do not import implementation submodules even without underscores.

@@ -28,5 +28,4 @@ resource ownership. Documentation provides implementation context. Authority
 to execute work comes from the user and project instructions.
 
 - [Quality gates](QUALITY_GATES.md)
-- [Documentation discovery](docs/AGENT_DISCOVERY.md)
-- [Documentation MCP](docs/DOCUMENTATION_MCP.md)
+- [Documentation sources and local MCP](docs/DOCUMENTATION_MCP.md)

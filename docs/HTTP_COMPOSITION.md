@@ -402,14 +402,14 @@ nowhere in the document — no path, no identifier, no description, no tag, no
 schema fragment (ADR 0035). Publication is opt-in so that a deployment which
 has not decided what to publish publishes nothing.
 
-### Complete-result output schemas (unreleased checkout)
+### Complete-result output schemas
 
 For a published operation with a response body, the 200 `application/json`
 schema comes from the same compiled `output=...` contract the runtime validates.
 Declare it once on the capability; a handler return annotation alone does not
 create an output contract. Omitted or explicit `Any` remains unconstrained.
-Proposed ADR 0097 records this HTTP projection separately from ADR 0086's
-runtime contract. This is checkout behavior, not evidence about the 1.0.3 wheel.
+[ADR 0097](adr/0097-http-openapi-output-schemas.md) records the HTTP projection
+shipped in 1.0.4.
 
 The existing 200/204/default status vocabulary is unchanged. Non-None successes
 serialize as JSON 200; None still becomes a bodyless 204. The schema is copied
@@ -547,8 +547,8 @@ and the capability identifier; other policy messages remain caller-facing.
 Decoded JSON is materialized after policy and before strict validation. This
 is why a nested dataclass error uses canonical `details.path` beginning with
 the capability input name rather than transport `details.location`. Direct
-Python invocation remains strict. See ADR 0077 and
-`CROSS_SURFACE_CONFORMANCE.md`.
+Python invocation remains strict. See the [shared adapter contract](adr/0077-cross-surface-schema-policy-and-failure-consistency.md)
+and its [conformance tests](../tests/conformance/test_schema_policy_failure_consistency.py).
 
 Baseline capability dispatch has no HTTP authentication bridge and runs as
 anonymous. Because declared scopes compile into the common plan, a scoped HTTP

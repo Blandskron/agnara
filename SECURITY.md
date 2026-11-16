@@ -253,7 +253,7 @@ Implementations must:
 Hiding an operation in Swagger UI, ReDoc, Agnara Explorer or any other
 navigation surface is not authorization.
 
-See RFC 0003 and ADR 0018.
+See ADR 0018.
 
 ## Security claims
 

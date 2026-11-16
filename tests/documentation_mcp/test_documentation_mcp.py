@@ -599,7 +599,7 @@ def test_real_stdio_initialize_list_call_and_clean_shutdown(root: Path) -> None:
 
 def test_actual_repository_corpus_and_governed_api() -> None:
     corpus = freeze(ROOT)
-    assert len(corpus.documents) == 42
+    assert len(corpus.documents) == 41
     assert corpus.documents["a2a-service"].path == "docs/A2A_SERVICE.md"
     assert corpus.documents["a2a-service"].stability == "current-repository"
     assert corpus.documents["a2a-service-example"].path == "examples/a2a_service.py"

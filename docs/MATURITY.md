@@ -72,7 +72,7 @@ The fourteen public exports follow the 1.x compatibility contract.
 
 | Subsystem | Status | Evidence and limits |
 | --- | --- | --- |
-| Capability declaration and metadata | `IMPLEMENTED` | Effects, risk, confirmation, idempotency, scopes. RFC 0001. |
+| Capability declaration and metadata | `IMPLEMENTED` | Effects, risk, confirmation, idempotency and scopes. |
 | Capability identity | `IMPLEMENTED` | `<namespace>.<name>`; namespace is the owning app. ADR 0065. |
 | Capability registry and freeze | `IMPLEMENTED` | ADR 0005. Registration closes at `compile()`. |
 | App / bounded-context model | `IMPLEMENTED` | `App`, `AppDescriptor`, `Agnara.include`. ADR 0011, ADR 0065. |
@@ -87,7 +87,7 @@ The fourteen public exports follow the 1.x compatibility contract.
 | Policy engine | `IMPLEMENTED` | Pre-handler evaluation, scopes, principals, confirmation. ADR 0024. |
 | Confirmation requirements | `IMPLEMENTED` | Declaration and verification; no durable pending-approval state. |
 | Telemetry hooks | `IMPLEMENTED` | Start and terminal events. ADR 0023. No span model in the kernel. |
-| Unified exposure model | `IMPLEMENTED` | `agnara.exposure`: neutral identity, per-surface adapter compilation, one frozen availability registry. ADR 0070, RFC 0006. Both shipped adapters go through it. |
+| Unified exposure model | `IMPLEMENTED` | `agnara.exposure`: neutral identity, per-surface adapter compilation, one frozen availability registry. ADR 0070. Both shipped adapters go through it. |
 | Introspection snapshot | `IMPLEMENTED` | Versioned, frozen, no runtime objects reachable. ADR 0045. Exposures are derived from the frozen exposure registry. |
 | Discovery visibility | `IMPLEMENTED` | Per-field publication decisions. ADR 0046. |
 | Execution identity | `IMPLEMENTED` | ADRs 0087, 0088 and 0091. Each `ExecutionContext` owns an opaque runtime-generated identity; direct idempotency reuse adopts the claimed logical identity while each lifecycle invocation retains a fresh telemetry `invocation_id`. Caller metadata cannot choose it. HTTP returns only the generated identity in `agnara-execution-id`; HTTP/MCP request IDs are bounded untrusted correlation only, never execution selection, authority or idempotency proof. |

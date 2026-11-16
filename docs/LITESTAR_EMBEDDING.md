@@ -14,10 +14,8 @@ uv run python examples/litestar_embedding.py
 uv run pytest tests/docs/test_litestar_embedding_example.py tests/integration/litestar
 ```
 
-The workspace's optional Litestar fixture is pinned to 2.24.0. It is not a core
-dependency or a general integration support tier. The example uses the existing
-1.0.3 public API; checkout version strings do not prove published wheel behavior.
-See the [public manifest](public-api.json), [embedding contract](adr/0094-framework-neutral-embedding-contract.md)
+The optional fixture pins Litestar 2.24.0 and uses the
+[public Agnara API](public-api.json). See the [embedding contract](adr/0094-framework-neutral-embedding-contract.md)
 and [interoperability limits](INTEROPERABILITY.md).
 
 ## Native host boundary

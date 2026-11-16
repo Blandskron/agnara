@@ -10,6 +10,11 @@ full history are available through Git tags and GitHub Releases.
 - Add the searchable Agnara 1.0.4 manual at the repository root for GitHub
   Pages and consolidate duplicate navigation and planning documentation.
 
+### Changed
+
+- Retire answered RFCs to linked Git history and consolidate discovery,
+  schema and adapter guidance around their current contracts.
+
 ### Fixed
 
 - Require OpenTelemetry API 1.45.2 or later in the 1.x line for the telemetry

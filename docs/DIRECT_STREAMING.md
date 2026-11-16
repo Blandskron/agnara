@@ -12,8 +12,7 @@ The example uses only governed public imports. Each case compiles a capability,
 binds an invocation-scoped provider, creates a container on the running event
 loop and closes it in `finally`. The resource and trusted principal are local
 fixtures; no database, network connection or production authentication is used.
-This guide describes the current checkout, including unreleased output fixes;
-it does not establish the behavior of the published 1.0.3 wheel.
+The stream-unit validation rules in this guide are available in Agnara 1.0.4.
 
 Expected standard output (the deliberately failing cases also emit runtime
 log warnings):

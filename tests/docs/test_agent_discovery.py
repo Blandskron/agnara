@@ -29,7 +29,6 @@ ROOT = Path(__file__).resolve().parents[2]
 NEW_MARKDOWN = (
     "docs/AGENT_GUIDE.md",
     "docs/AGENT_SELECTION.md",
-    "docs/AGENT_DISCOVERY.md",
     "docs/DOCUMENTATION_MCP.md",
     "docs/AGENT_DISCOVERY_BENCHMARK.md",
     "examples/README.md",
