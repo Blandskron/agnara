@@ -27,7 +27,7 @@ discovery exports as API authority.
 [llms.txt](../llms.txt) routes readers to the versioned manual and runnable
 guides. [index.json](index.json) defines the documentation allowlist and
 corpus order. The [generated agent corpus](../llms-full.txt) labels its
-1.0.3 teaching baseline and current-checkout guidance. Runtime discovery is
+1.0.4 release baseline and current-checkout guidance. Runtime discovery is
 separate and uses the filtered output of `agnara context`.
 
 ```bash
@@ -47,9 +47,9 @@ Every tool returns JSON structured content and a matching JSON text block:
 ```json
 {
   "schema_version": 1,
-  "documentation_version": "1.0.3",
+  "documentation_version": "1.0.4",
   "source_commit": "<accepted immutable commit>",
-  "release_commit": "c25d9eb5b2d432f652c4661a1925cb38baa63c82",
+  "release_commit": "b6fa9f1a9df9f8f2940d7bc351a4d40295887686",
   "stability": "stable-api",
   "source_path": "docs/AGENT_GUIDE.md",
   "source_sha256": "<content hash>",
@@ -70,8 +70,10 @@ credential strings or exception traces enter client errors.
 
 ## Tools
 
-All input schemas set `additionalProperties: false`; `version` is required
-and initially accepts exactly `"1.0.3"`. No tool takes a path or URL.
+Every input schema requires `version` and rejects additional properties.
+The version must match the loaded snapshot. The current corpus uses 1.0.4,
+and the loader also accepts previously frozen 1.0.3 snapshots. No tool
+takes a path or URL.
 
 | Tool | Arguments | Result |
 | --- | --- | --- |
@@ -110,15 +112,10 @@ tokens or content. Stdio testing needs no claim of OAuth or remote support.
 6. No documented remote endpoint until maintainers verify deployment, DNS/TLS,
    public-data review, chosen protocol subset, limits and actual client access.
 
-## Delivery plan
+## Local transport and SDK pin
 
-Phase 1: corpus validator, frozen loader, deterministic search and five local
-tools with unit/adversarial/official-client tests, a stdio launch command and
-tested setup instructions. Keep generated corpus optional and read-only.
-Phase 2: a separate maintainer-reviewed deployment Issue; choose host, remote
-transport, TLS and observability with an operational owner and rollback. Static
-file publication should precede or accompany remote MCP. Future multi-version
-support selects separate immutable snapshots, never current checkout aliases.
+Each process serves one immutable snapshot over stdio. Remote MCP requires a
+separate deployment decision. The public manual is served through GitHub Pages.
 
 Repository tooling lives in `tools/documentation_mcp`; it never imports the
 Agnara runtime. Because of that it cannot read `MCP_PYTHON_SDK_VERSION`, so it

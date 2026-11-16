@@ -173,7 +173,7 @@ def execute(corpus: Corpus, name: str, args: dict) -> dict:
                 "schema_version": 1,
                 "note": (
                     "API baseline and documentation revision differ; "
-                    "nonbaseline entries are not released behavior."
+                    "nonbaseline entries require separate compatibility review."
                 ),
             },
         )

@@ -1,7 +1,6 @@
 # Releases
 
-The latest published release is 1.0.4. The agent discovery corpus still
-targets the verified 1.0.3 API baseline.
+The latest published release and current agent discovery baseline are 1.0.4.
 
 - [1.0.4 release record](RELEASE_CHECKLIST.md)
 - [1.0.4 notes](v1.0.4.md)

@@ -1,8 +1,8 @@
 # Agent implementation guide
 
-Use the [1.0.4 manual](../index.html) for signatures of the current published
-release. This guide also feeds the versioned 1.0.3 teaching corpus and labels
-examples that require a newer release or the current checkout.
+This guide targets the published 1.0.4 API on Python >=3.14. Use the
+[reference manual](../index.html) for signatures and the runnable examples
+below to validate calls in the installed environment.
 
 ## What is Agnara
 
@@ -10,11 +10,10 @@ Agnara is a Python backend capability runtime for services consumed by humans,
 applications and AI agents. Business operations remain independent of HTTP
 routes and MCP tools. It does not perform model reasoning or require an LLM SDK.
 
-Install the core and selected adapters at the same version. The 1.0.3
-teaching corpus uses these pins:
+Install the core and the adapters the service uses at the same version:
 
 ```bash
-python -m pip install "agnara==1.0.3" "agnara-http==1.0.3" "agnara-mcp==1.0.3"
+python -m pip install "agnara==1.0.4" "agnara-http==1.0.4" "agnara-mcp==1.0.4"
 python -c "from importlib.metadata import version; print(version('agnara'))"
 ```
 
@@ -98,8 +97,8 @@ the example does not deploy a remote endpoint. Consult
 
 ## A2A
 
-The `agnara-a2a==1.0.3` wheel is an empty namespace. Agnara 1.0.4 introduced
-the `provisional` ADR 0098 profile (`A2a`, `build_a2a_app`; see ADR 0099).
+Agnara 1.0.4 introduced the `provisional` ADR 0098 profile
+(`A2a`, `build_a2a_app`; see ADR 0099).
 For the published API, see the [1.0.4 manual](../index.html#agnara_a2a).
 
 The [A2A guide](A2A_SERVICE.md) and [example](../examples/a2a_service.py)
@@ -174,9 +173,8 @@ Run `uv run pytest tests/docs tests/architecture` in this repo.
 ## Examples
 
 The [example index](../examples/README.md) routes tasks to executable sources
-and their tests. Reuse the smallest matching example. The minimal and shared
-HTTP/MCP examples are additionally checked against installed PyPI 1.0.3
-packages; current-checkout bug-fix demonstrations are explicitly qualified.
+and their tests. The minimal and shared HTTP/MCP examples have been verified
+against the published 1.0.4 wheels. Reuse the smallest matching example.
 
 ## Recommended architecture
 

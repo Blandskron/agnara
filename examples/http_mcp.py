@@ -1,7 +1,7 @@
 """Invoke one capability directly, over HTTP and through the in-process MCP client.
 
-Run with ``uv run python examples/http_mcp.py``. Compatible with published
-1.0.3. No server, authentication provider or network endpoint is deployed.
+Run with ``uv run python examples/http_mcp.py``. Verified with published
+1.0.4 wheels. Uses an in-process MCP connection.
 """
 
 from __future__ import annotations
@@ -99,7 +99,7 @@ async def demonstrate() -> dict[str, Any]:
             [plan],
             container,
             name="shared-capability-example",
-            version="1.0.3",
+            version="1.0.4",
             authorization=McpAuthorization(exposures, reject_authenticated),
             timeout=2,
         )

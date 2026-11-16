@@ -14,7 +14,7 @@ contributing to this framework, not to an unrelated application repository.
   and the [implementation path](docs/AGENT_GUIDE.md).
 - Verify Python >=3.14 and installed distribution versions. The
   [reference manual](index.html) covers the published 1.0.4 API. The agent
-  corpus labels its 1.0.3 teaching baseline and current-checkout guidance.
+  corpus labels the 1.0.4 release baseline and current-checkout guidance.
 - Use canonical exports in [public-api.json](docs/public-api.json), follow
   [runnable examples](examples/README.md), and execute imports/calls before
   claiming support. Never invent imports, constructors or decorators.
