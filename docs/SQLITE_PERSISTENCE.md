@@ -26,7 +26,7 @@ is absent from Agnara distribution dependencies. The example uses governed
 imports from `agnara`, `agnara.di` and `agnara.execution`; its output below is
 verified against the current checkout. An editable distribution version is not
 proof of a historical wheel's behavior; use
-[release history](https://github.com/Blandskron/agnara/releases/tag/v1.0.3)
+[release history](https://github.com/Blandskron/agnara/releases/tag/v1.0.4)
 for published provenance.
 
 | Scenario | Outcome | Storage decision |
