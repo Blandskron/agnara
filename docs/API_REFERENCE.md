@@ -210,7 +210,27 @@ Use `--check` in automation to verify that this projection has not drifted.
 
 ### `agnara_events`
 
-This module currently exports no public names.
+| Name | Stability |
+| --- | --- |
+| `ASYNCAPI_VERSION` | `provisional` |
+| `CLOUDEVENTS_JSON_CONTENT_TYPE` | `provisional` |
+| `DRAFT_07_SCHEMA_FORMAT` | `provisional` |
+| `AsyncAPIExportError` | `provisional` |
+| `AsyncAPIInfo` | `provisional` |
+| `CompiledEventBinding` | `provisional` |
+| `ConsumerBudgets` | `provisional` |
+| `ConsumerDiagnostic` | `provisional` |
+| `Delivery` | `provisional` |
+| `DeliverySource` | `provisional` |
+| `EventSubscriptionExposure` | `provisional` |
+| `EventsDefinitionError` | `provisional` |
+| `SettlementAction` | `provisional` |
+| `SettlementUncertaintyError` | `provisional` |
+| `compile_event_surface` | `provisional` |
+| `compile_inbound_event` | `provisional` |
+| `consume_inbound_events` | `provisional` |
+| `declare_inbound_event` | `provisional` |
+| `project_asyncapi` | `provisional` |
 
 
 ## `agnara-http`

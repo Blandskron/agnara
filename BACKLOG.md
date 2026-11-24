@@ -8,8 +8,8 @@ the milestone and the [maturity matrix](docs/MATURITY.md) for current behavior.
 
 - [ ] Maintain runnable tutorials, reference applications and interoperability
   evidence against the governed API and explicit host contract.
-- [ ] Scope EVT-04 (public exports, package maturity, runnable guide and support
-  review for `agnara-events`) after maintainer review of EVT-03.
+- [ ] Review EVT-04 provisional `agnara-events` surface, guide and live broker
+  evidence before any future compatibility promotion.
 - [ ] Evaluate further protocol projections in separate feasibility Issues.
 - [ ] Review activation of the
   [Python 3.15 research plan](docs/research/python-315-readiness.md) before

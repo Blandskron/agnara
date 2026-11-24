@@ -15,7 +15,7 @@ from agnara_cli._target import TargetError, resolve_target
 _ADAPTERS = {"http": "agnara-http", "mcp": "agnara-mcp"}
 _UNCHECKED_EXPOSURE_MESSAGES = {
     "a2a": "adapter metadata checks are not implemented for this declared exposure",
-    "events": "reserved namespace; no implemented Agnara event runtime",
+    "events": "adapter metadata checks are not implemented for this declared exposure",
     "tasks": "no implemented Agnara task runtime",
 }
 _UNCHECKED = (

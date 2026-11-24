@@ -1705,6 +1705,7 @@ repository, run `uv sync` then `uv run python examples/<file>.py`.
 | Official-client MCP service | [mcp_tools.py](examples/mcp_tools.py) | [test](tests/docs/test_mcp_tools_example.py), [guide](docs/MCP_TOOLS.md) |
 | Provisional A2A service through the official in-process client | [a2a_service.py](examples/a2a_service.py) | [test](tests/docs/test_a2a_service_example.py), [guide](docs/A2A_SERVICE.md); provisional in 1.0.4, no network-support claim |
 | Optional application-owned A2A disconnect helper | [a2a_disconnect.py](examples/a2a_disconnect.py), injected into [a2a_service.py](examples/a2a_service.py) | [ownership tests](tests/a2a/test_a2a_disconnect_recipe.py), [guide](docs/A2A_SERVICE.md#try-the-opt-in-recipe); copyable companion module, not an Agnara export or standalone server |
+| Provisional inbound CloudEvents 1.0 consumer and AsyncAPI 3.1.0 projection | [events_inbound.py](examples/events_inbound.py) | [test](tests/docs/test_events_inbound_example.py), [guide](docs/EVENTS_INBOUND.md); provisional ADR 0101/0103 surface, zero broker dependencies |
 | Same capability invoked directly and over HTTP + MCP | [http_mcp.py](examples/http_mcp.py) | [test](tests/docs/test_http_mcp_example.py), [installed-wheel gate](tests/release/test_integrated_dogfooding.py) |
 | Runtime embedded inside native FastAPI routes | [fastapi_embedding.py](examples/fastapi_embedding.py) | [test](tests/docs/test_fastapi_embedding_example.py), [guide](docs/FASTAPI_EMBEDDING.md); optional pinned host fixture |
 | Runtime embedded inside native Starlette routes | [starlette_embedding.py](examples/starlette_embedding.py) | [test](tests/docs/test_starlette_embedding_example.py), [guide](docs/STARLETTE_EMBEDDING.md); optional pinned host fixture |
@@ -1957,9 +1958,10 @@ inventory and does not create a second contract.
 
 ##### Current 1.x public API stability contract
 
-The manifest classifies **174 exports across 13 modules**: 174
-distinct names at 174 canonical import paths. The current 1.x contract contains
-the 166 `stable` names; the 8 `agnara_a2a` names are `provisional` (ADR 0099).
+The manifest classifies **193 exports across 13 modules**: 193
+distinct names at 193 canonical import paths. The current 1.x contract contains
+the 166 `stable` names; the 8 `agnara_a2a` names (ADR 0099) and 19
+`agnara_events` names (ADR 0103) are `provisional`.
 Leaf-module re-export aliases are no longer in `__all__` and are not
 supported public API.
 
@@ -1967,10 +1969,11 @@ supported public API.
 behaviour are compatible throughout the current major line. `provisional`
 means the name is governed and importable, but its signature and behaviour may
 change in a minor release after a reviewed decision; it is not part of the 1.x
-compatibility promise. Only `agnara_a2a` uses it, by maintainer decision
-recorded in ADR 0099. `experimental` remains vocabulary for a future deliberate
-classification and does not occur in the current inventory. `internal` names are outside the manifest
-and have no compatibility promise.
+compatibility promise. Only `agnara_a2a` (ADR 0099) and `agnara_events`
+(ADR 0103) use it, by proposed architecture decision. `experimental` remains
+vocabulary for a future deliberate classification and does not occur in the
+current inventory. `internal` names are outside the manifest and have no
+compatibility promise.
 
 ##### Canonical modules
 
@@ -1985,15 +1988,13 @@ and have no compatibility promise.
 | `agnara` | `agnara.schema` | 13 |
 | `agnara-a2a` | `agnara_a2a` | 0 (8 `provisional`) |
 | `agnara-cli` | `agnara_cli` | 4 |
-| `agnara-events` | `agnara_events` | 0 |
+| `agnara-events` | `agnara_events` | 0 (19 `provisional`) |
 | `agnara-http` | `agnara_http` | 14 |
 | `agnara-mcp` | `agnara_mcp` | 20 |
 | `agnara-telemetry` | `agnara_telemetry` | 2 |
 
-The reserved `agnara_events` namespace is deliberately classified with no
-exports. All other non-private implementation modules are
-internal unless their name is re-exported from this table's module through the
-manifest.
+All non-private implementation modules outside this table are internal unless
+their names are re-exported from a governed module listed above.
 
 ##### Canonical spelling and authority
 
@@ -2270,7 +2271,27 @@ Use `--check` in automation to verify that this projection has not drifted.
 
 ###### `agnara_events`
 
-This module currently exports no public names.
+| Name | Stability |
+| --- | --- |
+| `ASYNCAPI_VERSION` | `provisional` |
+| `CLOUDEVENTS_JSON_CONTENT_TYPE` | `provisional` |
+| `DRAFT_07_SCHEMA_FORMAT` | `provisional` |
+| `AsyncAPIExportError` | `provisional` |
+| `AsyncAPIInfo` | `provisional` |
+| `CompiledEventBinding` | `provisional` |
+| `ConsumerBudgets` | `provisional` |
+| `ConsumerDiagnostic` | `provisional` |
+| `Delivery` | `provisional` |
+| `DeliverySource` | `provisional` |
+| `EventSubscriptionExposure` | `provisional` |
+| `EventsDefinitionError` | `provisional` |
+| `SettlementAction` | `provisional` |
+| `SettlementUncertaintyError` | `provisional` |
+| `compile_event_surface` | `provisional` |
+| `compile_inbound_event` | `provisional` |
+| `consume_inbound_events` | `provisional` |
+| `declare_inbound_event` | `provisional` |
+| `project_asyncapi` | `provisional` |
 
 
 ##### `agnara-http`

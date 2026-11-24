@@ -29,14 +29,13 @@ A subsystem with no entry is `RESEARCH` by default. Absence is not a promise.
 | `agnara-cli` | `IMPLEMENTED` | yes | 4 | [Project generation tests](../tests/cli/test_project_create.py) and `tests/cli/` cover scaffolding and introspection. Static `doctor` diagnostics are available; an explicit runtime mode checks composition and manifest app registration. A development-server command remains absent. |
 | `agnara-telemetry` | `IMPLEMENTED` | yes | 2 | [Metrics](../tests/telemetry/test_metrics.py) and [tracing tests](../tests/telemetry/test_tracing.py) cover explicit hooks. SDK/provider/exporter setup, propagation and shutdown remain host-owned. |
 | `agnara-a2a` | `EXPERIMENTAL` | yes | 8 | Provisional since 1.0.4. [Surface tests](../tests/a2a/test_a2a_surface.py) drive the ADR 0098 complete-result profile through the pinned official client in process: one capability per surface, JSON-RPC at revision 1.0, no tasks, streaming or push notifications. Every export is `provisional` (ADR 0099). [Runnable guide](A2A_SERVICE.md) and installed candidate-wheel consumers run in the existing cross-platform test matrix. [Loopback tests](../tests/a2a/test_a2a_network.py) measure Uvicorn 0.52.4/h11, including disconnects and graceful shutdown. Post-entry peer disconnect relies on kernel deadline cleanup, not immediate request cancellation; no A2A support is claimed. |
-| `agnara-events` | `PLANNED` | yes | 0 | [Namespace](../packages/agnara-events/src/agnara_events/__init__.py) reserved; no event publication, broker integration or AsyncAPI runtime. Not a completed adapter. |
+| `agnara-events` | `EXPERIMENTAL` | yes | 19 | Provisional under ADR 0101/0103. Inbound CloudEvents 1.0 structured-mode decoder, 13-outcome manual settlement, cooperative shutdown and opt-in AsyncAPI 3.1.0 / Draft-07 projection; zero broker dependencies. Covered by `tests/events/`, [inbound guide](EVENTS_INBOUND.md) and a live RabbitMQ 4.2.5 / `aio-pika` 9.6.1 round-trip fixture; no event publishing, binary mode, batching, streaming or confirmation channel is supported. |
 
 `IMPLEMENTED` means the stated contract works with test evidence; it does not
 mean every proposed feature or roadmap item is complete. Five packages expose
-implemented, bounded public surfaces. A2A has an experimental, provisional
-surface in this checkout and Events remains a reserved namespace; neither is a
-supported adapter, even though both distributions can be built, installed and
-imported.
+implemented, bounded public surfaces. A2A and Events have experimental,
+provisional surfaces in this checkout; neither is a stable adapter, even though
+all seven distributions can be built, installed and imported.
 
 Package verification starts with `scripts/check_distributions.py`, which
 checks the seven-package publication inventory, metadata, exact core pins,
@@ -53,9 +52,10 @@ unreleased checkout changes recorded in [the changelog](../CHANGELOG.md).
 
 Every distribution's public surface is classified in
 `docs/public-api.json` and enforced in both directions by the release gate:
-174 classified exports across 13 modules: 166 `stable` and the 8 `provisional`
-`agnara_a2a` names. Those entries are
-import paths rather than distinct symbols: 174 names are reachable at 174 canonical paths,
+193 classified exports across 13 modules: 166 `stable`, the 8 `provisional`
+`agnara_a2a` names, and the 19 `provisional` `agnara_events` names. Those
+entries are import paths rather than distinct symbols: 193 names are reachable
+at 193 canonical paths,
 because a name is classified once per module it can be imported from.
 `agnara-cli` has four governed names; implementation helpers are not public
 imports (ADR 0076).
@@ -152,7 +152,7 @@ The fourteen public exports follow the 1.x compatibility contract.
 | Project manifest | `IMPLEMENTED` | `agnara.toml`. ADR 0059. No schema version field yet. |
 | Telemetry bridges | `IMPLEMENTED` | Optional OpenTelemetry metrics and spans. `tests/integration/telemetry/` proves one FastAPI 0.141.1 host trace with nested capability spans, concurrent isolation, stream terminal closure and redaction using SDK 1.45.2 in-memory export. Host extraction, providers, exporters and shutdown remain application-owned; compilation, nested invocation and streaming are additionally proven in an interpreter where `opentelemetry` is unimportable. No network-exporter or framework-support claim follows. ADR 0054-0058. |
 | A2A | `EXPERIMENTAL` | ADR 0098 complete-result profile behind provisional `agnara_a2a` exports (ADR 0099); official-client in-process and bounded Uvicorn/h11 loopback evidence. The unwrapped host relies on kernel deadline cleanup after a post-entry peer disconnect. The opt-in [application-owned recipe](A2A_SERVICE.md#try-the-opt-in-recipe) adds cooperative disconnect cancellation with exact-source installed-wheel/host evidence; it is not a public API or support promotion. Tasks, streaming, push notifications, extended or signed cards and other bindings are absent. |
-| Events / AsyncAPI | `PLANNED` | Namespace reserved. |
+| Events / AsyncAPI | `EXPERIMENTAL` | ADR 0101/0103 provisional inbound CloudEvents 1.0 structured-mode consumer and opt-in AsyncAPI 3.1.0 / Draft-07 projector (`agnara_events`); broker SDKs and retry topology stay host-owned. No event publication, binary mode, batching or stability commitment. |
 | Tasks and durable execution | `RESEARCH` | No package, no abstraction. |
 | Workflows | `RESEARCH` | Whether Agnara should own one is undecided. |
 | Realtime | `RESEARCH` | |

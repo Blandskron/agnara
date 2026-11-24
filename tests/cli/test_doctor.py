@@ -129,7 +129,7 @@ def test_metadata_absence_and_synchronized_version_refusal(
     ("exposure", "message"),
     [
         ("a2a", "adapter metadata checks are not implemented for this declared exposure"),
-        ("events", "reserved namespace; no implemented Agnara event runtime"),
+        ("events", "adapter metadata checks are not implemented for this declared exposure"),
         ("tasks", "no implemented Agnara task runtime"),
     ],
 )

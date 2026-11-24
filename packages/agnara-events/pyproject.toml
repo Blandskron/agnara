@@ -1,7 +1,7 @@
 [project]
 name = "agnara-events"
 version = "1.0.4"
-description = "Reserved events namespace for Agnara; no public event runtime API is implemented."
+description = "Provisional inbound CloudEvents 1.0 and AsyncAPI 3.1.0 adapter for Agnara (ADR 0101, ADR 0103)."
 readme = "README.md"
 requires-python = ">=3.14"
 authors = [{name = "Agnara Maintainers", email = "maintainers@agnara.dev"}]
