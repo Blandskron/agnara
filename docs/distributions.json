@@ -28,7 +28,7 @@
     {
       "name": "agnara-events",
       "import_name": "agnara_events",
-      "role": "reserved",
+      "role": "adapter",
       "console_scripts": [],
       "third_party_requirements": []
     },

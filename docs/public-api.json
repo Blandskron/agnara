@@ -622,7 +622,84 @@
       "modules": [
         {
           "module": "agnara_events",
-          "exports": []
+          "exports": [
+            {
+              "name": "ASYNCAPI_VERSION",
+              "stability": "provisional"
+            },
+            {
+              "name": "CLOUDEVENTS_JSON_CONTENT_TYPE",
+              "stability": "provisional"
+            },
+            {
+              "name": "DRAFT_07_SCHEMA_FORMAT",
+              "stability": "provisional"
+            },
+            {
+              "name": "AsyncAPIExportError",
+              "stability": "provisional"
+            },
+            {
+              "name": "AsyncAPIInfo",
+              "stability": "provisional"
+            },
+            {
+              "name": "CompiledEventBinding",
+              "stability": "provisional"
+            },
+            {
+              "name": "ConsumerBudgets",
+              "stability": "provisional"
+            },
+            {
+              "name": "ConsumerDiagnostic",
+              "stability": "provisional"
+            },
+            {
+              "name": "Delivery",
+              "stability": "provisional"
+            },
+            {
+              "name": "DeliverySource",
+              "stability": "provisional"
+            },
+            {
+              "name": "EventSubscriptionExposure",
+              "stability": "provisional"
+            },
+            {
+              "name": "EventsDefinitionError",
+              "stability": "provisional"
+            },
+            {
+              "name": "SettlementAction",
+              "stability": "provisional"
+            },
+            {
+              "name": "SettlementUncertaintyError",
+              "stability": "provisional"
+            },
+            {
+              "name": "compile_event_surface",
+              "stability": "provisional"
+            },
+            {
+              "name": "compile_inbound_event",
+              "stability": "provisional"
+            },
+            {
+              "name": "consume_inbound_events",
+              "stability": "provisional"
+            },
+            {
+              "name": "declare_inbound_event",
+              "stability": "provisional"
+            },
+            {
+              "name": "project_asyncapi",
+              "stability": "provisional"
+            }
+          ]
         }
       ]
     },

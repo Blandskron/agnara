@@ -153,8 +153,8 @@ def test_no_public_name_is_underscore_prefixed(module: str) -> None:
 
 
 #: Modules whose exports are classified `provisional` by a reviewed decision.
-#: ADR 0099 classifies the whole `agnara_a2a` surface; nothing else may be.
-PROVISIONAL_MODULES = frozenset({"agnara_a2a"})
+#: ADR 0099 classifies `agnara_a2a` and ADR 0103 classifies `agnara_events`.
+PROVISIONAL_MODULES = frozenset({"agnara_a2a", "agnara_events"})
 
 
 @pytest.mark.parametrize("module", MODULE_NAMES)

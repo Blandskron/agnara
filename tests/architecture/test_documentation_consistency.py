@@ -162,17 +162,12 @@ def test_the_declared_public_surface_matches_the_package(distribution: str) -> N
     )
 
 
-def test_the_reserved_namespaces_are_still_reserved(maturity: str) -> None:
-    """`agnara-events` is documented as having no runtime.
-
-    If it grows an implementation, its row stops being true, and this is
-    the cheapest place to notice. `agnara-a2a` left this list with ADR 0099.
-    """
-    for distribution in ("agnara-events",):
+def test_every_distribution_surface_is_governed(maturity: str) -> None:
+    """All seven workspace distributions now declare governed exports in ``__all__``."""
+    for distribution in sorted(DISTRIBUTIONS):
         module = importlib.import_module(distribution.replace("-", "_"))
-        assert getattr(module, "__all__", None) == [], (
-            f"{distribution} now exports something; update docs/MATURITY.md"
-        )
+        exported = getattr(module, "__all__", None)
+        assert exported, f"{distribution} has no public exports; update docs/MATURITY.md"
 
 
 # ---------------------------------------------------------------------------

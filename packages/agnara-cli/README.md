@@ -46,11 +46,11 @@ agnara doctor --project path/to/project --json
 
 Read-only checks cover the executing Python >=3.14 baseline, strict project
 manifest, contained app directories and installed core/CLI/declared HTTP/MCP
-version metadata. A2A declarations fail with a message about missing diagnostic
-coverage, rather than claiming the provisional adapter has no runtime. Events
-declarations fail as a reserved namespace without an event runtime; Tasks
-declarations fail because no task runtime is implemented. These checks do not
-inspect those distributions' metadata and fail whether or not they are installed.
+version metadata. A2A and Events declarations fail with a message about missing
+diagnostic coverage, rather than claiming those provisional adapters have no
+runtime. Tasks declarations fail because no task runtime is implemented. These
+checks do not inspect those distributions' metadata and fail whether or not they
+are installed.
 No project or adapter code is imported, no files are written and no dependencies
 are installed.
 

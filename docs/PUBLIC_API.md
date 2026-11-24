@@ -7,9 +7,10 @@ inventory and does not create a second contract.
 
 ## Current 1.x public API stability contract
 
-The manifest classifies **174 exports across 13 modules**: 174
-distinct names at 174 canonical import paths. The current 1.x contract contains
-the 166 `stable` names; the 8 `agnara_a2a` names are `provisional` (ADR 0099).
+The manifest classifies **193 exports across 13 modules**: 193
+distinct names at 193 canonical import paths. The current 1.x contract contains
+the 166 `stable` names; the 8 `agnara_a2a` names (ADR 0099) and 19
+`agnara_events` names (ADR 0103) are `provisional`.
 Leaf-module re-export aliases are no longer in `__all__` and are not
 supported public API.
 
@@ -17,10 +18,11 @@ supported public API.
 behaviour are compatible throughout the current major line. `provisional`
 means the name is governed and importable, but its signature and behaviour may
 change in a minor release after a reviewed decision; it is not part of the 1.x
-compatibility promise. Only `agnara_a2a` uses it, by maintainer decision
-recorded in ADR 0099. `experimental` remains vocabulary for a future deliberate
-classification and does not occur in the current inventory. `internal` names are outside the manifest
-and have no compatibility promise.
+compatibility promise. Only `agnara_a2a` (ADR 0099) and `agnara_events`
+(ADR 0103) use it, by proposed architecture decision. `experimental` remains
+vocabulary for a future deliberate classification and does not occur in the
+current inventory. `internal` names are outside the manifest and have no
+compatibility promise.
 
 ## Canonical modules
 
@@ -35,15 +37,13 @@ and have no compatibility promise.
 | `agnara` | `agnara.schema` | 13 |
 | `agnara-a2a` | `agnara_a2a` | 0 (8 `provisional`) |
 | `agnara-cli` | `agnara_cli` | 4 |
-| `agnara-events` | `agnara_events` | 0 |
+| `agnara-events` | `agnara_events` | 0 (19 `provisional`) |
 | `agnara-http` | `agnara_http` | 14 |
 | `agnara-mcp` | `agnara_mcp` | 20 |
 | `agnara-telemetry` | `agnara_telemetry` | 2 |
 
-The reserved `agnara_events` namespace is deliberately classified with no
-exports. All other non-private implementation modules are
-internal unless their name is re-exported from this table's module through the
-manifest.
+All non-private implementation modules outside this table are internal unless
+their names are re-exported from a governed module listed above.
 
 ## Canonical spelling and authority
 

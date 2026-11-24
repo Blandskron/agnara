@@ -1,20 +1,20 @@
 # agnara-events
 
-`agnara-events` reserves the official event-adapter namespace. It has no
-public exports, broker integration, event runtime or AsyncAPI projection.
-Installing it does not enable event publication.
+`agnara-events` provides Agnara's provisional inbound CloudEvents 1.0
+structured-mode adapter and opt-in AsyncAPI 3.1.0 / JSON Schema Draft-07
+projection ([ADR 0101](../../docs/adr/0101-initial-inbound-event-projection.md),
+[ADR 0103](../../docs/adr/0103-events-provisional-public-surface.md)).
 
 ```bash
 pip install "agnara-events==1.0.4"
 ```
 
-The import package is `agnara_events`; its `__all__` is empty. It pins the
-exact synchronized `agnara` kernel and does not depend on sibling
-adapters. There is no usage API beyond importing the reserved namespace.
+All 19 exports in `agnara_events` are classified `provisional` in
+`docs/public-api.json` and may change before promotion. The package depends only
+on the synchronized `agnara` kernel and Python's standard library; broker SDKs,
+connections and retry topologies remain host-owned behind `Delivery` and
+`DeliverySource`.
 
-[RFC 0011](../../docs/rfc/0011-event-initial-projection.md) compares candidate
-first projections and defines a future feasibility gate. It is open research,
-not a usage guide or an implementation/support commitment.
-
-See the [public API policy](../../docs/PUBLIC_API.md) and
+See the [inbound events guide](../../docs/EVENTS_INBOUND.md),
+[public API policy](../../docs/PUBLIC_API.md) and
 [maturity matrix](../../docs/MATURITY.md).

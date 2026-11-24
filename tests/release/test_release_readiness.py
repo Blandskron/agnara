@@ -166,9 +166,6 @@ GOVERNED_MODULES = [
     if module["exports"]
 ]
 
-#: Distributions that hold a reserved namespace: classified, and empty.
-RESERVED_DISTRIBUTIONS = ["agnara-events"]
-
 
 def manifest() -> dict[str, Any]:
     return json.loads(readiness.PUBLIC_API_PATH.read_text(encoding="utf-8"))
@@ -238,18 +235,12 @@ def test_public_api_gate_rejects_manifest_drift(
     assert module in detail
 
 
-@pytest.mark.parametrize("distribution", RESERVED_DISTRIBUTIONS)
-def test_a_reserved_namespace_cannot_quietly_gain_an_export(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, distribution: str
+def test_an_adapter_module_cannot_quietly_gain_an_unexported_name(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """`agnara-events` declares an empty surface on purpose.
-
-    An empty ``__all__`` is skipped by the reverse walk, so without a manifest
-    entry a reserved namespace would be the one place a first export could
-    appear ungoverned. Classifying the empty list is what closes that.
-    """
+    """Adding an unlisted name to the manifest fails the release gate."""
     document = manifest()
-    modules = manifest_modules(document, distribution)
+    modules = manifest_modules(document, "agnara-events")
     modules[0]["exports"].append({"name": "Sneaked", "stability": "provisional"})
     use_manifest(document, tmp_path, monkeypatch)
 

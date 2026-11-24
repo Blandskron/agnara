@@ -10,13 +10,13 @@ full history are available through Git tags and GitHub Releases.
 - Add the searchable Agnara 1.0.4 manual at the repository root for GitHub
   Pages and consolidate duplicate navigation and planning documentation.
 
-- Implement the internal EVT-03 inbound event projection inside
-  `agnara-events` (strict CloudEvents 1.0 JSON decoder, broker-neutral
-  delivery/settlement consumer covering all 13 ADR 0101 outcome rows and
-  cooperative shutdown, and opt-in AsyncAPI 3.1.0 / Draft-07 projection),
-  alongside conformance tests in `tests/events/` and the RabbitMQ 4.2.5 /
-  `aio-pika` 9.6.1 EVT-03 probe. `agnara-events` retains zero public exports
-  until EVT-04.
+- Implement the EVT-03/EVT-04 inbound event projection in `agnara-events`
+  (strict CloudEvents 1.0 JSON decoder, broker-neutral delivery/settlement
+  consumer covering all 13 ADR 0101 outcome rows and cooperative shutdown, and
+  opt-in AsyncAPI 3.1.0 / Draft-07 projection), exposing 19 `provisional`
+  exports under proposed ADR 0103 alongside `examples/events_inbound.py`,
+  `docs/EVENTS_INBOUND.md`, `tests/events/`, and the live RabbitMQ 4.2.5 /
+  `aio-pika` 9.6.1 probe. `agnara-events` retains zero broker dependencies.
 
 ### Changed
 
