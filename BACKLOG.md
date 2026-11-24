@@ -8,10 +8,8 @@ the milestone and the [maturity matrix](docs/MATURITY.md) for current behavior.
 
 - [ ] Maintain runnable tutorials, reference applications and interoperability
   evidence against the governed API and explicit host contract.
-- [ ] Review the [proposed inbound event projection](docs/adr/0101-initial-inbound-event-projection.md)
-  and scope EVT-03 if the maintainer accepts the profile.
-- [ ] Review the [proposed durable execution ownership decision](docs/adr/0102-durable-execution-ownership.md)
-  against the DUR-01 evidence and the conditions for further research.
+- [ ] Scope EVT-04 (public exports, package maturity, runnable guide and support
+  review for `agnara-events`) after maintainer review of EVT-03.
 - [ ] Evaluate further protocol projections in separate feasibility Issues.
 - [ ] Review activation of the
   [Python 3.15 research plan](docs/research/python-315-readiness.md) before

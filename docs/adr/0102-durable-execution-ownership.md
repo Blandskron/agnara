@@ -1,6 +1,6 @@
 # ADR 0102 — Durable execution ownership
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-16
 - Tracking: [GitHub Issue #789](https://github.com/Blandskron/agnara/issues/789) (DUR-02)
 - Related: ADR 0087, ADR 0089, ADR 0091, ADR 0094, [RFC 0012](../rfc/0012-durable-execution-boundary.md)

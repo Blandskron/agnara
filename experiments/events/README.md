@@ -47,3 +47,17 @@ The probe translates one fixed tuple schema and does not generate an AsyncAPI
 document. EVT-02 needs decisions on strict numeric schema semantics, supported
 translations, error projection and which settlement guarantees the public
 contract can describe. [RabbitMQ quorum queues](https://www.rabbitmq.com/docs/4.2/quorum-queues)
+
+## EVT-03 internal projection round-trip fixture
+
+With [ADR 0101](../../docs/adr/0101-initial-inbound-event-projection.md)
+accepted, `experiments/events/evt03_probe.py` exercises the internal
+`agnara_events` exposure, strict CloudEvents decoder, consumer settlement and
+AsyncAPI 3.1.0 / Draft-07 projection against the same disposable RabbitMQ 4.2.5
+container, reporting snapshot revision conflicts as canonical
+`Failure(FailureCode.CONFLICT)`.
+
+```powershell
+uv pip install --no-deps --python experiments/events/.venv/Scripts/python.exe ./packages/agnara ./packages/agnara-events
+& ./experiments/events/run_evt03.ps1
+```
