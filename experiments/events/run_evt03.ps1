@@ -13,8 +13,9 @@ try {
     $deadline = (Get-Date).AddSeconds(60)
     do {
         $ready = & {
+            $ErrorActionPreference = 'Continue'
             $PSNativeCommandUseErrorActionPreference = $false
-            docker exec --user rabbitmq $name sh -c 'test -r /var/lib/rabbitmq/.erlang.cookie && rabbitmq-diagnostics -q check_running' 2>$null | Out-Null
+            docker exec --user rabbitmq $name sh -c 'test -r /var/lib/rabbitmq/.erlang.cookie && rabbitmq-diagnostics -q check_running' 2>&1 | Out-Null
             $LASTEXITCODE -eq 0
         }
         if (-not $ready) { Start-Sleep -Milliseconds 500 }
@@ -25,11 +26,17 @@ try {
     }
 
     docker exec $name rabbitmqctl -q add_user evt-publisher $env:AGNARA_EVT_PUBLISHER | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Failed to add evt-publisher' }
     docker exec $name rabbitmqctl -q set_permissions evt-publisher '^$' '^inventory-in$' '^$' | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Failed to set evt-publisher permissions' }
     docker exec $name rabbitmqctl -q add_user evt-denied $env:AGNARA_EVT_DENIED | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Failed to add evt-denied' }
     docker exec $name rabbitmqctl -q set_permissions evt-denied '^$' '^$' '^$' | Out-Null
-    docker exec $name rabbitmqctl -q set_policy evt03 '^inventory$' '{"dead-letter-strategy":"at-least-once"}' --apply-to quorum_queues | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Failed to set evt-denied permissions' }
+    docker exec $name rabbitmqctl -q set_policy evt03 '^inventory$' '{\"dead-letter-strategy\":\"at-least-once\"}' --apply-to quorum_queues | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Failed to set evt03 quorum dead-letter policy' }
     & (Join-Path $PSScriptRoot '.venv/Scripts/python.exe') -m experiments.events.evt03_probe
+    if ($LASTEXITCODE -ne 0) { throw "evt03_probe failed with exit code $LASTEXITCODE" }
 }
 finally {
     $PSNativeCommandUseErrorActionPreference = $false

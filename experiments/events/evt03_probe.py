@@ -379,14 +379,28 @@ async def probe(inventory: Evt03Inventory) -> dict[str, Any]:
             # 4. Bounded redelivery for transient internal failure -> dead-lettered at limit.
             inventory.transient_failure = True
             await publish_event(exchange, EXACT_REVISION + 1, event_id="transient")
-            for _ in range(3):
-                transient_diag = await run_one_delivery(
-                    binding, container, subscription, budgets=budgets
+            transient_stop = asyncio.Event()
+            transient_diags: list[_ConsumerDiagnostic] = []
+
+            def stop_after_three(entry: _ConsumerDiagnostic) -> None:
+                transient_diags.append(entry)
+                if len(transient_diags) >= 3:
+                    transient_stop.set()
+
+            async with _RabbitMqDeliverySource(subscription) as source:
+                observed_transient = await _consume_inbound_events(
+                    binding,
+                    container,
+                    source,
+                    budgets=budgets,
+                    stop_event=transient_stop,
+                    on_diagnostic=stop_after_three,
                 )
-                assert (
-                    transient_diag.outcome == "internal_failure"
-                    and transient_diag.settlement == "release"
-                )
+            assert len(observed_transient) == 3
+            assert all(
+                d.outcome == "internal_failure" and d.settlement == "release"
+                for d in observed_transient
+            )
             await dead_letter("delivery_limit")
             inventory.transient_failure = False
 

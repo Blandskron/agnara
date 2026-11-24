@@ -61,3 +61,11 @@ container, reporting snapshot revision conflicts as canonical
 uv pip install --no-deps --python experiments/events/.venv/Scripts/python.exe ./packages/agnara ./packages/agnara-events
 & ./experiments/events/run_evt03.ps1
 ```
+
+Retained live run: Windows 11 (`Windows-11-10.0.26300-SP0`), Docker `29.9.3`,
+`rabbitmq:4.2.5-alpine`, Python `3.14.4`, SQLite `3.50.4`, `agnara 1.0.4`,
+`agnara-events 1.0.4`, `aio-pika 9.6.1`, `jsonschema 4.26.0`, `pydantic 2.13.5`.
+Observed output: `committed_revisions: [9007199254740993, 9007199254740995]`,
+`asyncapi_version: "3.1.0"`, dead-letter routing on `CONFLICT`, oversized/duplicate/wrong-type
+envelopes, lexical `2.0`, 3 transient `delivery_limit` attempts, and post-shutdown
+replay commit.
