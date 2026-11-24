@@ -15,7 +15,9 @@ full history are available through Git tags and GitHub Releases.
   consumer covering all 13 ADR 0101 outcome rows and cooperative shutdown, and
   opt-in AsyncAPI 3.1.0 / Draft-07 projection), exposing 19 `provisional`
   exports under proposed ADR 0103 alongside `examples/events_inbound.py`,
-  `docs/EVENTS_INBOUND.md`, `tests/events/`, and the live RabbitMQ 4.2.5 /
+  `docs/EVENTS_INBOUND.md`, installed candidate-wheel dogfooding
+  (`tests/reference_apps/events_guide.py`), discovery index / Documentation MCP
+  coverage (`docs/index.json`), `tests/events/`, and the live RabbitMQ 4.2.5 /
   `aio-pika` 9.6.1 probe. `agnara-events` retains zero broker dependencies.
 
 ### Changed

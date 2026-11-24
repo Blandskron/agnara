@@ -18,6 +18,7 @@ ADDITIONAL_GUIDES = ("fastapi_embedding.py", "sqlite_persistence.py")
 STRUCTURED_GUIDES = (
     ("a2a_service.py", "a2a_guide.py", "A2A_GUIDE_ARTIFACT_OK"),
     ("a2a_disconnect.py", "a2a_disconnect_guide.py", "A2A_DISCONNECT_RECIPE_ARTIFACT_OK"),
+    ("events_inbound.py", "events_guide.py", "EVENTS_GUIDE_ARTIFACT_OK"),
     ("direct_streaming.py", "direct_streaming_guide.py", "DIRECT_STREAMING_GUIDE_ARTIFACT_OK"),
     ("mcp_tools.py", "mcp_guide.py", "MCP_GUIDE_ARTIFACT_OK"),
     ("http_mcp.py", "http_mcp_guide.py", "HTTP_MCP_GUIDE_ARTIFACT_OK"),
