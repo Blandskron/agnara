@@ -185,3 +185,21 @@ def test_benchmark_prompts_and_schema_are_valid_without_claimed_results() -> Non
             assert prompts["target_version"] in item["text"]
     Draft202012Validator.check_schema(json.loads((benchmark / "result.schema.json").read_text()))
     assert not (benchmark / "results.json").exists()
+
+
+def test_runnable_example_provenance_matches_104_baseline() -> None:
+    examples_readme = (ROOT / "examples/README.md").read_text(encoding="utf-8")
+    for stale in (
+        "unreleased checkout/candidate wheels",
+        "target unreleased fixes",
+        "current-checkout output fixes",
+    ):
+        assert stale not in examples_readme
+
+    a2a_example = (ROOT / "examples/a2a_service.py").read_text(encoding="utf-8")
+    assert "unreleased checkout" not in a2a_example
+    assert "1.0.3 A2A wheel" not in a2a_example
+
+    sqlite_guide = (ROOT / "docs/SQLITE_PERSISTENCE.md").read_text(encoding="utf-8")
+    assert "releases/tag/v1.0.4" in sqlite_guide
+    assert "releases/tag/v1.0.3" not in sqlite_guide

@@ -1,7 +1,7 @@
 """Run the provisional A2A profile with the official client, without sockets.
 
-Run ``uv run python examples/a2a_service.py`` from this unreleased checkout.
-The published 1.0.3 A2A wheel cannot run this example. See docs/A2A_SERVICE.md.
+Run ``uv run python examples/a2a_service.py`` from a synchronized checkout or
+with Agnara 1.0.4 provisional packages. See docs/A2A_SERVICE.md.
 """
 
 from __future__ import annotations
