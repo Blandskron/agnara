@@ -7,7 +7,8 @@ unique numbers.
 Most older ADRs still say `Proposed`, including some decisions implemented in
 code. The following records explicitly declare `Accepted`: ADR 0023, ADR 0068,
 ADR 0069, ADR 0073, ADR 0084, ADR 0085, ADR 0086, ADR 0087,
-ADR 0088, ADR 0089, ADR 0091, ADR 0092, ADR 0093, ADR 0094 and ADR 0095.
+ADR 0088, ADR 0089, ADR 0091, ADR 0092, ADR 0093, ADR 0094, ADR 0095,
+ADR 0101 and ADR 0102.
 The index and record statuses are checked together. `docs/MATURITY.md`, not an
 ADR status alone, describes current implementation.
 

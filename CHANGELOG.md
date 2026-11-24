@@ -10,7 +10,18 @@ full history are available through Git tags and GitHub Releases.
 - Add the searchable Agnara 1.0.4 manual at the repository root for GitHub
   Pages and consolidate duplicate navigation and planning documentation.
 
+- Implement the internal EVT-03 inbound event projection inside
+  `agnara-events` (strict CloudEvents 1.0 JSON decoder, broker-neutral
+  delivery/settlement consumer covering all 13 ADR 0101 outcome rows and
+  cooperative shutdown, and opt-in AsyncAPI 3.1.0 / Draft-07 projection),
+  alongside conformance tests in `tests/events/` and the RabbitMQ 4.2.5 /
+  `aio-pika` 9.6.1 EVT-03 probe. `agnara-events` retains zero public exports
+  until EVT-04.
+
 ### Changed
+
+- Accept ADR 0101 (initial inbound event projection) and ADR 0102
+  (application-owned durable execution recovery).
 
 - Retire answered RFCs to linked Git history and consolidate discovery,
   schema and adapter guidance around their current contracts.

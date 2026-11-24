@@ -1,6 +1,6 @@
 # ADR 0101 — Initial inbound event projection
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-13
 - Tracking: GitHub Issue #787 (EVT-02)
 - Related: ADR 0017, ADR 0018, ADR 0046, ADR 0070, ADR 0086, ADR 0091,

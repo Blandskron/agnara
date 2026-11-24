@@ -47,3 +47,25 @@ The probe translates one fixed tuple schema and does not generate an AsyncAPI
 document. EVT-02 needs decisions on strict numeric schema semantics, supported
 translations, error projection and which settlement guarantees the public
 contract can describe. [RabbitMQ quorum queues](https://www.rabbitmq.com/docs/4.2/quorum-queues)
+
+## EVT-03 internal projection round-trip fixture
+
+With [ADR 0101](../../docs/adr/0101-initial-inbound-event-projection.md)
+accepted, `experiments/events/evt03_probe.py` exercises the internal
+`agnara_events` exposure, strict CloudEvents decoder, consumer settlement and
+AsyncAPI 3.1.0 / Draft-07 projection against the same disposable RabbitMQ 4.2.5
+container, reporting snapshot revision conflicts as canonical
+`Failure(FailureCode.CONFLICT)`.
+
+```powershell
+uv pip install --no-deps --python experiments/events/.venv/Scripts/python.exe ./packages/agnara ./packages/agnara-events
+& ./experiments/events/run_evt03.ps1
+```
+
+Retained live run: Windows 11 (`Windows-11-10.0.26300-SP0`), Docker `29.9.3`,
+`rabbitmq:4.2.5-alpine`, Python `3.14.4`, SQLite `3.50.4`, `agnara 1.0.4`,
+`agnara-events 1.0.4`, `aio-pika 9.6.1`, `jsonschema 4.26.0`, `pydantic 2.13.5`.
+Observed output: `committed_revisions: [9007199254740993, 9007199254740995]`,
+`asyncapi_version: "3.1.0"`, dead-letter routing on `CONFLICT`, oversized/duplicate/wrong-type
+envelopes, lexical `2.0`, 3 transient `delivery_limit` attempts, and post-shutdown
+replay commit.
