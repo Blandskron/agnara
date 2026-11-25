@@ -4,6 +4,7 @@
 - Date: 2026-11-24
 - Tracking: GitHub Issue #817
 - Initiative: Protocol Projections
+- Follow-up: [WS-01 evidence](../../experiments/websocket/README.md)
 - Related: ADR 0026, ADR 0029, ADR 0041, ADR 0070, ADR 0071, ADR 0084, ADR 0085, ADR 0086, RFC 0009
 
 ## 1. Purpose and current boundary
