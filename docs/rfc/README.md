@@ -8,8 +8,9 @@
 | [0008 · Framework embedding](0008-framework-embedding-and-ecosystem-composition.md) | Composition beyond the host boundary resolved by [ADR 0094](../adr/0094-framework-neutral-embedding-contract.md). |
 | [0009 · Streaming](0009-streaming-model.md) | Additional projections beyond the [kernel contract](../adr/0084-core-streaming-contract.md) and [HTTP SSE](../adr/0085-http-sse-streaming-projection.md). |
 | [0010 · A2A](0010-a2a-initial-projection.md) | Profiles beyond the [provisional complete-result surface](../adr/0099-a2a-provisional-public-surface.md). |
-| [0011 · Events](0011-event-initial-projection.md) | Review the [proposed inbound projection](../adr/0101-initial-inbound-event-projection.md). |
-| [0012 · Durable execution](0012-durable-execution-boundary.md) | Review the [proposed ownership decision](../adr/0102-durable-execution-ownership.md). |
+| [0011 · Events](0011-event-initial-projection.md) | Implemented as provisional inbound profile under accepted [ADR 0101](../adr/0101-initial-inbound-event-projection.md) and proposed [ADR 0103](../adr/0103-events-provisional-public-surface.md); outbound publishing, batching and stability promotion remain open. |
+| [0012 · Durable execution](0012-durable-execution-boundary.md) | Boundary settled by accepted [ADR 0102](../adr/0102-durable-execution-ownership.md); future task/workflow runtime projections remain separate work. |
+| [0013 · WebSocket streaming](0013-websocket-streaming-projection.md) | Feasibility and boundary questions for projecting ADR 0084 capability streams over ASGI WebSockets. |
 
 ## Answered proposals
 
