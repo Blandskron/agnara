@@ -76,9 +76,13 @@ validation rejects `2.0` as `invalid_input`.
 
 ```bash
 uv run python -m pytest tests/events tests/docs/test_events_inbound_example.py
+uv run python -m pytest tests/release/test_integrated_dogfooding.py
 uv run python scripts/check_public_imports.py examples/events_inbound.py docs/EVENTS_INBOUND.md
 ```
 
+The installed-artifact gate builds all seven candidate wheels, installs them
+outside the checkout, copies the exact example, and runs the
+[consumer](../tests/reference_apps/events_guide.py) under Python `-I`.
 For a live RabbitMQ 4.2.5 / `aio-pika` 9.6.1 round-trip fixture using Docker,
 see [experiments/events/README.md](../experiments/events/README.md). Exports
 stay `provisional` and maturity stays `EXPERIMENTAL`; event publishing, binary

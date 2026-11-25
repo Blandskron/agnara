@@ -599,7 +599,7 @@ def test_real_stdio_initialize_list_call_and_clean_shutdown(root: Path) -> None:
 
 def test_actual_repository_corpus_and_governed_api() -> None:
     corpus = freeze(ROOT)
-    assert len(corpus.documents) == 41
+    assert len(corpus.documents) == 43
     assert corpus.documents["a2a-service"].path == "docs/A2A_SERVICE.md"
     assert corpus.documents["a2a-service"].stability == "current-repository"
     assert corpus.documents["a2a-service-example"].path == "examples/a2a_service.py"
@@ -608,6 +608,10 @@ def test_actual_repository_corpus_and_governed_api() -> None:
     assert corpus.documents["a2a-proposal"].stability == "proposed"
     assert corpus.documents["a2a-feasibility"].path == "docs/research/a2a-initial-feasibility.md"
     assert corpus.documents["a2a-feasibility"].stability == "current-repository"
+    assert corpus.documents["events-inbound"].path == "docs/EVENTS_INBOUND.md"
+    assert corpus.documents["events-inbound"].stability == "current-repository"
+    assert corpus.documents["events-inbound-example"].path == "examples/events_inbound.py"
+    assert corpus.documents["events-inbound-example"].stability == "current-repository"
     assert corpus.documents["events-proposal"].path == "docs/rfc/0011-event-initial-projection.md"
     assert corpus.documents["events-proposal"].stability == "proposed"
     assert corpus.documents["starlette-embedding"].path == "docs/STARLETTE_EMBEDDING.md"
@@ -691,6 +695,34 @@ def test_provisional_a2a_guide_requires_explicit_opt_in() -> None:
                 "get_example", {"version": "1.0.4", "example_id": "a2a-service-example"}
             )
         ).is_error
+
+    run(scenario())
+
+
+def test_provisional_events_guide_requires_explicit_opt_in() -> None:
+    service = DocumentationService(freeze(ROOT))
+
+    async def scenario() -> None:
+        arguments = {"version": "1.0.4", "document_id": "events-inbound"}
+        assert (await service.call("read_doc", arguments)).is_error
+        guide = body(await service.call("read_doc", {**arguments, "include_nonbaseline": True}))
+        assert guide["stability"] == "current-repository"
+        assert guide["source_path"] == "docs/EVENTS_INBOUND.md"
+        assert "ADR 0103" in guide["content"]["text"]
+        example_args = {"version": "1.0.4", "example_id": "events-inbound-example"}
+        assert (await service.call("get_example", example_args)).is_error
+        hits = body(
+            await service.call(
+                "search_docs",
+                {
+                    "version": "1.0.4",
+                    "query": "events",
+                    "topic": "events",
+                    "include_nonbaseline": True,
+                },
+            )
+        )["content"]["hits"]
+        assert {"events-inbound", "events-inbound-example"} <= {hit["id"] for hit in hits}
 
     run(scenario())
 

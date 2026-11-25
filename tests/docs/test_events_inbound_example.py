@@ -3,44 +3,56 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import subprocess
 import sys
+from copy import deepcopy
 from pathlib import Path
 
+import pytest
 from examples.events_inbound import demonstrate
 from jsonschema import Draft7Validator
 
+from tests.reference_apps.events_guide import validate
 
-def test_events_inbound_example_outcomes_and_cleanup() -> None:
+
+@pytest.fixture(scope="module")
+def outcome():
     async def run() -> dict:
         before = asyncio.all_tasks()
         result = await demonstrate()
         assert asyncio.all_tasks() == before
         return result
 
-    outcome = asyncio.run(run())
-    assert outcome["surface_count"] == 1
-    assert outcome["asyncapi"] == "3.1.0"
-    assert outcome["diagnostics"] == [
-        ("success", "acknowledge"),
-        ("conflict", "reject"),
-        ("invalid_input", "reject"),
-        ("type_mismatch", "reject"),
-        ("internal_failure", "release"),
-        ("cancelled", "release"),
-    ]
-    assert outcome["events"][-3:] == [
-        "ledger.close",
-        "delivery.release",
-        "container.close",
-    ]
-    assert "private-broker-diagnostic-must-be-redacted" not in json.dumps(outcome)
+    return asyncio.run(run())
 
+
+def test_events_inbound_example_outcomes_and_cleanup(outcome) -> None:
+    validate(outcome)
     schema = outcome["doc"]["components"]["messages"]["inventory-applyMessage"]["payload"]["schema"]
     Draft7Validator.check_schema(schema)
-    assert "servers" not in outcome["doc"]
-    assert "ledger" not in schema["properties"]["data"]["properties"]
+
+
+@pytest.mark.parametrize(
+    "corruption",
+    ["diagnostics", "events", "redaction", "servers", "protected_param"],
+)
+def test_artifact_validator_rejects_incorrect_evidence(outcome, corruption: str) -> None:
+    changed = deepcopy(outcome)
+    if corruption == "diagnostics":
+        changed["diagnostics"][0] = ("success", "reject")
+    elif corruption == "events":
+        changed["events"][-2:] = reversed(changed["events"][-2:])
+    elif corruption == "redaction":
+        changed["diagnostics"].append(("private-broker-diagnostic-must-be-redacted", "release"))
+    elif corruption == "servers":
+        changed["doc"]["servers"] = {"prod": {"host": "amqp://secret"}}
+    else:
+        schema = changed["doc"]["components"]["messages"]["inventory-applyMessage"]["payload"][
+            "schema"
+        ]
+        schema["properties"]["data"]["properties"]["ledger"] = {"type": "string"}
+    with pytest.raises(AssertionError):
+        validate(changed)
 
 
 def test_events_inbound_example_runs_outside_checkout(tmp_path: Path) -> None:

@@ -118,6 +118,7 @@ versions stay pinned outside distributable dependencies.
 | [Direct idempotency](../examples/direct_idempotency.py) | Exact sequential receipts/refusals, principal isolation and two effects; event-gated concurrent in-progress refusal and denial, later receipt/identity reuse and exactly one effect. | One process and event loop; no threads, multiple workers, durable persistence, lease expiry, restart, HTTP/MCP-selector or independent resource-close evidence. |
 | [Nested invocation](../examples/nested_invocation.py) | Exact authorized summary, explicit successful fallback for child denial, parent/no-scope refusal before effects, distinct root execution identities and ordered independent handler traces. | Sequential complete-result calls in one compiled application per case; no independent child identity/context, resource-close, cancellation, delegation or cross-application evidence from this guide consumer. |
 | [Direct streaming](../examples/direct_streaming.py) | Seven ordered typed unit/count/terminal/refusal observations, exact redacted failures, demand and producer/provider traces, plus propagated caller cancellation and cleanup without surviving tasks. | Local direct Python stream owner; independent container-close/deadline checks remain checkout evidence, with no network backpressure, durable resumption or cross-task sharing claim. |
+| [Inbound events](../examples/events_inbound.py) | CloudEvents 1.0 acceptance (`9007199254740993`), canonical `CONFLICT`, lexical `2.0` and mismatched-type refusals without `Ledger` acquisition, redacted `internal_failure` release, shutdown cancellation cleanup before `delivery.release` and detached AsyncAPI 3.1.0 projection. | In-memory `DeliverySource` fixture under provisional ADR 0101/0103 exports; live RabbitMQ 4.2.5 / `aio-pika` 9.6.1 round trips remain a separate Docker experiment, with no event publishing, batching or stability commitment. |
 
 The fixture tests in `tests/release/` check output, redaction and execution
 traces. The separate `tests/reference_apps/nested_resource_lifecycle.py`
@@ -143,8 +144,13 @@ WebSockets and MCP streaming are not projections of the kernel stream.
 with in-process and a bounded real-loopback Uvicorn/h11 fixture. Peer disconnect
 after handler entry relies on deadline cleanup; this is not a supported host
 integration. See the [A2A guide](A2A_SERVICE.md#real-loopback-host-evidence).
-`agnara-events` exposes no runtime API. GraphQL, gRPC,
-brokers, task queues and workflow engines require separate contracts before
+`agnara-events` exposes a provisional ADR 0101/0103 inbound CloudEvents 1.0
+structured-mode consumer and opt-in AsyncAPI 3.1.0 / Draft-07 projection,
+verified by installed candidate wheels and a live RabbitMQ 4.2.5 / `aio-pika`
+9.6.1 fixture; broker SDKs stay host-owned, and event publishing, batching,
+binary mode and stability commitments remain absent. See the
+[inbound events guide](EVENTS_INBOUND.md). GraphQL, gRPC,
+task queues and workflow engines require separate contracts before
 implementation.
 
 The [maturity matrix](MATURITY.md) owns current subsystem claims;
