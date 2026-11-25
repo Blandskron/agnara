@@ -1,0 +1,47 @@
+{
+  "experiment": "WS-01",
+  "python": "3.14.4",
+  "scenarios": {
+    "backpressure_and_disconnect": {
+      "disconnect_cancelled_producer": true,
+      "zero_prefetch_verified": true
+    },
+    "deadline_and_concurrency": {
+      "concurrent_isolated": true,
+      "deadline_outcome": "timed_out",
+      "singleton_lifetime_preserved": true
+    },
+    "option_a_completed_and_empty": {
+      "di_closed": 2,
+      "empty_units": 0,
+      "nonempty_units": 3
+    },
+    "option_b_input_contracts": {
+      "invalid_close": 1008,
+      "ok_units": 2,
+      "oversized_initial_close": 1009
+    },
+    "origin_rejected_before_accept": {
+      "di_opens": 0,
+      "missing_close": 1008,
+      "untrusted_close": 1008
+    },
+    "policy_denied_before_di": {
+      "di_opens": 0,
+      "option_a_pre_accept_close": 1008,
+      "option_b_outcome": "forbidden"
+    },
+    "redaction_and_oversize": {
+      "mid_fail_units": 1,
+      "oversize_unit_refused": true,
+      "pre_fail_units": 0,
+      "redacted": true
+    },
+    "tcp_loopback_rfc6455": {
+      "abrupt_tcp_drop_cleaned": true,
+      "bad_origin_http": 403,
+      "loopback_units": 2
+    }
+  },
+  "surviving_tasks": 0
+}
