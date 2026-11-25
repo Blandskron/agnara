@@ -350,3 +350,32 @@ def test_decode_cloudevent_rejects_oversized_integer_digits() -> None:
     with pytest.raises(_EnvelopeError) as exc_info:
         _decode_cloudevent(body, CLOUDEVENTS_JSON_CONTENT_TYPE, expected_type="e.v1")
     assert exc_info.value.category == "integer_bounds"
+
+
+@pytest.mark.parametrize(
+    "raw_json",
+    [
+        b'{"specversion":"1.0","id":"bad\\uD800","source":"/s","type":"e.v1","data":{}}',
+        b'{"specversion":"1.0","id":"1","source":"/s\\uDC00","type":"e.v1","data":{}}',
+        b'{"specversion":"1.0","id":"1","source":"/s","type":"e.v1","data":{"k\\uD800":1}}',
+        b'{"specversion":"1.0","id":"1","source":"/s","type":"e.v1","data":{"nested":["\\uDFFF"]}}',
+    ],
+)
+def test_decode_cloudevent_rejects_unpaired_surrogates(raw_json: bytes) -> None:
+    with pytest.raises(_EnvelopeError) as exc_info:
+        _decode_cloudevent(raw_json, CLOUDEVENTS_JSON_CONTENT_TYPE, expected_type="e.v1")
+    assert exc_info.value.category == "invalid_utf8"
+
+
+@pytest.mark.parametrize(
+    "bad_sub_id",
+    ["orders/v1", "orders~1", "orders sub", "a" * 129, "sub\ud800", "orders#1"],
+)
+def test_exposure_rejects_unsafe_subscription_id(bad_sub_id: str) -> None:
+    with pytest.raises(_EventsDefinitionError):
+        _declare_inbound_event(
+            CapabilityId.parse("jobs.plain"),
+            subscription_id=bad_sub_id,
+            event_type="e.v1",
+            principal=Principal("svc"),
+        )

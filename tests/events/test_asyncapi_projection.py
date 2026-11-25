@@ -230,3 +230,26 @@ def test_hidden_or_private_exposures_are_filtered_before_schema_translation() ->
             [visible, filtered_by_policy],
             _AsyncAPIInfo(title="Mixed", version="1.0.0"),
         )
+
+
+def test_asyncapi_rejects_deep_nesting_surrogates_duplicate_required_and_bad_bounds() -> None:
+    deep: dict[str, object] = {"type": "string"}
+    for _ in range(40):
+        deep = {"type": "object", "properties": {"next": deep}, "additionalProperties": False}
+    with pytest.raises(_AsyncAPIExportError, match="depth"):
+        _translate_schema_to_draft07(deep)
+
+    with pytest.raises(_AsyncAPIExportError, match="surrogate"):
+        _AsyncAPIInfo(title="bad\ud800", version="1.0.0")
+
+    for bad_schema in (
+        {"type": "object", "properties": {"bad\ud800": {"type": "string"}}},
+        {"type": "string", "const": "x\udc00"},
+        {"type": "object", "properties": {"a": {"type": "string"}}, "required": ["a", "a"]},
+        {"type": "integer", "minimum": 10, "maximum": 5},
+        {"type": "number", "exclusiveMinimum": 5, "maximum": 5},
+        {"type": "string", "minLength": 5, "maxLength": 2},
+        {"type": "array", "items": {"type": "string"}, "minItems": 4, "maxItems": 2},
+    ):
+        with pytest.raises(_AsyncAPIExportError):
+            _translate_schema_to_draft07(bad_schema)

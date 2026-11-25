@@ -15,6 +15,7 @@ __all__: list[str] = []
 
 ASYNCAPI_VERSION = "3.1.0"
 DRAFT_07_SCHEMA_FORMAT = "application/schema+json;version=draft-07"
+MAX_SCHEMA_DEPTH = 32
 
 _PRIMITIVE_TYPES = frozenset({"null", "boolean", "object", "array", "number", "integer", "string"})
 _NUMERIC_BOUND_KEYS = frozenset(
@@ -42,6 +43,11 @@ class _AsyncAPIExportError(ValueError):
     """Safe failure when a visible event exposure cannot be projected to AsyncAPI."""
 
 
+def _reject_surrogates(text: str) -> None:
+    if any(0xD800 <= ord(ch) <= 0xDFFF for ch in text):
+        raise _AsyncAPIExportError("unpaired Unicode surrogate is not allowed")
+
+
 @dataclass(frozen=True, slots=True)
 class _AsyncAPIInfo:
     """Explicit public AsyncAPI info metadata."""
@@ -56,29 +62,38 @@ class _AsyncAPIInfo:
             value = getattr(self, field_name)
             if not isinstance(value, str) or not value.strip():
                 raise _AsyncAPIExportError(f"AsyncAPI info {field_name} must be non-empty")
+            _reject_surrogates(value)
         for field_name in ("summary", "description"):
             value = getattr(self, field_name)
-            if value is not None and (not isinstance(value, str) or not value.strip()):
-                raise _AsyncAPIExportError(
-                    f"AsyncAPI info {field_name} must be non-empty when supplied"
-                )
+            if value is not None:
+                if not isinstance(value, str) or not value.strip():
+                    raise _AsyncAPIExportError(
+                        f"AsyncAPI info {field_name} must be non-empty when supplied"
+                    )
+                _reject_surrogates(value)
 
 
-def _ensure_json_literal(value: object) -> Any:
-    if value is None or isinstance(value, bool | str | int):
+def _ensure_json_literal(value: object, *, _depth: int = 0) -> Any:
+    if _depth > MAX_SCHEMA_DEPTH:
+        raise _AsyncAPIExportError("schema nesting depth exceeded")
+    if isinstance(value, str):
+        _reject_surrogates(value)
+        return value
+    if value is None or isinstance(value, bool | int):
         return value
     if isinstance(value, float):
         if not math.isfinite(value):
             raise _AsyncAPIExportError("non-finite numeric schema value is not allowed")
         return value
     if isinstance(value, list | tuple):
-        return [_ensure_json_literal(item) for item in value]
+        return [_ensure_json_literal(item, _depth=_depth + 1) for item in value]
     if isinstance(value, Mapping):
         checked: dict[str, Any] = {}
         for key, item in value.items():
             if not isinstance(key, str):
                 raise _AsyncAPIExportError("schema literal mapping keys must be strings")
-            checked[key] = _ensure_json_literal(item)
+            _reject_surrogates(key)
+            checked[key] = _ensure_json_literal(item, _depth=_depth + 1)
         return checked
     raise _AsyncAPIExportError("unsupported non-JSON schema literal")
 
@@ -99,7 +114,9 @@ def _finite_number(key: str, value: object) -> int | float:
     return value
 
 
-def _translate_tuple(schema: Mapping[str, Any]) -> dict[str, Any]:
+def _translate_tuple(schema: Mapping[str, Any], *, _depth: int = 0) -> dict[str, Any]:
+    if _depth > MAX_SCHEMA_DEPTH:
+        raise _AsyncAPIExportError("schema nesting depth exceeded")
     unknown = set(schema) - _TUPLE_ALLOWED_KEYS
     if unknown:
         raise _AsyncAPIExportError(
@@ -118,15 +135,56 @@ def _translate_tuple(schema: Mapping[str, Any]) -> dict[str, Any]:
         raise _AsyncAPIExportError("fixed tuple requires exact minItems and maxItems")
     return {
         "type": "array",
-        "items": [_translate_schema_to_draft07(item) for item in prefix_items],
+        "items": [_translate_schema_to_draft07(item, _depth=_depth + 1) for item in prefix_items],
         "additionalItems": False,
         "minItems": min_items,
         "maxItems": max_items,
     }
 
 
-def _translate_schema_to_draft07(schema: object) -> dict[str, Any] | bool:
+def _check_bound_consistency(translated: Mapping[str, Any]) -> None:
+    if (
+        "minimum" in translated
+        and "maximum" in translated
+        and translated["minimum"] > translated["maximum"]
+    ):
+        raise _AsyncAPIExportError("schema minimum exceeds maximum")
+    if (
+        "exclusiveMinimum" in translated
+        and "maximum" in translated
+        and translated["exclusiveMinimum"] >= translated["maximum"]
+    ):
+        raise _AsyncAPIExportError("schema exclusiveMinimum exceeds or equals maximum")
+    if (
+        "minimum" in translated
+        and "exclusiveMaximum" in translated
+        and translated["minimum"] >= translated["exclusiveMaximum"]
+    ):
+        raise _AsyncAPIExportError("schema minimum exceeds or equals exclusiveMaximum")
+    if (
+        "exclusiveMinimum" in translated
+        and "exclusiveMaximum" in translated
+        and translated["exclusiveMinimum"] >= translated["exclusiveMaximum"]
+    ):
+        raise _AsyncAPIExportError("schema exclusiveMinimum exceeds or equals exclusiveMaximum")
+    if (
+        "minLength" in translated
+        and "maxLength" in translated
+        and translated["minLength"] > translated["maxLength"]
+    ):
+        raise _AsyncAPIExportError("schema minLength exceeds maxLength")
+    if (
+        "minItems" in translated
+        and "maxItems" in translated
+        and translated["minItems"] > translated["maxItems"]
+    ):
+        raise _AsyncAPIExportError("schema minItems exceeds maxItems")
+
+
+def _translate_schema_to_draft07(schema: object, *, _depth: int = 0) -> dict[str, Any] | bool:
     """Translate a restricted schema subset to JSON Schema Draft-07."""
+    if _depth > MAX_SCHEMA_DEPTH:
+        raise _AsyncAPIExportError("schema nesting depth exceeded")
     if isinstance(schema, bool):
         return schema
     if not isinstance(schema, Mapping):
@@ -137,7 +195,7 @@ def _translate_schema_to_draft07(schema: object) -> dict[str, Any] | bool:
             raise _AsyncAPIExportError(f"unsupported schema keyword {key!r}")
 
     if "prefixItems" in schema:
-        return _translate_tuple(schema)
+        return _translate_tuple(schema, _depth=_depth)
 
     translated: dict[str, Any] = {}
     if "type" in schema:
@@ -160,10 +218,10 @@ def _translate_schema_to_draft07(schema: object) -> dict[str, Any] | bool:
         enum_values = schema["enum"]
         if not isinstance(enum_values, list | tuple) or not enum_values:
             raise _AsyncAPIExportError("schema enum must be a non-empty list")
-        translated["enum"] = [_ensure_json_literal(item) for item in enum_values]
+        translated["enum"] = [_ensure_json_literal(item, _depth=_depth + 1) for item in enum_values]
 
     if "const" in schema:
-        translated["const"] = _ensure_json_literal(schema["const"])
+        translated["const"] = _ensure_json_literal(schema["const"], _depth=_depth + 1)
 
     for key in _NUMERIC_BOUND_KEYS:
         if key in schema:
@@ -173,13 +231,15 @@ def _translate_schema_to_draft07(schema: object) -> dict[str, Any] | bool:
         if key in schema:
             translated[key] = _non_negative_int(key, schema[key])
 
+    _check_bound_consistency(translated)
+
     if "properties" in schema:
         raw_props = schema["properties"]
         if not isinstance(raw_props, Mapping):
             raise _AsyncAPIExportError("schema properties must be a mapping")
         # Property names are application field identifiers, never schema keywords.
         translated["properties"] = {
-            name: _translate_schema_to_draft07(prop_schema)
+            name: _translate_schema_to_draft07(prop_schema, _depth=_depth + 1)
             for name, prop_schema in _validated_property_entries(raw_props)
         }
 
@@ -189,6 +249,10 @@ def _translate_schema_to_draft07(schema: object) -> dict[str, Any] | bool:
             isinstance(item, str) for item in raw_required
         ):
             raise _AsyncAPIExportError("schema required must be a list of strings")
+        for item in raw_required:
+            _reject_surrogates(item)
+        if len(set(raw_required)) != len(raw_required):
+            raise _AsyncAPIExportError("schema required must not repeat field names")
         translated["required"] = list(raw_required)
 
     if "additionalProperties" in schema:
@@ -196,7 +260,9 @@ def _translate_schema_to_draft07(schema: object) -> dict[str, Any] | bool:
         if isinstance(additional, bool):
             translated["additionalProperties"] = additional
         elif isinstance(additional, Mapping):
-            translated["additionalProperties"] = _translate_schema_to_draft07(additional)
+            translated["additionalProperties"] = _translate_schema_to_draft07(
+                additional, _depth=_depth + 1
+            )
         else:
             raise _AsyncAPIExportError("schema additionalProperties must be a boolean or schema")
 
@@ -204,7 +270,7 @@ def _translate_schema_to_draft07(schema: object) -> dict[str, Any] | bool:
         items_schema = schema["items"]
         if not isinstance(items_schema, bool | Mapping):
             raise _AsyncAPIExportError("homogeneous array items must be a schema or boolean")
-        translated["items"] = _translate_schema_to_draft07(items_schema)
+        translated["items"] = _translate_schema_to_draft07(items_schema, _depth=_depth + 1)
 
     return translated
 
@@ -214,6 +280,7 @@ def _validated_property_entries(raw_props: Mapping[Any, Any]) -> list[tuple[str,
     for name, prop_schema in raw_props.items():
         if not isinstance(name, str):
             raise _AsyncAPIExportError("schema property names must be strings")
+        _reject_surrogates(name)
         entries.append((name, prop_schema))
     return entries
 
