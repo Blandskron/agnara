@@ -31,6 +31,11 @@ full history are available through Git tags and GitHub Releases.
 - Align agent discovery and the local documentation MCP corpus with the
   published 1.0.4 API. The loader still accepts frozen 1.0.3 snapshots.
 
+- Align the root `index.html` 1.0.4 reference manual UX/UI with Blandskron brand
+  guidelines v1.0, adding self-hosted visual tokens, accessible light/dark theme
+  switching, keyboard search shortcuts, active navigation tracking, and copyable
+  code blocks while preserving all 1.0.4 API content.
+
 ### Fixed
 
 - Harden `agnara-events` boundaries against unpaired Unicode surrogates in
