@@ -88,6 +88,22 @@ def _parse_bounded_int(token: str) -> int:
         raise _EnvelopeError("integer_bounds") from error
 
 
+def _reject_unpaired_surrogates(root: object) -> None:
+    """Reject unpaired UTF-16 surrogates produced by ``\\uD800``..``\\uDFFF`` JSON escapes."""
+    stack: list[object] = [root]
+    while stack:
+        item = stack.pop()
+        if isinstance(item, str):
+            if any(0xD800 <= ord(ch) <= 0xDFFF for ch in item):
+                raise _EnvelopeError("invalid_utf8")
+        elif isinstance(item, dict):
+            for key, val in item.items():
+                stack.append(key)
+                stack.append(val)
+        elif isinstance(item, list):
+            stack.extend(item)
+
+
 def _parse_strict_json(
     raw_body: bytes,
     *,
@@ -107,7 +123,7 @@ def _parse_strict_json(
     _check_json_depth(text, max_depth)
 
     try:
-        return json.loads(
+        parsed = json.loads(
             text,
             object_pairs_hook=_reject_duplicate_keys,
             parse_constant=_reject_constant,
@@ -118,6 +134,9 @@ def _parse_strict_json(
         raise
     except ValueError as error:
         raise _EnvelopeError("malformed_json") from error
+
+    _reject_unpaired_surrogates(parsed)
+    return parsed
 
 
 def _is_valid_uri_reference(value: object) -> bool:

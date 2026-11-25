@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
@@ -20,6 +21,7 @@ __all__: list[str] = []
 
 _ADAPTER = "events"
 _DEFAULT_SURFACE = "default"
+_SUBSCRIPTION_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}\Z")
 
 
 class _EventsDefinitionError(DefinitionError):
@@ -36,6 +38,8 @@ def _required_text(field: str, value: object) -> str:
         )
     if any(ord(ch) < 0x20 or ord(ch) == 0x7F for ch in trimmed):
         raise _EventsDefinitionError(f"{field} must not contain control characters")
+    if any(0xD800 <= ord(ch) <= 0xDFFF for ch in trimmed):
+        raise _EventsDefinitionError(f"{field} must not contain unpaired Unicode surrogates")
     return trimmed
 
 
@@ -76,6 +80,11 @@ class _EventSubscriptionExposure:
                 f"capability_id must be a CapabilityId, got {type(self.capability_id).__name__}"
             )
         _required_text("subscription_id", self.subscription_id)
+        if not _SUBSCRIPTION_ID_RE.match(self.subscription_id):
+            raise _EventsDefinitionError(
+                "subscription_id must match ^[A-Za-z0-9._-]{1,128}$ so AsyncAPI references "
+                "stay safe RFC 6901 pointers"
+            )
         _required_text("event_type", self.event_type)
         if not isinstance(self.principal, Principal) or isinstance(
             self.principal, AnonymousPrincipal

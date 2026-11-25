@@ -33,6 +33,13 @@ full history are available through Git tags and GitHub Releases.
 
 ### Fixed
 
+- Harden `agnara-events` boundaries against unpaired Unicode surrogates in
+  CloudEvents JSON, exposure metadata, and AsyncAPI exports; restrict
+  `subscription_id` to safe RFC 6901 pointer characters; bound AsyncAPI schema
+  translation depth (`32`), duplicate `required` entries, and contradictory
+  numeric/length bounds; and add deterministic Hypothesis adversarial fuzzing
+  in `tests/property/test_events_adversarial.py`.
+
 - Require OpenTelemetry API 1.45.2 or later in the 1.x line for the telemetry
   and MCP adapters and the standalone documentation MCP server. This covers
   [GHSA-mf5v-w3w3-f6cg](https://github.com/advisories/GHSA-mf5v-w3w3-f6cg)
