@@ -1,10 +1,10 @@
-"""A4-09: one semantic contract across direct, HTTP and MCP surfaces."""
+"""A4-09: one semantic contract across direct, HTTP, MCP and inbound event surfaces."""
 
 from __future__ import annotations
 
 import asyncio
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Literal, cast
 
@@ -31,6 +31,18 @@ from agnara.execution import (
 )
 from agnara.policy import PolicyFailure, Principal
 from agnara.schema import materialize_json
+from agnara_events import (
+    CLOUDEVENTS_JSON_CONTENT_TYPE,
+    AsyncAPIExportError,
+    AsyncAPIInfo,
+    ConsumerBudgets,
+    ConsumerDiagnostic,
+    SettlementAction,
+    compile_inbound_event,
+    consume_inbound_events,
+    declare_inbound_event,
+    project_asyncapi,
+)
 from agnara_http import Binding, BindingSource, Http, OpenApiInfo, OpenApiOperation
 from agnara_http._problem import _serialize_failure
 from agnara_mcp import Mcp, McpToolInvoker, project_mcp_result, project_mcp_tools
@@ -74,6 +86,10 @@ def test_boolean_json_cannot_select_a_numeric_enum_on_http_or_mcp(value: bool) -
     )
     assert result.is_error is True
     assert _mcp_payload(result)["code"] == "invalid_input"
+
+    event_diagnostic, event_settlement = _events_call(definition, plan, {"choice": value})
+    assert event_diagnostic.outcome == "invalid_input"
+    assert event_settlement == SettlementAction.REJECT.value
     assert calls == []
 
 
@@ -90,7 +106,8 @@ def test_numeric_literal_inputs_agree_on_http_and_mcp(value: object, expected: i
         calls.append(choice)
         return {"choice": choice}
 
-    plan = ExecutionPlan.compile(app.capabilities["literal_contract.accept"], DIRegistry())
+    definition = app.capabilities["literal_contract.accept"]
+    plan = ExecutionPlan.compile(definition, DIRegistry())
     direct = asyncio.run(invoke_result(plan, _context(plan, {"choice": value})))
     assert isinstance(direct, Failure)
     assert direct.code is FailureCode.INVALID_INPUT
@@ -106,19 +123,33 @@ def test_numeric_literal_inputs_agree_on_http_and_mcp(value: object, expected: i
         "literal_contract.accept",
         {"choice": value},
     )
+    event_diagnostic, event_settlement = _events_call(definition, plan, {"choice": value})
     if expected is None:
         assert status == 400
         assert payload["code"] == "invalid_input"
         assert payload["details"]["path"] == ["choice"]
         assert result.is_error is True
         assert _mcp_payload(result)["code"] == "invalid_input"
+        assert event_diagnostic.outcome == "invalid_input"
+        assert event_settlement == SettlementAction.REJECT.value
         assert calls == []
     else:
         assert status == 200
         assert payload == {"choice": expected}
         assert result.is_error is False
         assert result.structured_content == {"result": {"choice": expected}}
-        assert calls == [expected, expected]
+        assert event_diagnostic.outcome == "success"
+        assert event_settlement == SettlementAction.ACKNOWLEDGE.value
+        assert calls == [expected, expected, expected]
+
+
+@dataclass(frozen=True)
+class Draft07Profile:
+    tier: Tier
+    labels: list[str]
+    scores: dict[str, int]
+    coordinates: tuple[int, int]
+    mode: Literal["safe", "fast"] = "safe"
 
 
 @dataclass(frozen=True)
@@ -191,6 +222,79 @@ def _mcp_payload(result: CallToolResult) -> dict[str, Any]:
     return cast(dict[str, Any], json.loads(block.text))
 
 
+@dataclass
+class _EventDelivery:
+    body: bytes
+    content_type: str | None = CLOUDEVENTS_JSON_CONTENT_TYPE
+    actions: list[str] = field(default_factory=list)
+
+    async def acknowledge(self) -> None:
+        self.actions.append(SettlementAction.ACKNOWLEDGE.value)
+
+    async def reject(self) -> None:
+        self.actions.append(SettlementAction.REJECT.value)
+
+    async def release(self) -> None:
+        self.actions.append(SettlementAction.RELEASE.value)
+
+
+class _SingleEventSource:
+    def __init__(self, delivery: _EventDelivery) -> None:
+        self._delivery: _EventDelivery | None = delivery
+
+    async def receive(self) -> _EventDelivery | None:
+        delivery, self._delivery = self._delivery, None
+        return delivery
+
+    async def stop_receiving(self) -> None:
+        return None
+
+
+def _events_call(
+    definition: CapabilityDefinition,
+    plan: ExecutionPlan,
+    data: object,
+    *,
+    principal: Principal | None = None,
+) -> tuple[ConsumerDiagnostic, str]:
+    exposure = declare_inbound_event(
+        definition,
+        subscription_id="conformance-sub",
+        event_type="example.conformance.v1",
+        principal=principal if principal is not None else Principal("events-worker"),
+    )
+    binding = compile_inbound_event(exposure, {definition.id: plan})
+    envelope = json.dumps(
+        {
+            "specversion": "1.0",
+            "id": "evt-conformance-1",
+            "source": "urn:agnara:conformance",
+            "type": "example.conformance.v1",
+            "datacontenttype": "application/json",
+            "data": data,
+        }
+    ).encode("utf-8")
+    delivery = _EventDelivery(envelope)
+
+    async def run() -> tuple[ConsumerDiagnostic, str]:
+        container = DIContainer(DIRegistry())
+        try:
+            diagnostics = await consume_inbound_events(
+                binding,
+                container,
+                _SingleEventSource(delivery),
+                budgets=ConsumerBudgets(attempt_seconds=5.0, shutdown_seconds=1.0),
+                stop_event=asyncio.Event(),
+            )
+            assert len(diagnostics) == 1
+            assert len(delivery.actions) == 1
+            return diagnostics[0], delivery.actions[0]
+        finally:
+            await container.aclose()
+
+    return asyncio.run(run())
+
+
 @pytest.mark.parametrize("value", [10**400, -(10**400)], ids=["positive", "negative"])
 def test_out_of_range_json_float_is_invalid_input_on_every_json_surface(value: int) -> None:
     app = Agnara("numbers")
@@ -227,6 +331,10 @@ def test_out_of_range_json_float_is_invalid_input_on_every_json_surface(value: i
     assert result.is_error is True
     assert _mcp_payload(result)["code"] == "invalid_input"
     assert _mcp_payload(result)["message"] == "integer is outside the float range"
+
+    event_diagnostic, event_settlement = _events_call(definition, plan, {"factor": value})
+    assert event_diagnostic.outcome == "invalid_input"
+    assert event_settlement == SettlementAction.REJECT.value
     assert calls == []
 
 
@@ -258,14 +366,63 @@ def test_supported_schema_graph_is_one_semantic_contract_on_all_surfaces() -> No
         openapi=OpenApiOperation(),
     )
     asgi = http.compile(app.compile(), openapi=OpenApiInfo("Contracts", "1"))
+    event_binding = compile_inbound_event(
+        declare_inbound_event(
+            definition,
+            subscription_id="contracts-accept",
+            event_type="example.contracts.accept.v1",
+            principal=Principal("events-worker"),
+            public_address="contracts.accept.v1",
+        ),
+        {definition.id: plan},
+    )
+    # ADR 0101 Draft-07 export intentionally rejects `anyOf` unions such as `str | None`,
+    # while a union-free graph projects directly into AsyncAPI 3.1.0.
+    with pytest.raises(AsyncAPIExportError, match="anyOf"):
+        project_asyncapi([event_binding], AsyncAPIInfo("Contracts", "1"))
+
+    draft07_app = Agnara("draft07_contracts")
+
+    @draft07_app.capability
+    def accept_strict(profile: Draft07Profile) -> str:
+        return profile.tier.value
+
+    strict_definition = draft07_app.capabilities["draft07_contracts.accept_strict"]
+    strict_plan = ExecutionPlan.compile(strict_definition, DIRegistry())
+    strict_event_binding = compile_inbound_event(
+        declare_inbound_event(
+            strict_definition,
+            subscription_id="contracts-accept",
+            event_type="example.contracts.accept.v1",
+            principal=Principal("events-worker"),
+            public_address="contracts.accept.v1",
+        ),
+        {strict_definition.id: strict_plan},
+    )
+    asyncapi = project_asyncapi([strict_event_binding], AsyncAPIInfo("Contracts", "1"))
+    event_data_schema = asyncapi["components"]["messages"]["contracts-acceptMessage"]["payload"][
+        "schema"
+    ]["properties"]["data"]
+    event_profile_schema = event_data_schema["properties"]["profile"]
 
     core_schema = dict(plan.input_schemas["profile"].json_schema())
     http_schema = asgi.openapi()["paths"]["/profiles"]["post"]["requestBody"]["content"]
     http_schema = http_schema["application/json"]["schema"]
     mcp_schema = tool.input_schema["properties"]["profile"]
     assert core_schema == http_schema == mcp_schema
-    assert tool.input_schema["required"] == ["profile"]
-    assert core_schema["required"] == ["tier", "labels", "scores", "coordinates"]
+    assert tool.input_schema["required"] == event_data_schema["required"] == ["profile"]
+    assert (
+        core_schema["required"]
+        == event_profile_schema["required"]
+        == ["tier", "labels", "scores", "coordinates"]
+    )
+    assert event_profile_schema["properties"]["coordinates"] == {
+        "type": "array",
+        "items": [{"type": "integer"}, {"type": "integer"}],
+        "additionalItems": False,
+        "minItems": 2,
+        "maxItems": 2,
+    }
 
     python_value = Profile(Tier.PRO, ["a"], {"quality": 5}, (3, 4))
     direct = asyncio.run(invoke_result(plan, _context(plan, {"profile": python_value})))
@@ -281,6 +438,8 @@ def test_supported_schema_graph_is_one_semantic_contract_on_all_surfaces() -> No
     http_status, http_value = _request(asgi, wire_value)
     invoker = McpToolInvoker(mcp_tools, [plan], DIContainer(DIRegistry()))
     mcp_value = _mcp_call(invoker, "contracts.accept", {"profile": wire_value})
+    event_ok, event_ok_settlement = _events_call(definition, plan, {"profile": wire_value})
+    event_bad, event_bad_settlement = _events_call(definition, plan, {"profile": {"tier": "pro"}})
 
     assert isinstance(direct, Success)
     assert isinstance(strict_rejection, Failure)
@@ -288,6 +447,10 @@ def test_supported_schema_graph_is_one_semantic_contract_on_all_surfaces() -> No
     assert http_status == 200
     assert http_value == direct.value
     assert mcp_value.structured_content == {"result": direct.value}
+    assert event_ok.outcome == "success"
+    assert event_ok_settlement == SettlementAction.ACKNOWLEDGE.value
+    assert event_bad.outcome == "invalid_input"
+    assert event_bad_settlement == SettlementAction.REJECT.value
 
 
 _MATERIALIZATION_EFFECTS: list[str] = []
@@ -337,11 +500,14 @@ def test_scope_policy_precedes_business_policy_materialization_and_handler() -> 
         "policy.guarded",
         {"value": {"value": 1}},
     )
+    event_failure, event_settlement = _events_call(definition, plan, {"value": {"value": 1}})
     assert http_status == 403
     assert http_failure["code"] == "forbidden"
     assert http_failure["detail"] == "required scopes not granted"
     assert _mcp_payload(mcp_failure)["code"] == "forbidden"
     assert _mcp_payload(mcp_failure)["message"] == "required scopes not granted"
+    assert event_failure.outcome == "forbidden"
+    assert event_settlement == SettlementAction.REJECT.value
     assert _MATERIALIZATION_EFFECTS == []
 
     denied = asyncio.run(
@@ -418,6 +584,7 @@ def test_unexpected_wire_constructor_failure_is_redacted_on_both_transports() ->
         "redaction.accept",
         {"value": {"value": 1}},
     )
+    event_failure, event_settlement = _events_call(definition, plan, {"value": {"value": 1}})
 
     assert http_status == 500
     assert http_failure["detail"] == "The server could not complete the capability invocation."
@@ -425,8 +592,49 @@ def test_unexpected_wire_constructor_failure_is_redacted_on_both_transports() ->
         "code": "internal_failure",
         "message": "capability invocation failed",
     }
+    assert event_failure.outcome == "internal_failure"
+    assert event_settlement == SettlementAction.RELEASE.value
     assert "private" not in json.dumps(http_failure)
     assert "private" not in json.dumps(mcp_failure.model_dump(mode="json"))
+    assert "private" not in repr(event_failure)
+
+
+@pytest.mark.parametrize(
+    ("code", "expected_settlement"),
+    [
+        (FailureCode.INVALID_INPUT, SettlementAction.REJECT.value),
+        (FailureCode.UNAUTHENTICATED, SettlementAction.REJECT.value),
+        (FailureCode.FORBIDDEN, SettlementAction.REJECT.value),
+        (FailureCode.NOT_FOUND, SettlementAction.REJECT.value),
+        (FailureCode.CONFLICT, SettlementAction.REJECT.value),
+        (FailureCode.RATE_LIMITED, SettlementAction.RELEASE.value),
+        (FailureCode.UNAVAILABLE, SettlementAction.RELEASE.value),
+        (FailureCode.TIMEOUT, SettlementAction.RELEASE.value),
+        (FailureCode.INTERNAL_FAILURE, SettlementAction.RELEASE.value),
+    ],
+)
+def test_events_failure_settlement_matrix_matches_canonical_codes(
+    code: FailureCode,
+    expected_settlement: str,
+) -> None:
+    app = Agnara("event_matrix")
+
+    @app.capability
+    def fail_with() -> Failure:
+        return Failure(
+            code,
+            "secret=C:/private/token.txt",
+            {"credential": "raw-secret"},
+        )
+
+    definition = app.capabilities["event_matrix.fail_with"]
+    plan = ExecutionPlan.compile(definition, DIRegistry())
+    diagnostic, settlement = _events_call(definition, plan, {})
+
+    assert diagnostic.outcome == code.value
+    assert settlement == diagnostic.settlement == expected_settlement
+    assert "private" not in repr(diagnostic)
+    assert "raw-secret" not in repr(diagnostic)
 
 
 @pytest.mark.parametrize(

@@ -1,4 +1,4 @@
-"""One owned-resource contract through direct calls, HTTP and the official MCP client."""
+"""One owned-resource contract through direct calls, HTTP, MCP and inbound events."""
 
 from __future__ import annotations
 
@@ -6,13 +6,13 @@ import asyncio
 import json
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import pytest
 from mcp_types import TextContent
 
-from agnara import Agnara
+from agnara import Agnara, Principal
 from agnara.di import DIContainer, DIRegistry, Scope, provider
 from agnara.execution import (
     ExecutionContext,
@@ -22,12 +22,20 @@ from agnara.execution import (
     Success,
     invoke_result,
 )
+from agnara_events import (
+    CLOUDEVENTS_JSON_CONTENT_TYPE,
+    ConsumerBudgets,
+    SettlementAction,
+    compile_inbound_event,
+    consume_inbound_events,
+    declare_inbound_event,
+)
 from agnara_http import Binding, BindingSource, Http
 from agnara_mcp import Mcp, McpAuthorization, build_mcp_server
 from mcp import Client
 
 SECRET = "private-resource-contract-diagnostic"
-SURFACES = ("direct", "http", "mcp")
+SURFACES = ("direct", "http", "mcp", "events")
 
 
 @dataclass
@@ -155,6 +163,43 @@ def _reject_authenticated(_identity):
     raise ValueError("this public conformance fixture has no authenticated mapping")
 
 
+@dataclass
+class _EventDelivery:
+    body: bytes
+    content_type: str | None = CLOUDEVENTS_JSON_CONTENT_TYPE
+    actions: list[str] = field(default_factory=list)
+
+    async def acknowledge(self) -> None:
+        self.actions.append(SettlementAction.ACKNOWLEDGE.value)
+
+    async def reject(self) -> None:
+        self.actions.append(SettlementAction.REJECT.value)
+
+    async def release(self) -> None:
+        self.actions.append(SettlementAction.RELEASE.value)
+
+
+class _SingleEventSource:
+    def __init__(self, delivery: _EventDelivery) -> None:
+        self._delivery: _EventDelivery | None = delivery
+        self.stopped = False
+
+    async def receive(self) -> _EventDelivery | None:
+        delivery, self._delivery = self._delivery, None
+        return delivery
+
+    async def stop_receiving(self) -> None:
+        self.stopped = True
+
+
+def _expected_event_settlement(outcome: str) -> str:
+    if outcome == "success":
+        return SettlementAction.ACKNOWLEDGE.value
+    if outcome in {"invalid_input", "forbidden"}:
+        return SettlementAction.REJECT.value
+    return SettlementAction.RELEASE.value
+
+
 @asynccontextmanager
 async def _surface(surface: str, mode: str):
     scenario = _Scenario(mode)
@@ -188,6 +233,49 @@ async def _surface(surface: str, mode: str):
                     return _Outcome(result.code.value, None, repr(result))
 
                 yield scenario, direct_call
+                return
+
+            if surface == "events":
+                exposure = declare_inbound_event(
+                    scenario.capabilities["lifecycle.execute"],
+                    subscription_id="lifecycle.execute",
+                    event_type="example.lifecycle.execute",
+                    principal=Principal("events-worker"),
+                )
+                binding = compile_inbound_event(
+                    exposure,
+                    {scenario.plan.definition.id: scenario.plan},
+                )
+
+                async def events_call(value):
+                    envelope = json.dumps(
+                        {
+                            "specversion": "1.0",
+                            "id": f"evt-{value}",
+                            "source": "urn:agnara:conformance",
+                            "type": "example.lifecycle.execute",
+                            "datacontenttype": "application/json",
+                            "data": {"value": value},
+                        }
+                    ).encode("utf-8")
+                    delivery = _EventDelivery(envelope)
+                    source = _SingleEventSource(delivery)
+                    diagnostics = await consume_inbound_events(
+                        binding,
+                        container,
+                        source,
+                        budgets=ConsumerBudgets(attempt_seconds=5.0, shutdown_seconds=1.0),
+                        stop_event=asyncio.Event(),
+                    )
+                    assert len(diagnostics) == 1
+                    diagnostic = diagnostics[0]
+                    expected_action = _expected_event_settlement(diagnostic.outcome)
+                    assert delivery.actions == [expected_action]
+                    assert diagnostic.settlement == expected_action
+                    code = "ok" if diagnostic.outcome == "success" else diagnostic.outcome
+                    return _Outcome(code, None, repr(diagnostic))
+
+                yield scenario, events_call
                 return
 
             assert surface == "mcp"
@@ -238,7 +326,10 @@ def test_result_ordering_redaction_and_cleanup_match_across_surfaces(surface, mo
             assert outcome.code == expected
             assert SECRET not in outcome.wire
             if expected == "ok":
-                assert outcome.value == 2
+                if surface == "events":
+                    assert outcome.value is None
+                else:
+                    assert outcome.value == 2
             if mode in {"invalid", "denied", "denied_bad"}:
                 assert scenario.resources == [] and scenario.events == []
             else:
@@ -280,11 +371,18 @@ def test_concurrent_calls_keep_resources_isolated_until_their_own_exit(surface):
                 one, two = scenario.by_value[1], scenario.by_value[2]
                 assert one is not two and not one.closed and not two.closed
                 scenario.release[1].set()
-                assert (await first).value == 2
+                first_outcome = await first
+                assert first_outcome.code == "ok"
                 assert one.closed and not two.closed
                 assert ("close", two.serial) not in scenario.events
                 scenario.release[2].set()
-                assert (await second).value == 4
+                second_outcome = await second
+                assert second_outcome.code == "ok"
+                if surface == "events":
+                    # ADR 0101 discards handler return values after acknowledgement.
+                    assert first_outcome.value is None and second_outcome.value is None
+                else:
+                    assert first_outcome.value == 2 and second_outcome.value == 4
             scenario.assert_closed(2)
         scenario.assert_closed(2)
         assert asyncio.all_tasks() == {asyncio.current_task()}
