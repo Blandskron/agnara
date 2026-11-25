@@ -27,6 +27,7 @@ from mcp.server.auth.middleware.bearer_auth import AuthenticatedUser
 from mcp.server.auth.provider import AccessToken
 
 from agnara.execution import ExecutionPlan
+from agnara.exposure import FrozenExposureRegistry, compile_exposures
 from agnara.introspection import (
     DiscoveryVisibility,
     ScopeVisible,
@@ -36,6 +37,14 @@ from agnara.introspection import (
 )
 from agnara.policy import Principal
 from agnara_cli import EXIT_OK, main
+from agnara_events import (
+    AsyncAPIInfo,
+    CompiledEventBinding,
+    compile_event_surface,
+    compile_inbound_event,
+    declare_inbound_event,
+    project_asyncapi,
+)
 from agnara_http._discovery import _compile_discovery, _DiscoveryDispatcher, _DiscoveryRoute
 from agnara_http._dispatch import _compile_exposures
 from agnara_mcp import Mcp, McpAuthenticatedIdentity, McpAuthorization
@@ -330,3 +339,107 @@ def test_mcp_discovery_hides_what_the_snapshot_hides_for_the_same_viewer(
     scopes = VIEWERS[viewer]
 
     assert mcp_visible(scopes) == from_model(scopes)
+
+
+def _events_setup(
+    module: Any,
+) -> tuple[list[ExecutionPlan], list[CompiledEventBinding], FrozenExposureRegistry]:
+    plans_by_id = {
+        capability_id: ExecutionPlan.compile(
+            module.app.capabilities[capability_id], module.registry
+        )
+        for capability_id in module.app.capabilities
+    }
+    compiled_caps = module.app.compile()
+    bindings: list[CompiledEventBinding] = []
+    for capability_id in compiled_caps:
+        definition = compiled_caps[capability_id]
+        name = definition.id.name
+        exposure = declare_inbound_event(
+            definition,
+            subscription_id=f"billing-{name}",
+            event_type=f"example.billing.{name}.v1",
+            principal=Principal("events-worker"),
+            public_address=f"billing.{name}.v1",
+            summary=f"Receive {name}",
+        )
+        bindings.append(compile_inbound_event(exposure, plans_by_id, surface=name))
+    compiled_exposures = compile_exposures(
+        compiled_caps,
+        [compile_event_surface(binding) for binding in bindings],
+    )
+    return list(plans_by_id.values()), bindings, compiled_exposures
+
+
+@pytest.mark.parametrize("viewer", sorted(VIEWERS))
+def test_events_exposures_in_snapshot_agree_with_visibility_for_the_same_viewer(
+    project: Path, viewer: str
+) -> None:
+    """Filtered snapshots include `events` exposures only for visible capabilities."""
+    scopes = VIEWERS[viewer]
+    expected = from_model(scopes)
+    module = loaded()
+    plans, bindings, compiled_exposures = _events_setup(module)
+    event_by_capability = {str(b.exposure.capability_id): b for b in bindings}
+
+    snap = snapshot(
+        [
+            describe_app(
+                module.app,
+                plans,
+                dependencies=module.registry,
+                exposures=compiled_exposures,
+            )
+        ]
+    )
+    filtered = filter_snapshot(snap, visibility(), principal(scopes)).json_data()
+    serialized = json.dumps(filtered)
+
+    assert identifiers(filtered) == expected
+    capabilities = [cap for app in filtered["applications"] for cap in app["capabilities"]]
+    for capability in capabilities:
+        cap_id = capability["id"]
+        binding = event_by_capability[cap_id]
+        assert capability["exposures"] == [
+            {
+                "transport": "events",
+                "name": binding.exposure.subscription_id,
+                "detail": {},
+            }
+        ]
+    for cap_id, binding in event_by_capability.items():
+        if cap_id not in expected:
+            assert cap_id not in serialized
+            assert binding.exposure.subscription_id not in serialized
+            assert binding.exposure.event_type not in serialized
+
+
+@pytest.mark.parametrize("viewer", sorted(VIEWERS))
+def test_asyncapi_visibility_hides_what_the_snapshot_hides_for_the_same_viewer(
+    project: Path, viewer: str
+) -> None:
+    """Opt-in AsyncAPI filtering hides restricted capabilities matching ScopeVisible."""
+    scopes = VIEWERS[viewer]
+    expected = from_model(scopes)
+    module = loaded()
+    _, bindings, _ = _events_setup(module)
+    by_subscription = {b.exposure.subscription_id: b for b in bindings}
+
+    doc = project_asyncapi(
+        bindings,
+        AsyncAPIInfo("Billing Events", "1.0.0"),
+        is_visible=lambda binding: binding.plan.definition.scopes <= scopes,
+    )
+    exported_ids = [
+        str(by_subscription[subscription_id].exposure.capability_id)
+        for subscription_id in doc["channels"]
+    ]
+    serialized = json.dumps(doc)
+
+    assert exported_ids == expected
+    for binding in bindings:
+        if str(binding.exposure.capability_id) not in expected:
+            assert binding.exposure.subscription_id not in serialized
+            assert binding.exposure.event_type not in serialized
+            assert binding.exposure.public_address is not None
+            assert binding.exposure.public_address not in serialized
