@@ -8,13 +8,14 @@ A generated adapter imports **only this app's application layer**. It does not
 import ``agnara_http``, ``agnara_mcp`` or any other transport package, for
 three reasons that all point the same way:
 
-* No adapter distribution is published to PyPI, and a generated project
-  declares ``dependencies = ["agnara"]``. An import of an unpublished package
-  would produce a project that cannot be installed.
-* ``agnara-http``, ``agnara-a2a`` and ``agnara-events`` declare an empty public
-  surface on purpose -- the HTTP composition API is still the golden-design
-  sketch in ``docs/API_DESIGN.md`` section 4. Importing them would mean
-  importing private names into generated user code.
+* A generated starter project declares only ``dependencies = ["agnara"]`` in
+  ``pyproject.toml`` so the project remains installable out of the box without
+  coupling scaffolding to every optional transport distribution or its SDK
+  dependencies.
+* Keeping template generation decoupled from transport packages lets each
+  application opt into the exact adapters it deploys (for instance
+  ``agnara-http``, ``agnara-mcp``, provisional ``agnara-a2a`` or provisional
+  ``agnara-events``) at composition time without changing application code.
 * It makes `docs/SCAFFOLDING.md`'s invariant -- "No MCP import appears outside
   the MCP adapter file/package" -- true by construction rather than by
   convention.
